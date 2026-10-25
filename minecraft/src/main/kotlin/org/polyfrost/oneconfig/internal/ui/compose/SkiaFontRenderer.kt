@@ -99,7 +99,15 @@ object SkiaFontRenderer : PreparableReloadListener {
     private const val BATCH_BUCKETS = 7
     private const val ITALIC_SHEAR = 0.25f
 
+    private val NO_OFFSET = floatArrayOf(0f, 0f)
+    private val OUTLINE_OFFSETS = floatArrayOf(
+        -1f, -1f, 0f, -1f, 1f, -1f,
+        -1f, 0f, 1f, 0f,
+        -1f, 1f, 0f, 1f, 1f, 1f,
+    )
+
     private val vertexPaint = Paint().apply { isAntiAlias = false }
+    private val layerPaint = Paint()
     private val batchPositions = FloatArray(MAX_BATCH_QUADS * 8)
     private val batchTexCoords = FloatArray(MAX_BATCH_QUADS * 8)
     private val batchColors = IntArray(MAX_BATCH_QUADS * 4)
@@ -137,6 +145,7 @@ object SkiaFontRenderer : PreparableReloadListener {
         McFontQueue.measureWidth = { text, scale -> measureWidth(text) * scale }
         McFontQueue.measureHeight = { scale -> LINE_HEIGHT * scale }
         McFontQueue.renderer = ::draw
+        McFontQueue.outlineRenderer = ::drawOutlined
         ComposePreloader.preloadGpuWarmup()
     }
 
@@ -196,6 +205,34 @@ object SkiaFontRenderer : PreparableReloadListener {
             if (shadow) drawGlyphs(canvas, line, x, lineY, color, scale, true)
             drawGlyphs(canvas, line, x, lineY, color, scale, false)
         }
+        flushBatch(canvas)
+    }
+
+    fun drawOutlined(canvas: Canvas, text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+        closeRetired()
+        ensureLoaded()
+        if (glyphs.isEmpty() && unihex == null) return
+        val lines = text.lines()
+        val outlineAlpha = outlineColor ushr 24
+        val layered = outlineAlpha < 0xFF
+        if (layered) {
+            val width = lines.maxOf { measureWidth(it) } * scale
+            val height = lines.size * LINE_HEIGHT * scale
+            layerPaint.color = outlineAlpha shl 24
+            canvas.saveLayer(Rect.makeLTRB(x - scale, y - scale, x + width + scale, y + height + scale), layerPaint)
+        }
+        val opaqueOutline = outlineColor or 0xFF000000.toInt()
+        lines.forEachIndexed { index, line ->
+            drawGlyphs(canvas, line, x, y + index * LINE_HEIGHT * scale, color, scale, false, opaqueOutline)
+        }
+        if (layered) {
+            flushBatch(canvas)
+            canvas.restore()
+        }
+        lines.forEachIndexed { index, line ->
+            drawGlyphs(canvas, line, x, y + index * LINE_HEIGHT * scale, color, scale, false)
+        }
+        flushBatch(canvas)
     }
 
     private fun ensureLoaded() {
@@ -214,7 +251,10 @@ object SkiaFontRenderer : PreparableReloadListener {
     internal var reloadFailed = false
         private set
 
-    private fun drawGlyphs(canvas: Canvas, text: String, x: Float, y: Float, color: Int, scale: Float, isShadow: Boolean) {
+    private fun drawGlyphs(
+        canvas: Canvas, text: String, x: Float, y: Float, color: Int, scale: Float, isShadow: Boolean, outlineColor: Int? = null,
+    ) {
+        val offsets = if (outlineColor != null) OUTLINE_OFFSETS else NO_OFFSET
         var curX = x
         var curColor = color
         var isBold = false
@@ -242,7 +282,7 @@ object SkiaFontRenderer : PreparableReloadListener {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
 
-            val drawColor = if (isShadow) shadowColor(curColor) else curColor
+            val drawColor = outlineColor ?: if (isShadow) shadowColor(curColor) else curColor
 
             val glyph = glyphOf(cp)
             if (glyph != null) {
@@ -253,7 +293,7 @@ object SkiaFontRenderer : PreparableReloadListener {
                     val dstY = y + glyph.top * scale + shift
                     blit(
                         canvas, glyph.image, glyph.srcX, glyph.srcY, glyph.srcW, glyph.srcH,
-                        curX + shift, dstY, dstW, dstH, drawColor, isBold, isItalic, DEFAULT_OFFSET * scale
+                        curX + shift, dstY, dstW, dstH, drawColor, isBold, isItalic, DEFAULT_OFFSET * scale, offsets, scale
                     )
                 }
                 curX += (glyph.advance + if (isBold) DEFAULT_OFFSET else 0f) * scale
@@ -272,7 +312,7 @@ object SkiaFontRenderer : PreparableReloadListener {
                         val dstH = UNIHEX_HEIGHT / UNIHEX_OVERSAMPLE * scale
                         blit(
                             canvas, image, 0f, 0f, w.toFloat(), UNIHEX_HEIGHT.toFloat(),
-                            curX + shift, y + shift, dstW, dstH, drawColor, isBold, isItalic, UNIHEX_OFFSET * scale
+                            curX + shift, y + shift, dstW, dstH, drawColor, isBold, isItalic, UNIHEX_OFFSET * scale, offsets, scale
                         )
                     }
                     curX += (hex.advance(hexIndex) + if (isBold) UNIHEX_OFFSET else 0f) * scale
@@ -287,24 +327,36 @@ object SkiaFontRenderer : PreparableReloadListener {
                     val baseline = y + BASELINE * scale + shift
                     canvas.save()
                     if (isItalic) canvas.skew(-0.25f, 0f)
-                    canvas.drawString(str, curX + shift, baseline, font, textPaint)
-                    if (isBold) canvas.drawString(str, curX + shift + scale, baseline, font, textPaint)
+                    var o = 0
+                    while (o < offsets.size) {
+                        val ox = curX + shift + offsets[o] * scale
+                        val oy = baseline + offsets[o + 1] * scale
+                        canvas.drawString(str, ox, oy, font, textPaint)
+                        if (isBold) canvas.drawString(str, ox + scale, oy, font, textPaint)
+                        o += 2
+                    }
                     canvas.restore()
                 }
             }
             curX += advanceOf(cp, isBold) * scale
         }
-        flushBatch(canvas)
     }
 
     private fun blit(
         canvas: Canvas, image: Image,
         srcX: Float, srcY: Float, srcW: Float, srcH: Float,
         x: Float, y: Float, w: Float, h: Float,
-        color: Int, bold: Boolean, italic: Boolean, boldOffset: Float
+        color: Int, bold: Boolean, italic: Boolean, boldOffset: Float,
+        offsets: FloatArray, offsetScale: Float,
     ) {
-        pushQuad(canvas, image, srcX, srcY, srcW, srcH, x, y, w, h, color, italic)
-        if (bold) pushQuad(canvas, image, srcX, srcY, srcW, srcH, x + boldOffset, y, w, h, color, italic)
+        var o = 0
+        while (o < offsets.size) {
+            val ox = x + offsets[o] * offsetScale
+            val oy = y + offsets[o + 1] * offsetScale
+            pushQuad(canvas, image, srcX, srcY, srcW, srcH, ox, oy, w, h, color, italic)
+            if (bold) pushQuad(canvas, image, srcX, srcY, srcW, srcH, ox + boldOffset, oy, w, h, color, italic)
+            o += 2
+        }
     }
 
     private fun pushQuad(

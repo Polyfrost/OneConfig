@@ -693,6 +693,16 @@ public class OneConfigConfig extends Config {
     )
     public static boolean showFirstLaunchMessage = true;
 
+    @Switch(
+        title = "oneconfig.preferences.profile_switch_toast.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.general",
+        subcategoryTranslation = true,
+        description = "oneconfig.preferences.profile_switch_toast.description",
+        descriptionTranslation = true
+    )
+    public static boolean profileSwitchToast = true;
+
     /**
      * The live instance used to persist programmatic changes such as {@link #markFirstLaunchShown()}
      */

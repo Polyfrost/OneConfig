@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -24,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -32,7 +33,7 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val trackColor by animateColorAsState(if (checked) Accent else LocalTheme.current.controlTrackColor)
+    val accentAlpha by animateFloatAsState(if (checked) 1f else 0f)
     val thumbOffset by animateDpAsState(if (checked) 24.dp else 3.dp, animationSpec = spring())
     val borderColor by animateColorAsState(
         if (isHovered) LocalTheme.current.textColor.copy(alpha = 0.15f) else Color.Transparent
@@ -47,7 +48,8 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
             modifier = Modifier
                 .size(42.dp, 21.dp)
                 .clip(LocalTheme.current.circleShape)
-                .background(trackColor)
+                .background(LocalTheme.current.controlTrackColor)
+                .background(AccentBrush, alpha = accentAlpha)
                 .border(1.dp, borderColor, LocalTheme.current.circleShape)
                 .onClick(interactionSource) { onCheckedChange(!checked) }
                 .pointerHoverIcon(PointerIcon.Hand),

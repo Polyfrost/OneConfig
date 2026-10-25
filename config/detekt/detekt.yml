@@ -1,0 +1,27 @@
+style:
+  UnnecessaryFullyQualifiedName:
+    active: true
+    # Java types that Kotlin maps to its own builtins, which an import would shadow
+    ignoredFullyQualifiedNames:
+      - 'java.lang.Boolean'
+      - 'java.lang.Byte'
+      - 'java.lang.Short'
+      - 'java.lang.Long'
+      - 'java.lang.Float'
+      - 'java.lang.Double'
+      - 'java.lang.String'
+      - 'java.lang.CharSequence'
+      - 'java.lang.Number'
+      - 'java.lang.Comparable'
+      - 'java.lang.Enum'
+      - 'java.lang.Throwable'
+      - 'java.lang.Cloneable'
+      - 'java.lang.Iterable'
+      - 'java.lang.annotation.Annotation'
+      - 'java.util.Iterator'
+      - 'java.util.ListIterator'
+      - 'java.util.Collection'
+      - 'java.util.List'
+      - 'java.util.Set'
+      - 'java.util.Map'
+      - 'java.util.Map.Entry'

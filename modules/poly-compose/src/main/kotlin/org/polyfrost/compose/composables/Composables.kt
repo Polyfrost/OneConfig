@@ -99,6 +99,18 @@ fun PolyMcText(
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,
 ) {
+    PolyMcText(text, null, color, shadow, scale, modifier)
+}
+
+@Composable
+fun PolyMcText(
+    text: String,
+    outlineColor: PolyColor?,
+    color: PolyColor = PolyColor.WHITE,
+    shadow: Boolean = true,
+    scale: Float = 1f,
+    modifier: PolyModifier = PolyModifier,
+) {
     ComposeNode<McTextNode, PolyApplier>(
         factory = { McTextNode() },
         update = {
@@ -106,6 +118,7 @@ fun PolyMcText(
             set(scale) { this.scale = it; remeasure() }
             set(color) { this.color = it }
             set(shadow) { this.shadow = it }
+            set(outlineColor) { this.outlineColor = it }
             set(modifier) { modifier.applyTo(style); remeasure() }
         },
     )

@@ -80,6 +80,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getEffectiveShowBackground ()Z
 	public final fun getEffectiveTextWeight ()Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
+	public final fun getFullShadow ()Z
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
 	public final fun getKeepBgWhenHidden ()Z
@@ -162,6 +163,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setConfigId (Ljava/lang/String;)V
 	public fun setCustomScale (F)V
 	public final fun setFont (Lorg/polyfrost/oneconfig/api/hud/v1/Font;)V
+	public final fun setFullShadow (Z)V
 	public final fun setGrowthAnchor (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public final fun setGrowthAnchorKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun setHidden (Z)V

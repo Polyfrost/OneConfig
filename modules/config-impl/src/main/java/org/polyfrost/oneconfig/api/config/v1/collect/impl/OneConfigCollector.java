@@ -43,6 +43,7 @@ import org.jspecify.annotations.NonNull;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
+import org.polyfrost.oneconfig.api.config.v1.SliderBounds;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
@@ -183,6 +184,9 @@ public class OneConfigCollector extends ReflectiveCollector {
             if (tempData.remove("formatter") instanceof Class<?> formatter && formatter != ValueFormatter.class) {
                 tempData.put("formatter", MHUtils.instantiate(formatter, false).getOrThrow());
             }
+            if (tempData.remove("bounds") instanceof Class<?> bounds && bounds != SliderBounds.class) {
+                tempData.put("bounds", MHUtils.instantiate(bounds, false).getOrThrow());
+            }
 
             property.addMetadata(tempData);
         }
@@ -224,6 +228,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             case RangeNumberList ignored -> validateRangeListField(field, property, "@RangeNumberList");
             case Color color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
+                if (color.gradient()) property.addMetadata("gradient", Unit.INSTANCE);
             }
             case ColorList color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);

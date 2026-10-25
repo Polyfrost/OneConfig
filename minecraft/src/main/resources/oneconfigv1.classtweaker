@@ -60,4 +60,5 @@ classTweaker v1 official
 
 #? if > 1.8.9 {
 #accessible class net/minecraft/client/Options$FieldAccess
+#accessible class net/minecraft/client/Options$OptionAccess
 #?}

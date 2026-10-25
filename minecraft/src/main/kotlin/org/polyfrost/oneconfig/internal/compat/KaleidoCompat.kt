@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
 import java.lang.reflect.Array as ReflectArray
+import java.util.regex.Pattern
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -308,8 +309,8 @@ object KaleidoCompat {
     }
 
     private fun regexOf(value: Any): String? = constraintsOf(value).firstNotNullOfOrNull { constraint ->
-        constraint.javaClass.declaredFields.firstOrNull { it.type == java.util.regex.Pattern::class.java }
-            ?.let { runCatching { it.isAccessible = true; (it.get(constraint) as? java.util.regex.Pattern)?.pattern() }.getOrNull() }
+        constraint.javaClass.declaredFields.firstOrNull { it.type == Pattern::class.java }
+            ?.let { runCatching { it.isAccessible = true; (it.get(constraint) as? Pattern)?.pattern() }.getOrNull() }
     }
 
     private fun readField(target: Any, name: String): Any? =

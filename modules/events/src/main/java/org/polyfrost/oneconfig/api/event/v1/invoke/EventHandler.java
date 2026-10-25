@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.event.v1.invoke;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import kotlin.OverloadResolutionByLambdaReturnType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -52,7 +53,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      * @param <E>     the event type
      * @return the event handler
      */
-    @kotlin.OverloadResolutionByLambdaReturnType
+    @OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> ofRemoving(Class<E> cls, Predicate<? super E> handler) {
         EventClassValidator.validate(cls);
         return new EventHandler<E>() {
@@ -76,7 +77,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      * @param <E>     the event type
      * @return the event handler
      */
-    @kotlin.OverloadResolutionByLambdaReturnType
+    @OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<? super E> handler) {
         EventClassValidator.validate(cls);
         return new EventHandler<E>() {
@@ -93,7 +94,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
         };
     }
 
-    @kotlin.OverloadResolutionByLambdaReturnType
+    @OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> of(Class<E> cls, Runnable handler) {
         EventClassValidator.validate(cls);
         return new EventHandler<E>() {

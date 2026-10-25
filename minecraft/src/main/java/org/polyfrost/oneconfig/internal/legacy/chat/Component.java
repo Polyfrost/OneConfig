@@ -14,6 +14,7 @@ import java.util.UUID;
 import net.minecraft.resource.Identifier;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.ChunkPos;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.jspecify.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public interface Component extends Message, FormattedText, Text {
             net.kyori.adventure.text.format.Style.Builder adventureStyle = net.kyori.adventure.text.format.Style.style();
             Integer color = style.getRgbColor();
             if (color != null) {
-                adventureStyle.color(net.kyori.adventure.text.format.TextColor.color(color));
+                adventureStyle.color(TextColor.color(color));
             }
             adventureStyle.decoration(TextDecoration.BOLD, style.isBold());
             adventureStyle.decoration(TextDecoration.ITALIC, style.isItalic());

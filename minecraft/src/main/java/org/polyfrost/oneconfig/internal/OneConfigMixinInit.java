@@ -110,6 +110,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if > 1.8.9
         mixins.add("Mixin_VersionedResourcePacks");
         //? if > 1.8.9
+        mixins.add("fixes.Mixin_SkipMalformedOptions");
+        //? if > 1.8.9
         mixins.add("Mixin_CommunityTranslations");
         //? if = 1.8.9
         //mixins.add("Mixin_LegacyCommunityTranslations");

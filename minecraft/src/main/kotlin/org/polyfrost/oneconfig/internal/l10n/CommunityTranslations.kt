@@ -4,6 +4,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.utils.v1.JsonUtils
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
@@ -18,8 +19,7 @@ import java.util.function.BiConsumer
 import java.util.function.Function
 
 object CommunityTranslations {
-    private const val DISTRIBUTION_HASH = ""
-    private const val DISTRIBUTION_URL = "https://distributions.crowdin.net/"
+    private const val DISTRIBUTION_URL = "https://translations.r2.polyfrost.org/v1"
     private const val SOURCE_LANGUAGE = "en_us"
     private val MANIFEST_TTL = TimeUnit.HOURS.toMillis(6)
     private val RETRY_DELAY = TimeUnit.MINUTES.toMillis(10)
@@ -40,23 +40,27 @@ object CommunityTranslations {
 
     @JvmStatic
     fun apply(languages: List<String>, namespaces: Collection<String>, existing: Function<String, String?>, sink: BiConsumer<String, String>) {
-        if (DISTRIBUTION_HASH.isEmpty()) return
         runCatching {
             val wanted = languages.map(::normalize).filter { it != SOURCE_LANGUAGE }.distinct()
             if (wanted.isEmpty()) return
             val present = namespaces.toSet()
             val manifest = readManifest()
+            val applied = HashSet<String>()
             if (manifest != null) {
                 for (language in wanted) {
                     for (namespace in manifest.files[language]?.keys.orEmpty()) {
                         if (namespace !in present) continue
                         readTranslations(language, namespace, manifest.timestamp)?.forEach { (key, value) ->
                             val current = existing.apply(key)
-                            if (current == null || arity(current) == arity(value)) sink.accept(key, value)
+                            if (current == null || arity(current) == arity(value)) {
+                                sink.accept(key, value)
+                                applied.add(namespace)
+                            }
                         }
                     }
                 }
             }
+            TranslationCredits.namespaces = applied
             if (!isUpToDate(manifest, wanted, present) && System.currentTimeMillis() - lastFailure >= RETRY_DELAY) {
                 Multithreading.submit {
                     if (synchronized(refreshLock) { refresh(wanted, present) }) reloadLanguages()
@@ -77,7 +81,7 @@ object CommunityTranslations {
         if (isUpToDate(previous, languages, namespaces)) return false
         var manifest = previous
         if (manifest == null || manifestAge() >= MANIFEST_TTL) {
-            val text = NetworkUtils.getString("$DISTRIBUTION_URL$DISTRIBUTION_HASH/manifest.json")
+            val text = NetworkUtils.getString("$DISTRIBUTION_URL/manifest.json")
             val fetched = text?.let(::parseManifest)
             if (text == null || fetched == null || !write(manifestFile, text)) {
                 lastFailure = System.currentTimeMillis()
@@ -92,7 +96,7 @@ object CommunityTranslations {
                 if (namespace !in namespaces) continue
                 val target = cachedFile(language, namespace, manifest.timestamp)
                 if (Files.isRegularFile(target)) continue
-                val text = NetworkUtils.getString("$DISTRIBUTION_URL$DISTRIBUTION_HASH$path?timestamp=${manifest.timestamp}")
+                val text = NetworkUtils.getString("$DISTRIBUTION_URL$path?timestamp=${manifest.timestamp}")
                 if (text != null && JsonUtils.parseOrNull(text) is JsonObject && write(target, text)) {
                     pruneOlder(target)
                     changed = true

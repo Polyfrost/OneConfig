@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
@@ -23,7 +24,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.ButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val DangerColor = Color(0xFFE35B5B)
@@ -38,8 +39,14 @@ fun ButtonOption(data: ButtonOptionData) {
     val confirmText = data.confirmText
     var firstClickAt by remember { mutableStateOf<Long?>(null) }
     val confirming = firstClickAt != null
-    val baseColor = if (confirming) DangerColor else Accent
-    val bgColor by animateColorAsState(if (isHovered) baseColor.copy(alpha = 0.75f) else baseColor)
+    val bgColor by animateColorAsState(
+        when {
+            !confirming -> Color.Transparent
+            isHovered -> DangerColor.copy(alpha = 0.75f)
+            else -> DangerColor
+        }
+    )
+    val accentAlpha by animateFloatAsState(if (confirming) 0f else if (isHovered) 0.75f else 1f)
     val textColor = LocalTheme.current.accentTextColor
 
     Box(
@@ -47,6 +54,7 @@ fun ButtonOption(data: ButtonOptionData) {
             .widthIn(max = LocalOptionWidth.current)
             .pointerHoverIcon(PointerIcon.Hand)
             .background(bgColor, LocalTheme.current.buttonShape)
+            .background(AccentBrush, LocalTheme.current.buttonShape, accentAlpha)
             .onClick(interactionSource) {
                 val clickedAt = firstClickAt
                 when {

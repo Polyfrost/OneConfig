@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat.toggle
 
+import java.awt.Color
+import java.lang.reflect.Array as ReflectArray
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import org.apache.logging.log4j.LogManager
@@ -271,8 +273,8 @@ internal class ConfigMask(
         return try {
             when {
                 value is PolyColor -> PolyColor(value.rawArgb, value.chroma, value.chromaSpeed)
-                type.isArray -> java.lang.reflect.Array.getLength(value).let { length ->
-                    java.lang.reflect.Array.newInstance(type.componentType, length).also { System.arraycopy(value, 0, it, 0, length) }
+                type.isArray -> ReflectArray.getLength(value).let { length ->
+                    ReflectArray.newInstance(type.componentType, length).also { System.arraycopy(value, 0, it, 0, length) }
                 }
                 value is List<*> -> ArrayList(value)
                 else -> ObjectSerializer.overwrite(type.getDeclaredConstructor().also { it.isAccessible = true }.newInstance(), value)
@@ -372,10 +374,10 @@ internal class ConfigMask(
             value is Number && (type == Boolean::class.javaPrimitiveType || type == java.lang.Boolean::class.java) -> value.toInt() != 0
             value is Number && (type == Float::class.javaPrimitiveType || type == java.lang.Float::class.java) -> value.toFloat()
             value is Number && (type == Double::class.javaPrimitiveType || type == java.lang.Double::class.java) -> value.toDouble()
-            value is Number && (type == Int::class.javaPrimitiveType || type == java.lang.Integer::class.java) -> value.toInt()
+            value is Number && (type == Int::class.javaPrimitiveType || type == Integer::class.java) -> value.toInt()
             value is Number && (type == Long::class.javaPrimitiveType || type == java.lang.Long::class.java) -> value.toLong()
             value is Number && type == PolyColor::class.java -> PolyColor(value.toInt())
-            value is Number && type == java.awt.Color::class.java -> java.awt.Color(value.toInt(), true)
+            value is Number && type == Color::class.java -> Color(value.toInt(), true)
             value is String && type.isEnum -> type.enumConstants.first { (it as Enum<*>).name == value }
             else -> value
         }

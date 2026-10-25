@@ -22,7 +22,7 @@ on:
       - '.gitignore'
 
 concurrency:
-  group: ${{ github.head_ref || format('{0}-{1}', github.ref, github.run_number) }}
+  group: ${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
@@ -71,8 +71,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      # checks run after the uploads so that their failures don't withhold the built artifacts
       - name: Build
-        run: ./gradlew -p modules build --no-daemon
+        run: ./gradlew -p modules assemble --no-daemon
 
       - name: Test publication
         run: ./gradlew -p modules publishToMavenLocal
@@ -99,6 +100,13 @@ jobs:
             modules/compose-bundle/build/libs/*-javadoc.jar
             modules/compose-bundle/build/libs/*-sources.jar
           if-no-files-found: error
+
+      - name: Check
+        run: ./gradlew -p modules check --no-daemon
+
+      # buildSrc's Detekt tasks (which also cover the Gradle scripts) aren't part of any project's build
+      - name: Lint
+        run: ./gradlew :buildSrc:detekt --no-daemon
 
   minecraft:
     name: Build ${{ matrix.node }}
@@ -129,8 +137,9 @@ jobs:
       - *setup-gradle
       - *loom-cache
 
+      # checks run after the uploads so that their failures don't withhold the built artifacts
       - name: Build
-        run: ./gradlew :minecraft:$NODE:build :bootstrap:$NODE:build --no-daemon
+        run: ./gradlew :minecraft:$NODE:assemble :bootstrap:$NODE:assemble --no-daemon
 
       - name: Test publication
         run: ./gradlew :minecraft:$NODE:publishToMavenLocal
@@ -148,6 +157,9 @@ jobs:
           name: lib-artifacts-${{ env.NODE }}
           path: minecraft/versions/${{ env.NODE }}/build/libs/
           if-no-files-found: error
+
+      - name: Check
+        run: ./gradlew :minecraft:$NODE:check :bootstrap:$NODE:check --no-daemon
 
   lib-artifacts:
     name: Merge dev artifacts

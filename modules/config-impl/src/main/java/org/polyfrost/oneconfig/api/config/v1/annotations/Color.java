@@ -81,4 +81,6 @@ public @interface Color {
     String subcategoryKey() default "";
 
     boolean alpha() default true;
+
+    boolean gradient() default false;
 }

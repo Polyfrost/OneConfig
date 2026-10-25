@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -37,7 +39,7 @@ fun CheckboxIndicator(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val bgColor by animateColorAsState(if (checked) Accent else theme.componentBackground)
+    val accentAlpha by animateFloatAsState(if (checked) 1f else 0f)
     val borderColor by animateColorAsState(
         when {
             checked -> Accent
@@ -50,7 +52,8 @@ fun CheckboxIndicator(
         modifier = modifier
             .size(24.dp)
             .clip(theme.checkBoxShape)
-            .background(bgColor)
+            .background(theme.componentBackground)
+            .background(AccentBrush, alpha = accentAlpha)
             .border(1.5.dp, borderColor, theme.checkBoxShape)
             .onClick(interactionSource, onToggle)
             .pointerHoverIcon(PointerIcon.Hand),

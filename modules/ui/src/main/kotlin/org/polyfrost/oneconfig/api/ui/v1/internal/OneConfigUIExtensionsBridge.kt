@@ -9,6 +9,8 @@ interface OneConfigUIExtensionsBridge {
 
     fun replaceModOrder(ids: List<String>)
 
+    fun modSortModeId(): String
+
     fun refreshOption(property: Property<*>)
 }
 

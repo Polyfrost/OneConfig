@@ -4,6 +4,5 @@ repos:
       - id: api-check
         name: API Check
         language: system
-        entry: ./gradlew -p modules apiCheck
+        entry: ./scripts/api-check.sh
         files: '^modules/.+\.(java|kt)$'
-        pass_filenames: false

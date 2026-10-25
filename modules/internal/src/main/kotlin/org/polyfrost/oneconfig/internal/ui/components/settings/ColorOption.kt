@@ -145,6 +145,8 @@ internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
     var chromaEnabled by mutableStateOf(false)
     val alphaEnabled = hasAlpha
     var chromaSpeed by mutableFloatStateOf(1f)
+    var gradientEnabled by mutableStateOf(false)
+    var gradientColor by mutableStateOf(initialColor)
 
     fun currentColor(): Color = hsbToColor(hue, saturation, brightness, alpha)
 
@@ -210,6 +212,8 @@ fun ColorOption(data: ColorOptionData) {
             val color = initialValue as? PolyColor
             chromaEnabled = color?.chroma == true
             chromaSpeed = color?.chromaSpeed ?: 1f
+            gradientEnabled = color?.gradientEnabled == true
+            if (color != null) gradientColor = Color(color.gradientArgb)
         }
     }
     val textColor by animateColorAsState(
@@ -230,6 +234,7 @@ fun ColorOption(data: ColorOptionData) {
             data.prop.type == PolyColor::class.java -> {
                 (data.prop as Property<Any>).set(
                     PolyColor(color.toArgb(), pickerModel.chromaEnabled, pickerModel.chromaSpeed)
+                        .withGradient(data.gradient && pickerModel.gradientEnabled, pickerModel.gradientColor.toArgb())
                 )
                 updateAccent()
             }
@@ -248,19 +253,26 @@ fun ColorOption(data: ColorOptionData) {
         if (data.prop.type == PolyColor::class.java) updateAccent()
     }
 
+    val showGradient = data.gradient && pickerModel.gradientEnabled && !pickerModel.chromaEnabled
+    val swatch = if (showGradient) Brush.horizontalGradient(listOf(currentColor, pickerModel.gradientColor)) else SolidColor(currentColor)
+
     Box {
         Row(
             modifier = Modifier
                 .onClick(interactionSource) { expanded = !expanded }
                 .pointerHoverIcon(PointerIcon.Hand)
-                .background(currentColor, LocalTheme.current.sideBarNavigationEntryShape)
+                .background(swatch, LocalTheme.current.sideBarNavigationEntryShape)
                 .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon("paintbrush", color = textColor, modifier = Modifier.size(14.dp))
-            Text("#${colorToHex(currentColor)}", color = textColor, fontSize = 13.sp)
+            Text(
+                if (showGradient) "#${colorToHex(currentColor)} → #${colorToHex(pickerModel.gradientColor)}" else "#${colorToHex(currentColor)}",
+                color = textColor,
+                fontSize = 13.sp,
+            )
         }
 
         if (expanded) {
@@ -275,6 +287,7 @@ fun ColorOption(data: ColorOptionData) {
                     onColorChanged = ::persistColor,
                     onClose = { expanded = false },
                     chromaCapable = data.prop.type == PolyColor::class.java,
+                    gradientCapable = data.gradient && data.prop.type == PolyColor::class.java,
                 )
             }
         }
@@ -287,6 +300,7 @@ internal fun ColorPickerPopup(
     onColorChanged: (Color) -> Unit,
     onClose: () -> Unit,
     chromaCapable: Boolean = true,
+    gradientCapable: Boolean = false,
 ) {
     val theme = LocalTheme.current
     val hue = model.hue
@@ -298,6 +312,7 @@ internal fun ColorPickerPopup(
     var hexText by remember(model) { mutableStateOf(colorToHex(model.currentColor())) }
     var alphaText by remember(model) { mutableStateOf((model.alpha * 100f).roundToInt().toString()) }
     var speedText by remember(model) { mutableStateOf("%.1f".format(model.chromaSpeed)) }
+    var gradientText by remember(model) { mutableStateOf(colorToHex(model.gradientColor)) }
 
     LaunchedEffect(model.chromaEnabled, model.hue) {
         if (model.chromaEnabled) hexText = colorToHex(model.currentColor())
@@ -558,6 +573,83 @@ internal fun ColorPickerPopup(
                     model.chromaEnabled = it
                     onColorChanged(model.currentColor())
                 }
+            }
+        }
+
+        if (gradientCapable) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(LocalTheme.current.circleShape)
+                            .background(Brush.horizontalGradient(listOf(currentColor, model.gradientColor)))
+                    )
+                    Text("Gradient", color = theme.textColor, fontSize = 13.sp)
+                }
+                SwitchControl(model.gradientEnabled) {
+                    model.gradientEnabled = it
+                    if (it && model.gradientColor.toArgb() == currentColor.toArgb()) {
+                        model.gradientColor = hsbToColor((model.hue + 40f) % 360f, model.saturation, model.brightness, model.alpha)
+                        gradientText = colorToHex(model.gradientColor)
+                    }
+                    onColorChanged(model.currentColor())
+                }
+            }
+        }
+
+        if (gradientCapable && model.gradientEnabled) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(LocalTheme.current.sideBarNavigationEntryShape)
+                        .background(model.gradientColor)
+                        .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
+                )
+                BasicTextField(
+                    value = gradientText,
+                    onValueChange = { input ->
+                        val filtered = input.filter { it.isLetterOrDigit() }.take(8)
+                        gradientText = filtered
+                        hexToColor(filtered)?.let { c ->
+                            model.gradientColor = c
+                            onColorChanged(model.currentColor())
+                        }
+                    },
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        color = theme.textColor,
+                        fontSize = 13.sp,
+                        fontFamily = theme.typography.family,
+                    ),
+                    cursorBrush = SolidColor(theme.textColor),
+                    modifier = Modifier.trackTextInputFocus()
+                        .weight(1f)
+                        .background(theme.componentBackground, LocalTheme.current.sideBarNavigationEntryShape)
+                        .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
+                        .padding(horizontal = 10.dp, vertical = 7.dp),
+                    decorationBox = { innerTextField ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("#", color = theme.textColorSecondary, fontSize = 13.sp)
+                            innerTextField()
+                        }
+                    },
+                )
             }
         }
 

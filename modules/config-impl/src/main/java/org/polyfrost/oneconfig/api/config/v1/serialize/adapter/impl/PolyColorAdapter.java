@@ -35,14 +35,19 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 public class PolyColorAdapter extends Adapter<PolyColor, Object> {
 	@Override
 	public Object serialize(PolyColor in) {
-		if (!in.getChroma()) {
+		if (!in.getChroma() && !in.getGradientEnabled()) {
 			return rgba(in.getRawArgb());
 		}
 
 		Map<String, Object> out = new HashMap<>();
 		out.put("rgba", rgba(in.getRawArgb()));
-		out.put("chroma", true);
-		out.put("chromaSpeed", in.getChromaSpeed());
+		if (in.getChroma()) {
+			out.put("chroma", true);
+			out.put("chromaSpeed", in.getChromaSpeed());
+		}
+		if (in.getGradientEnabled()) {
+			out.put("gradient", rgba(in.getGradientArgb()));
+		}
 		return out;
 	}
 
@@ -52,10 +57,15 @@ public class PolyColorAdapter extends Adapter<PolyColor, Object> {
 			Map<?, ?> map = (Map<?, ?>) in;
 			PolyColor color = deserialize(map.get("rgba"));
 			Object speed = map.get("chromaSpeed");
-			return color.withChroma(
+			PolyColor out = color.withChroma(
 				Boolean.TRUE.equals(map.get("chroma")),
 				speed instanceof Number ? ((Number) speed).floatValue() : color.getChromaSpeed()
 			);
+			Object gradient = map.get("gradient");
+			if (gradient != null) {
+				out = out.withGradient(true, deserialize(gradient).getRawArgb());
+			}
+			return out;
 		}
 		if (in instanceof int[]) {
 			int[] color = (int[]) in;

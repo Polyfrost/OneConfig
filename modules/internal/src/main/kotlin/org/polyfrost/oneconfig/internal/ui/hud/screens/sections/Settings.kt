@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +42,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
 import org.polyfrost.oneconfig.internal.ui.hud.screens.GloballyManagedHint
 import org.polyfrost.oneconfig.internal.ui.screens.HudConfigScreen
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val DeleteButtonColor = Color(0xFFE5484D)
@@ -67,6 +68,7 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
         var textChroma by remember { mutableStateOf(hud.textChroma) }
         var textChromaSpeed by remember { mutableStateOf(hud.textChromaSpeed) }
         var showShadow by remember { mutableStateOf(hud.showShadow) }
+        var fullShadow by remember { mutableStateOf(hud.fullShadow) }
         var shadowColor by remember { mutableStateOf(Color(hud.shadowColor)) }
         var shadowChroma by remember { mutableStateOf(hud.shadowChroma) }
         var shadowChromaSpeed by remember { mutableStateOf(hud.shadowChromaSpeed) }
@@ -237,7 +239,7 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                 }
             }
 
-            Section("Appearance", query, "Text Color", "Text Shadow", "Shadow Color") {
+            Section("Appearance", query, "Text Color", "Text Shadow", "Full Shadow", "Shadow Color") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "textColor") {
                         ColorButton(
@@ -266,6 +268,17 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                         }
                     }
                     if (showShadow) {
+                        HudSettingTarget(hud, "fullShadow") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                SwitchControl(fullShadow) {
+                                    Snapshot.withMutableSnapshot { fullShadow = it; hud.fullShadow = it }
+                                }
+                                Text("Full Shadow", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                            }
+                        }
                         HudSettingTarget(hud, "shadowColor") {
                             ColorButton(
                                 "Shadow Color", shadowColor,
@@ -349,11 +362,12 @@ private fun ResetHudPositionButton(hud: Hud) {
     val enabled = hudHasPositionDefaults(hud)
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val bgColor by animateColorAsState(
+    val disabledAlpha by animateFloatAsState(if (enabled) 0f else 1f)
+    val accentAlpha by animateFloatAsState(
         when {
-            !enabled -> theme.borderColor
-            isHovered -> Accent.copy(alpha = 0.75f)
-            else -> Accent
+            !enabled -> 0f
+            isHovered -> 0.75f
+            else -> 1f
         },
     )
     val textColor = if (enabled) theme.accentTextColor else theme.textColorSecondary
@@ -361,7 +375,8 @@ private fun ResetHudPositionButton(hud: Hud) {
     Box(
         modifier = Modifier
             .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-            .background(bgColor, theme.buttonShape)
+            .background(theme.borderColor.copy(alpha = theme.borderColor.alpha * disabledAlpha), theme.buttonShape)
+            .background(AccentBrush, theme.buttonShape, alpha = accentAlpha)
             .then(
                 if (enabled) {
                     Modifier.onClick(interactionSource) { resetHudPosition(hud) }

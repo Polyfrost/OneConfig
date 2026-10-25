@@ -1050,6 +1050,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     private var _showShadow: MutableState<Boolean> = mutableStateOf(false)
     var showShadow: Boolean get() = _showShadow.value; set(v) { _showShadow.value = v }
 
+    private var _fullShadow: MutableState<Boolean> = mutableStateOf(false)
+    var fullShadow: Boolean get() = _fullShadow.value; set(v) { _fullShadow.value = v }
+
     private var _shadowColor: MutableState<Int> = mutableStateOf(0x40000000)
     var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.value = v }
 
@@ -1336,6 +1339,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             tree["textChroma"] = ktProperty(out::textChroma).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textChromaSpeed"] = ktProperty(out::textChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showShadow"] = ktProperty(out::showShadow).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["fullShadow"] = ktProperty(out::fullShadow).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowColor"] = ktProperty(out::shadowColor).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowChroma"] = ktProperty(out::shadowChroma).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowChromaSpeed"] = ktProperty(out::shadowChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
@@ -1520,6 +1524,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _textChroma = mutableStateOf(this@Hud.textChroma)
         _textChromaSpeed = mutableStateOf(this@Hud.textChromaSpeed)
         _showShadow = mutableStateOf(this@Hud.showShadow)
+        _fullShadow = mutableStateOf(this@Hud.fullShadow)
         _shadowColor = mutableStateOf(this@Hud.shadowColor)
         _shadowChroma = mutableStateOf(this@Hud.shadowChroma)
         _shadowChromaSpeed = mutableStateOf(this@Hud.shadowChromaSpeed)

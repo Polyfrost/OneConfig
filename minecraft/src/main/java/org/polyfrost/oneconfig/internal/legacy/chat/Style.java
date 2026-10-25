@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.legacy.chat;
 
 //? if = 1.8.9 {
 /*import java.util.Objects;
+import net.minecraft.text.Formatting;
 
 public class Style extends net.minecraft.text.Style {
     public static final Style EMPTY = new Style(
@@ -244,7 +245,7 @@ public class Style extends net.minecraft.text.Style {
     }
 
     @Override
-    public Style setColor(final net.minecraft.text.Formatting color) {
+    public Style setColor(final Formatting color) {
         return this.withColor(fromLegacy(color));
     }
 
@@ -292,14 +293,14 @@ public class Style extends net.minecraft.text.Style {
     public String asString() {
         StringBuilder builder = new StringBuilder();
 
-        net.minecraft.text.Formatting color = this.getColor();
+        Formatting color = this.getColor();
         if (color != null) builder.append(color);
 
-        if (this.isBold()) builder.append(net.minecraft.text.Formatting.BOLD);
-        if (this.isItalic()) builder.append(net.minecraft.text.Formatting.ITALIC);
-        if (this.isUnderlined()) builder.append(net.minecraft.text.Formatting.UNDERLINE);
-        if (this.isStrikethrough()) builder.append(net.minecraft.text.Formatting.STRIKETHROUGH);
-        if (this.isObfuscated()) builder.append(net.minecraft.text.Formatting.OBFUSCATED);
+        if (this.isBold()) builder.append(Formatting.BOLD);
+        if (this.isItalic()) builder.append(Formatting.ITALIC);
+        if (this.isUnderlined()) builder.append(Formatting.UNDERLINE);
+        if (this.isStrikethrough()) builder.append(Formatting.STRIKETHROUGH);
+        if (this.isObfuscated()) builder.append(Formatting.OBFUSCATED);
 
         return builder.toString();
     }
@@ -318,7 +319,7 @@ public class Style extends net.minecraft.text.Style {
     }
 
     @Override
-    public net.minecraft.text.Formatting getColor() {
+    public Formatting getColor() {
         if (this.color != null) {
             return toLegacy(this.color);
         }
@@ -437,11 +438,11 @@ public class Style extends net.minecraft.text.Style {
         };
     }
 
-    private static net.minecraft.text.Formatting toLegacy(final ChatFormatting formatting) {
-        return formatting == null ? null : net.minecraft.text.Formatting.valueOf(formatting.name());
+    private static Formatting toLegacy(final ChatFormatting formatting) {
+        return formatting == null ? null : Formatting.valueOf(formatting.name());
     }
 
-    private static ChatFormatting fromLegacy(final net.minecraft.text.Formatting formatting) {
+    private static ChatFormatting fromLegacy(final Formatting formatting) {
         return formatting == null ? null : ChatFormatting.valueOf(formatting.name());
     }
 
