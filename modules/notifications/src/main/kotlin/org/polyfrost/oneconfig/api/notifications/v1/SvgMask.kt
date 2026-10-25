@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.cos
 import kotlin.math.sin
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -14,18 +14,18 @@ import kotlin.math.sqrt
 object SvgMask {
     private val cache = ConcurrentHashMap<String, Optional>()
 
-    private class Optional(val bitmap: ImageBitmap?)
+    private class Optional(val bitmap: PolyBitmap?)
 
     private class Shape(val polys: List<FloatArray>, val fill: Int?, val stroke: Int?, val strokeWidth: Float, val evenOdd: Boolean)
 
-    fun get(resourcePath: String, pixelSize: Int, tint: Int? = null): ImageBitmap? {
+    fun get(resourcePath: String, pixelSize: Int, tint: Int? = null): PolyBitmap? {
         val size = pixelSize.coerceIn(1, 2048)
         return cache.getOrPut("$resourcePath@$size@$tint") {
             Optional(runCatching { readResource(resourcePath)?.let { rasterize(String(it), size, tint) } }.getOrNull())
         }.bitmap
     }
 
-    fun rasterize(svg: String, size: Int, tint: Int? = null): ImageBitmap? {
+    fun rasterize(svg: String, size: Int, tint: Int? = null): PolyBitmap? {
         val root = Regex("<svg\\b[^>]*>").find(svg)?.value ?: return null
         val view = attr(root, "viewBox")?.let(::numbers)
         val vx = view?.getOrNull(0) ?: 0f
@@ -80,7 +80,7 @@ object SvgMask {
             for (c in 0 until 3) px[i * 4 + c] = (acc[i * 4 + c] / a * 255f).roundToInt().coerceIn(0, 255).toByte()
             px[i * 4 + 3] = (a * 255f).roundToInt().coerceIn(0, 255).toByte()
         }
-        return ImageBitmap(w, h, px)
+        return PolyBitmap(w, h, px)
     }
 
     private fun composite(acc: FloatArray, cov: FloatArray, argb: Int) {

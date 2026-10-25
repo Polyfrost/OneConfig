@@ -1,28 +1,10 @@
-package org.polyfrost.oneconfig.api.notifications.v1
+package org.polyfrost.compose.render
 
 import kotlin.math.abs
 import kotlin.math.hypot
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.node.PolyNode
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.render.PolyFont
-import org.polyfrost.compose.render.PolyGlyphPage
-import org.polyfrost.compose.render.PolyRenderer
-import org.polyfrost.compose.render.PolyTessellator
-import org.polyfrost.compose.render.RenderContext
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.draw.alpha
-import org.polyfrost.compose.ui.draw.drawWithContent
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
-import org.polyfrost.compose.ui.unit.DpOffset
-import org.polyfrost.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 class PolyTessellatorTest {
@@ -33,7 +15,7 @@ class PolyTessellatorTest {
         override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
             batches.add(Batch(texture, verts, colors, nearest))
         }
-        override fun bitmapTexture(bitmap: ImageBitmap) = bitmap
+        override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
         override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = Unit
         var lives = 0
         override fun live(draw: (PolyRenderer) -> Unit) { lives++; draw(this) }
@@ -210,7 +192,7 @@ class PolyTessellatorTest {
     @Test
     fun linearGradientMapsPositionToTheRamp() {
         val r = Recorder()
-        r.rectGradient(0f, 0f, 100f, 10f, Brush.horizontalGradient(0xFFFF0000.toInt(), 0xFF0000FF.toInt()), 0f)
+        r.rectGradient(0f, 0f, 100f, 10f, PolyGradient.horizontal(0xFFFF0000.toInt(), 0xFF0000FF.toInt()), 0f)
         val b = r.done().single()
         val page = b.texture as PolyGlyphPage.Page
         val s = PolyGlyphPage.SIZE
@@ -231,7 +213,7 @@ class PolyTessellatorTest {
     @Test
     fun shadowIsNineSlicesOfABlurredMask() {
         val r = Recorder()
-        r.shadow(10f, 10f, 40f, 60f, 4f, Shadow(radius = 6.dp, color = PolyColor(0x80000000.toInt())))
+        r.shadow(10f, 10f, 40f, 60f, 4f, PolyShadow(PolyColor(0x80000000.toInt()), 6f, 0f, 0f, 0f))
         val b = r.done().single()
         assertEquals(9 * 4, b.colors.size)
         assertTrue(b.colors.all { it == 0x80000000.toInt() })
@@ -243,14 +225,14 @@ class PolyTessellatorTest {
         val xs = b.verts.filterIndexed { i, _ -> i % 4 == 0 }
         assertEquals(30f, (xs.min() + xs.max()) / 2f, 1e-3f)
         assertTrue(xs.min() < 10f - 6f)
-        val small = Recorder().apply { shadow(0f, 0f, 4f, 4f, 2f, Shadow(radius = 6.dp, color = PolyColor(0x80000000.toInt()), offset = DpOffset(0.dp, 4.dp))) }.done().single()
+        val small = Recorder().apply { shadow(0f, 0f, 4f, 4f, 2f, PolyShadow(PolyColor(0x80000000.toInt()), 6f, 0f, 4f, 0f)) }.done().single()
         assertEquals(4 * 4, small.colors.size)
     }
 
     @Test
     fun bigShadowMaskIsDownsampledButKeepsItsExtent() {
         val r = Recorder()
-        r.shadow(0f, 0f, 400f, 300f, 20f, Shadow(radius = 50.dp, color = PolyColor(0x80000000.toInt())))
+        r.shadow(0f, 0f, 400f, 300f, 20f, PolyShadow(PolyColor(0x80000000.toInt()), 50f, 0f, 0f, 0f))
         val b = r.done().single()
         assertEquals(9 * 4, b.colors.size)
         val page = b.texture as PolyGlyphPage.Page
@@ -268,7 +250,7 @@ class PolyTessellatorTest {
     @Test
     fun imageCarriesUvAndTint() {
         val r = Recorder()
-        val bmp = ImageBitmap(4, 4, ByteArray(64) { -1 })
+        val bmp = PolyBitmap(4, 4, ByteArray(64) { -1 })
         r.saveLayerAlpha(0.5f)
         r.image(bmp, 0f, 0f, 8f, 8f, 0.25f, 0f, 0.75f, 1f, 0xFF00FF00.toInt())
         r.restore()
@@ -279,7 +261,7 @@ class PolyTessellatorTest {
         assertEquals(2, us.size)
         assertEquals(2f, us.max() - us.min(), 1e-3f)
         assertTrue(b.colors.take(4).all { it == 0x8000FF00.toInt() })
-        val big = ImageBitmap(300, 2, ByteArray(300 * 2 * 4))
+        val big = PolyBitmap(300, 2, ByteArray(300 * 2 * 4))
         assertEquals(big, Recorder().apply { image(big, 0f, 0f, 8f, 8f, 0f, 0f, 1f, 1f, -1) }.done().single().texture)
     }
 
@@ -343,7 +325,7 @@ class PolyTessellatorTest {
 
     @Test
     fun nearestImagesBatchApart() {
-        val bmp = ImageBitmap(4, 4, ByteArray(64) { -1 })
+        val bmp = PolyBitmap(4, 4, ByteArray(64) { -1 })
         val b = Recorder().run {
             image(bmp, 0f, 0f, 8f, 8f, FilterQuality.None)
             image(bmp, 8f, 0f, 8f, 8f)
@@ -351,21 +333,6 @@ class PolyTessellatorTest {
         }
         assertEquals(listOf(true, false), b.map { it.nearest })
         assertEquals(b[0].texture, b[1].texture)
-    }
-
-    @Test
-    fun drawWithContentDrawsOverChildren() {
-        val node = PolyNode()
-        Modifier.drawWithContent { drawContent(); ctx.rect(x, y, width, 1f, PolyColor(0xFF0000FF.toInt())) }.applyTo(node.style)
-        node.width = 10f; node.height = 10f
-        val child = PolyNode()
-        Modifier.background(PolyColor(0xFFFF0000.toInt())).applyTo(child.style)
-        child.width = 10f; child.height = 10f
-        child.parent = node
-        node.children += child
-        val b = Recorder().also { node.renderFaded(RenderContext(it)) }.done().single()
-        assertEquals(0xFFFF0000.toInt(), b.colors.first())
-        assertEquals(0xFF0000FF.toInt(), b.colors.last { it ushr 24 == 0xFF })
     }
 
     private fun Batch.solidArea(): Float {
@@ -411,21 +378,5 @@ class PolyTessellatorTest {
         assertWinding(ring)
         assertTrue(ring.solidArea() in 3600f..4000f, "area ${ring.solidArea()}")
         assertEquals(-5.5f, listOf(ring).bounds()[0], 0.01f)
-    }
-
-    @Test
-    fun drawScopeRotatesGeometry() {
-        val r = Recorder()
-        val scope = org.polyfrost.compose.ui.graphics.drawscope.DrawScope(org.polyfrost.compose.render.RenderContext(r), 0f, 0f, org.polyfrost.compose.ui.geometry.Size(100f, 100f))
-        scope.rotate(90f) { drawLine(PolyColor.WHITE, org.polyfrost.compose.ui.geometry.Offset(10f, 50f), org.polyfrost.compose.ui.geometry.Offset(90f, 50f), strokeWidth = 2f) }
-        val b = r.done().bounds()
-        assertEquals(48.5f, b[0], 0.01f); assertEquals(51.5f, b[2], 0.01f)
-        assertEquals(9.5f, b[1], 0.01f); assertEquals(90.5f, b[3], 0.01f)
-
-        val arc = Recorder()
-        org.polyfrost.compose.ui.graphics.drawscope.DrawScope(org.polyfrost.compose.render.RenderContext(arc), 0f, 0f, org.polyfrost.compose.ui.geometry.Size(100f, 100f))
-            .drawArc(PolyColor.WHITE, 0f, 90f, false, style = org.polyfrost.compose.ui.graphics.drawscope.Stroke(4f))
-        val ab = arc.done().bounds()
-        assertTrue(ab[0] > 45f && ab[1] > 45f && ab[2] in 101f..103f && ab[3] in 101f..103f, ab.toList().toString())
     }
 }

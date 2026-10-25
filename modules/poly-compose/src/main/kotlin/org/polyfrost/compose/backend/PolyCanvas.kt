@@ -17,16 +17,15 @@ import androidx.compose.ui.graphics.Vertices
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import org.polyfrost.compose.render.PolyPath
-import org.polyfrost.compose.ui.graphics.ImageBitmap as PolyBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.RenderContext
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
-import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.render.PolyShadow
 import kotlin.math.abs
 import kotlin.math.min
-import org.polyfrost.compose.ui.graphics.FilterQuality as PolyFilterQuality
+import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
 
 interface PolyDrawCanvas : Canvas {
     fun polyOp(op: (PolyCanvas) -> Unit)
@@ -152,7 +151,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     private fun shape(x: Float, y: Float, w: Float, h: Float, radius: Float, paint: PolyPaint) {
         if (w <= 0f || h <= 0f) return
         if (paint.blur > 0f) {
-            r.shadow(x, y, w, h, radius, Shadow(Dp(paint.blur), org.polyfrost.compose.render.PolyColor(paint.argb())))
+            r.shadow(x, y, w, h, radius, PolyShadow(org.polyfrost.compose.render.PolyColor(paint.argb()), paint.blur, 0f, 0f, 0f))
             return
         }
         if (paint.style == PaintingStyle.Stroke) {

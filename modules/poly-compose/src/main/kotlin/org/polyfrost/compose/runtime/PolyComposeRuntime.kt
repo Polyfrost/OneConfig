@@ -20,31 +20,22 @@ class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.hu
         layout(parentWidth, parentHeight)
     }
 
-    fun update(parentWidth: Float, parentHeight: Float, nanos: Long = System.nanoTime()): Boolean {
-        val changed = host.frame(nanos)
-        return layoutIfChanged(parentWidth, parentHeight) || changed
-    }
-
-    var pixelSnap = 0f
-
     private var laidOutChanges = -1L
     private var laidOutW = Float.NaN
     private var laidOutH = Float.NaN
-    private var laidOutSnap = Float.NaN
     private var laidOutFonts = -1
 
     fun layout(parentWidth: Float, parentHeight: Float) {
         laidOutChanges = host.changeCount
         laidOutW = parentWidth
         laidOutH = parentHeight
-        laidOutSnap = pixelSnap
         laidOutFonts = FontManager.revision
-        PolyLayoutEngine.layout(root, parentWidth, parentHeight, pixelSnap)
+        PolyLayoutEngine.layout(root, parentWidth, parentHeight)
     }
 
     fun layoutIfChanged(parentWidth: Float, parentHeight: Float): Boolean {
         if (laidOutChanges == host.changeCount && laidOutW == parentWidth && laidOutH == parentHeight &&
-            laidOutSnap == pixelSnap && laidOutFonts == FontManager.revision
+            laidOutFonts == FontManager.revision
         ) return false
         layout(parentWidth, parentHeight)
         return true

@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin.fixes;
 
 import androidx.compose.ui.graphics.ImageBitmap;
 import org.polyfrost.compose.backend.PolyImageBitmap;
+import org.polyfrost.compose.render.PolyBitmap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
@@ -17,7 +18,7 @@ public class Mixin_ComposeImageResources {
     @Overwrite
     public static ImageBitmap loadImageBitmap(InputStream inputStream) throws IOException {
         byte[] bytes = inputStream.readAllBytes();
-        org.polyfrost.compose.ui.graphics.ImageBitmap bitmap = org.polyfrost.compose.ui.graphics.ImageBitmap.decode(bytes);
+        PolyBitmap bitmap = PolyBitmap.decode(bytes);
         if (bitmap == null) throw new IOException("cannot decode image (" + bytes.length + " bytes)");
         return new PolyImageBitmap(bitmap);
     }

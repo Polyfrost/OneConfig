@@ -1,41 +1,29 @@
 package org.polyfrost.compose.node
 
-import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.layout.PolySize
-import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.layout.px
 import org.polyfrost.compose.render.RenderContext
 
 class ImageNode(
-    var image: ImageBitmap
+    private val image: PolyBitmap
 ) : PolyNode() {
-    internal var autoWidth = false
-    internal var autoHeight = false
-
-    var tint: PolyColor? = null
-    var filterQuality = FilterQuality.Low
-
-
     fun remeasure() {
-        if (style.width == PolySize.Wrap || autoWidth) { style.width = PolySize.Px(image.width.toFloat()); autoWidth = true }
-        if (style.height == PolySize.Wrap || autoHeight) { style.height = PolySize.Px(image.height.toFloat()); autoHeight = true }
+        style.width = image.width.px
+        style.height = image.height.px
     }
 
     override fun render(ctx: RenderContext) {
         val s = style
-        val bg = s.background
-        if (bg.alpha > 0) ctx.rect(x, y, width, height, bg, s.radius)
+        if (s.background.alpha > 0) ctx.rect(x, y, width, height, s.background, s.radius)
 
         if (s.clipToBounds) {
             ctx.save()
             if (s.radius > 0f) ctx.clipRRect(x, y, width, height, s.radius) else ctx.clipRect(x, y, width, height)
         }
-        val tint = tint
-        if (tint != null) ctx.image(image, x, y, width, height, 0f, 0f, 1f, 1f, tint, filterQuality) else ctx.image(image, x, y, width, height, filterQuality)
+        ctx.image(image, x, y, width, height)
         if (s.clipToBounds) ctx.restore()
 
-        val border = s.borderColor
-        if (s.borderWidth > 0f && border.alpha > 0) ctx.rectStroke(x, y, width, height, border, s.borderWidth, s.radius)
+        if (s.borderWidth > 0f && s.borderColor.alpha > 0) ctx.rectStroke(x, y, width, height, s.borderColor, s.borderWidth, s.radius)
 
     }
 }

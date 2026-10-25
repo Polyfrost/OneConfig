@@ -23,12 +23,12 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.render.FilterQuality
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyGradient
 import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.PolyRenderer
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
+import org.polyfrost.compose.render.PolyShadow
 
 class ComposeBackendTest {
     private class LogRenderer : PolyRenderer {
@@ -39,8 +39,8 @@ class ComposeBackendTest {
         private fun log(s: String) { calls += s }
         override fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float) = log("rect ${x + tx},${y + ty} ${w}x$h #${Integer.toHexString(color)} r=$radius")
         override fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: Int) = log("hole")
-        override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float) = log("gradient ${x + tx},${y + ty} ${w}x$h")
-        override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: Shadow) = log("shadow ${x + tx},${y + ty} ${w}x$h r=$radius blur=${shadow.radius.value}")
+        override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float) = log("gradient ${x + tx},${y + ty} ${w}x$h")
+        override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow) = log("shadow ${x + tx},${y + ty} ${w}x$h r=$radius blur=${shadow.blur}")
         override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float) = log("stroke")
         override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: Int, bottom: Int, strokeWidth: Float, radius: Float) = log("strokeGradient")
         override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float) = log("line")
@@ -49,7 +49,7 @@ class ComposeBackendTest {
         override fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float) = log("textOutline")
         override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = log("mcText")
         override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) = log("mcTextOutline")
-        override fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) = log("image")
+        override fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) = log("image")
         override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
         override fun save() { stack.addLast(tx to ty) }
         override fun restore() { val (x, y) = stack.removeLast(); tx = x; ty = y }

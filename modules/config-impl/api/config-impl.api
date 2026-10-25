@@ -223,9 +223,6 @@ protected final class org/polyfrost/oneconfig/api/config/v1/KtConfig$Provider : 
 	public fun provideDelegate (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lkotlin/reflect/KProperty;)Lkotlin/properties/ReadWriteProperty;
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/config/v1/PolyVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
-}
-
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/SliderBounds {
 	public fun max (F)F
 	public fun min (F)F

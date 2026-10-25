@@ -29,21 +29,21 @@ package org.polyfrost.oneconfig.api.hud.v1
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.util.fastFilterNotNull
+import androidx.compose.ui.util.fastJoinToString
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.compose.foundation.Canvas
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.PaddingValues
-import org.polyfrost.compose.foundation.layout.align
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.wrapContentSize
-import org.polyfrost.compose.mc.McText
+import org.polyfrost.compose.composables.PolyBox
+import org.polyfrost.compose.composables.PolyCanvas
+import org.polyfrost.compose.composables.PolyMcText
+import org.polyfrost.compose.composables.PolyModifier
+import org.polyfrost.compose.composables.align
+import org.polyfrost.compose.composables.padding
+import org.polyfrost.compose.composables.size
+import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
@@ -88,7 +88,7 @@ abstract class TextHud(
         }
 
         val contentAlign = alignment
-        val padInsets = PaddingValues(padLeft.dp, padTop.dp, padRight.dp, padBottom.dp)
+        val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
         // PolyColor.argb cycles on the current time when chroma is on so it keeps animating
         // at render time without needing recomposition
         val fgColor = PolyColor(textColor, textChroma, textChromaSpeed)
@@ -99,10 +99,10 @@ abstract class TextHud(
         // which hudBackground() accounts for
         val bgModifier = hudBackground()
         val outerModifier =
-            if (isStaticValid) bgModifier.size(staticW.dp, staticH.dp).padding(padInsets)
-            else bgModifier.wrapContentSize().padding(padInsets)
+            if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
+            else bgModifier.padding(padInsets)
 
-        Box(modifier = outerModifier) {
+        PolyBox(modifier = outerModifier) {
             if (font == Font.Poppins) {
                 val fontName = getPoppinsFontName()
                 val fontSize = 8f * textScale
@@ -117,8 +117,8 @@ abstract class TextHud(
                 val shadowCol = if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null
                 val outline = textScale
 
-                Canvas(
-                    modifier = Modifier.size(blockW.dp, blockH.dp)
+                PolyCanvas(
+                    modifier = PolyModifier.size(blockW, blockH)
                         .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
                     lines.forEachIndexed { index, lineText ->
                         if (lineText.isEmpty()) return@forEachIndexed
@@ -171,13 +171,13 @@ abstract class TextHud(
                     if (textBold || textItalic || textUnderline) append("§r")
                 }
 
-                McText(
+                PolyMcText(
                     text = formatted,
-                    modifier = if (isStaticValid) Modifier.align(contentAlign) else Modifier,
                     color = fgColor,
                     shadow = showShadow && !fullShadow,
                     outlineColor = if (showShadow && fullShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null,
                     scale = textScale,
+                    modifier = if (isStaticValid) PolyModifier.align(contentAlign) else PolyModifier,
                 )
             }
         }
@@ -186,11 +186,11 @@ abstract class TextHud(
     open val concatString: String get() = ""
 
     open fun concat(prefix: String, value: String?, suffix: String): String {
-        val separator = concatString
-        var out = prefix
-        if (!value.isNullOrEmpty()) out = if (out.isEmpty()) value else out + separator + value
-        if (suffix.isNotEmpty()) out = if (out.isEmpty()) suffix else out + separator + suffix
-        return out
+        return arrayListOf(
+            prefix.takeIf { it.isNotEmpty() },
+            value?.takeIf { it.isNotEmpty() },
+            suffix.takeIf { it.isNotEmpty() }
+        ).fastFilterNotNull().fastJoinToString(concatString)
     }
 
     /**

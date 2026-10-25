@@ -30,7 +30,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
-	public final fun getAlignment ()Lorg/polyfrost/compose/ui/Alignment;
+	public final fun getAlignment ()Lorg/polyfrost/compose/layout/PolyAlign;
 	public fun getAlwaysRedraw ()Z
 	public final fun getAnchorOffsetX ()F
 	public final fun getAnchorOffsetY ()F
@@ -107,9 +107,9 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getX ()F
 	public fun getY ()F
 	public fun hasBackground ()Z
-	public final fun hudBackground ()Lorg/polyfrost/compose/ui/Modifier;
-	public final fun hudBackground (Lorg/polyfrost/compose/ui/Modifier;)Lorg/polyfrost/compose/ui/Modifier;
-	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/ui/Modifier;ILjava/lang/Object;)Lorg/polyfrost/compose/ui/Modifier;
+	public final fun hudBackground ()Lorg/polyfrost/compose/composables/PolyModifier;
+	public final fun hudBackground (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/composables/PolyModifier;ILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public final fun isAnchored ()Z
 	public final fun isMergeAnchored ()Z
 	public final fun isReal ()Z
@@ -123,7 +123,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun reseedStaticSizeIfNeeded ()V
 	public final fun reseedStaticWidth ()V
 	public final fun setAbsolutePosition (FF)V
-	public final fun setAlignment (Lorg/polyfrost/compose/ui/Alignment;)V
+	public final fun setAlignment (Lorg/polyfrost/compose/layout/PolyAlign;)V
 	public final fun setAnchorOffsetX (F)V
 	public final fun setAnchorOffsetY (F)V
 	public final fun setAnchorPoint (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
@@ -230,14 +230,14 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor : java/lang/Enum
 	public static final field TopLeft Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public static final field TopRight Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static final fun of (Lorg/polyfrost/compose/ui/Alignment;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
-	public final fun toAlign ()Lorg/polyfrost/compose/ui/Alignment;
+	public static final fun of (Lorg/polyfrost/compose/layout/PolyAlign;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public final fun toAlign ()Lorg/polyfrost/compose/layout/PolyAlign;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor$Companion {
-	public final fun of (Lorg/polyfrost/compose/ui/Alignment;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public final fun of (Lorg/polyfrost/compose/layout/PolyAlign;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {

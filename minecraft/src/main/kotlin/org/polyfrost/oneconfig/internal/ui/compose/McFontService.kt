@@ -4,7 +4,7 @@ import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGlyphPage
 //? if >= 1.21.11
-import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 
 object McFontService {
     fun init() {
@@ -32,6 +32,6 @@ object McFontService {
         PolyFont.engine = StbFonts
         PolyGlyphPage.rasterizer = StbFonts
         //? if >= 1.21.11
-        ImageBitmap.decoder = BitmapTextures.decoder
+        PolyBitmap.decoder = BitmapTextures.decoder
     }
 }

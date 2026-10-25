@@ -3,13 +3,11 @@ package org.polyfrost.oneconfig.test
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.PaddingValues
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.mc.McText
-import org.polyfrost.compose.ui.unit.dp
+import org.polyfrost.compose.composables.PolyBox
+import org.polyfrost.compose.composables.PolyMcText
+import org.polyfrost.compose.composables.PolyRow
+import org.polyfrost.compose.composables.padding
+import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.oneconfig.api.config.v1.annotations.ItemList
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
@@ -41,17 +39,17 @@ class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
     override fun Content() {
         val ids = displayItems.value
         val scale = textScale
-        val padding = PaddingValues((padLeft * scale).dp, (padTop * scale).dp, (padRight * scale).dp, (padBottom * scale).dp)
-        Box(modifier = hudBackground().padding(padding)) {
-            Row(horizontalArrangement = Arrangement.spacedBy((3f * scale).dp)) {
+        val padding = PolyInsets(padLeft * scale, padTop * scale, padRight * scale, padBottom * scale)
+        PolyBox(modifier = hudBackground().padding(padding)) {
+            PolyRow(gap = 3f * scale) {
                 if (ids.isEmpty()) {
-                    McText(text = "§7No items", scale = scale)
+                    PolyMcText(text = "§7No items", scale = scale)
                 } else {
                     ids.forEach { id ->
-                        Row(horizontalArrangement = Arrangement.spacedBy((2f * scale).dp)) {
+                        PolyRow(gap = 2f * scale) {
                             PolyItemIcon(id, iconSize * scale)
                             if (showNames) {
-                                McText(text = displayName(id), scale = scale)
+                                PolyMcText(text = displayName(id), scale = scale)
                             }
                         }
                     }

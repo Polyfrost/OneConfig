@@ -36,8 +36,3 @@ dependencies {
     compileOnly(libs.jetbrains.compose.runtime)
     compileOnly(libs.kotlinx.coroutines)
 }
-
-dependencies {
-    testImplementation(libs.jetbrains.compose.runtime)
-    testImplementation(libs.kotlinx.coroutines)
-}

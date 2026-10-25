@@ -1,17 +1,13 @@
 package org.polyfrost.compose.render
 
-import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
 
 interface PolyRenderer {
     fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float)
 
     fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: Int)
-    fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float)
+    fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float)
 
-    fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: Shadow)
+    fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow)
     fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float)
 
     fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: Int, bottom: Int, strokeWidth: Float, radius: Float)
@@ -34,10 +30,10 @@ interface PolyRenderer {
 
     fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float)
 
-    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
+    fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
         image(bitmap, x, y, w, h, 0f, 0f, 1f, 1f, -1, filterQuality)
 
-    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality = FilterQuality.Low)
+    fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality = FilterQuality.Low)
 
     fun live(draw: (PolyRenderer) -> Unit)
 

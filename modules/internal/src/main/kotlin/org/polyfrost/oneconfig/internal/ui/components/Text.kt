@@ -88,7 +88,7 @@ internal fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedStr
                     color = baseColor
                     bold = false; italic = false; strikethrough = false; underline = false
                 }
-                code == 'k' -> flush()
+                code == 'k' -> { /* obfuscated is unsupported so swallow the code */ flush() }
                 else -> {
                     pending.append(c).append(text[i + 1])
                 }

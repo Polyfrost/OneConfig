@@ -1,7 +1,6 @@
 package org.polyfrost.compose.render
 
 import java.util.WeakHashMap
-import org.polyfrost.compose.ui.graphics.ImageBitmap
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
@@ -65,7 +64,7 @@ object PolyGlyphPage {
             return Glyph(this, r.offX, r.offY, r.w, r.h, x / SIZE.toFloat(), y / SIZE.toFloat(), (x + r.w) / SIZE.toFloat(), (y + r.h) / SIZE.toFloat())
         }
 
-        internal fun place(b: ImageBitmap): Glyph? {
+        internal fun place(b: PolyBitmap): Glyph? {
             val w = b.width
             val h = b.height
             val at = alloc(w + 2, h + 2)
@@ -142,12 +141,12 @@ object PolyGlyphPage {
     private const val BITMAP_MAX = 256
     private const val BITMAP_PAGES = 4
 
-    private val bitmaps = WeakHashMap<ImageBitmap, Glyph>()
+    private val bitmaps = WeakHashMap<PolyBitmap, Glyph>()
     private var placedSince = 0L
     private var placed = 0
 
     @JvmStatic
-    fun bitmap(b: ImageBitmap): Glyph? {
+    fun bitmap(b: PolyBitmap): Glyph? {
         bitmaps[b]?.let { return it }
         if (b.width > BITMAP_MAX || b.height > BITMAP_MAX) return null
         val now = System.nanoTime()

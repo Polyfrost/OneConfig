@@ -37,6 +37,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 
 public final class MainMenuFpsSampler {
+    private static final String POLYPLUS_PACKAGE = "org.polyfrost.polyplus.";
 
     private static final long MAX_TICK_GAP_NANOS = 250L * 1_000_000L;
 
@@ -90,7 +91,7 @@ public final class MainMenuFpsSampler {
         elapsedNanos += gap;
 
         boolean representative = !(screen instanceof LevelLoadingScreen)
-                && !(screen instanceof ComposeScreen);
+                && (!(screen instanceof ComposeScreen) || screen.getClass().getName().startsWith(POLYPLUS_PACKAGE));
         if (representative) {
             fpsSum += Math.max(0, Platform.compatibility().fps());
             sampleCount++;

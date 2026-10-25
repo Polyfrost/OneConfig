@@ -34,30 +34,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import org.polyfrost.compose.foundation.Canvas
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.border
-import org.polyfrost.compose.foundation.layout.Arrangement
-import org.polyfrost.compose.foundation.layout.Box
-import org.polyfrost.compose.foundation.layout.Column
-import org.polyfrost.compose.foundation.layout.Row
-import org.polyfrost.compose.foundation.layout.align
-import org.polyfrost.compose.foundation.layout.height
-import org.polyfrost.compose.foundation.layout.padding
-import org.polyfrost.compose.foundation.layout.size
-import org.polyfrost.compose.foundation.layout.width
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
-import org.polyfrost.compose.foundation.text.Text
+import org.polyfrost.compose.composables.PolyBox
+import org.polyfrost.compose.composables.PolyCanvas
+import org.polyfrost.compose.composables.PolyColumn
+import org.polyfrost.compose.composables.PolyModifier
+import org.polyfrost.compose.composables.PolyRow
+import org.polyfrost.compose.composables.PolyText
+import org.polyfrost.compose.composables.align
+import org.polyfrost.compose.composables.background
+import org.polyfrost.compose.composables.border
+import org.polyfrost.compose.composables.height
+import org.polyfrost.compose.composables.margin
+import org.polyfrost.compose.composables.padding
+import org.polyfrost.compose.composables.size
+import org.polyfrost.compose.composables.tag
+import org.polyfrost.compose.composables.width
+import org.polyfrost.compose.layout.PolyAlign
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.RenderContext
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.ui.layout.layoutId
-import org.polyfrost.compose.ui.text.font.FontFamily
-import org.polyfrost.compose.ui.unit.dp
-import org.polyfrost.compose.ui.unit.sp
 
 private const val CARD_WIDTH = 340f
 private const val CARD_PAD_H = 14f
@@ -94,10 +90,10 @@ fun NotificationToasts() {
     val h = ToastViewport.height
     if (w <= 0f || h <= 0f) return
 
-    Box(modifier = Modifier.width(w.dp).height(h.dp)) {
-        Column(
-            modifier = Modifier.padding(16.dp).align(Alignment.BottomEnd),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+    PolyBox(modifier = PolyModifier.width(w).height(h)) {
+        PolyColumn(
+            gap = 12f,
+            modifier = PolyModifier.align(PolyAlign.BottomRight).margin(16f),
         ) {
             for (notification in NotificationsManager.active) {
                 key(notification.id) { Toast(notification) }
@@ -173,25 +169,25 @@ private fun Toast(notification: Notification) {
     val bgBase = if (notification.hovered) NotificationTheme.background.lighten(0.06f) else NotificationTheme.background
     val cardBg = bgBase.multiplyAlpha(a)
 
-    Column(
-        modifier = Modifier
-            .width(CARD_WIDTH.dp)
-            .background(cardBg, RoundedCornerShape(NotificationTheme.radiusCard.dp))
-            .border(1.dp, NotificationTheme.border.multiplyAlpha(a), RoundedCornerShape(NotificationTheme.radiusCard.dp))
-            .padding(horizontal = CARD_PAD_H.dp, vertical = CARD_PAD_V.dp)
-            .layoutId(ToastHit.Body(notification)),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    PolyColumn(
+        gap = 12f,
+        modifier = PolyModifier
+            .width(CARD_WIDTH)
+            .background(cardBg, NotificationTheme.radiusCard)
+            .border(NotificationTheme.border.multiplyAlpha(a), 1f, NotificationTheme.radiusCard)
+            .padding(horizontal = CARD_PAD_H, vertical = CARD_PAD_V)
+            .tag(ToastHit.Body(notification)),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(ICON_GAP.dp)) {
+        PolyRow(gap = ICON_GAP) {
             ToastIcon(notification, a)
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(notification.title, color = NotificationTheme.accentFor(notification.type).multiplyAlpha(a), fontSize = TITLE_SIZE.sp, fontFamily = fontFamily(NotificationTheme.fontTitle))
+            PolyColumn(gap = 4f) {
+                PolyText(notification.title, color = NotificationTheme.accentFor(notification.type).multiplyAlpha(a), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
                 val bodyFont = messageFont()
                 val lines = remember(notification.message, bodyFont) {
                     wrapText(notification.message, TEXT_WIDTH, bodyFont)
                 }
                 for (line in lines) {
-                    Text(line, color = NotificationTheme.textSecondary.multiplyAlpha(a), fontSize = MESSAGE_SIZE.sp, fontFamily = fontFamily(NotificationTheme.fontBody))
+                    PolyText(line, color = NotificationTheme.textSecondary.multiplyAlpha(a), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
                 }
             }
         }
@@ -204,7 +200,7 @@ private fun Toast(notification: Notification) {
         }
 
         if (notification.actions.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            PolyRow(gap = 16f) {
                 for (action in notification.actions) {
                     ActionButton(notification, action, a)
                 }
@@ -221,13 +217,13 @@ private fun quantize(value: Float): Float {
 @Composable
 private fun ProgressBar(progress: () -> Float, a: Float) {
     val accent = NotificationTheme.accent
-    Box(
-        modifier = Modifier
-            .width(CONTENT_WIDTH.dp)
-            .height(6.dp)
-            .background(accent.multiplyAlpha(0.5f * a), RoundedCornerShape(NotificationTheme.radiusProgress.dp)),
+    PolyBox(
+        modifier = PolyModifier
+            .width(CONTENT_WIDTH)
+            .height(6f)
+            .background(accent.multiplyAlpha(0.5f * a), NotificationTheme.radiusProgress),
     ) {
-        Canvas(Modifier.width(CONTENT_WIDTH.dp).height(6.dp), live = true) { x, y, _, h ->
+        PolyCanvas(PolyModifier.width(CONTENT_WIDTH).height(6f), live = true) { x, y, _, h ->
             val fillWidth = (CONTENT_WIDTH * progress()).coerceIn(0f, CONTENT_WIDTH)
             if (fillWidth > 0f) rect(x, y, fillWidth, h, accent.multiplyAlpha(a), NotificationTheme.radiusProgress)
         }
@@ -239,29 +235,29 @@ private fun ActionButton(notification: Notification, action: NotificationAction,
     val hovered = ToastInput.hoveredAction === action
     val base = if (action.primary) NotificationTheme.accent else NotificationTheme.subtleButton
     val bg = (if (hovered) base.lighten(0.12f) else base).multiplyAlpha(a)
-    Box(
-        modifier = Modifier
-            .background(bg, RoundedCornerShape(NotificationTheme.radiusButton.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .layoutId(ToastHit.Action(notification, action)),
+    PolyBox(
+        modifier = PolyModifier
+            .background(bg, NotificationTheme.radiusButton)
+            .padding(horizontal = 12f, vertical = 6f)
+            .tag(ToastHit.Action(notification, action)),
     ) {
         val textColor = if (action.primary) NotificationTheme.actionPrimaryText else NotificationTheme.actionSubtleText
-        Text(action.label, color = textColor.multiplyAlpha(a), fontSize = MESSAGE_SIZE.sp, fontFamily = fontFamily(NotificationTheme.fontTitle))
+        PolyText(action.label, color = textColor.multiplyAlpha(a), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
     }
 }
 
 @Composable
 private fun ToastIcon(notification: Notification, a: Float) {
-    val bitmap = notification.icon
-    if (bitmap != null) {
-        Canvas(modifier = Modifier.size(ICON_SIZE.dp, ICON_SIZE.dp).align(Alignment.Top)) { x, y, w, h ->
-            val s = minOf(w / bitmap.width, h / bitmap.height)
-            fadedImage(bitmap, x + (w - bitmap.width * s) / 2f, y + (h - bitmap.height * s) / 2f, bitmap.width * s, bitmap.height * s, a)
+    val custom = notification.icon
+    if (custom != null) {
+        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
+            val s = minOf(w / custom.width, h / custom.height)
+            fadedImage(custom, x + (w - custom.width * s) / 2f, y + (h - custom.height * s) / 2f, custom.width * s, custom.height * s, a)
         }
     } else {
         val accent = NotificationTheme.accentFor(notification.type).argb
         val iconFolder = NotificationTheme.iconFolder
-        Canvas(modifier = Modifier.size(ICON_SIZE.dp, ICON_SIZE.dp).align(Alignment.Top)) { x, y, w, h ->
+        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
             val name = notification.type.iconName
             val img = iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, accent) }
@@ -271,7 +267,7 @@ private fun ToastIcon(notification: Notification, a: Float) {
     }
 }
 
-private fun RenderContext.fadedImage(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, a: Float) {
+private fun RenderContext.fadedImage(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, a: Float) {
     if (a >= 1f) return image(bitmap, x, y, w, h)
     saveLayerAlpha(a)
     image(bitmap, x, y, w, h)
@@ -279,8 +275,6 @@ private fun RenderContext.fadedImage(bitmap: ImageBitmap, x: Float, y: Float, w:
 }
 
 private const val TEXT_WIDTH = CONTENT_WIDTH - ICON_SIZE - ICON_GAP
-
-private fun fontFamily(name: String?): FontFamily = name?.let { FontFamily(it) } ?: FontFamily.Default
 
 private fun messageFont(): PolyFont = NotificationTheme.fontBody?.let { PolyFont(it, MESSAGE_SIZE) } ?: PolyFont.default(MESSAGE_SIZE)
 

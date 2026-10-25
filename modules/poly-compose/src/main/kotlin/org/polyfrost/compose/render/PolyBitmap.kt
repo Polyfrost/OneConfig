@@ -1,16 +1,16 @@
-package org.polyfrost.compose.ui.graphics
+package org.polyfrost.compose.render
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 
-class ImageBitmap(val width: Int, val height: Int, val pixels: ByteArray) {
+class PolyBitmap(val width: Int, val height: Int, val pixels: ByteArray) {
     init {
         require(width > 0 && height > 0 && pixels.size == width * height * 4) { "bad bitmap ${width}x$height, ${pixels.size} bytes" }
     }
 
     fun interface Decoder {
-        fun decode(bytes: ByteArray): ImageBitmap?
+        fun decode(bytes: ByteArray): PolyBitmap?
     }
 
     companion object {
@@ -18,15 +18,15 @@ class ImageBitmap(val width: Int, val height: Int, val pixels: ByteArray) {
         var decoder: Decoder = Decoder { bytes -> runCatching { ImageIO.read(ByteArrayInputStream(bytes))?.let(::fromAwt) }.getOrNull() }
 
         @JvmStatic
-        fun decode(bytes: ByteArray): ImageBitmap? = decoder.decode(bytes)
+        fun decode(bytes: ByteArray): PolyBitmap? = decoder.decode(bytes)
 
         @JvmStatic
-        fun fromResource(path: String, loader: ClassLoader? = null): ImageBitmap? =
-            ((loader ?: ImageBitmap::class.java.classLoader)?.getResourceAsStream(path) ?: ImageBitmap::class.java.getResourceAsStream(path))
+        fun fromResource(path: String, loader: ClassLoader? = null): PolyBitmap? =
+            ((loader ?: PolyBitmap::class.java.classLoader)?.getResourceAsStream(path) ?: PolyBitmap::class.java.getResourceAsStream(path))
                 ?.use { decode(it.readBytes()) }
 
         @JvmStatic
-        fun fromAwt(img: BufferedImage): ImageBitmap {
+        fun fromAwt(img: BufferedImage): PolyBitmap {
             val w = img.width
             val h = img.height
             val argb = img.getRGB(0, 0, w, h, null, 0, w)
@@ -35,7 +35,7 @@ class ImageBitmap(val width: Int, val height: Int, val pixels: ByteArray) {
                 val c = argb[i]
                 px[i * 4] = (c shr 16).toByte(); px[i * 4 + 1] = (c shr 8).toByte(); px[i * 4 + 2] = c.toByte(); px[i * 4 + 3] = (c ushr 24).toByte()
             }
-            return ImageBitmap(w, h, px)
+            return PolyBitmap(w, h, px)
         }
     }
 }

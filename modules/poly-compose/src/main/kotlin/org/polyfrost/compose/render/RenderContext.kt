@@ -1,10 +1,5 @@
 package org.polyfrost.compose.render
 
-import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.StrokeCap
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
 
 class RenderContext(val renderer: PolyRenderer) {
     private var _absX = 0f
@@ -43,11 +38,6 @@ class RenderContext(val renderer: PolyRenderer) {
     fun fillPath(path: PolyPath, color: PolyColor) {
         if (color.alpha == 0) return
         renderer.fillPath(path, color.argb)
-    }
-
-    fun strokePolyline(points: FloatArray, closed: Boolean, color: PolyColor, strokeWidth: Float, cap: StrokeCap = StrokeCap.Butt) {
-        if (color.alpha == 0) return
-        renderer.strokePolyline(points, closed, color.argb, strokeWidth, cap.ordinal)
     }
 
     fun text(text: String, x: Float, y: Float, color: PolyColor, font: PolyFont) {
@@ -98,22 +88,22 @@ class RenderContext(val renderer: PolyRenderer) {
         _absY += dy
     }
 
-    fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
+    fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
         renderer.image(bitmap, x, y, w, h, filterQuality)
 
     fun image(
-        bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: PolyColor,
+        bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: PolyColor,
         filterQuality: FilterQuality = FilterQuality.Low,
     ) {
         if (tint.alpha == 0) return
         renderer.image(bitmap, x, y, w, h, u0, v0, u1, v1, tint.argb, filterQuality)
     }
 
-    fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float = 0f) =
+    fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float = 0f) =
         renderer.rectGradient(x, y, w, h, gradient, radius)
 
-    fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: Shadow) {
-        if (shadow.drawColor.alpha == 0) return
+    fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow) {
+        if (shadow.color.alpha == 0) return
         renderer.shadow(x, y, w, h, radius, shadow)
     }
 

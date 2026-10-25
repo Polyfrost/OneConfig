@@ -10,8 +10,7 @@ import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.backend.PolyDrawCanvas
 import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.ui.unit.Dp
-import org.polyfrost.compose.ui.graphics.shadow.Shadow as PolyShadow
+import org.polyfrost.compose.render.PolyShadow
 
 @Stable
 fun Modifier.cachedDropShadow(shape: Shape, shadow: Shadow): Modifier {
@@ -23,7 +22,7 @@ fun Modifier.cachedDropShadow(shape: Shape, shadow: Shadow): Modifier {
         val spread = shadow.spread.toPx()
         val ox = shadow.offset.x.toPx()
         val oy = shadow.offset.y.toPx()
-        val poly = PolyShadow(Dp(shadow.radius.toPx()), PolyColor(shadow.color.toArgb()), alpha = shadow.alpha)
+        val poly = PolyShadow(PolyColor(shadow.color.toArgb()).multiplyAlpha(shadow.alpha), shadow.radius.toPx(), 0f, 0f, 0f)
         drawIntoCanvas { c ->
             (c as? PolyDrawCanvas)?.polyOp {
                 it.renderer.shadow(ox - spread, oy - spread, size.width + spread * 2f, size.height + spread * 2f, radius + spread, poly)

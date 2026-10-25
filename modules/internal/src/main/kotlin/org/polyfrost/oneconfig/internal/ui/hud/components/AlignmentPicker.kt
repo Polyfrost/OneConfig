@@ -29,20 +29,20 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.polyfrost.compose.ui.Alignment as PolyAlign
+import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val alignmentGrid: Map<PolyAlign, Pair<Int, Int>> = mapOf(
-    PolyAlign.TopStart     to Pair(0, 0),
-    PolyAlign.TopCenter         to Pair(1, 0),
-    PolyAlign.TopEnd    to Pair(2, 0),
-    PolyAlign.CenterStart        to Pair(0, 1),
+    PolyAlign.TopLeft     to Pair(0, 0),
+    PolyAlign.Top         to Pair(1, 0),
+    PolyAlign.TopRight    to Pair(2, 0),
+    PolyAlign.Left        to Pair(0, 1),
     PolyAlign.Center      to Pair(1, 1),
-    PolyAlign.CenterEnd       to Pair(2, 1),
-    PolyAlign.BottomStart  to Pair(0, 2),
-    PolyAlign.BottomCenter      to Pair(1, 2),
-    PolyAlign.BottomEnd to Pair(2, 2),
+    PolyAlign.Right       to Pair(2, 1),
+    PolyAlign.BottomLeft  to Pair(0, 2),
+    PolyAlign.Bottom      to Pair(1, 2),
+    PolyAlign.BottomRight to Pair(2, 2),
 )
 
 private val gridAlignment: Map<Pair<Int, Int>, PolyAlign> =

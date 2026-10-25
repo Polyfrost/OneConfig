@@ -65,21 +65,6 @@ public class TextHudTest {
     }
 
     @Test
-    void concatSkipsEmptyParts() {
-        TextHud hud = new TestMutableTextHud("Value") {
-            @Override
-            public String getConcatString() {
-                return " ";
-            }
-        };
-        assertEquals("a b c", hud.concat("a", "b", "c"));
-        assertEquals("a c", hud.concat("a", null, "c"));
-        assertEquals("b c", hud.concat("", "b", "c"));
-        assertEquals("a", hud.concat("a", "", ""));
-        assertEquals("", hud.concat("", null, ""));
-    }
-
-    @Test
     void bracketsWrapTheWholeLine() throws Exception {
         TestMutableTextHud hud = new TestMutableTextHud("Value");
         hud.update();

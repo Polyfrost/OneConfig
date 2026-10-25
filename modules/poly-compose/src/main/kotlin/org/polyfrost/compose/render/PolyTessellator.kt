@@ -3,10 +3,6 @@ package org.polyfrost.compose.render
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.tan
-import org.polyfrost.compose.ui.graphics.ImageBitmap
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.FilterQuality
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -50,7 +46,7 @@ abstract class PolyTessellator : PolyRenderer {
 
     protected abstract fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray)
 
-    protected abstract fun bitmapTexture(bitmap: ImageBitmap): Any
+    protected abstract fun bitmapTexture(bitmap: PolyBitmap): Any
 
     override fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float) {
         if (w <= 0f || h <= 0f) return
@@ -97,10 +93,10 @@ abstract class PolyTessellator : PolyRenderer {
         if (clipped) restore()
     }
 
-    override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: Brush, radius: Float) {
+    override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float) {
         if (w <= 0f || h <= 0f) return
         val s = state
-        val tex: ImageBitmap
+        val tex: PolyBitmap
         val uv: (Float, Float, FloatArray) -> Unit
         if (gradient.linear) {
             tex = ramp(gradient)
@@ -121,7 +117,7 @@ abstract class PolyTessellator : PolyRenderer {
     override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, top: Int, bottom: Int, strokeWidth: Float, radius: Float) {
         val y0 = y * state.sy + state.ty
         val y1 = (y + h) * state.sy + state.ty
-        stroke(x, y, w, h, top, strokeWidth, radius) { py -> Brush.lerpArgb(top, bottom, ((py - y0) / (y1 - y0)).coerceIn(0f, 1f)) }
+        stroke(x, y, w, h, top, strokeWidth, radius) { py -> PolyGradient.lerpArgb(top, bottom, ((py - y0) / (y1 - y0)).coerceIn(0f, 1f)) }
     }
 
     private fun stroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float, shade: ((Float) -> Int)?) {
@@ -314,7 +310,7 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
-    override fun image(bitmap: ImageBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) {
+    override fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) {
         val c = mulAlpha(tint, state.alpha)
         if (c ushr 24 == 0) return
         val g = PolyGlyphPage.bitmap(bitmap)
@@ -325,14 +321,14 @@ abstract class PolyTessellator : PolyRenderer {
         else quadPx(x0, y0, x0 + w * state.sx, y0 + h * state.sy, g.u(u0), g.v(v0), g.u(u1), g.v(v1), c)
     }
 
-    override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: Shadow) {
+    override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow) {
         val s = scaleAvg()
-        val color = shadow.drawColor.argb
-        val spread = shadow.spread.value
-        val blur = shadow.radius.value
+        val color = shadow.color.argb
+        val spread = shadow.spread
+        val blur = shadow.blur
         if (color ushr 24 == 0 || s <= 0f) return
-        val bx = x - spread + shadow.offset.x.value
-        val by = y - spread + shadow.offset.y.value
+        val bx = x - spread + shadow.offsetX
+        val by = y - spread + shadow.offsetY
         val bw = w + spread * 2f
         val bh = h + spread * 2f
         val rad = if (radius > 0f) max(0f, radius + spread) else 0f
@@ -876,7 +872,7 @@ abstract class PolyTessellator : PolyRenderer {
                 val t = di / (di - dj)
                 val x = p.x[i] + (p.x[j] - p.x[i]) * t; val y = p.y[i] + (p.y[j] - p.y[i]) * t
                 val u = p.u[i] + (p.u[j] - p.u[i]) * t; val v = p.v[i] + (p.v[j] - p.v[i]) * t
-                val c = Brush.lerpArgb(p.c[i], p.c[j], t)
+                val c = PolyGradient.lerpArgb(p.c[i], p.c[j], t)
                 after.add(x, y, u, v, c)
                 before?.add(x, y, u, v, c)
             }
@@ -960,7 +956,7 @@ abstract class PolyTessellator : PolyRenderer {
                 val t = di / (di - dj)
                 val x = p.x[i] + (p.x[j] - p.x[i]) * t; val y = p.y[i] + (p.y[j] - p.y[i]) * t
                 val u = p.u[i] + (p.u[j] - p.u[i]) * t; val v = p.v[i] + (p.v[j] - p.v[i]) * t
-                val c = Brush.lerpArgb(p.c[i], p.c[j], t)
+                val c = PolyGradient.lerpArgb(p.c[i], p.c[j], t)
                 inside.add(x, y, u, v, c)
                 outside?.add(x, y, u, v, c)
             }
@@ -1036,15 +1032,15 @@ abstract class PolyTessellator : PolyRenderer {
         return out
     }
 
-    private class ShadowMask(val bitmap: ImageBitmap, val slice: Float, val extent: Float, val width: Float)
+    private class ShadowMask(val bitmap: PolyBitmap, val slice: Float, val extent: Float, val width: Float)
 
     companion object {
         private fun <K, V> lru(max: Int) = object : LinkedHashMap<K, V>(16, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?) = size > max
         }
 
-        private val ramps = lru<Pair<List<PolyColor>, List<Float>?>, ImageBitmap>(64)
-        private val boxRasters = lru<Pair<Brush, Int>, ImageBitmap>(32)
+        private val ramps = lru<Pair<List<PolyColor>, List<Float>?>, PolyBitmap>(64)
+        private val boxRasters = lru<Pair<PolyGradient, Int>, PolyBitmap>(32)
         private val masks = lru<Long, ShadowMask>(32)
         private val mcOutlines = lru<String, FloatArray>(256)
         private val mcRasters = HashMap<Pair<PolyGlyphPage.Face, Int>, PolyGlyphPage.Raster?>()
@@ -1137,19 +1133,19 @@ abstract class PolyTessellator : PolyRenderer {
             return out.toFloatArray()
         }
 
-        private fun bitmapOf(w: Int, h: Int, argb: (Int, Int) -> Int): ImageBitmap {
+        private fun bitmapOf(w: Int, h: Int, argb: (Int, Int) -> Int): PolyBitmap {
             val px = ByteArray(w * h * 4)
             for (y in 0 until h) for (x in 0 until w) {
                 val c = argb(x, y)
                 val o = (y * w + x) * 4
                 px[o] = (c shr 16).toByte(); px[o + 1] = (c shr 8).toByte(); px[o + 2] = c.toByte(); px[o + 3] = (c ushr 24).toByte()
             }
-            return ImageBitmap(w, h, px)
+            return PolyBitmap(w, h, px)
         }
 
-        private fun ramp(g: Brush): ImageBitmap = ramps.getOrPut(g.colors to g.stops) { bitmapOf(256, 1) { x, _ -> g.sample(x / 255f) } }
+        private fun ramp(g: PolyGradient): PolyBitmap = ramps.getOrPut(g.colors to g.stops) { bitmapOf(256, 1) { x, _ -> g.sample(x / 255f) } }
 
-        private fun boxRaster(g: Brush, aspect: Float): ImageBitmap {
+        private fun boxRaster(g: PolyGradient, aspect: Float): PolyBitmap {
             val q = (aspect * 16f).roundToInt().coerceIn(1, 1024)
             return boxRasters.getOrPut(g to q) {
                 val a = q / 16f

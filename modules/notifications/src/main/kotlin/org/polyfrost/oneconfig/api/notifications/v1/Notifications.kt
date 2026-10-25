@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.api.notifications.v1
 
 import java.util.concurrent.Callable
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 
 /**
  * Utility for sending notifications
@@ -66,7 +66,7 @@ object Notifications {
         title: String,
         message: String,
         type: NotificationType = NotificationType.INFO,
-        icon: ImageBitmap? = null,
+        icon: PolyBitmap? = null,
         duration: Float = Notification.DEFAULT_DURATION,
         progress: Callable<Float>? = null,
         onClick: Runnable? = null,
@@ -114,21 +114,21 @@ object Notifications {
 
     @JvmStatic
     @JvmOverloads
-    fun icon(resourcePath: String, size: Int = 64): ImageBitmap? = SvgMask.get(resourcePath, size)
+    fun icon(resourcePath: String, size: Int = 64): PolyBitmap? = SvgMask.get(resourcePath, size)
 
     @JvmStatic
     fun builder(title: String, message: String): Builder = Builder(title, message)
 
     class Builder internal constructor(private val title: String, private val message: String) {
         private var type: NotificationType = NotificationType.INFO
-        private var icon: ImageBitmap? = null
+        private var icon: PolyBitmap? = null
         private var duration: Float = Notification.DEFAULT_DURATION
         private var progress: Callable<Float>? = null
         private var onClick: Runnable? = null
         private val actions = ArrayList<NotificationAction>()
 
         fun type(type: NotificationType) = apply { this.type = type }
-        fun icon(icon: ImageBitmap?) = apply { this.icon = icon }
+        fun icon(icon: PolyBitmap?) = apply { this.icon = icon }
         fun duration(duration: Float) = apply { this.duration = duration }
 
         /**

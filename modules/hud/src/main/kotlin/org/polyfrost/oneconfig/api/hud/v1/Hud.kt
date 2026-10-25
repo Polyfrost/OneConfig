@@ -38,13 +38,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
-import org.polyfrost.compose.foundation.background
-import org.polyfrost.compose.foundation.shape.RoundedCornerShape
+import org.polyfrost.compose.composables.PolyModifier
+import org.polyfrost.compose.composables.background
+import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.runtime.PolyComposeRuntime
-import org.polyfrost.compose.ui.Alignment
-import org.polyfrost.compose.ui.Modifier
-import org.polyfrost.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
@@ -84,28 +82,31 @@ enum class HudAnchor {
     Left, Center, Right,
     BottomLeft, Bottom, BottomRight;
 
-    fun toAlign(): Alignment? = when (this) {
+    fun toAlign(): PolyAlign? = when (this) {
         Auto -> null
-        TopLeft -> Alignment.TopStart
-        Top -> Alignment.TopCenter
-        TopRight -> Alignment.TopEnd
-        Left -> Alignment.CenterStart
-        Center -> Alignment.Center
-        Right -> Alignment.CenterEnd
-        BottomLeft -> Alignment.BottomStart
-        Bottom -> Alignment.BottomCenter
-        BottomRight -> Alignment.BottomEnd
+        TopLeft -> PolyAlign.TopLeft
+        Top -> PolyAlign.Top
+        TopRight -> PolyAlign.TopRight
+        Left -> PolyAlign.Left
+        Center -> PolyAlign.Center
+        Right -> PolyAlign.Right
+        BottomLeft -> PolyAlign.BottomLeft
+        Bottom -> PolyAlign.Bottom
+        BottomRight -> PolyAlign.BottomRight
     }
 
     companion object {
         @JvmStatic
-        fun of(align: Alignment): HudAnchor {
-            val h = align.horizontalBias
-            return when {
-                align.verticalBias < 0f -> if (h < 0f) TopLeft else if (h > 0f) TopRight else Top
-                align.verticalBias > 0f -> if (h < 0f) BottomLeft else if (h > 0f) BottomRight else Bottom
-                else -> if (h < 0f) Left else if (h > 0f) Right else Center
-            }
+        fun of(align: PolyAlign): HudAnchor = when (align) {
+            PolyAlign.TopLeft -> TopLeft
+            PolyAlign.Top -> Top
+            PolyAlign.TopRight -> TopRight
+            PolyAlign.Left -> Left
+            PolyAlign.Center -> Center
+            PolyAlign.Right -> Right
+            PolyAlign.BottomLeft -> BottomLeft
+            PolyAlign.Bottom -> Bottom
+            PolyAlign.BottomRight -> BottomRight
         }
     }
 }
@@ -647,10 +648,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         Snapshot.withMutableSnapshot { setAbsolutePosition(absX, absY) }
     }
 
-    private var _alignment: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Center)
-    var alignment: Alignment get() = _alignment.value.toAlign() ?: Alignment.Center; set(v) { _alignment.value = HudAnchor.of(v) }
-
-    internal var alignmentAnchor: HudAnchor get() = _alignment.value; set(v) { _alignment.value = v }
+    private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
+    var alignment: PolyAlign get() = _alignment.value; set(v) { _alignment.value = v }
 
     private var _growthAnchor: MutableState<HudAnchor> = mutableStateOf(HudAnchor.Auto)
     var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.put(v) }
@@ -1297,7 +1296,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["alignment"] = ktProperty(out::alignmentAnchor).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
             tree["growthAnchor"] = ktProperty(out::growthAnchor).apply {
                 description = "The point this HUD stays pinned to when its size changes, so it only ever grows away from that point."
                 addDisplayCondition(hideFromConfigUi)
@@ -1433,9 +1432,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      * neighbour shape (see [bgMerged])
      */
     @JvmOverloads
-    fun hudBackground(modifier: Modifier = Modifier): Modifier =
+    fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier =
         if (showBackground && hasBackground() && !bgMerged) {
-            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), RoundedCornerShape(bgRadius.dp))
+            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
         } else {
             modifier
         }
@@ -1501,7 +1500,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         _relativeY = mutableStateOf(this@Hud.relativeY)
         _renderedW = mutableStateOf(0f)
         _renderedH = mutableStateOf(0f)
-        _alignment = mutableStateOf(this@Hud.alignmentAnchor)
+        _alignment = mutableStateOf(this@Hud.alignment)
         _growthAnchor = mutableStateOf(this@Hud.growthAnchor)
         _anchorTargetId = mutableStateOf(this@Hud.anchorTargetId)
         _anchorPoint = mutableStateOf(this@Hud.anchorPoint)

@@ -37,7 +37,7 @@ import kotlin.math.sqrt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.polyfrost.compose.backend.asComposeImageBitmap
-import org.polyfrost.compose.ui.graphics.ImageBitmap as PolyBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.AccentGradient

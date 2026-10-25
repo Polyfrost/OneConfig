@@ -17,8 +17,7 @@ import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.RecordingCanvas
 import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.ui.graphics.shadow.Shadow
-import org.polyfrost.compose.ui.unit.Dp
+import org.polyfrost.compose.render.PolyShadow
 
 @Suppress("UNUSED_PARAMETER")
 class SkiaGraphicsContext(measureDrawBounds: Boolean = false, snapshotCache: Boolean = true) : PlatformGraphicsContext() {
@@ -144,7 +143,7 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
         val o = outline
         if (shadowElevation > 0f && o != null) {
             val b = o.bounds
-            r.shadow(b.left, b.top + shadowElevation / 2f, b.width, b.height, radiusOf(o), Shadow(Dp(shadowElevation), PolyColor(spotShadowColor.copy(alpha = spotShadowColor.alpha * 0.25f).toArgb())))
+            r.shadow(b.left, b.top + shadowElevation / 2f, b.width, b.height, radiusOf(o), PolyShadow(PolyColor(spotShadowColor.copy(alpha = spotShadowColor.alpha * 0.25f).toArgb()), shadowElevation, 0f, 0f, 0f))
         }
         if (clip) {
             if (o == null) r.clipRect(0f, 0f, size.width.toFloat(), size.height.toFloat())

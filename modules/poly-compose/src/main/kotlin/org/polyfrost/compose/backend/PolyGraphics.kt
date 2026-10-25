@@ -35,9 +35,7 @@ import androidx.compose.ui.graphics.platform.PlatformRenderEffect
 import androidx.compose.ui.graphics.platform.PlatformShader
 import androidx.compose.ui.graphics.toArgb
 import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.ui.graphics.Brush
-import org.polyfrost.compose.ui.graphics.PointGradient
-import org.polyfrost.compose.ui.graphics.RadialGradient
+import org.polyfrost.compose.render.PolyGradient
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -46,7 +44,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
-import org.polyfrost.compose.ui.graphics.ImageBitmap as PolyBitmap
+import org.polyfrost.compose.render.PolyBitmap
 
 object PolyGraphics : PlatformGraphics {
     override fun createCanvas(image: ImageBitmap): Canvas = error("drawing into ImageBitmap is not supported")
@@ -65,13 +63,13 @@ object PolyGraphics : PlatformGraphics {
         PolyImageBitmap(PolyBitmap.decode(bytes) ?: error("cannot decode image (${bytes.size} bytes)"))
 
     override fun createLinearGradientShader(from: Offset, to: Offset, colors: List<Color>, colorStops: List<Float>?, tileMode: TileMode): Shader =
-        Shader(GradientShader(PointGradient(colors.map(::polyColor), colorStops, from.x, from.y, to.x, to.y), null, 0f))
+        Shader(GradientShader(PolyGradient.Points(colors.map(::polyColor), colorStops, from.x, from.y, to.x, to.y), null, 0f))
 
     override fun createRadialGradientShader(center: Offset, radius: Float, colors: List<Color>, colorStops: List<Float>?, tileMode: TileMode): Shader =
-        Shader(GradientShader(RadialGradient(colors.map(::polyColor), colorStops), center, radius))
+        Shader(GradientShader(PolyGradient.Radial(colors.map(::polyColor), colorStops), center, radius))
 
     override fun createSweepGradientShader(center: Offset, colors: List<Color>, colorStops: List<Float>?): Shader =
-        Shader(GradientShader(PointGradient(listOf(polyColor(colors.first())), null, 0f, 0f, 1f, 0f), null, 0f))
+        Shader(GradientShader(PolyGradient.Points(listOf(polyColor(colors.first())), null, 0f, 0f, 1f, 0f), null, 0f))
 
     override fun createImageShader(image: ImageBitmap, tileModeX: TileMode, tileModeY: TileMode): Shader = Shader(ImageShader(image))
     override fun createCompositeShader(destination: Shader, source: Shader, blendMode: BlendMode): Shader = source
@@ -95,10 +93,10 @@ object PolyGraphics : PlatformGraphics {
     internal fun polyColor(c: Color) = PolyColor(c.toArgb())
 }
 
-internal class GradientShader(val brush: Brush, val center: Offset?, val radius: Float) : PlatformShader {
-    fun brushFor(x: Float, y: Float, w: Float, h: Float): Brush {
+internal class GradientShader(val brush: PolyGradient, val center: Offset?, val radius: Float) : PlatformShader {
+    fun brushFor(x: Float, y: Float, w: Float, h: Float): PolyGradient {
         val c = center ?: return brush
-        val g = brush as RadialGradient
+        val g = brush as PolyGradient.Radial
         val m = min(w, h)
         if (w <= 0f || h <= 0f || m <= 0f) return g
         return g.copy(centerX = (c.x - x) / w, centerY = (c.y - y) / h, radius = radius / m)

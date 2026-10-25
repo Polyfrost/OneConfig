@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components.effect
 
-import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.slf4j.LoggerFactory
@@ -23,7 +23,7 @@ class MinecraftEffectCatalogService : EffectCatalogService {
 
     @Volatile
     private var catalogCache: List<EffectDescriptor>? = null
-    private val iconCache = HashMap<String, ImageBitmap?>()
+    private val iconCache = HashMap<String, PolyBitmap?>()
 
     //? if = 1.8.9
     //private var atlasLoaded = false
@@ -70,7 +70,7 @@ class MinecraftEffectCatalogService : EffectCatalogService {
         *///?}
     }
 
-    override fun icon(id: String): ImageBitmap? = synchronized(lock) {
+    override fun icon(id: String): PolyBitmap? = synchronized(lock) {
         //? if > 1.8.9 {
         if (iconCache.containsKey(id)) return iconCache[id]
         loadIcon(id).also { iconCache[id] = it }
@@ -88,13 +88,13 @@ class MinecraftEffectCatalogService : EffectCatalogService {
     }
 
     //? if > 1.8.9 {
-    private fun loadIcon(id: String): ImageBitmap? {
+    private fun loadIcon(id: String): PolyBitmap? {
         val namespace = id.substringBefore(':', "minecraft")
         val path = id.substringAfter(':')
         val texture = Identifier.tryBuild(namespace, "textures/mob_effect/$path.png") ?: return null
         return try {
             Minecraft.getInstance().resourceManager.getResource(texture).orElse(null)
-                ?.open()?.use { ImageBitmap.decode(it.readAllBytes()) }
+                ?.open()?.use { PolyBitmap.decode(it.readAllBytes()) }
         } catch (e: Exception) {
             LOG.warn("Failed to load the icon for status effect {}", id, e)
             null
@@ -104,7 +104,7 @@ class MinecraftEffectCatalogService : EffectCatalogService {
     /*private fun loadAtlas() {
         val texture = NamespacedIdentifiers.from("minecraft", "textures/gui/container/inventory.png")
         val atlas = ResourceManager.client().getResource(texture).orElse(null)
-            ?.open()?.use { ImageBitmap.decode(it.readBytes()) }
+            ?.open()?.use { PolyBitmap.decode(it.readBytes()) }
         if (atlas == null) {
             LOG.warn("Failed to read the status effect icon atlas {}", texture)
             return
@@ -120,13 +120,13 @@ class MinecraftEffectCatalogService : EffectCatalogService {
         }
     }
 
-    private fun crop(src: ImageBitmap, x: Int, y: Int, size: Int): ImageBitmap? {
+    private fun crop(src: PolyBitmap, x: Int, y: Int, size: Int): PolyBitmap? {
         if (size <= 0 || x < 0 || y < 0 || x + size > src.width || y + size > src.height) return null
         val out = ByteArray(size * size * 4)
         for (row in 0 until size) {
             System.arraycopy(src.pixels, ((y + row) * src.width + x) * 4, out, row * size * 4, size * 4)
         }
-        return ImageBitmap(size, size, out)
+        return PolyBitmap(size, size, out)
     }
     *///?}
 

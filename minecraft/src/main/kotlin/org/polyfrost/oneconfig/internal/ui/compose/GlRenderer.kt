@@ -12,7 +12,7 @@ import org.lwjgl.opengl.GL30
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
-import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 import org.polyfrost.oneconfig.internal.ui.TextureRenderer
 import org.slf4j.LoggerFactory
@@ -29,7 +29,7 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
     private class Live(val at: Int, val state: State, val draw: (PolyRenderer) -> Unit)
     private val lives = ArrayList<Live>()
 
-    override fun bitmapTexture(bitmap: ImageBitmap): Any = GlTextures.bitmap(bitmap)
+    override fun bitmapTexture(bitmap: PolyBitmap): Any = GlTextures.bitmap(bitmap)
 
     override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
         batches.add(GlProgram.Batch(texture, premultiplied, nearest, verts, colors))
@@ -257,14 +257,14 @@ void main() { vec4 c = texture2D(uTex, vUv) * vColor; gl_FragColor = uPremul == 
 }
 
 internal object GlTextures {
-    class Tex(val bitmap: ImageBitmap?, var id: Int, var lastUsed: Long)
+    class Tex(val bitmap: PolyBitmap?, var id: Int, var lastUsed: Long)
 
-    private val bitmaps = IdentityHashMap<ImageBitmap, Tex>()
+    private val bitmaps = IdentityHashMap<PolyBitmap, Tex>()
     private val external = HashMap<Int, Tex>()
     private val pages = IdentityHashMap<PolyGlyphPage.Page, IntArray>()
     private var frame = 0L
 
-    fun bitmap(bitmap: ImageBitmap): Tex = bitmaps.getOrPut(bitmap) { Tex(bitmap, 0, frame) }.also { it.lastUsed = frame }
+    fun bitmap(bitmap: PolyBitmap): Tex = bitmaps.getOrPut(bitmap) { Tex(bitmap, 0, frame) }.also { it.lastUsed = frame }
 
     fun external(id: Int): Tex = external.getOrPut(id) { Tex(null, id, 0) }
 
@@ -291,7 +291,7 @@ internal object GlTextures {
         return tex[0]
     }
 
-    private fun upload(bitmap: ImageBitmap): Int {
+    private fun upload(bitmap: PolyBitmap): Int {
         val id = newTexture()
         val px = BufferUtils.createByteBuffer(bitmap.pixels.size).put(bitmap.pixels)
         px.flip()

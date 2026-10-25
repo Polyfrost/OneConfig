@@ -62,7 +62,7 @@ import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyTessellator
 import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.RenderContext
-import org.polyfrost.compose.ui.graphics.ImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer
@@ -79,21 +79,21 @@ import kotlin.math.roundToInt
 
 class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boolean = false) : PolyTessellator(), TextureRenderer, CapturingRenderer {
     private val ops = ArrayList<(GuiGraphicsExtractor) -> Unit>()
-    private val bitmapLog = ArrayList<ImageBitmap>()
+    private val bitmapLog = ArrayList<PolyBitmap>()
 
-    val bitmaps = HashSet<ImageBitmap>()
+    val bitmaps = HashSet<PolyBitmap>()
     private val elementPose = Matrix3x2f().scale(1f / guiScale)
     private val screenW = Minecraft.getInstance().window.guiScaledWidth
     private val screenH = Minecraft.getInstance().window.guiScaledHeight
 
-    override fun bitmapTexture(bitmap: ImageBitmap): Any {
+    override fun bitmapTexture(bitmap: PolyBitmap): Any {
         bitmaps.add(bitmap)
         val ref = BitmapTextures.get(bitmap)
         bitmapLog.add(bitmap)
         return ref
     }
 
-    private class Captured(val ops: List<(GuiGraphicsExtractor) -> Unit>, val bitmaps: List<ImageBitmap>, val refs: List<AbstractTextureRef>)
+    private class Captured(val ops: List<(GuiGraphicsExtractor) -> Unit>, val bitmaps: List<PolyBitmap>, val refs: List<AbstractTextureRef>)
 
     override fun mark(): Any {
         flush()
@@ -635,7 +635,7 @@ object BlazeToasts {
 
 internal class Recording {
     private var ops: List<(GuiGraphicsExtractor) -> Unit> = emptyList()
-    private var bitmaps: Set<ImageBitmap> = emptySet()
+    private var bitmaps: Set<PolyBitmap> = emptySet()
     private var scale = 0f
 
     fun render(gfx: GuiGraphicsExtractor, dirty: Boolean, draw: (RenderContext) -> Unit) {
@@ -692,10 +692,10 @@ internal object GlyphAtlas {
 internal object BitmapTextures {
     private class Entry(val ref: AbstractTextureRef, var lastUsed: Long)
 
-    private val cache = IdentityHashMap<ImageBitmap, Entry>()
+    private val cache = IdentityHashMap<PolyBitmap, Entry>()
     private var frame = 0L
 
-    fun get(bitmap: ImageBitmap): AbstractTextureRef {
+    fun get(bitmap: PolyBitmap): AbstractTextureRef {
         cache[bitmap]?.let { it.lastUsed = frame; return it.ref }
         val w = bitmap.width
         val px = bitmap.pixels
@@ -713,7 +713,7 @@ internal object BitmapTextures {
         return ref
     }
 
-    val decoder = ImageBitmap.Decoder { bytes ->
+    val decoder = PolyBitmap.Decoder { bytes ->
         runCatching {
             NativeImage.read(bytes).use { img ->
                 val w = img.width
@@ -723,12 +723,12 @@ internal object BitmapTextures {
                     val o = (y * w + x) * 4
                     px[o] = (c shr 16).toByte(); px[o + 1] = (c shr 8).toByte(); px[o + 2] = c.toByte(); px[o + 3] = (c ushr 24).toByte()
                 }
-                ImageBitmap(w, img.height, px)
+                PolyBitmap(w, img.height, px)
             }
         }.getOrNull()
     }
 
-    fun touch(bitmaps: Set<ImageBitmap>) {
+    fun touch(bitmaps: Set<PolyBitmap>) {
         for (b in bitmaps) cache[b]?.lastUsed = frame
     }
 

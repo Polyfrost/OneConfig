@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.compose.backend.drawPoly
-import org.polyfrost.compose.ui.Alignment as PolyAlign
+import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
