@@ -31,8 +31,9 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -60,7 +61,7 @@ private const val GLOW_EXTENT = 1400f
 private val glowProfile = floatArrayOf(0f, .2f, .4f, .5f, .6f, .7f, .8f, 1f) to
     floatArrayOf(.95f, .77f, .42f, .25f, .13f, .055f, .018f, 0f)
 
-private fun DrawScope.drawGlow(cx: Float, cy: Float, color: androidx.compose.ui.graphics.Color, alpha: Float) {
+private fun DrawScope.drawGlow(cx: Float, cy: Float, color: Color, alpha: Float) {
     val (pos, a) = glowProfile
     val stops = Array(pos.size) { pos[it] to color.copy(alpha = a[it] * alpha) }
     drawCircle(Brush.radialGradient(*stops, center = Offset(cx, cy), radius = GLOW_EXTENT), GLOW_EXTENT, Offset(cx, cy))

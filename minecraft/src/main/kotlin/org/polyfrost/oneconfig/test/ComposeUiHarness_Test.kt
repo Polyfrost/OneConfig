@@ -21,6 +21,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.RenderThreadDispatcher
 import java.io.File
 
 //? if >= 1.21.10 {
+import net.minecraft.client.Screenshot
 import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
@@ -286,9 +287,9 @@ object ComposeUiHarness_Test {
 
     private fun shot() {
         //? if >= 26.1 {
-        net.minecraft.client.Screenshot.grab(Minecraft.getInstance(), false)
+        Screenshot.grab(Minecraft.getInstance(), false)
         //?} else if >= 1.21.10
-        //net.minecraft.client.Screenshot.grab(Minecraft.getInstance().gameDirectory, Minecraft.getInstance().mainRenderTarget) {}
+        //Screenshot.grab(Minecraft.getInstance().gameDirectory, Minecraft.getInstance().mainRenderTarget) {}
     }
 
     private fun dump(label: String) {

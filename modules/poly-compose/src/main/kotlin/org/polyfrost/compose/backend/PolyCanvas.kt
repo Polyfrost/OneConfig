@@ -13,25 +13,28 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PointMode
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.Vertices
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
-import org.polyfrost.compose.render.PolyPath
-import org.polyfrost.compose.render.PolyBitmap
-import org.polyfrost.compose.render.PolyRenderer
-import org.polyfrost.compose.render.RenderContext
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import org.polyfrost.compose.render.PolyShadow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import java.util.WeakHashMap
 import kotlin.math.abs
 import kotlin.math.min
 import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyPath
+import org.polyfrost.compose.render.PolyRenderer
+import org.polyfrost.compose.render.PolyShadow
+import org.polyfrost.compose.render.RenderContext
 
 interface PolyDrawCanvas : Canvas {
     fun polyOp(op: (PolyCanvas) -> Unit)
 }
 
-private val recolorCache = java.util.WeakHashMap<PolyBitmap, MutableMap<List<Float>, PolyBitmap>>()
+private val recolorCache = WeakHashMap<PolyBitmap, MutableMap<List<Float>, PolyBitmap>>()
 
 private fun recolored(bitmap: PolyBitmap, matrix: ColorMatrix): PolyBitmap = synchronized(recolorCache) {
     val m = matrix.values
@@ -151,7 +154,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     private fun shape(x: Float, y: Float, w: Float, h: Float, radius: Float, paint: PolyPaint) {
         if (w <= 0f || h <= 0f) return
         if (paint.blur > 0f) {
-            r.shadow(x, y, w, h, radius, PolyShadow(org.polyfrost.compose.render.PolyColor(paint.argb()), paint.blur, 0f, 0f, 0f))
+            r.shadow(x, y, w, h, radius, PolyShadow(PolyColor(paint.argb()), paint.blur, 0f, 0f, 0f))
             return
         }
         if (paint.style == PaintingStyle.Stroke) {
@@ -210,7 +213,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         val sw = pp.strokeWidth.coerceAtLeast(1f)
         val c = pp.argb()
         when (pointMode) {
-            PointMode.Points -> for (k in points.indices step 2) r.rect(points[k] - sw / 2f, points[k + 1] - sw / 2f, sw, sw, c, if (pp.strokeCap == androidx.compose.ui.graphics.StrokeCap.Round) sw / 2f else 0f)
+            PointMode.Points -> for (k in points.indices step 2) r.rect(points[k] - sw / 2f, points[k + 1] - sw / 2f, sw, sw, c, if (pp.strokeCap == StrokeCap.Round) sw / 2f else 0f)
             PointMode.Lines -> for (k in 0 until points.size - 3 step 4) r.line(points[k], points[k + 1], points[k + 2], points[k + 3], c, sw)
             else -> for (k in 0 until points.size - 3 step 2) r.line(points[k], points[k + 1], points[k + 2], points[k + 3], c, sw)
         }

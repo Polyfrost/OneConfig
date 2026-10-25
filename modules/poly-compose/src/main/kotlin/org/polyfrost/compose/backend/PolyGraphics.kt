@@ -1,5 +1,6 @@
 package org.polyfrost.compose.backend
 
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
@@ -34,8 +35,6 @@ import androidx.compose.ui.graphics.platform.PlatformGraphics
 import androidx.compose.ui.graphics.platform.PlatformRenderEffect
 import androidx.compose.ui.graphics.platform.PlatformShader
 import androidx.compose.ui.graphics.toArgb
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.render.PolyGradient
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -45,6 +44,8 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyGradient
 
 object PolyGraphics : PlatformGraphics {
     override fun createCanvas(image: ImageBitmap): Canvas = error("drawing into ImageBitmap is not supported")
@@ -260,7 +261,7 @@ class PolyComposePath : Path {
     override fun addOval(oval: Rect, direction: Path.Direction) {
         val empty = isEmpty
         arcTo(oval, 0f, 359.999f, true); close()
-        if (empty && oval.width == oval.height) roundRect = RoundRect(oval, androidx.compose.ui.geometry.CornerRadius(oval.width / 2f))
+        if (empty && oval.width == oval.height) roundRect = RoundRect(oval, CornerRadius(oval.width / 2f))
     }
 
     override fun addRoundRect(roundRect: RoundRect, direction: Path.Direction) {
