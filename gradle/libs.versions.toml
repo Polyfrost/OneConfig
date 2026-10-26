@@ -30,7 +30,7 @@ errorprone-plugin = "5.1.1"
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
 # Compose
-compose = "1.13.0-alpha02"
+compose = "1.13.0-beta01"
 androidx-compose-runtime = "1.13.0-alpha03"
 compose-navigation = "2.10.0-rc01"
 skiko = "0.154.0"
