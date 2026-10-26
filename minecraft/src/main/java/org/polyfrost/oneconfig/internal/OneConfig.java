@@ -250,11 +250,11 @@ public class OneConfig
         HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
         //? if >= 1.21.11 {
-        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, true)) BlazeHud.markDirty();
+        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, true, true)) BlazeHud.markDirty();
         //?} else {
         /*if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, false)) {
-            GlHost.INSTANCE.drawHudGl(ctx -> {
-                HudManager.INSTANCE.render(ctx, sw, sh);
+            GlHost.INSTANCE.drawHudGl((ctx, volatileCtx) -> {
+                HudManager.INSTANCE.render(ctx, sw, sh, volatileCtx);
                 return Unit.INSTANCE;
             });
         }

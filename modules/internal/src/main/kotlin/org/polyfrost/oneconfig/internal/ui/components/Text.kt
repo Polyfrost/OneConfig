@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
@@ -114,6 +115,7 @@ fun Text(
     textAlign: TextAlign = TextAlign.Start,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+    colorProducer: ColorProducer? = null,
 ) {
     when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
         is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
@@ -129,7 +131,8 @@ fun Text(
             ),
             maxLines = maxLines,
             overflow = overflow,
-            modifier = modifier
+            modifier = modifier,
+            color = colorProducer,
         )
         is Iterable<*> -> {
             Column {

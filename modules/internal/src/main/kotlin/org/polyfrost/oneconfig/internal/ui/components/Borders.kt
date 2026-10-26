@@ -7,12 +7,51 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSimple
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.ceil
+import kotlin.math.min
+import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
+
+fun Modifier.animatedFrame(
+    shape: Shape,
+    fill: () -> Color = { Color.Transparent },
+    accentAlpha: () -> Float = { 0f },
+    border: () -> Color,
+) = drawWithCache {
+    val outline = shape.createOutline(size, layoutDirection, this)
+    val strokeWidth = min(ceil(1.dp.toPx()), ceil(size.minDimension / 2f))
+    val half = strokeWidth / 2f
+    val stroke = Stroke(strokeWidth)
+    val inset = Size(size.width - strokeWidth, size.height - strokeWidth)
+    val accent = AccentBrush
+    onDrawWithContent {
+        val f = fill()
+        if (f.alpha > 0f) drawOutline(outline, f)
+        val a = accentAlpha()
+        if (a > 0f) drawOutline(outline, accent, a)
+        drawContent()
+        val b = border()
+        if (b.alpha <= 0f) return@onDrawWithContent
+        val rr = (outline as? Outline.Rounded)?.roundRect
+        when {
+            outline is Outline.Rectangle -> drawRect(b, Offset(half, half), inset, style = stroke)
+            rr != null && rr.isSimple && rr.topLeftCornerRadius.x >= half ->
+                drawRoundRect(b, Offset(half, half), inset, CornerRadius(rr.topLeftCornerRadius.x - half, rr.topLeftCornerRadius.y - half), stroke)
+            else -> drawOutline(outline, b, style = stroke)
+        }
+    }
+}
 
 fun Modifier.topBorder(
     color: Color,

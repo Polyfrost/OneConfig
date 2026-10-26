@@ -14,7 +14,11 @@ class PolyColor @JvmOverloads constructor(
     private var staticArgb: Int = argb
 
     var argb: Int
-        get() = if (chroma) chromaArgb(staticArgb, chromaSpeed) else staticArgb
+        get() {
+            if (!chroma) return staticArgb
+            chromaReads++
+            return chromaArgb(staticArgb, chromaSpeed)
+        }
         set(value) {
             staticArgb = value
         }
@@ -113,6 +117,9 @@ class PolyColor @JvmOverloads constructor(
 
     companion object {
         const val CHROMA_CYCLE_SECONDS = 10.0
+
+        @JvmField
+        var chromaReads = 0
 
         val TRANSPARENT get() = PolyColor(0x00000000)
         val WHITE get() = PolyColor(0xFFFFFFFF.toInt())

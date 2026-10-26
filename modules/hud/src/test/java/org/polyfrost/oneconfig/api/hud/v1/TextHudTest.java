@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.api.hud.v1;
 
-import androidx.compose.runtime.MutableState;
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +64,26 @@ public class TextHudTest {
     }
 
     @Test
+    void unchangedInputsKeepTextAndChangedInputsRebuildIt() throws Exception {
+        TestMutableTextHud hud = new TestMutableTextHud("Value");
+        hud.update();
+        hud.update();
+        assertEquals("LabelValue", displayText(hud));
+
+        TestMutableTextHud clone = (TestMutableTextHud) hud.clone();
+        clone.update();
+        assertEquals("LabelValue", displayText(clone));
+
+        hud.setPrefix("Other");
+        hud.update();
+        assertEquals("OtherValue", displayText(hud));
+
+        hud.setText("Next");
+        hud.update();
+        assertEquals("OtherNext", displayText(hud));
+    }
+
+    @Test
     void bracketsWrapTheWholeLine() throws Exception {
         TestMutableTextHud hud = new TestMutableTextHud("Value");
         hud.update();
@@ -85,11 +104,10 @@ public class TextHudTest {
         assertEquals("", displayText(hud));
     }
 
-    @SuppressWarnings("unchecked")
     private static String displayText(TextHud hud) throws Exception {
-        Field field = TextHud.class.getDeclaredField("displayTextState");
+        Field field = TextHud.class.getDeclaredField("displayText");
         field.setAccessible(true);
-        return ((MutableState<String>) field.get(hud)).getValue();
+        return (String) field.get(hud);
     }
 
     private static class TestDateTimeHud extends TextHud.DateTime {

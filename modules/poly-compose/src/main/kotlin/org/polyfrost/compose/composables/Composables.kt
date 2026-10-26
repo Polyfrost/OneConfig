@@ -125,6 +125,28 @@ fun PolyMcText(
 }
 
 @Composable
+fun PolyMcText(
+    text: () -> String,
+    outlineColor: PolyColor?,
+    color: PolyColor = PolyColor.WHITE,
+    shadow: Boolean = true,
+    scale: Float = 1f,
+    modifier: PolyModifier = PolyModifier,
+) {
+    ComposeNode<McTextNode, PolyApplier>(
+        factory = { McTextNode() },
+        update = {
+            set(text) { textProvider = it; this.text = it(); remeasure() }
+            set(scale) { this.scale = it; remeasure() }
+            set(color) { this.color = it }
+            set(shadow) { this.shadow = it }
+            set(outlineColor) { this.outlineColor = it }
+            set(modifier) { modifier.applyTo(style); remeasure() }
+        },
+    )
+}
+
+@Composable
 fun PolySpacer(width: Float = 0f, height: Float = 0f) {
     ComposeNode<SpacerNode, PolyApplier>(
         factory = { SpacerNode() },

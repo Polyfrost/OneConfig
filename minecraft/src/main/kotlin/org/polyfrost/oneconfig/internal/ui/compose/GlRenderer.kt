@@ -9,10 +9,12 @@ import org.lwjgl.opengl.GL14
 import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
+import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
 import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
 import org.polyfrost.oneconfig.internal.ui.TextureRenderer
 import org.slf4j.LoggerFactory
@@ -20,6 +22,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.IntBuffer
 import java.util.IdentityHashMap
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 //? if = 1.21.1 {
@@ -34,7 +37,7 @@ import net.minecraft.client.renderer.GameRenderer
 import org.joml.Matrix4f
 *///?}
 
-class GlRenderer private constructor(private val inLive: Boolean) : PolyTessellator(), TextureRenderer {
+class GlRenderer private constructor(private val inLive: Boolean) : PolyTessellator(), TextureRenderer, CapturingRenderer {
     constructor() : this(false)
 
     private val batches = ArrayList<GlProgram.Batch>()
@@ -42,7 +45,47 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
     private class Live(val at: Int, val state: State, val draw: (PolyRenderer) -> Unit)
     private val lives = ArrayList<Live>()
 
+    private val screenW = Platform.screen().viewportWidth()
+    private val screenH = Platform.screen().viewportHeight()
+    private val guiW = Platform.screen().guiWidth()
+
     override fun bitmapTexture(bitmap: PolyBitmap): Any = GlTextures.bitmap(bitmap)
+
+    private class Captured(val batches: List<GlProgram.Batch>, val lives: List<Live>)
+
+    override fun mark(): Any {
+        flush()
+        return intArrayOf(batches.size, lives.size)
+    }
+
+    override fun since(mark: Any): Any {
+        flush()
+        val m = mark as IntArray
+        return Captured(ArrayList(batches.subList(m[0], batches.size)), lives.subList(m[1], lives.size).map { Live(it.at - m[0], it.state, it.draw) })
+    }
+
+    override fun valid(captured: Any): Boolean = (captured as Captured).batches.all { GlTextures.alive(it.texture) }
+
+    override fun append(captured: Any) {
+        flush()
+        val c = captured as Captured
+        for (l in c.lives) lives.add(Live(l.at + batches.size, l.state, l.draw))
+        batches.addAll(c.batches)
+    }
+
+    override fun writeStateKey() {
+        super.writeStateKey()
+        keyAdd(screenW.toFloat()); keyAdd(screenH.toFloat()); keyAdd(guiW.toFloat())
+    }
+
+    fun matches(): Boolean =
+        screenW == Platform.screen().viewportWidth() && screenH == Platform.screen().viewportHeight() && guiW == Platform.screen().guiWidth()
+
+    fun reset() {
+        batches.clear()
+        lives.clear()
+        resetTessellator()
+    }
 
     override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
         batches.add(GlProgram.Batch(texture, premultiplied, nearest, verts, colors))
@@ -52,6 +95,32 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
         if (inLive) return draw(this)
         flush()
         lives.add(Live(batches.size, state.copy(), draw))
+    }
+
+    override fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float) {
+        if (inLive || '§' in text) return super.mcTextLive(text, x, y, color, shadow, scale)
+        flush()
+        val start = batches.size
+        mcText(text, x, y, -1, shadow, scale)
+        flush()
+        if (batches.size == start) return
+        val tail = batches.subList(start, batches.size)
+        val baked = ArrayList(tail)
+        tail.clear()
+        val base = baked.map { it.colors.copyOf() }
+        val alpha = state.alpha
+        lives.add(Live(batches.size, state.copy()) { r ->
+            val c = mulAlpha(color(), alpha)
+            if (c ushr 24 != 0) {
+                val sc = mulAlpha((c and -0x1000000) or ((c and 0xFCFCFC) shr 2), alpha)
+                for (k in baked.indices) {
+                    val dst = baked[k].colors
+                    val src = base[k]
+                    for (i in dst.indices) dst[i] = if (src[i] and 0xFFFFFF == 0xFFFFFF) c else sc
+                }
+                (r as GlRenderer).batches.addAll(baked)
+            }
+        })
     }
 
     override fun texture(target: RenderTarget, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, alpha: Float) {
@@ -65,34 +134,125 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
 
     fun draw(fbo: Int, w: Int, h: Int, topDown: Boolean, clear: Boolean, kept: Boolean = false) {
         flush()
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo)
-        GL11.glViewport(0, 0, w, h)
-        GL11.glDisable(GL11.GL_SCISSOR_TEST)
-        if (clear) {
-            GL11.glColorMask(true, true, true, true)
-            GL11.glClearColor(0f, 0f, 0f, 0f)
-            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT)
-        }
-        val segments = segments()
-        if (batches.isNotEmpty() || segments.isNotEmpty()) GlProgram.draw(batches, w, h, topDown, segments, kept)
-        GlTextures.endFrame()
+        drawBatches(fbo, w, h, topDown, clear, batches, segments(lives), kept, false)
     }
 
     //? if = 1.21.1 {
     /*fun drawVanilla(w: Int, h: Int, topDown: Boolean) {
         flush()
-        val segments = segments()
+        val segments = segments(lives)
         if (batches.isNotEmpty() || segments.isNotEmpty()) VanillaProgram.draw(batches, w, h, topDown, segments)
         GlTextures.endFrame()
     }
     *///?}
 
-    private fun segments() = lives.map { l ->
-        val r = GlRenderer(true)
-        r.state = l.state.copy()
-        l.draw(r)
-        r.flush()
-        GlProgram.Segment(l.at, r.batches)
+    private fun flushPending() = flush()
+
+    private fun replay(lives: List<Live>): List<GlProgram.Segment> = lives.map { l ->
+        reset()
+        state = l.state.copy()
+        l.draw(this)
+        flush()
+        GlProgram.Segment(l.at, ArrayList(batches))
+    }
+
+    internal class Layer(private val coalesce: Boolean = false) {
+        private var batches: List<GlProgram.Batch> = emptyList()
+        private var lives: List<Live> = emptyList()
+        private var raw: List<GlProgram.Batch> = emptyList()
+        private var rawLives: List<Live> = emptyList()
+        private var stable = 0
+
+        fun take(renderer: GlRenderer) {
+            renderer.flushPending()
+            val next = renderer.batches
+            val nextLives = renderer.lives
+            if (coalesce && same(next, raw) && sameLives(nextLives, rawLives)) {
+                idle()
+                return
+            }
+            raw = ArrayList(next)
+            rawLives = ArrayList(nextLives)
+            batches = raw
+            lives = rawLives
+            stable = 0
+        }
+
+        private fun idle() {
+            if (++stable == COALESCE_FRAMES) coalesce()
+            if (batches !== raw && batches.any { !GlTextures.alive(it.texture) }) {
+                batches = raw
+                lives = rawLives
+            }
+        }
+
+        private fun same(a: List<GlProgram.Batch>, b: List<GlProgram.Batch>) = a.size == b.size && a.indices.all { a[it] === b[it] }
+
+        private fun sameLives(a: List<Live>, b: List<Live>) =
+            a.size == b.size && a.indices.all { a[it].at == b[it].at && a[it].state === b[it].state && a[it].draw === b[it].draw }
+
+        private fun coalesce() {
+            val out = ArrayList<GlProgram.Batch>()
+            val outLives = ArrayList<Live>()
+            val run = ArrayList<GlProgram.Batch>()
+            fun emit() {
+                if (run.size == 1) out.add(run[0]) else if (run.isNotEmpty()) out.add(GlProgram.Batch.merge(run))
+                run.clear()
+            }
+            var li = 0
+            for (i in 0..raw.size) {
+                if (li < rawLives.size && rawLives[li].at == i) emit()
+                while (li < rawLives.size && rawLives[li].at == i) {
+                    val l = rawLives[li++]
+                    outLives.add(Live(out.size, l.state, l.draw))
+                }
+                if (i == raw.size) break
+                val b = raw[i]
+                if (run.isNotEmpty() && !run[0].sameKey(b)) emit()
+                run.add(b)
+            }
+            emit()
+            if (out.size == raw.size) return
+            batches = out
+            lives = outLives
+        }
+
+        companion object {
+            fun draw(fbo: Int, w: Int, h: Int, topDown: Boolean, clear: Boolean, vararg layers: Layer) {
+                val all = ArrayList<GlProgram.Batch>()
+                val allLives = ArrayList<Live>()
+                for (layer in layers) {
+                    for (l in layer.lives) allLives.add(Live(l.at + all.size, l.state, l.draw))
+                    all.addAll(layer.batches)
+                }
+                drawBatches(fbo, w, h, topDown, clear, all, segments(allLives), false, true)
+            }
+        }
+    }
+
+    private companion object {
+        private const val COALESCE_FRAMES = 60
+        private var liveRenderer: GlRenderer? = null
+
+        fun segments(lives: List<Live>): List<GlProgram.Segment> {
+            if (lives.isEmpty()) return emptyList()
+            return (liveRenderer ?: GlRenderer(true).also { liveRenderer = it }).replay(lives)
+        }
+
+        fun drawBatches(fbo: Int, w: Int, h: Int, topDown: Boolean, clear: Boolean, batches: List<GlProgram.Batch>, segments: List<GlProgram.Segment>, kept: Boolean, arena: Boolean) {
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo)
+            GL11.glViewport(0, 0, w, h)
+            GL11.glDisable(GL11.GL_SCISSOR_TEST)
+            if (clear) {
+                GL11.glColorMask(true, true, true, true)
+                GL11.glClearColor(0f, 0f, 0f, 0f)
+                GL11.glClear(GL11.GL_COLOR_BUFFER_BIT)
+            }
+            if (batches.isNotEmpty() || segments.isNotEmpty()) {
+                if (arena) GlProgram.drawArena(batches, w, h, topDown, segments) else GlProgram.draw(batches, w, h, topDown, segments, kept)
+            }
+            GlTextures.endFrame()
+        }
     }
 }
 
@@ -147,7 +307,30 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
 *///?}
 
 internal object GlProgram {
-    class Batch(val texture: Any, val premultiplied: Boolean, val nearest: Boolean, val verts: FloatArray, val colors: IntArray)
+    class Batch(val texture: Any, val premultiplied: Boolean, val nearest: Boolean, val verts: FloatArray, val colors: IntArray) {
+        @JvmField var arenaAt = 0
+        @JvmField var arenaGen = -1
+        @JvmField var seen = -1L
+
+        fun sameKey(o: Batch) = texture === o.texture && premultiplied == o.premultiplied && nearest == o.nearest
+
+        companion object {
+            fun merge(list: List<Batch>): Batch {
+                var n = 0
+                for (b in list) n += b.colors.size
+                val verts = FloatArray(n * 4)
+                val colors = IntArray(n)
+                var o = 0
+                for (b in list) {
+                    System.arraycopy(b.verts, 0, verts, o * 4, b.colors.size * 4)
+                    System.arraycopy(b.colors, 0, colors, o, b.colors.size)
+                    o += b.colors.size
+                }
+                val first = list[0]
+                return Batch(first.texture, first.premultiplied, first.nearest, verts, colors)
+            }
+        }
+    }
     class Segment(val at: Int, val batches: List<Batch>)
 
     private val LOG = LoggerFactory.getLogger(GlProgram::class.java)
@@ -163,6 +346,11 @@ internal object GlProgram {
     }
     private val keptVbo = Vbo()
     private val scratchVbo = Vbo()
+    private val arenaVbo = Vbo()
+    private var arenaUsed = 0
+    private var arenaGen = 0
+    private var arenaFrame = 0L
+    private const val MIN_ARENA = 1 shl 14
     private var ibo = 0
     private var iboQuads = 0
     private var uScale = 0
@@ -189,6 +377,7 @@ internal object GlProgram {
         GL20.glUniform1i(GL20.glGetUniformLocation(p, "uTex"), 0)
         keptVbo.id = GL15.glGenBuffers()
         scratchVbo.id = GL15.glGenBuffers()
+        arenaVbo.id = GL15.glGenBuffers()
         ibo = GL15.glGenBuffers()
         if (core) vao = GL30.glGenVertexArrays()
         program = p
@@ -225,32 +414,10 @@ internal object GlProgram {
         GL20.glEnableVertexAttribArray(0)
         GL20.glEnableVertexAttribArray(1)
         GL20.glEnableVertexAttribArray(2)
-        GL20.glVertexAttribPointer(0, 2, GL11.GL_FLOAT, false, STRIDE, 0L)
-        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, STRIDE, 8L)
-        GL20.glVertexAttribPointer(2, 4, GL11.GL_UNSIGNED_BYTE, true, STRIDE, 16L)
+        attribPointers()
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, ibo)
         ensureIndices(vertices / 4)
-
-        GL20.glUniform2f(uScale, 2f / w, if (topDown) 2f / h else -2f / h)
-        GL20.glUniform2f(uOffset, -1f, if (topDown) -1f else 1f)
-        GL11.glDisable(GL11.GL_CULL_FACE)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
-        GL11.glDisable(GL11.GL_STENCIL_TEST)
-        GL11.glDisable(GL11.GL_SCISSOR_TEST)
-        if (!core) GL11.glDisable(GL11.GL_ALPHA_TEST)
-        GL11.glColorMask(true, true, true, true)
-        GL11.glEnable(GL11.GL_BLEND)
-        GL14.glBlendEquation(GL14.GL_FUNC_ADD)
-        GL14.glBlendFuncSeparate(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
-        GL13.glActiveTexture(GL13.GL_TEXTURE0)
-
-        fun drawBatch(b: Batch, first: Int) {
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, GlTextures.id(b.texture))
-            GL20.glUniform1i(uPremul, if (b.premultiplied) 1 else 0)
-            if (b.nearest) filter(GL11.GL_NEAREST)
-            GL11.glDrawElements(GL11.GL_TRIANGLES, b.colors.size / 4 * 6, GL11.GL_UNSIGNED_INT, first * 6L * 4L)
-            if (b.nearest) filter(GL11.GL_LINEAR)
-        }
+        setupState(w, h, topDown)
 
         var first = 0
         var liveFirst = (vertices - liveVerts) / 4
@@ -267,6 +434,130 @@ internal object GlProgram {
         GL20.glDisableVertexAttribArray(1)
         GL20.glDisableVertexAttribArray(2)
         if (core) GL30.glBindVertexArray(0)
+    }
+
+    fun drawArena(batches: List<Batch>, w: Int, h: Int, topDown: Boolean, live: List<Segment>) {
+        if (program == 0) init()
+        val frame = ++arenaFrame
+        val gen = arenaGen
+        var inArena = 0
+        var adding = 0
+        for (b in batches) {
+            if (b.arenaGen == gen) inArena += b.colors.size
+            else if (b.seen == frame - 1) adding += b.colors.size
+        }
+        val rebuild = arenaUsed + adding > arenaVbo.size || arenaUsed - inArena > maxOf(inArena, MIN_ARENA)
+        if (rebuild) arenaGen++
+        val newGen = arenaGen
+        val adds = ArrayList<Batch>()
+        for (b in batches) {
+            if (b.arenaGen == newGen) continue
+            if (b.arenaGen == gen || b.seen == frame - 1) {
+                b.arenaGen = newGen
+                adds.add(b)
+            }
+        }
+        var scratchVerts = 0
+        for (b in batches) {
+            if (b.arenaGen != newGen) scratchVerts += b.colors.size
+            b.seen = frame
+        }
+
+        GL20.glUseProgram(program)
+        if (core) GL30.glBindVertexArray(vao)
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, arenaVbo.id)
+        if (rebuild) {
+            var need = 0
+            for (b in adds) need += b.colors.size
+            arenaVbo.size = maxOf(Integer.highestOneBit(maxOf(need, 1)) shl 2, MIN_ARENA)
+            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, arenaVbo.size.toLong() * STRIDE, GL15.GL_DYNAMIC_DRAW)
+            arenaUsed = 0
+        }
+        if (adds.isNotEmpty()) {
+            var at = arenaUsed
+            for (b in adds) { b.arenaAt = at; at += b.colors.size }
+            upload(arenaUsed, adds)
+            arenaUsed = at
+        }
+
+        var liveVerts = 0
+        for (seg in live) for (b in seg.batches) liveVerts += b.colors.size
+        val scratchSize = scratchVerts + liveVerts
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, scratchVbo.id)
+        if (scratchSize > 0) {
+            scratchVbo.size = maxOf(scratchSize, scratchVbo.size)
+            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, scratchVbo.size.toLong() * STRIDE, GL15.GL_STREAM_DRAW)
+            scratchVbo.uploaded = null
+            var at = if (scratchVerts > 0) upload(0, batches.filter { it.arenaGen != newGen }) else 0
+            for (seg in live) if (seg.batches.isNotEmpty()) at += upload(at, seg.batches)
+        }
+
+        GL20.glEnableVertexAttribArray(0)
+        GL20.glEnableVertexAttribArray(1)
+        GL20.glEnableVertexAttribArray(2)
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, ibo)
+        ensureIndices(maxOf(arenaVbo.size, scratchVbo.size) / 4)
+        setupState(w, h, topDown)
+
+        var bound = -1
+        fun use(id: Int) {
+            if (bound == id) return
+            bound = id
+            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, id)
+            attribPointers()
+        }
+        var scratchFirst = 0
+        var liveFirst = scratchVerts / 4
+        var seg = 0
+        for (i in 0..batches.size) {
+            while (seg < live.size && live[seg].at == i) {
+                use(scratchVbo.id)
+                for (b in live[seg++].batches) { drawBatch(b, liveFirst); liveFirst += b.colors.size / 4 }
+            }
+            if (i == batches.size) break
+            val b = batches[i]
+            if (b.arenaGen == newGen) {
+                use(arenaVbo.id)
+                drawBatch(b, b.arenaAt / 4)
+            } else {
+                use(scratchVbo.id)
+                drawBatch(b, scratchFirst)
+                scratchFirst += b.colors.size / 4
+            }
+        }
+        GL20.glDisableVertexAttribArray(0)
+        GL20.glDisableVertexAttribArray(1)
+        GL20.glDisableVertexAttribArray(2)
+        if (core) GL30.glBindVertexArray(0)
+    }
+
+    private fun attribPointers() {
+        GL20.glVertexAttribPointer(0, 2, GL11.GL_FLOAT, false, STRIDE, 0L)
+        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, STRIDE, 8L)
+        GL20.glVertexAttribPointer(2, 4, GL11.GL_UNSIGNED_BYTE, true, STRIDE, 16L)
+    }
+
+    private fun setupState(w: Int, h: Int, topDown: Boolean) {
+        GL20.glUniform2f(uScale, 2f / w, if (topDown) 2f / h else -2f / h)
+        GL20.glUniform2f(uOffset, -1f, if (topDown) -1f else 1f)
+        GL11.glDisable(GL11.GL_CULL_FACE)
+        GL11.glDisable(GL11.GL_DEPTH_TEST)
+        GL11.glDisable(GL11.GL_STENCIL_TEST)
+        GL11.glDisable(GL11.GL_SCISSOR_TEST)
+        if (!core) GL11.glDisable(GL11.GL_ALPHA_TEST)
+        GL11.glColorMask(true, true, true, true)
+        GL11.glEnable(GL11.GL_BLEND)
+        GL14.glBlendEquation(GL14.GL_FUNC_ADD)
+        GL14.glBlendFuncSeparate(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
+        GL13.glActiveTexture(GL13.GL_TEXTURE0)
+    }
+
+    private fun drawBatch(b: Batch, first: Int) {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, GlTextures.id(b.texture))
+        GL20.glUniform1i(uPremul, if (b.premultiplied) 1 else 0)
+        if (b.nearest) filter(GL11.GL_NEAREST)
+        GL11.glDrawElements(GL11.GL_TRIANGLES, b.colors.size / 4 * 6, GL11.GL_UNSIGNED_INT, first * 6L * 4L)
+        if (b.nearest) filter(GL11.GL_LINEAR)
     }
 
     private fun filter(mode: Int) {
@@ -337,10 +628,16 @@ internal object GlTextures {
     private val external = HashMap<Int, Tex>()
     private val pages = IdentityHashMap<PolyGlyphPage.Page, IntArray>()
     private var frame = 0L
+    private var scanAt = 0L
 
-    fun bitmap(bitmap: PolyBitmap): Tex = bitmaps.getOrPut(bitmap) { Tex(bitmap, 0, frame) }.also { it.lastUsed = frame }
+    fun bitmap(bitmap: PolyBitmap): Tex = bitmaps.getOrPut(bitmap) {
+        scanAt = min(scanAt, frame + RELEASE_FRAMES + 1)
+        Tex(bitmap, 0, frame)
+    }.also { it.lastUsed = frame }
 
     fun external(id: Int): Tex = external.getOrPut(id) { Tex(null, id, 0) }
+
+    fun alive(key: Any): Boolean = key !is Tex || key.bitmap == null || bitmaps[key.bitmap] === key
 
     fun id(key: Any): Int = when (key) {
         is PolyGlyphPage.Page -> glyphPage(key)
@@ -429,14 +726,19 @@ internal object GlTextures {
 
     fun endFrame() {
         frame++
+        if (external.size > 64) external.clear()
+        if (frame < scanAt) return
+        var next = Long.MAX_VALUE
         val it = bitmaps.values.iterator()
         while (it.hasNext()) {
             val t = it.next()
-            if (frame - t.lastUsed > 600) {
+            if (frame - t.lastUsed > RELEASE_FRAMES) {
                 if (t.id != 0) deleteTexture(t.id)
                 it.remove()
-            }
+            } else next = min(next, t.lastUsed + RELEASE_FRAMES + 1)
         }
-        if (external.size > 64) external.clear()
+        scanAt = next
     }
+
+    private const val RELEASE_FRAMES = 600L
 }

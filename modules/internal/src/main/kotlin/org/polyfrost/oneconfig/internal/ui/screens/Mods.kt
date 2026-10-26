@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
@@ -55,6 +54,7 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -683,7 +683,7 @@ private fun FavoriteStar(
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha by animateFloatAsState(
+    val alpha = animateFloatAsState(
         when {
             favorite -> 1f
             !hoverHint -> 0f
@@ -697,7 +697,7 @@ private fun FavoriteStar(
     Box(
         modifier = modifier
             .size(24.dp)
-            .alpha(alpha)
+            .graphicsLayer { this.alpha = alpha.value }
             .then(
                 if (interactive) {
                     Modifier
@@ -724,7 +724,7 @@ private fun HideToggle(
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha by animateFloatAsState(
+    val alpha = animateFloatAsState(
         when {
             hidden || hovered -> 1f
             cardHovered -> 0.6f
@@ -735,7 +735,7 @@ private fun HideToggle(
     Box(
         modifier = modifier
             .size(24.dp)
-            .alpha(alpha)
+            .graphicsLayer { this.alpha = alpha.value }
             .onClick(interactionSource) { ModHidden.toggle(mod.id) }
             .pointerHoverIcon(PointerIcon.Hand),
         contentAlignment = Alignment.Center,

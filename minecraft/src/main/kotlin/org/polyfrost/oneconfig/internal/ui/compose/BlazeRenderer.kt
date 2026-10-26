@@ -51,11 +51,14 @@ import net.minecraft.client.renderer.state.gui.GuiRenderState
 import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
 *///?}
 import net.minecraft.locale.Language
+import net.minecraft.util.ARGB
 import net.minecraft.network.chat.FormattedText
 import org.joml.Matrix3x2f
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.font.TextRenderable
 import net.minecraft.util.FormattedCharSequence
+import net.minecraft.network.chat.Style
+import net.minecraft.util.StringDecomposer
 import org.joml.Matrix4f
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.compose.render.PolyGlyphPage
@@ -120,7 +123,22 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         bitmapLog.addAll(c.bitmaps)
     }
 
-    override fun stateKey(): Any = listOf(super.stateKey(), guiScale, screenW, screenH)
+    override fun writeStateKey() {
+        super.writeStateKey()
+        keyAdd(guiScale); keyAdd(screenW.toFloat()); keyAdd(screenH.toFloat())
+    }
+
+    fun matches(guiScale: Float): Boolean {
+        val window = Minecraft.getInstance().window
+        return guiScale == this.guiScale && screenW == window.guiScaledWidth && screenH == window.guiScaledHeight
+    }
+
+    fun reset() {
+        ops.clear()
+        bitmapLog.clear()
+        bitmaps.clear()
+        resetTessellator()
+    }
 
     override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
         val box = rectGui(bounds[0], bounds[1], bounds[2], bounds[3]) ?: return
@@ -131,9 +149,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             else -> GlyphAtlas.page(PolyGlyphPage.pages[0]).setup()
         }
         val pipeline = if (premultiplied) RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA else RenderPipelines.GUI_TEXTURED
-        val mesh = Mesh(pipeline, setup, elementPose, verts, colors, box, keepVertices)
-        //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
-        ops.add { g -> g.guiRenderState.addGuiElement(mesh) }
+        ops.add(MeshOp(Mesh(pipeline, setup, elementPose, verts, colors, box, keepVertices)))
     }
 
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
@@ -144,29 +160,39 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         val font = Minecraft.getInstance().font
         text.lines().forEachIndexed { index, line ->
             if (line.isEmpty()) return@forEachIndexed
-            val m = Matrix3x2f().scale(1f / guiScale).translate(state.tx, state.ty).scale(state.sx, state.sy)
-                .translate(x, y + index * font.lineHeight * scale).scale(scale)
-            val seq = Language.getInstance().getVisualOrder(FormattedText.of(line))
-            val draw: (GuiGraphicsExtractor) -> Unit = { g ->
-                if (scissor != null) g.enableScissor(scissor.left(), scissor.top(), scissor.right(), scissor.bottom())
-                g.pose().pushMatrix()
-                g.pose().mul(m)
-                //~ if >= 26.1 'drawString' -> 'text'
-                g.text(font, seq, 0, 0, c, shadow)
-                g.pose().popMatrix()
-                if (scissor != null) g.disableScissor()
-            }
-            val baked = if (keepVertices && !line.contains("§k", ignoreCase = true)) bakeText(font, seq, m, c, shadow, scissor) else null
+            val m = lineMatrix(x, y, index, font.lineHeight, scale)
+            val seq = visualOrder(line)
+            val draw: (GuiGraphicsExtractor) -> Unit = { g -> vanillaText(g, font, seq, m, c, shadow, scissor) }
+            val baked = if (!keepVertices || line.contains("§k", ignoreCase = true)) null
+                else if ('§' in line || Language.getInstance().isDefaultRightToLeft) bakeText(font, seq, m, c, shadow, scissor)
+                else GlyphQuads.bake(font, line, m, c, shadow, scissor) ?: bakeText(font, seq, m, c, shadow, scissor)
             if (baked != null) {
-                ops.add { g ->
-                    //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
-                    if (baked.any { it.textureSetup().texure0()!!.isClosed }) draw(g) else for (mesh in baked) g.guiRenderState.addGuiElement(mesh)
-                }
+                ops.add(BakedTextOp(baked, draw))
                 return@forEachIndexed
             }
             ops.add(draw)
         }
     }
+
+    override fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float) {
+        if (!keepVertices || '§' in text || Language.getInstance().isDefaultRightToLeft) return super.mcTextLive(text, x, y, color, shadow, scale)
+        flush()
+        val alpha = state.alpha
+        val scissor = state.clip?.let { rectGui(it[0], it[1], it[2], it[3]) ?: return }
+        val font = Minecraft.getInstance().font
+        text.lines().forEachIndexed { index, line ->
+            if (line.isEmpty()) return@forEachIndexed
+            val m = lineMatrix(x, y, index, font.lineHeight, scale)
+            val seq = visualOrder(line)
+            val meshes = GlyphQuads.bake(font, line, m, -1, shadow, scissor, keep = false)
+            val op = LiveTextOp(meshes, color, alpha) { g, c -> vanillaText(g, font, seq, m, c, shadow, scissor) }
+            ops.add(op)
+        }
+    }
+
+    private fun lineMatrix(x: Float, y: Float, index: Int, lineHeight: Int, scale: Float): Matrix3x2f =
+        Matrix3x2f().scale(1f / guiScale).translate(state.tx, state.ty).scale(state.sx, state.sy)
+            .translate(x, y + index * lineHeight * scale).scale(scale)
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
         val a = mulAlpha(outlineColor, state.alpha) ushr 24
@@ -210,28 +236,18 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             meshes.add(Mesh(pipeline!!, setup, Matrix3x2f(), cap.verts.copyOf(cap.n * 4), cap.colors.copyOf(cap.n), bounds, true, scissor, TEXT_LIGHTMAP))
             cap = GlyphCapture()
         }
-        prepared.visit(object : Font.GlyphVisitor {
-            //? if >= 26.2 {
-            override fun acceptRenderable(renderable: TextRenderable) = accept(renderable)
-            //?} else {
-            /*override fun acceptGlyph(glyph: TextRenderable.Styled) = accept(glyph)
-            override fun acceptEffect(effect: TextRenderable) = accept(effect)
-            *///?}
-
-            fun accept(renderable: TextRenderable) {
-                val p = renderable.guiPipeline()
-                //~ if >= 26.2 'GUI_TEXT_INTENSITY' -> 'GUI_TEXT_GRAYSCALE'
-                if (p !== RenderPipelines.GUI_TEXT && p !== RenderPipelines.GUI_TEXT_GRAYSCALE) { unknown = true; return }
-                if (p !== pipeline || renderable.textureView() !== view) { close(); pipeline = p; view = renderable.textureView() }
-                renderable.render(pose, cap, FULL_BRIGHT, true)
-            }
-        })
+        visitRenderables(prepared) { renderable ->
+            val p = renderable.guiPipeline()
+            if (!isTextPipeline(p)) { unknown = true; return@visitRenderables }
+            if (p !== pipeline || renderable.textureView() !== view) { close(); pipeline = p; view = renderable.textureView() }
+            renderable.render(pose, cap, FULL_BRIGHT, true)
+        }
         if (unknown) return null
         close()
         return meshes
     }
 
-    private class GlyphCapture : VertexConsumer {
+    internal class GlyphCapture : VertexConsumer {
         var verts = FloatArray(64)
         var colors = IntArray(16)
         var n = 0
@@ -264,14 +280,19 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         quadPx(x0, y0, x0 + w * state.sx, y0 + h * state.sy, u0, v0, u1, v1, (a shl 24) or (a shl 16) or (a shl 8) or a)
     }
 
+    private var liveRenderer: BlazeRenderer? = null
+
     override fun live(draw: (PolyRenderer) -> Unit) {
         flush()
         val s = state.copy()
         ops.add { g ->
-            val r = BlazeRenderer(guiScale)
+            val r = liveRenderer ?: BlazeRenderer(guiScale).also { liveRenderer = it }
             r.state = s.copy()
             draw(r)
             for (op in r.finish()) op(g)
+            r.ops.clear()
+            r.bitmapLog.clear()
+            r.bitmaps.clear()
             GlyphAtlas.uploadDirty()
         }
     }
@@ -289,12 +310,48 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         return if (r <= l || b <= t) null else ScreenRectangle(l, t, r - l, b - t)
     }
 
+    internal class MeshOp(val mesh: Mesh) : (GuiGraphicsExtractor) -> Unit {
+        override fun invoke(g: GuiGraphicsExtractor) {
+            //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
+            g.guiRenderState.addGuiElement(mesh)
+        }
+    }
+
+    internal class LiveTextOp(
+        val meshes: List<Mesh>?, private val color: () -> Int, private val alpha: Float,
+        private val fallback: (GuiGraphicsExtractor, Int) -> Unit,
+    ) : (GuiGraphicsExtractor) -> Unit {
+        private val base = meshes?.map { it.colors.copyOf() }
+
+        override fun invoke(g: GuiGraphicsExtractor) {
+            val c = alphaMul(color(), alpha)
+            if (c ushr 24 == 0) return
+            if (meshes == null || meshes.any { it.closed }) return fallback(g, c)
+            val sc = ARGB.scaleRGB(c, 0.25f)
+            for (k in meshes.indices) {
+                val dst = meshes[k].colors
+                val src = base!![k]
+                for (i in dst.indices) dst[i] = if (src[i] and 0xFFFFFF == 0xFFFFFF) c else sc
+                //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
+                g.guiRenderState.addGuiElement(meshes[k])
+            }
+        }
+    }
+
+    private class BakedTextOp(val meshes: List<Mesh>, val draw: (GuiGraphicsExtractor) -> Unit) : (GuiGraphicsExtractor) -> Unit {
+        override fun invoke(g: GuiGraphicsExtractor) {
+            if (meshes.any { it.closed }) return draw(g)
+            //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
+            for (mesh in meshes) g.guiRenderState.addGuiElement(mesh)
+        }
+    }
+
     internal class Mesh(
         private val pipeline: RenderPipeline,
         private val textureSetup: TextureSetup,
         private val pose: Matrix3x2f,
         private val verts: FloatArray,
-        private val colors: IntArray,
+        internal val colors: IntArray,
         private val bounds: ScreenRectangle,
         private val keep: Boolean,
         private val scissor: ScreenRectangle? = null,
@@ -302,7 +359,36 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     ) : GuiElementRenderState {
         @JvmField var gpu: Any? = null
         @JvmField var lastDrawn = 0
+        private var drawn = false
         val vertexCount get() = colors.size
+        val closed: Boolean get() = textureSetup.texure0()?.isClosed == true
+
+
+        fun mergeable(o: Mesh): Boolean =
+            keep && o.keep && pipeline === o.pipeline && textureSetup == o.textureSetup && pose == o.pose &&
+                scissor == o.scissor && lightmap == o.lightmap
+
+        fun overlaps(b: ScreenRectangle): Boolean =
+            bounds.left() < b.right() && b.left() < bounds.right() && bounds.top() < b.bottom() && b.top() < bounds.bottom()
+
+        companion object {
+            fun merge(list: List<Mesh>): Mesh {
+                val first = list[0]
+                var n = 0
+                for (m in list) n += m.colors.size
+                val verts = FloatArray(n * 4)
+                val colors = IntArray(n)
+                var o = 0
+                var l = Int.MAX_VALUE; var t = Int.MAX_VALUE; var r = Int.MIN_VALUE; var b = Int.MIN_VALUE
+                for (m in list) {
+                    System.arraycopy(m.verts, 0, verts, o * 4, m.colors.size * 4)
+                    System.arraycopy(m.colors, 0, colors, o, m.colors.size)
+                    o += m.colors.size
+                    l = min(l, m.bounds.left()); t = min(t, m.bounds.top()); r = max(r, m.bounds.right()); b = max(b, m.bounds.bottom())
+                }
+                return Mesh(first.pipeline, first.textureSetup, first.pose, verts, colors, ScreenRectangle(l, t, r - l, b - t), true, first.scissor, first.lightmap)
+            }
+        }
 
         override fun buildVertices(consumer: VertexConsumer) {
             if (gpu != null) {
@@ -317,7 +403,9 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
                 val o = i * 4
                 vertex(consumer, verts[o], verts[o + 1], verts[o + 2], verts[o + 3], colors[i])
             }
-            if (keep && b != null && b.`oneconfig$getVertices`() - before == colors.size && b.`oneconfig$getElementsToFill`() == 0) {
+            val again = drawn
+            drawn = true
+            if (keep && again && b != null && b.`oneconfig$getVertices`() - before == colors.size && b.`oneconfig$getElementsToFill`() == 0) {
                 val size = b.`oneconfig$getVertexSize`()
                 val len = colors.size * size
                 val ptr = b.`oneconfig$getVertexPointer`() + size - len
@@ -335,9 +423,204 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         override fun scissorArea(): ScreenRectangle? = scissor
         override fun bounds() = bounds
     }
+
+    companion object {
+        fun coalesce(ops: List<(GuiGraphicsExtractor) -> Unit>): List<(GuiGraphicsExtractor) -> Unit> {
+            val out = ArrayList<(GuiGraphicsExtractor) -> Unit>()
+            val buckets = ArrayList<ArrayList<Mesh>?>()
+            val fixed = ArrayList<LiveTextOp?>()
+            val areas = ArrayList<ScreenRectangle>()
+            fun emit() {
+                for (i in buckets.indices) out.add(fixed[i] ?: buckets[i]!!.let { MeshOp(if (it.size == 1) it[0] else Mesh.merge(it)) })
+                buckets.clear()
+                fixed.clear()
+                areas.clear()
+            }
+            fun union(a: ScreenRectangle, b: ScreenRectangle): ScreenRectangle {
+                val l = min(a.left(), b.left()); val t = min(a.top(), b.top())
+                return ScreenRectangle(l, t, max(a.right(), b.right()) - l, max(a.bottom(), b.bottom()) - t)
+            }
+            fun place(m: Mesh) {
+                for (i in buckets.indices.reversed()) {
+                    val b = buckets[i]
+                    if (b != null && b[0].mergeable(m)) {
+                        b.add(m)
+                        areas[i] = union(areas[i], m.bounds())
+                        return
+                    }
+                    if (m.overlaps(areas[i]) && (b ?: fixed[i]!!.meshes!!).any { m.overlaps(it.bounds()) }) break
+                }
+                buckets.add(arrayListOf(m))
+                fixed.add(null)
+                areas.add(m.bounds())
+            }
+            for (op in ops) {
+                if (op is LiveTextOp && !op.meshes.isNullOrEmpty() && op.meshes.none { it.closed }) {
+                    buckets.add(null)
+                    fixed.add(op)
+                    areas.add(op.meshes.map { it.bounds() }.reduce(::union))
+                    continue
+                }
+                val meshes = when (op) {
+                    is MeshOp -> listOf(op.mesh)
+                    is BakedTextOp -> op.meshes.takeUnless { m -> m.any { it.closed } }
+                    else -> null
+                }
+                if (meshes == null) {
+                    emit()
+                    out.add(op)
+                } else {
+                    for (m in meshes) place(m)
+                }
+            }
+            emit()
+            return out
+        }
+    }
 }
 
 private const val FULL_BRIGHT = 0xF000F0
+
+private fun alphaMul(color: Int, alpha: Float): Int {
+    if (alpha >= 1f) return color
+    val a = ((color ushr 24) * alpha).roundToInt().coerceIn(0, 255)
+    return (a shl 24) or (color and 0x00FFFFFF)
+}
+
+private fun vanillaText(g: GuiGraphicsExtractor, font: Font, seq: FormattedCharSequence, m: Matrix3x2f, c: Int, shadow: Boolean, scissor: ScreenRectangle?) {
+    if (scissor != null) g.enableScissor(scissor.left(), scissor.top(), scissor.right(), scissor.bottom())
+    g.pose().pushMatrix()
+    g.pose().mul(m)
+    //~ if >= 26.1 'drawString' -> 'text'
+    g.text(font, seq, 0, 0, c, shadow)
+    g.pose().popMatrix()
+    if (scissor != null) g.disableScissor()
+}
+
+//~ if >= 26.2 'GUI_TEXT_INTENSITY' -> 'GUI_TEXT_GRAYSCALE'
+private fun isTextPipeline(p: RenderPipeline) = p === RenderPipelines.GUI_TEXT || p === RenderPipelines.GUI_TEXT_GRAYSCALE
+
+private inline fun visitRenderables(prepared: Font.PreparedText, crossinline accept: (TextRenderable) -> Unit) {
+    prepared.visit(object : Font.GlyphVisitor {
+        //? if >= 26.2 {
+        override fun acceptRenderable(renderable: TextRenderable) = accept(renderable)
+        //?} else {
+        /*override fun acceptGlyph(glyph: TextRenderable.Styled) = accept(glyph)
+        override fun acceptEffect(effect: TextRenderable) = accept(effect)
+        *///?}
+    })
+}
+
+private object GlyphQuads {
+    private class Glyph(
+        val advance: Float, val pipeline: RenderPipeline?, val view: GpuTextureView?,
+        val left: Float, val right: Float, val up: Float, val down: Float,
+        val u0: Float, val u1: Float, val v0: Float, val v1: Float,
+    )
+
+    private val UNSUPPORTED = Glyph(0f, null, null, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)
+    private val glyphs = arrayOfNulls<Glyph>(0x590)
+    private var font: Font? = null
+
+    init {
+        EventManager.register(ResourceFinishedLoading::class.java, Runnable { glyphs.fill(null) })
+    }
+
+    private fun glyph(font: Font, c: Char): Glyph {
+        glyphs[c.code]?.let { return it }
+        return probe(font, c).also { glyphs[c.code] = it }
+    }
+
+    private fun probe(font: Font, c: Char): Glyph {
+        val str = c.toString()
+        val advance = font.splitter.stringWidth(str)
+        val prepared = font.prepareText(FormattedCharSequence.forward(str, Style.EMPTY), 0f, 0f, -1, true, false, 0)
+        var found: TextRenderable? = null
+        var count = 0
+        visitRenderables(prepared) { found = it; count++ }
+        val r = found ?: return if (count == 0) Glyph(advance, null, null, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f) else UNSUPPORTED
+        if (count != 1 || !isTextPipeline(r.guiPipeline())) return UNSUPPORTED
+        val cap = BlazeRenderer.GlyphCapture()
+        r.render(Matrix4f(), cap, FULL_BRIGHT, true)
+        if (cap.n != 8) return UNSUPPORTED
+        val v = cap.verts
+        val l = v[16]; val up = v[17]; val down = v[21]; val rt = v[24]
+        val u0 = v[18]; val v0 = v[19]; val v1 = v[23]; val u1 = v[26]
+        val main = floatArrayOf(l, up, u0, v0, l, down, u0, v1, rt, down, u1, v1, rt, up, u1, v0)
+        val shadow = floatArrayOf(1f + l, 1f + up, u0, v0, 1f + l, 1f + down, u0, v1, 1f + rt, 1f + down, u1, v1, 1f + rt, 1f + up, u1, v0)
+        for (i in 0 until 16) if (v[i] != shadow[i] || v[16 + i] != main[i]) return UNSUPPORTED
+        return Glyph(advance, r.guiPipeline(), r.textureView(), l, rt, up, down, u0, u1, v0, v1)
+    }
+
+    fun bake(font: Font, line: String, m: Matrix3x2f, color: Int, shadow: Boolean, scissor: ScreenRectangle?, keep: Boolean = true): List<BlazeRenderer.Mesh>? {
+        if (this.font !== font) { glyphs.fill(null); this.font = font }
+        for (ch in line) {
+            if (ch.code >= 0x590) return null
+            val g = glyph(font, ch)
+            if (g === UNSUPPORTED) return null
+            if (g.view?.isClosed == true) { glyphs.fill(null); return null }
+        }
+        val shadowColor = ARGB.scaleRGB(color, 0.25f)
+        val so = if (shadow) 1f else 0f
+        var left = Float.MAX_VALUE; var top = Float.MAX_VALUE; var right = -Float.MAX_VALUE; var bottom = -Float.MAX_VALUE
+        var pen = 0f
+        for (ch in line) {
+            val g = glyphs[ch.code]!!
+            if (g.pipeline != null) {
+                left = min(left, pen + g.left); top = min(top, 0f + g.up)
+                right = max(right, pen + g.right + so); bottom = max(bottom, 0f + g.down + so)
+            }
+            pen += g.advance
+        }
+        if (left >= right || top >= bottom) return emptyList()
+        val l = floor(left).toInt(); val t = floor(top).toInt()
+        var bounds = ScreenRectangle(l, t, ceil(right).toInt() - l, ceil(bottom).toInt() - t).transformMaxBounds(m)
+        if (scissor != null) bounds = scissor.intersection(bounds) ?: return emptyList()
+        val pose = Matrix4f().mul(m)
+        val sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST)
+        val meshes = ArrayList<BlazeRenderer.Mesh>(1)
+        var pipeline: RenderPipeline? = null
+        var view: GpuTextureView? = null
+        var cap = BlazeRenderer.GlyphCapture()
+        fun close() {
+            if (cap.n == 0) return
+            val setup = if (TEXT_LIGHTMAP) TextureSetup.singleTextureWithLightmap(view!!, sampler) else TextureSetup.singleTexture(view!!, sampler)
+            meshes.add(BlazeRenderer.Mesh(pipeline!!, setup, Matrix3x2f(), cap.verts.copyOf(cap.n * 4), cap.colors.copyOf(cap.n), bounds, keep, scissor, TEXT_LIGHTMAP))
+            cap = BlazeRenderer.GlyphCapture()
+        }
+        pen = 0f
+        for (ch in line) {
+            val g = glyphs[ch.code]!!
+            val p = g.pipeline
+            if (p != null) {
+                if (p !== pipeline || g.view !== view) { close(); pipeline = p; view = g.view }
+                if (shadow) quad(cap, pose, pen + 1f, 0f + 1f, g, shadowColor)
+                quad(cap, pose, pen, 0f, g, color)
+            }
+            pen += g.advance
+        }
+        close()
+        return meshes
+    }
+
+    private fun quad(cap: BlazeRenderer.GlyphCapture, pose: Matrix4f, x: Float, y: Float, g: Glyph, color: Int) {
+        val x0 = x + g.left; val x1 = x + g.right; val y0 = y + g.up; val y1 = y + g.down
+        cap.addVertex(pose, x0, y0, 0f).setColor(color).setUv(g.u0, g.v0)
+        cap.addVertex(pose, x0, y1, 0f).setColor(color).setUv(g.u0, g.v1)
+        cap.addVertex(pose, x1, y1, 0f).setColor(color).setUv(g.u1, g.v1)
+        cap.addVertex(pose, x1, y0, 0f).setColor(color).setUv(g.u1, g.v0)
+    }
+
+}
+
+private fun visualOrder(line: String): FormattedCharSequence {
+    val lang = Language.getInstance()
+    if (!lang.isDefaultRightToLeft && line.all { it < '\u0590' }) {
+        return if ('§' in line) FormattedCharSequence { sink -> StringDecomposer.iterateFormatted(line, Style.EMPTY, sink) }
+        else FormattedCharSequence.forward(line, Style.EMPTY)
+    }
+    return lang.getVisualOrder(FormattedText.of(line))
+}
 
 internal object McOutlines {
     private const val MAX_ENTRIES = 32
@@ -382,8 +665,6 @@ internal object McOutlines {
             outline.release()
         }
     }
-
-    private fun visualOrder(line: String): FormattedCharSequence = Language.getInstance().getVisualOrder(FormattedText.of(line))
 
     private fun uncolored(seq: FormattedCharSequence) = FormattedCharSequence { sink ->
         seq.accept { index, style, codePoint -> sink.accept(index, style.withColor(null as TextColor?), codePoint) }
@@ -481,6 +762,7 @@ private const val TEXT_LIGHTMAP = false
 internal object KeptMeshes {
     private const val RELEASE_FRAMES = 10
     private var frame = 0
+    private var scanAt = 0
     private val alive = ArrayList<BlazeRenderer.Mesh>()
     private val byDraw = IdentityHashMap<Any, ArrayList<BlazeRenderer.Mesh>>()
 
@@ -521,6 +803,7 @@ internal object KeptMeshes {
         mesh.gpu = RenderSystem.getDevice().createBuffer({ "OneConfig kept GUI mesh" }, GpuBuffer.USAGE_VERTEX, MemoryUtil.memByteBuffer(ptr, len))
         mesh.lastDrawn = frame
         alive.add(mesh)
+        scanAt = min(scanAt, frame + RELEASE_FRAMES + 1)
     }
 
     private fun kept(element: GuiElementRenderState): BlazeRenderer.Mesh? {
@@ -592,15 +875,22 @@ internal object KeptMeshes {
     fun endFrame() {
         byDraw.clear()
         frame++
+        if (frame < scanAt) return
+        var next = Int.MAX_VALUE
         alive.removeIf { m ->
-            (frame - m.lastDrawn > RELEASE_FRAMES).also { if (it) { (m.gpu as GpuBuffer).close(); m.gpu = null } }
+            (frame - m.lastDrawn > RELEASE_FRAMES).also { if (it) { (m.gpu as GpuBuffer).close(); m.gpu = null } else next = min(next, m.lastDrawn + RELEASE_FRAMES + 1) }
         }
+        scanAt = next
     }
 }
 
 object BlazeHud {
     private var dirty = true
-    private val recording = Recording()
+    private var scale = 0f
+    private val stable = Recording(coalesce = true)
+    private val volatile = Recording()
+    private var stableRenderer: BlazeRenderer? = null
+    private var volatileRenderer: BlazeRenderer? = null
 
     @JvmStatic
     fun markDirty() {
@@ -609,10 +899,34 @@ object BlazeHud {
 
     @JvmStatic
     fun render(gfx: GuiGraphicsExtractor) {
-        recording.render(gfx, dirty) { HudManager.render(it, HudManager.guiScreenWidth, HudManager.guiScreenHeight) }
+        val guiScale = Minecraft.getInstance().window.guiScale.toFloat()
+        if (dirty || guiScale != scale) {
+            scale = guiScale
+            val a = reuse(stableRenderer, guiScale).also { stableRenderer = it }
+            val b = reuse(volatileRenderer, guiScale).also { volatileRenderer = it }
+            HudManager.render(RenderContext(a), HudManager.guiScreenWidth, HudManager.guiScreenHeight, RenderContext(b))
+            stable.take(a, copy = true)
+            volatile.take(b, copy = true)
+            GlyphAtlas.uploadDirty()
+            BitmapTextures.endFrame()
+        } else {
+            stable.idle()
+            volatile.idle()
+        }
         dirty = false
+        stacking(gfx) {
+            stable.replay(gfx)
+            volatile.replay(gfx)
+        }
+    }
+
+    private fun reuse(renderer: BlazeRenderer?, guiScale: Float): BlazeRenderer {
+        if (renderer == null || !renderer.matches(guiScale)) return BlazeRenderer(guiScale, keepVertices = true)
+        renderer.reset()
+        return renderer
     }
 }
+
 
 object BlazeToasts {
     private val recording = Recording()
@@ -633,8 +947,10 @@ object BlazeToasts {
     }
 }
 
-internal class Recording {
+internal class Recording(private val coalesce: Boolean = false) {
     private var ops: List<(GuiGraphicsExtractor) -> Unit> = emptyList()
+    private var raw: List<(GuiGraphicsExtractor) -> Unit> = emptyList()
+    private var stable = 0
     private var bitmaps: Set<PolyBitmap> = emptySet()
     private var scale = 0f
 
@@ -644,15 +960,54 @@ internal class Recording {
             scale = guiScale
             val renderer = BlazeRenderer(guiScale, keepVertices = true)
             draw(RenderContext(renderer))
-            ops = renderer.finish()
-            bitmaps = renderer.bitmaps
+            take(renderer)
             GlyphAtlas.uploadDirty()
             BitmapTextures.endFrame()
         } else {
-            BitmapTextures.touch(bitmaps)
+            idle()
         }
+        stacking(gfx) { replay(gfx) }
+    }
+
+    fun take(renderer: BlazeRenderer, copy: Boolean = false) {
+        val next = renderer.finish()
+        if (coalesce && next.size == raw.size && next.indices.all { next[it] === raw[it] }) {
+            idle()
+            return
+        }
+        raw = if (copy) ArrayList(next) else next
+        ops = raw
+        stable = 0
+        bitmaps = if (copy) HashSet(renderer.bitmaps) else renderer.bitmaps
+        BitmapTextures.touch(bitmaps)
+    }
+
+    fun idle() {
+        BitmapTextures.touch(bitmaps)
+        if (coalesce && ++stable == COALESCE_FRAMES) ops = BlazeRenderer.coalesce(raw)
+        if (ops !== raw && ops.any { it is BlazeRenderer.MeshOp && it.mesh.closed }) ops = raw
+    }
+
+
+    fun replay(gfx: GuiGraphicsExtractor) {
         for (op in ops) op(gfx)
     }
+}
+
+private inline fun stacking(gfx: GuiGraphicsExtractor, draw: () -> Unit) {
+    val stacking = gfx.guiRenderState as StackingGuiRenderState
+    stacking.`oneconfig$setStacking`(true)
+    try {
+        draw()
+    } finally {
+        stacking.`oneconfig$setStacking`(false)
+    }
+}
+
+private const val COALESCE_FRAMES = 60
+
+interface StackingGuiRenderState {
+    fun `oneconfig$setStacking`(stacking: Boolean)
 }
 
 
@@ -669,8 +1024,10 @@ internal object GlyphAtlas {
     private class Entry(val image: NativeImage, val ref: AbstractTextureRef, var uploaded: Int)
 
     private val entries = IdentityHashMap<PolyGlyphPage.Page, Entry>()
+    private var uploadedRevision = -1L
 
     private fun entry(page: PolyGlyphPage.Page) = entries.getOrPut(page) {
+        uploadedRevision = -1L
         val image = NativeImage(SIZE, SIZE, true)
         Entry(image, AbstractTextureRef(DynamicTexture({ "oneconfig_glyphs_${entries.size}" }, image)), 0)
     }
@@ -678,6 +1035,8 @@ internal object GlyphAtlas {
     fun page(page: PolyGlyphPage.Page): AbstractTextureRef = entry(page).ref
 
     fun uploadDirty() {
+        if (PolyGlyphPage.revision == uploadedRevision) return
+        uploadedRevision = PolyGlyphPage.revision
         for (page in PolyGlyphPage.pages) {
             val e = entry(page)
             if (e.uploaded == page.version) continue
@@ -694,6 +1053,7 @@ internal object BitmapTextures {
 
     private val cache = IdentityHashMap<PolyBitmap, Entry>()
     private var frame = 0L
+    private var scanAt = 0L
 
     fun get(bitmap: PolyBitmap): AbstractTextureRef {
         cache[bitmap]?.let { it.lastUsed = frame; return it.ref }
@@ -710,6 +1070,7 @@ internal object BitmapTextures {
         }
         val ref = AbstractTextureRef(DynamicTexture({ "oneconfig_hud_image" }, img))
         cache[bitmap] = Entry(ref, frame)
+        scanAt = min(scanAt, frame + RELEASE_FRAMES + 1)
         return ref
     }
 
@@ -734,14 +1095,19 @@ internal object BitmapTextures {
 
     fun endFrame() {
         frame++
+        if (frame < scanAt) return
+        var next = Long.MAX_VALUE
         val it = cache.values.iterator()
         while (it.hasNext()) {
             val e = it.next()
-            if (frame - e.lastUsed > 600) {
+            if (frame - e.lastUsed > RELEASE_FRAMES) {
                 e.ref.texture.close()
                 it.remove()
-            }
+            } else next = min(next, e.lastUsed + RELEASE_FRAMES + 1)
         }
+        scanAt = next
     }
+
+    private const val RELEASE_FRAMES = 600L
 }
 //?}

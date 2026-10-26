@@ -2,6 +2,9 @@ package org.polyfrost.compose.render
 
 
 class RenderContext(val renderer: PolyRenderer) {
+    @JvmField
+    var cacheNodes = false
+
     private var _absX = 0f
     private var _absY = 0f
     private val absXStack = ArrayDeque<Float>()
@@ -53,6 +56,11 @@ class RenderContext(val renderer: PolyRenderer) {
     fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
         if (text.isEmpty()) return
         renderer.mcText(text, x, y, color, shadow, scale)
+    }
+
+    fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float) {
+        if (text.isEmpty()) return
+        renderer.mcTextLive(text, x, y, color, shadow, scale)
     }
 
     fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {

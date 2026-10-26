@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -31,25 +30,25 @@ fun IconButton(
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val iconColor by animateColorAsState(
+    val iconColor = animateColorAsState(
         if (!enabled) {
             LocalTheme.current.textColorSecondary.copy(alpha = 0.35f)
         } else {
             if (isHovered) hoveredForeground else foreground
         }
     )
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (hoverBorder && enabled && isHovered) LocalTheme.current.borderColor
         else LocalTheme.current.borderColor.copy(0f)
     )
 
     Icon(
         iconName,
-        color = iconColor,
+        tint = { iconColor.value },
         modifier = Modifier.onClick(interactionSource, enabled, onClick).then(modifier)
             // inset the glyph so the outline doesn't hug it; size bordered buttons 8dp larger to keep the icon size
             .then(
-                if (hoverBorder) Modifier.border(1.dp, borderColor, LocalTheme.current.buttonShape).padding(4.dp)
+                if (hoverBorder) Modifier.animatedFrame(LocalTheme.current.buttonShape, border = { borderColor.value }).padding(4.dp)
                 else Modifier
             )
     )
@@ -68,12 +67,12 @@ fun SelectableIconButton(
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val iconColor by animateColorAsState(
+    val iconColor = animateColorAsState(
         if (isHovered || selected) hoveredForeground else foreground
     )
 
     Icon(
         iconName,
-        color = iconColor, modifier = Modifier.onClick(interactionSource, onClick).then(modifier)
+        tint = { iconColor.value }, modifier = Modifier.onClick(interactionSource, onClick).then(modifier)
     )
 }

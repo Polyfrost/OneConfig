@@ -30,6 +30,9 @@ interface PolyRenderer {
 
     fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float)
 
+    fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float) =
+        live { it.mcText(text, x, y, color(), shadow, scale) }
+
     fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
         image(bitmap, x, y, w, h, 0f, 0f, 1f, 1f, -1, filterQuality)
 
@@ -80,6 +83,7 @@ interface CapturingRenderer {
     fun valid(captured: Any): Boolean
     fun append(captured: Any)
     fun stateKey(): Any
+    fun sameState(key: Any): Boolean
     fun saveState(): Any
     fun restoreState(saved: Any)
 }

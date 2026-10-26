@@ -338,21 +338,25 @@ class MinecraftItemCatalogService : ItemCatalogService {
             destroyAtlases(queueRendererDisposal = true)
         }
         recover()
+        HudManager.invalidate()
     }
 
     /** Clears rendering failures so the atlas and failed items can retry after a reload or resize. */
     private fun recover() {
+        var changed = renderingFailed
         renderingFailed = false
         synchronized(requestLock) {
+            if (failedItems.isNotEmpty()) changed = true
             failedItems.clear()
             activeEntries.forEach { entry ->
                 if (!entry.failed) return@forEach
+                changed = true
                 entry.failed = false
                 entry.identityInitialized = false
                 entry.atlas?.cleanTick = -1
             }
         }
-        HudManager.invalidate()
+        if (changed) HudManager.invalidate()
     }
 
     private fun markFailed(entry: IconEntry, stage: String, throwable: Throwable) {

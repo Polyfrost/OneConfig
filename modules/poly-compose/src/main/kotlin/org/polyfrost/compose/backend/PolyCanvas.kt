@@ -62,9 +62,12 @@ private class MaskOp(val fade: PolyFade) : (PolyCanvas) -> Unit {
     override fun invoke(c: PolyCanvas) = c.renderer.restore()
 }
 
+internal class DynamicOp(val block: (RenderContext) -> Unit) : (PolyCanvas) -> Unit {
+    override fun invoke(c: PolyCanvas) = block(c.context)
+}
+
 fun DrawScope.drawPoly(block: (RenderContext) -> Unit) = drawIntoCanvas { c ->
-    (c as? RecordingCanvas)?.dynamic = true
-    (c as? PolyDrawCanvas)?.polyOp { block(it.context) }
+    (c as? PolyDrawCanvas)?.polyOp(DynamicOp(block))
 }
 
 class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
@@ -240,13 +243,14 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
 
 class RecordingCanvas : PolyDrawCanvas {
     val ops = ArrayList<(PolyCanvas) -> Unit>()
-    var dynamic = false
 
     override fun polyOp(op: (PolyCanvas) -> Unit) { ops += op }
 
-    fun replay(canvas: PolyCanvas) {
+    fun replay(canvas: PolyCanvas) = replay(canvas, null)
+
+    internal fun replay(canvas: PolyCanvas, dynamic: ((DynamicOp) -> Unit)?) {
         for (i in ops.indices.reversed()) (ops[i] as? MaskOp)?.let { canvas.renderer.saveLayerFade(it.fade) }
-        for (op in ops) op(canvas)
+        for (op in ops) if (dynamic != null && op is DynamicOp) dynamic(op) else op(canvas)
     }
 
     private fun Paint.snap() = (this as PolyPaint).copy()

@@ -318,7 +318,6 @@ public final class org/polyfrost/compose/backend/RecordingCanvas : org/polyfrost
 	public fun drawRoundRect (FFFFFFLandroidx/compose/ui/graphics/Paint;)V
 	public fun drawVertices-TPEHhCM (Landroidx/compose/ui/graphics/Vertices;ILandroidx/compose/ui/graphics/Paint;)V
 	public fun enableZ ()V
-	public final fun getDynamic ()Z
 	public final fun getOps ()Ljava/util/ArrayList;
 	public fun polyOp (Lkotlin/jvm/functions/Function1;)V
 	public final fun replay (Lorg/polyfrost/compose/backend/PolyCanvas;)V
@@ -327,7 +326,6 @@ public final class org/polyfrost/compose/backend/RecordingCanvas : org/polyfrost
 	public fun save ()V
 	public fun saveLayer (Landroidx/compose/ui/geometry/Rect;Landroidx/compose/ui/graphics/Paint;)V
 	public fun scale (FF)V
-	public final fun setDynamic (Z)V
 	public fun skew (FF)V
 	public fun skewRad (FF)V
 	public fun translate (FF)V
@@ -348,6 +346,7 @@ public final class org/polyfrost/compose/composables/ComposablesKt {
 	public static final fun PolyImage (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/render/PolyBitmap;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun PolyMcText (Lkotlin/jvm/functions/Function0;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyRect (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyRow (FLorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolySpacer (FFLandroidx/compose/runtime/Composer;II)V
@@ -374,6 +373,7 @@ public final class org/polyfrost/compose/composables/PolyModifierKt {
 	public static synthetic fun border$default (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/render/PolyColor;FFILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun clip (Lorg/polyfrost/compose/composables/PolyModifier;F)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static synthetic fun clip$default (Lorg/polyfrost/compose/composables/PolyModifier;FILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static final fun fade (Lorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function0;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun fill (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun fillHeight (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun fillWidth (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
@@ -479,6 +479,7 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun getBorderColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getBorderWidth ()F
 	public final fun getClipToBounds ()Z
+	public final fun getFade ()Lkotlin/jvm/functions/Function0;
 	public final fun getGap ()F
 	public final fun getHeight ()Lorg/polyfrost/compose/layout/PolySize;
 	public final fun getLayoutType ()Lorg/polyfrost/compose/layout/LayoutType;
@@ -496,6 +497,7 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun setBorderColor (Lorg/polyfrost/compose/render/PolyColor;)V
 	public final fun setBorderWidth (F)V
 	public final fun setClipToBounds (Z)V
+	public final fun setFade (Lkotlin/jvm/functions/Function0;)V
 	public final fun setGap (F)V
 	public final fun setHeight (Lorg/polyfrost/compose/layout/PolySize;)V
 	public final fun setLayoutType (Lorg/polyfrost/compose/layout/LayoutType;)V
@@ -610,6 +612,8 @@ public final class org/polyfrost/compose/node/McTextNode : org/polyfrost/compose
 	public final fun getScale ()F
 	public final fun getShadow ()Z
 	public final fun getText ()Ljava/lang/String;
+	public final fun getTextProvider ()Lkotlin/jvm/functions/Function0;
+	public fun measureContent ()V
 	public final fun remeasure ()V
 	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
 	public final fun setColor (Lorg/polyfrost/compose/render/PolyColor;)V
@@ -617,6 +621,7 @@ public final class org/polyfrost/compose/node/McTextNode : org/polyfrost/compose
 	public final fun setScale (F)V
 	public final fun setShadow (Z)V
 	public final fun setText (Ljava/lang/String;)V
+	public final fun setTextProvider (Lkotlin/jvm/functions/Function0;)V
 }
 
 public class org/polyfrost/compose/node/PolyNode {
@@ -629,6 +634,7 @@ public class org/polyfrost/compose/node/PolyNode {
 	public final fun getWidth ()F
 	public final fun getX ()F
 	public final fun getY ()F
+	public fun measureContent ()V
 	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
 	public final fun setHeight (F)V
 	public final fun setParent (Lorg/polyfrost/compose/node/PolyNode;)V
@@ -673,6 +679,7 @@ public abstract interface class org/polyfrost/compose/render/CapturingRenderer {
 	public abstract fun append (Ljava/lang/Object;)V
 	public abstract fun mark ()Ljava/lang/Object;
 	public abstract fun restoreState (Ljava/lang/Object;)V
+	public abstract fun sameState (Ljava/lang/Object;)Z
 	public abstract fun saveState ()Ljava/lang/Object;
 	public abstract fun since (Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun stateKey ()Ljava/lang/Object;
@@ -752,6 +759,7 @@ public final class org/polyfrost/compose/render/PolyColor {
 	public static final field $stable I
 	public static final field CHROMA_CYCLE_SECONDS D
 	public static final field Companion Lorg/polyfrost/compose/render/PolyColor$Companion;
+	public static field chromaReads I
 	public fun <init> ()V
 	public fun <init> (I)V
 	public fun <init> (IZ)V
@@ -899,6 +907,7 @@ public final class org/polyfrost/compose/render/PolyGlyphPage {
 	public static final fun getPages ()Ljava/util/List;
 	public static final fun getRasterizer ()Lorg/polyfrost/compose/render/PolyGlyphPage$Rasterizer;
 	public static final fun getRecorder ()Lkotlin/jvm/functions/Function4;
+	public static final fun getRevision ()J
 	public final fun glyph (Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZI)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
 	public static synthetic fun glyph$default (Lorg/polyfrost/compose/render/PolyGlyphPage;Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZIILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
 	public static final fun prerasterize (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;III)V
@@ -1076,6 +1085,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public abstract fun line (FFFFIF)V
 	public abstract fun live (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun mcText (Ljava/lang/String;FFIZF)V
+	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public abstract fun mcTextOutline (Ljava/lang/String;FFIIF)V
 	public abstract fun rect (FFFFIF)V
 	public abstract fun rectGradient (FFFFLorg/polyfrost/compose/render/PolyGradient;F)V
@@ -1099,6 +1109,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun image (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
+	public static fun mcTextLive (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public static fun saveLayerFade (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyFade;)V
 	public static fun strokePolyline (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFI)V
 }
@@ -1149,8 +1160,10 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	protected final fun getState ()Lorg/polyfrost/compose/render/PolyTessellator$State;
 	public fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;)V
 	public fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
+	protected final fun keyAdd (F)V
 	public fun line (FFFFIF)V
 	public fun mcText (Ljava/lang/String;FFIZF)V
+	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public fun mcTextOutline (Ljava/lang/String;FFIIF)V
 	protected final fun mulAlpha (IF)I
 	protected final fun quadPx (FFFFFFFFI)V
@@ -1159,8 +1172,10 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun rectStroke (FFFFIFF)V
 	public fun rectStrokeGradient (FFFFLorg/polyfrost/compose/render/PolyGradient;FF)V
 	public fun rectWithHole (FFFFFFFFFI)V
+	protected final fun resetTessellator ()V
 	public fun restore ()V
 	public final fun restoreState (Ljava/lang/Object;)V
+	public final fun sameState (Ljava/lang/Object;)Z
 	public fun save ()V
 	public fun saveLayerAlpha (F)V
 	public fun saveLayerFade (Lorg/polyfrost/compose/render/PolyFade;)V
@@ -1168,12 +1183,13 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun scale (FF)V
 	protected final fun setState (Lorg/polyfrost/compose/render/PolyTessellator$State;)V
 	public fun shadow (FFFFFLorg/polyfrost/compose/render/PolyShadow;)V
-	public fun stateKey ()Ljava/lang/Object;
+	public final fun stateKey ()Ljava/lang/Object;
 	public fun strokePolyline ([FZIFI)V
 	protected abstract fun submit (Ljava/lang/Object;ZZ[F[I[F)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public fun translate (FF)V
+	protected fun writeStateKey ()V
 }
 
 public final class org/polyfrost/compose/render/PolyTessellator$Companion {
@@ -1213,6 +1229,7 @@ protected final class org/polyfrost/compose/render/PolyTessellator$State {
 
 public final class org/polyfrost/compose/render/RenderContext {
 	public static final field $stable I
+	public field cacheNodes Z
 	public fun <init> (Lorg/polyfrost/compose/render/PolyRenderer;)V
 	public final fun clipRRect (FFFFF)V
 	public final fun clipRect (FFFF)V
@@ -1228,6 +1245,7 @@ public final class org/polyfrost/compose/render/RenderContext {
 	public static synthetic fun line$default (Lorg/polyfrost/compose/render/RenderContext;FFFFLorg/polyfrost/compose/render/PolyColor;FILjava/lang/Object;)V
 	public final fun live (Lkotlin/jvm/functions/Function1;)V
 	public final fun mcText (Ljava/lang/String;FFIZF)V
+	public final fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public final fun mcTextOutline (Ljava/lang/String;FFIIF)V
 	public final fun measureText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyFont;)F
 	public final fun rect (FFFFLorg/polyfrost/compose/render/PolyColor;F)V
@@ -1252,11 +1270,13 @@ public final class org/polyfrost/compose/render/RenderContext {
 public final class org/polyfrost/compose/runtime/PolyApplier : androidx/compose/runtime/AbstractApplier {
 	public static final field $stable I
 	public fun <init> (Lorg/polyfrost/compose/node/PolyNode;)V
+	public final fun getChanges ()J
 	public synthetic fun insertBottomUp (ILjava/lang/Object;)V
 	public fun insertBottomUp (ILorg/polyfrost/compose/node/PolyNode;)V
 	public synthetic fun insertTopDown (ILjava/lang/Object;)V
 	public fun insertTopDown (ILorg/polyfrost/compose/node/PolyNode;)V
 	public fun move (III)V
+	public fun onEndChanges ()V
 	public fun remove (II)V
 }
 
@@ -1286,10 +1306,13 @@ public final class org/polyfrost/compose/runtime/PolyComposeRuntime {
 	public fun <init> ()V
 	public fun <init> (Lorg/polyfrost/compose/runtime/PolyComposeClock;)V
 	public synthetic fun <init> (Lorg/polyfrost/compose/runtime/PolyComposeClock;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun contentChanged ()V
 	public final fun dispose ()V
 	public final fun frame (FFJ)V
 	public static synthetic fun frame$default (Lorg/polyfrost/compose/runtime/PolyComposeRuntime;FFJILjava/lang/Object;)V
+	public final fun getRevision ()J
 	public final fun getRoot ()Lorg/polyfrost/compose/node/RootNode;
+	public final fun invalidateLayout ()V
 	public final fun layout (FF)V
 	public final fun layoutIfChanged (FF)Z
 	public final fun setContent (Lkotlin/jvm/functions/Function2;)V

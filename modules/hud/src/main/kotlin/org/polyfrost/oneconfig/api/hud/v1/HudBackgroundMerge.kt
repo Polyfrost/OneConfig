@@ -86,7 +86,7 @@ internal object HudBackgroundMerge {
         /** Spanning trees over the group's contacts so every HUD follows the one it is fused to */
         val links: List<Link>,
         private val bgColor: Int,
-        private val chroma: Boolean,
+        val chroma: Boolean,
         private val chromaSpeed: Float,
         private val radius: Float,
         private val loops: List<FloatArray>,

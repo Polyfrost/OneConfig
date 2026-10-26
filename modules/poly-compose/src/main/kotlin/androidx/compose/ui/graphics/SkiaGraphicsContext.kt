@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
+import org.polyfrost.compose.backend.DynamicOp
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.RecordingCanvas
 import org.polyfrost.compose.render.CapturingRenderer
@@ -70,12 +71,12 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
 
     private class LayerCache(val version: Int, val props: List<Any?>, val key: Any, val segs: List<Any>)
     private class ChildRef(val layer: PolyGraphicsLayer, val state: Any)
+    private class DynamicRef(val op: DynamicOp, val state: Any)
     private class Capture(var mark: Any) { val segs = ArrayList<Any>() }
 
     override fun record(density: Density, layoutDirection: LayoutDirection, layer: GraphicsLayer, block: DrawScope.() -> Unit) {
         version++
         recording.ops.clear()
-        recording.dynamic = false
         drawScope.draw(density, layoutDirection, recording, size.toSize(), block)
     }
 
@@ -103,29 +104,29 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
     }
 
     private fun drawCached(c: PolyCanvas, cr: CapturingRenderer) {
-        if (recording.dynamic) {
-            cache = null
-            capturing += null
-            try { drawLive(c) } finally { capturing.removeLast() }
-            return
-        }
-        val key = cr.stateKey()
         val props = props()
         val hit = cache
-        if (hit != null && hit.version == version && hit.key == key && hit.props == props && hit.segs.all { it is ChildRef || cr.valid(it) }) {
+        if (hit != null && hit.version == version && cr.sameState(hit.key) && hit.props == props && hit.segs.all { it is ChildRef || it is DynamicRef || cr.valid(it) }) {
             capturing += null
             try {
                 for (seg in hit.segs) {
-                    if (seg !is ChildRef) { cr.append(seg); continue }
+                    if (seg !is ChildRef && seg !is DynamicRef) { cr.append(seg); continue }
                     val saved = cr.saveState()
-                    cr.restoreState(seg.state)
-                    try { seg.layer.drawNow(c) } finally { cr.restoreState(saved) }
+                    try {
+                        when (seg) {
+                            is ChildRef -> { cr.restoreState(seg.state); seg.layer.drawNow(c) }
+                            is DynamicRef -> { cr.restoreState(seg.state); seg.op(c) }
+                        }
+                    } finally {
+                        cr.restoreState(saved)
+                    }
                 }
             } finally {
                 capturing.removeLast()
             }
             return
         }
+        val key = cr.stateKey()
         val cap = Capture(cr.mark())
         capturing += cap
         try { drawLive(c) } finally { capturing.removeLast() }
@@ -155,7 +156,14 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
             if (o == null) r.clipRect(0f, 0f, size.width.toFloat(), size.height.toFloat())
             else { val b = o.bounds; r.clipRRect(b.left, b.top, b.width, b.height, radiusOf(o)) }
         }
-        recording.replay(c)
+        val cap = capturing.lastOrNull()
+        val cr = r as? CapturingRenderer
+        if (cap == null || cr == null) recording.replay(c)
+        else recording.replay(c) { op ->
+            cap.segs += cr.since(cap.mark)
+            cap.segs += DynamicRef(op, cr.saveState())
+            try { op(c) } finally { cap.mark = cr.mark() }
+        }
         r.restore()
     }
 

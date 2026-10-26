@@ -157,6 +157,7 @@ fun Icon(
     color: Color = Color.Unspecified,
     modifier: Modifier = Modifier,
     fitAspectRatio: Boolean = false,
+    tint: (() -> Color)? = null,
 ) {
     val theme = LocalTheme.current
     val resolvedColor = if (color == Color.Unspecified) theme.textColor else color
@@ -182,10 +183,10 @@ fun Icon(
                     if (fitAspectRatio) bytes?.let(::readSvgAspectRatio) else null
                 }
                 Image(
-                    painter = painter,
+                    painter = tinted(painter, tint),
                     contentDescription = null,
                     modifier = modifier.then(iconSizeModifier(aspectRatio)),
-                    colorFilter = ColorFilter.tint(resolvedColor)
+                    colorFilter = if (tint == null) ColorFilter.tint(resolvedColor) else null
                 )
                 return
             }
@@ -229,11 +230,33 @@ fun Icon(
         }
     }
     Image(
-        painter = painter,
+        painter = if (isSvg) tinted(painter, tint) else painter,
         contentDescription = null,
         modifier = clippedResourceModifier,
-        colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
+        colorFilter = if (isSvg && tint == null) ColorFilter.tint(resolvedColor) else null
     )
+}
+
+private class TintedPainter(val base: Painter) : Painter() {
+    var tint: () -> Color = { Color.Unspecified }
+    private var alpha = 1f
+
+    override val intrinsicSize get() = base.intrinsicSize
+
+    override fun applyAlpha(alpha: Float): Boolean {
+        this.alpha = alpha
+        return true
+    }
+
+    override fun DrawScope.onDraw() {
+        with(base) { draw(size, alpha, ColorFilter.tint(tint())) }
+    }
+}
+
+@Composable
+private fun tinted(painter: Painter, tint: (() -> Color)?): Painter {
+    if (tint == null) return painter
+    return remember(painter) { TintedPainter(painter) }.also { it.tint = tint }
 }
 
 @Composable

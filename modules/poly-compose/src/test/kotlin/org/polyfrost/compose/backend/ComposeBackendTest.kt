@@ -10,8 +10,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
@@ -22,9 +24,10 @@ import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.FilterQuality
 import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGradient
 import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.PolyRenderer
@@ -58,6 +61,49 @@ class ComposeBackendTest {
         override fun scale(sx: Float, sy: Float) {}
         override fun clipRect(x: Float, y: Float, w: Float, h: Float) = log("clip ${x + tx},${y + ty} ${w}x$h")
         override fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = log("clipR ${x + tx},${y + ty} ${w}x$h r=$radius")
+    }
+
+    private class CapturingLogRenderer : CapturingRenderer, PolyRenderer by LogRenderer() {
+        val calls = ArrayList<String>()
+        private var tx = 0f
+        private var ty = 0f
+        private val stack = ArrayDeque<Pair<Float, Float>>()
+        override fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float) { calls += "rect ${x + tx},${y + ty} #${Integer.toHexString(color)}" }
+        override fun save() { stack.addLast(tx to ty) }
+        override fun restore() { val (x, y) = stack.removeLast(); tx = x; ty = y }
+        override fun saveLayerAlpha(alpha: Float) = save()
+        override fun translate(dx: Float, dy: Float) { tx += dx; ty += dy }
+        override fun mark(): Any = calls.size
+        override fun since(mark: Any): Any = ArrayList(calls.subList(mark as Int, calls.size))
+        override fun valid(captured: Any) = true
+        override fun append(captured: Any) { @Suppress("UNCHECKED_CAST") (captured as List<String>).forEach { calls += "cached $it" } }
+        override fun stateKey(): Any = tx to ty
+        override fun sameState(key: Any) = key == stateKey()
+        override fun saveState(): Any = Triple(tx, ty, ArrayList(stack))
+        override fun restoreState(saved: Any) {
+            @Suppress("UNCHECKED_CAST") val (x, y, s) = saved as Triple<Float, Float, List<Pair<Float, Float>>>
+            tx = x; ty = y; stack.clear(); stack.addAll(s)
+        }
+    }
+
+    @Test
+    fun layerCacheReplaysStaticOpsAndRerunsPolyOps() {
+        PolyCompose.install()
+        val rec = FrameRecomposer(Dispatchers.Unconfined) {}
+        val scope = SingleComposeSceneRenderingScope {}
+        val scene = CanvasLayersComposeScene(frameRecomposer = rec, density = Density(1f), size = IntSize(400, 300))
+        var polyRuns = 0
+        scene.setContent {
+            Box(Modifier.padding(10.dp).graphicsLayer {}.size(50.dp).background(Color.Red).drawBehind {
+                drawPoly { polyRuns++; it.renderer.rect(5f, 5f, 1f, 1f, 0xFF00FF00.toInt(), 0f) }
+            })
+        }
+        val frames = List(2) { CapturingLogRenderer().also { r -> with(scope) { scene.render(rec, PolyCanvas(r), System.nanoTime()) } }.calls }
+        scene.close()
+        rec.close()
+        assertEquals(2, polyRuns)
+        assertEquals(listOf("rect 10.0,10.0 #ffff0000", "rect 15.0,15.0 #ff00ff00"), frames[0])
+        assertEquals(listOf("cached rect 10.0,10.0 #ffff0000", "rect 15.0,15.0 #ff00ff00"), frames[1])
     }
 
     private fun render(content: @Composable () -> Unit): List<String> {

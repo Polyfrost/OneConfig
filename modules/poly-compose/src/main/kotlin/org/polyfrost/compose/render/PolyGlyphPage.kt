@@ -39,6 +39,10 @@ object PolyGlyphPage {
         var version = 1
             private set
 
+        init {
+            revision++
+        }
+
         private var penX = PAD * 2 + WHITE
         private var penY = PAD
         private var rowH = WHITE
@@ -53,6 +57,7 @@ object PolyGlyphPage {
             penY = y
             rowH = max(row, h)
             version++
+            revision++
             return (x shl 16) or y
         }
 
@@ -97,6 +102,10 @@ object PolyGlyphPage {
 
     @JvmStatic
     val pages: List<Page> get() = _pages
+
+    @JvmStatic
+    var revision = 0L
+        private set
 
     private val atlases = HashMap<Pair<Face, Int>, HashMap<Int, Glyph?>>()
     private val outlineAtlases = HashMap<Triple<Face, Int, Int>, HashMap<Int, Glyph?>>()

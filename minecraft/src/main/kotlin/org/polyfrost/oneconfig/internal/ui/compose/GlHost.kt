@@ -447,10 +447,21 @@ object GlHost {
         return false
     }
 
-    fun drawHudGl(draw: (RenderContext) -> Unit) {
+    private var hudStable: GlRenderer? = null
+    private var hudVolatile: GlRenderer? = null
+    private val stableLayer = GlRenderer.Layer(coalesce = true)
+    private val volatileLayer = GlRenderer.Layer()
+
+    private fun reuse(renderer: GlRenderer?): GlRenderer {
+        if (renderer == null || !renderer.matches()) return GlRenderer()
+        renderer.reset()
+        return renderer
+    }
+
+    fun drawHudGl(draw: (RenderContext, RenderContext?) -> Unit) {
         //? if = 1.21.1 {
         /*if (vanillaPipeline) {
-            hudFrame = runCatching { GlRenderer().also { draw(RenderContext(it)) } }
+            hudFrame = runCatching { GlRenderer().also { draw(RenderContext(it), null) } }
                 .onFailure { LOG.warn("GlHost.drawHudGl() error", it) }
                 .getOrNull()
             return
@@ -461,10 +472,13 @@ object GlHost {
         if (fbo <= 0) return
         gl.capture()
         try {
-            val renderer = GlRenderer()
-            draw(RenderContext(renderer))
+            val stable = reuse(hudStable).also { hudStable = it }
+            val volatile = reuse(hudVolatile).also { hudVolatile = it }
+            draw(RenderContext(stable), RenderContext(volatile))
+            stableLayer.take(stable)
+            volatileLayer.take(volatile)
             //~ if = 1.8.9 'topDown = true' -> 'topDown = false'
-            renderer.draw(fbo, rt.width, rt.height, topDown = true, clear = true)
+            GlRenderer.Layer.draw(fbo, rt.width, rt.height, topDown = true, clear = true, stableLayer, volatileLayer)
         } catch (e: Throwable) {
             LOG.warn("GlHost.drawHudGl() error", e)
         } finally {

@@ -16,8 +16,12 @@ object McFontQueue {
     fun measureBlockHeight(lines: Int, scale: Float): Float =
         lines * measureTextHeight(scale) - scale
 
+    private val advances = FloatArray(0x590) { Float.NaN }
+    @Volatile private var advancesFor: PolyGlyphPage.Rasterizer? = null
+
     private fun bundledWidth(text: String, scale: Float): Float {
         val r = PolyGlyphPage.rasterizer ?: return text.length * 6f * scale
+        if ('§' !in text) plainWidth(r, text, scale)?.let { return it }
         var w = 0f
         var bold = false
         var i = 0
@@ -36,6 +40,27 @@ object McFontQueue {
                 val uni = r.face("unifont") ?: continue
                 uni.advance(uni.glyph(cp)) * 8f * scale
             }
+        }
+        return w
+    }
+
+    private fun plainWidth(r: PolyGlyphPage.Rasterizer, text: String, scale: Float): Float? {
+        if (advancesFor !== r) {
+            advances.fill(Float.NaN)
+            advancesFor = r
+        }
+        var w = 0f
+        for (ch in text) {
+            val code = ch.code
+            if (code >= 0x590) return null
+            var a = advances[code]
+            if (a.isNaN()) {
+                val main = r.face("minecraft")
+                a = if (main != null && main.glyph(code) != 0) main.advance(main.glyph(code)) * 10f
+                else r.face("unifont")?.let { it.advance(it.glyph(code)) * 8f } ?: return null
+                advances[code] = a
+            }
+            w += a * scale
         }
         return w
     }

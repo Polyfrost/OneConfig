@@ -134,6 +134,13 @@ private val externalGeometry = object : ClassValue<Boolean>() {
     }
 }
 
+internal val hudStateWrites = AtomicInteger()
+
+private val externalRedraw = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean =
+        runCatching { type.getMethod("getAlwaysRedraw").declaringClass != Hud::class.java }.getOrDefault(true)
+}
+
 private val stateOnlyMinimumSize = object : ClassValue<Boolean>() {
     override fun computeValue(type: Class<*>): Boolean = runCatching {
         type.getMethod("minimumSize").declaringClass.let { it == Hud::class.java || it == TextHud::class.java }
@@ -1061,6 +1068,37 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @JvmField
     var lastLayoutFrame: Long = -1L
 
+    @Volatile
+    @Transient
+    internal var drawReads = 0
+
+    @Transient
+    internal var lastDraw: HudManager.HudDraw? = null
+
+    @Transient
+    internal var lastDrawRender = -1L
+
+    @Transient
+    internal var sizedScale = Float.NaN
+
+    @Transient
+    internal var sizedW = 0f
+
+    @Transient
+    internal var sizedH = 0f
+
+    @Transient
+    internal var sizedWrites = -1
+
+    @Volatile
+    @Transient
+    internal var contentStamp = 0
+
+    protected fun contentChanged() {
+        contentStamp++
+        _runtime?.contentChanged()
+    }
+
     @ApiStatus.Internal
     @JvmField
     var lastUpdate: Long = Long.MIN_VALUE
@@ -1160,7 +1198,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             return false
         }
         if (hasExternalGeometry || Snapshot.isInSnapshot) return false
-        val writes = stateWrites.get()
+        val writes = hudStateWrites.get()
         if (geomValid && geomStateOnly && writes == geomWrites &&
             HudManager.guiScreenWidth == geomW && HudManager.guiScreenHeight == geomH &&
             (!geomScaleFromOption || Platform.compatibility().options().guiScale == geomGuiScale)
@@ -1209,10 +1247,51 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         return true
     }
 
+    internal val geometryStateOnly: Boolean get() = geomValid && geomStateOnly && !hasExternalGeometry
+
+    internal val geometryPollable: Boolean get() = geomValid && chainExternal.isEmpty() && !hasExternalGeometry
+
     internal val geometryStamp: Int get() = if (refreshFrameGeometry()) geomStamp and Int.MAX_VALUE else -1
 
     @get:ApiStatus.Internal
     val frameScale: Float get() = if (refreshFrameGeometry()) cachedScale else effectiveScale
+
+    @Transient private var flagWrites = -1
+    @Transient private var flagRedraw = false
+    @Transient private var flagHidden = false
+    @Transient private var flagUseGuiScale = true
+    @Transient private var flagCustomScale = 1f
+
+    private fun refreshFrameFlags(): Boolean {
+        if (HudManager.isEditing || Snapshot.isInSnapshot) return false
+        val writes = hudStateWrites.get()
+        if (writes != flagWrites) {
+            flagWrites = writes
+            if (!externalRedraw.get(javaClass)) flagRedraw = alwaysRedraw
+            if (!hasExternalGeometry) {
+                flagHidden = hidden
+                flagUseGuiScale = useGuiScale
+                flagCustomScale = customScale
+            }
+        }
+        return true
+    }
+
+    internal val redrawOverridden: Boolean get() = externalRedraw.get(javaClass)
+
+    internal val frameAlwaysRedraw: Boolean
+        get() = if (!externalRedraw.get(javaClass) && refreshFrameFlags()) flagRedraw else alwaysRedraw
+
+    internal val frameHidden: Boolean
+        get() = if (!hasExternalGeometry && refreshFrameFlags()) flagHidden else hidden
+
+    internal val frameEffectiveScale: Float
+        get() {
+            if (hasExternalGeometry || !refreshFrameFlags()) return effectiveScale
+            if (flagUseGuiScale) return flagCustomScale
+            val gui = Platform.compatibility().options().guiScale
+            return if (gui > 0f) flagCustomScale / gui else flagCustomScale
+        }
 
     @get:ApiStatus.Internal
     val frameX: Float get() = if (refreshFrameGeometry()) cachedX else x
@@ -1484,6 +1563,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Suppress("UNCHECKED_CAST")
     override fun clone(): Hud = (super.clone() as Hud).apply {
         _runtime = null
+        lastDraw = null
         revision = AtomicInteger(this@Hud.revision.get())
         pinnedCorner = null
         unpinPending = false
@@ -1557,13 +1637,11 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
         private val pendingWrites = WeakHashMap<Any, PendingWrite>()
 
-        private val stateWrites = AtomicInteger()
-
         private var instancesRevisionCache = 0
         private var instancesRevisionWrites = -1
 
         val instancesRevision: Int get() {
-            val writes = stateWrites.get()
+            val writes = hudStateWrites.get()
             if (writes != instancesRevisionWrites) {
                 instancesRevisionCache = Snapshot.withoutReadObservation { HudManager.instancesRevision.intValue }
                 instancesRevisionWrites = writes
@@ -1572,9 +1650,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
 
         init {
-            Snapshot.registerGlobalWriteObserver { stateWrites.incrementAndGet() }
+            Snapshot.registerGlobalWriteObserver { hudStateWrites.incrementAndGet() }
             Snapshot.registerApplyObserver { changed, _ ->
-                if (changed.isNotEmpty()) stateWrites.incrementAndGet()
+                if (changed.isNotEmpty()) hudStateWrites.incrementAndGet()
                 synchronized(pendingWrites) {
                     if (pendingWrites.isEmpty()) return@registerApplyObserver
                     for (state in changed) pendingWrites.remove(state)?.get()?.bumpRevision()
@@ -1606,4 +1684,5 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         override fun hashCode() = id.toInt()
     }
 }
+
 

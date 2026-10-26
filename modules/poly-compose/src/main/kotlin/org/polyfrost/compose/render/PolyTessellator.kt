@@ -1,5 +1,6 @@
 package org.polyfrost.compose.render
 
+import java.util.Arrays
 import java.util.Collections
 import kotlin.math.acos
 import kotlin.math.atan2
@@ -385,15 +386,46 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
-    open fun stateKey(): Any {
+    private var keyScratch = FloatArray(32)
+    private var keySize = 0
+
+    protected fun keyAdd(v: Float) {
+        if (keySize == keyScratch.size) keyScratch = keyScratch.copyOf(keySize * 2)
+        keyScratch[keySize++] = v
+    }
+
+    protected open fun writeStateKey() {
         val s = state
-        val out = arrayListOf(s.sx, s.sy, s.tx, s.ty, s.alpha, s.glyphScale)
-        s.clip?.forEach(out::add) ?: out.add(-1f)
+        keyAdd(s.sx); keyAdd(s.sy); keyAdd(s.tx); keyAdd(s.ty); keyAdd(s.alpha); keyAdd(s.glyphScale)
+        val clip = s.clip
+        if (clip != null) for (v in clip) keyAdd(v) else keyAdd(-1f)
         var c = s.rclip
-        while (c != null) { c.box.forEach(out::add); c = c.parent }
+        while (c != null) { for (v in c.box) keyAdd(v); c = c.parent }
         var m = s.mask
-        while (m != null) { out.add(if (m.fade.vertical) 1f else 0f); m.fade.stops.forEach(out::add); m.fade.alphas.forEach(out::add); m = m.parent }
-        return out
+        while (m != null) {
+            keyAdd(if (m.fade.vertical) 1f else 0f)
+            for (v in m.fade.stops) keyAdd(v)
+            for (v in m.fade.alphas) keyAdd(v)
+            m = m.parent
+        }
+    }
+
+    fun stateKey(): Any {
+        keySize = 0
+        writeStateKey()
+        return StateKey(keyScratch.copyOf(keySize))
+    }
+
+    fun sameState(key: Any): Boolean {
+        if (key !is StateKey) return false
+        keySize = 0
+        writeStateKey()
+        return Arrays.equals(key.values, 0, key.values.size, keyScratch, 0, keySize)
+    }
+
+    private class StateKey(val values: FloatArray) {
+        override fun equals(other: Any?): Boolean = other is StateKey && values.contentEquals(other.values)
+        override fun hashCode(): Int = values.contentHashCode()
     }
 
     fun saveState(): Any = state.copy()
@@ -565,6 +597,17 @@ abstract class PolyTessellator : PolyRenderer {
         vertex(x0, y1, u0, v1, color)
         vertex(x1, y1, u1, v1, color)
         vertex(x1, y0, u1, v0, color)
+    }
+
+    protected fun resetTessellator() {
+        state = State(1f, 1f, 0f, 0f, 1f, null, null)
+        stack.clear()
+        count = 0
+        qn = 0
+        batchTexture = PolyGlyphPage.pages[0]
+        batchPremul = false
+        batchNearest = false
+        minX = Float.MAX_VALUE; minY = Float.MAX_VALUE; maxX = -Float.MAX_VALUE; maxY = -Float.MAX_VALUE
     }
 
     protected fun flush() {
