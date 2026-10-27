@@ -206,6 +206,14 @@ class TextOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
     val regex: String? get() = prop.getMetadata("regex")
     val multiline: Boolean get() = prop.getMetadata("multiline") ?: false
+    val secure: Boolean get() = prop.getMetadata("secure") ?: false
+
+    fun mask(text: String): String {
+        val mask: Char = prop.getMetadata("secureMask") ?: '*'
+        val showChars: String = prop.getMetadata("secureShowChars") ?: ""
+        val shownFrom = text.length - (prop.getMetadata<Int>("secureShowLast") ?: 0)
+        return CharArray(text.length) { i -> if (i >= shownFrom || text[i] in showChars) text[i] else mask }.concatToString()
+    }
 
     @Suppress("UNCHECKED_CAST")
     val strProp: Property<String> get() = prop as Property<String>

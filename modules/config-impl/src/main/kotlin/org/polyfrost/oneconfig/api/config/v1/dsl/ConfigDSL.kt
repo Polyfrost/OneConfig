@@ -253,6 +253,25 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var regex: String?
             get() = this["regex"] as String?
             set(value) { this["regex"] = value }
+
+        var secure: Boolean
+            get() = this["secure"] as? Boolean ?: false
+            set(value) { this["secure"] = value }
+
+        var secureMask: Char
+            get() = this["secureMask"] as? Char ?: '*'
+            set(value) { this["secureMask"] = value }
+
+        var secureShowLast: Int
+            get() = this["secureShowLast"] as? Int ?: 0
+            set(value) {
+                require(value >= 0) { "text '$id' has a negative secureShowLast ($value)" }
+                this["secureShowLast"] = value
+            }
+
+        var secureShowChars: String
+            get() = this["secureShowChars"] as? String ?: ""
+            set(value) { this["secureShowChars"] = value }
     }
 
     open class OptionsProp<T : Any>(default: T, typeOfT: Class<T>, options: Array<out String>) : Prop<T>(default, typeOfT) {

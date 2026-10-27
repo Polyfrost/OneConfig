@@ -72,6 +72,10 @@ public class TestConfig_Test extends Config {
     public static String multilineText = "Hello world!\nThis is a second line.\noneconfigoneconfigoneconfigoneconfigoneconfigoneconfig";
     @Text(title = "Full Width Text", description = "The same text box spanning the whole row", multiline = true, fullWidth = true)
     public static String fullWidthText = "Hello world!\nThis is a second line.\noneconfigoneconfigoneconfigoneconfigoneconfigoneconfig";
+    @Text(title = "Secure Text", description = "Masked like a password, click the eye to reveal it", secure = true)
+    public static String secureText = "abcd-efgh-ijkl-mnop";
+    @Text(title = "Partly Secure Text", description = "Keeps the dashes and last 4 characters readable", secure = true, secureShowLast = 4, secureShowChars = "-")
+    public static String partlySecureText = "abcd-efgh-ijkl-mnop";
     @File(title = "Image", description = "Pick an image file", types = {".png", ".jpg"}, filterName = "Images")
     public static String image = "";
     @File(title = "Directory", description = "Pick a folder", directory = true)
