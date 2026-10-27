@@ -50,16 +50,6 @@ object GLVulkanService : VulkanService {
         )
     }
 
-    override fun makeBackBufferRenderTarget(
-        width: Int, height: Int,
-        vkImageHandle: Long, vkFormat: Int, vkQueueFamily: Int,
-    ): BackendRenderTarget {
-        val stencilBits = 8
-        return BackendRenderTarget.makeGL(
-            width, height, 0, stencilBits, 0, FramebufferFormat.GR_GL_RGBA8
-        )
-    }
-
     override fun makeOffscreenBRT(
         target: RenderTarget,
         width: Int,

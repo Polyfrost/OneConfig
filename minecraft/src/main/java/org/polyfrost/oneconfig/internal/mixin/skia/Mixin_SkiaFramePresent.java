@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-//? >= 26.1 {
+//? > 1.8.9 {
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,10 +20,9 @@ public class Mixin_SkiaFramePresent {
         SkiaCtx.INSTANCE.draw();
     }
 }
-//? } else {
+//? } elif >= 26.1 {
 
-/*// 26.1 removed Window.updateDisplay, which is where Mixin_SkiaFrame used to flush the GL Skia surface.
-// Flush into the main render target before RenderTarget.blitToScreen (in renderFrame) so queued Compose/Skia
+/*// Flush into the main render target before RenderTarget.blitToScreen (in renderFrame) so queued Compose/Skia
 // draws are included by screenshots and by the window blit.
 @Mixin(Minecraft.class)
 public class Mixin_SkiaFramePresent {
@@ -32,6 +31,22 @@ public class Mixin_SkiaFramePresent {
             target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;blitToScreen()V"))
     private void impl$onPresent(boolean tick, CallbackInfo ci) {
         SkiaCtx.INSTANCE.draw();
+    }
+}
+*///? } else {
+
+/*// Flush into the main render target before RenderTarget.blitToScreen so queued Compose/Skia draws are included
+// by screenshots and by the window blit, including when another mod replaces that blit with its own presentation.
+@Mixin(Minecraft.class)
+public class Mixin_SkiaFramePresent {
+
+    //~ if < 1.21.5 'blitToScreen()V' -> 'blitToScreen(II)V'
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;blitToScreen()V"))
+    private void impl$onPresent(boolean tick, CallbackInfo ci) {
+        // VulkanMod flushes from Mixin_VulkanModSkiaFlush instead
+        if (!SkiaCtx.INSTANCE.isVulkanMode()) {
+            SkiaCtx.INSTANCE.draw();
+        }
     }
 }
 *///? }

@@ -48,16 +48,6 @@ interface VulkanService {
     ): BackendRenderTarget
 
     /**
-     * Create a BackendRenderTarget that draws directly to the back buffer
-     */
-    fun makeBackBufferRenderTarget(
-        width: Int, height: Int,
-        vkImageHandle: Long = 0L,
-        vkFormat: Int = 0,
-        vkQueueFamily: Int = 0,
-    ): BackendRenderTarget = makeBackendRenderTarget(width, height, vkImageHandle, vkFormat, vkQueueFamily)
-
-    /**
      * Wraps [target]'s color attachment as an offscreen Skia render target
      */
     fun makeOffscreenBRT(

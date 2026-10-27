@@ -195,8 +195,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? >= 26.1 {
         mixins.add("blaze3d.GpuDeviceAccessor");
         mixins.add("blaze3d.GlDeviceAccessor");
-        mixins.add("skia.Mixin_SkiaFramePresent");
         //? }
+        //? if > 1.8.9
+        mixins.add("skia.Mixin_SkiaFramePresent");
         //? >= 1.21.8 {
         mixins.add("skia.Mixin_GuiRendererLegacyTarget");
         mixins.add("render.GameRendererAccessor");
@@ -207,9 +208,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
         mixins.add("skia.Mixin_DebugOverlayAboveUi");
-        //? if < 26.1 && > 1.8.9 {
-        /*mixins.add("skia.Mixin_ScreenshotComposite");
-        *///? }
         mixins.add("skia.Mixin_InitSkiaFontRenderer");
         mixins.add("skia.Mixin_StartupWarmupOverlay");
 

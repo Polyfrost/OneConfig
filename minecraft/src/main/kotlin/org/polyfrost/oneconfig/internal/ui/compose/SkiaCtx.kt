@@ -50,7 +50,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //?}
 
-//? if < 26.1 {
+//? if = 1.8.9 {
 /*import org.lwjgl.opengl.GL30
 *///?}
 
@@ -483,32 +483,6 @@ object SkiaCtx {
         }
         blitCompose(ctx)
         return true
-    }
-
-    fun compositeBackBufferForScreenshot(target: RenderTarget) {
-        //? if < 26.1 {
-        /*if (!this::directContext.isInitialized) return
-        if (isVulkanMode) return
-        if (Platform.screen().current<Any>() !is ComposeScreen) return
-        val w = target.width
-        val h = target.height
-        if (w <= 0 || h <= 0) return
-        val drawFbo = RenderTargetFbo.getFboId(target)
-        if (drawFbo <= 0) return
-
-        val savedRead = IntArray(1)
-        val savedDraw = IntArray(1)
-        GL30.glGetIntegerv(GL30.GL_READ_FRAMEBUFFER_BINDING, savedRead)
-        GL30.glGetIntegerv(GL30.GL_DRAW_FRAMEBUFFER_BINDING, savedDraw)
-        try {
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0)
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFbo)
-            GL30.glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL30.GL_COLOR_BUFFER_BIT, GL30.GL_NEAREST)
-        } finally {
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, savedRead[0])
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, savedDraw[0])
-        }
-        *///? }
     }
     //?}
 
@@ -1124,7 +1098,6 @@ object SkiaCtx {
         if (existing != null && existing.width == w && existing.height == h) return existing
 
         glSurface?.close(); glBrt?.close()
-        //? if >= 26.1 || = 1.8.9 {
         //? if >= 26.2 {
         val target = client.gameRenderer.mainRenderTarget()
         //? } else {
@@ -1139,16 +1112,6 @@ object SkiaCtx {
             ColorSpace.sRGB,
             null,
         )
-        //? } else {
-        /*glBrt = svc.makeBackBufferRenderTarget(w, h)
-        glSurface = Surface.makeFromBackendRenderTarget(
-            directContext, glBrt!!,
-            SurfaceOrigin.BOTTOM_LEFT,
-            SurfaceColorFormat.RGBA_8888,
-            ColorSpace.sRGB,
-            null,
-        )
-        *///? }
         return glSurface
     }
 

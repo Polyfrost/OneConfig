@@ -37,19 +37,13 @@ public class Mixin_SkiaFrame {
     }
     *///?}
 
-    //? if < 26.1 {
-    /*//? if >= 1.21.4 {
-    @Inject(method = "updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V", at = @At("HEAD"))
-    //?} elif > 1.8.9 {
-    /^@Inject(method = "updateDisplay()V", at = @At("HEAD"))
-    ^///?} else
-    //@Inject(method = "runGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/pipeline/RenderTarget;draw(II)V"))
+    //? if = 1.8.9 {
+    /*@Inject(method = "runGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/pipeline/RenderTarget;draw(II)V"))
     void impl$onDraw(CallbackInfo ci) {
         if (!SkiaCtx.INSTANCE.isVulkanMode()) {
             SkiaCtx.INSTANCE.draw();
         }
-        //? if = 1.8.9
-        //DebugOverlayOffscreen.INSTANCE.render();
+        DebugOverlayOffscreen.INSTANCE.render();
     }
     *///? }
 }
