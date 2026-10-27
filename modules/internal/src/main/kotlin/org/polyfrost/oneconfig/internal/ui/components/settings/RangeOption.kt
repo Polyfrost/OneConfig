@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -176,8 +177,8 @@ internal fun RangeSliderTrack(
 
     val thumbPx = with(LocalDensity.current) { thumbWidth.toPx() }
     val span = (max - min).takeIf { it != 0f } ?: 1f
-    val startFraction by animateFloatAsState(((minOf(start, end) - min) / span).coerceIn(0f, 1f), animationSpec = spring())
-    val endFraction by animateFloatAsState(((maxOf(start, end) - min) / span).coerceIn(0f, 1f), animationSpec = spring())
+    val startFraction = animateFloatAsState(((minOf(start, end) - min) / span).coerceIn(0f, 1f), animationSpec = spring())
+    val endFraction = animateFloatAsState(((maxOf(start, end) - min) / span).coerceIn(0f, 1f), animationSpec = spring())
 
     Box(
         modifier = modifier
@@ -240,16 +241,18 @@ internal fun RangeSliderTrack(
                 .clip(theme.checkBoxShape)
                 .background(theme.chipBackground)
         )
-        val usablePx = (trackWidthPx - thumbPx).coerceAtLeast(0f)
-        val startTipPx = startFraction * usablePx + thumbPx
-        val endTipPx = endFraction * usablePx
+        fun usablePx() = (trackWidthPx - thumbPx).coerceAtLeast(0f)
+        fun startTipPx() = startFraction.value * usablePx() + thumbPx
         Box(
             Modifier
                 .align(Alignment.CenterStart)
-                .offset { IntOffset(startTipPx.toInt(), 0) }
-                .fillMaxWidth(
-                    if (trackWidthPx <= 0f) 0f else ((endTipPx - startTipPx) / trackWidthPx).coerceAtLeast(0f)
-                )
+                .offset { IntOffset(startTipPx().toInt(), 0) }
+                .layout { measurable, constraints ->
+                    val f = if (trackWidthPx <= 0f) 0f else ((endFraction.value * usablePx() - startTipPx()) / trackWidthPx).coerceAtLeast(0f)
+                    val w = (constraints.maxWidth * f).roundToInt().coerceIn(constraints.minWidth, constraints.maxWidth)
+                    val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
+                    layout(w, placeable.height) { placeable.place(0, 0) }
+                }
                 .height(trackHeight)
                 .clip(theme.checkBoxShape)
                 .background(AccentBrush)
@@ -262,7 +265,7 @@ internal fun RangeSliderTrack(
                 height = thumbHeight,
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset { IntOffset((fraction * usablePx).toInt(), 0) },
+                    .offset { IntOffset((fraction.value * usablePx()).toInt(), 0) },
             )
         }
     }

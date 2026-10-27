@@ -8,6 +8,9 @@ interface PolyRenderer {
     fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float)
 
     fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow)
+
+    fun shadowWithHole(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float) =
+        shadow(x, y, w, h, radius, shadow)
     fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float)
 
     fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float)

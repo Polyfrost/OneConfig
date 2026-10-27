@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
@@ -48,6 +50,7 @@ import java.util.ArrayDeque
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -120,10 +123,12 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
 
 /** Per-row state handed to the row content so it can match the row's hover and focus styling */
 internal class ListRowContext(
-    val contentColor: Color,
+    private val color: State<Color>,
     val fieldInteraction: MutableInteractionSource,
     val focused: Boolean,
-)
+) {
+    val contentColor: Color get() = color.value
+}
 
 @Composable
 internal fun <T> rememberListEntries(key: Any?, initial: () -> List<T>, onCommit: (List<T>) -> Unit): ListEntriesState<T> =
@@ -211,8 +216,7 @@ internal fun <T> ListOptionContainer(
                                 dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                                 else -> baseOffset
                             }
-                            val animatedOffset by animateFloatAsState(targetOffset)
-                            val visualOffset = if (isDragging) targetOffset else animatedOffset
+                            val animatedOffset = animateFloatAsState(targetOffset)
 
                             EntryRow(
                                 valid = !invalid(entry.value),
@@ -220,7 +224,7 @@ internal fun <T> ListOptionContainer(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(entryHeight)
-                                    .offset { IntOffset(0, visualOffset.roundToInt()) }
+                                    .offset { IntOffset(0, (if (isDragging) targetOffset else animatedOffset.value).roundToInt()) }
                                     .zIndex(if (isDragging) 1f else 0f),
                                 dragHandle = if (!reorderable) null else { handleModifier ->
                                     handleModifier.draggable(
@@ -264,16 +268,16 @@ private fun EntryRow(
     val fieldInteraction = rememberInteractionSource()
     val isFocused by fieldInteraction.collectIsFocusedAsState()
 
-    val contentColor by animateColorAsState(
+    val contentColor = animateColorAsState(
         if (dragging || isHovered || isFocused) theme.textColor else theme.textColorSecondary
     )
-    val borderColor by animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
+    val borderColor = animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
 
     Row(
         modifier = modifier
             .clip(EntryShape)
-            .background(theme.modCardBackground, EntryShape)
-            .border(1.dp, borderColor, EntryShape)
+            .graphicsLayer {}
+            .animatedFrame(EntryShape, fill = { theme.modCardBackground }, border = { borderColor.value })
             .hoverable(rowInteraction)
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -287,7 +291,7 @@ private fun EntryRow(
                         .size(16.dp)
                         .pointerHoverIcon(PointerIcon.Hand)
                 ),
-                color = contentColor,
+                tint = { contentColor.value },
             )
         }
 
@@ -299,7 +303,7 @@ private fun EntryRow(
                 .size(16.dp)
                 .pointerHoverIcon(PointerIcon.Hand)
                 .onClick(rememberInteractionSource(), onRemove),
-            color = contentColor,
+            tint = { contentColor.value },
         )
     }
 }
@@ -309,13 +313,14 @@ private fun AddEntryButton(label: Any, entryHeight: Dp, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val contentColor by animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
+    val contentColor = animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(entryHeight)
             .clip(EntryShape)
+            .graphicsLayer {}
             .border(1.dp, theme.borderColor, EntryShape)
             .pointerHoverIcon(PointerIcon.Hand)
             .hoverable(interactionSource)
@@ -324,11 +329,12 @@ private fun AddEntryButton(label: Any, entryHeight: Dp, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon("plus", modifier = Modifier.size(16.dp), color = contentColor)
+        Icon("plus", modifier = Modifier.size(16.dp), tint = { contentColor.value })
         Text(
             label,
             modifier = Modifier.weight(1f, fill = false),
-            color = contentColor,
+            color = Color.Unspecified,
+            colorProducer = { contentColor.value },
             fontSize = 13.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

@@ -355,19 +355,24 @@ object GlHost {
 
     private var glScreen: ((RenderContext) -> Unit)? = null
     private var glScreenDirty = false
+    private var glBlurAlpha = 0f
     private var screenFrame: GlRenderer? = null
 
-    fun screen(dirty: Boolean, paint: (RenderContext) -> Unit) {
+    fun screen(dirty: Boolean, blurAlpha: Float, paint: (RenderContext) -> Unit) {
         glScreen = paint
+        glBlurAlpha = blurAlpha
         if (dirty) glScreenDirty = true
     }
 
     fun draw() {
         if (!legacyGl) return
         val paint = glScreen
-        if (paint == null) screenFrame = null
-        else {
+        if (paint == null) {
+            screenFrame = null
+            GlBlur.release()
+        } else {
             glScreen = null
+            if (glBlurAlpha > 0f && !vanillaPipeline) drawBlur(glBlurAlpha)
             val reuse = screenFrame?.takeUnless { glScreenDirty }
             glScreenDirty = false
             screenFrame = drawGl(reuse, true, paint)
@@ -375,6 +380,24 @@ object GlHost {
         if (NotificationsManager.count > 0) drawGl(null) {
             NotificationsRenderer.prepare(Platform.screen().guiWidth().toFloat(), Platform.screen().guiHeight().toFloat())
             NotificationsRenderer.draw(it)
+        }
+    }
+
+    private fun drawBlur(alpha: Float) {
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
+        if (w <= 0 || h <= 0) return
+        gl.capture()
+        try {
+            //? if = 1.8.9 {
+            /*val fbo = RenderTargetFbo.getFboId(client.mainRenderTarget)
+            *///?} else
+            val fbo = 0
+            GlBlur.draw(fbo, w, h, alpha, client.isPaused)
+        } catch (e: Throwable) {
+            LOG.warn("GlHost.drawBlur() error", e)
+        } finally {
+            gl.restore()
         }
     }
 

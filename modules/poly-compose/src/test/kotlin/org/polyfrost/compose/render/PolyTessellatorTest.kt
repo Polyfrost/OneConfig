@@ -311,6 +311,55 @@ class PolyTessellatorTest {
     }
 
     @Test
+    fun shadowWithHoleSkipsOnlyTheInsideOfTheHole() {
+        val sh = PolyShadow(PolyColor(0x80000000.toInt()), 50f, 0f, 0f, 0f)
+        val full = Recorder().apply { shadow(-4f, 9f, 408f, 308f, 24f, sh) }.done().single()
+        val holed = Recorder().apply { shadowWithHole(-4f, 9f, 408f, 308f, 24f, sh, 0f, 0f, 400f, 300f, 20f) }.done().single()
+        fun hits(b: Batch, x: Float, y: Float): Int {
+            var n = 0
+            for (q in 0 until b.colors.size / 4) {
+                val xs = (0 until 4).map { b.verts[(q * 4 + it) * 4] }
+                val ys = (0 until 4).map { b.verts[(q * 4 + it) * 4 + 1] }
+                if (x > xs.min() && x < xs.max() && y > ys.min() && y < ys.max()) n++
+            }
+            return n
+        }
+        for (y in -100..420 step 7) for (x in -100..520 step 7) {
+            val px = x + 0.37f; val py = y + 0.41f
+            val expected = hits(full, px, py)
+            val inside = (0..4).any {
+                val a = it * Math.PI.toFloat() / 8f
+                val ix = 20f * (1f - kotlin.math.cos(a)) + 0.45f
+                val iy = 20f * (1f - kotlin.math.sin(a)) + 0.45f
+                px in ix..400f - ix && py in iy..300f - iy
+            }
+            assertEquals(if (inside) 0 else expected, hits(holed, px, py), "at $px,$py")
+        }
+    }
+
+    @Test
+    fun imageCutByRoundClipKeepsFullCoverageAlongItsEdges() {
+        val bmp = PolyBitmap(4, 4, ByteArray(64) { -1 })
+        val b = Recorder().apply { save(); clipRRect(0f, 0f, 1000f, 300f, 20f); image(bmp, 0f, 0f, 1000f, 300f); restore() }.done()
+        fun alphaAt(px: Float, py: Float): Float {
+            for (batch in b) for (q in 0 until batch.colors.size / 4) for (t in arrayOf(intArrayOf(0, 1, 2), intArrayOf(0, 2, 3))) {
+                val i = t.map { q * 4 + it }
+                val x = i.map { batch.verts[it * 4] }; val y = i.map { batch.verts[it * 4 + 1] }
+                val d = (y[1] - y[2]) * (x[0] - x[2]) + (x[2] - x[1]) * (y[0] - y[2])
+                if (abs(d) < 1e-9f) continue
+                val l0 = ((y[1] - y[2]) * (px - x[2]) + (x[2] - x[1]) * (py - y[2])) / d
+                val l1 = ((y[2] - y[0]) * (px - x[2]) + (x[0] - x[2]) * (py - y[2])) / d
+                val l2 = 1f - l0 - l1
+                if (l0 < 0f || l1 < 0f || l2 < 0f) continue
+                return (l0 * (batch.colors[i[0]] ushr 24) + l1 * (batch.colors[i[1]] ushr 24) + l2 * (batch.colors[i[2]] ushr 24)) / 255f
+            }
+            return 0f
+        }
+        for (x in listOf(100f, 500f, 900f, 970f)) assertEquals(1f, alphaAt(x + 0.5f, 0.5f), 0.02f, "top at $x")
+        for (y in listOf(50f, 150f, 250f)) assertEquals(1f, alphaAt(999.5f, y + 0.5f), 0.02f, "right at $y")
+    }
+
+    @Test
     fun imageCarriesUvAndTint() {
         val r = Recorder()
         val bmp = PolyBitmap(4, 4, ByteArray(64) { -1 })
@@ -342,6 +391,40 @@ class PolyTessellatorTest {
             sum += l0 * (b.colors[i[0]] ushr 24) + l1 * (b.colors[i[1]] ushr 24) + l2 * (b.colors[i[2]] ushr 24)
         }
         return sum.roundToInt()
+    }
+
+    @Test
+    fun strokeOnItsOwnClipEdgeMatchesTheClippedRing() {
+        fun draw(grow: Float) = Recorder().apply {
+            scale(2f, 2f)
+            save(); clipRRect(10f - grow, 10f - grow, 100f + grow * 2f, 60f + grow * 2f, 8f + grow)
+            rectStroke(10f, 10f, 100f, 60f, -1, 1.5f, 8f)
+            restore()
+        }.done()
+        val fast = draw(0f)
+        val ref = draw(0.002f)
+        assertTrue(fast.sumOf { it.colors.size } < ref.sumOf { it.colors.size })
+        for (y in 16..24) for (x in 16..240) {
+            val px = x + 0.37f; val py = y + 0.41f
+            assertEquals(ref.alphaAt(px, py).toFloat(), fast.alphaAt(px, py).toFloat(), 3f, "at $px,$py")
+        }
+        for (y in 18..140 step 7) for (x in 18..24) assertEquals(ref.alphaAt(x + 0.37f, y + 0.41f).toFloat(), fast.alphaAt(x + 0.37f, y + 0.41f).toFloat(), 3f, "at $x,$y")
+    }
+
+    @Test
+    fun imageOnAFractionalClipEdgeKeepsTheOuterRampLikeAFill() {
+        val bmp = PolyBitmap(4, 4, ByteArray(64) { -1 })
+        fun draw(image: Boolean) = Recorder().apply {
+            save(); clipRRect(10.7f, 10.7f, 99.6f, 59.6f, 8f)
+            if (image) image(bmp, 10.7f, 10.7f, 99.6f, 59.6f) else rect(10.7f, 10.7f, 99.6f, 59.6f, -1, 8f)
+            restore()
+        }.done()
+        val img = draw(true)
+        val fill = draw(false)
+        for ((x, y) in listOf(10.5f to 40.37f, 110.5f to 40.37f, 60.37f to 10.5f, 60.37f to 70.5f, 9.5f to 40.37f, 111.5f to 40.37f, 60.37f to 9.5f, 60.37f to 71.5f)) {
+            assertEquals(fill.alphaAt(x, y).toFloat(), img.alphaAt(x, y).toFloat(), 3f, "at $x,$y")
+        }
+        for ((x, y) in listOf(10.5f to 40.37f, 110.5f to 40.37f, 60.37f to 10.5f, 60.37f to 70.5f)) assertTrue(img.alphaAt(x, y) > 40, "at $x,$y")
     }
 
     @Test

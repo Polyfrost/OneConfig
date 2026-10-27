@@ -30,6 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
@@ -44,6 +46,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -154,25 +157,24 @@ fun DraggableListOption(data: DraggableListOptionData) {
                         dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                         else -> baseOffset
                     }
-                    val animatedOffset by animateFloatAsState(targetOffset)
-                    val visualOffset = if (isDragging) targetOffset else animatedOffset
+                    val animatedOffset = animateFloatAsState(targetOffset)
 
-                    val bgColor by animateColorAsState(
+                    val bgColor = animateColorAsState(
                         if (isDragging) Accent else theme.componentBackground
                     )
-                    val contentColor by animateColorAsState(
+                    val contentColor = animateColorAsState(
                         if (isDragging || isHovered) theme.textColor else theme.textColorSecondary
                     )
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset { IntOffset(0, visualOffset.roundToInt()) }
+                            .offset { IntOffset(0, (if (isDragging) targetOffset else animatedOffset.value).roundToInt()) }
                             .height(itemHeight)
                             .zIndex(if (isDragging) 1f else 0f)
                             .clip(ListItemShape)
-                            .background(bgColor, ListItemShape)
-                            .border(1.dp, theme.borderColor, ListItemShape)
+                            .graphicsLayer {}
+                            .animatedFrame(ListItemShape, fill = { bgColor.value }, border = { theme.borderColor })
                             .hoverable(rowInteraction)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -201,7 +203,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
                                         dragAccum = 0f
                                     },
                                 ),
-                            color = contentColor,
+                            tint = { contentColor.value },
                         )
 
                         if (data.checkable) {
@@ -215,12 +217,13 @@ fun DraggableListOption(data: DraggableListOptionData) {
                             )
                         }
 
-                        data.icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), color = contentColor) }
+                        data.icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), tint = { contentColor.value }) }
 
                         Text(
                             optionLabels[item.value] ?: item.value,
                             modifier = Modifier.weight(1f, fill = false),
-                            color = contentColor,
+                            color = Color.Unspecified,
+                            colorProducer = { contentColor.value },
                             fontSize = 13.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

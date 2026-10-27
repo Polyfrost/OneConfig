@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -47,7 +48,7 @@ fun SliderControl(
 ) {
     val theme = LocalTheme.current
     var trackWidthPx by remember { mutableStateOf(0f) }
-    val fraction by animateFloatAsState(
+    val fraction = animateFloatAsState(
         ((value - min) / (max - min)).coerceIn(0f, 1f),
         animationSpec = spring(),
     )
@@ -102,7 +103,12 @@ fun SliderControl(
         )
         Box(
             Modifier
-                .fillMaxWidth(fraction).height(trackHeight)
+                .layout { measurable, constraints ->
+                    val w = (constraints.maxWidth * fraction.value).roundToInt().coerceIn(constraints.minWidth, constraints.maxWidth)
+                    val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
+                    layout(w, placeable.height) { placeable.place(0, 0) }
+                }
+                .height(trackHeight)
                 .align(Alignment.CenterStart)
                 .clip(theme.checkBoxShape)
                 .background(AccentBrush)
@@ -110,7 +116,7 @@ fun SliderControl(
         Box(
             Modifier
                 .align(Alignment.CenterStart)
-                .offset { IntOffset((fraction * (trackWidthPx - thumbSize.toPx())).toInt(), 0) }
+                .offset { IntOffset((fraction.value * (trackWidthPx - thumbSize.toPx())).toInt(), 0) }
                 .size(thumbSize)
                 .background(theme.controlThumbColor, theme.circleShape)
         )

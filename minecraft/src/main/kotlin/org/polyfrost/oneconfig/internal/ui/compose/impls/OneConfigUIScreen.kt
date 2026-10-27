@@ -91,7 +91,17 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override val retainsScene: Boolean get() = this === sharedScreen
 
-    override val menuBlur: Boolean get() = OneConfigConfig.enableBackgroundBlur
+    override fun blurAlpha(): Float {
+        if (!OneConfigConfig.enableBackgroundBlur) return 0f
+        val now = System.currentTimeMillis()
+        val progress = if (closeRequested) {
+            if (closeAnimationMs <= 0L) 0f
+            else 1f - easeOutExpo((now - closeRequestedAt).toFloat() / closeAnimationMs)
+        } else {
+            (now - openedAt).toFloat() / OPEN_ANIMATION_MS
+        }
+        return progress.coerceIn(0f, 1f)
+    }
 
     companion object {
         private val LOGGER = LogManager.getLogger("OneConfig/UI")

@@ -356,7 +356,12 @@ internal object GlProgram {
     private var uScale = 0
     private var uOffset = 0
     private var uPremul = 0
+    private var boundTex = -1
+    private var boundPremul = -1
     private var vertexData: ByteBuffer = BufferUtils.createByteBuffer(1 shl 16)
+    private var vertexInts: IntBuffer = vertexData.asIntBuffer()
+    private var scratch = IntArray(vertexData.capacity() / 4)
+    private val LITTLE = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
 
     private fun init() {
         val glsl = GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION) ?: "1.20"
@@ -550,11 +555,21 @@ internal object GlProgram {
         GL14.glBlendEquation(GL14.GL_FUNC_ADD)
         GL14.glBlendFuncSeparate(GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA)
         GL13.glActiveTexture(GL13.GL_TEXTURE0)
+        boundTex = -1
+        boundPremul = -1
     }
 
     private fun drawBatch(b: Batch, first: Int) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, GlTextures.id(b.texture))
-        GL20.glUniform1i(uPremul, if (b.premultiplied) 1 else 0)
+        val tex = GlTextures.id(b.texture)
+        if (tex != boundTex) {
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, tex)
+            boundTex = tex
+        }
+        val premul = if (b.premultiplied) 1 else 0
+        if (premul != boundPremul) {
+            GL20.glUniform1i(uPremul, premul)
+            boundPremul = premul
+        }
         if (b.nearest) filter(GL11.GL_NEAREST)
         GL11.glDrawElements(GL11.GL_TRIANGLES, b.colors.size / 4 * 6, GL11.GL_UNSIGNED_INT, first * 6L * 4L)
         if (b.nearest) filter(GL11.GL_LINEAR)
@@ -568,17 +583,33 @@ internal object GlProgram {
     private fun upload(at: Int, batches: List<Batch>): Int {
         var vertices = 0
         for (b in batches) vertices += b.colors.size
-        if (vertexData.capacity() < vertices * STRIDE) vertexData = BufferUtils.createByteBuffer(Integer.highestOneBit(vertices * STRIDE) shl 1)
+        val ints = vertices * (STRIDE / 4)
+        if (vertexData.capacity() < vertices * STRIDE) {
+            vertexData = BufferUtils.createByteBuffer(Integer.highestOneBit(vertices * STRIDE) shl 1)
+            vertexInts = vertexData.asIntBuffer()
+            scratch = IntArray(vertexData.capacity() / 4)
+        }
+        val out = scratch
+        var n = 0
+        for (b in batches) {
+            val v = b.verts
+            val cs = b.colors
+            for (i in cs.indices) {
+                val o = i * 4
+                out[n] = v[o].toRawBits()
+                out[n + 1] = v[o + 1].toRawBits()
+                out[n + 2] = v[o + 2].toRawBits()
+                out[n + 3] = v[o + 3].toRawBits()
+                val c = cs[i]
+                out[n + 4] = if (LITTLE) (c and 0xFF00FF00.toInt()) or ((c shr 16) and 0xFF) or ((c and 0xFF) shl 16) else (c shl 8) or (c ushr 24)
+                n += 5
+            }
+        }
+        vertexInts.clear()
+        vertexInts.put(out, 0, ints)
         val buf = vertexData
         buf.clear()
-        buf.order(ByteOrder.nativeOrder())
-        for (b in batches) for (i in b.colors.indices) {
-            val o = i * 4
-            buf.putFloat(b.verts[o]).putFloat(b.verts[o + 1]).putFloat(b.verts[o + 2]).putFloat(b.verts[o + 3])
-            val c = b.colors[i]
-            buf.put((c shr 16).toByte()).put((c shr 8).toByte()).put(c.toByte()).put((c ushr 24).toByte())
-        }
-        buf.flip()
+        buf.limit(vertices * STRIDE)
         GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, at.toLong() * STRIDE, buf)
         return vertices
     }
@@ -627,6 +658,7 @@ internal object GlTextures {
     private val bitmaps = IdentityHashMap<PolyBitmap, Tex>()
     private val external = HashMap<Int, Tex>()
     private val pages = IdentityHashMap<PolyGlyphPage.Page, IntArray>()
+    private var pagePixels: IntBuffer? = null
     private var frame = 0L
     private var scanAt = 0L
 
@@ -654,8 +686,9 @@ internal object GlTextures {
         if (tex[1] != page.version) {
             tex[1] = page.version
             bind(tex[0])
-            val px = BufferUtils.createIntBuffer(page.pixels.size).put(page.pixels)
-            px.flip()
+            val px = (pagePixels ?: BufferUtils.createIntBuffer(page.pixels.size).also { pagePixels = it })
+            px.clear()
+            px.put(page.pixels).flip()
             unpackDefaults()
             texImage(PolyGlyphPage.SIZE, PolyGlyphPage.SIZE, px)
         }

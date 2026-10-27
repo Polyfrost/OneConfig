@@ -41,10 +41,12 @@ sealed class PolyGradient {
         override val affine get() = colors.size <= 2 && stops == null
         override val linear get() = true
 
+        private val cosA = cos(Math.toRadians(angle.toDouble()))
+        private val sinA = sin(Math.toRadians(angle.toDouble()))
+
         override fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float {
-            val rad = Math.toRadians(angle.toDouble())
-            val dx = (w / 2f * cos(rad)).toFloat() * 2f
-            val dy = (h / 2f * sin(rad)).toFloat() * 2f
+            val dx = (w / 2f * cosA).toFloat() * 2f
+            val dy = (h / 2f * sinA).toFloat() * 2f
             val len2 = dx * dx + dy * dy
             if (len2 <= 0f) return 0f
             val sx = x + w / 2f - dx / 2f

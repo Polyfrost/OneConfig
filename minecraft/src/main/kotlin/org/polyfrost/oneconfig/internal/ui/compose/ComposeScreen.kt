@@ -406,19 +406,12 @@ abstract class ComposeScreen(
             //~ if >= 26.1 'renderPanorama' -> 'extractPanorama'
             extractPanorama(ctx, tickDelta)
         }
-        //? if >= 1.21.6 {
-        //~ if >= 26.1 'renderBlurredBackground' -> 'extractBlurredBackground'
-        if (menuBlur) extractBlurredBackground(ctx)
-        //?} else if >= 1.21.2 {
-        /*if (menuBlur) renderBlurredBackground()
-        *///?} else
-        //if (menuBlur) renderBlurredBackground(tickDelta)
-        //? if < 1.21.11
-        //if (menuBlur) ctx.fill(0, 0, 1, 1, 0x01000000)
+        //? if >= 1.21.11
+        UiBlur.extract(ctx, blurAlpha())
     }
     //?}
 
-    protected open val menuBlur: Boolean get() = false
+    protected open fun blurAlpha(): Float = 0f
 
     protected open val retainsScene: Boolean get() = false
 
@@ -539,7 +532,7 @@ abstract class ComposeScreen(
         //? if >= 1.21.11 {
         recording.render(ctx, wasDirty) { paint(it, nanos) }
         //?} else
-        //GlHost.screen(wasDirty) { paint(it, nanos) }
+        //GlHost.screen(wasDirty, blurAlpha()) { paint(it, nanos) }
     }
 
     //? if >= 1.21.11

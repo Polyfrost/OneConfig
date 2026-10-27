@@ -35,6 +35,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -59,6 +60,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
@@ -216,11 +218,11 @@ fun ColorOption(data: ColorOptionData) {
             if (color != null) gradientColor = Color(color.gradientArgb)
         }
     }
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         if (currentColor.luminance() > 0.6f) Color.Black else Color.White
     )
 
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
     )
 
@@ -261,17 +263,19 @@ fun ColorOption(data: ColorOptionData) {
             modifier = Modifier
                 .onClick(interactionSource) { expanded = !expanded }
                 .pointerHoverIcon(PointerIcon.Hand)
+                .graphicsLayer {}
                 .background(swatch, LocalTheme.current.sideBarNavigationEntryShape)
-                .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
+                .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, border = { borderColor.value })
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon("paintbrush", color = textColor, modifier = Modifier.size(14.dp))
+            Icon("paintbrush", tint = { textColor.value }, modifier = Modifier.size(14.dp))
             Text(
                 if (showGradient) "#${colorToHex(currentColor)} → #${colorToHex(pickerModel.gradientColor)}" else "#${colorToHex(currentColor)}",
-                color = textColor,
+                color = Color.Unspecified,
                 fontSize = 13.sp,
+                colorProducer = { textColor.value },
             )
         }
 

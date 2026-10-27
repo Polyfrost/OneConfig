@@ -44,15 +44,16 @@ import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 
+internal val SidebarWidth = 264.dp
+
 @Composable
-fun Sidebar() {
+fun Sidebar(background: Boolean = true) {
     val appearance = LocalShell.current.appearance
     val flipTopOrder = appearance.flipTopOptionOrder
     Column(
         modifier = Modifier.fillMaxHeight()
-            .width(264.dp)
-            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(appearance.sidebarOpacity))
-            .rightBorder(LocalTheme.current.borderColor, 1f),
+            .width(SidebarWidth)
+            .then(if (background) Modifier.background(LocalTheme.current.sidebarBackground.withOpacityPercent(appearance.sidebarOpacity)).rightBorder(LocalTheme.current.borderColor, 1f) else Modifier),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Navigation(showTopOptions = !flipTopOrder)

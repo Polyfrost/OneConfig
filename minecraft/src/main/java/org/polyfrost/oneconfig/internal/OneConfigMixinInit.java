@@ -209,6 +209,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("render.RenderPipelinesAccessor");
         mixins.add("render.Mixin_GuiRendererKeptMeshes");
         mixins.add("render.Mixin_GuiRenderStateStacking");
+        mixins.add("render.Mixin_UiBlur");
+        mixins.add("render.PostChainAccessor");
+        mixins.add("render.PostPassAccessor");
         //?}
 
         //? if >= 1.21.10 {

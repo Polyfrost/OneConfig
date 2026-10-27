@@ -118,8 +118,8 @@ fun Text(
     colorProducer: ColorProducer? = null,
 ) {
     when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
-        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
-        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
+        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, colorProducer)
+        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, colorProducer)
         is String -> BasicText(
             if (comp.indexOf(LEGACY_CHAR) >= 0) parseLegacyFormatting(comp, color) else AnnotatedString(comp),
             style = TextStyle(

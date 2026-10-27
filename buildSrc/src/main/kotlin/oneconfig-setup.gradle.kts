@@ -116,6 +116,12 @@ if (stonecutter.eval(stonecutter.current.version, ">= 1.21.4")
     }
 }
 
+if (stonecutter.eval(stonecutter.current.version, "< 1.21.11")) {
+    tasks.named<ProcessResources>("processResources") {
+        exclude("assets/oneconfig/post_effect/**")
+        exclude("assets/oneconfig/shaders/**")
+    }
+}
 
 fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false) {
     val dep = project.dependencies.create(dependency) as ExternalModuleDependency

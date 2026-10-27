@@ -27,10 +27,11 @@ fun Modifier.animatedFrame(
     shape: Shape,
     fill: () -> Color = { Color.Transparent },
     accentAlpha: () -> Float = { 0f },
+    borderWidth: Dp = 1.dp,
     border: () -> Color,
 ) = drawWithCache {
     val outline = shape.createOutline(size, layoutDirection, this)
-    val strokeWidth = min(ceil(1.dp.toPx()), ceil(size.minDimension / 2f))
+    val strokeWidth = min(ceil(borderWidth.toPx()), ceil(size.minDimension / 2f))
     val half = strokeWidth / 2f
     val stroke = Stroke(strokeWidth)
     val inset = Size(size.width - strokeWidth, size.height - strokeWidth)
