@@ -25,6 +25,7 @@ class KtApiParityTest {
         var pct by slider("Percent", 5f) { "$it%" }
         var t by text("Text", regex = "\\d+")
         var notes by text("Notes", multiline = true).fullWidth().onChange { }
+        var key by text("Key", secure = true, secureMask = '•', secureShowLast = 4, secureShowChars = "-")
         var colors by colorList("Colors", intArrayOf(-1), alpha = false)
         var active by masterToggle()
 
@@ -58,6 +59,12 @@ class KtApiParityTest {
         assertEquals("\\d+", tree.getProp("t")!!.getMetadata<String>("regex"))
         assertEquals(true, tree.getProp("notes")!!.getMetadata<Boolean>("fullWidth"))
         assertNull(tree.getProp("t")!!.getMetadata<Boolean>("fullWidth"))
+        val key = tree.getProp("key")!!
+        assertEquals(true, key.getMetadata<Boolean>("secure"))
+        assertEquals('•', key.getMetadata<Char>("secureMask"))
+        assertEquals(4, key.getMetadata<Int>("secureShowLast"))
+        assertEquals("-", key.getMetadata<String>("secureShowChars"))
+        assertEquals(false, tree.getProp("t")!!.getMetadata<Boolean>("secure"))
         assertTrue(tree.getProp("colors")!!.getMetadata<Any>("noAlpha") != null)
 
         val active = tree.getProp("active")!!
@@ -73,6 +80,15 @@ class KtApiParityTest {
     @Test
     fun sliderStepLargerThanRangeIsRejected() {
         assertThrows(IllegalArgumentException::class.java) { BadStep() }
+    }
+
+    class BadShowLast : KtConfig("kt_api_parity_bad_show_last", "Bad", Category.QOL) {
+        var key by text("Key", secure = true, secureShowLast = -1)
+    }
+
+    @Test
+    fun negativeSecureShowLastIsRejected() {
+        assertThrows(IllegalArgumentException::class.java) { BadShowLast() }
     }
 
     @Test
@@ -124,6 +140,16 @@ class KtApiParityTest {
         assertEquals(true, dsl.fileList().apply { fullWidth = true }.property.getMetadata<Boolean>("fullWidth"))
         val list = dsl.draggableList(arrayOf("a"), "a", "b").apply { checkable = true }
         assertEquals(true, list["checkable"])
+        val key = dsl.text("a")
+        assertFalse(key.secure)
+        assertEquals('*', key.secureMask)
+        key.secure = true
+        key.secureShowLast = 4
+        key.secureShowChars = "-"
+        assertEquals(true, key.property.getMetadata<Boolean>("secure"))
+        assertEquals(4, key.property.getMetadata<Int>("secureShowLast"))
+        assertEquals("-", key.property.getMetadata<String>("secureShowChars"))
+        assertThrows(IllegalArgumentException::class.java) { key.secureShowLast = -1 }
     }
 
     class OddRanges : KtConfig("kt_api_parity_odd_ranges", "Odd", Category.QOL) {

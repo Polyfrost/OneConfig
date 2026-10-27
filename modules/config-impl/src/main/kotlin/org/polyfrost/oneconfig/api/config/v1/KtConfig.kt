@@ -201,7 +201,11 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategoryKey: String? = null,
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.textinput.placeholder",
-        regex: String? = null
+        regex: String? = null,
+        secure: Boolean = false,
+        secureMask: Char = '*',
+        secureShowLast: Int = 0,
+        secureShowChars: String = ""
     ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
         addMetadata(
             name,
@@ -218,7 +222,31 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         this.addMetadata("multiline", multiline)
         this.addMetadata("placeholderKey", placeholderKey)
         this.addMetadata("regex", regex)
+        require(secureShowLast >= 0) { "text '$name' has a negative secureShowLast ($secureShowLast)" }
+        this.addMetadata("secure", secure)
+        this.addMetadata("secureMask", secureMask)
+        this.addMetadata("secureShowLast", secureShowLast)
+        this.addMetadata("secureShowChars", secureShowChars)
     }
+
+    @JvmSynthetic
+    @Deprecated(message = "Binary compatibility for mods compiled before secure was added", level = DeprecationLevel.HIDDEN)
+    protected fun text(
+        name: String,
+        def: String = "",
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        multiline: Boolean = false,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+        placeholder: String? = null,
+        placeholderKey: String? = "oneconfig.textinput.placeholder",
+        regex: String? = null
+    ) = text(name, def, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey, placeholder, placeholderKey, regex, false)
 
     @JvmSynthetic
     @Deprecated(message = "Binary compatibility for mods compiled before regex was added", level = DeprecationLevel.HIDDEN)
