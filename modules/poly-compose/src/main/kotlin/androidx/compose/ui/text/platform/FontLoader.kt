@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+
 package androidx.compose.ui.text.platform
 
 import androidx.compose.ui.text.font.Font

@@ -79,7 +79,7 @@ object SvgMask {
         val rootFill = attr(parent, "fill")
         val rootStroke = attr(parent, "stroke")
         val rootWidth = attr(parent, "stroke-width")
-        val shapes = Regex("<(path|rect|circle|ellipse)\\b[^>]*>").findAll(body).mapNotNull { m ->
+        val shapes = Regex("<(path|rect|circle|ellipse|line)\\b[^>]*>").findAll(body).mapNotNull { m ->
             val el = m.value
             val polys = when (m.groupValues[1]) {
                 "circle", "ellipse" -> {
@@ -98,6 +98,10 @@ object SvgMask {
                     val ry = (attr(el, "ry") ?: attr(el, "rx"))?.toFloatOrNull() ?: 0f
                     listOf(roundRect(x, y, w, h, min(rx, w / 2f), min(ry, h / 2f)))
                 }
+                "line" -> listOf(floatArrayOf(
+                    attr(el, "x1")?.toFloatOrNull() ?: 0f, attr(el, "y1")?.toFloatOrNull() ?: 0f,
+                    attr(el, "x2")?.toFloatOrNull() ?: 0f, attr(el, "y2")?.toFloatOrNull() ?: 0f,
+                ))
                 else -> parsePath(attr(el, "d") ?: return@mapNotNull null)
             }
             val opacity = attr(el, "opacity")?.toFloatOrNull() ?: 1f
@@ -324,7 +328,7 @@ object SvgMask {
     }
 
     fun parsePath(d: String): List<FloatArray> {
-        val tokens = Regex("[A-Za-z]|[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?").findAll(d).map { it.value }.toList()
+        val tokens = Regex("[A-Za-z]|[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?").findAll(d).map { it.value }.toMutableList()
         val polys = ArrayList<FloatArray>()
         val cur = ArrayList<Float>()
         var x = 0f; var y = 0f; var sx = 0f; var sy = 0f
@@ -343,6 +347,38 @@ object SvgMask {
                     u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * ey)
             }
             cx = x2; cy = y2
+        }
+        fun flag(): Boolean {
+            val t = tokens[i]
+            if (t.length > 1 && (t[0] == '0' || t[0] == '1')) tokens[i] = t.substring(1) else i++
+            return t[0] == '1'
+        }
+        fun arc(rx0: Float, ry0: Float, rotation: Float, large: Boolean, sweep: Boolean, ex: Float, ey: Float) {
+            val x0 = x.toDouble(); val y0 = y.toDouble()
+            var rx = Math.abs(rx0.toDouble()); var ry = Math.abs(ry0.toDouble())
+            if (x0 == ex.toDouble() && y0 == ey.toDouble()) return
+            if (rx == 0.0 || ry == 0.0) { line(ex, ey); return }
+            val phi = Math.toRadians(rotation.toDouble())
+            val cp = Math.cos(phi); val sp = Math.sin(phi)
+            val dx = (x0 - ex) / 2; val dy = (y0 - ey) / 2
+            val x1 = cp * dx + sp * dy; val y1 = -sp * dx + cp * dy
+            val lambda = x1 * x1 / (rx * rx) + y1 * y1 / (ry * ry)
+            if (lambda > 1) { rx *= Math.sqrt(lambda); ry *= Math.sqrt(lambda) }
+            val den = rx * rx * y1 * y1 + ry * ry * x1 * x1
+            val coef = Math.sqrt(Math.max(0.0, (rx * rx * ry * ry - den) / den)) * if (large == sweep) -1 else 1
+            val ccx = coef * rx * y1 / ry; val ccy = -coef * ry * x1 / rx
+            val mx = cp * ccx - sp * ccy + (x0 + ex) / 2; val my = sp * ccx + cp * ccy + (y0 + ey) / 2
+            val t1 = Math.atan2((y1 - ccy) / ry, (x1 - ccx) / rx)
+            var dt = Math.atan2((-y1 - ccy) / ry, (-x1 - ccx) / rx) - t1
+            if (sweep && dt < 0) dt += 2 * Math.PI else if (!sweep && dt > 0) dt -= 2 * Math.PI
+            val n = Math.max(4, Math.ceil(Math.abs(dt) / (Math.PI / 16)).toInt())
+            for (k in 1 until n) {
+                val a = t1 + dt * k / n
+                val ux = rx * Math.cos(a); val uy = ry * Math.sin(a)
+                line((mx + cp * ux - sp * uy).toFloat(), (my + sp * ux + cp * uy).toFloat())
+            }
+            line(ex, ey)
+            cx = ex; cy = ey
         }
         while (i < tokens.size) {
             val t = tokens[i]
@@ -373,6 +409,11 @@ object SvgMask {
                     val ex = ox + num(); val ey = oy + num()
                     cubic(x + 2f / 3f * (qx - x), y + 2f / 3f * (qy - y), ex + 2f / 3f * (qx - ex), ey + 2f / 3f * (qy - ey), ex, ey)
                     cx = qx; cy = qy
+                }
+                'A' -> {
+                    val rx = num(); val ry = num(); val rot = num()
+                    val large = flag(); val sweep = flag()
+                    arc(rx, ry, rot, large, sweep, ox + num(), oy + num())
                 }
                 'Z' -> { line(sx, sy); flush(); cur.add(sx); cur.add(sy) }
                 else -> return polys.also { flush() }

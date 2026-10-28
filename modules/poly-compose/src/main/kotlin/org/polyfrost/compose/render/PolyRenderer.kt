@@ -17,7 +17,7 @@ interface PolyRenderer {
     fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float)
     fun fillPath(path: PolyPath, color: Int)
 
-    fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int) {
+    fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int, join: Int = JOIN_MITER) {
         val n = points.size / 2
         for (i in 0 until (if (closed) n else n - 1)) {
             val j = (i + 1) % n
@@ -51,13 +51,22 @@ interface PolyRenderer {
 
     fun translate(dx: Float, dy: Float)
     fun scale(sx: Float, sy: Float)
+    fun rotate(degrees: Float) {}
     fun animatedScale(sx: Float, sy: Float) = scale(sx, sy)
     fun clipRect(x: Float, y: Float, w: Float, h: Float)
     fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float)
+
+    companion object {
+        const val CAP_BUTT = 0
+        const val CAP_ROUND = 1
+        const val CAP_SQUARE = 2
+        const val JOIN_MITER = 0
+        const val JOIN_ROUND = 1
+    }
 }
 
-class PolyFade(val vertical: Boolean, val stops: FloatArray, val alphas: FloatArray) {
-    init { require(stops.size == alphas.size && stops.isNotEmpty()) }
+class PolyFade(val vertical: Boolean, val stops: FloatArray, val alphas: FloatArray, val colors: IntArray? = null) {
+    init { require(stops.size == alphas.size && stops.isNotEmpty() && (colors == null || colors.size == stops.size)) }
 
     fun alphaAt(pos: Float): Float {
         if (pos <= stops[0]) return alphas[0]
@@ -68,12 +77,19 @@ class PolyFade(val vertical: Boolean, val stops: FloatArray, val alphas: FloatAr
         return alphas.last()
     }
 
+    fun colorAt(pos: Float): Int {
+        val c = colors ?: return 0xFFFFFF
+        if (pos <= stops[0]) return c[0]
+        for (i in 1 until stops.size) if (pos < stops[i]) return PolyGradient.lerpArgb(c[i - 1], c[i], (pos - stops[i - 1]) / (stops[i] - stops[i - 1]))
+        return c.last()
+    }
+
     fun span(pos: Float): Int {
         for (i in stops.indices) if (pos < stops[i]) return i
         return stops.size
     }
 
-    fun opaque(i: Int) = when (i) {
+    fun opaque(i: Int) = colors == null && when (i) {
         0 -> alphas[0] >= 1f
         stops.size -> alphas.last() >= 1f
         else -> alphas[i - 1] >= 1f && alphas[i] >= 1f

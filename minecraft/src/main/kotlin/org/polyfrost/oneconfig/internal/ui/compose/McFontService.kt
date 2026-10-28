@@ -3,8 +3,14 @@ package org.polyfrost.oneconfig.internal.ui.compose
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGlyphPage
-//? if >= 1.21.11
+//? if >= 1.21.11 {
+import net.minecraft.client.Minecraft
+import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
+//?}
 
 object McFontService {
     fun init() {
@@ -25,6 +31,13 @@ object McFontService {
         FontManager.loadFromResource("assets/oneconfig/fonts/unifont/unifont.otf", "unifont", pixelAligned = true)
         FontManager.setDefault("poppins")
         installEngines()
+        //? if >= 1.21.11 {
+        McFontQueue.measureWidth = { text, scale -> Minecraft.getInstance().font.width(text) * scale }
+        EventManager.register(ResourceFinishedLoading::class.java) { _ ->
+            FontManager.invalidateMetrics()
+            HudManager.invalidate()
+        }
+        //?}
     }
 
     @JvmStatic

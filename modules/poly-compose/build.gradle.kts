@@ -38,13 +38,3 @@ dependencies {
     testImplementation(libs.jetbrains.compose.runtime)
     testImplementation(libs.kotlinx.coroutines)
 }
-
-kotlin {
-    compilerOptions {
-        optIn.addAll(
-            "androidx.compose.ui.InternalComposeUiApi",
-            "androidx.compose.ui.ExperimentalComposeUiApi",
-            "androidx.compose.ui.text.ExperimentalTextApi",
-        )
-    }
-}

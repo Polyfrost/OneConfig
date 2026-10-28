@@ -30,4 +30,23 @@ class SvgMaskTest {
         assertEquals(0, a(0, 0))
         assertEquals(0, a(9, 5))
     }
+
+    @Test
+    fun parsesArcsWithCompactFlags() {
+        for (d in listOf("M0 0 A5 5 0 0 1 10 0", "M0 0a5 5 0 0110 0")) {
+            val pts = SvgMask.parsePath(d).single()
+            assertEquals(10f, pts[pts.size - 2], 1e-3f, d)
+            assertEquals(0f, pts[pts.size - 1], 1e-3f, d)
+            val ys = pts.filterIndexed { i, _ -> i % 2 == 1 }
+            assertEquals(5f, ys.maxOf { kotlin.math.abs(it) }, 0.05f, d)
+        }
+    }
+
+    @Test
+    fun rasterisesLines() {
+        val bmp = SvgMask.rasterize("""<svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2"><line x1="0" y1="5" x2="10" y2="5"/></svg>""", 10)!!
+        fun a(x: Int, y: Int) = bmp.pixels[(y * bmp.width + x) * 4 + 3].toInt() and 0xFF
+        assertTrue(a(5, 5) > 200)
+        assertEquals(0, a(5, 1))
+    }
 }

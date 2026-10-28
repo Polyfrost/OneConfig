@@ -1,5 +1,6 @@
 package org.polyfrost.compose.render
 
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -66,6 +67,18 @@ sealed class PolyGradient {
             val r = radius * minOf(w, h)
             if (r <= 0f) return 1f
             return hypot(px - (x + centerX * w), py - (y + centerY * h)) / r
+        }
+    }
+
+    data class Sweep(
+        override val colors: List<PolyColor>,
+        override val stops: List<Float>? = null,
+        val centerX: Float = 0.5f,
+        val centerY: Float = 0.5f,
+    ) : PolyGradient() {
+        override fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float {
+            val t = atan2(py - (y + centerY * h), px - (x + centerX * w)) / (2f * Math.PI.toFloat())
+            return if (t < 0f) t + 1f else t
         }
     }
 

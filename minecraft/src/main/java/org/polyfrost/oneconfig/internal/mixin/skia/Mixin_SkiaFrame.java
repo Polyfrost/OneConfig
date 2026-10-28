@@ -44,7 +44,10 @@ public class Mixin_SkiaFrame {
     ^///?} else
     //@Inject(method = "runGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/pipeline/RenderTarget;draw(II)V"))
     void impl$onDraw(CallbackInfo ci) {
-        GlHost.INSTANCE.draw();
+        //? if > 1.8.9 {
+        GlHost.INSTANCE.drawAtPresent();
+        //?} else
+        //GlHost.INSTANCE.drawBeforeBlit();
     }
     *///? }
 }

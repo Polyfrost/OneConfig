@@ -12,6 +12,10 @@ object FontManager {
     var revision = 0
         private set
 
+    fun invalidateMetrics() {
+        revision++
+    }
+
     @JvmOverloads
     fun register(name: String, bytes: ByteArray, pixelAligned: Boolean = false) {
         fontData[name] = bytes

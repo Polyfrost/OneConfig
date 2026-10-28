@@ -1,7 +1,11 @@
+@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+
 package org.polyfrost.compose.backend
 
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.ClipOp
@@ -12,8 +16,10 @@ import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.Vertices
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -21,6 +27,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import java.util.WeakHashMap
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.hypot
 import kotlin.math.min
 import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
 import org.polyfrost.compose.render.PolyBitmap
@@ -107,7 +115,9 @@ private fun recolored(bitmap: PolyBitmap, matrix: ColorMatrix): PolyBitmap = syn
     }
 }
 
-private fun Paint.fadeMask(): PolyFade? = (shader?.platformShader as? GradientShader)?.fade(alpha)
+private fun Paint.fadeMask(): PolyFade? = (shader?.platformShader as? GradientShader)?.fade(alpha, blendMode == BlendMode.Modulate)
+
+private fun Paint.masks() = blendMode == BlendMode.DstIn || blendMode == BlendMode.Modulate
 
 private class MaskOp(val fade: PolyFade) : (PolyCanvas) -> Unit {
     override fun invoke(c: PolyCanvas) = c.renderer.restore()
@@ -135,13 +145,18 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     override fun translate(dx: Float, dy: Float) = r.translate(dx, dy)
     override fun scale(sx: Float, sy: Float) = r.scale(sx, sy)
 
-    override fun rotate(degrees: Float) {}
+    override fun rotate(degrees: Float) = r.rotate(degrees)
     override fun skew(sx: Float, sy: Float) {}
 
     override fun concat(matrix: Matrix) {
         val v = matrix.values
         r.translate(v[Matrix.TranslateX], v[Matrix.TranslateY])
-        r.scale(v[Matrix.ScaleX], v[Matrix.ScaleY])
+        val a = v[Matrix.ScaleX]
+        val b = v[Matrix.SkewY]
+        if (b == 0f && v[Matrix.SkewX] == 0f) return r.scale(a, v[Matrix.ScaleY])
+        val sx = hypot(a, b)
+        r.rotate(Math.toDegrees(atan2(b, a).toDouble()).toFloat())
+        r.scale(sx, (a * v[Matrix.ScaleY] - b * v[Matrix.SkewX]) / sx)
     }
 
     override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) {
@@ -156,8 +171,21 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         else p.getBounds().let { r.clipRect(it.left, it.top, it.width, it.height) }
     }
 
-    override fun drawLine(p1: Offset, p2: Offset, paint: Paint) =
-        r.line(p1.x, p1.y, p2.x, p2.y, (paint as PolyPaint).argb(), paint.strokeWidth.coerceAtLeast(1f))
+    override fun drawLine(p1: Offset, p2: Offset, paint: Paint) = segment(p1.x, p1.y, p2.x, p2.y, paint as PolyPaint)
+
+    private fun segment(x1: Float, y1: Float, x2: Float, y2: Float, paint: PolyPaint) {
+        if (paint.strokeCap == StrokeCap.Butt && paint.pathEffect !is DashEffect) return r.line(x1, y1, x2, y2, paint.argb(), paint.strokeWidth.coerceAtLeast(1f))
+        strokeContour(floatArrayOf(x1, y1, x2, y2), false, paint)
+    }
+
+    private fun strokeContour(c: FloatArray, closed: Boolean, paint: PolyPaint) {
+        val color = paint.argb()
+        val sw = paint.strokeWidth.coerceAtLeast(1f)
+        val cap = when (paint.strokeCap) { StrokeCap.Round -> PolyRenderer.CAP_ROUND; StrokeCap.Square -> PolyRenderer.CAP_SQUARE; else -> PolyRenderer.CAP_BUTT }
+        val join = if (paint.strokeJoin == StrokeJoin.Round) PolyRenderer.JOIN_ROUND else PolyRenderer.JOIN_MITER
+        val dash = paint.pathEffect as? DashEffect ?: return r.strokePolyline(c, closed, color, sw, cap, join)
+        for (d in dashes(c, closed, dash)) r.strokePolyline(d, false, color, sw, cap, join)
+    }
 
     override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) =
         shape(left, top, right - left, bottom - top, 0f, paint as PolyPaint)
@@ -190,35 +218,34 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         p.plainRect?.let { return shape(it.left, it.top, it.width, it.height, 0f, pp) }
         val color = pp.argb()
         if (pp.style == PaintingStyle.Stroke) {
-            val sw = pp.strokeWidth.coerceAtLeast(1f)
-            p.allContours().forEachIndexed { i, c -> polyline(c, p.closedAt(i), color, sw) }
+            p.allContours().forEachIndexed { i, c -> strokeContour(c, p.closedAt(i), pp) }
             return
         }
+        val poly = PolyPath()
+        poly.evenOdd = p.fillType == PathFillType.EvenOdd
         for (c in p.allContours()) {
             if (c.size < 6) continue
-            val poly = PolyPath()
             poly.moveTo(c[0], c[1])
             for (k in 2 until c.size step 2) poly.lineTo(c[k], c[k + 1])
             poly.close()
-            r.fillPath(poly, color)
         }
-    }
-
-    private fun polyline(c: FloatArray, closed: Boolean, color: Int, width: Float) {
-        val n = c.size / 2
-        for (i in 0 until (if (closed) n else n - 1)) {
-            val j = (i + 1) % n
-            r.line(c[i * 2], c[i * 2 + 1], c[j * 2], c[j * 2 + 1], color, width)
-        }
+        r.fillPath(poly, color)
     }
 
     private fun shape(x: Float, y: Float, w: Float, h: Float, radius: Float, paint: PolyPaint) {
-        if (w <= 0f || h <= 0f || paint.blendMode == BlendMode.DstIn) return
-        if (paint.blur > 0f) {
-            r.shadow(x, y, w, h, radius, PolyShadow(PolyColor(paint.argb()), paint.blur, 0f, 0f, 0f))
+        if (w <= 0f || h <= 0f || paint.masks()) return
+        val blur = if (paint.blur > 0f) paint.blur
+        else if (imageBlur > 0.5f && paint.style == PaintingStyle.Fill && paint.shader == null) (imageBlur - 0.5f) / 0.57735f
+        else 0f
+        if (blur > 0f) {
+            r.shadow(x, y, w, h, radius, PolyShadow(PolyColor(paint.argb()), blur, 0f, 0f, 0f))
             return
         }
         if (paint.style == PaintingStyle.Stroke) {
+            if (paint.pathEffect is DashEffect) {
+                val outline = PolyComposePath().apply { addRoundRect(RoundRect(Rect(x, y, x + w, y + h), CornerRadius(radius))) }
+                return strokeContour(outline.allContours()[0], true, paint)
+            }
             val sw = paint.strokeWidth.coerceAtLeast(1f)
             val g = (paint.shader?.platformShader as? GradientShader)?.brushFor(x, y, w, h)
             if (g == null) {
@@ -291,14 +318,50 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         val c = pp.argb()
         when (pointMode) {
             PointMode.Points -> for (k in points.indices step 2) r.rect(points[k] - sw / 2f, points[k + 1] - sw / 2f, sw, sw, c, if (pp.strokeCap == StrokeCap.Round) sw / 2f else 0f)
-            PointMode.Lines -> for (k in 0 until points.size - 3 step 4) r.line(points[k], points[k + 1], points[k + 2], points[k + 3], c, sw)
-            else -> for (k in 0 until points.size - 3 step 2) r.line(points[k], points[k + 1], points[k + 2], points[k + 3], c, sw)
+            PointMode.Lines -> for (k in 0 until points.size - 3 step 4) segment(points[k], points[k + 1], points[k + 2], points[k + 3], pp)
+            else -> if (points.size >= 4) strokeContour(points, false, pp)
         }
     }
 
     override fun drawVertices(vertices: Vertices, blendMode: BlendMode, paint: Paint) {}
     override fun enableZ() {}
     override fun disableZ() {}
+}
+
+private fun dashes(c: FloatArray, closed: Boolean, e: DashEffect): List<FloatArray> {
+    val iv = e.intervals
+    var total = 0f
+    for (v in iv) total += v
+    val n = c.size / 2
+    if (iv.size < 2 || total <= 0f || n < 2) return listOf(c)
+    var k = 0
+    var pos = ((e.phase % total) + total) % total
+    while (pos > iv[k]) { pos -= iv[k]; k = (k + 1) % iv.size }
+    var rem = iv[k] - pos
+    var on = k % 2 == 0
+    val out = ArrayList<FloatArray>()
+    var cur = FloatArrayList()
+    if (on) cur.add(c[0], c[1])
+    for (i in 0 until if (closed) n else n - 1) {
+        val j = (i + 1) % n
+        val ax = c[i * 2]; val ay = c[i * 2 + 1]
+        val bx = c[j * 2]; val by = c[j * 2 + 1]
+        val len = hypot(bx - ax, by - ay)
+        var t = 0f
+        while (len - t > rem) {
+            t += rem
+            val x = ax + (bx - ax) * t / len; val y = ay + (by - ay) * t / len
+            cur.add(x, y)
+            if (on) { if (cur.size >= 4) out += cur.toArray(); cur = FloatArrayList() }
+            on = !on
+            k = (k + 1) % iv.size
+            rem = iv[k]
+        }
+        rem -= len - t
+        if (on) cur.add(bx, by)
+    }
+    if (on && cur.size >= 4) out += cur.toArray()
+    return out
 }
 
 class RecordingCanvas : PolyDrawCanvas {
@@ -320,14 +383,14 @@ class RecordingCanvas : PolyDrawCanvas {
     override fun saveLayer(bounds: Rect, paint: Paint) { val p = paint.snap(); polyOp { it.saveLayer(bounds, p) } }
     override fun translate(dx: Float, dy: Float) = polyOp { it.translate(dx, dy) }
     override fun scale(sx: Float, sy: Float) = polyOp { it.scale(sx, sy) }
-    override fun rotate(degrees: Float) {}
+    override fun rotate(degrees: Float) = polyOp { it.rotate(degrees) }
     override fun skew(sx: Float, sy: Float) {}
     override fun concat(matrix: Matrix) { val m = Matrix(matrix.values.copyOf()); polyOp { it.concat(m) } }
     override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) = polyOp { it.clipRect(left, top, right, bottom, clipOp) }
     override fun clipPath(path: Path, clipOp: ClipOp) { val p = path.copyPath(); polyOp { it.clipPath(p, clipOp) } }
     override fun drawLine(p1: Offset, p2: Offset, paint: Paint) { val p = paint.snap(); polyOp { it.drawLine(p1, p2, p) } }
     override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
-        if (paint.blendMode == BlendMode.DstIn) { paint.fadeMask()?.let { ops += MaskOp(it) }; return }
+        if (paint.masks()) { paint.fadeMask()?.let { ops += MaskOp(it) }; return }
         val p = paint.snap()
         polyOp { it.drawRect(left, top, right, bottom, p) }
     }
@@ -344,6 +407,6 @@ class RecordingCanvas : PolyDrawCanvas {
     override fun enableZ() {}
     override fun disableZ() {}
 
-    private fun Path.copyPath(): Path = PolyComposePath().also { it.addPath(this, Offset.Zero) }
+    private fun Path.copyPath(): Path = PolyComposePath().also { it.fillType = fillType; it.addPath(this, Offset.Zero) }
 }
 

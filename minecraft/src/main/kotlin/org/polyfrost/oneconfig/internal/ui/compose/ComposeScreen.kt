@@ -197,11 +197,7 @@ abstract class ComposeScreen(
     private fun poisonScene(cause: Throwable) {
         if (scenePoisoned) return
         scenePoisoned = true
-        try {
-            sceneDirty = true
-        } catch (t: Throwable) {
-            cause.addSuppressed(t)
-        }
+        sceneDirty = true
         LOGGER.error(
             "Compose scene for ${this::class.java.simpleName} failed and has been discarded; " +
                 "it will be rebuilt on the next frame.",
@@ -289,10 +285,6 @@ abstract class ComposeScreen(
         sceneFailure = failure
         return scene
     }
-
-    private var clockSkewNanos = 0L
-
-    private fun frameNanos(): Long = System.nanoTime() + clockSkewNanos
 
     @Volatile
     private var sceneDirty = true
@@ -517,7 +509,7 @@ abstract class ComposeScreen(
         }
 
         // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
-        val nanos = frameNanos()
+        val nanos = System.nanoTime()
         withScene { scene ->
             recomposerOrNull?.performFrame(nanos)
             scene.measureAndLayout()

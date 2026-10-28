@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+
 package org.polyfrost.compose.backend
 
 import androidx.compose.ui.graphics.platform.PlatformGraphicsRegistry

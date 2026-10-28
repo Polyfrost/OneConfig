@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.api.notifications.v1
 import java.util.concurrent.Callable
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.render.PolyBitmap
+import org.jetbrains.skia.Image
 
 /**
  * Utility for sending notifications
@@ -75,6 +76,44 @@ object Notifications {
         return push(Notification(title, message, type, icon, duration, progress, actions, onClick))
     }
 
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    @JvmName("send")
+    fun sendSkia(
+        title: String,
+        message: String,
+        type: NotificationType = NotificationType.INFO,
+        icon: Image? = null,
+        duration: Float = Notification.DEFAULT_DURATION,
+        progress: Callable<Float>? = null,
+        onClick: Runnable? = null,
+        actions: List<NotificationAction> = emptyList(),
+    ): Notification = send(title, message, type, null, duration, progress, onClick, actions)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    @JvmName("send")
+    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?): Notification =
+        send(title, message, type, null)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    @JvmName("send")
+    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float): Notification =
+        send(title, message, type, null, duration)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    @JvmName("send")
+    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?): Notification =
+        send(title, message, type, null, duration, progress)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    @JvmName("send")
+    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, onClick: Runnable?): Notification =
+        send(title, message, type, null, duration, progress, onClick)
+
     private fun push(notification: Notification): Notification {
         NotificationsManager.push(notification)
         LOGGER.info("Pushed notification #{} ({}): {}", notification.id, notification.type, notification.title)
@@ -116,6 +155,12 @@ object Notifications {
     @JvmOverloads
     fun icon(resourcePath: String, size: Int = 64): PolyBitmap? = SvgMask.get(resourcePath, size)
 
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    @JvmOverloads
+    @JvmName("icon")
+    fun skiaIcon(resourcePath: String, size: Int = 64): Image? = null
+
     @JvmStatic
     fun builder(title: String, message: String): Builder = Builder(title, message)
 
@@ -129,6 +174,10 @@ object Notifications {
 
         fun type(type: NotificationType) = apply { this.type = type }
         fun icon(icon: PolyBitmap?) = apply { this.icon = icon }
+
+        @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+        @JvmName("icon")
+        fun skiaIcon(icon: Image?) = apply { this.icon = null }
         fun duration(duration: Float) = apply { this.duration = duration }
 
         /**

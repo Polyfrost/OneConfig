@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class, androidx.compose.ui.text.ExperimentalTextApi::class)
+
 package org.polyfrost.compose.backend
 
 import androidx.compose.ui.geometry.Offset
@@ -35,6 +37,7 @@ import androidx.compose.ui.text.platform.PlatformText
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -42,9 +45,12 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.render.PolyRenderer
+import java.text.Bidi
 import java.text.BreakIterator
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -94,7 +100,10 @@ object PolyText : PlatformText {
     override val defaultFontRasterizationSettings = FontRasterizationSettings(FontSmoothing.AntiAlias, FontHinting.Slight, subpixelPositioning = true, autoHintingForced = false)
 }
 
-internal class TextRun(val start: Int, val end: Int, val font: PolyFont, val style: SpanStyle, val spanColor: Color = Color.Unspecified) {
+internal class TextRun(
+    val start: Int, val end: Int, val font: PolyFont, val style: SpanStyle,
+    val spanColor: Color = Color.Unspecified, val spanDecoration: TextDecoration? = null, val spanShadow: Shadow? = null,
+) {
     val metrics get() = font.metrics
 }
 
@@ -121,14 +130,18 @@ internal class PolyIntrinsics(
             if (a >= b) continue
             var s = base
             var spanColor = Color.Unspecified
+            var spanDecoration: TextDecoration? = null
+            var spanShadow: Shadow? = null
             for (sp in spans) if (sp.start <= a && sp.end >= b) {
                 s = s.merge(sp.item)
                 if (sp.item.color.isSpecified) spanColor = sp.item.color
+                sp.item.textDecoration?.let { spanDecoration = it }
+                sp.item.shadow?.let { spanShadow = it }
             }
             val name = resolver.resolve(s.fontFamily, s.fontWeight ?: FontWeight.Normal, s.fontStyle ?: FontStyle.Normal, s.fontSynthesis ?: FontSynthesis.All).value as? String
                 ?: FontManager.DEFAULT_KEY
             val size = px(s.fontSize, 14f)
-            runs += TextRun(a, b, fontCache.getOrPut(name to size) { PolyFont(name, size) }, s, spanColor)
+            runs += TextRun(a, b, fontCache.getOrPut(name to size) { PolyFont(name, size) }, s, spanColor, spanDecoration, spanShadow)
         }
         if (runs.isEmpty()) {
             val name = resolver.resolve(base.fontFamily, base.fontWeight ?: FontWeight.Normal, base.fontStyle ?: FontStyle.Normal).value as? String ?: FontManager.DEFAULT_KEY
@@ -187,11 +200,17 @@ private object Advances {
         cache.getOrPut(font) { ConcurrentHashMap() }.getOrPut(cp) { font.measureTextWidth(String(Character.toChars(cp))) }
 }
 
-internal class Line(val start: Int, val end: Int, val visibleEnd: Int, val top: Float, val bottom: Float, val baseline: Float, val left: Float, val width: Float, val ellipsis: Boolean)
+internal class Seg(val str: String, val x: Float, val w: Float, val run: TextRun)
+
+internal class Line(
+    val start: Int, val end: Int, val visibleEnd: Int, val top: Float, val bottom: Float, val baseline: Float, val left: Float, val width: Float, val ellipsis: Boolean,
+    val rtl: Boolean = false, val runs: IntArray? = null, val runX: FloatArray? = null, val segs: Array<Seg>? = null,
+)
 
 internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, overflow: TextOverflow, private val maxWidth: Float) : PlatformParagraph {
     private val text = intr.text
     private val lines: List<Line>
+    private val levels: ByteArray?
     override val didExceedMaxLines: Boolean
     override val width: Float
     override val height: Float
@@ -205,20 +224,77 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         val ascent = -intr.runs.minOf { it.metrics.ascent }
         val content = ascent + intr.runs.maxOf { it.metrics.descent }
         val boxW = if (maxWidth.isFinite()) maxWidth else kept.maxOfOrNull { intr.width(it.first, it.third) } ?: 0f
+        val flags = when (intr.style.textDirection) {
+            TextDirection.Ltr -> Bidi.DIRECTION_LEFT_TO_RIGHT
+            TextDirection.Rtl -> Bidi.DIRECTION_RIGHT_TO_LEFT
+            TextDirection.ContentOrRtl -> Bidi.DIRECTION_DEFAULT_RIGHT_TO_LEFT
+            else -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT
+        }
+        val forcedRtl = flags == Bidi.DIRECTION_RIGHT_TO_LEFT || flags == Bidi.DIRECTION_DEFAULT_RIGHT_TO_LEFT
+        val lv = if (!forcedRtl && text.none { it >= '֐' }) null else ByteArray(text.length)
+        var para: Bidi? = null
+        var paraStart = 0
+        var paraEnd = 0
         lines = kept.mapIndexed { i, (s, e, ve) ->
             val ellipsize = didExceedMaxLines && i == kept.lastIndex && overflow == TextOverflow.Ellipsis
             val vEnd = if (ellipsize) ellipsisEnd(s, ve) else ve
-            val w = intr.width(s, vEnd) + if (ellipsize) ellipsisWidth(vEnd) else 0f
+            val ew = if (ellipsize) ellipsisWidth(vEnd) else 0f
+            val w = intr.width(s, vEnd) + ew
             val top = i * lh
+            if (lv != null && (para == null || s > paraEnd)) {
+                paraStart = text.lastIndexOf('\n', s - 1) + 1
+                paraEnd = text.indexOf('\n', s).let { if (it < 0) text.length else it }
+                para = Bidi(text.substring(paraStart, paraEnd), flags).also { lv.fill(it.baseLevel.toByte(), paraStart, min(paraEnd + 1, text.length)) }
+            }
+            val b = para
+            val rtl = b != null && !b.baseIsLeftToRight()
             val left = when (intr.align) {
                 TextAlign.Center -> (boxW - w) / 2f
-                TextAlign.End, TextAlign.Right -> boxW - w
-                else -> 0f
+                TextAlign.Right -> boxW - w
+                TextAlign.End -> if (rtl) 0f else boxW - w
+                TextAlign.Left -> 0f
+                else -> if (rtl) boxW - w else 0f
             }
-            Line(s, e, vEnd, top, top + lh, top + (lh - content) / 2f + ascent, max(0f, left), w, ellipsize)
+            val line = Line(s, e, vEnd, top, top + lh, top + (lh - content) / 2f + ascent, max(0f, left), w, ellipsize, rtl)
+            if (b == null || lv == null) line else bidiLine(line, b, paraStart, if (ellipsize) vEnd else min(e, paraEnd), ew, lv)
         }
+        levels = lv
         width = if (maxWidth.isFinite()) maxWidth else lines.maxOfOrNull { it.width } ?: 0f
         height = lines.lastOrNull()?.bottom ?: lh
+    }
+
+    private fun bidiLine(l: Line, para: Bidi, paraStart: Int, limit: Int, ellipsisW: Float, levels: ByteArray): Line {
+        val s = l.start
+        val line = if (limit > s) para.createLineBidi(s - paraStart, limit - paraStart) else null
+        if (!l.rtl && (line == null || line.isLeftToRight)) return l
+        if (line == null) return Line(s, l.end, l.visibleEnd, l.top, l.bottom, l.baseline, l.left, l.width, l.ellipsis, true, IntArray(0), FloatArray(0), emptyArray())
+        val n = line.runCount
+        val order = Array<Any>(n) { it }
+        Bidi.reorderVisually(ByteArray(n) { line.getRunLevel(it).toByte() }, 0, order, 0, n)
+        val runs = IntArray(n * 3)
+        val runX = FloatArray(n)
+        val segs = ArrayList<Seg>()
+        var x = if (l.rtl) l.left + ellipsisW - intr.width(l.visibleEnd, limit) else l.left
+        for (v in 0 until n) {
+            val k = order[v] as Int
+            val rs = s + line.getRunStart(k)
+            val re = s + line.getRunLimit(k)
+            val level = line.getRunLevel(k)
+            levels.fill(level.toByte(), rs, re)
+            runs[v * 3] = rs
+            runs[v * 3 + 1] = re
+            runs[v * 3 + 2] = level
+            runX[v] = x
+            for (run in intr.runs) {
+                val a = max(run.start, rs)
+                val e = min(min(run.end, re), l.visibleEnd)
+                if (a >= e) continue
+                segs += if (level and 1 == 0) Seg(text.substring(a, e), x + intr.width(rs, a), intr.width(a, e), run)
+                else Seg(StringBuilder(e - a).append(text, a, e).reverse().toString(), x + intr.width(e, re), intr.width(a, e), run)
+            }
+            x += intr.width(rs, re)
+        }
+        return Line(s, l.end, l.visibleEnd, l.top, l.bottom, l.baseline, l.left, l.width, l.ellipsis, l.rtl, runs, runX, segs.toTypedArray())
     }
 
     private fun layout(): List<Triple<Int, Int, Int>> {
@@ -272,6 +348,12 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         return e
     }
 
+    private fun editEnd(l: Line) = when {
+        l.ellipsis -> l.visibleEnd
+        l.end > l.start && text[l.end - 1] == '\n' -> l.end - 1
+        else -> l.end
+    }
+
     private fun lineFor(offset: Int): Int {
         for (i in lines.indices) if (offset < lines[i].end) return i
         return lines.lastIndex.coerceAtLeast(0)
@@ -304,7 +386,43 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
     override fun getHorizontalPosition(offset: Int, usePrimaryDirection: Boolean): Float {
         if (lines.isEmpty()) return 0f
         val l = lines[lineFor(offset)]
-        return l.left + intr.width(l.start, offset.coerceIn(l.start, l.visibleEnd))
+        if (l.runs != null) return bidiX(l, offset.coerceIn(l.start, editEnd(l)), usePrimaryDirection)
+        return l.left + intr.width(l.start, offset.coerceIn(l.start, editEnd(l)))
+    }
+
+    private fun runIndex(runs: IntArray, i: Int): Int {
+        var k = 0
+        while (k < runs.size) {
+            if (i >= runs[k] && i < runs[k + 1]) return k
+            k += 3
+        }
+        return -1
+    }
+
+    private fun edge(l: Line, k: Int, offset: Int): Float {
+        val runs = l.runs!!
+        val x = l.runX!![k / 3]
+        return if (runs[k + 2] and 1 == 0) x + intr.width(runs[k], offset) else x + intr.width(offset, runs[k + 1])
+    }
+
+    private fun bidiX(l: Line, offset: Int, primary: Boolean): Float {
+        val runs = l.runs!!
+        val runX = l.runX!!
+        if (runs.isEmpty()) return if (l.rtl) l.left + l.width else l.left
+        val visLeft = runX[0]
+        val visRight = runX[runX.size - 1] + intr.width(runs[runs.size - 3], runs[runs.size - 2])
+        val paraLevel = if (l.rtl) 1 else 0
+        val before = if (offset > l.start) runIndex(runs, offset - 1) else -1
+        val at = runIndex(runs, offset)
+        val levelBefore = if (before < 0) paraLevel else runs[before + 2]
+        val levelAt = if (at < 0) paraLevel else runs[at + 2]
+        val trailing = (levelBefore < levelAt) == primary
+        return when {
+            trailing && before >= 0 -> edge(l, before, offset)
+            !trailing && at >= 0 -> edge(l, at, offset)
+            trailing -> if (l.rtl) visRight else visLeft
+            else -> if (l.rtl) visLeft else visRight
+        }
     }
 
     override fun getCursorRect(offset: Int): Rect {
@@ -313,8 +431,14 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         return Rect(x, l.top, x, l.bottom)
     }
 
-    override fun getParagraphDirection(offset: Int) = ResolvedTextDirection.Ltr
-    override fun getBidiRunDirection(offset: Int) = ResolvedTextDirection.Ltr
+    override fun getParagraphDirection(offset: Int) =
+        if (lines.isNotEmpty() && lines[lineFor(offset)].rtl) ResolvedTextDirection.Rtl else ResolvedTextDirection.Ltr
+
+    override fun getBidiRunDirection(offset: Int): ResolvedTextDirection {
+        val lv = levels ?: return ResolvedTextDirection.Ltr
+        if (lv.isEmpty()) return getParagraphDirection(offset)
+        return if (lv[offset.coerceIn(0, lv.size - 1)].toInt() and 1 == 0) ResolvedTextDirection.Ltr else ResolvedTextDirection.Rtl
+    }
 
     override fun getLineForVerticalPosition(vertical: Float): Int {
         for (i in lines.indices) if (vertical < lines[i].bottom) return i
@@ -325,13 +449,25 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         if (lines.isEmpty()) return 0
         val l = lines[getLineForVerticalPosition(position.y)]
         var x = l.left
-        for (i in l.start until l.visibleEnd) {
+        val end = editEnd(l)
+        if (l.runs != null) {
+            val hi = if (l === lines.last() || end < l.end) end else max(l.start, end - 1)
+            var best = l.start
+            var bestD = Float.POSITIVE_INFINITY
+            for (o in l.start..hi) {
+                if (o > l.start && o < text.length && Character.isLowSurrogate(text[o]) && Character.isHighSurrogate(text[o - 1])) continue
+                val d = abs(bidiX(l, o, true) - position.x)
+                if (d < bestD) { bestD = d; best = o }
+            }
+            return best
+        }
+        for (i in l.start until end) {
             val a = intr.advances[i]
             if (a == 0f) continue
             if (position.x < x + a / 2f) return i
             x += a
         }
-        return l.visibleEnd
+        return if (l === lines.last() || end < l.end) end else max(l.start, end - 1)
     }
 
     override fun getRangeForRect(rect: Rect, granularity: TextGranularity, inclusionStrategy: TextInclusionStrategy): TextRange {
@@ -342,6 +478,13 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
 
     override fun getBoundingBox(offset: Int): Rect {
         val l = lines.getOrNull(lineFor(offset)) ?: return Rect.Zero
+        val runs = l.runs
+        val k = if (runs != null) runIndex(runs, offset) else -1
+        if (k >= 0) {
+            val a = edge(l, k, offset)
+            val b = edge(l, k, offset + 1)
+            return Rect(min(a, b), l.top, max(a, b), l.bottom)
+        }
         val x = getHorizontalPosition(offset, true)
         return Rect(x, l.top, x + (intr.advances.getOrNull(offset) ?: 0f), l.bottom)
     }
@@ -365,6 +508,21 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
     override fun getPathForRange(start: Int, end: Int): Path {
         val p = PolyComposePath()
         for (l in lines) {
+            val runs = l.runs
+            if (runs != null) {
+                var k = 0
+                while (k < runs.size) {
+                    val a = max(start, runs[k])
+                    val b = min(end, runs[k + 1])
+                    if (a < b) {
+                        val x0 = edge(l, k, a)
+                        val x1 = edge(l, k, b)
+                        p.addRect(Rect(min(x0, x1), l.top, max(x0, x1), l.bottom))
+                    }
+                    k += 3
+                }
+                continue
+            }
             val s = max(start, l.start)
             val e = min(end, l.visibleEnd)
             if (s >= e && !(start < l.end && end > l.visibleEnd && s <= l.visibleEnd)) continue
@@ -389,25 +547,19 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
             val r = pc.renderer
             for (l in lines) {
                 var x = l.left
-                for (run in intr.runs) {
+                val segs = l.segs
+                if (segs != null) {
+                    for (sg in segs) {
+                        drawRun(r, l, sg.run, sg.str, sg.x, sg.w, color, alpha, shadow, decoration)
+                        x = max(x, sg.x + sg.w)
+                    }
+                    if (l.rtl) x = l.left
+                } else for (run in intr.runs) {
                     val s = max(run.start, l.start)
                     val e = min(run.end, l.visibleEnd)
                     if (s >= e) continue
-                    val str = text.substring(s, e)
-                    val base = run.spanColor.takeIf { it.isSpecified } ?: color ?: run.style.color.takeIf { it.isSpecified } ?: Color.Black
-                    val c = base.copy(alpha = base.alpha * alpha * (run.style.alpha.takeUnless { it.isNaN() } ?: 1f)).toArgb()
                     val w = intr.width(s, e)
-                    if (run.style.background.isSpecified && run.style.background.alpha > 0f) r.rect(x, l.top, w, l.bottom - l.top, run.style.background.toArgb(), 0f)
-                    val sh = shadow ?: run.style.shadow
-                    if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font)
-                    r.text(str, x, l.baseline, c, run.font)
-                    val deco = decoration ?: run.style.textDecoration
-                    if (deco != null) {
-                        val m = run.metrics
-                        val t = max(1f, m.underlineThickness)
-                        if (TextDecoration.Underline in deco) r.rect(x, l.baseline + m.underlinePosition, w, t, c, 0f)
-                        if (TextDecoration.LineThrough in deco) r.rect(x, l.baseline - m.strikeoutPosition, w, max(1f, m.strikeoutThickness), c, 0f)
-                    }
+                    drawRun(r, l, run, text.substring(s, e), x, w, color, alpha, shadow, decoration)
                     x += w
                 }
                 if (l.ellipsis) {
@@ -416,6 +568,22 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                     r.text(ELLIPSIS, x, l.baseline, base.copy(alpha = base.alpha * alpha).toArgb(), run.font)
                 }
             }
+        }
+    }
+
+    private fun drawRun(r: PolyRenderer, l: Line, run: TextRun, str: String, x: Float, w: Float, color: Color?, alpha: Float, shadow: Shadow?, decoration: TextDecoration?) {
+        val base = run.spanColor.takeIf { it.isSpecified } ?: color ?: run.style.color.takeIf { it.isSpecified } ?: Color.Black
+        val c = base.copy(alpha = base.alpha * alpha * (run.style.alpha.takeUnless { it.isNaN() } ?: 1f)).toArgb()
+        if (run.style.background.isSpecified && run.style.background.alpha > 0f) r.rect(x, l.top, w, l.bottom - l.top, run.style.background.toArgb(), 0f)
+        val sh = run.spanShadow ?: shadow ?: run.style.shadow
+        if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font)
+        r.text(str, x, l.baseline, c, run.font)
+        val deco = run.spanDecoration ?: decoration ?: run.style.textDecoration
+        if (deco != null) {
+            val m = run.metrics
+            val t = max(1f, m.underlineThickness)
+            if (TextDecoration.Underline in deco) r.rect(x, l.baseline + m.underlinePosition, w, t, c, 0f)
+            if (TextDecoration.LineThrough in deco) r.rect(x, l.baseline + m.strikeoutPosition, w, max(1f, m.strikeoutThickness), c, 0f)
         }
     }
 

@@ -13,7 +13,7 @@ import java.io.InputStream;
 public class Mixin_ComposeImageResources {
     /**
      * @author Polyfrost
-     * @reason Skia is not shipped
+     * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
      */
     @Overwrite
     public static ImageBitmap loadImageBitmap(InputStream inputStream) throws IOException {

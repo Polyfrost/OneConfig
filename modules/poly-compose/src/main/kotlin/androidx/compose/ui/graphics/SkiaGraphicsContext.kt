@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+
 package androidx.compose.ui.graphics
 
 import androidx.compose.ui.geometry.Offset
@@ -136,17 +138,18 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
         cache = LayerCache(version, props, key, cap.segs)
     }
 
-    private fun props(): List<Any?> = listOf(alpha, scaleX, scaleY, animating, translationX, translationY, left, top, size, outline, clip, shadowElevation, spotShadowColor, pivotOffset, renderEffect)
+    private fun props(): List<Any?> = listOf(alpha, scaleX, scaleY, animating, translationX, rotationZ, translationY, left, top, size, outline, clip, shadowElevation, spotShadowColor, pivotOffset, renderEffect)
 
     private fun drawLive(c: PolyCanvas) {
         if (alpha <= 0f) return
         val r = c.renderer
         if (alpha < 1f) r.saveLayerAlpha(alpha) else r.save()
         r.translate(left + translationX, top + translationY)
-        if (scaleX != 1f || scaleY != 1f) {
+        if (scaleX != 1f || scaleY != 1f || rotationZ != 0f) {
             val p = if (pivotOffset.isUnspecified) Offset(size.width / 2f, size.height / 2f) else pivotOffset
             r.translate(p.x, p.y)
-            if (animating) r.animatedScale(scaleX, scaleY) else r.scale(scaleX, scaleY)
+            if (rotationZ != 0f) r.rotate(rotationZ)
+            if (scaleX != 1f || scaleY != 1f) { if (animating) r.animatedScale(scaleX, scaleY) else r.scale(scaleX, scaleY) }
             r.translate(-p.x, -p.y)
         }
         val o = outline

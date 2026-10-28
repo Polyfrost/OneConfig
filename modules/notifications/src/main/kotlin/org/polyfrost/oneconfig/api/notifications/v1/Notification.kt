@@ -33,6 +33,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicLong
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyBitmap
+import org.jetbrains.skia.Image
 
 /**
  * The visual category of a [Notification]
@@ -87,6 +88,38 @@ class Notification @JvmOverloads constructor(
     val actions: List<NotificationAction> = emptyList(),
     val onClick: Runnable? = null,
 ) {
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    constructor(
+        title: String,
+        message: String,
+        type: NotificationType = NotificationType.INFO,
+        icon: Image? = null,
+        duration: Float = DEFAULT_DURATION,
+        progress: Callable<Float>? = null,
+        actions: List<NotificationAction> = emptyList(),
+        onClick: Runnable? = null,
+    ) : this(title, message, type, null as PolyBitmap?, duration, progress, actions, onClick)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    constructor(title: String, message: String, type: NotificationType, icon: Image?) :
+        this(title, message, type, null as PolyBitmap?)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float) :
+        this(title, message, type, null as PolyBitmap?, duration)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?) :
+        this(title, message, type, null as PolyBitmap?, duration, progress)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
+        this(title, message, type, null as PolyBitmap?, duration, progress, actions)
+
+    @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
+    @get:JvmName("getIcon")
+    val skiaIcon: Image? get() = null
+
     val id: Long = COUNTER.incrementAndGet()
 
     val createdAt: Long = System.currentTimeMillis()

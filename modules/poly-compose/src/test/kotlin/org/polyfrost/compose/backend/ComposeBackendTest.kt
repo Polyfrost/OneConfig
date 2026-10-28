@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+
 package org.polyfrost.compose.backend
 
 import androidx.compose.foundation.background
@@ -12,11 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
+import androidx.compose.ui.text.PlatformParagraph
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.ResolvedTextDirection
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -136,5 +146,101 @@ class ComposeBackendTest {
         assertTrue(calls.any { it.startsWith("rect 0.0,0.0 400.0x300.0") }, "full-size background")
         assertTrue(calls.any { it.startsWith("shadow") }, "shadow")
         assertEquals(1, calls.count { it.startsWith("text 'hi'") })
+    }
+
+    private fun paragraph(text: String, style: TextStyle = TextStyle(), maxWidth: Int = 100): PlatformParagraph {
+        PolyFont.engine = object : PolyFont.Engine {
+            override fun measureTextWidth(font: PolyFont, text: String) = text.codePointCount(0, text.length) * font.size * 0.5f
+            override fun metrics(font: PolyFont) = PolyFont.Metrics(-font.size * 0.8f, font.size * 0.2f, 0f, font.size * 0.1f, 1f)
+        }
+        return PolyText.createParagraph(text, style, emptyList(), emptyList(), 0, TextOverflow.Clip, Constraints(maxWidth = maxWidth), Density(1f), PolyText.createFontFamilyResolver())
+    }
+
+    private fun drawnText(p: PlatformParagraph): List<String> {
+        val r = LogRenderer()
+        p.paint(PolyCanvas(r), Color.Black, null, null)
+        return r.calls.filter { it.startsWith("text") }
+    }
+
+    @Test
+    fun plainLatinLayoutIsUnchanged() {
+        val p = paragraph("hello world")
+        assertEquals(listOf("text 'hello world' 0.0,11.2"), drawnText(p))
+        assertEquals(0f, p.getLineLeft(0))
+        assertEquals(21f, p.getHorizontalPosition(3, true))
+        assertEquals(3, p.getOffsetForPosition(Offset(22f, 5f)))
+        assertEquals(ResolvedTextDirection.Ltr, p.getParagraphDirection(0))
+        assertEquals(ResolvedTextDirection.Ltr, p.getBidiRunDirection(0))
+    }
+
+    @Test
+    fun hebrewLaysOutRightToLeft() {
+        val p = paragraph("אבג")
+        assertEquals(ResolvedTextDirection.Rtl, p.getParagraphDirection(0))
+        assertEquals(ResolvedTextDirection.Rtl, p.getBidiRunDirection(1))
+        assertEquals(79f, p.getLineLeft(0))
+        assertEquals(100f, p.getHorizontalPosition(0, true))
+        assertEquals(79f, p.getHorizontalPosition(3, true))
+        assertEquals(listOf("text 'גבא' 79.0,11.2"), drawnText(p))
+    }
+
+    @Test
+    fun mixedTextDrawsRunsInVisualOrder() {
+        val p = paragraph("abc אבג def")
+        assertEquals(ResolvedTextDirection.Ltr, p.getParagraphDirection(0))
+        assertEquals(ResolvedTextDirection.Rtl, p.getBidiRunDirection(5))
+        assertEquals(listOf("text 'abc ' 0.0,11.2", "text 'גבא' 28.0,11.2", "text ' def' 49.0,11.2"), drawnText(p))
+        assertEquals(28f, p.getHorizontalPosition(4, true))
+        assertEquals(49f, p.getHorizontalPosition(4, false))
+        assertEquals(42f, p.getHorizontalPosition(5, true))
+        assertEquals(49f, p.getHorizontalPosition(7, true))
+        fun span(s: Int, e: Int) = p.getPathForRange(s, e).getBounds().let { it.left to it.right }
+        assertEquals(21f to 28f, span(3, 4))
+        assertEquals(35f to 49f, span(4, 6))
+        assertEquals(21f to 49f, span(3, 6))
+    }
+
+    @Test
+    fun caretAndHitTestRoundTrip() {
+        for (text in listOf("abc אבג def", "אבג", "אבג abc דהו", "abc")) {
+            val p = paragraph(text)
+            for (o in 0..text.length) {
+                val x = p.getHorizontalPosition(o, true)
+                assertEquals(o, p.getOffsetForPosition(Offset(x, 5f)), "'$text' offset $o at x=$x")
+            }
+        }
+    }
+
+    @Test
+    fun rtlDirectionRightAlignsLatinAtStart() {
+        val p = paragraph("abc", TextStyle(textDirection = TextDirection.Rtl, textAlign = TextAlign.Start))
+        assertEquals(ResolvedTextDirection.Rtl, p.getParagraphDirection(0))
+        assertEquals(ResolvedTextDirection.Ltr, p.getBidiRunDirection(0))
+        assertEquals(79f, p.getLineLeft(0))
+        assertEquals(listOf("text 'abc' 79.0,11.2"), drawnText(p))
+        val end = paragraph("abc", TextStyle(textDirection = TextDirection.Rtl, textAlign = TextAlign.End))
+        assertEquals(0f, end.getLineLeft(0))
+    }
+
+    @Test
+    fun directionIsPerParagraph() {
+        assertEquals(100f, paragraph("", TextStyle(textDirection = TextDirection.Rtl)).getHorizontalPosition(0, true))
+        val p = paragraph("אב\nab\n")
+        assertEquals(ResolvedTextDirection.Rtl, p.getParagraphDirection(0))
+        assertEquals(ResolvedTextDirection.Ltr, p.getParagraphDirection(3))
+        assertEquals(86f, p.getLineLeft(0))
+        assertEquals(0f, p.getLineLeft(1))
+        assertEquals(3, p.lineCount)
+    }
+
+    @Test
+    fun rtlEllipsisSitsAtVisualEnd() {
+        PolyFont.engine = object : PolyFont.Engine {
+            override fun measureTextWidth(font: PolyFont, text: String) = text.codePointCount(0, text.length) * font.size * 0.5f
+            override fun metrics(font: PolyFont) = PolyFont.Metrics(-font.size * 0.8f, font.size * 0.2f, 0f, font.size * 0.1f, 1f)
+        }
+        val p = PolyText.createParagraph("אבגד הוזח טיכל", TextStyle(), emptyList(), emptyList(), 1, TextOverflow.Ellipsis, Constraints(maxWidth = 50), Density(1f), PolyText.createFontFamilyResolver())
+        val calls = drawnText(p)
+        assertEquals(listOf("text 'דגבא' 22.0,11.2", "text '…' 15.0,11.2"), calls)
     }
 }

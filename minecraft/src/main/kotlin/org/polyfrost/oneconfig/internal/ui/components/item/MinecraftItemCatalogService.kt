@@ -96,6 +96,12 @@ import net.minecraft.resources.ResourceLocation
 /*import net.minecraft.util.RandomSource
 *///?}
 
+//? if vulkanmod && = 1.21.1 {
+/*import net.vulkanmod.vulkan.Renderer
+import net.vulkanmod.vulkan.VRenderSystem
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost
+*///?}
+
 //? if = 1.8.9 {
 /*import net.minecraft.client.render.platform.Lighting
 *///?}
@@ -1067,6 +1073,14 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 val width = right - left
                 val height = bottom - top
 
+                //? if vulkanmod && = 1.21.1 {
+                /*if (GlHost.vanillaPipeline) {
+                    VRenderSystem.setClearColor(0f, 0f, 0f, 0f)
+                    VRenderSystem.clearDepth(1.0)
+                    Renderer.clearAttachments(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT, left, top, width, height)
+                    return@forEach
+                }
+                *///?}
                 //? if > 1.8.9 {
                 GlStateManager._scissorBox(left, target.height - bottom, width, height)
                 //? if >= 1.21.4 {

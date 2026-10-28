@@ -13,7 +13,7 @@ import java.io.InputStream;
 public class Mixin_ComposeSvgResources {
     /**
      * @author Polyfrost
-     * @reason Skia is not shipped
+     * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
      */
     @Overwrite
     public static Painter loadSvgPainter(InputStream inputStream, Density density) throws IOException {

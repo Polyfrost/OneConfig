@@ -1,6 +1,8 @@
 package org.polyfrost.compose.render
 
 class PolyPath {
+    var evenOdd = false
+
     private var ops = IntArray(16)
     private var args = FloatArray(64)
     private var opCount = 0

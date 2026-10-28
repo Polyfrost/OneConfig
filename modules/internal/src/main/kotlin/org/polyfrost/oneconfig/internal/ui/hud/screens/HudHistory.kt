@@ -89,7 +89,7 @@ private fun capture(): Layout {
         val tree = hud.tree ?: continue
         val id = tree.id ?: continue
         val values = LinkedHashMap<String, Value>()
-        val anchored = hud.effectiveAnchorParent != null
+        val anchored = hud.isAnchored
         forEachOption(tree) { path, prop ->
             val value = prop.get()
             values[path] = if (value == null || WrappingUtils.isSimpleClass(prop.type)) {
@@ -114,7 +114,7 @@ private fun write(hud: Hud, entry: Entry): Boolean {
     forEachOption(hud.tree) { path, prop -> options[path] = prop }
     var changed = false
     var linksDropped = false
-    val anchored = hud.effectiveAnchorParent != null
+    val anchored = hud.isAnchored
     for ((path, value) in entry.values) {
         if (value.derived && anchored) continue
         if (path.startsWith(OWN_STATE_PREFIX)) {

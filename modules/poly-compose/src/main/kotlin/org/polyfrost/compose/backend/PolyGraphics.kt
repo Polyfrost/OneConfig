@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+
 package org.polyfrost.compose.backend
 
 import androidx.compose.ui.geometry.CornerRadius
@@ -71,7 +73,7 @@ object PolyGraphics : PlatformGraphics {
         Shader(GradientShader(PolyGradient.Radial(colors.map(::polyColor), colorStops), center, radius))
 
     override fun createSweepGradientShader(center: Offset, colors: List<Color>, colorStops: List<Float>?): Shader =
-        Shader(GradientShader(PolyGradient.Points(listOf(polyColor(colors.first())), null, 0f, 0f, 1f, 0f), null, 0f))
+        Shader(GradientShader(PolyGradient.Sweep(colors.map(::polyColor), colorStops), center, 0f))
 
     override fun createImageShader(image: ImageBitmap, tileModeX: TileMode, tileModeY: TileMode): Shader = Shader(ImageShader(image))
     override fun createCompositeShader(destination: Shader, source: Shader, blendMode: BlendMode): Shader {
@@ -103,14 +105,17 @@ object PolyGraphics : PlatformGraphics {
 internal class GradientShader(val brush: PolyGradient, val center: Offset?, val radius: Float) : PlatformShader {
     fun brushFor(x: Float, y: Float, w: Float, h: Float): PolyGradient {
         val c = center ?: return brush
-        val g = brush as PolyGradient.Radial
         val m = min(w, h)
-        if (w <= 0f || h <= 0f || m <= 0f) return g
-        return g.copy(centerX = (c.x - x) / w, centerY = (c.y - y) / h, radius = radius / m)
+        if (w <= 0f || h <= 0f || m <= 0f) return brush
+        return when (brush) {
+            is PolyGradient.Radial -> brush.copy(centerX = (c.x - x) / w, centerY = (c.y - y) / h, radius = radius / m)
+            is PolyGradient.Sweep -> brush.copy(centerX = (c.x - x) / w, centerY = (c.y - y) / h)
+            else -> brush
+        }
     }
 }
 
-internal fun GradientShader.fade(alpha: Float): PolyFade? {
+internal fun GradientShader.fade(alpha: Float, tint: Boolean = false): PolyFade? {
     val g = brush as? PolyGradient.Points ?: return null
     val vertical = g.x0 == g.x1
     if (!vertical && g.y0 != g.y1) return null
@@ -119,7 +124,8 @@ internal fun GradientShader.fade(alpha: Float): PolyFade? {
     val n = g.colors.size
     val stops = FloatArray(n) { a + (b - a) * (g.stops?.get(it) ?: if (n == 1) 0f else it / (n - 1f)) }
     val alphas = FloatArray(n) { g.colors[it].alpha / 255f * alpha }
-    return if (b < a) PolyFade(vertical, stops.reversedArray(), alphas.reversedArray()) else PolyFade(vertical, stops, alphas)
+    val colors = if (tint) IntArray(n) { g.colors[it].argb and 0xFFFFFF } else null
+    return if (b < a) PolyFade(vertical, stops.reversedArray(), alphas.reversedArray(), colors?.reversedArray()) else PolyFade(vertical, stops, alphas, colors)
 }
 
 internal class MaskedShader(val color: GradientShader, val mask: PolyFade) : PlatformShader

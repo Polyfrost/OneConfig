@@ -203,6 +203,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("skia.Mixin_ItemAtlasScissor");
         //? if < 1.21.8
         //mixins.add("skia.Mixin_MainTargetRedirect");
+        //? if > 1.8.9 && < 1.21.11
+        //mixins.add("skia.Mixin_GlHostPresent");
         //? if >= 1.21.11 {
         mixins.add("skia.Mixin_BlazeToasts");
         mixins.add("render.BufferBuilderAccessor");

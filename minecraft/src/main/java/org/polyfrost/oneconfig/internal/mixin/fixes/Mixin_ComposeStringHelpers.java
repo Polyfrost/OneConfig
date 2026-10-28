@@ -19,21 +19,37 @@ public class Mixin_ComposeStringHelpers {
         return it;
     }
 
+    /**
+     * @author Polyfrost
+     * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
+     */
     @Overwrite
     public static int findPrecedingBreak(String text, int index) {
         return oneconfig$chars(text).preceding(index);
     }
 
+    /**
+     * @author Polyfrost
+     * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
+     */
     @Overwrite
     public static int findFollowingBreak(String text, int index) {
         return oneconfig$chars(text).following(index);
     }
 
+    /**
+     * @author Polyfrost
+     * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
+     */
     @Overwrite
     private static boolean canBeEmojiOrPictographic(String text) {
         return text.codePoints().anyMatch(cp -> Character.isEmoji(cp) || Character.isExtendedPictographic(cp) || cp == 0xFE0F);
     }
 
+    /**
+     * @author Polyfrost
+     * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
+     */
     @Overwrite
     public static int findNextNonWhitespaceSymbolsSubsequenceStartOffset(int offset, String text) {
         BreakIterator it = oneconfig$chars(text);
@@ -49,6 +65,10 @@ public class Mixin_ComposeStringHelpers {
         return current;
     }
 
+    /**
+     * @author Polyfrost
+     * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
+     */
     @Overwrite
     public static int midpointPositionWithUnicodeSymbols(String text) {
         int half = (int) text.codePoints().count() / 2;

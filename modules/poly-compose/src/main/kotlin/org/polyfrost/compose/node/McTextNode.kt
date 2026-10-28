@@ -2,6 +2,7 @@ package org.polyfrost.compose.node
 
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.mc.McFontQueue
+import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.RenderContext
 
@@ -12,15 +13,17 @@ class McTextNode : PolyNode() {
     var scale: Float = 1f
     var outlineColor: PolyColor? = null
     var textProvider: (() -> String)? = null
+    private var measuredFonts = -1
 
     override fun measureContent() {
-        val t = textProvider?.invoke() ?: return
-        if (t == text) return
+        val t = textProvider?.invoke() ?: text
+        if (t == text && measuredFonts == FontManager.revision) return
         text = t
         remeasure()
     }
 
     fun remeasure() {
+        measuredFonts = FontManager.revision
         val lines = text.lines()
         style.width = PolySize.Px(lines.maxOf {  McFontQueue.measureTextWidth(it, scale) })
         style.height = PolySize.Px(McFontQueue.measureBlockHeight(lines.size, scale))

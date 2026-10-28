@@ -364,7 +364,25 @@ object GlHost {
         if (dirty) glScreenDirty = true
     }
 
-    fun draw() {
+    private var drawnBeforeBlit = false
+
+    fun drawBeforeBlit() {
+        if (!legacyGl || vanillaPipeline) return
+        drawnBeforeBlit = true
+        //? if < 1.21.11 {
+        /*draw(RenderTargetFbo.getFboId(client.mainRenderTarget))
+        *///?}
+    }
+
+    fun drawAtPresent() {
+        if (drawnBeforeBlit) {
+            drawnBeforeBlit = false
+            return
+        }
+        draw(0)
+    }
+
+    private fun draw(fbo: Int) {
         if (!legacyGl) return
         val paint = glScreen
         if (paint == null) {
@@ -372,27 +390,23 @@ object GlHost {
             GlBlur.release()
         } else {
             glScreen = null
-            if (glBlurAlpha > 0f && !vanillaPipeline) drawBlur(glBlurAlpha)
+            if (glBlurAlpha > 0f && !vanillaPipeline) drawBlur(fbo, glBlurAlpha)
             val reuse = screenFrame?.takeUnless { glScreenDirty }
             glScreenDirty = false
-            screenFrame = drawGl(reuse, true, paint)
+            screenFrame = drawGl(fbo, reuse, true, paint)
         }
-        if (NotificationsManager.count > 0) drawGl(null) {
+        if (NotificationsManager.count > 0) drawGl(fbo, null) {
             NotificationsRenderer.prepare(Platform.screen().guiWidth().toFloat(), Platform.screen().guiHeight().toFloat())
             NotificationsRenderer.draw(it)
         }
     }
 
-    private fun drawBlur(alpha: Float) {
+    private fun drawBlur(fbo: Int, alpha: Float) {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0) return
         gl.capture()
         try {
-            //? if = 1.8.9 {
-            /*val fbo = RenderTargetFbo.getFboId(client.mainRenderTarget)
-            *///?} else
-            val fbo = 0
             GlBlur.draw(fbo, w, h, alpha, client.isPaused)
         } catch (e: Throwable) {
             LOG.warn("GlHost.drawBlur() error", e)
@@ -401,7 +415,7 @@ object GlHost {
         }
     }
 
-    private fun drawGl(cached: GlRenderer?, kept: Boolean = false, draw: (RenderContext) -> Unit): GlRenderer? {
+    private fun drawGl(fbo: Int, cached: GlRenderer?, kept: Boolean = false, draw: (RenderContext) -> Unit): GlRenderer? {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
         if (w <= 0 || h <= 0 || Platform.screen().guiWidth() <= 0) return null
@@ -419,10 +433,6 @@ object GlHost {
         gl.capture()
         try {
             val renderer = cached ?: GlRenderer().also { draw(RenderContext(it)) }
-            //? if = 1.8.9 {
-            /*val fbo = RenderTargetFbo.getFboId(client.mainRenderTarget)
-            *///?} else
-            val fbo = 0
             renderer.draw(fbo, w, h, topDown = false, clear = false, kept = kept)
             return renderer
         } catch (e: Throwable) {

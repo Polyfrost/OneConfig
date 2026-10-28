@@ -525,4 +525,153 @@ class PolyTessellatorTest {
         assertTrue(ring.solidArea() in 3600f..4000f, "area ${ring.solidArea()}")
         assertEquals(-5.5f, listOf(ring).bounds()[0], 0.01f)
     }
+
+    @Test
+    fun pathHolesStayEmpty() {
+        fun draw(evenOdd: Boolean, reverseHole: Boolean) = Recorder().run {
+            val p = PolyPath()
+            p.evenOdd = evenOdd
+            p.moveTo(0f, 0f); p.lineTo(100f, 0f); p.lineTo(100f, 100f); p.lineTo(0f, 100f); p.close()
+            if (reverseHole) { p.moveTo(30f, 30f); p.lineTo(30f, 70f); p.lineTo(70f, 70f); p.lineTo(70f, 30f) }
+            else { p.moveTo(30f, 30f); p.lineTo(70f, 30f); p.lineTo(70f, 70f); p.lineTo(30f, 70f) }
+            p.close()
+            fillPath(p, -1)
+            done()
+        }
+        for (b in listOf(draw(false, true), draw(true, false))) {
+            b.forEach(::assertWinding)
+            assertEquals(0, b.alphaAt(50.2f, 50.3f))
+            assertEquals(255, b.alphaAt(10.2f, 10.3f))
+            assertEquals(255, b.alphaAt(85.2f, 50.3f))
+            assertEquals(255, b.alphaAt(50.2f, 20.3f))
+        }
+        assertEquals(255, draw(false, false).alphaAt(50.2f, 50.3f))
+    }
+
+    @Test
+    fun rotationTurnsVerticesAroundThePivot() {
+        val b = Recorder().run {
+            translate(50f, 50f); rotate(90f); translate(-50f, -50f)
+            rect(60f, 40f, 20f, 20f, -1, 0f)
+            done()
+        }
+        assertEquals(255, b.alphaAt(50.2f, 70.3f))
+        assertEquals(0, b.alphaAt(70.2f, 50.3f))
+        val box = b.bounds()
+        assertEquals(39.5f, box[0], 0.01f)
+        assertEquals(59.5f, box[1], 0.01f)
+    }
+
+    @Test
+    fun roundJoinRoundsTheOuterCorner() {
+        val b = Recorder().run { strokePolyline(floatArrayOf(0f, 0f, 100f, 0f, 100f, 50f), false, -1, 10f, 0, PolyRenderer.JOIN_ROUND); done() }
+        b.forEach(::assertWinding)
+        assertEquals(0, b.alphaAt(104.6f, -4.6f))
+        assertEquals(255, b.alphaAt(102.9f, -2.9f))
+        assertEquals(255, b.alphaAt(97.1f, 2.9f))
+        for (p in 0 until 40) assertTrue(b.alphaAt(90.37f + p * 0.37f, -4.9f + p * 0.3f) <= 256, "overlap at $p")
+    }
+
+    @Test
+    fun dashedLineLeavesGaps() {
+        org.polyfrost.compose.backend.PolyCompose.install()
+        val r = Recorder()
+        val paint = org.polyfrost.compose.backend.PolyPaint().apply {
+            strokeWidth = 4f
+            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+        }
+        org.polyfrost.compose.backend.PolyCanvas(r).drawLine(androidx.compose.ui.geometry.Offset(0f, 10f), androidx.compose.ui.geometry.Offset(100f, 10f), paint)
+        val b = r.done()
+        assertEquals(255, b.alphaAt(5.2f, 10.3f))
+        assertEquals(0, b.alphaAt(15.2f, 10.3f))
+        assertEquals(255, b.alphaAt(25.2f, 10.3f))
+        assertEquals(0, b.alphaAt(95.2f, 10.3f))
+    }
+
+    @Test
+    fun tintMaskMultipliesVertexColour() {
+        val r = Recorder()
+        r.saveLayerFade(PolyFade(false, floatArrayOf(0f, 100f), floatArrayOf(1f, 1f), intArrayOf(0xFF0000, 0x0000FF)))
+        r.rect(0f, 0f, 100f, 10f, 0xFF808080.toInt(), 0f)
+        r.restore()
+        val b = r.done().single()
+        for (i in b.colors.indices) {
+            val x = b.verts[i * 4]
+            if (x !in 0f..100f || b.colors[i] ushr 24 != 255) continue
+            val c = b.colors[i]
+            assertEquals(0, (c shr 8) and 0xFF)
+            assertEquals((128 * (1f - x / 100f)).roundToInt().toFloat(), ((c shr 16) and 0xFF).toFloat(), 1.5f, "red at $x")
+        }
+    }
+
+    private fun PolyPath.loop(vararg pts: Float) {
+        moveTo(pts[0], pts[1])
+        for (k in 2 until pts.size step 2) lineTo(pts[k], pts[k + 1])
+        close()
+    }
+
+    @Test
+    fun severalHolesBridgeWithoutCuttingEachOther() {
+        fun draw(evenOdd: Boolean, holes: List<FloatArray>) = Recorder().run {
+            val p = PolyPath()
+            p.evenOdd = evenOdd
+            p.loop(0f, 0f, 100f, 0f, 100f, 100f, 0f, 100f)
+            for (h in holes) if (evenOdd) p.loop(h[0], h[1], h[2], h[1], h[2], h[3], h[0], h[3]) else p.loop(h[0], h[1], h[0], h[3], h[2], h[3], h[2], h[1])
+            fillPath(p, -1)
+            done()
+        }
+        val two = listOf(floatArrayOf(10f, 10f, 40f, 40f), floatArrayOf(60f, 60f, 90f, 90f))
+        val three = two + listOf(floatArrayOf(60f, 10f, 90f, 40f))
+        for (eo in listOf(false, true)) for (holes in listOf(two, three)) {
+            val b = draw(eo, holes)
+            for (h in holes) assertEquals(0, b.alphaAt((h[0] + h[2]) / 2f + 0.2f, (h[1] + h[3]) / 2f + 0.3f), "hole $eo ${holes.size}")
+            val solid = mutableListOf(50.2f to 50.3f, 95.2f to 50.3f, 25.2f to 75.3f, 5.2f to 5.3f, 50.2f to 95.3f, 75.2f to 50.3f)
+            if (holes.size == 2) solid += 75.2f to 25.3f
+            for ((x, y) in solid) assertEquals(255, b.alphaAt(x, y), "solid at $x,$y $eo ${holes.size}")
+            for (q in 0 until 200) assertTrue(b.alphaAt(q * 0.5f + 0.13f, q * 0.37f + 7.1f) <= 256, "overlap at $q")
+        }
+    }
+
+    @Test
+    fun overlappingContoursFillIndependently() {
+        for (eo in listOf(false, true)) {
+            val b = Recorder().run {
+                val p = PolyPath()
+                p.evenOdd = eo
+                p.loop(0f, 0f, 40f, 0f, 40f, 40f, 0f, 40f)
+                p.loop(20f, 20f, 35f, 70f, 5f, 70f)
+                fillPath(p, -1)
+                done()
+            }
+            assertEquals(255, b.alphaAt(20.2f, 60.3f))
+            assertEquals(255, b.alphaAt(10.2f, 10.3f))
+        }
+    }
+
+    @Test
+    fun zeroLengthDashesDrawDots() {
+        org.polyfrost.compose.backend.PolyCompose.install()
+        fun draw(cap: androidx.compose.ui.graphics.StrokeCap) = Recorder().also { r ->
+            val paint = org.polyfrost.compose.backend.PolyPaint().apply {
+                strokeWidth = 4f
+                strokeCap = cap
+                pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(0f, 10f), 0f)
+            }
+            org.polyfrost.compose.backend.PolyCanvas(r).drawLine(androidx.compose.ui.geometry.Offset(0f, 10f), androidx.compose.ui.geometry.Offset(100f, 10f), paint)
+        }.done()
+        val round = draw(androidx.compose.ui.graphics.StrokeCap.Round)
+        for (x in listOf(0.2f, 10.2f, 50.2f, 90.2f)) assertEquals(255, round.alphaAt(x, 10.3f), "dot at $x")
+        assertEquals(0, round.alphaAt(5.2f, 10.3f))
+        assertEquals(0, round.alphaAt(11.9f, 11.8f))
+        val square = draw(androidx.compose.ui.graphics.StrokeCap.Square)
+        assertEquals(255, square.alphaAt(11.4f, 11.2f))
+        assertTrue(draw(androidx.compose.ui.graphics.StrokeCap.Butt).isEmpty())
+    }
+
+    @Test
+    fun roundJoinCapsAFullReversal() {
+        val b = Recorder().run { strokePolyline(floatArrayOf(0f, 0f, 50f, 0f, 20f, 0f), false, -1, 10f, 0, PolyRenderer.JOIN_ROUND); done() }
+        assertTrue(b.alphaAt(53.2f, 0.3f) > 0)
+        assertEquals(0, b.alphaAt(56.2f, 0.3f))
+    }
 }

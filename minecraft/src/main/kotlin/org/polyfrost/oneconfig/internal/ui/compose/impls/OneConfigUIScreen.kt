@@ -164,8 +164,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             return OpeningRoute(route, restored = true)
         }
 
-        private const val MOD_GRID_KEY = "mods"
-
         private const val WARM_FRAMES = 6
 
         private const val WARM_STOP_WAIT_MS = 250L
@@ -340,14 +338,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private var openRevision by mutableIntStateOf(0)
 
     @Volatile private var everOpened = false
-
-    private fun scrollModGrid(index: Int) {
-        runCatching { shell.scroll.grid(MOD_GRID_KEY)?.requestScrollToItem(index) }
-    }
-
-    private fun warmRoute(route: Any) {
-        runCatching { if (shell.navigation.isReady) shell.navigation.navigate(route) }
-    }
 
     private fun markClosed() {
         shell.session.markClosed(System.currentTimeMillis())

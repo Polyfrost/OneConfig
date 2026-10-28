@@ -231,9 +231,11 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         var cap = GlyphCapture()
         var unknown = false
         fun close() {
+            val p = pipeline ?: return
+            val v = view ?: return
             if (cap.n == 0) return
-            val setup = if (TEXT_LIGHTMAP) TextureSetup.singleTextureWithLightmap(view!!, sampler) else TextureSetup.singleTexture(view!!, sampler)
-            meshes.add(Mesh(pipeline!!, setup, Matrix3x2f(), cap.verts.copyOf(cap.n * 4), cap.colors.copyOf(cap.n), bounds, true, scissor, TEXT_LIGHTMAP))
+            val setup = if (TEXT_LIGHTMAP) TextureSetup.singleTextureWithLightmap(v, sampler) else TextureSetup.singleTexture(v, sampler)
+            meshes.add(Mesh(p, setup, Matrix3x2f(), cap.verts.copyOf(cap.n * 4), cap.colors.copyOf(cap.n), bounds, true, scissor, TEXT_LIGHTMAP))
             cap = GlyphCapture()
         }
         visitRenderables(prepared) { renderable ->
@@ -583,9 +585,11 @@ private object GlyphQuads {
         var view: GpuTextureView? = null
         var cap = BlazeRenderer.GlyphCapture()
         fun close() {
+            val p = pipeline ?: return
+            val v = view ?: return
             if (cap.n == 0) return
-            val setup = if (TEXT_LIGHTMAP) TextureSetup.singleTextureWithLightmap(view!!, sampler) else TextureSetup.singleTexture(view!!, sampler)
-            meshes.add(BlazeRenderer.Mesh(pipeline!!, setup, Matrix3x2f(), cap.verts.copyOf(cap.n * 4), cap.colors.copyOf(cap.n), bounds, keep, scissor, TEXT_LIGHTMAP))
+            val setup = if (TEXT_LIGHTMAP) TextureSetup.singleTextureWithLightmap(v, sampler) else TextureSetup.singleTexture(v, sampler)
+            meshes.add(BlazeRenderer.Mesh(p, setup, Matrix3x2f(), cap.verts.copyOf(cap.n * 4), cap.colors.copyOf(cap.n), bounds, keep, scissor, TEXT_LIGHTMAP))
             cap = BlazeRenderer.GlyphCapture()
         }
         pen = 0f

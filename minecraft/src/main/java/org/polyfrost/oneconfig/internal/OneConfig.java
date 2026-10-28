@@ -249,6 +249,12 @@ public class OneConfig
         HudManager.targetPixelWidth = Platform.screen().viewportWidth();
         HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
+        if (HudManager.isConfigUiOpen) {
+            HudManager.INSTANCE.prepare(sw, sh);
+            ItemCatalog.INSTANCE.renderHudIcons();
+            HudManager.invalidate();
+            return;
+        }
         //? if >= 1.21.11 {
         if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, true, true)) BlazeHud.markDirty();
         //?} else {
@@ -266,7 +272,7 @@ public class OneConfig
     public static void submitHud(GuiGraphicsExtractor graphics) {
         //~ if = 1.8.9 '(graphics)' -> '()'
         LegacyHudRenderer.INSTANCE.renderLive(graphics);
-        if (GlHost.INSTANCE.unavailableReason() != null) return;
+        if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
         //? if >= 1.21.11 {
         BlazeHud.render(graphics);
         //?} else {
