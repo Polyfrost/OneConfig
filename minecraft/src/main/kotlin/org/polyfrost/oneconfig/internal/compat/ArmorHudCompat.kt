@@ -10,6 +10,7 @@ import java.util.function.Consumer
 import net.minecraft.client.AttackIndicatorStatus
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.renderer.Rect2i
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.player.Player
@@ -157,14 +158,9 @@ object ArmorHudCompat {
         val answer = callStatic("getWidgetRect", ctx, player)
             ?: return cannotRead("ArmorHudMod#getWidgetRect could not be called")
         val optional = answer as? Optional<*> ?: return cannotRead("ArmorHudMod#getWidgetRect gave $answer")
-        val rect = optional.orElse(null) ?: return null
-        val x = (call(rect, "getX") as? Number)?.toFloat() ?: return cannotRead("${rect.javaClass.name} has no x")
-        val y = (call(rect, "getY") as? Number)?.toFloat() ?: return cannotRead("${rect.javaClass.name} has no y")
-        val w = (call(rect, "getWidth") as? Number)?.toFloat()
-            ?: return cannotRead("${rect.javaClass.name} has no width")
-        val h = (call(rect, "getHeight") as? Number)?.toFloat()
-            ?: return cannotRead("${rect.javaClass.name} has no height")
-        return floatArrayOf(x, y, w, h)
+        val value = optional.orElse(null) ?: return null
+        val rect = value as? Rect2i ?: return cannotRead("${value.javaClass.name} is not a Rect2i")
+        return floatArrayOf(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat())
     }
 
     private fun legacyWidgetRect(player: Any): FloatArray? {
