@@ -72,11 +72,6 @@ class VulkanModVulkanService private constructor(
         1,
     )
 
-    override fun makeBackBufferRenderTarget(
-        width: Int, height: Int,
-        vkImageHandle: Long, vkFormat: Int, vkQueueFamily: Int,
-    ): BackendRenderTarget = makeBackendRenderTarget(width, height, vkImageHandle, vkFormat, vkQueueFamily)
-
     override fun makeOffscreenBRT(
         target: RenderTarget,
         width: Int,

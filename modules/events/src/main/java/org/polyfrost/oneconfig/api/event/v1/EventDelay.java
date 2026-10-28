@@ -51,6 +51,8 @@ public final class EventDelay {
                 @Override
                 public boolean handle(E event) {
                     if (--delay < 1) {
+                        // unregister first so the function re-posting this event (e.g. via a nested frame) can't re-fire it
+                        unregister();
                         function.accept(event);
                         return true;
                     }
