@@ -103,6 +103,21 @@ internal fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedStr
     flush()
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+fun Text(
+    text: Any,
+    modifier: Modifier = Modifier,
+    color: Color,
+    fontSize: TextUnit = 14.sp,
+    lineHeight: TextUnit? = null,
+    shift: BaselineShift = BaselineShift.None,
+    fontWeight: FontWeight = FontWeight.Normal,
+    textAlign: TextAlign = TextAlign.Start,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+) = Text(text, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, null)
+
 @Composable
 fun Text(
     text: Any,

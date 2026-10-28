@@ -151,6 +151,15 @@ private class RasterIconPainter(private val icon: RasterIcon) : Painter() {
     }
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+fun Icon(
+    iconName: String,
+    color: Color = Color.Unspecified,
+    modifier: Modifier = Modifier,
+    fitAspectRatio: Boolean = false,
+) = Icon(iconName, color, modifier, fitAspectRatio, null)
+
 @Composable
 fun Icon(
     iconName: String,
