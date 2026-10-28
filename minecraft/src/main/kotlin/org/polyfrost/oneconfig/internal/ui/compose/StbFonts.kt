@@ -15,6 +15,7 @@ import org.lwjgl.system.MemoryUtil
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGlyphPage
+import org.polyfrost.compose.render.PolyTessellator
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
 
@@ -131,13 +132,17 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
     override fun measureTextWidth(font: PolyFont, text: String): Float {
         val face = face(font.name) ?: return 0f
         var units = 0L
+        var extra = 0f
         var i = 0
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
-            units += face.advanceUnits(face.glyph(cp))
+            val id = face.glyph(cp)
+            val fallback = if (id == 0 && !Character.isWhitespace(cp)) face(PolyTessellator.FALLBACK_FONT) else null
+            val fid = fallback?.glyph(cp) ?: 0
+            if (fid != 0) extra += fallback!!.advance(fid) else units += face.advanceUnits(id)
         }
-        return units * face.emScale * font.size
+        return (units * face.emScale + extra) * font.size
     }
 
     override fun metrics(font: PolyFont) = face(font.name)?.metrics(font.size) ?: PolyFont.Metrics(0f, 0f, 0f, 0f, 0f)

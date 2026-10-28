@@ -16,7 +16,20 @@ object SvgMask {
 
     private class Optional(val bitmap: PolyBitmap?)
 
-    private class Shape(val polys: List<FloatArray>, val fill: Int?, val stroke: Int?, val strokeWidth: Float, val evenOdd: Boolean)
+    private fun interface Paint {
+        fun at(x: Float, y: Float): Int
+    }
+
+    private class Shape(
+        val polys: List<FloatArray>, val fill: Paint?, val stroke: Paint?, val strokeWidth: Float, val evenOdd: Boolean,
+        val fillOpacity: Float, val strokeOpacity: Float, val mask: String?,
+    )
+
+    private class Gradient(val radial: Boolean, val attrs: String, val offsets: FloatArray, val colors: IntArray)
+
+    private class Canvas(val w: Int, val h: Int, val vx: Float, val vy: Float, val scale: Float, val gradients: Map<String, Gradient>, val masks: Map<String, String>) {
+        val maskCoverage = HashMap<String, FloatArray>()
+    }
 
     fun get(resourcePath: String, pixelSize: Int, tint: Int? = null): PolyBitmap? {
         val size = pixelSize.coerceIn(1, 2048)
@@ -32,47 +45,26 @@ object SvgMask {
         val vy = view?.getOrNull(1) ?: 0f
         val vw = view?.getOrNull(2) ?: attr(root, "width")?.toFloatOrNull() ?: size.toFloat()
         val vh = view?.getOrNull(3) ?: attr(root, "height")?.toFloatOrNull() ?: size.toFloat()
-        val rootFill = attr(root, "fill")
-        val rootStroke = attr(root, "stroke")
-        val rootWidth = attr(root, "stroke-width")
 
-        val body = svg.replace(Regex("<defs\\b.*?</defs>|<clipPath\\b.*?</clipPath>", RegexOption.DOT_MATCHES_ALL), "")
-        val shapes = Regex("<(path|rect|circle|ellipse)\\b[^>]*>").findAll(body).mapNotNull { m ->
-            val el = m.value
-            val polys = if (m.groupValues[1] == "circle" || m.groupValues[1] == "ellipse") {
-                val cx = attr(el, "cx")?.toFloatOrNull() ?: 0f
-                val cy = attr(el, "cy")?.toFloatOrNull() ?: 0f
-                val rx = (attr(el, "rx") ?: attr(el, "r"))?.toFloatOrNull() ?: return@mapNotNull null
-                val ry = (attr(el, "ry") ?: attr(el, "r"))?.toFloatOrNull() ?: return@mapNotNull null
-                listOf(FloatArray(66) { i -> val a = (i / 2) * (2 * Math.PI / 32); if (i % 2 == 0) cx + rx * cos(a).toFloat() else cy + ry * sin(a).toFloat() })
-            } else if (m.groupValues[1] == "rect") {
-                val x = attr(el, "x")?.toFloatOrNull() ?: 0f
-                val y = attr(el, "y")?.toFloatOrNull() ?: 0f
-                val w = attr(el, "width")?.toFloatOrNull() ?: return@mapNotNull null
-                val h = attr(el, "height")?.toFloatOrNull() ?: return@mapNotNull null
-                listOf(floatArrayOf(x, y, x + w, y, x + w, y + h, x, y + h, x, y))
-            } else parsePath(attr(el, "d") ?: return@mapNotNull null)
-            val fill = color(attr(el, "fill") ?: rootFill ?: "black")
-            val stroke = color(attr(el, "stroke") ?: rootStroke ?: "none")
-            val sw = (attr(el, "stroke-width") ?: rootWidth)?.toFloatOrNull() ?: 1f
-            if (fill == null && stroke == null) null else Shape(polys, fill, stroke, sw, attr(el, "fill-rule") == "evenodd")
-        }.toList()
+        val gradients = Regex("<(linear|radial)Gradient\\b([^>]*)>(.*?)</\\1Gradient>", RegexOption.DOT_MATCHES_ALL).findAll(svg).mapNotNull { m ->
+            val id = attr(m.groupValues[2], "id") ?: return@mapNotNull null
+            val stops = Regex("<stop\\b[^>]*>").findAll(m.groupValues[3]).map { it.value }.toList()
+            val offsets = FloatArray(stops.size) { fraction(attr(stops[it], "offset"), 0f) }
+            val colors = IntArray(stops.size) {
+                val rgb = color(attr(stops[it], "stop-color") ?: "black") ?: 0
+                withAlpha(rgb, attr(stops[it], "stop-opacity")?.toFloatOrNull() ?: 1f)
+            }
+            id to Gradient(m.groupValues[1] == "radial", m.groupValues[2], offsets, colors)
+        }.toMap()
+        val maskBlock = Regex("<mask\\b[^>]*>.*?</mask>", RegexOption.DOT_MATCHES_ALL)
+        val masks = maskBlock.findAll(svg).mapNotNull { m -> attr(m.value, "id")?.let { it to m.value } }.toMap()
 
+        val body = svg.replace(Regex("<defs\\b.*?</defs>|<clipPath\\b.*?</clipPath>", RegexOption.DOT_MATCHES_ALL), "").replace(maskBlock, "")
         val scale = size / max(vw, vh)
-        val w = max(1, (vw * scale).roundToInt())
-        val h = max(1, (vh * scale).roundToInt())
-        val acc = FloatArray(w * h * 4)
-        val cov = FloatArray(w * h)
-        for (shape in shapes) {
-            if (shape.fill != null) {
-                fillCoverage(shape.polys, shape.evenOdd, w, h, vx, vy, scale, cov)
-                composite(acc, cov, tint ?: shape.fill)
-            }
-            if (shape.stroke != null) {
-                strokeCoverage(shape.polys, shape.strokeWidth / 2f, w, h, vx, vy, scale, cov)
-                composite(acc, cov, tint ?: shape.stroke)
-            }
-        }
+        val canvas = Canvas(max(1, (vw * scale).roundToInt()), max(1, (vh * scale).roundToInt()), vx, vy, scale, gradients, masks)
+        val acc = draw(canvas, body, root, tint)
+        val w = canvas.w
+        val h = canvas.h
         val px = ByteArray(w * h * 4)
         for (i in 0 until w * h) {
             val a = acc[i * 4 + 3]
@@ -83,18 +75,190 @@ object SvgMask {
         return PolyBitmap(w, h, px)
     }
 
-    private fun composite(acc: FloatArray, cov: FloatArray, argb: Int) {
-        val ca = (argb ushr 24) / 255f
-        val r = (argb shr 16 and 0xFF) / 255f
-        val g = (argb shr 8 and 0xFF) / 255f
-        val b = (argb and 0xFF) / 255f
+    private fun draw(canvas: Canvas, body: String, parent: String, tint: Int?): FloatArray {
+        val rootFill = attr(parent, "fill")
+        val rootStroke = attr(parent, "stroke")
+        val rootWidth = attr(parent, "stroke-width")
+        val shapes = Regex("<(path|rect|circle|ellipse)\\b[^>]*>").findAll(body).mapNotNull { m ->
+            val el = m.value
+            val polys = when (m.groupValues[1]) {
+                "circle", "ellipse" -> {
+                    val cx = attr(el, "cx")?.toFloatOrNull() ?: 0f
+                    val cy = attr(el, "cy")?.toFloatOrNull() ?: 0f
+                    val rx = (attr(el, "rx") ?: attr(el, "r"))?.toFloatOrNull() ?: return@mapNotNull null
+                    val ry = (attr(el, "ry") ?: attr(el, "r"))?.toFloatOrNull() ?: return@mapNotNull null
+                    listOf(FloatArray(66) { i -> val a = (i / 2) * (2 * Math.PI / 32); if (i % 2 == 0) cx + rx * cos(a).toFloat() else cy + ry * sin(a).toFloat() })
+                }
+                "rect" -> {
+                    val x = attr(el, "x")?.toFloatOrNull() ?: 0f
+                    val y = attr(el, "y")?.toFloatOrNull() ?: 0f
+                    val w = attr(el, "width")?.toFloatOrNull() ?: return@mapNotNull null
+                    val h = attr(el, "height")?.toFloatOrNull() ?: return@mapNotNull null
+                    val rx = (attr(el, "rx") ?: attr(el, "ry"))?.toFloatOrNull() ?: 0f
+                    val ry = (attr(el, "ry") ?: attr(el, "rx"))?.toFloatOrNull() ?: 0f
+                    listOf(roundRect(x, y, w, h, min(rx, w / 2f), min(ry, h / 2f)))
+                }
+                else -> parsePath(attr(el, "d") ?: return@mapNotNull null)
+            }
+            val opacity = attr(el, "opacity")?.toFloatOrNull() ?: 1f
+            val fill = paint(canvas, attr(el, "fill") ?: rootFill ?: "black", polys)
+            val stroke = paint(canvas, attr(el, "stroke") ?: rootStroke ?: "none", polys)
+            val sw = (attr(el, "stroke-width") ?: rootWidth)?.toFloatOrNull() ?: 1f
+            val fillOpacity = opacity * (attr(el, "fill-opacity")?.toFloatOrNull() ?: 1f)
+            val strokeOpacity = opacity * (attr(el, "stroke-opacity")?.toFloatOrNull() ?: 1f)
+            val mask = attr(el, "mask")?.let { Regex("url\\(#([^)]+)\\)").find(it)?.groupValues?.get(1) }
+            if (fill == null && stroke == null) null else Shape(polys, fill, stroke, sw, attr(el, "fill-rule") == "evenodd", fillOpacity, strokeOpacity, mask)
+        }.toList()
+
+        val acc = FloatArray(canvas.w * canvas.h * 4)
+        val cov = FloatArray(canvas.w * canvas.h)
+        for (shape in shapes) {
+            val mask = shape.mask?.let { maskCoverage(canvas, it) }
+            if (shape.fill != null) {
+                fillCoverage(shape.polys, shape.evenOdd, canvas.w, canvas.h, canvas.vx, canvas.vy, canvas.scale, cov)
+                composite(canvas, acc, cov, mask, shape.fill, shape.fillOpacity, tint)
+            }
+            if (shape.stroke != null) {
+                strokeCoverage(shape.polys, shape.strokeWidth / 2f, canvas.w, canvas.h, canvas.vx, canvas.vy, canvas.scale, cov)
+                composite(canvas, acc, cov, mask, shape.stroke, shape.strokeOpacity, tint)
+            }
+        }
+        return acc
+    }
+
+    private fun maskCoverage(canvas: Canvas, id: String): FloatArray? {
+        canvas.maskCoverage[id]?.let { return it }
+        val block = canvas.masks[id] ?: return null
+        val open = Regex("<mask\\b[^>]*>").find(block)?.value ?: return null
+        val acc = draw(canvas, block.removePrefix(open), open, null)
+        val out = FloatArray(canvas.w * canvas.h) { i ->
+            val a = acc[i * 4 + 3]
+            if (a <= 0f) 0f else (0.2125f * acc[i * 4] + 0.7154f * acc[i * 4 + 1] + 0.0721f * acc[i * 4 + 2])
+        }
+        canvas.maskCoverage[id] = out
+        return out
+    }
+
+    private fun paint(canvas: Canvas, value: String, polys: List<FloatArray>): Paint? {
+        val ref = Regex("url\\(#([^)]+)\\)").find(value)?.groupValues?.get(1)
+        if (ref == null) return color(value)?.let { c -> Paint { _, _ -> c } }
+        val g = canvas.gradients[ref] ?: return null
+        val userSpace = attr(g.attrs, "gradientUnits") == "userSpaceOnUse"
+        var m = transform(attr(g.attrs, "gradientTransform"))
+        if (!userSpace) {
+            var x0 = Float.MAX_VALUE; var y0 = Float.MAX_VALUE; var x1 = -Float.MAX_VALUE; var y1 = -Float.MAX_VALUE
+            for (p in polys) for (k in p.indices step 2) { x0 = min(x0, p[k]); x1 = max(x1, p[k]); y0 = min(y0, p[k + 1]); y1 = max(y1, p[k + 1]) }
+            m = multiply(floatArrayOf(x1 - x0, 0f, 0f, y1 - y0, x0, y0), m)
+        }
+        val inv = invert(m) ?: return null
+        fun at(name: String, def: Float) = fraction(attr(g.attrs, name), def)
+        if (g.radial) {
+            val cx = at("cx", 0.5f); val cy = at("cy", 0.5f); val r = at("r", 0.5f)
+            if (r <= 0f) return null
+            return Paint { x, y ->
+                val gx = inv[0] * x + inv[2] * y + inv[4] - cx
+                val gy = inv[1] * x + inv[3] * y + inv[5] - cy
+                sample(g, sqrt(gx * gx + gy * gy) / r)
+            }
+        }
+        val x1 = at("x1", 0f); val y1 = at("y1", 0f); val x2 = at("x2", 1f); val y2 = at("y2", 0f)
+        val dx = x2 - x1; val dy = y2 - y1
+        val len2 = dx * dx + dy * dy
+        return Paint { x, y ->
+            val gx = inv[0] * x + inv[2] * y + inv[4]
+            val gy = inv[1] * x + inv[3] * y + inv[5]
+            sample(g, if (len2 > 0f) ((gx - x1) * dx + (gy - y1) * dy) / len2 else 0f)
+        }
+    }
+
+    private fun sample(g: Gradient, t: Float): Int {
+        val n = g.offsets.size
+        if (n == 0) return 0
+        if (t <= g.offsets[0]) return g.colors[0]
+        for (i in 1 until n) {
+            if (t > g.offsets[i]) continue
+            val span = g.offsets[i] - g.offsets[i - 1]
+            val f = if (span > 0f) (t - g.offsets[i - 1]) / span else 1f
+            val a = g.colors[i - 1]; val b = g.colors[i]
+            var out = 0
+            for (s in 0..24 step 8) {
+                val ca = a ushr s and 0xFF; val cb = b ushr s and 0xFF
+                out = out or ((ca + (cb - ca) * f).roundToInt().coerceIn(0, 255) shl s)
+            }
+            return out
+        }
+        return g.colors[n - 1]
+    }
+
+    private fun transform(s: String?): FloatArray {
+        var m = floatArrayOf(1f, 0f, 0f, 1f, 0f, 0f)
+        if (s == null) return m
+        for (t in Regex("(\\w+)\\s*\\(([^)]*)\\)").findAll(s)) {
+            val n = numbers(t.groupValues[2])
+            val op = when (t.groupValues[1]) {
+                "translate" -> floatArrayOf(1f, 0f, 0f, 1f, n.getOrElse(0) { 0f }, n.getOrElse(1) { 0f })
+                "scale" -> floatArrayOf(n.getOrElse(0) { 1f }, 0f, 0f, n.getOrElse(1) { n.getOrElse(0) { 1f } }, 0f, 0f)
+                "rotate" -> {
+                    val a = Math.toRadians(n.getOrElse(0) { 0f }.toDouble())
+                    val c = cos(a).toFloat(); val sn = sin(a).toFloat()
+                    val px = n.getOrElse(1) { 0f }; val py = n.getOrElse(2) { 0f }
+                    floatArrayOf(c, sn, -sn, c, px - c * px + sn * py, py - sn * px - c * py)
+                }
+                "matrix" -> if (n.size >= 6) n.take(6).toFloatArray() else continue
+                else -> continue
+            }
+            m = multiply(m, op)
+        }
+        return m
+    }
+
+    private fun multiply(a: FloatArray, b: FloatArray) = floatArrayOf(
+        a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1],
+        a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3],
+        a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5],
+    )
+
+    private fun invert(m: FloatArray): FloatArray? {
+        val d = m[0] * m[3] - m[1] * m[2]
+        if (d == 0f) return null
+        return floatArrayOf(m[3] / d, -m[1] / d, -m[2] / d, m[0] / d, (m[2] * m[5] - m[3] * m[4]) / d, (m[1] * m[4] - m[0] * m[5]) / d)
+    }
+
+    private fun roundRect(x: Float, y: Float, w: Float, h: Float, rx: Float, ry: Float): FloatArray {
+        if (rx <= 0f || ry <= 0f) return floatArrayOf(x, y, x + w, y, x + w, y + h, x, y + h, x, y)
+        val seg = 8
+        val corners = arrayOf(floatArrayOf(x + w - rx, y + ry, -90f), floatArrayOf(x + w - rx, y + h - ry, 0f), floatArrayOf(x + rx, y + h - ry, 90f), floatArrayOf(x + rx, y + ry, 180f))
+        val out = FloatArray(4 * (seg + 1) * 2 + 2)
+        var k = 0
+        for (c in corners) for (i in 0..seg) {
+            val a = Math.toRadians((c[2] + 90f * i / seg).toDouble())
+            out[k++] = c[0] + rx * cos(a).toFloat()
+            out[k++] = c[1] + ry * sin(a).toFloat()
+        }
+        out[k++] = out[0]
+        out[k] = out[1]
+        return out
+    }
+
+    private fun fraction(v: String?, def: Float): Float {
+        val s = v?.trim() ?: return def
+        return if (s.endsWith('%')) s.dropLast(1).toFloatOrNull()?.div(100f) ?: def else s.toFloatOrNull() ?: def
+    }
+
+    private fun withAlpha(argb: Int, opacity: Float) = (((argb ushr 24) * opacity.coerceIn(0f, 1f)).roundToInt() shl 24) or (argb and 0xFFFFFF)
+
+    private fun composite(canvas: Canvas, acc: FloatArray, cov: FloatArray, mask: FloatArray?, paint: Paint, opacity: Float, tint: Int?) {
         for (i in cov.indices) {
-            val c = cov[i] * ca
+            var c = cov[i] * opacity
+            if (mask != null) c *= mask[i]
+            if (c <= 0f) continue
+            val argb = tint ?: paint.at(canvas.vx + (i % canvas.w + 0.5f) / canvas.scale, canvas.vy + (i / canvas.w + 0.5f) / canvas.scale)
+            c *= (argb ushr 24) / 255f
             if (c <= 0f) continue
             val o = i * 4
-            acc[o] = r * c + acc[o] * (1f - c)
-            acc[o + 1] = g * c + acc[o + 1] * (1f - c)
-            acc[o + 2] = b * c + acc[o + 2] * (1f - c)
+            acc[o] = (argb shr 16 and 0xFF) / 255f * c + acc[o] * (1f - c)
+            acc[o + 1] = (argb shr 8 and 0xFF) / 255f * c + acc[o + 1] * (1f - c)
+            acc[o + 2] = (argb and 0xFF) / 255f * c + acc[o + 2] * (1f - c)
             acc[o + 3] = c + acc[o + 3] * (1f - c)
         }
     }

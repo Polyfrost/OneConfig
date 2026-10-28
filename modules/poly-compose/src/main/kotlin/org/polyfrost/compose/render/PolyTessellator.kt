@@ -248,9 +248,12 @@ abstract class PolyTessellator : PolyRenderer {
         val outline = outlinePx / k
         val bucket = (font.size * scaleAvg() / k * 4f).roundToInt()
         val atlas = if (cpuOnly) null else PolyGlyphPage.atlas(face, bucket, outline, round)
-        fun glyph(id: Int, phase: Int): PolyGlyphPage.Glyph? {
-            if (atlas != null) return PolyGlyphPage.glyph(atlas, face, bucket, id, outline, round, phase)
-            if (outline <= 0f) PolyGlyphPage.prerasterize(face, bucket, id, phase)
+        var fallback: PolyGlyphPage.Face? = null
+        var fallbackAtlas: HashMap<Int, PolyGlyphPage.Glyph?>? = null
+        fun glyph(f: PolyGlyphPage.Face, id: Int, phase: Int): PolyGlyphPage.Glyph? {
+            val a = if (f === face) atlas else fallbackAtlas
+            if (a != null) return PolyGlyphPage.glyph(a, f, bucket, id, outline, round, phase)
+            if (outline <= 0f) PolyGlyphPage.prerasterize(f, bucket, id, phase)
             return null
         }
         var penX = x
@@ -258,31 +261,40 @@ abstract class PolyTessellator : PolyRenderer {
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
-            val id = face.glyph(cp)
+            var f = face
+            var id = face.glyph(cp)
+            if (id == 0 && !Character.isWhitespace(cp)) {
+                if (fallback == null) {
+                    fallback = PolyGlyphPage.rasterizer?.face(FALLBACK_FONT)
+                    if (fallback != null && !cpuOnly) fallbackAtlas = PolyGlyphPage.atlas(fallback, bucket, outline, round)
+                }
+                val fid = fallback?.glyph(cp) ?: 0
+                if (fid != 0) { f = fallback!!; id = fid }
+            }
             val sx = penX * state.sx + state.tx
             if (k != 1f) {
                 val phase = if (subpixel) ((sx - floor(sx)) * PolyGlyphPage.SUBPIXELS).toInt() else 0
-                val g = glyph(id, phase)
+                val g = glyph(f, id, phase)
                 if (g != null) {
                     val px = sx + (g.offX - phase.toFloat() / PolyGlyphPage.SUBPIXELS) * k
                     val py = y * state.sy + state.ty + g.offY * k
                     begin(g.page, false)
                     quadPx(px, py, px + g.w * k, py + g.h * k, g.u0, g.v0, g.u1, g.v1, c)
                 }
-                penX += face.advance(id) * font.size
+                penX += f.advance(id) * font.size
                 continue
             }
             var base = if (subpixel) floor(sx).toInt() else sx.roundToInt()
             var phase = if (subpixel) ((sx - base) * PolyGlyphPage.SUBPIXELS).roundToInt() else 0
             if (phase == PolyGlyphPage.SUBPIXELS) { base++; phase = 0 }
-            val g = glyph(id, phase)
+            val g = glyph(f, id, phase)
             if (g != null) {
                 val px = base + g.offX
                 val py = (y * state.sy + state.ty).roundToInt() + g.offY
                 begin(g.page, false)
                 quadPx(px.toFloat(), py.toFloat(), (px + g.w).toFloat(), (py + g.h).toFloat(), g.u0, g.v0, g.u1, g.v1, c)
             }
-            penX += face.advance(id) * font.size
+            penX += f.advance(id) * font.size
         }
     }
 
@@ -1264,6 +1276,8 @@ abstract class PolyTessellator : PolyRenderer {
     private class ShadowMask(val bitmap: PolyBitmap, val slice: Float, val extent: Float, val width: Float)
 
     companion object {
+        const val FALLBACK_FONT = "unifont"
+
         private val cornerTrigs = arrayOfNulls<FloatArray>(17)
 
         private fun cornerTrig(segs: Int): FloatArray = cornerTrigs[segs] ?: FloatArray(4 * (segs + 1) * 2).also { t ->

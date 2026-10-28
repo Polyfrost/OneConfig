@@ -37,6 +37,57 @@ interface PolyDrawCanvas : Canvas {
 
 private val recolorCache = WeakHashMap<PolyBitmap, MutableMap<List<Float>, PolyBitmap>>()
 
+internal var imageBlur = 0f
+
+private val blurCache = WeakHashMap<PolyBitmap, MutableMap<Int, PolyBitmap>>()
+
+private fun blurred(bitmap: PolyBitmap, sigma: Float): PolyBitmap = synchronized(blurCache) {
+    val key = (sigma * 4f).toInt()
+    if (key <= 0) return bitmap
+    blurCache.getOrPut(bitmap) { HashMap() }.getOrPut(key) {
+        val w = bitmap.width
+        val h = bitmap.height
+        val src = bitmap.pixels
+        val buf = FloatArray(w * h * 4)
+        for (i in 0 until w * h) {
+            val a = (src[i * 4 + 3].toInt() and 0xFF) / 255f
+            for (c in 0..2) buf[i * 4 + c] = (src[i * 4 + c].toInt() and 0xFF) * a
+            buf[i * 4 + 3] = a * 255f
+        }
+        val tmp = FloatArray(buf.size)
+        val ideal = kotlin.math.sqrt(4f * sigma * sigma + 1f)
+        for (pass in 0 until 3) {
+            val r = ((ideal - 1f) / 2f).toInt().coerceAtLeast(1)
+            boxBlur(buf, tmp, w, h, r, 4, w * 4)
+            boxBlur(tmp, buf, h, w, r, w * 4, 4)
+        }
+        val out = ByteArray(src.size)
+        for (i in 0 until w * h) {
+            val a = buf[i * 4 + 3]
+            if (a <= 0f) continue
+            for (c in 0..2) out[i * 4 + c] = (buf[i * 4 + c] / (a / 255f)).toInt().coerceIn(0, 255).toByte()
+            out[i * 4 + 3] = a.toInt().coerceIn(0, 255).toByte()
+        }
+        PolyBitmap(w, h, out)
+    }
+}
+
+private fun boxBlur(src: FloatArray, dst: FloatArray, len: Int, lines: Int, r: Int, step: Int, lineStep: Int) {
+    val norm = 1f / (2 * r + 1)
+    for (line in 0 until lines) {
+        val base = line * lineStep
+        for (c in 0..3) {
+            fun at(i: Int) = src[base + i.coerceIn(0, len - 1) * step + c]
+            var sum = 0f
+            for (i in -r..r) sum += at(i)
+            for (i in 0 until len) {
+                dst[base + i * step + c] = sum * norm
+                sum += at(i + r + 1) - at(i - r)
+            }
+        }
+    }
+}
+
 private fun recolored(bitmap: PolyBitmap, matrix: ColorMatrix): PolyBitmap = synchronized(recolorCache) {
     val m = matrix.values
     recolorCache.getOrPut(bitmap) { HashMap() }.getOrPut(m.toList()) {
@@ -208,7 +259,16 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         var bmp = (image as? PolyImageBitmap)?.bitmap ?: return
         val iw = bmp.width.toFloat()
         val ih = bmp.height.toFloat()
-        val matrix = paint.colorFilter?.let { (PolyPaint.filterPlatform(it) as? MatrixFilter)?.matrix }
+        if (imageBlur > 0f && w > 0f) bmp = blurred(bmp, imageBlur * sw / w)
+        val filter = paint.colorFilter?.let { PolyPaint.filterPlatform(it) }
+        val matrix = when {
+            filter is MatrixFilter -> filter.matrix
+            filter is TintFilter && filter.blendMode == BlendMode.Multiply -> filter.color.let { c ->
+                val a = c.alpha
+                ColorMatrix().apply { setToScale(1f - a + a * c.red, 1f - a + a * c.green, 1f - a + a * c.blue, 1f) }
+            }
+            else -> null
+        }
         if (matrix != null) bmp = recolored(bmp, matrix)
         val tint = if (paint.colorFilter != null && matrix == null) paint.argb() else ((paint.alpha * 255f).toInt().coerceIn(0, 255) shl 24) or 0xFFFFFF
         val fq = when (paint.filterQuality) {

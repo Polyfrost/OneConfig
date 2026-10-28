@@ -9,7 +9,6 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -64,6 +63,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -379,32 +383,46 @@ private suspend fun awaitOverlayDrawn() {
 }
 
 @Composable
-private fun BoxScope.ProfileBusyOverlay() {
+private fun ProfileBusyOverlay() {
     val theme = LocalTheme.current
-    Box(
-        modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.55f)),
-        contentAlignment = Alignment.Center,
+    ShellPopup(
+        popupPositionProvider = WindowOriginPositionProvider,
+        properties = PopupProperties(focusable = true, dismissOnBackPress = false, dismissOnClickOutside = false),
     ) {
-        Column(
-            modifier = Modifier
-                .background(theme.modCardBackground, theme.modCardShape)
-                .padding(horizontal = 32.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                "Applying profile changes\u2026",
-                color = theme.textColor,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                "The game will stop responding until it finishes.",
-                color = theme.textColorSecondary,
-                fontSize = 14.sp,
-            )
+            Column(
+                modifier = Modifier
+                    .background(theme.modCardBackground, theme.modCardShape)
+                    .padding(horizontal = 32.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    "Applying profile changes\u2026",
+                    color = theme.textColor,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    "The game will stop responding until it finishes.",
+                    color = theme.textColorSecondary,
+                    fontSize = 14.sp,
+                )
+            }
         }
     }
+}
+
+private object WindowOriginPositionProvider : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = IntOffset.Zero
 }
 
 private fun Throwable.messageOrType(): String = message ?: this::class.java.simpleName

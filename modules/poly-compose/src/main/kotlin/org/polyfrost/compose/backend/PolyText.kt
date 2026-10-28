@@ -94,7 +94,7 @@ object PolyText : PlatformText {
     override val defaultFontRasterizationSettings = FontRasterizationSettings(FontSmoothing.AntiAlias, FontHinting.Slight, subpixelPositioning = true, autoHintingForced = false)
 }
 
-internal class TextRun(val start: Int, val end: Int, val font: PolyFont, val style: SpanStyle) {
+internal class TextRun(val start: Int, val end: Int, val font: PolyFont, val style: SpanStyle, val spanColor: Color = Color.Unspecified) {
     val metrics get() = font.metrics
 }
 
@@ -120,11 +120,15 @@ internal class PolyIntrinsics(
             val b = bounds[i + 1]
             if (a >= b) continue
             var s = base
-            for (sp in spans) if (sp.start <= a && sp.end >= b) s = s.merge(sp.item)
+            var spanColor = Color.Unspecified
+            for (sp in spans) if (sp.start <= a && sp.end >= b) {
+                s = s.merge(sp.item)
+                if (sp.item.color.isSpecified) spanColor = sp.item.color
+            }
             val name = resolver.resolve(s.fontFamily, s.fontWeight ?: FontWeight.Normal, s.fontStyle ?: FontStyle.Normal, s.fontSynthesis ?: FontSynthesis.All).value as? String
                 ?: FontManager.DEFAULT_KEY
             val size = px(s.fontSize, 14f)
-            runs += TextRun(a, b, fontCache.getOrPut(name to size) { PolyFont(name, size) }, s)
+            runs += TextRun(a, b, fontCache.getOrPut(name to size) { PolyFont(name, size) }, s, spanColor)
         }
         if (runs.isEmpty()) {
             val name = resolver.resolve(base.fontFamily, base.fontWeight ?: FontWeight.Normal, base.fontStyle ?: FontStyle.Normal).value as? String ?: FontManager.DEFAULT_KEY
@@ -390,7 +394,7 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                     val e = min(run.end, l.visibleEnd)
                     if (s >= e) continue
                     val str = text.substring(s, e)
-                    val base = color ?: run.style.color.takeIf { it.isSpecified } ?: Color.Black
+                    val base = run.spanColor.takeIf { it.isSpecified } ?: color ?: run.style.color.takeIf { it.isSpecified } ?: Color.Black
                     val c = base.copy(alpha = base.alpha * alpha * (run.style.alpha.takeUnless { it.isNaN() } ?: 1f)).toArgb()
                     val w = intr.width(s, e)
                     if (run.style.background.isSpecified && run.style.background.alpha > 0f) r.rect(x, l.top, w, l.bottom - l.top, run.style.background.toArgb(), 0f)
@@ -408,7 +412,7 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                 }
                 if (l.ellipsis) {
                     val run = intr.runAt(max(0, l.visibleEnd - 1))
-                    val base = color ?: run.style.color.takeIf { it.isSpecified } ?: Color.Black
+                    val base = run.spanColor.takeIf { it.isSpecified } ?: color ?: run.style.color.takeIf { it.isSpecified } ?: Color.Black
                     r.text(ELLIPSIS, x, l.baseline, base.copy(alpha = base.alpha * alpha).toArgb(), run.font)
                 }
             }

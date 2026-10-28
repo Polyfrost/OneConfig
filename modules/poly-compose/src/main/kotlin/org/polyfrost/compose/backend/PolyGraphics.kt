@@ -81,7 +81,8 @@ object PolyGraphics : PlatformGraphics {
     }
     override fun transformShader(shader: Shader, matrix: Matrix): Shader = shader
 
-    override fun createBlurRenderEffect(renderEffect: RenderEffect?, radiusX: Float, radiusY: Float, edgeTreatment: TileMode): PlatformRenderEffect = NoEffect
+    override fun createBlurRenderEffect(renderEffect: RenderEffect?, radiusX: Float, radiusY: Float, edgeTreatment: TileMode): PlatformRenderEffect =
+        if (radiusX > 0f || radiusY > 0f) PolyBlurEffect(0.57735f * max(radiusX, radiusY) + 0.5f) else NoEffect
     override fun createOffsetRenderEffect(renderEffect: RenderEffect?, offset: Offset): PlatformRenderEffect = NoEffect
     override fun createBlurFilter(radius: Float): PlatformBlurFilter = BlurFilter(radius)
     override fun setBlurFilter(paint: Paint, blur: PlatformBlurFilter?) { (paint as? PolyPaint)?.blur = (blur as? BlurFilter)?.radius ?: 0f }
@@ -129,6 +130,7 @@ internal class MatrixFilter(val matrix: ColorMatrix) : PlatformColorFilter()
 internal class DashEffect(val intervals: FloatArray, val phase: Float) : PathEffect
 internal object NoPathEffect : PathEffect
 internal object NoEffect : PlatformRenderEffect
+internal class PolyBlurEffect(val sigma: Float) : PlatformRenderEffect
 
 class PolyImageBitmap(val bitmap: PolyBitmap) : ImageBitmap {
     override val width get() = bitmap.width

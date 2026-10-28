@@ -14,8 +14,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
 import org.polyfrost.compose.backend.DynamicOp
+import org.polyfrost.compose.backend.PolyBlurEffect
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.RecordingCanvas
+import org.polyfrost.compose.backend.imageBlur
 import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyShadow
@@ -134,7 +136,7 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
         cache = LayerCache(version, props, key, cap.segs)
     }
 
-    private fun props(): List<Any?> = listOf(alpha, scaleX, scaleY, animating, translationX, translationY, left, top, size, outline, clip, shadowElevation, spotShadowColor, pivotOffset)
+    private fun props(): List<Any?> = listOf(alpha, scaleX, scaleY, animating, translationX, translationY, left, top, size, outline, clip, shadowElevation, spotShadowColor, pivotOffset, renderEffect)
 
     private fun drawLive(c: PolyCanvas) {
         if (alpha <= 0f) return
@@ -158,11 +160,17 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
         }
         val cap = capturing.lastOrNull()
         val cr = r as? CapturingRenderer
-        if (cap == null || cr == null) recording.replay(c)
-        else recording.replay(c) { op ->
-            cap.segs += cr.since(cap.mark)
-            cap.segs += DynamicRef(op, cr.saveState())
-            try { op(c) } finally { cap.mark = cr.mark() }
+        val prevBlur = imageBlur
+        imageBlur = (renderEffect?.platformRenderEffect as? PolyBlurEffect)?.sigma ?: prevBlur
+        try {
+            if (cap == null || cr == null) recording.replay(c)
+            else recording.replay(c) { op ->
+                cap.segs += cr.since(cap.mark)
+                cap.segs += DynamicRef(op, cr.saveState())
+                try { op(c) } finally { cap.mark = cr.mark() }
+            }
+        } finally {
+            imageBlur = prevBlur
         }
         r.restore()
     }
