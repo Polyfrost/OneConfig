@@ -30,6 +30,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.min
+import kotlin.math.sqrt
 import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyColor
@@ -63,7 +64,7 @@ private fun blurred(bitmap: PolyBitmap, sigma: Float): PolyBitmap = synchronized
             buf[i * 4 + 3] = a * 255f
         }
         val tmp = FloatArray(buf.size)
-        val ideal = kotlin.math.sqrt(4f * sigma * sigma + 1f)
+        val ideal = sqrt(4f * sigma * sigma + 1f)
         for (pass in 0 until 3) {
             val r = ((ideal - 1f) / 2f).toInt().coerceAtLeast(1)
             boxBlur(buf, tmp, w, h, r, 4, w * 4)
