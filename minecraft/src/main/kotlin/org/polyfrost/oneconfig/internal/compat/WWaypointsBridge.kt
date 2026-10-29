@@ -141,6 +141,35 @@ internal object WWaypointsBridge {
         }
     }.getOrDefault(emptyList())
 
+    private const val POLICY = "com.wwaypoints.client.ServerFeaturePolicy"
+
+    /** `WaypointsFeature` bits by constant name, empty before 0.8.0 added server policies */
+    private val featureMasks: Map<String, Int> by lazy {
+        runCatching {
+            val feature = Class.forName("com.wwaypoints.protocol.WaypointsFeature")
+            val mask = feature.getMethod("mask")
+            feature.enumConstants.associate { (it as Enum<*>).name to mask.invoke(it) as Int }
+        }.getOrDefault(emptyMap())
+    }
+
+    /**
+     * whether the server's policy currently switches off the named `WaypointsFeature`, which switching off
+     * `ENTIRE_MOD` does to every feature
+     *
+     * reads the mask because `allows` also reports false while the mod is switched off from its card
+     */
+    fun disabledByServer(feature: String): Boolean {
+        val bits = (featureMasks["ENTIRE_MOD"] ?: return false) or (featureMasks[feature] ?: return false)
+        val mask = runCatching { method(POLICY, "disabledMask")?.invoke(null) as? Int }.getOrNull() ?: return false
+        return (mask and bits) != 0
+    }
+
+    fun addServerPolicyListener(listener: Runnable) {
+        if (featureMasks.isEmpty()) return
+        runCatching { method(CLIENT, "addServerPolicyListener", Runnable::class.java)?.invoke(null, listener) }
+            .onFailure { LOGGER.warn("wWaypoints policy listener registration failed", it) }
+    }
+
     fun saveConfig() = invokeClient("saveConfig")
 
     fun saveWaypoints() = invokeClient("saveWaypoints")
