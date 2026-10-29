@@ -35,6 +35,7 @@ dependencies {
     api(libs.jetbrains.compose.material)
     api(libs.jetbrains.compose.ui)
     api(libs.jetbrains.compose.ui.util)
+    implementation(libs.bundles.twelvemonkeys)
     testImplementation(libs.jetbrains.compose.runtime)
     testImplementation(libs.kotlinx.coroutines)
 }

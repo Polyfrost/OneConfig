@@ -108,6 +108,13 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
     }
 
     private fun drawCached(c: PolyCanvas, cr: CapturingRenderer) {
+        if (alpha <= 0f) return
+        if (alpha >= 1f) return drawCachedInLayer(c, cr)
+        c.renderer.saveLayerAlpha(alpha)
+        try { drawCachedInLayer(c, cr) } finally { c.renderer.restore() }
+    }
+
+    private fun drawCachedInLayer(c: PolyCanvas, cr: CapturingRenderer) {
         val props = props()
         val hit = cache
         if (hit != null && hit.version == version && cr.sameState(hit.key) && hit.props == props && hit.segs.all { it is ChildRef || it is DynamicRef || cr.valid(it) }) {
@@ -133,17 +140,17 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
         val key = cr.stateKey()
         val cap = Capture(cr.mark())
         capturing += cap
-        try { drawLive(c) } finally { capturing.removeLast() }
+        try { drawLive(c, layered = true) } finally { capturing.removeLast() }
         cap.segs += cr.since(cap.mark)
         cache = LayerCache(version, props, key, cap.segs)
     }
 
     private fun props(): List<Any?> = listOf(alpha, scaleX, scaleY, animating, translationX, rotationZ, translationY, left, top, size, outline, clip, shadowElevation, spotShadowColor, pivotOffset, renderEffect)
 
-    private fun drawLive(c: PolyCanvas) {
+    private fun drawLive(c: PolyCanvas, layered: Boolean = false) {
         if (alpha <= 0f) return
         val r = c.renderer
-        if (alpha < 1f) r.saveLayerAlpha(alpha) else r.save()
+        if (alpha < 1f && !layered) r.saveLayerAlpha(alpha) else r.save()
         r.translate(left + translationX, top + translationY)
         if (scaleX != 1f || scaleY != 1f || rotationZ != 0f) {
             val p = if (pivotOffset.isUnspecified) Offset(size.width / 2f, size.height / 2f) else pivotOffset

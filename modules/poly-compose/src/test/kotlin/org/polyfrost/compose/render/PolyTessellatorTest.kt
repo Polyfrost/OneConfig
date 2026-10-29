@@ -24,6 +24,134 @@ class PolyTessellatorTest {
         fun done() = also { flush() }.batches
     }
 
+    private class Group(val items: List<Any>, val alpha: Float)
+
+    private class Layered : PolyTessellator() {
+        val ops = ArrayList<Any>()
+        override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
+            ops.add(Batch(texture, verts, colors, nearest))
+        }
+        override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
+        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = Unit
+        override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
+        override val layered get() = true
+        override fun layerMark(): Any = ops.size
+        override fun layer(mark: Any, alpha: Float) {
+            val sub = ops.subList(mark as Int, ops.size)
+            val g = Group(ArrayList(sub), alpha)
+            sub.clear()
+            ops.add(g)
+        }
+        var fades = 0
+        override fun fade(mark: Any, alpha: Float): Boolean {
+            fades++
+            for (i in mark as Int until ops.size) {
+                val b = ops[i] as? Batch ?: return false
+                ops[i] = Batch(b.texture, b.verts, IntArray(b.colors.size) { mulAlpha(b.colors[it], alpha) }, b.nearest)
+            }
+            return true
+        }
+        fun done() = also { flush() }.ops
+    }
+
+    @Test
+    fun nonOverlappingDrawsFadeWithoutLayer() {
+        val r = Layered()
+        r.saveLayerAlpha(0.5f)
+        r.rect(0f, 0f, 4f, 4f, -1, 0f)
+        r.rect(10f, 0f, 4f, 4f, -1, 0f)
+        r.restore()
+        val b = r.done().single() as Batch
+        assertEquals(128, b.colors.maxOf { it ushr 24 })
+    }
+
+    @Test
+    fun nonOverlappingDrawsAcrossFlushFadeInBackend() {
+        val r = Layered()
+        val bmp = PolyBitmap(300, 2, ByteArray(300 * 2 * 4) { -1 })
+        r.saveLayerAlpha(0.5f)
+        r.rect(0f, 0f, 4f, 4f, -1, 0f)
+        r.image(bmp, 10f, 0f, 4f, 4f, 0f, 0f, 1f, 1f, -1)
+        r.restore()
+        val ops = r.done()
+        assertEquals(1, r.fades)
+        assertEquals(2, ops.size)
+        assertTrue(ops.all { it is Batch && it.colors.maxOf { c -> c ushr 24 } == 128 })
+    }
+
+    @Test
+    fun layerTargetsGrowInBuckets() {
+        assertEquals(128, PolyTessellator.layerTargetSize(0, 100))
+        assertEquals(128, PolyTessellator.layerTargetSize(128, 110))
+        assertEquals(128, PolyTessellator.layerTargetSize(128, 128))
+        assertEquals(192, PolyTessellator.layerTargetSize(128, 130))
+    }
+
+    @Test
+    fun singleDrawLayerMultipliesInPlace() {
+        val r = Layered()
+        r.rect(20f, 0f, 4f, 4f, -1, 0f)
+        r.saveLayerAlpha(0.5f)
+        r.rect(0f, 0f, 4f, 4f, -1, 0f)
+        r.restore()
+        val b = r.done().single() as Batch
+        val ref = (Layered().apply { rect(0f, 0f, 4f, 4f, -1, 0f) }.done().single() as Batch).colors
+        val alphas = b.colors.map { it ushr 24 }
+        assertEquals(ref.size * 2, alphas.size)
+        assertEquals(ref.map { it ushr 24 }, alphas.take(ref.size))
+        assertEquals(ref.map { ((it ushr 24) * 0.5f).roundToInt() }, alphas.drop(ref.size))
+    }
+
+    @Test
+    fun overlappingDrawsCompositeAsGroup() {
+        val r = Layered()
+        r.rect(20f, 0f, 4f, 4f, -1, 0f)
+        r.saveLayerAlpha(0.5f)
+        r.rect(0f, 0f, 4f, 4f, -1, 0f)
+        r.rect(2f, 0f, 4f, 4f, -1, 0f)
+        r.restore()
+        r.rect(40f, 0f, 4f, 4f, -1, 0f)
+        val ops = r.done()
+        assertEquals(3, ops.size)
+        val g = ops[1] as Group
+        assertEquals(0.5f, g.alpha)
+        val inner = g.items.single() as Batch
+        assertEquals(255, inner.colors.maxOf { it ushr 24 })
+        assertTrue((ops[0] as Batch).verts[0] >= 20f)
+        assertTrue((ops[2] as Batch).verts[0] >= 40f)
+    }
+
+    @Test
+    fun nestedLayersSplitAtFlush() {
+        val r = Layered()
+        r.rect(20f, 0f, 4f, 4f, -1, 0f)
+        r.saveLayerAlpha(0.5f)
+        r.rect(0f, 0f, 4f, 4f, -1, 0f)
+        r.saveLayerAlpha(0.5f)
+        r.rect(0f, 0f, 4f, 4f, -1, 0f)
+        r.rect(1f, 0f, 4f, 4f, -1, 0f)
+        r.restore()
+        r.restore()
+        val ops = r.done()
+        assertEquals(2, ops.size)
+        val outer = ops[1] as Group
+        assertEquals(0.5f, outer.alpha)
+        assertEquals(2, outer.items.size)
+        assertEquals(255, (outer.items[0] as Batch).colors.maxOf { it ushr 24 })
+        assertEquals(0.5f, (outer.items[1] as Group).alpha)
+    }
+
+    @Test
+    fun deviceTransformTracksScaleAndRotation() {
+        val r = Recorder()
+        r.translate(3f, 4f)
+        r.scale(2f, 3f)
+        r.translate(1f, 1f)
+        assertTrue(floatArrayOf(2f, 3f, 5f, 7f).contentEquals(r.deviceTransform()))
+        r.rotate(90f)
+        assertEquals(null, r.deviceTransform())
+    }
+
     @Test
     fun outlineGlyphGrowsCoverage() {
         val face = object : PolyGlyphPage.Face {

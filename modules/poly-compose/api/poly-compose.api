@@ -740,6 +740,7 @@ public final class org/polyfrost/compose/render/PolyBitmap {
 	public final fun getHeight ()I
 	public final fun getPixels ()[B
 	public final fun getWidth ()I
+	public static final fun registerImageReaders ()V
 	public static final fun setDecoder (Lorg/polyfrost/compose/render/PolyBitmap$Decoder;)V
 }
 
@@ -749,6 +750,7 @@ public final class org/polyfrost/compose/render/PolyBitmap$Companion {
 	public final fun fromResource (Ljava/lang/String;Ljava/lang/ClassLoader;)Lorg/polyfrost/compose/render/PolyBitmap;
 	public static synthetic fun fromResource$default (Lorg/polyfrost/compose/render/PolyBitmap$Companion;Ljava/lang/String;Ljava/lang/ClassLoader;ILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyBitmap;
 	public final fun getDecoder ()Lorg/polyfrost/compose/render/PolyBitmap$Decoder;
+	public final fun registerImageReaders ()V
 	public final fun setDecoder (Lorg/polyfrost/compose/render/PolyBitmap$Decoder;)V
 }
 
@@ -1109,6 +1111,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public fun animatedScale (FF)V
 	public abstract fun clipRRect (FFFFF)V
 	public abstract fun clipRect (FFFF)V
+	public fun deviceTransform ()[F
 	public abstract fun fillPath (Lorg/polyfrost/compose/render/PolyPath;I)V
 	public abstract fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;)V
 	public fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
@@ -1149,6 +1152,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$Companion {
 
 public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun animatedScale (Lorg/polyfrost/compose/render/PolyRenderer;FF)V
+	public static fun deviceTransform (Lorg/polyfrost/compose/render/PolyRenderer;)[F
 	public static fun image (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
@@ -1196,18 +1200,27 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public static final field FALLBACK_FONT Ljava/lang/String;
 	public fun <init> ()V
 	public fun animatedScale (FF)V
+	protected final fun appendDrawBoxes ([F)V
 	protected final fun begin (Ljava/lang/Object;ZZ)V
 	public static synthetic fun begin$default (Lorg/polyfrost/compose/render/PolyTessellator;Ljava/lang/Object;ZZILjava/lang/Object;)V
+	protected final fun beginDraw ()V
 	protected abstract fun bitmapTexture (Lorg/polyfrost/compose/render/PolyBitmap;)Ljava/lang/Object;
 	public fun clipRRect (FFFFF)V
 	public fun clipRect (FFFF)V
+	public fun deviceTransform ()[F
+	protected final fun drawBoxesSince (I)[F
+	protected fun fade (Ljava/lang/Object;F)Z
 	public fun fillPath (Lorg/polyfrost/compose/render/PolyPath;I)V
 	protected final fun flush ()V
 	protected fun getCpuOnly ()Z
+	protected final fun getDrawBoxMark ()I
+	protected fun getLayered ()Z
 	protected final fun getState ()Lorg/polyfrost/compose/render/PolyTessellator$State;
 	public fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;)V
 	public fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
 	protected final fun keyAdd (F)V
+	protected fun layer (Ljava/lang/Object;F)V
+	protected fun layerMark ()Ljava/lang/Object;
 	public fun line (FFFFIF)V
 	public fun mcText (Ljava/lang/String;FFIZF)V
 	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
@@ -1237,11 +1250,14 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	protected abstract fun submit (Ljava/lang/Object;ZZ[F[I[F)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
+	protected final fun touch (FFFF)V
+	protected final fun touchAll ()V
 	public fun translate (FF)V
 	protected fun writeStateKey ()V
 }
 
 public final class org/polyfrost/compose/render/PolyTessellator$Companion {
+	public final fun layerTargetSize (II)I
 }
 
 protected final class org/polyfrost/compose/render/PolyTessellator$Mask {
@@ -1283,6 +1299,7 @@ public final class org/polyfrost/compose/render/RenderContext {
 	public fun <init> (Lorg/polyfrost/compose/render/PolyRenderer;)V
 	public final fun clipRRect (FFFFF)V
 	public final fun clipRect (FFFF)V
+	public final fun deviceTransform ()[F
 	public final fun fillPath (Lorg/polyfrost/compose/render/PolyPath;Lorg/polyfrost/compose/render/PolyColor;)V
 	public final fun getAbsoluteX ()F
 	public final fun getAbsoluteY ()F

@@ -90,6 +90,8 @@ class RenderContext(val renderer: PolyRenderer) {
         _absY = absYStack.removeLast()
     }
 
+    fun deviceTransform(): FloatArray? = renderer.deviceTransform()
+
     fun translate(dx: Float, dy: Float) {
         renderer.translate(dx, dy)
         _absX += dx

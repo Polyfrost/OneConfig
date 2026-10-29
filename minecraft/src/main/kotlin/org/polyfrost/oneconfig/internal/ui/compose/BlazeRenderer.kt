@@ -24,6 +24,7 @@ import com.mojang.renderpearl.api.textures.FilterMode
 import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.renderpearl.api.buffers.GpuBuffer
 import com.mojang.renderpearl.api.commands.RenderPass
+import java.util.Collections
 import java.util.IdentityHashMap
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -96,18 +97,18 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         return ref
     }
 
-    private class Captured(val ops: List<(GuiGraphicsExtractor) -> Unit>, val bitmaps: List<PolyBitmap>, val refs: List<AbstractTextureRef>)
+    private class Captured(val ops: List<(GuiGraphicsExtractor) -> Unit>, val bitmaps: List<PolyBitmap>, val refs: List<AbstractTextureRef>, val boxes: FloatArray)
 
     override fun mark(): Any {
         flush()
-        return intArrayOf(ops.size, bitmapLog.size)
+        return intArrayOf(ops.size, bitmapLog.size, drawBoxMark)
     }
 
     override fun since(mark: Any): Any {
         flush()
         val m = mark as IntArray
         val bmps = ArrayList(bitmapLog.subList(m[1], bitmapLog.size))
-        return Captured(ArrayList(ops.subList(m[0], ops.size)), bmps, bmps.map(BitmapTextures::get))
+        return Captured(ArrayList(ops.subList(m[0], ops.size)), bmps, bmps.map(BitmapTextures::get), drawBoxesSince(m[2]))
     }
 
     override fun valid(captured: Any): Boolean {
@@ -119,6 +120,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         flush()
         val c = captured as Captured
         ops.addAll(c.ops)
+        appendDrawBoxes(c.boxes)
         bitmaps.addAll(c.bitmaps)
         bitmapLog.addAll(c.bitmaps)
     }
@@ -140,6 +142,44 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         resetTessellator()
     }
 
+    override val layered: Boolean get() = true
+
+    override fun layerMark(): Any = ops.size
+
+    override fun layer(mark: Any, alpha: Float) {
+        val sub = ops.subList(mark as Int, ops.size)
+        if (sub.isEmpty()) return
+        val op = LayerOp.of(ArrayList(sub), alpha, guiScale, screenW, screenH)
+        sub.clear()
+        if (op != null) ops.add(op)
+    }
+
+    override fun fade(mark: Any, alpha: Float): Boolean {
+        val from = mark as Int
+        val faded = ArrayList<(GuiGraphicsExtractor) -> Unit>(ops.size - from)
+        for (i in from until ops.size) faded += when (val op = ops[i]) {
+            is MeshOp -> MeshOp(op.mesh.faded(alpha))
+            is BakedTextOp -> op.faded(alpha)
+            is LiveTextOp -> op.faded(alpha)
+            is LayerOp -> op.faded(alpha)
+            is LiveOp -> op.faded(alpha)
+            else -> return false
+        }
+        for (i in faded.indices) ops[from + i] = faded[i]
+        return true
+    }
+
+    private fun touchText(text: String, x: Float, y: Float, scale: Float, shadow: Boolean) {
+        val font = Minecraft.getInstance().font
+        val lines = text.lines()
+        val w = (lines.maxOf { font.width(it) } + 1f) * scale
+        val h = (lines.size * font.lineHeight + 1f) * scale
+        repeat(if (shadow) 2 else 1) {
+            beginDraw()
+            touch(x * state.sx + state.tx, y * state.sy + state.ty, (x + w) * state.sx + state.tx, (y + h) * state.sy + state.ty)
+        }
+    }
+
     override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
         val box = rectGui(bounds[0], bounds[1], bounds[2], bounds[3]) ?: return
         val setup = when (texture) {
@@ -157,20 +197,16 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         val c = mulAlpha(color, state.alpha)
         if (c ushr 24 == 0) return
         val scissor = state.clip?.let { rectGui(it[0], it[1], it[2], it[3]) ?: return }
+        touchText(text, x, y, scale, shadow)
         val font = Minecraft.getInstance().font
         text.lines().forEachIndexed { index, line ->
             if (line.isEmpty()) return@forEachIndexed
             val m = lineMatrix(x, y, index, font.lineHeight, scale)
             val seq = visualOrder(line)
-            val draw: (GuiGraphicsExtractor) -> Unit = { g -> vanillaText(g, font, seq, m, c, shadow, scissor) }
             val baked = if (!keepVertices || line.contains("§k", ignoreCase = true)) null
                 else if ('§' in line || Language.getInstance().isDefaultRightToLeft) bakeText(font, seq, m, c, shadow, scissor)
                 else GlyphQuads.bake(font, line, m, c, shadow, scissor) ?: bakeText(font, seq, m, c, shadow, scissor)
-            if (baked != null) {
-                ops.add(BakedTextOp(baked, draw))
-                return@forEachIndexed
-            }
-            ops.add(draw)
+            ops.add(BakedTextOp(baked, c) { g, color -> vanillaText(g, font, seq, m, color, shadow, scissor) })
         }
     }
 
@@ -179,6 +215,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         flush()
         val alpha = state.alpha
         val scissor = state.clip?.let { rectGui(it[0], it[1], it[2], it[3]) ?: return }
+        touchText(text, x, y, scale, shadow)
         val font = Minecraft.getInstance().font
         text.lines().forEachIndexed { index, line ->
             if (line.isEmpty()) return@forEachIndexed
@@ -211,6 +248,8 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
                 val y0 = py - outline.pad
                 val bounds = rectGui(x0, y0, x0 + outline.w, y0 + outline.h)
                 if (bounds != null) {
+                    beginDraw()
+                    touch(x0, y0, x0 + outline.w, y0 + outline.h)
                     val color4 = (a shl 24) or (a shl 16) or (a shl 8) or a
                     ops.add { g -> outline.draw(g, elementPose, x0, y0, color4, bounds, scissor) }
                 }
@@ -274,6 +313,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     fun texture(view: GpuTextureView, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, alpha: Float) {
+        beginDraw()
         val a = (alpha * state.alpha * 255f).roundToInt().coerceIn(0, 255)
         if (a == 0) return
         begin(view, true)
@@ -286,15 +326,25 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
 
     override fun live(draw: (PolyRenderer) -> Unit) {
         flush()
-        val s = state.copy()
-        ops.add { g ->
+        beginDraw()
+        touchAll()
+        ops.add(LiveOp(state.copy(), draw))
+    }
+
+    private inner class LiveOp(private val s: State, private val draw: (PolyRenderer) -> Unit) : (GuiGraphicsExtractor) -> Unit {
+        private var held: List<LayerOp> = emptyList()
+
+        fun faded(alpha: Float) = LiveOp(s.copy().also { it.alpha *= alpha }, draw)
+
+        override fun invoke(g: GuiGraphicsExtractor) {
             val r = liveRenderer ?: BlazeRenderer(guiScale).also { liveRenderer = it }
             r.state = s.copy()
             draw(r)
-            for (op in r.finish()) op(g)
-            r.ops.clear()
-            r.bitmapLog.clear()
-            r.bitmaps.clear()
+            val out = r.finish()
+            for (layer in held) layer.release()
+            held = out.filterIsInstance<LayerOp>()
+            for (op in out) op(g)
+            r.reset()
             GlyphAtlas.uploadDirty()
         }
     }
@@ -321,12 +371,20 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
 
     internal class LiveTextOp(
         val meshes: List<Mesh>?, private val color: () -> Int, private val alpha: Float,
+        private val base: List<IntArray>? = meshes?.map { it.colors.copyOf() },
         private val fallback: (GuiGraphicsExtractor, Int) -> Unit,
     ) : (GuiGraphicsExtractor) -> Unit {
-        private val base = meshes?.map { it.colors.copyOf() }
+        private var drawn: Int? = null
+
+        fun shifted(dx: Int, dy: Int) = LiveTextOp(meshes?.map { it.shifted(dx, dy) }, color, alpha, base) { g, c -> shiftedDraw(g, dx, dy) { fallback(it, c) } }
+
+        fun faded(a: Float) = LiveTextOp(meshes?.map { it.faded(1f) }, color, alpha * a, base, fallback)
+
+        fun changed() = alphaMul(color(), alpha) != drawn
 
         override fun invoke(g: GuiGraphicsExtractor) {
             val c = alphaMul(color(), alpha)
+            drawn = c
             if (c ushr 24 == 0) return
             if (meshes == null || meshes.any { it.closed }) return fallback(g, c)
             val sc = ARGB.scaleRGB(c, 0.25f)
@@ -340,9 +398,15 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         }
     }
 
-    private class BakedTextOp(val meshes: List<Mesh>, val draw: (GuiGraphicsExtractor) -> Unit) : (GuiGraphicsExtractor) -> Unit {
+    internal class BakedTextOp(
+        val meshes: List<Mesh>?, private val color: Int, private val draw: (GuiGraphicsExtractor, Int) -> Unit,
+    ) : (GuiGraphicsExtractor) -> Unit {
+        fun shifted(dx: Int, dy: Int) = BakedTextOp(meshes?.map { it.shifted(dx, dy) }, color) { g, c -> shiftedDraw(g, dx, dy) { draw(it, c) } }
+
+        fun faded(alpha: Float) = BakedTextOp(meshes?.map { it.faded(alpha) }, alphaMul(color, alpha), draw)
+
         override fun invoke(g: GuiGraphicsExtractor) {
-            if (meshes.any { it.closed }) return draw(g)
+            if (meshes == null || meshes.any { it.closed }) return draw(g, color)
             //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
             for (mesh in meshes) g.guiRenderState.addGuiElement(mesh)
         }
@@ -365,6 +429,17 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         val vertexCount get() = colors.size
         val closed: Boolean get() = textureSetup.texure0()?.isClosed == true
 
+
+        fun shifted(dx: Int, dy: Int) = Mesh(
+            pipeline, textureSetup, Matrix3x2f().translation(-dx.toFloat(), -dy.toFloat()).mul(pose), verts, colors,
+            bounds.shifted(dx, dy), keep, scissor?.shifted(dx, dy), lightmap,
+        )
+
+        fun faded(alpha: Float): Mesh {
+            val premul = pipeline === RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA
+            val out = IntArray(colors.size) { fadeColor(colors[it], alpha, premul) }
+            return Mesh(pipeline, textureSetup, pose, verts, out, bounds, keep, scissor, lightmap)
+        }
 
         fun mergeable(o: Mesh): Boolean =
             keep && o.keep && pipeline === o.pipeline && textureSetup == o.textureSetup && pose == o.pose &&
@@ -465,7 +540,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
                 }
                 val meshes = when (op) {
                     is MeshOp -> listOf(op.mesh)
-                    is BakedTextOp -> op.meshes.takeUnless { m -> m.any { it.closed } }
+                    is BakedTextOp -> op.meshes?.takeUnless { m -> m.any { it.closed } }
                     else -> null
                 }
                 if (meshes == null) {
@@ -482,6 +557,17 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
 }
 
 private const val FULL_BRIGHT = 0xF000F0
+
+private fun fadeColor(color: Int, alpha: Float, premultiplied: Boolean): Int {
+    if (!premultiplied) return alphaMul(color, alpha)
+    var out = 0
+    var shift = 0
+    while (shift < 32) {
+        out = out or ((((color ushr shift) and 0xFF) * alpha).roundToInt().coerceIn(0, 255) shl shift)
+        shift += 8
+    }
+    return out
+}
 
 private fun alphaMul(color: Int, alpha: Float): Int {
     if (alpha >= 1f) return color
@@ -749,7 +835,7 @@ internal object McOutlines {
         }
     }
 
-    private fun createGuiRenderer(mc: Minecraft, state: GuiRenderState): GuiRenderer {
+    internal fun createGuiRenderer(mc: Minecraft, state: GuiRenderState): GuiRenderer {
         //? if >= 26.2 {
         return GuiRenderer(state, mc.gameRenderer.featureRenderDispatcher(), emptyList())
         //?} else {
@@ -844,7 +930,11 @@ internal object KeptMeshes {
         val meshes = byDraw[draw] ?: return false
         val first = meshes[0]
         val scissor = first.scissorArea()
-        if (scissor == null) pass.disableScissor() else {
+        val transform = GuiTargetRedirect.scissorTransform
+        if (scissor == null) pass.disableScissor() else if (transform != null) {
+            val m = transform.map(scissor.left(), scissor.top(), scissor.right(), scissor.bottom())
+            pass.enableScissor(m[0], m[1], m[2], m[3])
+        } else {
             val window = Minecraft.getInstance().window
             val s = window.guiScale.toInt()
             val right = min(scissor.right() * s, window.width)
@@ -979,7 +1069,9 @@ internal class Recording(private val coalesce: Boolean = false) {
             idle()
             return
         }
+        val old = raw
         raw = if (copy) ArrayList(next) else next
+        LayerOp.retire(old, raw)
         ops = raw
         stable = 0
         bitmaps = if (copy) HashSet(renderer.bitmaps) else renderer.bitmaps
@@ -995,6 +1087,162 @@ internal class Recording(private val coalesce: Boolean = false) {
 
     fun replay(gfx: GuiGraphicsExtractor) {
         for (op in ops) op(gfx)
+    }
+}
+
+internal class LayerOp private constructor(
+    private val ops: List<(GuiGraphicsExtractor) -> Unit>, private val alpha: Float, private val guiScale: Float, val bounds: ScreenRectangle,
+) : (GuiGraphicsExtractor) -> Unit {
+    private var target: OffscreenTarget? = null
+    private var composite: BlazeRenderer.Mesh? = null
+    private var lastUsed = 0L
+
+    private fun moved(dx: Int, dy: Int) = LayerOp(ops, alpha, guiScale, bounds.shifted(dx, dy))
+
+    fun faded(a: Float) = LayerOp(ops, alpha * a, guiScale, bounds)
+
+    private fun stale(): Boolean = ops.any {
+        when (it) {
+            is BlazeRenderer.MeshOp, is BlazeRenderer.BakedTextOp -> false
+            is BlazeRenderer.LiveTextOp -> it.changed()
+            is LayerOp -> it.stale()
+            else -> true
+        }
+    }
+
+    override fun invoke(g: GuiGraphicsExtractor) {
+        lastUsed = System.nanoTime()
+        sweep(lastUsed)
+        val c = composite?.takeUnless { it.closed || stale() } ?: render() ?: return
+        //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
+        g.guiRenderState.addGuiElement(c)
+    }
+
+    fun release() {
+        active.remove(this)
+        target?.let { if (pool.size < MAX_POOLED) pool.add(it) else it.dispose() }
+        target = null
+        composite = null
+        for (op in ops) if (op is LayerOp) op.release()
+    }
+
+    private fun render(): BlazeRenderer.Mesh? {
+        val gs = guiScale.roundToInt()
+        val w = bounds.width() * gs
+        val h = bounds.height() * gs
+        val offscreen = target ?: acquire(w, h).also { target = it; active.add(this) }
+        val current = offscreen.target
+        if (!offscreen.resolve(PolyTessellator.layerTargetSize(current?.width ?: 0, w), PolyTessellator.layerTargetSize(current?.height ?: 0, h))) return null
+        val rt = offscreen.target ?: return null
+        offscreen.clear()
+        val mc = Minecraft.getInstance()
+        val (state, renderer) = gui.getOrNull(depth) ?: GuiRenderState().let { s -> (s to McOutlines.createGuiRenderer(mc, s)).also { gui.add(it) } }
+        depth++
+        try {
+            val graphics = GuiGraphicsExtractor(mc, state, bounds.width(), bounds.height())
+            stacking(graphics) { for (op in ops) op(graphics) }
+        } finally {
+            depth--
+        }
+        val previousTarget = GuiTargetRedirect.target
+        val previousScissor = GuiTargetRedirect.scissorTransform
+        val previousSize = GuiTargetRedirect.itemRenderSizePx
+        GuiTargetRedirect.target = rt
+        GuiTargetRedirect.scissorTransform = GuiTargetRedirect.ScissorTransform { l, t, r, b -> intArrayOf(l * gs, rt.height - b * gs, (r - l) * gs, (b - t) * gs) }
+        GuiTargetRedirect.itemRenderSizePx = 0
+        try {
+            //? if >= 26.2 {
+            renderer.render()
+            //?} else {
+            /*renderer.render((mc.gameRenderer as GameRendererAccessor).`oneconfig$getFogRenderer`().getBuffer(FogRenderer.FogMode.NONE))
+            *///?}
+        } finally {
+            GuiTargetRedirect.itemRenderSizePx = previousSize
+            GuiTargetRedirect.scissorTransform = previousScissor
+            GuiTargetRedirect.target = previousTarget
+        }
+        //? if >= 26.1 {
+        renderer.endFrame()
+        //?} else
+        //renderer.incrementFrameNumber()
+        val view = rt.colorTextureView ?: return null
+        val a = (alpha * 255f).roundToInt().coerceIn(0, 255)
+        val l = bounds.left().toFloat(); val t = bounds.top().toFloat(); val r = bounds.right().toFloat(); val b = bounds.bottom().toFloat()
+        val u1 = w.toFloat() / rt.width
+        val v1 = 1f - h.toFloat() / rt.height
+        val verts = floatArrayOf(l, t, 0f, 1f, l, b, 0f, v1, r, b, u1, v1, r, t, u1, 1f)
+        val setup = TextureSetup.singleTexture(view, sampler(true))
+        return BlazeRenderer.Mesh(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, setup, Matrix3x2f(), verts, IntArray(4) { a * 0x01010101 }, bounds, false)
+            .also { composite = it }
+    }
+
+    companion object {
+        private const val MAX_POOLED = 4
+        private val pool = ArrayList<OffscreenTarget>()
+        private val active = ArrayList<LayerOp>()
+        private val gui = ArrayList<Pair<GuiRenderState, GuiRenderer>>()
+        private var depth = 0
+        private var sweptAt = 0L
+
+        fun of(ops: List<(GuiGraphicsExtractor) -> Unit>, alpha: Float, guiScale: Float, screenW: Int, screenH: Int): LayerOp? {
+            var bounds: ScreenRectangle? = null
+            fun add(b: ScreenRectangle) { bounds = bounds?.let { union(it, b) } ?: b }
+            for (op in ops) when (op) {
+                is BlazeRenderer.MeshOp -> add(op.mesh.bounds())
+                is BlazeRenderer.BakedTextOp -> op.meshes?.forEach { add(it.bounds()) } ?: return LayerOp(ops, alpha, guiScale, ScreenRectangle(0, 0, screenW, screenH))
+                is BlazeRenderer.LiveTextOp -> op.meshes?.forEach { add(it.bounds()) } ?: return LayerOp(ops, alpha, guiScale, ScreenRectangle(0, 0, screenW, screenH))
+                is LayerOp -> add(op.bounds)
+                else -> return LayerOp(ops, alpha, guiScale, ScreenRectangle(0, 0, screenW, screenH))
+            }
+            val b = bounds?.intersection(ScreenRectangle(0, 0, screenW, screenH)) ?: return null
+            if (b.width() <= 0 || b.height() <= 0) return null
+            val dx = b.left(); val dy = b.top()
+            val shifted = ops.map { op ->
+                when (op) {
+                    is BlazeRenderer.MeshOp -> BlazeRenderer.MeshOp(op.mesh.shifted(dx, dy))
+                    is BlazeRenderer.BakedTextOp -> op.shifted(dx, dy)
+                    is BlazeRenderer.LiveTextOp -> op.shifted(dx, dy)
+                    else -> (op as LayerOp).moved(dx, dy)
+                }
+            }
+            return LayerOp(shifted, alpha, guiScale, b)
+        }
+
+        fun retire(old: List<(GuiGraphicsExtractor) -> Unit>, next: List<(GuiGraphicsExtractor) -> Unit>) {
+            if (old.none { it is LayerOp }) return
+            val kept = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
+            for (op in next) if (op is LayerOp) kept.add(op)
+            for (op in old) if (op is LayerOp && op !in kept) op.release()
+        }
+
+        private fun acquire(w: Int, h: Int): OffscreenTarget {
+            val fit = pool.filter { it.target?.let { t -> t.width >= w && t.height >= h } == true }.minByOrNull { it.target!!.let { t -> t.width * t.height } }
+            if (fit != null) return fit.also { pool.remove(it) }
+            return pool.removeLastOrNull() ?: OffscreenTarget()
+        }
+
+        private fun sweep(now: Long) {
+            if (now - sweptAt < 250_000_000L) return
+            sweptAt = now
+            active.filter { now - it.lastUsed > 1_000_000_000L }.forEach(LayerOp::release)
+        }
+
+        private fun union(a: ScreenRectangle, b: ScreenRectangle): ScreenRectangle {
+            val l = min(a.left(), b.left()); val t = min(a.top(), b.top())
+            return ScreenRectangle(l, t, max(a.right(), b.right()) - l, max(a.bottom(), b.bottom()) - t)
+        }
+    }
+}
+
+private fun ScreenRectangle.shifted(dx: Int, dy: Int) = ScreenRectangle(left() - dx, top() - dy, width(), height())
+
+private fun shiftedDraw(g: GuiGraphicsExtractor, dx: Int, dy: Int, draw: (GuiGraphicsExtractor) -> Unit) {
+    g.pose().pushMatrix()
+    g.pose().translate(-dx.toFloat(), -dy.toFloat())
+    try {
+        draw(g)
+    } finally {
+        g.pose().popMatrix()
     }
 }
 

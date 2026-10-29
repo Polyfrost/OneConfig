@@ -49,6 +49,8 @@ interface PolyRenderer {
     fun saveLayerAlpha(alpha: Float)
     fun saveLayerFade(fade: PolyFade) = save()
 
+    fun deviceTransform(): FloatArray? = null
+
     fun translate(dx: Float, dy: Float)
     fun scale(sx: Float, sy: Float)
     fun rotate(degrees: Float) {}

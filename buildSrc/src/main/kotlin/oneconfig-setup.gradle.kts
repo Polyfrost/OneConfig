@@ -254,6 +254,7 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["kotlinx"])
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
+    handleApiDep(versionedCatalog.bundles["twelvemonkeys"])
     handleApiDep(versionedCatalog["java-objc-bridge"])
     val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1") || loader == "ornithe") "1.0.2" else "1.0.1"
     handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")

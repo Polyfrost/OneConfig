@@ -22,6 +22,9 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.IntBuffer
 import java.util.IdentityHashMap
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -42,7 +45,17 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
 
     private val batches = ArrayList<GlProgram.Batch>()
 
-    private class Live(val at: Int, val state: State, val draw: (PolyRenderer) -> Unit)
+    private class Live(val at: Int, val state: State, val draw: (PolyRenderer) -> Unit, val key: (() -> Int)? = null) {
+        private var last: Int? = null
+
+        fun moved(at: Int) = Live(at, state, draw, key).also { it.last = last }
+
+        fun changed() = key == null || key() != last
+
+        fun commit() {
+            last = key?.invoke()
+        }
+    }
     private val lives = ArrayList<Live>()
 
     private val screenW = Platform.screen().viewportWidth()
@@ -51,17 +64,17 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
 
     override fun bitmapTexture(bitmap: PolyBitmap): Any = GlTextures.bitmap(bitmap)
 
-    private class Captured(val batches: List<GlProgram.Batch>, val lives: List<Live>)
+    private class Captured(val batches: List<GlProgram.Batch>, val lives: List<Live>, val boxes: FloatArray)
 
     override fun mark(): Any {
         flush()
-        return intArrayOf(batches.size, lives.size)
+        return intArrayOf(batches.size, lives.size, drawBoxMark)
     }
 
     override fun since(mark: Any): Any {
         flush()
         val m = mark as IntArray
-        return Captured(ArrayList(batches.subList(m[0], batches.size)), lives.subList(m[1], lives.size).map { Live(it.at - m[0], it.state, it.draw) })
+        return Captured(ArrayList(batches.subList(m[0], batches.size)), lives.subList(m[1], lives.size).map { it.moved(it.at - m[0]) }, drawBoxesSince(m[2]))
     }
 
     override fun valid(captured: Any): Boolean = (captured as Captured).batches.all { GlTextures.alive(it.texture) }
@@ -69,8 +82,9 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
     override fun append(captured: Any) {
         flush()
         val c = captured as Captured
-        for (l in c.lives) lives.add(Live(l.at + batches.size, l.state, l.draw))
+        for (l in c.lives) lives.add(l.moved(l.at + batches.size))
         batches.addAll(c.batches)
+        appendDrawBoxes(c.boxes)
     }
 
     override fun writeStateKey() {
@@ -91,9 +105,38 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
         batches.add(GlProgram.Batch(texture, premultiplied, nearest, verts, colors))
     }
 
+    override val layered: Boolean get() = !GlHost.vanillaPipeline
+
+    override fun layerMark(): Any = intArrayOf(batches.size, lives.size)
+
+    override fun layer(mark: Any, alpha: Float) {
+        val m = mark as IntArray
+        val sub = batches.subList(m[0], batches.size)
+        val subLives = lives.subList(m[1], lives.size)
+        if (sub.isEmpty() && subLives.isEmpty()) return
+        val shifted = subLives.map { it.moved(it.at - m[0]) }
+        val live = if (shifted.isEmpty()) null else ({ shifted.forEach(Live::commit); segments(shifted) })
+        val group = Group.of(ArrayList(sub), live, { shifted.any(Live::changed) }, alpha, screenW, screenH)
+        sub.clear()
+        subLives.clear()
+        if (group != null) batches.add(group.batch)
+    }
+
+    override fun fade(mark: Any, alpha: Float): Boolean {
+        val m = mark as IntArray
+        for (i in m[0] until batches.size) batches[i] = batches[i].faded(alpha)
+        for (i in m[1] until lives.size) {
+            val l = lives[i]
+            lives[i] = Live(l.at, l.state.copy().also { it.alpha *= alpha }, l.draw, l.key)
+        }
+        return true
+    }
+
     override fun live(draw: (PolyRenderer) -> Unit) {
         if (inLive) return draw(this)
         flush()
+        beginDraw()
+        touchAll()
         lives.add(Live(batches.size, state.copy(), draw))
     }
 
@@ -108,8 +151,8 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
         val baked = ArrayList(tail)
         tail.clear()
         val base = baked.map { it.colors.copyOf() }
-        val alpha = state.alpha
-        lives.add(Live(batches.size, state.copy()) { r ->
+        lives.add(Live(batches.size, state.copy(), { r ->
+            val alpha = (r as GlRenderer).state.alpha
             val c = mulAlpha(color(), alpha)
             if (c ushr 24 != 0) {
                 val sc = mulAlpha((c and -0x1000000) or ((c and 0xFCFCFC) shr 2), alpha)
@@ -118,12 +161,13 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
                     val src = base[k]
                     for (i in dst.indices) dst[i] = if (src[i] and 0xFFFFFF == 0xFFFFFF) c else sc
                 }
-                (r as GlRenderer).batches.addAll(baked)
+                r.batches.addAll(baked)
             }
-        })
+        }, color))
     }
 
     override fun texture(target: RenderTarget, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, alpha: Float) {
+        beginDraw()
         val a = (alpha * state.alpha * 255f).roundToInt().coerceIn(0, 255)
         if (a == 0) return
         begin(GlTextures.external(RenderTargetFbo.getColorTexId(target)), true)
@@ -230,6 +274,118 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
         }
     }
 
+    internal class Group private constructor(
+        private val batches: List<GlProgram.Batch>, private val live: (() -> List<GlProgram.Segment>)?, private val changed: () -> Boolean,
+        alpha: Float, private val x: Int, private val y: Int, private val w: Int, private val h: Int,
+    ) {
+        private var target: IntArray? = null
+        private var rendered = false
+        private var lastUsed = 0L
+
+        val tex: Int get() = target?.get(1) ?: 0
+
+        val batch = GlProgram.Batch(
+            this, true, true,
+            floatArrayOf(x.toFloat(), y.toFloat(), 0f, 0f, x.toFloat(), (y + h).toFloat(), 0f, 1f, (x + w).toFloat(), (y + h).toFloat(), 1f, 1f, (x + w).toFloat(), y.toFloat(), 1f, 0f),
+            IntArray(4) { (alpha * 255f).roundToInt().coerceIn(0, 255) * 0x01010101 },
+        )
+
+        private fun stale(): Boolean = (live != null && changed()) || batches.any { (it.texture as? Group)?.stale() == true }
+
+        private fun render(composite: GlProgram.Batch, transient: ArrayList<Group>?, sink: ArrayList<Group>) {
+            lastUsed = frame
+            transient?.add(this)
+            if (rendered && target != null && !stale()) return
+            prepare(batches, transient, sink)
+            val segs = live?.invoke() ?: emptyList()
+            for (s in segs) prepare(s.batches, sink, sink)
+            val t = target?.takeIf { it[2] >= w && it[3] >= h } ?: acquire(w, h).also { next ->
+                target?.let(::recycle) ?: active.add(this)
+                target = next
+            }
+            val u1 = w.toFloat() / t[2]
+            val v1 = h.toFloat() / t[3]
+            val v = composite.verts
+            if (v[10] != u1 || v[11] != v1) {
+                v[7] = v1; v[10] = u1; v[11] = v1; v[14] = u1
+                GlProgram.invalidate(composite)
+            }
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, t[0])
+            GL11.glViewport(0, 0, t[2], t[3])
+            GL11.glDisable(GL11.GL_SCISSOR_TEST)
+            GL11.glColorMask(true, true, true, true)
+            GL11.glClearColor(0f, 0f, 0f, 0f)
+            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT)
+            if (batches.isNotEmpty() || segs.isNotEmpty()) GlProgram.draw(batches, t[2], t[3], true, segs, false, x.toFloat(), y.toFloat())
+            rendered = true
+        }
+
+        fun release() {
+            active.remove(this)
+            target?.let(::recycle)
+            target = null
+            rendered = false
+        }
+
+        companion object {
+            private const val MAX_POOLED = 4
+            private const val RELEASE_FRAMES = 8
+            private val pool = ArrayList<IntArray>()
+            private val active = ArrayList<Group>()
+            private var frame = 0L
+
+            fun of(batches: List<GlProgram.Batch>, live: (() -> List<GlProgram.Segment>)?, changed: () -> Boolean, alpha: Float, screenW: Int, screenH: Int): Group? {
+                var l = 0; var t = 0; var r = screenW; var b = screenH
+                if (live == null) {
+                    var x0 = Float.MAX_VALUE; var y0 = Float.MAX_VALUE; var x1 = -Float.MAX_VALUE; var y1 = -Float.MAX_VALUE
+                    for (batch in batches) for (i in batch.colors.indices) {
+                        val vx = batch.verts[i * 4]; val vy = batch.verts[i * 4 + 1]
+                        x0 = min(x0, vx); y0 = min(y0, vy); x1 = max(x1, vx); y1 = max(y1, vy)
+                    }
+                    if (x0 > x1) return null
+                    l = max(floor(x0).toInt(), 0); t = max(floor(y0).toInt(), 0)
+                    r = min(ceil(x1).toInt(), screenW); b = min(ceil(y1).toInt(), screenH)
+                }
+                if (r <= l || b <= t) return null
+                return Group(batches, live, changed, alpha, l, t, r - l, b - t)
+            }
+
+            fun prepare(batches: List<GlProgram.Batch>, transient: ArrayList<Group>?, sink: ArrayList<Group>) {
+                for (b in batches) (b.texture as? Group)?.render(b, transient, sink)
+            }
+
+            fun endFrame() {
+                frame++
+                for (g in active.filter { frame - it.lastUsed > RELEASE_FRAMES }) g.release()
+            }
+
+            private fun recycle(t: IntArray) {
+                if (pool.size < MAX_POOLED) pool.add(t) else delete(t)
+            }
+
+            private fun acquire(w: Int, h: Int): IntArray {
+                val fit = pool.filter { it[2] >= w && it[3] >= h }.minByOrNull { it[2] * it[3] }
+                if (fit != null) return fit.also { pool.remove(it) }
+                val t = pool.removeLastOrNull() ?: intArrayOf(GL30.glGenFramebuffers(), GL11.glGenTextures(), 0, 0)
+                t[2] = PolyTessellator.layerTargetSize(0, w); t[3] = PolyTessellator.layerTargetSize(0, h)
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, t[1])
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST)
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST)
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE)
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE)
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, t[2], t[3], 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, null as ByteBuffer?)
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, t[0])
+                GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, t[1], 0)
+                return t
+            }
+
+            private fun delete(t: IntArray) {
+                GL30.glDeleteFramebuffers(t[0])
+                GL11.glDeleteTextures(t[1])
+            }
+        }
+    }
+
     private companion object {
         private const val COALESCE_FRAMES = 60
         private var liveRenderer: GlRenderer? = null
@@ -240,6 +396,9 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
         }
 
         fun drawBatches(fbo: Int, w: Int, h: Int, topDown: Boolean, clear: Boolean, batches: List<GlProgram.Batch>, segments: List<GlProgram.Segment>, kept: Boolean, arena: Boolean) {
+            val transient = ArrayList<Group>()
+            Group.prepare(batches, null, transient)
+            for (s in segments) Group.prepare(s.batches, transient, transient)
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo)
             GL11.glViewport(0, 0, w, h)
             GL11.glDisable(GL11.GL_SCISSOR_TEST)
@@ -251,6 +410,8 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
             if (batches.isNotEmpty() || segments.isNotEmpty()) {
                 if (arena) GlProgram.drawArena(batches, w, h, topDown, segments) else GlProgram.draw(batches, w, h, topDown, segments, kept)
             }
+            for (g in transient) g.release()
+            Group.endFrame()
             GlTextures.endFrame()
         }
     }
@@ -313,6 +474,21 @@ internal object GlProgram {
         @JvmField var seen = -1L
 
         fun sameKey(o: Batch) = texture === o.texture && premultiplied == o.premultiplied && nearest == o.nearest
+
+        fun faded(alpha: Float) = Batch(texture, premultiplied, nearest, verts, IntArray(colors.size) { i ->
+            val c = colors[i]
+            if (premultiplied) {
+                var out = 0
+                var shift = 0
+                while (shift < 32) {
+                    out = out or ((((c ushr shift) and 0xFF) * alpha).roundToInt().coerceIn(0, 255) shl shift)
+                    shift += 8
+                }
+                out
+            } else {
+                (((c ushr 24) * alpha).roundToInt().coerceIn(0, 255) shl 24) or (c and 0xFFFFFF)
+            }
+        })
 
         companion object {
             fun merge(list: List<Batch>): Batch {
@@ -397,7 +573,13 @@ internal object GlProgram {
         return s
     }
 
-    fun draw(batches: List<Batch>, w: Int, h: Int, topDown: Boolean, live: List<Segment> = emptyList(), kept: Boolean = false) {
+    fun invalidate(b: Batch) {
+        b.arenaGen = -1
+        b.seen = -1L
+        keptVbo.uploaded = null
+    }
+
+    fun draw(batches: List<Batch>, w: Int, h: Int, topDown: Boolean, live: List<Segment> = emptyList(), kept: Boolean = false, ox: Float = 0f, oy: Float = 0f) {
         if (program == 0) init()
         var staticVerts = 0
         for (b in batches) staticVerts += b.colors.size
@@ -422,7 +604,7 @@ internal object GlProgram {
         attribPointers()
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, ibo)
         ensureIndices(vertices / 4)
-        setupState(w, h, topDown)
+        setupState(w, h, topDown, ox, oy)
 
         var first = 0
         var liveFirst = (vertices - liveVerts) / 4
@@ -542,9 +724,9 @@ internal object GlProgram {
         GL20.glVertexAttribPointer(2, 4, GL11.GL_UNSIGNED_BYTE, true, STRIDE, 16L)
     }
 
-    private fun setupState(w: Int, h: Int, topDown: Boolean) {
+    private fun setupState(w: Int, h: Int, topDown: Boolean, ox: Float = 0f, oy: Float = 0f) {
         GL20.glUniform2f(uScale, 2f / w, if (topDown) 2f / h else -2f / h)
-        GL20.glUniform2f(uOffset, -1f, if (topDown) -1f else 1f)
+        GL20.glUniform2f(uOffset, -1f - ox * 2f / w, if (topDown) -1f - oy * 2f / h else 1f + oy * 2f / h)
         GL11.glDisable(GL11.GL_CULL_FACE)
         GL11.glDisable(GL11.GL_DEPTH_TEST)
         GL11.glDisable(GL11.GL_STENCIL_TEST)
@@ -673,6 +855,7 @@ internal object GlTextures {
 
     fun id(key: Any): Int = when (key) {
         is PolyGlyphPage.Page -> glyphPage(key)
+        is GlRenderer.Group -> key.tex
         is Tex -> {
             key.lastUsed = frame
             if (key.id == 0 && key.bitmap != null) key.id = upload(key.bitmap)

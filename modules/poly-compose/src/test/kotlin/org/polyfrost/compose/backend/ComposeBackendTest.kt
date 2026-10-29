@@ -81,7 +81,7 @@ class ComposeBackendTest {
         override fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float) { calls += "rect ${x + tx},${y + ty} #${Integer.toHexString(color)}" }
         override fun save() { stack.addLast(tx to ty) }
         override fun restore() { val (x, y) = stack.removeLast(); tx = x; ty = y }
-        override fun saveLayerAlpha(alpha: Float) = save()
+        override fun saveLayerAlpha(alpha: Float) { calls += "layer $alpha"; save() }
         override fun translate(dx: Float, dy: Float) { tx += dx; ty += dy }
         override fun mark(): Any = calls.size
         override fun since(mark: Any): Any = ArrayList(calls.subList(mark as Int, calls.size))
@@ -114,6 +114,22 @@ class ComposeBackendTest {
         assertEquals(2, polyRuns)
         assertEquals(listOf("rect 10.0,10.0 #ffff0000", "rect 15.0,15.0 #ff00ff00"), frames[0])
         assertEquals(listOf("cached rect 10.0,10.0 #ffff0000", "rect 15.0,15.0 #ff00ff00"), frames[1])
+    }
+
+    @Test
+    fun translucentLayerCacheReplaysInsideLayer() {
+        PolyCompose.install()
+        val rec = FrameRecomposer(Dispatchers.Unconfined) {}
+        val scope = SingleComposeSceneRenderingScope {}
+        val scene = CanvasLayersComposeScene(frameRecomposer = rec, density = Density(1f), size = IntSize(400, 300))
+        scene.setContent {
+            Box(Modifier.padding(10.dp).graphicsLayer { alpha = 0.5f }.size(50.dp).background(Color.Red))
+        }
+        val frames = List(2) { CapturingLogRenderer().also { r -> with(scope) { scene.render(rec, PolyCanvas(r), System.nanoTime()) } }.calls }
+        scene.close()
+        rec.close()
+        assertEquals(listOf("layer 0.5", "rect 10.0,10.0 #ffff0000"), frames[0])
+        assertEquals(listOf("layer 0.5", "cached rect 10.0,10.0 #ffff0000"), frames[1])
     }
 
     private fun render(content: @Composable () -> Unit): List<String> {

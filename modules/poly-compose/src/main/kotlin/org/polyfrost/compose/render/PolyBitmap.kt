@@ -1,8 +1,11 @@
 package org.polyfrost.compose.render
 
+import com.twelvemonkeys.imageio.plugins.bmp.ICOImageReaderSpi
+import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
+import javax.imageio.spi.IIORegistry
 
 class PolyBitmap(val width: Int, val height: Int, val pixels: ByteArray) {
     init {
@@ -14,11 +17,20 @@ class PolyBitmap(val width: Int, val height: Int, val pixels: ByteArray) {
     }
 
     companion object {
-        @JvmStatic
-        var decoder: Decoder = Decoder { bytes -> runCatching { ImageIO.read(ByteArrayInputStream(bytes))?.let(::fromAwt) }.getOrNull() }
+        private val awtDecoder = Decoder { bytes -> runCatching { ImageIO.read(ByteArrayInputStream(bytes))?.let(::fromAwt) }.getOrNull() }
 
         @JvmStatic
-        fun decode(bytes: ByteArray): PolyBitmap? = decoder.decode(bytes)
+        var decoder: Decoder = awtDecoder
+
+        @JvmStatic
+        fun decode(bytes: ByteArray): PolyBitmap? = decoder.decode(bytes) ?: if (decoder !== awtDecoder) awtDecoder.decode(bytes) else null
+
+        @JvmStatic
+        fun registerImageReaders() {
+            val registry = IIORegistry.getDefaultInstance()
+            registry.registerServiceProvider(WebPImageReaderSpi())
+            registry.registerServiceProvider(ICOImageReaderSpi())
+        }
 
         @JvmStatic
         fun fromResource(path: String, loader: ClassLoader? = null): PolyBitmap? =
