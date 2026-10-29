@@ -28,6 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -84,6 +85,7 @@ private fun ThemeCard(theme: UITheme) {
         modifier = Modifier
             .background(LocalTheme.current.modCardBackground, LocalTheme.current.backgroundShape)
             .border(borderWidth, borderColor, LocalTheme.current.backgroundShape)
+            .keepSearchFocus()
             .clickable(interactionSource, indication = null) {
                 // Use clickable because onClick always plays CLICK. ThemeRegistry.activate chooses CLICK or OPEN
                 ThemeRegistry.activate(theme)

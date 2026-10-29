@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -45,7 +47,9 @@ fun IconButton(
     Icon(
         iconName,
         tint = { iconColor.value },
-        modifier = Modifier.onClick(interactionSource, enabled, onClick).then(modifier)
+        modifier = Modifier.onClick(interactionSource, enabled, onClick)
+            .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
+            .then(modifier)
             // inset the glyph so the outline doesn't hug it; size bordered buttons 8dp larger to keep the icon size
             .then(
                 if (hoverBorder) Modifier.animatedFrame(LocalTheme.current.buttonShape, border = { borderColor.value }).padding(4.dp)
