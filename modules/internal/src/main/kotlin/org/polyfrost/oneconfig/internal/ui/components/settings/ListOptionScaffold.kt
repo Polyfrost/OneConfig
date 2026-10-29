@@ -55,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -198,6 +199,7 @@ internal fun <T> ListOptionContainer(
                     .heightIn(max = maxHeight)
                     .fadingEdges(scrollState, theme.componentBackground)
                     .then(containmentModifier)
+                    .wheelScroll(scrollState, contain = { containScroll && scrollState.maxValue > 0 })
                     .verticalScroll(scrollState),
             ) {
                 Box(

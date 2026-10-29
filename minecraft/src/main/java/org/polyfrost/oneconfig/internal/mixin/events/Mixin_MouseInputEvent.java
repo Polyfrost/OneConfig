@@ -16,6 +16,7 @@ import net.minecraft.client.input.MouseButtonInfo;
 
 //? if > 1.8.9 {
 import net.minecraft.client.MouseHandler;
+import org.polyfrost.oneconfig.internal.ui.compose.RawScroll;
 //?}
 
 //? if = 1.8.9 {
@@ -81,6 +82,14 @@ public class Mixin_MouseInputEvent {
         MouseInputEvent.Moved.post(x, y);
     }
     *///? }
+
+    //? if > 1.8.9 {
+    @Inject(method = "onScroll", at = @At("HEAD"))
+    private void oneconfig$captureRawScroll(long window, double x, double y, CallbackInfo ci) {
+        RawScroll.x = x;
+        RawScroll.y = y;
+    }
+    //?}
 
     @Unique
     private static int oneconfig$state(int action) {
