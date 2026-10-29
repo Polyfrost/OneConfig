@@ -3066,6 +3066,7 @@ private fun DesignStudioPanel(
                     Box(modifier = Modifier.fillMaxSize()) {
                         Column(
                             modifier = Modifier.fillMaxSize()
+                                .wheelScroll(panelScrollState)
                                 .verticalScroll(panelScrollState)
                                 .padding(end = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(22.dp)

@@ -54,7 +54,7 @@ internal fun ScrollbarBox(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val thickness = LocalScrollbarStyle.current.thickness
-    Box(modifier.scrollable(state, Orientation.Vertical, reverseDirection = true)) {
+    Box(modifier.wheelScroll(state).scrollable(state, Orientation.Vertical, reverseDirection = true)) {
         content()
         VerticalScrollbar(
             adapter = adapter,

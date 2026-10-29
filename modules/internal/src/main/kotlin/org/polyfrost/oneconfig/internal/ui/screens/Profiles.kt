@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -90,6 +91,7 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -490,8 +492,10 @@ private fun ColumnScope.ProfilesGrid(
         return
     }
 
+    val gridState = rememberLazyGridState()
     LazyVerticalGrid(
-        modifier = Modifier.weight(1f),
+        state = gridState,
+        modifier = Modifier.weight(1f).wheelScroll(gridState),
         columns = GridCells.Fixed(5),
         verticalArrangement = Arrangement.spacedBy(19.dp),
         horizontalArrangement = Arrangement.spacedBy(19.dp),
