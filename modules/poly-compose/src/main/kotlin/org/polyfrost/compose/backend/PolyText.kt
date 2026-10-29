@@ -55,6 +55,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.round
 
 class PolyFontSource(val key: String, private val bytes: () -> ByteArray, override val weight: FontWeight, override val style: FontStyle) : Font {
     internal fun register(): String {
@@ -160,7 +161,7 @@ internal class PolyIntrinsics(
             }
         }
         val natural = runs.maxOf { it.metrics.spacing }
-        lineHeightPx = if (style.lineHeight.isSpecified) px(style.lineHeight, natural) else natural
+        lineHeightPx = if (style.lineHeight.isSpecified) px(style.lineHeight, natural) else round(natural)
     }
 
     fun px(unit: TextUnit, fallback: Float): Float = if (!unit.isSpecified) fallback else with(density) {
@@ -257,7 +258,8 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                 TextAlign.Left -> 0f
                 else -> if (rtl) boxW - w else 0f
             }
-            val line = Line(s, e, vEnd, top, top + lh, top + (lh - content) / 2f + ascent, max(0f, left), w, ellipsize, rtl)
+            val baseline = if (intr.style.lineHeight.isSpecified) top + (lh - content) / 2f + ascent else top + lh - (content - ascent)
+            val line = Line(s, e, vEnd, top, top + lh, baseline, max(0f, left), w, ellipsize, rtl)
             if (b == null || lv == null) line else bidiLine(line, b, paraStart, if (ellipsize) vEnd else min(e, paraEnd), ew, lv)
         }
         levels = lv
@@ -578,8 +580,9 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         val c = base.copy(alpha = base.alpha * alpha * (run.style.alpha.takeUnless { it.isNaN() } ?: 1f)).toArgb()
         if (run.style.background.isSpecified && run.style.background.alpha > 0f) r.rect(x, l.top, w, l.bottom - l.top, run.style.background.toArgb(), 0f)
         val sh = run.spanShadow ?: shadow ?: run.style.shadow
-        if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font)
-        r.text(str, x, l.baseline, c, run.font)
+        val letter = intr.px(run.style.letterSpacing, 0f)
+        if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font, letter)
+        r.text(str, x, l.baseline, c, run.font, letter)
         val deco = run.spanDecoration ?: decoration ?: run.style.textDecoration
         if (deco != null) {
             val m = run.metrics

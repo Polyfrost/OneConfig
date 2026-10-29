@@ -52,6 +52,42 @@ class SvgMaskTest {
     }
 
     @Test
+    fun appliesElementTransform() {
+        val bmp = SvgMask.rasterize("""<svg viewBox="0 0 20 20"><rect x="8" y="0" width="4" height="20" transform="rotate(90 10 10)" fill="white"/></svg>""", 20)!!
+        fun a(x: Int, y: Int) = bmp.pixels[(y * bmp.width + x) * 4 + 3].toInt() and 0xFF
+        assertEquals(255, a(2, 10))
+        assertEquals(0, a(10, 2))
+    }
+
+    @Test
+    fun groupsPassTransformAndStyleToUse() {
+        val svg = """<svg viewBox="0 0 20 20"><defs><rect id="r" width="4" height="4"/></defs><g transform="translate(10 0)" style="fill:#00ff00"><use href="#r" x="2" y="2"/></g></svg>"""
+        val bmp = SvgMask.rasterize(svg, 20)!!
+        fun px(x: Int, y: Int) = IntArray(4) { bmp.pixels[(y * bmp.width + x) * 4 + it].toInt() and 0xFF }.toList()
+        assertEquals(listOf(0, 255, 0, 255), px(13, 3))
+        assertEquals(0, px(3, 3)[3])
+    }
+
+    @Test
+    fun buttCapsStopAtEndpoints() {
+        val bmp = SvgMask.rasterize("""<svg viewBox="0 0 10 10"><line x1="2" y1="5" x2="8" y2="5" stroke="white" stroke-width="2"/></svg>""", 10)!!
+        fun a(x: Int, y: Int) = bmp.pixels[(y * bmp.width + x) * 4 + 3].toInt() and 0xFF
+        assertEquals(255, a(2, 4))
+        assertEquals(0, a(1, 4))
+        assertEquals(0, a(8, 4))
+    }
+
+    @Test
+    fun gradientHrefSharesStopsOnly() {
+        val svg = """<svg viewBox="0 0 10 10"><defs><linearGradient id="s" gradientTransform="scale(0.1)"><stop stop-color="#ff0000"/><stop offset="1" stop-color="#0000ff"/></linearGradient>""" +
+            """<linearGradient id="g" href="#s"/></defs><rect width="10" height="10" fill="url(#g)"/></svg>"""
+        val bmp = SvgMask.rasterize(svg, 10)!!
+        val right = bmp.pixels[(5 * 10 + 9) * 4 + 2].toInt() and 0xFF
+        val left = bmp.pixels[(5 * 10) * 4].toInt() and 0xFF
+        assertTrue(left > 220 && right > 220)
+    }
+
+    @Test
     fun tintKeepsPaintAlpha() {
         val svg = """<svg viewBox="0 0 10 10"><rect width="10" height="10" fill="url(#g)"/><defs><linearGradient id="g"><stop stop-color="white" stop-opacity="0.25"/></linearGradient></defs></svg>"""
         val bmp = SvgMask.rasterize(svg, 10, -1)!!

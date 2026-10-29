@@ -18,6 +18,7 @@ import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyTessellator
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
     class Face(bytes: ByteArray) : PolyGlyphPage.Face {
@@ -86,7 +87,7 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
             val w = IntArray(1); val h = IntArray(1); val xo = IntArray(1); val yo = IntArray(1)
             val sdf = stbtt_GetGlyphSDF(info, scale, id, SDF_PAD, SDF_EDGE.toByte(), SDF_SCALE, w, h, xo, yo) ?: return null
             try {
-                val bias = 0.5f + DILATE * pixelSize
+                val bias = 0.5f + DILATE * sqrt(pixelSize)
                 val sw = w[0]
                 fun dist(x: Int, y: Int) = if (x < 0 || x >= sw) -SDF_EDGE / SDF_SCALE else ((sdf.get(y * sw + x).toInt() and 0xFF) - SDF_EDGE) / SDF_SCALE
                 val ow = if (shiftX > 0f) sw + 1 else sw
@@ -147,7 +148,7 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
 
     override fun metrics(font: PolyFont) = face(font.name)?.metrics(font.size) ?: PolyFont.Metrics(0f, 0f, 0f, 0f, 0f)
 
-    private val DILATE = if (System.getProperty("os.name").startsWith("Mac")) java.lang.Float.parseFloat(System.getProperty("oneconfig.hud.textDilate", "0.0035")) else 0f
+    private val DILATE = System.getProperty("oneconfig.hud.textDilate")?.toFloat() ?: if (System.getProperty("os.name").startsWith("Mac")) 0.068f else 0f
     private const val SDF_PAD = 2
     private const val SDF_EDGE = 128
     private const val SDF_SCALE = 32f

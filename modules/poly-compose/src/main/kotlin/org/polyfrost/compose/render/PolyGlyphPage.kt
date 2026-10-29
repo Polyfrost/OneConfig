@@ -107,13 +107,13 @@ object PolyGlyphPage {
     var revision = 0L
         private set
 
-    private val atlases = HashMap<Pair<Face, Int>, HashMap<Int, Glyph?>>()
+    private val atlases = HashMap<Triple<Face, Int, Int>, HashMap<Int, Glyph?>>()
     private val outlineAtlases = HashMap<Triple<Face, Int, Int>, HashMap<Int, Glyph?>>()
 
-    fun atlas(face: Face, bucket: Int): HashMap<Int, Glyph?> = atlases.getOrPut(face to bucket) { HashMap() }
+    fun atlas(face: Face, bucket: Int, lum: Int = -1): HashMap<Int, Glyph?> = atlases.getOrPut(Triple(face, bucket, lum)) { HashMap() }
 
-    fun atlas(face: Face, bucket: Int, outlinePx: Float, round: Boolean): HashMap<Int, Glyph?> {
-        if (outlinePx <= 0f) return atlas(face, bucket)
+    fun atlas(face: Face, bucket: Int, outlinePx: Float, round: Boolean, lum: Int = -1): HashMap<Int, Glyph?> {
+        if (outlinePx <= 0f) return atlas(face, bucket, lum)
         val q = max(1, (outlinePx * 4f).roundToInt())
         return outlineAtlases.getOrPut(Triple(face, bucket, if (round) q else -q)) { HashMap() }
     }
@@ -123,6 +123,7 @@ object PolyGlyphPage {
     private data class Prekey(val face: Face, val bucket: Int, val slot: Int)
 
     private val prerastered = ConcurrentHashMap<Prekey, Raster>()
+    private val rasters = HashMap<Prekey, Raster>()
 
     @JvmStatic
     var recorder: ((face: Face, bucket: Int, id: Int, phase: Int) -> Unit)? = null
@@ -150,10 +151,14 @@ object PolyGlyphPage {
         if (prerasterDropped) prerastered.remove(key)
     }
 
-    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int, outlinePx: Float = 0f, round: Boolean = false, phase: Int = 0): Glyph? = atlas.getOrPut(id * SUBPIXELS + phase) {
+    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int, outlinePx: Float = 0f, round: Boolean = false, phase: Int = 0, lum: Int = -1): Glyph? = atlas.getOrPut(id * SUBPIXELS + phase) {
         if (outlinePx > 0f) return@getOrPut place(dilate(raster(face, bucket, id, phase) ?: return@getOrPut null, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
-        recorder?.invoke(face, bucket, id, phase)
-        place(prerastered.remove(Prekey(face, bucket, id * SUBPIXELS + phase)) ?: raster(face, bucket, id, phase) ?: return@getOrPut null)
+        val key = Prekey(face, bucket, id * SUBPIXELS + phase)
+        val r = rasters[key] ?: run {
+            recorder?.invoke(face, bucket, id, phase)
+            (prerastered.remove(key) ?: raster(face, bucket, id, phase))?.also { rasters[key] = it }
+        } ?: return@getOrPut null
+        place(if (lum < 0) r else PolyMaskGamma.apply(r, lum))
     }
 
     private fun dilate(r: Raster, radius: Float, round: Boolean): Raster {

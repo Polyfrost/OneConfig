@@ -212,6 +212,16 @@ class PolyTessellatorTest {
         assertTrue(10f in ys && 20f in ys)
     }
 
+    @Test
+    fun multiStopGradientStrokeKeepsMiddleStop() {
+        val r = Recorder()
+        val g = PolyGradient.Points(listOf(PolyColor(0xFFFFFFFF.toInt()), PolyColor(0x00FFFFFF), PolyColor(0xFFFFFFFF.toInt())), listOf(0f, 0.5f, 1f), 0f, 0f, 100f, 0f)
+        r.rectStrokeGradient(0f, 0f, 100f, 20f, g, 2f, 4f)
+        val b = r.done().single()
+        val mid = b.colors.indices.filter { abs(b.verts[it * 4] - 50f) < 3f }.minOf { b.colors[it] ushr 24 }
+        assertTrue(mid < 30, "middle alpha $mid")
+    }
+
     private fun assertWinding(b: Batch) {
         for (q in 0 until b.colors.size / 4) {
             var a = 0f

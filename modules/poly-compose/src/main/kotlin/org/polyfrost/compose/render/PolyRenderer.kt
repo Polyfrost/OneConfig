@@ -27,6 +27,18 @@ interface PolyRenderer {
 
     fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont)
 
+    fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float) {
+        if (letterSpacing == 0f) return text(text, x, y, color, font)
+        var cx = x
+        var i = 0
+        while (i < text.length) {
+            val ch = text.substring(i, i + Character.charCount(text.codePointAt(i)))
+            text(ch, cx, y, color, font)
+            cx += font.measureTextWidth(ch) + letterSpacing
+            i += ch.length
+        }
+    }
+
     fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float)
 
     fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float)

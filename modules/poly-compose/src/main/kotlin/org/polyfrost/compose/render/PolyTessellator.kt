@@ -191,14 +191,14 @@ abstract class PolyTessellator : PolyRenderer {
     }
 
     override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float) =
-        stroke(x, y, w, h, color, strokeWidth, radius, null)
+        stroke(x, y, w, h, color, strokeWidth, radius, shade = null)
 
     override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float) {
         val sx = state.sx; val sy = state.sy; val tx = state.tx; val ty = state.ty
-        stroke(x, y, w, h, gradient.sample(0f), strokeWidth, radius) { px, py -> gradient.colorAt((px - tx) / sx, (py - ty) / sy, x, y, w, h) }
+        stroke(x, y, w, h, gradient.sample(0f), strokeWidth, radius, dense = !gradient.affine) { px, py -> gradient.colorAt((px - tx) / sx, (py - ty) / sy, x, y, w, h) }
     }
 
-    private fun stroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float, shade: ((Float, Float) -> Int)?) {
+    private fun stroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float, dense: Boolean = false, shade: ((Float, Float) -> Int)?) {
         beginDraw()
         if (w <= 0f || h <= 0f || strokeWidth <= 0f) return
         val q = strokeWidth / 4f
@@ -208,14 +208,15 @@ abstract class PolyTessellator : PolyRenderer {
             val k = rc.box
             var same = true
             for (i in 0 until 6) if (abs(b[i] - k[i]) > 1e-3f) same = false
-            if (same) return stroke(x + q, y + q, w - q * 2f, h - q * 2f, color, strokeWidth / 2f, radius - q, shade)
+            if (same) return stroke(x + q, y + q, w - q * 2f, h - q * 2f, color, strokeWidth / 2f, radius - q, dense, shade)
         }
         val swPx = strokeWidth * scaleAvg()
         val alphaMul = if (swPx < 1f) swPx else 1f
         val half = (if (swPx < 1f) 1f / scaleAvg() else strokeWidth) / 2f
         val segs = cornerSegments(radius + half)
-        val outer = rrectPoints(x - half, y - half, w + half * 2f, h + half * 2f, if (radius > 0f) radius + half else 0f, segs)
-        val inner = rrectPoints(x + half, y + half, w - half * 2f, h - half * 2f, max(0f, radius - half), segs)
+        var outer = rrectPoints(x - half, y - half, w + half * 2f, h + half * 2f, if (radius > 0f) radius + half else 0f, segs)
+        var inner = rrectPoints(x + half, y + half, w - half * 2f, h - half * 2f, max(0f, radius - half), segs)
+        if (dense) densify(outer, inner).let { outer = it.first; inner = it.second }
         unclipped(x - half, y - half, w + half * 2f, h + half * 2f, if (radius > 0f) radius + half else 0f) {
             strokeRing(outer, inner, outer.size / 2, mulAlpha(color, alphaMul), shade?.let { f -> { px: Float, py: Float -> mulAlpha(f(px, py), alphaMul) } }, band = half * 2f * scaleAvg() > 1.001f)
         }
@@ -502,10 +503,12 @@ abstract class PolyTessellator : PolyRenderer {
 
     override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) = glyphs(text, x, y, color, font, 0f, false, true)
 
+    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float) = glyphs(text, x, y, color, font, 0f, false, true, letterSpacing)
+
     override fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float) =
         glyphs(text, x, y, color, font, width * scaleAvg(), true, true)
 
-    private fun glyphs(text: String, x: Float, y: Float, color: Int, font: PolyFont, outlinePx: Float, round: Boolean, subpixel: Boolean) {
+    private fun glyphs(text: String, x: Float, y: Float, color: Int, font: PolyFont, outlinePx: Float, round: Boolean, subpixel: Boolean, letterSpacing: Float = 0f) {
         beginDraw()
         val face = PolyGlyphPage.rasterizer?.face(font.name) ?: return
         val c = mulAlpha(color, state.alpha)
@@ -513,12 +516,13 @@ abstract class PolyTessellator : PolyRenderer {
         val k = state.glyphScale
         val outline = outlinePx / k
         val bucket = (font.size * scaleAvg() / k * 4f).roundToInt()
-        val atlas = if (cpuOnly) null else PolyGlyphPage.atlas(face, bucket, outline, round)
+        val lum = if (outline > 0f) -1 else PolyMaskGamma.bucket(color)
+        val atlas = if (cpuOnly) null else PolyGlyphPage.atlas(face, bucket, outline, round, lum)
         var fallback: PolyGlyphPage.Face? = null
         var fallbackAtlas: HashMap<Int, PolyGlyphPage.Glyph?>? = null
         fun glyph(f: PolyGlyphPage.Face, id: Int, phase: Int): PolyGlyphPage.Glyph? {
             val a = if (f === face) atlas else fallbackAtlas
-            if (a != null) return PolyGlyphPage.glyph(a, f, bucket, id, outline, round, phase)
+            if (a != null) return PolyGlyphPage.glyph(a, f, bucket, id, outline, round, phase, lum)
             if (outline <= 0f) PolyGlyphPage.prerasterize(f, bucket, id, phase)
             return null
         }
@@ -532,7 +536,7 @@ abstract class PolyTessellator : PolyRenderer {
             if (id == 0 && !Character.isWhitespace(cp)) {
                 if (fallback == null) {
                     fallback = PolyGlyphPage.rasterizer?.face(FALLBACK_FONT)
-                    if (fallback != null && !cpuOnly) fallbackAtlas = PolyGlyphPage.atlas(fallback, bucket, outline, round)
+                    if (fallback != null && !cpuOnly) fallbackAtlas = PolyGlyphPage.atlas(fallback, bucket, outline, round, lum)
                 }
                 val fid = fallback?.glyph(cp) ?: 0
                 if (fid != 0) { f = fallback!!; id = fid }
@@ -547,7 +551,7 @@ abstract class PolyTessellator : PolyRenderer {
                     begin(g.page, false)
                     glyphQuad(px, py, px + g.w * k, py + g.h * k, g.u0, g.v0, g.u1, g.v1, c)
                 }
-                penX += f.advance(id) * font.size
+                penX += f.advance(id) * font.size + letterSpacing
                 continue
             }
             var base = if (subpixel) floor(sx).toInt() else sx.roundToInt()
@@ -560,7 +564,7 @@ abstract class PolyTessellator : PolyRenderer {
                 begin(g.page, false)
                 glyphQuad(px.toFloat(), py.toFloat(), (px + g.w).toFloat(), (py + g.h).toFloat(), g.u0, g.v0, g.u1, g.v1, c)
             }
-            penX += f.advance(id) * font.size
+            penX += f.advance(id) * font.size + letterSpacing
         }
     }
 
@@ -1237,6 +1241,28 @@ abstract class PolyTessellator : PolyRenderer {
             quadVerts(oIn[a], oIn[a + 1], w, w, oc[i], oOut[a], oOut[a + 1], w, w, ocl[i], oOut[b], oOut[b + 1], w, w, ocl[j], oIn[b], oIn[b + 1], w, w, oc[j])
             quadVerts(iIn[a], iIn[a + 1], w, w, ic[i], iOut[a], iOut[a + 1], w, w, icl[i], iOut[b], iOut[b + 1], w, w, icl[j], iIn[b], iIn[b + 1], w, w, ic[j])
         }
+    }
+
+    private fun densify(outer: FloatArray, inner: FloatArray, step: Float = 4f): Pair<FloatArray, FloatArray> {
+        val n = outer.size / 2
+        val ks = IntArray(n) { i ->
+            val j = (i + 1) % n
+            max(1, ceil(hypot(outer[j * 2] - outer[i * 2], outer[j * 2 + 1] - outer[i * 2 + 1]) / step).toInt())
+        }
+        val o = FloatArray(ks.sum() * 2)
+        val i2 = FloatArray(o.size)
+        var p = 0
+        for (i in 0 until n) {
+            val j = (i + 1) % n
+            val k = ks[i]
+            for (t in 0 until k) {
+                val f = t.toFloat() / k
+                o[p] = outer[i * 2] + (outer[j * 2] - outer[i * 2]) * f; o[p + 1] = outer[i * 2 + 1] + (outer[j * 2 + 1] - outer[i * 2 + 1]) * f
+                i2[p] = inner[i * 2] + (inner[j * 2] - inner[i * 2]) * f; i2[p + 1] = inner[i * 2 + 1] + (inner[j * 2 + 1] - inner[i * 2 + 1]) * f
+                p += 2
+            }
+        }
+        return o to i2
     }
 
     private fun signedArea(p: FloatArray, n: Int): Float {

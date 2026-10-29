@@ -35,6 +35,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -349,6 +350,7 @@ abstract class ComposeScreen(
             CompositionLocalProvider(
                 LocalClipboardManager provides SystemClipboardManager,
                 LocalClipboard provides SystemClipboard,
+                LocalUiOversample provides surfaceScale(),
             ) {
                 compose()
             }
