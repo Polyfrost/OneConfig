@@ -1,11 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -50,13 +50,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.abs
-import kotlin.math.hypot
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
-import kotlin.ranges.coerceAtLeast
-import kotlin.ranges.coerceAtMost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -72,11 +65,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.hud.v1.Hud
-import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
-import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.api.hud.v1.HudResize
-import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
+import org.polyfrost.oneconfig.api.hud.v1.*
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
@@ -88,14 +77,10 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
-import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
-import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
-import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
+import org.polyfrost.oneconfig.internal.ui.hud.*
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
-import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
-import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -104,6 +89,14 @@ import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.*
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.abs
+import kotlin.math.hypot
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
+import kotlin.ranges.coerceAtLeast
+import kotlin.ranges.coerceAtMost
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker as LegacyHud
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudDesignStudio")
 
@@ -223,6 +216,9 @@ private val snapGuideColor = Color(176, 47, 31)
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
 private const val CHROME_LIBRARY_ICONS = "library-icons"
+private const val CHROME_GLOBAL_CHIP = "global-hud-chip"
+private const val CHROME_GLOBAL_PANEL = "global-hud-panel"
+private const val CHROME_DISABLED_WARNING = "hud-disabled-warning"
 private const val CHROME_TOUR = "tour"
 private const val CHROME_TOUR_CARD = "tour-card"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
@@ -1001,6 +997,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     var activeCategory by remember { mutableStateOf(StudioCategory.Settings) }
     var selectedHuds by remember { mutableStateOf<Set<Hud>>(emptySet()) }
     var panelOpen by remember { mutableStateOf(false) }
+    var globalPanelOpen by remember { mutableStateOf(false) }
     var panelUserMoved by remember { mutableStateOf(false) }
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var dragOffsetX by remember { mutableStateOf(0f) }
@@ -1022,6 +1019,8 @@ fun HudDesignStudio(visible: Boolean = true) {
     var resizeStartStaticW by remember { mutableStateOf(0f) }
     var resizeStartStaticH by remember { mutableStateOf(0f) }
     var libraryVisible by remember { mutableStateOf(true) }
+    var sideColumnWidth by remember { mutableStateOf(0.dp) }
+    val sideDensity = LocalDensity.current
     var searchText by remember { mutableStateOf("") }
     var searchFocusTarget by remember { mutableStateOf<StudioSearch?>(null) }
     var pendingLibraryScroll by remember { mutableStateOf<String?>(null) }
@@ -1075,6 +1074,17 @@ fun HudDesignStudio(visible: Boolean = true) {
         libraryVisible = false
         pendingLibraryScroll = null
         libraryModIntent = null
+    }
+
+    fun toggleGlobalPanel() {
+        Snapshot.withMutableSnapshot {
+            if (globalPanelOpen) {
+                globalPanelOpen = false
+            } else {
+                closeLibrary()
+                globalPanelOpen = true
+            }
+        }
     }
 
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
@@ -1143,7 +1153,10 @@ fun HudDesignStudio(visible: Boolean = true) {
                 selectedHuds = emptySet()
                 panelOpen = false
             }
-            if (step.focus == HudTourFocus.Library || step.interactive) libraryVisible = true
+            if (step.focus == HudTourFocus.Library || step.interactive) {
+                globalPanelOpen = false
+                libraryVisible = true
+            }
         }
         if (step.interactive && !tourTaskDone) {
             var stillMerged = HudManager.activeInstances.filter { it.bgMerged }
@@ -1312,6 +1325,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                     panelOpen = true
                                     searchFocusTarget = StudioSearch.Panel
                                 } else if (libraryModIds().isNotEmpty()) {
+                                    globalPanelOpen = false
                                     libraryVisible = true
                                     searchFocusTarget = StudioSearch.Library
                                 }
@@ -2279,6 +2293,101 @@ fun HudDesignStudio(visible: Boolean = true) {
         }
         }
 
+        val sidePanelEndPadding = sideColumnWidth + 40.dp
+        AnimatedVisibility(
+            visible = libraryVisible && libraryChromeVisible,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = sidePanelEndPadding)
+                .graphicsLayer { alpha = sideChromeAlpha },
+            enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+            exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+        ) {
+            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
+            HudLibraryPanel(
+                modifier = Modifier.chromeBlocker(CHROME_LIBRARY),
+                searchText = searchText,
+                onSearchChange = { searchText = it },
+                searchFocusRequested = searchFocusTarget == StudioSearch.Library,
+                onSearchFocused = { searchFocusTarget = null },
+                onClose = { closeLibrary() },
+                sections = librarySections,
+                suggestEvergreenHud = modIds.isEmpty(),
+                activeModId = activeLibraryMod,
+                scrollState = libraryScrollState,
+                onSectionIndexesChanged = { librarySectionIndexes = it },
+                pendingScroll = pendingLibraryScroll,
+                onScrollComplete = { target, interrupted ->
+                    if (pendingLibraryScroll == target) {
+                        pendingLibraryScroll = null
+                        if (interrupted) libraryModIntent = null
+                    }
+                },
+                onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
+                    try {
+                        // a single-instance provider is its own instance so a real but inactive one
+                        // is re-used rather than made a second time
+                        val instance = if (hud.isReal) hud else hud.make()
+                        HudManager.markProviderKnown(instance)
+                        val s = Platform.screen().screenToMcScale()
+                        val effScale = instance.effectiveScale
+                        val offX = hudLocalOffX * effScale
+                        val offY = hudLocalOffY * effScale
+                        val cursorX = if (lastPointerPos[0] > 0f) lastPointerPos[0] else sx
+                        val cursorY = if (lastPointerPos[1] > 0f) lastPointerPos[1] else sy
+                        val initX = cursorX * s - offX
+                        val initY = cursorY * s - offY
+                        instance.setAbsolutePosition(initX, initY)
+                        if (instance !in HudManager.activeInstances) {
+                            HudManager.activeInstances.add(instance)
+                            HudManager.instancesRevision.intValue++
+                            instance.setup()
+                            instance.captureStaticSizeDefaults()
+                            instance.capturePositionDefaults()
+                        }
+                        UiSounds.play(UiSoundEvent.HUD_DRAG_START)
+                        instance.onEditorDragStart()
+                        Snapshot.withMutableSnapshot {
+                            dragOffsetX = offX
+                            dragOffsetY = offY
+                            isDragging = true
+                            draggedHud = instance
+                            draggedGroup = setOf(instance)
+                            dragStarts = mapOf(instance to (initX to initY))
+                            selectedHuds = setOf(instance)
+                            hoveredHud = instance
+                            closeLibrary()
+                        }
+                    } catch (_: Throwable) {}
+                },
+                onCardClick = { hud ->
+                    val instance = placeHudCentered(hud)
+                    if (instance != null) {
+                        UiSounds.play(UiSoundEvent.HUD_SELECT)
+                        Snapshot.withMutableSnapshot {
+                            selectedHuds = setOf(instance)
+                            panelOpen = true
+                            closeLibrary()
+                        }
+                    }
+                },
+            )
+        }
+        AnimatedVisibility(
+            visible = globalPanelOpen && libraryChromeVisible,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = sidePanelEndPadding)
+                .graphicsLayer { alpha = sideChromeAlpha },
+            enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+            exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+        ) {
+            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_GLOBAL_PANEL) } }
+            GlobalHudSettingsPanel(
+                modifier = Modifier.chromeBlocker(CHROME_GLOBAL_PANEL),
+                onClose = { Snapshot.withMutableSnapshot { globalPanelOpen = false } },
+            )
+        }
         AnimatedVisibility(
             visible = libraryChromeVisible,
             modifier = Modifier.align(Alignment.CenterEnd),
@@ -2287,108 +2396,144 @@ fun HudDesignStudio(visible: Boolean = true) {
         ) {
             DisposableEffect(Unit) {
                 onDispose {
-                    chromeRects.remove(CHROME_LIBRARY)
                     chromeRects.remove(CHROME_LIBRARY_ICONS)
+                    chromeRects.remove(CHROME_GLOBAL_CHIP)
                 }
             }
-            Row(
-                modifier = Modifier.graphicsLayer { alpha = sideChromeAlpha },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(24.dp)
+            Column(
+                modifier = Modifier
+                    .graphicsLayer { alpha = sideChromeAlpha }
+                    .padding(end = 16.dp, top = 16.dp, bottom = 16.dp)
+                    .onSizeChanged { size ->
+                        sideColumnWidth = with(sideDensity) { size.width.toDp() }
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AnimatedVisibility(
-                    visible = libraryVisible,
-                    enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                    exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-                ) {
-                    DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
-                    HudLibraryPanel(
-                        modifier = Modifier.chromeBlocker(CHROME_LIBRARY),
-                        searchText = searchText,
-                        onSearchChange = { searchText = it },
-                        searchFocusRequested = searchFocusTarget == StudioSearch.Library,
-                        onSearchFocused = { searchFocusTarget = null },
-                        onClose = { closeLibrary() },
-                        sections = librarySections,
-                        suggestEvergreenHud = modIds.isEmpty(),
-                        activeModId = activeLibraryMod,
-                        scrollState = libraryScrollState,
-                        onSectionIndexesChanged = { librarySectionIndexes = it },
-                        pendingScroll = pendingLibraryScroll,
-                        onScrollComplete = { target, interrupted ->
-                            if (pendingLibraryScroll == target) {
-                                pendingLibraryScroll = null
-                                if (interrupted) libraryModIntent = null
-                            }
-                        },
-                        onDragStart = { hud, sx, sy, hudLocalOffX, hudLocalOffY ->
-                            try {
-                                // a single-instance provider is its own instance so a real but inactive one
-                                // is re-used rather than made a second time
-                                val instance = if (hud.isReal) hud else hud.make()
-                                HudManager.markProviderKnown(instance)
-                                val s = Platform.screen().screenToMcScale()
-                                val effScale = instance.effectiveScale
-                                val offX = hudLocalOffX * effScale
-                                val offY = hudLocalOffY * effScale
-                                val cursorX = if (lastPointerPos[0] > 0f) lastPointerPos[0] else sx
-                                val cursorY = if (lastPointerPos[1] > 0f) lastPointerPos[1] else sy
-                                val initX = cursorX * s - offX
-                                val initY = cursorY * s - offY
-                                instance.setAbsolutePosition(initX, initY)
-                                if (instance !in HudManager.activeInstances) {
-                                    HudManager.activeInstances.add(instance)
-                                    HudManager.instancesRevision.intValue++
-                                    instance.setup()
-                                    instance.captureStaticSizeDefaults()
-                                    instance.capturePositionDefaults()
-                                }
-                                UiSounds.play(UiSoundEvent.HUD_DRAG_START)
-                                instance.onEditorDragStart()
-                                Snapshot.withMutableSnapshot {
-                                    dragOffsetX = offX
-                                    dragOffsetY = offY
-                                    isDragging = true
-                                    draggedHud = instance
-                                    draggedGroup = setOf(instance)
-                                    dragStarts = mapOf(instance to (initX to initY))
-                                    selectedHuds = setOf(instance)
-                                    hoveredHud = instance
-                                    closeLibrary()
-                                }
-                            } catch (_: Throwable) {}
-                        },
-                        onCardClick = { hud ->
-                            val instance = placeHudCentered(hud)
-                            if (instance != null) {
-                                UiSounds.play(UiSoundEvent.HUD_SELECT)
-                                Snapshot.withMutableSnapshot {
-                                    selectedHuds = setOf(instance)
-                                    panelOpen = true
-                                    closeLibrary()
-                                }
-                            }
-                        },
+                    val globalButtonInteraction = remember { MutableInteractionSource() }
+                    val globalButtonHovered by globalButtonInteraction.collectIsHoveredAsState()
+                    val globalButtonAlpha by animateFloatAsState(
+                        if (globalPanelOpen) 1f else if (globalButtonHovered) 0.8f else 0.7f
                     )
-                }
-                if (modIds.isNotEmpty()) Column(
-                    modifier = Modifier.padding(end = 16.dp, top = 16.dp, bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ModIconColumn(
+                    val globalBarProgress by animateFloatAsState(
+                        targetValue = if (globalPanelOpen) 1f else 0f,
+                        animationSpec = tween(150),
+                        label = "globalChipBar",
+                    )
+                    Box(
+                        modifier = Modifier
+                            .chromeRegion(CHROME_GLOBAL_CHIP)
+                            .size(60.dp)
+                            .background(theme.popupBackground, theme.backgroundShape)
+                            .border(1.dp, theme.borderColor, theme.backgroundShape)
+                            .drawWithContent {
+                                drawContent()
+                                if (globalBarProgress > 0f) {
+                                    val fullHeight = 24.dp.toPx()
+                                    val barHeight = 4.dp.toPx() + (fullHeight - 4.dp.toPx()) * globalBarProgress
+                                    drawRoundRect(
+                                        color = Accent.copy(alpha = globalBarProgress),
+                                        topLeft = Offset(6.dp.toPx(), (size.height - barHeight) / 2f),
+                                        size = Size(4.dp.toPx(), barHeight),
+                                        cornerRadius = CornerRadius(2.dp.toPx() * globalBarProgress),
+                                    )
+                                }
+                            }
+                            .pointerHoverIcon(PointerIcon.Hand)
+                            .hoverable(globalButtonInteraction)
+                            .safePointerEvent(PointerEventType.Press, PointerEventPass.Main) { event ->
+                                if (event.changes.none { it.isConsumed }) {
+                                    event.changes.forEach { it.consume() }
+                                    UiSounds.play(UiSoundEvent.CLICK)
+                                    toggleGlobalPanel()
+                                }
+                            }
+                            .padding(14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            "settings",
+                            modifier = Modifier.size(32.dp).graphicsLayer { alpha = globalButtonAlpha },
+                            color = theme.textColor.copy(alpha = 1f),
+                        )
+                    }
+                    if (modIds.isNotEmpty()) ModIconColumn(
                         modifier = Modifier.chromeBlocker(CHROME_LIBRARY_ICONS),
                         modIds = modIds,
                         activeModId = activeLibraryMod,
                         libraryVisible = libraryVisible,
                     ) { modId ->
                         Snapshot.withMutableSnapshot {
-                            if (librarySections.none { it.modId == modId }) searchText = ""
-                            libraryVisible = true
-                            libraryModIntent = modId
-                            pendingLibraryScroll = modId
+                            if (libraryVisible && activeLibraryMod == modId) {
+                                closeLibrary()
+                            } else {
+                                if (librarySections.none { it.modId == modId }) searchText = ""
+                                globalPanelOpen = false
+                                libraryVisible = true
+                                libraryModIntent = modId
+                                pendingLibraryScroll = modId
+                            }
                         }
                     }
+                }
+        }
+
+        AnimatedVisibility(
+            visible = !GlobalHudSettings.enabled,
+            modifier = Modifier.align(Alignment.Center),
+            enter = fadeIn(tween(200)) + scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
+            exit = fadeOut(tween(160)) + scaleOut(targetScale = 0.9f, animationSpec = tween(250)),
+        ) {
+            val warnInteraction = remember { MutableInteractionSource() }
+            val warnHovered by warnInteraction.collectIsHoveredAsState()
+            val warnPulse = rememberInfiniteTransition(label = "hudDisabledWarningPulse")
+            val warnAlpha by warnPulse.animateFloat(
+                initialValue = 0.72f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse),
+                label = "hudDisabledWarningAlpha",
+            )
+            val warnHoverBlend by animateFloatAsState(
+                targetValue = if (warnHovered) 1f else 0f,
+                animationSpec = tween(200),
+                label = "hudDisabledWarningHover",
+            )
+            DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_DISABLED_WARNING) } }
+            Box(
+                modifier = Modifier
+                    .chromeRegion(CHROME_DISABLED_WARNING)
+                    .clip(theme.buttonShape)
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .background(Accent.copy(alpha = warnAlpha + (1f - warnAlpha) * warnHoverBlend), theme.buttonShape)
+                    .border(1.dp, Color.White.copy(alpha = 0.35f), theme.buttonShape)
+                    .hoverable(warnInteraction)
+                    .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
+                        if (event.changes.none { it.isConsumed }) {
+                            event.changes.forEach { it.consume() }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                            GlobalHudSettingsBridge.setEnabled(true)
+                        }
+                    }
+                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        "HUD overlay is off",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        "Click to show your HUDs",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
         }
@@ -3446,8 +3591,8 @@ private fun ModIconColumn(
         modifier = modifier
             .background(theme.popupBackground, theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+            .padding(horizontal = 6.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         modIds.forEach { modId ->
@@ -3687,22 +3832,29 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
     val iconAlpha by animateFloatAsState(
         if (selected) 1f else if (isHovered) 0.8f else 0.7f
     )
+    val barProgress by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = tween(150),
+        label = "modFilterBar",
+    )
 
     Box(
         modifier = Modifier
-            .size(36.dp)
+            .size(48.dp)
             .drawWithContent {
                 drawContent()
-                if (selected) {
-                    val barHeight = 24.dp.toPx()
+                if (barProgress > 0f) {
+                    val fullHeight = 24.dp.toPx()
+                    val barHeight = 4.dp.toPx() + (fullHeight - 4.dp.toPx()) * barProgress
                     drawRoundRect(
-                        color = Accent,
-                        topLeft = Offset(-8.dp.toPx(), (size.height - barHeight) / 2f),
+                        color = Accent.copy(alpha = barProgress),
+                        topLeft = Offset(-2.dp.toPx(), (size.height - barHeight) / 2f),
                         size = Size(4.dp.toPx(), barHeight),
-                        cornerRadius = CornerRadius(2.dp.toPx()),
+                        cornerRadius = CornerRadius(2.dp.toPx() * barProgress),
                     )
                 }
             }
+            .pointerHoverIcon(PointerIcon.Hand)
             .onClick(interactionSource) { onClick() },
         contentAlignment = Alignment.Center
     ) {

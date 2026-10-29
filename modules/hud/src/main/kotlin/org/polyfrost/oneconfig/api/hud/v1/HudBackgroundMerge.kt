@@ -111,7 +111,7 @@ internal object HudBackgroundMerge {
             if (!canMerge(hud)) continue
             items.add(
                 Item(
-                    hud, hud.x, hud.y, hud.renderedW, hud.renderedH, hud.bgRadius * hud.effectiveScale,
+                    hud, hud.x, hud.y, hud.renderedW, hud.renderedH, hud.effectiveBackgroundRadius * hud.effectiveScale,
                     hud.layoutX(refWidth), hud.layoutY(refHeight),
                 )
             )
@@ -157,14 +157,14 @@ internal object HudBackgroundMerge {
 
     fun canMerge(hud: Hud): Boolean =
         hud !is LegacyHudMarker && hud.canMergeBackground() &&
-            hud.showBackground && hud.mergeBackground && hud.hasBackground() &&
+            hud.effectiveShowBackground && hud.mergeBackground && hud.hasBackground() &&
             (!hud.hidden || hud.keepBgWhenHidden) &&
             hud.renderedW > 0f && hud.renderedH > 0f
 
     fun sameStyle(a: Hud, b: Hud): Boolean =
         a.bgColor == b.bgColor && a.bgChroma == b.bgChroma &&
             (!a.bgChroma || abs(a.bgChromaSpeed - b.bgChromaSpeed) <= EPS) &&
-            abs(a.bgRadius * a.effectiveScale - b.bgRadius * b.effectiveScale) <= EPS
+            abs(a.effectiveBackgroundRadius * a.effectiveScale - b.effectiveBackgroundRadius * b.effectiveScale) <= EPS
 
     private class Contact(val other: Int, val pins: Int)
 
@@ -497,8 +497,8 @@ internal object HudBackgroundMerge {
             key = key * 31 + (hud.renderedW * 4f).roundToInt()
             key = key * 31 + (hud.renderedH * 4f).roundToInt()
             key = key * 31 + hud.bgColor
-            key = key * 31 + (hud.bgRadius * hud.effectiveScale * 4f).roundToInt()
-            key = key * 31 + (if (hud.showBackground) 1 else 0)
+            key = key * 31 + (hud.effectiveBackgroundRadius * hud.effectiveScale * 4f).roundToInt()
+            key = key * 31 + (if (hud.effectiveShowBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
             key = key * 31 + (if (hud.hidden) 1 else 0)
