@@ -93,6 +93,7 @@ subprojects {
     // use the JUnit Platform and fails on Gradle 9+
     tasks.named<Test>("test") {
         enabled = false
+        dependsOn("j21Tests")
     }
 
     tasks.withType<Javadoc> {

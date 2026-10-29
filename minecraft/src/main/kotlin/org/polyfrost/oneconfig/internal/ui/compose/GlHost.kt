@@ -322,7 +322,7 @@ object GlHost {
         try {
             GlStateManager.enableBlend()
             GlStateManager.blendFuncSeparate(
-                GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
                 GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
             )
             GlStateManager.matrixMode(GL11.GL_PROJECTION)
