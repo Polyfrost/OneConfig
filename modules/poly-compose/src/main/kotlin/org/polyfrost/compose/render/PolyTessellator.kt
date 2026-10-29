@@ -679,8 +679,10 @@ abstract class PolyTessellator : PolyRenderer {
         val y0 = y * state.sy + state.ty
         val x1 = x0 + w * state.sx
         val y1 = y0 + h * state.sy
-        val ua = g?.u(u0) ?: u0; val va = g?.v(v0) ?: v0
-        val ub = g?.u(u1) ?: u1; val vb = g?.v(v1) ?: v1
+        val tu = if (filterQuality == FilterQuality.None) ((g?.let { abs(it.u(1f) - it.u(0f)) } ?: 1f) / bitmap.width * NEAREST_TIE_BIAS) else 0f
+        val tv = if (filterQuality == FilterQuality.None) ((g?.let { abs(it.v(1f) - it.v(0f)) } ?: 1f) / bitmap.height * NEAREST_TIE_BIAS) else 0f
+        val ua = (g?.u(u0) ?: u0) + tu; val va = (g?.v(v0) ?: v0) + tv
+        val ub = (g?.u(u1) ?: u1) + tu; val vb = (g?.v(v1) ?: v1) + tv
         val rc = state.rclip
         if (rc != null && state.rot == null && state.sx > 0f && state.sy > 0f && x1 > x0 && y1 > y0) {
             val k = rc.box
@@ -1713,6 +1715,8 @@ abstract class PolyTessellator : PolyRenderer {
 
     companion object {
         private const val MAX_FADE_DRAWS = 16
+
+        private const val NEAREST_TIE_BIAS = 1f / 256f
 
         fun layerTargetSize(current: Int, needed: Int): Int = if (current >= needed) current else (needed + 63) / 64 * 64
         const val FALLBACK_FONT = "unifont"

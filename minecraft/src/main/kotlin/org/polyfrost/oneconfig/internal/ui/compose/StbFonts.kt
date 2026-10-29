@@ -42,7 +42,7 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
             unitMetrics = floatArrayOf(-asc[0] * emScale, -desc[0] * emScale, gap[0] * emScale, ulPos, ulThick, soPos, soThick)
         }
 
-        override fun glyph(codepoint: Int): Int = glyphIds.getOrPut(codepoint) { stbtt_FindGlyphIndex(info, codepoint) }
+        override fun glyph(codepoint: Int): Int = glyphIds.getOrPut(codepoint) { stbtt_FindGlyphIndex(info, if (codepoint == '\t'.code) ' '.code else codepoint) }
 
         override fun advance(glyph: Int): Float = advanceUnits(glyph) * emScale
 

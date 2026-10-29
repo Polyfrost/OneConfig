@@ -88,6 +88,19 @@ class PolyTessellatorTest {
     }
 
     @Test
+    fun nearestImageUvsSitOffTexelTies() {
+        val bmp = PolyBitmap(16, 16, ByteArray(16 * 16 * 4) { -1 })
+        fun firstVertex(q: FilterQuality) = Recorder().run { image(bmp, 3f, 5f, 52f, 52f, 0f, 0f, 1f, 1f, -1, q); done() }.single().verts
+        val linear = firstVertex(FilterQuality.Low)
+        val nearest = firstVertex(FilterQuality.None)
+        val texelU = abs(linear[10] - linear[2]) / 16f
+        val du = nearest[2] - linear[2]
+        assertTrue(du > 0f && du < texelU / 64f, "u bias $du for texel $texelU")
+        assertTrue(nearest[3] - linear[3] > 0f)
+        assertEquals(linear[0], nearest[0])
+    }
+
+    @Test
     fun layerTargetsGrowInBuckets() {
         assertEquals(128, PolyTessellator.layerTargetSize(0, 100))
         assertEquals(128, PolyTessellator.layerTargetSize(128, 110))
