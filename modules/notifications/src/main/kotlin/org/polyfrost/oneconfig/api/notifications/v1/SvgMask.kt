@@ -21,7 +21,7 @@ object SvgMask {
     }
 
     private class Shape(
-        val polys: List<FloatArray>, val fill: Paint?, val stroke: Paint?, val strokeWidth: Float, val evenOdd: Boolean,
+        val polys: List<FloatArray>, val strokePolys: List<FloatArray>, val fill: Paint?, val stroke: Paint?, val strokeWidth: Float, val evenOdd: Boolean,
         val fillOpacity: Float, val strokeOpacity: Float, val mask: String?,
     )
 
@@ -111,7 +111,9 @@ object SvgMask {
             val fillOpacity = opacity * (attr(el, "fill-opacity")?.toFloatOrNull() ?: 1f)
             val strokeOpacity = opacity * (attr(el, "stroke-opacity")?.toFloatOrNull() ?: 1f)
             val mask = attr(el, "mask")?.let { Regex("url\\(#([^)]+)\\)").find(it)?.groupValues?.get(1) }
-            if (fill == null && stroke == null) null else Shape(polys, fill, stroke, sw, attr(el, "fill-rule") == "evenodd", fillOpacity, strokeOpacity, mask)
+            val dashes = attr(el, "stroke-dasharray")?.let(::numbers)?.takeIf { d -> d.isNotEmpty() && d.all { it >= 0f } && d.any { it > 0f } }
+            val strokePolys = if (dashes == null) polys else polys.flatMap { dash(it, if (dashes.size % 2 == 0) dashes else dashes + dashes) }
+            if (fill == null && stroke == null) null else Shape(polys, strokePolys, fill, stroke, sw, attr(el, "fill-rule") == "evenodd", fillOpacity, strokeOpacity, mask)
         }.toList()
 
         val acc = FloatArray(canvas.w * canvas.h * 4)
@@ -123,7 +125,7 @@ object SvgMask {
                 composite(canvas, acc, cov, mask, shape.fill, shape.fillOpacity, tint)
             }
             if (shape.stroke != null) {
-                strokeCoverage(shape.polys, shape.strokeWidth / 2f, canvas.w, canvas.h, canvas.vx, canvas.vy, canvas.scale, cov)
+                strokeCoverage(shape.strokePolys, shape.strokeWidth / 2f, canvas.w, canvas.h, canvas.vx, canvas.vy, canvas.scale, cov)
                 composite(canvas, acc, cov, mask, shape.stroke, shape.strokeOpacity, tint)
             }
         }
@@ -256,8 +258,10 @@ object SvgMask {
             var c = cov[i] * opacity
             if (mask != null) c *= mask[i]
             if (c <= 0f) continue
-            val argb = tint ?: paint.at(canvas.vx + (i % canvas.w + 0.5f) / canvas.scale, canvas.vy + (i / canvas.w + 0.5f) / canvas.scale)
-            c *= (argb ushr 24) / 255f
+            val p = paint.at(canvas.vx + (i % canvas.w + 0.5f) / canvas.scale, canvas.vy + (i / canvas.w + 0.5f) / canvas.scale)
+            val argb = tint ?: p
+            c *= (p ushr 24) / 255f
+            if (tint != null) c *= (tint ushr 24) / 255f
             if (c <= 0f) continue
             val o = i * 4
             acc[o] = (argb shr 16 and 0xFF) / 255f * c + acc[o] * (1f - c)
@@ -265,6 +269,33 @@ object SvgMask {
             acc[o + 2] = (argb and 0xFF) / 255f * c + acc[o + 2] * (1f - c)
             acc[o + 3] = c + acc[o + 3] * (1f - c)
         }
+    }
+
+    private fun dash(poly: FloatArray, pattern: List<Float>): List<FloatArray> {
+        val out = ArrayList<FloatArray>()
+        val cur = ArrayList<Float>()
+        var k = 0
+        var left = pattern[0]
+        var on = true
+        for (s in 0 until poly.size / 2 - 1) {
+            var ax = poly[s * 2]; var ay = poly[s * 2 + 1]
+            val bx = poly[s * 2 + 2]; val by = poly[s * 2 + 3]
+            var len = sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay))
+            if (on && cur.isEmpty()) { cur.add(ax); cur.add(ay) }
+            while (len > left) {
+                val f = left / len
+                ax += (bx - ax) * f; ay += (by - ay) * f
+                len -= left
+                if (on) { cur.add(ax); cur.add(ay); out.add(cur.toFloatArray()); cur.clear() } else { cur.add(ax); cur.add(ay) }
+                on = !on
+                k = (k + 1) % pattern.size
+                left = pattern[k]
+            }
+            left -= len
+            if (on) { cur.add(bx); cur.add(by) }
+        }
+        if (on && cur.size >= 4) out.add(cur.toFloatArray())
+        return out
     }
 
     private fun strokeCoverage(polys: List<FloatArray>, half: Float, w: Int, h: Int, vx: Float, vy: Float, scale: Float, out: FloatArray) {

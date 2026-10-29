@@ -50,4 +50,20 @@ class SvgMaskTest {
         assertTrue(a(5, 5) > 200)
         assertEquals(0, a(5, 1))
     }
+
+    @Test
+    fun tintKeepsPaintAlpha() {
+        val svg = """<svg viewBox="0 0 10 10"><rect width="10" height="10" fill="url(#g)"/><defs><linearGradient id="g"><stop stop-color="white" stop-opacity="0.25"/></linearGradient></defs></svg>"""
+        val bmp = SvgMask.rasterize(svg, 10, -1)!!
+        assertTrue(abs((bmp.pixels[5 * 10 * 4 + 5 * 4 + 3].toInt() and 0xFF) - 64) <= 1)
+    }
+
+    @Test
+    fun dashesStrokes() {
+        val bmp = SvgMask.rasterize("""<svg viewBox="0 0 20 4"><path d="M0 2H20" stroke="white" stroke-width="2" stroke-dasharray="4 4"/></svg>""", 20)!!
+        fun a(x: Int) = bmp.pixels[(2 * bmp.width + x) * 4 + 3].toInt() and 0xFF
+        assertTrue(a(2) > 200 && a(10) > 200 && a(18) > 200)
+        assertEquals(0, a(6))
+        assertEquals(0, a(14))
+    }
 }

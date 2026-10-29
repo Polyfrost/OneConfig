@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import org.lwjgl.BufferUtils
+import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL12
 import org.lwjgl.opengl.GL13
@@ -17,6 +18,7 @@ internal object GlBlur {
 
     private var program = 0
     private var core = false
+    private var alphaTest = false
     private var vao = 0
     private var vbo = 0
     private var uStep = 0
@@ -56,7 +58,7 @@ internal object GlBlur {
         GL11.glDisable(GL11.GL_CULL_FACE)
         GL11.glDisable(GL11.GL_DEPTH_TEST)
         GL11.glDisable(GL11.GL_STENCIL_TEST)
-        if (!core) GL11.glDisable(GL11.GL_ALPHA_TEST)
+        if (alphaTest) GL11.glDisable(GL11.GL_ALPHA_TEST)
         GL13.glActiveTexture(GL13.GL_TEXTURE0)
 
         if (!reuse) {
@@ -124,6 +126,7 @@ internal object GlBlur {
     private fun init() {
         val glsl = GL11.glGetString(GL20.GL_SHADING_LANGUAGE_VERSION) ?: "1.20"
         core = glsl.substringBefore(' ').split('.').let { it[0].toInt() * 100 + it.getOrElse(1) { "0" }.take(2).padEnd(2, '0').toInt() } >= 150
+        alphaTest = GL.getCapabilities().let { it.GL_ARB_compatibility || !it.OpenGL31 }
         val p = GL20.glCreateProgram()
         GL20.glAttachShader(p, shader(GL20.GL_VERTEX_SHADER, if (core) VS_150 else VS_120))
         GL20.glAttachShader(p, shader(GL20.GL_FRAGMENT_SHADER, if (core) FS_150 else FS_120))
