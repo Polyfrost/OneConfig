@@ -1,7 +1,8 @@
-@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+@file:OptIn(InternalComposeUiApi::class)
 
 package org.polyfrost.compose.backend
 
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect

@@ -1,11 +1,19 @@
 package org.polyfrost.compose.render
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.roundToInt
+import kotlin.math.sin
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.math.roundToInt
+import org.polyfrost.compose.backend.PolyCanvas
+import org.polyfrost.compose.backend.PolyCompose
+import org.polyfrost.compose.backend.PolyPaint
 
 class PolyTessellatorTest {
     private class Batch(val texture: Any, val verts: FloatArray, val colors: IntArray, val nearest: Boolean = false)
@@ -457,8 +465,8 @@ class PolyTessellatorTest {
             val expected = hits(full, px, py)
             val inside = (0..4).any {
                 val a = it * Math.PI.toFloat() / 8f
-                val ix = 20f * (1f - kotlin.math.cos(a)) + 0.45f
-                val iy = 20f * (1f - kotlin.math.sin(a)) + 0.45f
+                val ix = 20f * (1f - cos(a)) + 0.45f
+                val iy = 20f * (1f - sin(a)) + 0.45f
                 px in ix..400f - ix && py in iy..300f - iy
             }
             assertEquals(if (inside) 0 else expected, hits(holed, px, py), "at $px,$py")
@@ -702,13 +710,13 @@ class PolyTessellatorTest {
 
     @Test
     fun dashedLineLeavesGaps() {
-        org.polyfrost.compose.backend.PolyCompose.install()
+        PolyCompose.install()
         val r = Recorder()
-        val paint = org.polyfrost.compose.backend.PolyPaint().apply {
+        val paint = PolyPaint().apply {
             strokeWidth = 4f
-            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
         }
-        org.polyfrost.compose.backend.PolyCanvas(r).drawLine(androidx.compose.ui.geometry.Offset(0f, 10f), androidx.compose.ui.geometry.Offset(100f, 10f), paint)
+        PolyCanvas(r).drawLine(Offset(0f, 10f), Offset(100f, 10f), paint)
         val b = r.done()
         assertEquals(255, b.alphaAt(5.2f, 10.3f))
         assertEquals(0, b.alphaAt(15.2f, 10.3f))
@@ -778,22 +786,22 @@ class PolyTessellatorTest {
 
     @Test
     fun zeroLengthDashesDrawDots() {
-        org.polyfrost.compose.backend.PolyCompose.install()
-        fun draw(cap: androidx.compose.ui.graphics.StrokeCap) = Recorder().also { r ->
-            val paint = org.polyfrost.compose.backend.PolyPaint().apply {
+        PolyCompose.install()
+        fun draw(cap: StrokeCap) = Recorder().also { r ->
+            val paint = PolyPaint().apply {
                 strokeWidth = 4f
                 strokeCap = cap
-                pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(0f, 10f), 0f)
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(0f, 10f), 0f)
             }
-            org.polyfrost.compose.backend.PolyCanvas(r).drawLine(androidx.compose.ui.geometry.Offset(0f, 10f), androidx.compose.ui.geometry.Offset(100f, 10f), paint)
+            PolyCanvas(r).drawLine(Offset(0f, 10f), Offset(100f, 10f), paint)
         }.done()
-        val round = draw(androidx.compose.ui.graphics.StrokeCap.Round)
+        val round = draw(StrokeCap.Round)
         for (x in listOf(0.2f, 10.2f, 50.2f, 90.2f)) assertEquals(255, round.alphaAt(x, 10.3f), "dot at $x")
         assertEquals(0, round.alphaAt(5.2f, 10.3f))
         assertEquals(0, round.alphaAt(11.9f, 11.8f))
-        val square = draw(androidx.compose.ui.graphics.StrokeCap.Square)
+        val square = draw(StrokeCap.Square)
         assertEquals(255, square.alphaAt(11.4f, 11.2f))
-        assertTrue(draw(androidx.compose.ui.graphics.StrokeCap.Butt).isEmpty())
+        assertTrue(draw(StrokeCap.Butt).isEmpty())
     }
 
     @Test

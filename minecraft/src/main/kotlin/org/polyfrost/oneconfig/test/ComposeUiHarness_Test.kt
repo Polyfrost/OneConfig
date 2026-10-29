@@ -1,7 +1,8 @@
-@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+@file:OptIn(InternalComposeUiApi::class)
 
 package org.polyfrost.oneconfig.test
 
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.semantics.SemanticsActions

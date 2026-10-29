@@ -1,2 +1,2 @@
-## Unreleased changes
-- Opening the settings of mods like Bring Blocking Back from the Mods page no longer reopens them over and over until the game crashes
+## 1.5.2
+- Fixed getting stuck on title screen panorama with Slipstream and PolyPlus onboarding on 1.21.10 and 1.21.11 on macOS

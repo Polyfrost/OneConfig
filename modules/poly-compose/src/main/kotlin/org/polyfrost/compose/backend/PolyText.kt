@@ -1,7 +1,8 @@
-@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class, androidx.compose.ui.text.ExperimentalTextApi::class)
+@file:OptIn(InternalComposeUiApi::class, ExperimentalTextApi::class)
 
 package org.polyfrost.compose.backend
 
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.FontRasterizationSettings
 import androidx.compose.ui.text.FontSmoothing
 import androidx.compose.ui.text.FontHinting

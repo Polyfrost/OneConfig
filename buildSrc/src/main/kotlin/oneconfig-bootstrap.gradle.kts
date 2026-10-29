@@ -180,7 +180,7 @@ val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: 
 val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"
 val changelogs = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readText() ?: "No changelog provided."
 
-val validateChangelog by tasks.registering {
+val validateChangelog = tasks.register("validateChangelog") {
     description = "Validates that the changelog is written for the current version."
     val changelogText = changelogs
     val modVersion = project.version.toString()

@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.api.notifications.v1
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.math.abs
 
 class SvgMaskTest {
     @Test
@@ -38,7 +39,7 @@ class SvgMaskTest {
             assertEquals(10f, pts[pts.size - 2], 1e-3f, d)
             assertEquals(0f, pts[pts.size - 1], 1e-3f, d)
             val ys = pts.filterIndexed { i, _ -> i % 2 == 1 }
-            assertEquals(5f, ys.maxOf { kotlin.math.abs(it) }, 0.05f, d)
+            assertEquals(5f, ys.maxOf { abs(it) }, 0.05f, d)
         }
     }
 

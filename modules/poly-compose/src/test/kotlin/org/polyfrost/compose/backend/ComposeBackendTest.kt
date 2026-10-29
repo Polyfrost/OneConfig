@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+@file:OptIn(InternalComposeUiApi::class)
 
 package org.polyfrost.compose.backend
 
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
