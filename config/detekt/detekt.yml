@@ -2,8 +2,6 @@ style:
   UnnecessaryFullyQualifiedName:
     active: true
     ignoredFullyQualifiedNames:
-      # used in a file-level opt-in, where it cannot be imported
-      - 'androidx.compose.ui.InternalComposeUiApi'
       # Java types that Kotlin maps to its own builtins, which an import would shadow
       - 'java.lang.Boolean'
       - 'java.lang.Byte'
