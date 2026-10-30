@@ -593,6 +593,29 @@ public final class org/polyfrost/compose/mc/McFontQueue {
 	public final synthetic fun setRenderer (Lkotlin/jvm/functions/Function7;)V
 }
 
+public final class org/polyfrost/compose/mc/McGlyph {
+	public static final field $stable I
+	public fun <init> (Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFF)V
+	public final fun getAdvance ()F
+	public final fun getBitmap ()Lorg/polyfrost/compose/render/PolyBitmap;
+	public final fun getHeight ()F
+	public final fun getOffset ()F
+	public final fun getTop ()F
+	public final fun getU0 ()F
+	public final fun getU1 ()F
+	public final fun getV0 ()F
+	public final fun getV1 ()F
+	public final fun getWidth ()F
+}
+
+public final class org/polyfrost/compose/mc/McGlyphs {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/compose/mc/McGlyphs;
+	public static final fun getSource ()Lkotlin/jvm/functions/Function1;
+	public static final fun setSource (Lkotlin/jvm/functions/Function1;)V
+	public static final fun width (Ljava/lang/String;F)F
+}
+
 public final class org/polyfrost/compose/node/CanvasNode : org/polyfrost/compose/node/PolyNode {
 	public static final field $stable I
 	public fun <init> ()V

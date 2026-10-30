@@ -16,6 +16,8 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+import org.polyfrost.compose.mc.McGlyph
+import org.polyfrost.compose.mc.McGlyphs
 
 abstract class PolyTessellator : PolyRenderer {
     protected class State(
@@ -591,7 +593,7 @@ abstract class PolyTessellator : PolyRenderer {
         beginDraw()
         if (cpuOnly) return
         val c = mulAlpha(outlineColor, state.alpha)
-        val rects = if (c ushr 24 == 0) null else PolyGlyphPage.rasterizer?.let { r -> mcOutlines.getOrPut(text) { mcOutline(r, text) } }
+        val rects = if (c ushr 24 == 0) null else PolyGlyphPage.rasterizer?.let { r -> mcOutlines.getOrPut(text to FontManager.revision) { mcOutline(r, text) } }
         if (rects != null && rects.isNotEmpty()) {
             begin(whitePage(), false)
             val s = state
@@ -659,25 +661,51 @@ abstract class PolyTessellator : PolyRenderer {
                 continue
             }
             val drawn = if (shadow) (c and -0x1000000) or ((c and 0xFCFCFC) shr 2) else c
+            val g = McGlyphs.source?.invoke(cp)
+            // the shadow line is already one unit off, but vanilla offsets each glyph's shadow by its own offset
+            val o = if (shadow && g != null) (g.offset - 1f) * scale else 0f
             shearX = if (italic) 0.25f * state.sx / state.sy else 0f
-            shearBase = (top + 4f * scale) * state.sy + state.ty
+            shearBase = (top + o + 4f * scale) * state.sy + state.ty
             val start = pen
-            val main = PolyGlyphPage.rasterizer?.face(if (bold) "minecraft-bold" else "minecraft")
-            val s = String(Character.toChars(cp))
-            pen += if (main != null && main.glyph(cp) != 0) {
-                val font = PolyFont(if (bold) "minecraft-bold" else "minecraft", 10f * scale)
-                glyphs(s, pen, baseline, drawn, font, 0f, false, false)
-                main.advance(main.glyph(cp)) * font.size
+            if (g != null) {
+                mcGlyph(g, pen + o, top + o, scale, drawn)
+                if (bold) mcGlyph(g, pen + o + g.offset * scale, top + o, scale, drawn)
+                pen += (g.advance + if (bold) g.offset else 0f) * scale
             } else {
-                val font = PolyFont("unifont", 8f * scale)
-                val uni = PolyGlyphPage.rasterizer?.face("unifont") ?: continue
-                glyphs(s, pen, baseline, drawn, font, 0f, false, false)
-                uni.advance(uni.glyph(cp)) * font.size
+                val main = PolyGlyphPage.rasterizer?.face(if (bold) "minecraft-bold" else "minecraft")
+                val s = String(Character.toChars(cp))
+                pen += if (main != null && main.glyph(cp) != 0) {
+                    val font = PolyFont(if (bold) "minecraft-bold" else "minecraft", 10f * scale)
+                    glyphs(s, pen, baseline, drawn, font, 0f, false, false)
+                    main.advance(main.glyph(cp)) * font.size
+                } else {
+                    val font = PolyFont("unifont", 8f * scale)
+                    val uni = PolyGlyphPage.rasterizer?.face("unifont") ?: continue
+                    glyphs(s, pen, baseline, drawn, font, 0f, false, false)
+                    uni.advance(uni.glyph(cp)) * font.size
+                }
             }
-            if (under) mcEffect(start - scale, top + 8f * scale, pen, top + 9f * scale, drawn)
-            if (strike) mcEffect(start - scale, top + 3.5f * scale, pen, top + 4.5f * scale, drawn)
+            if (under) mcEffect(start + o - scale, top + o + 8f * scale, pen + o, top + o + 9f * scale, drawn)
+            if (strike) mcEffect(start + o - scale, top + o + 3.5f * scale, pen + o, top + o + 4.5f * scale, drawn)
         }
         shearX = 0f
+    }
+
+    private fun mcGlyph(g: McGlyph, x: Float, top: Float, scale: Float, color: Int) {
+        val b = g.bitmap ?: return
+        val c = mulAlpha(color, state.alpha)
+        if (c ushr 24 == 0) return
+        val p = PolyGlyphPage.bitmap(b)
+        begin(p?.page ?: bitmapTexture(b), false, nearest = true)
+        val s = state
+        val x0 = x * s.sx + s.tx
+        val y0 = (top + g.top * scale) * s.sy + s.ty
+        val tu = (p?.let { it.u1 - it.u0 } ?: 1f) / b.width * NEAREST_TIE_BIAS
+        val tv = (p?.let { it.v1 - it.v0 } ?: 1f) / b.height * NEAREST_TIE_BIAS
+        glyphQuad(
+            x0, y0, x0 + g.width * scale * s.sx, y0 + g.height * scale * s.sy,
+            (p?.u(g.u0) ?: g.u0) + tu, (p?.v(g.v0) ?: g.v0) + tv, (p?.u(g.u1) ?: g.u1) + tu, (p?.v(g.v1) ?: g.v1) + tv, c,
+        )
     }
 
     override fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) {
@@ -1776,10 +1804,24 @@ abstract class PolyTessellator : PolyRenderer {
         private val ramps = lru<Pair<List<PolyColor>, List<Float>?>, PolyBitmap>(64)
         private val boxRasters = lru<Pair<PolyGradient, Int>, PolyBitmap>(32)
         private val masks = lru<Long, ShadowMask>(32)
-        private val mcOutlines = lru<String, FloatArray>(256)
+        private val mcOutlines = lru<Pair<String, Int>, FloatArray>(256)
         private val mcRasters = HashMap<Pair<PolyGlyphPage.Face, Int>, PolyGlyphPage.Raster?>()
 
         private const val MC_GRID = 2
+
+        // nearest-samples the glyph's alpha at outline grid resolution, positioned like a face raster on the baseline
+        private fun mcRaster(g: McGlyph): PolyGlyphPage.Raster? {
+            val b = g.bitmap ?: return null
+            val w = (g.width * MC_GRID).roundToInt()
+            val h = (g.height * MC_GRID).roundToInt()
+            if (w <= 0 || h <= 0) return null
+            val coverage = ByteArray(w * h) { k ->
+                val sx = ((g.u0 + (g.u1 - g.u0) * (k % w + 0.5f) / w) * b.width).toInt().coerceIn(0, b.width - 1)
+                val sy = ((g.v0 + (g.v1 - g.v0) * (k / w + 0.5f) / h) * b.height).toInt().coerceIn(0, b.height - 1)
+                b.pixels[(sy * b.width + sx) * 4 + 3]
+            }
+            return PolyGlyphPage.Raster(0, ((g.top - 7f) * MC_GRID).roundToInt(), w, h, coverage)
+        }
 
         private fun mcOutline(r: PolyGlyphPage.Rasterizer, text: String): FloatArray {
             val placed = ArrayList<PolyGlyphPage.Raster>()
@@ -1809,20 +1851,29 @@ abstract class PolyTessellator : PolyRenderer {
                         }
                         continue
                     }
-                    val main = r.face(if (bold) "minecraft-bold" else "minecraft")
-                    val face: PolyGlyphPage.Face
-                    val em: Float
-                    if (main != null && main.glyph(cp) != 0) { face = main; em = 10f } else { face = r.face("unifont") ?: continue; em = 8f }
-                    val id = face.glyph(cp)
-                    val g = mcRasters.getOrPut(face to id) { face.raster(id, em * MC_GRID) }
-                    if (g != null && g.w > 0 && g.h > 0) {
+                    fun place(g: PolyGlyphPage.Raster?, x: Float) {
+                        if (g == null || g.w <= 0 || g.h <= 0) return
                         placed += g
-                        at += (pen * MC_GRID).roundToInt() + g.offX
+                        at += (x * MC_GRID).roundToInt() + g.offX
                         at += baseline + g.offY
                         slant += if (italic) lineTop * MC_GRID else Int.MIN_VALUE
                     }
                     val start = pen
-                    pen += face.advance(id) * em
+                    val rg = McGlyphs.source?.invoke(cp)
+                    if (rg != null) {
+                        val g = mcRaster(rg)
+                        place(g, pen)
+                        if (bold) place(g, pen + rg.offset)
+                        pen += rg.advance + if (bold) rg.offset else 0f
+                    } else {
+                        val main = r.face(if (bold) "minecraft-bold" else "minecraft")
+                        val face: PolyGlyphPage.Face
+                        val em: Float
+                        if (main != null && main.glyph(cp) != 0) { face = main; em = 10f } else { face = r.face("unifont") ?: continue; em = 8f }
+                        val id = face.glyph(cp)
+                        place(mcRasters.getOrPut(face to id) { face.raster(id, em * MC_GRID) }, pen)
+                        pen += face.advance(id) * em
+                    }
                     fun effect(top: Float) {
                         effects += ((start - 1f) * MC_GRID).roundToInt(); effects += ((lineTop + top) * MC_GRID).roundToInt()
                         effects += (pen * MC_GRID).roundToInt(); effects += ((lineTop + top + 1f) * MC_GRID).roundToInt()

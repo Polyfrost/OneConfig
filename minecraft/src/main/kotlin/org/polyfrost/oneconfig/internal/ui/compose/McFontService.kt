@@ -37,7 +37,9 @@ object McFontService {
             FontManager.invalidateMetrics()
             HudManager.invalidate()
         }
-        //?}
+        //?} else {
+        /*McResourceFont.init()
+        *///?}
     }
 
     @JvmStatic
