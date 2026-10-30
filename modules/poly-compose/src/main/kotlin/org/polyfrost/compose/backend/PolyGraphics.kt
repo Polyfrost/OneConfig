@@ -375,8 +375,10 @@ class PolyComposePath : Path {
     override fun getBounds(): Rect = bounds(allContours())
 
     override fun op(path1: Path, path2: Path, operation: PathOperation): Boolean {
+        val (result, type) = pathOp(path1 as PolyComposePath, path2 as PolyComposePath, operation)
         reset()
-        addPath(path1, Offset.Zero)
+        fillType = type
+        for (c in result) { contours.add(c); closed.add(true) }
         return true
     }
 
