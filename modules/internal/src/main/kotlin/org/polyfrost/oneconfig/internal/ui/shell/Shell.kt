@@ -30,8 +30,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.toArgb
@@ -96,38 +98,48 @@ private data class ShadowBake(val l: Float, val t: Float, val r: Float, val b: F
     fun alphaAt(x: Float, y: Float) = color.alpha * cover(x, l, r) * cover(y, t, b)
 }
 
-private class GlowBitmap {
+// one color with a baked alpha, so colors that animate (the accent, fill opacity) are applied when drawing instead of re-baking
+private class BakedLayer {
     private var key: List<Any?>? = null
     private var bitmap: PolyImageBitmap? = null
 
-    fun get(w: Float, h: Float, x0: Float, x1: Float, color: Color, alpha: Float, fill: Color, shadow: ShadowBake?): PolyImageBitmap {
-        val k = listOf(w, h, x0, x1, color, alpha, fill, shadow)
-        bitmap?.let { if (k == key) return it }
+    fun get(key: List<Any?>, w: Float, h: Float, x0: Float, x1: Float, color: Color, alphaAt: (x: Float, y: Float) -> Float): PolyImageBitmap {
+        bitmap?.let { if (key == this.key) return it }
         val bw = ceil(GLOW_BITMAP * (x1 - x0) / w).toInt().coerceIn(2, GLOW_BITMAP)
         val bh = (GLOW_BITMAP * h / w).roundToInt().coerceIn(2, GLOW_BITMAP)
         val px = ByteArray(bw * bh * 4)
-        val fa = fill.alpha
+        val r = (color.red * 255f).roundToInt().toByte()
+        val g = (color.green * 255f).roundToInt().toByte()
+        val b = (color.blue * 255f).roundToInt().toByte()
         for (y in 0 until bh) for (x in 0 until bw) {
-            val sx = x0 + (x + .5f) * (x1 - x0) / bw
-            val sy = (y + .5f) * h / bh
-            var a = 0f
-            for (g in glowCenters.indices step 2) {
-                val ga = glowAlphaAt(hypot(sx - glowCenters[g], sy - glowCenters[g + 1]) / GLOW_EXTENT) * alpha
-                a += ga * (1f - a)
-            }
-            val ga = a * (1f - fa)
-            val ba = fa + ga
-            val sa = (shadow?.alphaAt(sx, sy) ?: 0f) * (1f - ba)
-            val oa = ba + sa
             val o = (y * bw + x) * 4
-            if (oa > 0f) {
-                px[o] = ((fill.red * fa + color.red * ga + (shadow?.color?.red ?: 0f) * sa) / oa * 255f).roundToInt().toByte()
-                px[o + 1] = ((fill.green * fa + color.green * ga + (shadow?.color?.green ?: 0f) * sa) / oa * 255f).roundToInt().toByte()
-                px[o + 2] = ((fill.blue * fa + color.blue * ga + (shadow?.color?.blue ?: 0f) * sa) / oa * 255f).roundToInt().toByte()
-            }
-            px[o + 3] = (oa * 255f).roundToInt().toByte()
+            px[o] = r; px[o + 1] = g; px[o + 2] = b
+            px[o + 3] = (alphaAt(x0 + (x + .5f) * (x1 - x0) / bw, (y + .5f) * h / bh) * 255f).roundToInt().toByte()
         }
-        return PolyImageBitmap(PolyBitmap(bw, bh, px)).also { bitmap = it; key = k }
+        return PolyImageBitmap(PolyBitmap(bw, bh, px)).also { bitmap = it; this.key = key }
+    }
+}
+
+private fun glowAt(x: Float, y: Float, alpha: Float): Float {
+    var a = 0f
+    for (g in glowCenters.indices step 2) a += glowAlphaAt(hypot(x - glowCenters[g], y - glowCenters[g + 1]) / GLOW_EXTENT) * alpha * (1f - a)
+    return a
+}
+
+// shadow, accent glow and fill, bottom to top
+private class GlowLayers {
+    private val shadowLayer = BakedLayer()
+    private val glowLayer = BakedLayer()
+
+    fun DrawScope.draw(x0: Float, x1: Float, accent: Color, alpha: Float, fill: Color, shadow: ShadowBake?) {
+        val w = size.width
+        val h = size.height
+        val dstOffset = IntOffset(x0.roundToInt(), 0)
+        val dstSize = IntSize((x1 - x0).roundToInt(), h.roundToInt())
+        if (shadow != null) drawImage(shadowLayer.get(listOf(w, h, x0, x1, shadow), w, h, x0, x1, shadow.color, shadow::alphaAt), dstOffset = dstOffset, dstSize = dstSize)
+        val glow = glowLayer.get(listOf(w, h, x0, x1, alpha), w, h, x0, x1, Color.White) { x, y -> glowAt(x, y, alpha) }
+        drawImage(glow, dstOffset = dstOffset, dstSize = dstSize, colorFilter = ColorFilter.tint(accent))
+        drawRect(fill, Offset(x0, 0f), Size(x1 - x0, h))
     }
 }
 
@@ -151,8 +163,8 @@ fun Shell(
 
     val shell = LocalShell.current
     val glowAlpha = (shell.appearance.glowOpacity / 100f).coerceIn(0f, 1f)
-    val sidebarGlow = remember { GlowBitmap() }
-    val pageGlow = remember { GlowBitmap() }
+    val sidebarGlow = remember { GlowLayers() }
+    val pageGlow = remember { GlowLayers() }
     val sidebarColor = theme.sidebarBackground.withOpacityPercent(shell.appearance.sidebarOpacity)
     val pageColor = theme.pageBackground.withOpacityPercent(shell.appearance.pageOpacity)
     Row(
@@ -178,9 +190,9 @@ fun Shell(
                         val c = backgroundShadow.color
                         ShadowBake(ox - sp, oy - sp, size.width + ox + sp, size.height + oy + sp, backgroundShadow.radius.toPx() * 0.57735f, c.copy(alpha = c.alpha * backgroundShadow.alpha))
                     } else null
-                    drawImage(sidebarGlow.get(size.width, size.height, 0f, sw.toFloat(), accent, glowAlpha, sidebarColor, shadow), dstSize = IntSize(sw, h))
+                    with(sidebarGlow) { draw(0f, sw.toFloat(), accent, glowAlpha, sidebarColor, shadow) }
                     drawLine(theme.borderColor, Offset(sw.toFloat(), 0f), Offset(sw.toFloat(), size.height), 1f)
-                    drawImage(pageGlow.get(size.width, size.height, sw.toFloat(), size.width, accent, glowAlpha, pageColor, shadow), dstOffset = IntOffset(sw, 0), dstSize = IntSize(w - sw, h))
+                    with(pageGlow) { draw(sw.toFloat(), w.toFloat(), accent, glowAlpha, pageColor, shadow) }
                 }
             }
     ) {
