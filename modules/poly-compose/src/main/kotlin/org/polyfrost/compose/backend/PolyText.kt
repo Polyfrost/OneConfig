@@ -60,13 +60,20 @@ import kotlin.math.round
 
 private val italicFonts = ConcurrentHashMap.newKeySet<String>()
 
-// Minecraft ships ICU4J; fixed length keeps offsets aligned with the logical text
+private const val LIGATURE_PLACEHOLDER = '\uFFFF'
+
+// Minecraft ships ICU4J; without it Arabic is drawn unjoined
 private object Arabic {
     private val shaping = runCatching { ArabicShaping(ArabicShaping.LETTERS_SHAPE or ArabicShaping.LENGTH_FIXED_SPACES_NEAR) }.getOrNull()
 
+    // fixed length keeps offsets aligned with the logical text, leaving a space for each ligature that's replaced by a placeholder
     fun shape(text: String): String {
         if (shaping == null || text.none { it in '\u0600'..'\u08FF' }) return text
-        return try { shaping.shape(text) } catch (_: Exception) { text }
+        val shaped = try { shaping.shape(text) } catch (_: Exception) { return text }
+        if (shaped.length != text.length || ' ' !in shaped) return shaped
+        val out = shaped.toCharArray()
+        for (i in out.indices) if (out[i] == ' ' && text[i] != ' ') out[i] = LIGATURE_PLACEHOLDER
+        return String(out)
     }
 }
 
@@ -77,7 +84,12 @@ private fun reversedClusters(text: String): String {
     var end = it.last()
     var start = it.previous()
     while (start != BreakIterator.DONE) {
-        out.append(text, start, end)
+        var i = start
+        while (i < end) {
+            val cp = text.codePointAt(i)
+            if (cp != LIGATURE_PLACEHOLDER.code) out.appendCodePoint(cp)
+            i += Character.charCount(cp)
+        }
         end = start
         start = it.previous()
     }
@@ -191,7 +203,7 @@ internal class PolyIntrinsics(
             while (i < run.end) {
                 val cp = glyphs.codePointAt(i)
                 val n = Character.charCount(cp)
-                advances[i] = if (cp == '\n'.code) 0f else Advances.of(run.font, cp) + letter
+                advances[i] = if (cp == '\n'.code || cp == LIGATURE_PLACEHOLDER.code) 0f else Advances.of(run.font, cp) + letter
                 i += n
             }
         }

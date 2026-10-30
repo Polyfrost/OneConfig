@@ -292,6 +292,11 @@ class ComposeBackendTest {
     }
 
     @Test
+    fun arabicLigaturesLeaveNoGap() {
+        assertEquals(listOf("text '\uFEE1\uFEFC\uFEB3' 79.0,11.2"), drawnText(paragraph("\u0633\u0644\u0627\u0645")))
+    }
+
+    @Test
     fun caretAndHitTestRoundTrip() {
         for (text in listOf("abc אבג def", "אבג", "אבג abc דהו", "abc")) {
             val p = paragraph(text)
