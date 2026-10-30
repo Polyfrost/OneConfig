@@ -58,14 +58,13 @@
   "oneconfig.preferences.pause_game.title": "Pause Game",
   "oneconfig.preferences.pause_game.description": "Pause singleplayer worlds while the OneConfig menu is open.",
 
-  "oneconfig.preferences.reduced_res_filter.title": "Reduced-resolution filter",
-  "oneconfig.preferences.reduced_res_filter.description": "Counteracts blur when the game renders at a reduced resolution (e.g. Sodium Extra's 'Reduce Resolution on macOS'). Only takes effect when the display is upscaling a reduced framebuffer. 'Sharpen' softly crisps the whole menu; 'Harden edges' aliases text/edges so they survive the upscale like Minecraft's font (crisper text, but blockier corners).",
-  "oneconfig.preferences.reduced_res_filter.off": "Off",
-  "oneconfig.preferences.reduced_res_filter.sharpen": "Sharpen",
-  "oneconfig.preferences.reduced_res_filter.harden": "Harden edges",
-
-  "oneconfig.preferences.ui_sharpening.title": "Filter strength",
-  "oneconfig.preferences.ui_sharpening.description": "How strongly to apply the reduced-resolution filter. Higher is crisper but can add halos (Sharpen) or jagged edges (Harden).",
+  "oneconfig.preferences.ui_scale.title": "UI Scale",
+  "oneconfig.preferences.ui_scale.description": "Size of the OneConfig menu in percent. 100 fits it to the window.",
+  "oneconfig.preferences.pixel_grid.title": "Pixel Grid",
+  "oneconfig.preferences.pixel_grid.description": "Round the UI scale so pixel fonts stay sharp. Automatic only does this for the Minecraft theme.",
+  "oneconfig.preferences.pixel_grid.auto": "Automatic",
+  "oneconfig.preferences.pixel_grid.always": "Always",
+  "oneconfig.preferences.pixel_grid.never": "Never",
 
   "oneconfig.preferences.remember_last_page.title": "Remember last page",
   "oneconfig.preferences.remember_last_page.description": "Reopens the page you were on if you come back within this time. Otherwise opens the Mods page.",
@@ -82,7 +81,7 @@
   "oneconfig.preferences.show_opening_page_animation.description": "Plays the page animation when the menu is first opened.",
 
   "oneconfig.preferences.instant_search.title": "Instant Search",
-  "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens.",
+  "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens or you change pages.",
 
   "oneconfig.preferences.search_keybind.title": "Search Keybind",
   "oneconfig.preferences.search_keybind.description": "Focuses the search bar in the OneConfig menu and HUD editor.",

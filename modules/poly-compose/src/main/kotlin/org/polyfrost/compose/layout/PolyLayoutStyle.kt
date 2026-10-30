@@ -21,5 +21,6 @@ class PolyLayoutStyle {
     var borderWidth: Float = 0f
     var clipToBounds: Boolean = false
     var alpha: Float = 1f
+    var fade: (() -> Float)? = null
     var tag: Any? = null
 }

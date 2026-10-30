@@ -3,7 +3,7 @@
   "id": "compose-multiplatform",
   "version": "${version}",
   "name": "Compose Multiplatform",
-  "description": "Library mod bundling JetBrains' Compose Multiplatform libs.",
+  "description": "Library mod bundling the Compose runtime.",
   "authors": [
     "Polyfrost"
   ],

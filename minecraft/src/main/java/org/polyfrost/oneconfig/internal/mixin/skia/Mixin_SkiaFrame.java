@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.skia;
 
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,7 +13,6 @@ import com.mojang.blaze3d.platform.Window;
 
 //? if = 1.8.9 {
 /*import net.minecraft.client.Minecraft;
-import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen;
 *///?}
 
 //~ if = 1.8.9 'Window' -> 'Minecraft'
@@ -28,22 +27,27 @@ public class Mixin_SkiaFrame {
 
     @Inject(method = "refreshFramebufferSize", at = @At("TAIL"))
     void impl$onResize(CallbackInfo ci) {
-        SkiaCtx.INSTANCE.recreateSurface(this.framebufferWidth, this.framebufferHeight);
+        GlHost.INSTANCE.recreateSurface(this.framebufferWidth, this.framebufferHeight);
     }
     //?} else {
     /*@Inject(method = "resize", at = @At("TAIL"))
     void impl$onResize(int width, int height, CallbackInfo ci) {
-        SkiaCtx.INSTANCE.recreateSurface(width, height);
+        GlHost.INSTANCE.recreateSurface(width, height);
     }
     *///?}
 
-    //? if = 1.8.9 {
-    /*@Inject(method = "runGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/pipeline/RenderTarget;draw(II)V"))
+    //? if < 26.1 {
+    /*//? if >= 1.21.4 {
+    @Inject(method = "updateDisplay(Lcom/mojang/blaze3d/TracyFrameCapture;)V", at = @At("HEAD"))
+    //?} elif > 1.8.9 {
+    /^@Inject(method = "updateDisplay()V", at = @At("HEAD"))
+    ^///?} else
+    //@Inject(method = "runGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/pipeline/RenderTarget;draw(II)V"))
     void impl$onDraw(CallbackInfo ci) {
-        if (!SkiaCtx.INSTANCE.isVulkanMode()) {
-            SkiaCtx.INSTANCE.draw();
-        }
-        DebugOverlayOffscreen.INSTANCE.render();
+        //? if > 1.8.9 {
+        GlHost.INSTANCE.drawAtPresent();
+        //?} else
+        //GlHost.INSTANCE.drawBeforeBlit();
     }
     *///? }
 }

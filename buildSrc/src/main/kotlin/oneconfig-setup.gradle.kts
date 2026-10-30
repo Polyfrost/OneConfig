@@ -116,6 +116,12 @@ if (stonecutter.eval(stonecutter.current.version, ">= 1.21.4")
     }
 }
 
+if (stonecutter.eval(stonecutter.current.version, "< 1.21.11")) {
+    tasks.named<ProcessResources>("processResources") {
+        exclude("assets/oneconfig/post_effect/**")
+        exclude("assets/oneconfig/shaders/**")
+    }
+}
 
 fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false) {
     val dep = project.dependencies.create(dependency) as ExternalModuleDependency
@@ -138,7 +144,9 @@ if (loader == "neoforge") {
 }
 
 configurations.configureEach {
-    exclude(group = "org.jetbrains.skiko", module = "skiko-awt-runtime-all")
+    exclude(group = "org.jetbrains.skiko")
+    exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
+    exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
 }
 
 @JvmName("handleApiDepBundle")
@@ -225,20 +233,12 @@ dependencies {
 
     moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, skysoftRelocatedConfiguration)
 
+    "api"(versionedCatalog["jetbrains.compose.runtime"])
     "api"(versionedCatalog["jetbrains.compose.foundation"])
     "api"(versionedCatalog["jetbrains.compose.material"])
-    "api"(versionedCatalog["jetbrains.compose.runtime"])
     "api"(versionedCatalog["jetbrains.compose.ui"])
-    "api"(versionedCatalog["jetbrains.compose.ui.tooling.preview"])
     "api"(versionedCatalog["jetbrains.compose.ui.util"])
     "api"(versionedCatalog["jetbrains.compose.ui.backhandler"])
-    "api"(versionedCatalog["jetbrains.skiko.awt"])
-    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.x64"])
-    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.windows.arm64"])
-    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.x64"])
-    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.linux.arm64"])
-    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.x64"])
-    "api"(versionedCatalog["jetbrains.skiko.awt.runtime.macos.arm64"])
     "api"(versionedCatalog["jetbrains.compose.navigation"])
     "api"(versionedCatalog["jetbrains.lifecycle"])
     "api"(versionedCatalog["jetbrains.viewmodel"])
@@ -254,6 +254,7 @@ dependencies {
     handleApiDep(versionedCatalog.bundles["kotlinx"])
     handleApiDep(versionedCatalog.bundles["nightconfig"])
     handleApiDep(versionedCatalog["snakeyaml"])
+    handleApiDep(versionedCatalog.bundles["twelvemonkeys"])
     handleApiDep(versionedCatalog["java-objc-bridge"])
     val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1") || loader == "ornithe") "1.0.2" else "1.0.1"
     handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")

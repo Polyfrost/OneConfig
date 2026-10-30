@@ -64,9 +64,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
-import org.jetbrains.skia.Canvas
-import org.jetbrains.skia.Paint
-import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.backend.drawPoly
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -90,7 +89,6 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
-import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudOverlayBridge
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
@@ -177,7 +175,6 @@ object HudEditorViewport {
 
 private data class HudBounds(val x: Float, val y: Float, val width: Float, val height: Float)
 
-private val hiddenHudPaint = Paint().apply { setAlphaf(0.35f) }
 
 /** The search field the search keybind focuses */
 private enum class StudioSearch {
@@ -347,6 +344,42 @@ private fun pickHintSlot(root: IntSize, hint: IntSize, margin: Float, obstacles:
     return best
 }
 
+internal enum class HudAlign(val icon: String, val label: String) {
+    Left("align-left", "Align left"), CenterX("align-center", "Align centre"), Right("align-right", "Align right"),
+    Top("align-top", "Align top"), CenterY("align-middle", "Align middle"), Bottom("align-bottom", "Align bottom"),
+}
+
+internal fun alignHuds(huds: List<Hud>, align: HudAlign) {
+    val boxes = huds.mapNotNull { hud -> hudBounds(hud)?.let { hud to it } }
+    if (boxes.isEmpty()) return
+    if (boxes.any { it.first.locked }) notifyHudLocked()
+    val single = boxes.size == 1
+    val x0 = if (single) 0f else boxes.minOf { it.second.x }
+    val y0 = if (single) 0f else boxes.minOf { it.second.y }
+    val x1 = if (single) HudManager.guiScreenWidth else boxes.maxOf { it.second.x + it.second.width }
+    val y1 = if (single) HudManager.guiScreenHeight else boxes.maxOf { it.second.y + it.second.height }
+    val targets = boxes.filter { !it.first.locked }.map { (hud, b) ->
+        val dx = when (align) {
+            HudAlign.Left -> x0 - b.x
+            HudAlign.CenterX -> (x0 + x1 - b.width) / 2f - b.x
+            HudAlign.Right -> x1 - b.width - b.x
+            else -> 0f
+        }
+        val dy = when (align) {
+            HudAlign.Top -> y0 - b.y
+            HudAlign.CenterY -> (y0 + y1 - b.height) / 2f - b.y
+            HudAlign.Bottom -> y1 - b.height - b.y
+            else -> 0f
+        }
+        Triple(hud, hud.x + dx, hud.y + dy)
+    }
+    repeat(3) {
+        var moved = false
+        for ((hud, tx, ty) in targets) if (hud.x != tx || hud.y != ty) { hud.setAbsolutePosition(tx, ty); moved = true }
+        if (!moved) return
+    }
+}
+
 private fun hudBounds(hud: Hud): HudBounds? {
     val scale = hud.effectiveScale
     if (hud is LegacyHud) {
@@ -455,15 +488,18 @@ private fun hitTestAnchorPoint(
     return best
 }
 
-private fun drawHudContents(sk: Canvas, mcToScreen: Float) {
+private fun DrawScope.drawHudContents(mcToScreen: Float) {
     HudManager.renderRevision.intValue
     HudManager.instancesRevision.intValue
     HudManager.revision
-    // HUDs fused with a neighbour do not paint their own background so the merged shapes are laid down
-    // here first just like the in-game HUD pass
+    drawPoly { ctx -> drawHudContents(ctx, mcToScreen) }
+}
+
+private fun drawHudContents(ctx: RenderContext, mcToScreen: Float) {
+    val sk = ctx.renderer
     sk.save()
     if (mcToScreen != 1f) sk.scale(mcToScreen, mcToScreen)
-    HudManager.drawMergedBackgrounds(RenderContext(sk))
+    HudManager.drawMergedBackgrounds(ctx)
     sk.restore()
     for (hud in HudManager.activeInstances) {
         if (hud is LegacyHud) continue
@@ -473,12 +509,11 @@ private fun drawHudContents(sk: Canvas, mcToScreen: Float) {
         sk.save()
         sk.translate(bounds.x * mcToScreen, bounds.y * mcToScreen)
         if (contentScale != 1f) sk.scale(contentScale, contentScale)
-        if (hud.hidden) sk.saveLayer(null, hiddenHudPaint)
-        try { root.render(RenderContext(sk)) } catch (_: Throwable) {}
+        if (hud.hidden) sk.saveLayerAlpha(0.35f)
+        try { root.render(ctx) } catch (_: Throwable) {}
         if (hud.hidden) sk.restore()
         sk.restore()
     }
-    LegacyHudOverlayBridge.painter?.invoke(sk)
 }
 
 private fun orderedInstances(): List<Hud> = HudManager.zOrderedInstances { hud ->
@@ -772,7 +807,7 @@ private fun DrawScope.drawSelectedHudBounds(
 }
 
 private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float) {
-    val font = FontManager.getFont(10f, "poppins")
+    val font = PolyFont.default(10f)
     val metrics = font.metrics
     val textWidth = font.measureTextWidth(label)
     val textHeight = metrics.descent - metrics.ascent
@@ -787,12 +822,9 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
         size = Size(badgeWidth, badgeHeight),
         cornerRadius = CornerRadius(3f, 3f)
     )
-    drawIntoCanvas { canvas ->
-        val paint = Paint().apply { color = Color.White.toArgb() }
-        val textX = badgeX + horizontalPadding
-        val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
-        canvas.skiaCanvas.drawString(label, textX, textY, font, paint)
-    }
+    val textX = badgeX + horizontalPadding
+    val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
+    drawPoly { it.renderer.text(label, textX, textY, Color.White.toArgb(), font) }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -1985,7 +2017,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     if (!HudManager.inWorld) {
-                        drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
+                        drawHudContents(mcToScreen)
                     }
                     if (isDragging) {
                         snapGuides.vertical?.let { lineX ->
@@ -2837,7 +2869,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 // drawing it first would put it behind every HUD painted here
                 HudEditorViewport.observe()
                 val mcToScreen = Platform.screen().mcToScreenScale()
-                drawIntoCanvas { canvas -> drawHudContents(canvas.skiaCanvas, mcToScreen) }
+                drawHudContents(mcToScreen)
                 if (isDragging) {
                     snapGuides.vertical?.let { lineX ->
                         val sx = lineX * mcToScreen
@@ -3034,6 +3066,7 @@ private fun DesignStudioPanel(
                     Box(modifier = Modifier.fillMaxSize()) {
                         Column(
                             modifier = Modifier.fillMaxSize()
+                                .wheelScroll(panelScrollState)
                                 .verticalScroll(panelScrollState)
                                 .padding(end = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(22.dp)

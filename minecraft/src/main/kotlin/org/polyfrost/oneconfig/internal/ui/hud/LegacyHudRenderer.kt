@@ -6,6 +6,7 @@ import java.util.WeakHashMap
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
+import org.polyfrost.oneconfig.internal.ui.compose.GuiDraw
 
 //? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -41,6 +42,12 @@ object LegacyHudRenderer {
             e,
         )
     }
+
+    private val drawLive: GuiDraw = ::renderLive
+
+    /** [renderLive], or null when it has nothing to draw */
+    internal val liveDraw: GuiDraw?
+        get() = drawLive.takeIf { CompatOverlayRenderer.hasHooks() || HudManager.activeInstances.any { it is LegacyHud } }
 
     //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
     fun renderLive(graphics: GuiGraphicsExtractor) {

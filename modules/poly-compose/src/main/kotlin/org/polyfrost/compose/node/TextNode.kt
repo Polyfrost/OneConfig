@@ -1,7 +1,7 @@
 package org.polyfrost.compose.node
 
 import org.polyfrost.compose.layout.PolySize
-import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.RenderContext
 
@@ -15,7 +15,7 @@ class TextNode : PolyNode() {
 
     var fontName: String? = null
 
-    private fun font() = fontName?.let { FontManager.getFont(fontSize, it) } ?: FontManager.getFont(fontSize)
+    private fun font() = fontName?.let { PolyFont(it, fontSize) } ?: PolyFont.default(fontSize)
 
     fun remeasure() {
         val font = font()

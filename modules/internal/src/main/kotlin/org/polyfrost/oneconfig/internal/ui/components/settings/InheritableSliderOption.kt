@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -25,9 +24,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -35,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.api.settings.InheritableSliderOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -59,10 +62,10 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
 
     val thumbDp = 19.dp
     val span = (data.max - data.min).takeIf { it != 0f } ?: 1f
-    val fraction by animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), animationSpec = spring())
+    val fraction = animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), animationSpec = spring())
 
-    val filledColor by animateColorAsState(if (inherited) theme.textColorSecondary.copy(alpha = 0.4f) else Accent)
-    val thumbColor by animateColorAsState(
+    val filledColor = animateColorAsState(if (inherited) theme.textColorSecondary.copy(alpha = 0.4f) else Accent)
+    val thumbColor = animateColorAsState(
         if (inherited) theme.controlThumbColor.copy(alpha = 0.5f) else theme.controlThumbColor
     )
 
@@ -130,17 +133,23 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
             )
             Box(
                 Modifier
-                    .fillMaxWidth(fraction).height(5.dp)
+                    .layout { measurable, constraints ->
+                        val w = (constraints.maxWidth * fraction.value).roundToInt().coerceIn(constraints.minWidth, constraints.maxWidth)
+                        val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
+                        layout(w, placeable.height) { placeable.place(0, 0) }
+                    }
+                    .height(5.dp)
                     .align(Alignment.CenterStart)
-                    .clip(theme.checkBoxShape)
-                    .background(filledColor)
+                    .graphicsLayer {}
+                    .animatedFrame(theme.checkBoxShape, fill = { filledColor.value }, border = { Color.Transparent })
             )
             Box(
                 Modifier
                     .align(Alignment.CenterStart)
-                    .offset { IntOffset((fraction * (trackWidthPx - thumbDp.toPx())).toInt(), 0) }
+                    .offset { IntOffset((fraction.value * (trackWidthPx - thumbDp.toPx())).toInt(), 0) }
                     .size(thumbDp)
-                    .background(thumbColor, theme.circleShape)
+                    .graphicsLayer {}
+                    .animatedFrame(theme.circleShape, fill = { thumbColor.value }, border = { Color.Transparent })
             )
         }
         NumberSpinner(
@@ -166,21 +175,21 @@ private fun InheritChip(label: String, active: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val background by animateColorAsState(
+    val background = animateColorAsState(
         if (active) Accent.copy(alpha = 0.2f) else if (isHovered) theme.componentBackground else theme.chipBackground
     )
-    val border by animateColorAsState(if (active) Accent else theme.borderColor)
-    val textColor by animateColorAsState(if (active) Accent else theme.textColorSecondary)
+    val border = animateColorAsState(if (active) Accent else theme.borderColor)
+    val textColor = animateColorAsState(if (active) Accent else theme.textColorSecondary)
 
     Box(
         modifier = Modifier
-            .background(background, theme.sideBarNavigationEntryShape)
-            .border(1.dp, border, theme.sideBarNavigationEntryShape)
+            .graphicsLayer {}
+            .animatedFrame(theme.sideBarNavigationEntryShape, fill = { background.value }, border = { border.value })
             .onClick(interactionSource, onClick)
             .pointerHoverIcon(PointerIcon.Hand)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = textColor, fontSize = 12.sp)
+        Text(label, color = Color.Unspecified, fontSize = 12.sp, colorProducer = { textColor.value })
     }
 }

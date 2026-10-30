@@ -26,8 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,10 +40,12 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptio
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
@@ -90,17 +93,17 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
 
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (expanded) Accent else theme.borderColor
     )
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         if (isHovered || expanded) theme.textColor else theme.textColorSecondary
     )
-    val backgroundColor by animateColorAsState(
+    val backgroundColor = animateColorAsState(
         if (expanded) Accent.copy(0.2f).compositeOver(theme.componentBackground)
         else theme.componentBackground
     )
-    val chevronRotation by animateFloatAsState(if (expanded) 0f else 180f)
+    val chevronRotation = animateFloatAsState(if (expanded) 0f else 180f)
 
     val triggerLabel = when {
         !data.checkable -> options.getOrElse(selectedIdx) { "—" }
@@ -119,8 +122,8 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
             modifier = Modifier
                 .width(LocalOptionWidth.current)
                 .height(32.dp)
-                .background(backgroundColor, DropdownShape)
-                .border(1.dp, borderColor, DropdownShape)
+                .graphicsLayer {}
+                .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
                 .onClick(triggerInteraction) { expanded = !expanded }
                 .hoverable(triggerInteraction)
                 .pointerHoverIcon(PointerIcon.Hand)
@@ -131,12 +134,13 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
             Text(
                 triggerLabel,
                 modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
-                color = textColor,
+                color = Color.Unspecified,
                 fontSize = 13.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                colorProducer = { textColor.value },
             )
-            Icon("up", modifier = Modifier.rotate(chevronRotation), color = textColor)
+            Icon("up", modifier = Modifier.graphicsLayer { rotationZ = chevronRotation.value }, tint = { textColor.value })
         }
 
         SimpleDropdownMenu(
@@ -153,6 +157,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                     .border(1.dp, theme.borderColor, DropdownShape)
                     .heightIn(max = 280.dp)
                     .fadingEdges(scrollState, theme.componentBackground)
+                    .wheelScroll(scrollState)
                     .verticalScroll(scrollState)
                     .padding(MenuPadding),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -213,10 +218,10 @@ private fun CheckableListItem(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val bgColor by animateColorAsState(
+    val bgColor = animateColorAsState(
         if (isHovered) theme.modCardBackground else theme.modCardBackground.copy(0f)
     )
-    val contentColor by animateColorAsState(
+    val contentColor = animateColorAsState(
         if (isHovered) theme.textColor else theme.textColorSecondary
     )
 
@@ -224,7 +229,8 @@ private fun CheckableListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(ItemShape)
-            .background(bgColor, ItemShape)
+            .graphicsLayer {}
+            .animatedFrame(ItemShape, fill = { bgColor.value }, border = { Color.Transparent })
             .onClick(interactionSource, onToggle)
             .hoverable(interactionSource)
             .pointerHoverIcon(PointerIcon.Hand)
@@ -234,9 +240,9 @@ private fun CheckableListItem(
     ) {
         CheckboxIndicator(checked = checked, onToggle = onToggle)
 
-        icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), color = contentColor) }
+        icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), tint = { contentColor.value }) }
 
-        Text(label, color = contentColor, fontSize = 13.sp)
+        Text(label, color = Color.Unspecified, fontSize = 13.sp, colorProducer = { contentColor.value })
     }
 }
 
@@ -251,12 +257,12 @@ private fun PlainListItem(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val bgColor by animateColorAsState(
+    val bgColor = animateColorAsState(
         if (selected) Accent
         else if (isHovered) theme.modCardBackground
         else theme.modCardBackground.copy(0f)
     )
-    val contentColor by animateColorAsState(
+    val contentColor = animateColorAsState(
         if (selected || isHovered) theme.textColor else theme.textColorSecondary
     )
 
@@ -264,7 +270,8 @@ private fun PlainListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(ItemShape)
-            .background(bgColor, ItemShape)
+            .graphicsLayer {}
+            .animatedFrame(ItemShape, fill = { bgColor.value }, border = { Color.Transparent })
             .onClick(interactionSource, onSelect)
             .hoverable(interactionSource)
             .pointerHoverIcon(PointerIcon.Hand)
@@ -272,8 +279,8 @@ private fun PlainListItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(15.dp),
     ) {
-        icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), color = contentColor) }
+        icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), tint = { contentColor.value }) }
 
-        Text(label, color = contentColor, fontSize = 13.sp)
+        Text(label, color = Color.Unspecified, fontSize = 13.sp, colorProducer = { contentColor.value })
     }
 }

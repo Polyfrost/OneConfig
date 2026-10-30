@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -41,6 +42,7 @@ fun TextComponent(
     textAlign: TextAlign = TextAlign.Start,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+    colorProducer: ColorProducer? = null,
 ) {
      Row {
         component.iterable(ComponentIteratorType.DEPTH_FIRST).forEach {
@@ -55,7 +57,8 @@ fun TextComponent(
                     ),
                     maxLines = maxLines,
                     overflow = overflow,
-                    modifier = modifier
+                    modifier = modifier,
+                    color = colorProducer,
                 )
             }
 

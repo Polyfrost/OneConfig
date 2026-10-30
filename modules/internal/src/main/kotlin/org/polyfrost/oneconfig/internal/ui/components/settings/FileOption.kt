@@ -1,8 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
@@ -42,6 +41,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.FileOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -54,7 +54,7 @@ fun FileOption(data: FileOptionData) {
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isFocused by interactionSource.collectIsFocusedAsState()
 
-    val borderColor by animateColorAsState(if (isHovered || isFocused) theme.textColorSecondary else theme.borderColor)
+    val borderColor = animateColorAsState(if (isHovered || isFocused) theme.textColorSecondary else theme.borderColor)
 
     var value by remember(data.prop) {
         val initial = data.strProp.shown() ?: ""
@@ -107,8 +107,8 @@ fun FileOption(data: FileOptionData) {
         visualTransformation = pathTransformation,
         modifier = Modifier.trackTextInputFocus()
             .width(LocalOptionWidth.current)
-            .background(theme.modCardBackground, theme.sideBarNavigationEntryShape)
-            .border(1.dp, borderColor, theme.sideBarNavigationEntryShape)
+            .graphicsLayer {}
+            .animatedFrame(theme.sideBarNavigationEntryShape, fill = { theme.modCardBackground }, border = { borderColor.value })
             .padding(start = 12.dp, end = 6.dp, top = 5.dp, bottom = 5.dp),
         decorationBox = { innerTextField ->
             Row(

@@ -4,6 +4,7 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import kotlin.Unit;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
@@ -18,6 +19,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 public final class ModMenuApiCompat {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/ModMenuApiCompat");
+    private static final Set<String> OWN_MOD_IDS = Set.of("oneconfig", "oneconfigbootstrap", "oneconfigv1");
 
     private ModMenuApiCompat() {
     }
@@ -32,6 +34,7 @@ public final class ModMenuApiCompat {
 
     private static void preloadFactories() {
         collectFactories().forEach((modId, factory) -> {
+            if (OWN_MOD_IDS.contains(modId)) return;
             if (CompatLoader.INSTANCE.getNativeLoadedConfigs().contains(modId) || hasRegisteredTree(modId)) return;
             CompatLoader.INSTANCE.queueScreenWarmup(() -> {
                 if (CompatLoader.INSTANCE.getNativeLoadedConfigs().contains(modId) || hasRegisteredTree(modId)) {

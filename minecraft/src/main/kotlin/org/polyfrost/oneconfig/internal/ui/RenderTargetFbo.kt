@@ -20,6 +20,11 @@ import com.mojang.renderpearl.backend.opengl.GlTexture
 /*import com.mojang.renderpearl.backend.opengl.GlDevice
 *///?}
 
+//? if = 1.21.1 {
+/*import net.minecraft.client.Minecraft
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost
+*///?}
+
 //? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
 import org.lwjgl.opengl.GL11
@@ -76,11 +81,15 @@ object RenderTargetFbo {
 
     //? if < 1.21.5 {
     /*fun saveBoundTarget() = IntArray(5).also {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return@also
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, it)
         it[4] = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING)
     }
 
     fun restoreBoundTarget(s: IntArray) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return Minecraft.getInstance().mainRenderTarget.bindWrite(true)
         //? if > 1.8.9 {
         GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, s[4])
         GlStateManager._viewport(s[0], s[1], s[2], s[3])

@@ -30,32 +30,33 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlin.math.abs
 import kotlin.math.ceil
-import org.jetbrains.skia.BlendMode as SkBlendMode
-import org.jetbrains.skia.ColorFilter
-import org.jetbrains.skia.FilterTileMode
-import org.jetbrains.skia.Image
-import org.jetbrains.skia.ImageFilter
-import org.jetbrains.skia.Paint
-import org.jetbrains.skia.Rect
-import org.jetbrains.skia.SamplingMode
-import org.jetbrains.skia.Surface
+import kotlin.math.exp
+import kotlin.math.hypot
+import kotlin.math.roundToInt
+import org.polyfrost.compose.backend.PolyImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.Header
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
+import org.polyfrost.oneconfig.internal.ui.components.SidebarWidth
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.navigation
@@ -65,69 +66,86 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
 
-private const val GLOW_BAKE_SCALE = .25f
-private const val GLOW_BLUR_SIGMA = 300f
 private const val GLOW_RADIUS = 500f
+private const val GLOW_EXTENT = 1400f
+
+private val glowProfile = floatArrayOf(0f, .2f, .4f, .5f, .6f, .7f, .8f, 1f) to
+    floatArrayOf(.95f, .77f, .42f, .25f, .13f, .055f, .018f, 0f)
+
+private val glowCenters = floatArrayOf(147f, -199f, 893f, 736f)
+
+private fun glowAlphaAt(t: Float): Float {
+    val (pos, a) = glowProfile
+    if (t >= 1f) return 0f
+    var i = 1
+    while (pos[i] < t) i++
+    return a[i - 1] + (a[i] - a[i - 1]) * (t - pos[i - 1]) / (pos[i] - pos[i - 1])
+}
+
+private fun erf(x: Float): Float {
+    val z = abs(x)
+    val t = 1f / (1f + 0.3275911f * z)
+    val y = 1f - ((((1.0614054f * t - 1.4531521f) * t + 1.4214138f) * t - 0.28449672f) * t + 0.2548296f) * t * exp(-z * z)
+    return if (x < 0f) -y else y
+}
+
+private data class ShadowBake(val l: Float, val t: Float, val r: Float, val b: Float, val sigma: Float, val color: Color) {
+    private fun cover(x: Float, lo: Float, hi: Float): Float {
+        val k = 0.70710677f / sigma
+        return 0.5f * (erf((hi - x) * k) - erf((lo - x) * k))
+    }
+
+    fun alphaAt(x: Float, y: Float) = color.alpha * cover(x, l, r) * cover(y, t, b)
+}
+
+// one color with a baked alpha, so colors that animate (the accent, fill opacity) are applied when drawing instead of re-baking
+private class BakedLayer {
+    private var key: List<Any?>? = null
+    private var bitmap: PolyImageBitmap? = null
+
+    fun get(key: List<Any?>, w: Float, h: Float, x0: Float, x1: Float, color: Color, alphaAt: (x: Float, y: Float) -> Float): PolyImageBitmap {
+        bitmap?.let { if (key == this.key) return it }
+        val bw = ceil(GLOW_BITMAP * (x1 - x0) / w).toInt().coerceIn(2, GLOW_BITMAP)
+        val bh = (GLOW_BITMAP * h / w).roundToInt().coerceIn(2, GLOW_BITMAP)
+        val px = ByteArray(bw * bh * 4)
+        val r = (color.red * 255f).roundToInt().toByte()
+        val g = (color.green * 255f).roundToInt().toByte()
+        val b = (color.blue * 255f).roundToInt().toByte()
+        for (y in 0 until bh) for (x in 0 until bw) {
+            val o = (y * bw + x) * 4
+            px[o] = r; px[o + 1] = g; px[o + 2] = b
+            px[o + 3] = (alphaAt(x0 + (x + .5f) * (x1 - x0) / bw, (y + .5f) * h / bh) * 255f).roundToInt().toByte()
+        }
+        return PolyImageBitmap(PolyBitmap(bw, bh, px)).also { bitmap = it; this.key = key }
+    }
+}
+
+// shadow, accent glow and fill, bottom to top; each glow center is its own full-strength mask, so opacity is applied
+// when drawing and stacking them composites the same as combining them in one bake
+private class GlowLayers {
+    private val shadowLayer = BakedLayer()
+    private val glowLayers = Array(glowCenters.size / 2) { BakedLayer() }
+
+    fun DrawScope.draw(x0: Float, x1: Float, accent: Color, alpha: Float, fill: Color, shadow: ShadowBake?) {
+        val w = size.width
+        val h = size.height
+        val dstOffset = IntOffset(x0.roundToInt(), 0)
+        val dstSize = IntSize((x1 - x0).roundToInt(), h.roundToInt())
+        if (shadow != null) drawImage(shadowLayer.get(listOf(w, h, x0, x1, shadow), w, h, x0, x1, shadow.color, shadow::alphaAt), dstOffset = dstOffset, dstSize = dstSize)
+        val tint = ColorFilter.tint(accent.copy(alpha = alpha))
+        for ((i, layer) in glowLayers.withIndex()) {
+            val glow = layer.get(listOf(w, h, x0, x1), w, h, x0, x1, Color.White) { x, y ->
+                glowAlphaAt(hypot(x - glowCenters[i * 2], y - glowCenters[i * 2 + 1]) / GLOW_EXTENT)
+            }
+            drawImage(glow, dstOffset = dstOffset, dstSize = dstSize, colorFilter = tint)
+        }
+        drawRect(fill, Offset(x0, 0f), Size(x1 - x0, h))
+    }
+}
+
+private const val GLOW_BITMAP = 256
 
 internal val PageGutter = 25.dp
-
-private class GlowCache : RememberObserver {
-    private var image: Image? = null
-    private var width = -1
-    private var height = -1
-    private var alpha = Float.NaN
-
-    fun imageFor(widthPx: Int, heightPx: Int, alphaF: Float): Image? {
-        if (image == null || width != widthPx || height != heightPx || alpha != alphaF) {
-            image?.close()
-            image = bake(widthPx, heightPx, alphaF)
-            width = widthPx
-            height = heightPx
-            alpha = alphaF
-        }
-        return image
-    }
-
-    private fun bake(widthPx: Int, heightPx: Int, alphaF: Float): Image? {
-        val w = ceil(widthPx * GLOW_BAKE_SCALE).toInt()
-        val h = ceil(heightPx * GLOW_BAKE_SCALE).toInt()
-        if (w <= 0 || h <= 0 || alphaF <= 0f) return null
-
-        val surface = Surface.makeRasterN32Premul(w, h)
-        val sigma = GLOW_BLUR_SIGMA * GLOW_BAKE_SCALE
-        val filter = ImageFilter.makeBlur(sigma, sigma, FilterTileMode.DECAL)
-        val paint = Paint().apply {
-            imageFilter = filter
-            color = 0xFFFFFFFF.toInt()
-            setAlphaf(alphaF)
-        }
-        try {
-            surface.canvas.apply {
-                scale(GLOW_BAKE_SCALE, GLOW_BAKE_SCALE)
-                drawCircle(147f, -199f, GLOW_RADIUS, paint)
-                drawCircle(893f, 736f, GLOW_RADIUS, paint)
-            }
-            return surface.makeImageSnapshot()
-        } finally {
-            paint.close()
-            filter.close()
-            surface.close()
-        }
-    }
-
-    private fun release() {
-        image?.close()
-        image = null
-        width = -1
-        height = -1
-    }
-
-    override fun onRemembered() {}
-
-    override fun onForgotten() = release()
-
-    override fun onAbandoned() = release()
-}
 
 @Composable
 fun Shell(
@@ -143,53 +161,47 @@ fun Shell(
         Shadow(50.dp, theme.shadowColor, 4.dp, DpOffset(0.dp, 13.dp), .42f, BlendMode.SrcOver)
     }
 
-    val glowCache = remember { GlowCache() }
-
     val shell = LocalShell.current
     val glowAlpha = (shell.appearance.glowOpacity / 100f).coerceIn(0f, 1f)
-    val glowPaint = remember(Accent) {
-        Paint().apply {
-            colorFilter = ColorFilter.makeBlend(Accent.copy(alpha = 1f).toArgb(), SkBlendMode.SRC_IN)
-        }
-    }
-
+    val sidebarGlow = remember { GlowLayers() }
+    val pageGlow = remember { GlowLayers() }
+    val sidebarColor = theme.sidebarBackground.withOpacityPercent(shell.appearance.sidebarOpacity)
+    val pageColor = theme.pageBackground.withOpacityPercent(shell.appearance.pageOpacity)
     Row(
         modifier = Modifier.onGloballyPositioned {
             windowOffset = it.positionInRoot()
         }.sizeIn(
             1391.dp, 700.dp, 1391.dp, 700.dp
-        ).clip(theme.backgroundShape)
-            .let { mod ->
-                if (theme.shadowEnabled) mod.cachedDropShadow(theme.backgroundShape, backgroundShadow) else mod
-            }
+        ).let { mod ->
+                if (theme.shadowEnabled) mod.cachedDropShadow(theme.backgroundShape, backgroundShadow, hole = glowAlpha > 0f) else mod
+            }.clip(theme.backgroundShape)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .drawBehind {
                 backdrop(windowOffset)
-                val glow = glowCache.imageFor(
-                    ceil(size.width).toInt(),
-                    ceil(size.height).toInt(),
-                    glowAlpha,
-                )
-                if (glow != null) {
-                    drawIntoCanvas {
-                        it.nativeCanvas.drawImageRect(
-                            glow,
-                            Rect.makeWH(glow.width.toFloat(), glow.height.toFloat()),
-                            Rect.makeWH(glow.width / GLOW_BAKE_SCALE, glow.height / GLOW_BAKE_SCALE),
-                            SamplingMode.LINEAR,
-                            glowPaint,
-                            true,
-                        )
-                    }
+                if (glowAlpha > 0f) {
+                    val w = size.width.roundToInt()
+                    val h = size.height.roundToInt()
+                    val sw = SidebarWidth.roundToPx().coerceIn(0, w)
+                    val accent = Accent.copy(alpha = 1f)
+                    val shadow = if (theme.shadowEnabled) {
+                        val sp = backgroundShadow.spread.toPx()
+                        val ox = backgroundShadow.offset.x.toPx()
+                        val oy = backgroundShadow.offset.y.toPx()
+                        val c = backgroundShadow.color
+                        ShadowBake(ox - sp, oy - sp, size.width + ox + sp, size.height + oy + sp, backgroundShadow.radius.toPx() * 0.57735f, c.copy(alpha = c.alpha * backgroundShadow.alpha))
+                    } else null
+                    with(sidebarGlow) { draw(0f, sw.toFloat(), accent, glowAlpha, sidebarColor, shadow) }
+                    drawLine(theme.borderColor, Offset(sw.toFloat(), 0f), Offset(sw.toFloat(), size.height), 1f)
+                    with(pageGlow) { draw(sw.toFloat(), w.toFloat(), accent, glowAlpha, pageColor, shadow) }
                 }
             }
     ) {
-        Sidebar()
+        Sidebar(background = glowAlpha <= 0f)
 
         Column(
             modifier = Modifier
                 .weight(1f)
-                .background(theme.pageBackground.withOpacityPercent(shell.appearance.pageOpacity)),
+                .then(if (glowAlpha > 0f) Modifier else Modifier.background(pageColor)),
         ) {
             val backStackEntry by LocalShellNavController.current.currentBackStackEntryAsState()
             val isModsMenu = backStackEntry?.destination?.hasRoute(ModsRoute::class) == true

@@ -1,8 +1,8 @@
 style:
   UnnecessaryFullyQualifiedName:
     active: true
-    # Java types that Kotlin maps to its own builtins, which an import would shadow
     ignoredFullyQualifiedNames:
+      # Java types that Kotlin maps to its own builtins, which an import would shadow
       - 'java.lang.Boolean'
       - 'java.lang.Byte'
       - 'java.lang.Short'

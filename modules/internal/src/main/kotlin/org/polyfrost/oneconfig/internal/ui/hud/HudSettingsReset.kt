@@ -3,6 +3,8 @@ package org.polyfrost.oneconfig.internal.ui.hud
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -25,6 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -58,6 +62,8 @@ import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudAlign
+import org.polyfrost.oneconfig.internal.ui.hud.screens.alignHuds
 import org.polyfrost.oneconfig.internal.ui.hud.screens.tourString
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -354,6 +360,10 @@ fun HudCanvasResetMenu(
                 }
                 onDismiss()
             }
+            HudAlignRow { align ->
+                onDismiss()
+                alignHuds(actionTargets, align)
+            }
             Box(
                 modifier = if (preview) {
                     Modifier
@@ -574,6 +584,38 @@ private fun HudMenuRow(
         Text(text, color = rowColor, fontSize = 13.sp, modifier = Modifier.weight(1f))
         if (hint != null) {
             Text(hint, color = hintColor, fontSize = 10.sp)
+        }
+    }
+}
+
+@Composable
+private fun HudAlignRow(onAlign: (HudAlign) -> Unit) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        for (align in HudAlign.entries) {
+            val interactionSource = rememberInteractionSource()
+            val isHovered by interactionSource.collectIsHoveredAsState()
+            val hover by animateColorAsState(theme.textColor.copy(alpha = if (isHovered) 0.10f else 0f), tween(120))
+            Tooltip(
+                text = { Text(align.label, color = theme.textColor, fontSize = 12.sp) },
+                modifier = Modifier,
+                anchor = Alignment.TopCenter,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(hover, RoundedCornerShape(4.dp))
+                        .pointerHoverIcon(PointerIcon.Hand)
+                        .clickable(interactionSource, indication = null) { onAlign(align) }
+                        .semantics { contentDescription = align.label },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(align.icon, theme.textColor, Modifier.size(14.dp))
+                }
+            }
         }
     }
 }

@@ -46,6 +46,7 @@ object NotificationsRenderer {
 
     private var lastViewWidth = 0f
     private var lastViewHeight = 0f
+    private var lastScale = 0f
 
     private fun runtime(): PolyComposeRuntime =
         runtime ?: PolyComposeRuntime(clock).also {
@@ -59,6 +60,12 @@ object NotificationsRenderer {
      */
     @JvmStatic
     fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
+        prepare(screenWidth, screenHeight)
+        draw(ctx)
+    }
+
+    @JvmStatic
+    fun prepare(screenWidth: Float, screenHeight: Float): Boolean {
         val guiScale = Platform.compatibility().options().guiScale
         val scale = guiScale * BASE_SCALE
         val viewWidth = screenWidth * guiScale / scale
@@ -69,15 +76,22 @@ object NotificationsRenderer {
 
         val rt = runtime()
         clock.frame()
-        if (clock.appliedChange || viewWidth != lastViewWidth || viewHeight != lastViewHeight) {
+        val changed = clock.appliedChange || viewWidth != lastViewWidth || viewHeight != lastViewHeight || scale != lastScale
+        if (changed) {
             rt.layout(viewWidth, viewHeight)
             lastViewWidth = viewWidth
             lastViewHeight = viewHeight
+            lastScale = scale
         }
         handleInput(rt.root, scale)
+        return changed
+    }
 
+    @JvmStatic
+    fun draw(ctx: RenderContext) {
+        val rt = runtime ?: return
         ctx.save()
-        ctx.scale(scale, scale)
+        ctx.scale(lastScale, lastScale)
         rt.root.render(ctx)
         ctx.restore()
     }

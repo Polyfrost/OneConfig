@@ -2,8 +2,6 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -15,13 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -35,20 +33,25 @@ fun Chip(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
     val hoverBackground = Accent.copy(alpha = 0.5f).compositeOver(theme.chipBackground)
-    val backgroundColor by animateColorAsState(
+    val backgroundColor = animateColorAsState(
         if (isHovered) hoverBackground else theme.chipBackground
     )
-    val selectedAlpha by animateFloatAsState(if (selected) 1f else 0f)
-    val textColor by animateColorAsState(
+    val selectedAlpha = animateFloatAsState(if (selected) 1f else 0f)
+    val textColor = animateColorAsState(
         if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor
     )
+    val borderColor = theme.borderColor
 
     Row(
         modifier = Modifier
             .defaultMinSize(minHeight = 33.dp)
-            .background(backgroundColor, LocalTheme.current.sideBarNavigationEntryShape)
-            .background(AccentBrush, LocalTheme.current.sideBarNavigationEntryShape, selectedAlpha)
-            .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
+            .graphicsLayer {}
+            .animatedFrame(
+                theme.sideBarNavigationEntryShape,
+                fill = { backgroundColor.value },
+                accentAlpha = { selectedAlpha.value },
+                border = { borderColor },
+            )
             .pointerHoverIcon(PointerIcon.Hand)
             .onClick(interactionSource) { onClick() },
         verticalAlignment = Alignment.CenterVertically,
@@ -59,8 +62,8 @@ fun Chip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            icon?.let { Icon(it, color = textColor) }
-            Text(label, fontSize = 14.sp, color = textColor)
+            icon?.let { Icon(it, tint = { textColor.value }) }
+            Text(label, fontSize = 14.sp, color = Color.Unspecified, colorProducer = { textColor.value })
         }
     }
 }

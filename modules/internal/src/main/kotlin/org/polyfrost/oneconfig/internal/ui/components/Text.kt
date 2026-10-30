@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
@@ -102,6 +103,7 @@ internal fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedStr
     flush()
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @Composable
 fun Text(
     text: Any,
@@ -114,10 +116,25 @@ fun Text(
     textAlign: TextAlign = TextAlign.Start,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+) = Text(text, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, null)
+
+@Composable
+fun Text(
+    text: Any,
+    modifier: Modifier = Modifier,
+    color: Color,
+    fontSize: TextUnit = 14.sp,
+    lineHeight: TextUnit? = null,
+    shift: BaselineShift = BaselineShift.None,
+    fontWeight: FontWeight = FontWeight.Normal,
+    textAlign: TextAlign = TextAlign.Start,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+    colorProducer: ColorProducer? = null,
 ) {
     when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
-        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
-        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
+        is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, colorProducer)
+        is ComponentLike -> TextComponent(comp.asComponent(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, colorProducer)
         is String -> BasicText(
             if (comp.indexOf(LEGACY_CHAR) >= 0) parseLegacyFormatting(comp, color) else AnnotatedString(comp),
             style = TextStyle(
@@ -129,7 +146,8 @@ fun Text(
             ),
             maxLines = maxLines,
             overflow = overflow,
-            modifier = modifier
+            modifier = modifier,
+            color = colorProducer,
         )
         is Iterable<*> -> {
             Column {

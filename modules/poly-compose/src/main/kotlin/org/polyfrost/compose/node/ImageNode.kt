@@ -1,13 +1,16 @@
 package org.polyfrost.compose.node
 
 import org.jetbrains.skia.Image
-import org.jetbrains.skia.Paint
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.layout.px
 import org.polyfrost.compose.render.RenderContext
 
 class ImageNode(
-    private val image: Image
+    private val image: PolyBitmap
 ) : PolyNode() {
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    constructor(image: Image?) : this(PolyBitmap(1, 1, ByteArray(4)))
+
     fun remeasure() {
         style.width = image.width.px
         style.height = image.height.px
@@ -21,9 +24,7 @@ class ImageNode(
             ctx.save()
             if (s.radius > 0f) ctx.clipRRect(x, y, width, height, s.radius) else ctx.clipRect(x, y, width, height)
         }
-        ctx.image(image, x, y, width, height, Paint().apply {
-
-        })
+        ctx.image(image, x, y, width, height)
         if (s.clipToBounds) ctx.restore()
 
         if (s.borderWidth > 0f && s.borderColor.alpha > 0) ctx.rectStroke(x, y, width, height, s.borderColor, s.borderWidth, s.radius)

@@ -7,8 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.Snapshot
 import java.util.ServiceLoader
-import org.jetbrains.skia.Canvas
-import org.jetbrains.skia.Rect
+import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
 
@@ -21,7 +20,7 @@ interface ItemIconHandle : AutoCloseable {
     fun setRenderSizePx(size: Int)
 
     /** Returns whether the icon was rendered. */
-    fun draw(canvas: Canvas, bounds: Rect, alpha: Float = 1f): Boolean
+    fun draw(ctx: RenderContext, x: Float, y: Float, w: Float, h: Float, alpha: Float = 1f): Boolean
 
     /** Unregisters this icon from the renderer. */
     override fun close()
@@ -55,6 +54,10 @@ object ItemCatalog {
 
     val iconsAvailable: Boolean get() = _iconsAvailable.value
 
+    @Volatile
+    var iconsReady = false
+        private set
+
     fun platformService(): ItemCatalogService? = service
 
     fun items(): List<ItemDescriptor> = service?.items().orEmpty()
@@ -66,13 +69,14 @@ object ItemCatalog {
     fun openIcon(id: String, forHud: Boolean = false): ItemIconHandle? =
         if (iconsAvailable) service?.openIcon(id, forHud) else null
 
-    fun renderIcons(): Boolean = iconsAvailable && service?.renderIcons() == true
+    fun renderIcons(): Boolean = iconsReady && service?.renderIcons() == true
 
     fun renderHudIcons() {
-        if (iconsAvailable) service?.renderHudIcons()
+        if (iconsReady) service?.renderHudIcons()
     }
 
     fun markIconsAvailable() {
+        iconsReady = true
         Snapshot.withMutableSnapshot { _iconsAvailable.value = true }
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.floor
 import kotlin.math.round
+import kotlinx.coroutines.delay
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -64,6 +65,14 @@ private const val EM_STEP_PX = 5f
 
 private const val MIN_EM_PX = 10f
 
+private const val UI_SCALE_SETTLE_MS = 400L
+
+var uiScalePercent by mutableStateOf(100f)
+
+var pixelGridMode by mutableStateOf(0)
+
+private val UITheme.isMinecraft get() = previewImage.startsWith("minecraft")
+
 private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
     minimalHeight = 24.dp,
     thickness = 8.dp,
@@ -78,15 +87,19 @@ private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull
 private fun surfaceRatio(): Float = screenPlatform?.surfaceRatio()?.takeIf { it > 0f } ?: 1f
 
 @Composable
-fun pixelGridScale(scale: Float, max: Float, anchorSp: Float = GRID_ANCHOR_SP): Float {
-    if (scale <= 0f) return scale
+private fun gridAnchorPx(scale: Float, anchorSp: Float = GRID_ANCHOR_SP): Float {
     val density = LocalDensity.current
-    val anchorPx = anchorSp * density.fontScale * density.density * scale * surfaceRatio()
-    return scale * snapScaleToPixelGrid(anchorPx, max / scale)
+    return anchorSp * density.fontScale * density.density * scale * surfaceRatio()
 }
 
 @Composable
-private fun pixelGridDensity(designWidth: Dp, designHeight: Dp): Density {
+fun pixelGridScale(scale: Float, max: Float, anchorSp: Float = GRID_ANCHOR_SP): Float {
+    if (scale <= 0f) return scale
+    return scale * snapScaleToPixelGrid(gridAnchorPx(scale, anchorSp), max / scale)
+}
+
+@Composable
+private fun pixelGridDensity(designWidth: Dp, designHeight: Dp, theme: UITheme): Density {
     val density = LocalDensity.current
     val window = LocalWindowInfo.current.containerSize
     val headroom = with(density) {
@@ -95,7 +108,21 @@ private fun pixelGridDensity(designWidth: Dp, designHeight: Dp): Density {
             (window.height * EDGE_MARGIN_FRACTION) / designHeight.toPx(),
         )
     }
-    val scale = pixelGridScale(1f, headroom)
+    val snap = pixelGridMode == 1 || (pixelGridMode == 0 && theme.isMinecraft)
+    val base = if (snap) pixelGridScale(1f, headroom) else headroom
+    var percent by remember { mutableStateOf(uiScalePercent) }
+    LaunchedEffect(uiScalePercent) {
+        if (percent != uiScalePercent) {
+            delay(UI_SCALE_SETTLE_MS)
+            percent = uiScalePercent
+        }
+    }
+    val user = base * percent.coerceIn(50f, 200f) / 100f
+    val scale = when {
+        percent == 100f -> base
+        snap -> user * snapScaleToNearestStep(gridAnchorPx(user))
+        else -> user
+    }
     return remember(density, scale) {
         if (scale == 1f) density else Density(density.density * scale, density.fontScale)
     }
@@ -108,6 +135,11 @@ internal fun snapScaleToPixelGrid(anchorPx: Float, max: Float): Float {
     val em = maxOf(nearest, fits)
     val scale = em.coerceAtLeast(MIN_EM_PX) / anchorPx
     return if (scale <= max) scale else max
+}
+
+internal fun snapScaleToNearestStep(anchorPx: Float): Float {
+    if (anchorPx <= 0f) return 1f
+    return (round(anchorPx / EM_STEP_PX) * EM_STEP_PX).coerceAtLeast(MIN_EM_PX) / anchorPx
 }
 
 @Composable
@@ -137,13 +169,13 @@ fun Theme(
     CompositionLocalProvider(
         LocalTheme provides animated,
         LocalScrollbarStyle provides remember(animated.scrollBarShape) { scrollbarStyle(animated) },
-        LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight) else LocalDensity.current,
+        LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight, target) else LocalDensity.current,
         content = content
     )
 }
 
 internal fun syncNotificationTheme(theme: UITheme) {
-    val minecraft = theme.previewImage.startsWith("minecraft")
+    val minecraft = theme.isMinecraft
     NotificationTheme.set(
         background = PolyColor(theme.popupBackground.toArgb()),
         border = PolyColor(theme.borderColor.toArgb()),

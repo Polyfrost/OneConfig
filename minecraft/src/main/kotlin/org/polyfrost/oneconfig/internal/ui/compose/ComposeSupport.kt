@@ -12,7 +12,7 @@ object ComposeSupport {
 
     private val probed: String? by lazy { probe() }
 
-    fun unavailableReason(): String? = recordedFailure ?: probed
+    fun unavailableReason(): String? = recordedFailure ?: probed ?: GlHost.unavailableReason()
 
     val isAvailable: Boolean get() = unavailableReason() == null
 
@@ -33,10 +33,6 @@ object ComposeSupport {
         while (e != null && seen.add(e)) {
             val message = e.message.orEmpty()
             when {
-                e is UnsatisfiedLinkError || "UnsatisfiedLinkError" in message ->
-                    return "OneConfig's UI can't start: the Skia native library failed to load for " +
-                        "$osLabel. This platform isn't supported by OneConfig's renderer."
-
                 "java.awt" in message || "Toolkit" in message || "libawt" in message ->
                     return "OneConfig's UI can't start: this Java runtime has no working AWT support " +
                         "(java.awt.Toolkit failed to initialize). Try a full JDK/JRE rather than a " +
@@ -54,8 +50,8 @@ object ComposeSupport {
         if (System.getProperty(DISABLE_PROPERTY) != null) {
             return "OneConfig's UI is disabled by the -D$DISABLE_PROPERTY JVM flag."
         }
-        if (!classExists("java.awt.Toolkit") || !classExists("org.jetbrains.skiko.Library")) {
-            return "OneConfig's UI can't start on $osLabel: a required library (AWT or Skiko) is " +
+        if (!classExists("java.awt.Toolkit")) {
+            return "OneConfig's UI can't start on $osLabel: AWT is " +
                 "missing from this Java runtime. Try a full JDK/JRE."
         }
         return awtInitFailure()

@@ -28,36 +28,32 @@ package org.polyfrost.oneconfig.api.notifications.v1
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import org.jetbrains.skia.BlendMode
-import org.jetbrains.skia.ColorFilter
-import org.jetbrains.skia.Font
-import org.jetbrains.skia.Paint
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyColumn
 import org.polyfrost.compose.composables.PolyModifier
-import org.polyfrost.compose.composables.PolyRect
 import org.polyfrost.compose.composables.PolyRow
 import org.polyfrost.compose.composables.PolyText
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.composables.border
+import org.polyfrost.compose.composables.fade
 import org.polyfrost.compose.composables.height
 import org.polyfrost.compose.composables.margin
 import org.polyfrost.compose.composables.padding
-import org.polyfrost.compose.composables.radius
 import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.composables.tag
 import org.polyfrost.compose.composables.width
 import org.polyfrost.compose.layout.PolyAlign
-import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFont
 
 private const val CARD_WIDTH = 340f
 private const val CARD_PAD_H = 14f
@@ -109,6 +105,7 @@ fun NotificationToasts() {
 @Composable
 private fun Toast(notification: Notification) {
     var appear by remember { mutableStateOf(0f) }
+    val opaque by remember { derivedStateOf { appear >= 1f } }
     val timeFraction = remember { mutableStateOf(1f) }
     val progressValue = remember { mutableStateOf(quantize(notification.progressOrNull() ?: 0f)) }
 
@@ -168,45 +165,44 @@ private fun Toast(notification: Notification) {
         NotificationsManager.dismiss(notification)
     }
 
-    val a = appear
     val hasProgress = notification.progress != null
     val bgBase = if (notification.hovered) NotificationTheme.background.lighten(0.06f) else NotificationTheme.background
-    val cardBg = bgBase.multiplyAlpha(a)
 
     PolyColumn(
         gap = 12f,
         modifier = PolyModifier
             .width(CARD_WIDTH)
-            .background(cardBg, NotificationTheme.radiusCard)
-            .border(NotificationTheme.border.multiplyAlpha(a), 1f, NotificationTheme.radiusCard)
+            .background(bgBase, NotificationTheme.radiusCard)
+            .border(NotificationTheme.border, 1f, NotificationTheme.radiusCard)
             .padding(horizontal = CARD_PAD_H, vertical = CARD_PAD_V)
-            .tag(ToastHit.Body(notification)),
+            .tag(ToastHit.Body(notification))
+            .fade(if (opaque) null else ({ appear })),
     ) {
         PolyRow(gap = ICON_GAP) {
-            ToastIcon(notification, a)
+            ToastIcon(notification)
             PolyColumn(gap = 4f) {
-                PolyText(notification.title, color = NotificationTheme.accentFor(notification.type).multiplyAlpha(a), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
+                PolyText(notification.title, color = NotificationTheme.accentFor(notification.type), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
                 val bodyFont = messageFont()
                 val lines = remember(notification.message, bodyFont) {
                     wrapText(notification.message, TEXT_WIDTH, bodyFont)
                 }
                 for (line in lines) {
-                    PolyText(line, color = NotificationTheme.textSecondary.multiplyAlpha(a), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
+                    PolyText(line, color = NotificationTheme.textSecondary, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
                 }
             }
         }
 
         val showTimer = !hasProgress && !notification.persistent && notification.actions.isEmpty()
         if (hasProgress) {
-            ProgressBar({ progressValue.value }, a)
+            ProgressBar { progressValue.value }
         } else if (showTimer) {
-            ProgressBar({ timeFraction.value }, a)
+            ProgressBar { timeFraction.value }
         }
 
         if (notification.actions.isNotEmpty()) {
             PolyRow(gap = 16f) {
                 for (action in notification.actions) {
-                    ActionButton(notification, action, a)
+                    ActionButton(notification, action)
                 }
             }
         }
@@ -219,31 +215,26 @@ private fun quantize(value: Float): Float {
 }
 
 @Composable
-private fun ProgressBar(progress: () -> Float, a: Float) {
+private fun ProgressBar(progress: () -> Float) {
     val accent = NotificationTheme.accent
     PolyBox(
         modifier = PolyModifier
             .width(CONTENT_WIDTH)
             .height(6f)
-            .background(accent.multiplyAlpha(0.5f * a), NotificationTheme.radiusProgress),
+            .background(accent.multiplyAlpha(0.5f), NotificationTheme.radiusProgress),
     ) {
-        // read here and not in the enclosing body: PolyModifier has no equals, so recomposing the
-        // outer PolyBox would rebuild its chain and reapply the whole style on every tick
-        val fillWidth = (CONTENT_WIDTH * progress()).coerceIn(0f, CONTENT_WIDTH)
-        if (fillWidth > 0f) {
-            PolyRect(
-                color = accent.multiplyAlpha(a),
-                modifier = PolyModifier.width(fillWidth).height(6f).radius(NotificationTheme.radiusProgress),
-            )
+        PolyCanvas(PolyModifier.width(CONTENT_WIDTH).height(6f), live = true) { x, y, _, h ->
+            val fillWidth = (CONTENT_WIDTH * progress()).coerceIn(0f, CONTENT_WIDTH)
+            if (fillWidth > 0f) rect(x, y, fillWidth, h, accent, NotificationTheme.radiusProgress)
         }
     }
 }
 
 @Composable
-private fun ActionButton(notification: Notification, action: NotificationAction, a: Float) {
+private fun ActionButton(notification: Notification, action: NotificationAction) {
     val hovered = ToastInput.hoveredAction === action
     val base = if (action.primary) NotificationTheme.accent else NotificationTheme.subtleButton
-    val bg = (if (hovered) base.lighten(0.12f) else base).multiplyAlpha(a)
+    val bg = if (hovered) base.lighten(0.12f) else base
     PolyBox(
         modifier = PolyModifier
             .background(bg, NotificationTheme.radiusButton)
@@ -251,51 +242,38 @@ private fun ActionButton(notification: Notification, action: NotificationAction,
             .tag(ToastHit.Action(notification, action)),
     ) {
         val textColor = if (action.primary) NotificationTheme.actionPrimaryText else NotificationTheme.actionSubtleText
-        PolyText(action.label, color = textColor.multiplyAlpha(a), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
+        PolyText(action.label, color = textColor, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
     }
 }
 
 @Composable
-private fun ToastIcon(notification: Notification, a: Float) {
+private fun ToastIcon(notification: Notification) {
     val custom = notification.icon
     if (custom != null) {
-        val paint = remember { Paint() }
         PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
-            val s = minOf(w / custom.width.toFloat(), h / custom.height.toFloat())
-            val dw = custom.width * s
-            val dh = custom.height * s
-            paint.setAlphaf(a)
-            image(custom, x + (w - dw) / 2f, y + (h - dh) / 2f, dw, dh, paint)
+            val s = minOf(w / custom.width, h / custom.height)
+            image(custom, x + (w - custom.width * s) / 2f, y + (h - custom.height * s) / 2f, custom.width * s, custom.height * s)
         }
     } else {
         val accent = NotificationTheme.accentFor(notification.type)
         val iconFolder = NotificationTheme.iconFolder
-        val paint = remember { Paint() }
-        var filterArgb = 0
         PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
-            val img = SvgRasterizer.get(notification.type.iconName, pixelSize, iconFolder)
-            if (img != null) {
-                val argb = accent.argb
-                if (argb != filterArgb) {
-                    filterArgb = argb
-                    paint.colorFilter = ColorFilter.makeBlend(argb, BlendMode.SRC_IN)
-                }
-                paint.setAlphaf(a)
-                image(img, x, y, w, h, paint)
-            }
+            val name = notification.type.iconName
+            // white masks tinted when drawn, so animating theme colours don't rasterize and cache a mask per colour
+            val img = iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, WHITE) }
+                ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, WHITE)
+            if (img != null) image(img, x, y, w, h, 0f, 0f, 1f, 1f, accent)
         }
     }
 }
 
 private const val TEXT_WIDTH = CONTENT_WIDTH - ICON_SIZE - ICON_GAP
+private const val WHITE = -1
 
-private fun messageFont(): Font {
-    val name = NotificationTheme.fontBody
-    return name?.let { FontManager.getFont(MESSAGE_SIZE, it) } ?: FontManager.getFont(MESSAGE_SIZE)
-}
+private fun messageFont(): PolyFont = NotificationTheme.fontBody?.let { PolyFont(it, MESSAGE_SIZE) } ?: PolyFont.default(MESSAGE_SIZE)
 
-private fun wrapText(text: String, maxWidth: Float, font: Font): List<String> {
+private fun wrapText(text: String, maxWidth: Float, font: PolyFont): List<String> {
     if (text.isEmpty()) return emptyList()
     if (font.measureTextWidth(text) <= maxWidth) return listOf(text)
     val lines = ArrayList<String>()

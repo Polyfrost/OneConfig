@@ -36,7 +36,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
@@ -54,6 +56,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberChainOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -146,10 +149,9 @@ fun NumberChainOption(data: NumberChainOptionData) {
                         dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                         else -> baseOffset
                     }
-                    val animatedOffset by animateFloatAsState(targetOffset)
-                    val visualOffset = if (isDragging) targetOffset else animatedOffset
-                    val bgColor by animateColorAsState(if (isDragging) Accent else theme.chipBackground)
-                    val contentColor by animateColorAsState(
+                    val animatedOffset = animateFloatAsState(targetOffset)
+                    val bgColor = animateColorAsState(if (isDragging) Accent else theme.chipBackground)
+                    val contentColor = animateColorAsState(
                         when {
                             !movable -> theme.textColorSecondary
                             isDragging || isHovered -> theme.textColor
@@ -160,12 +162,12 @@ fun NumberChainOption(data: NumberChainOptionData) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset { IntOffset(0, visualOffset.roundToInt()) }
+                            .offset { IntOffset(0, (if (isDragging) targetOffset else animatedOffset.value).roundToInt()) }
                             .onSizeChanged { if (index == 0) rowHeightPx = it.height }
                             .zIndex(if (isDragging) 1f else 0f)
                             .clip(ChainShape)
-                            .background(bgColor, ChainShape)
-                            .border(1.dp, theme.borderColor, ChainShape)
+                            .graphicsLayer {}
+                            .animatedFrame(ChainShape, fill = { bgColor.value }, border = { theme.borderColor })
                             .hoverable(rowInteraction)
                             .padding(horizontal = 10.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -195,7 +197,7 @@ fun NumberChainOption(data: NumberChainOptionData) {
                                             },
                                         )
                                 ),
-                            color = contentColor,
+                            tint = { contentColor.value },
                         )
 
                         if (editingId == entry.id) {
@@ -217,7 +219,8 @@ fun NumberChainOption(data: NumberChainOptionData) {
                         } else {
                             Text(
                                 data.label(entry.value),
-                                color = contentColor,
+                                color = Color.Unspecified,
+                                colorProducer = { contentColor.value },
                                 fontSize = 13.sp,
                                 modifier = Modifier
                                     .weight(1f)
@@ -251,11 +254,12 @@ fun NumberChainOption(data: NumberChainOptionData) {
         if (entries.size < data.maxEntries) {
             val addInteraction = rememberInteractionSource()
             val addHovered by addInteraction.collectIsHoveredAsState()
-            val addColor by animateColorAsState(if (addHovered) theme.textColor else theme.textColorSecondary)
+            val addColor = animateColorAsState(if (addHovered) theme.textColor else theme.textColorSecondary)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(ChainShape)
+                    .graphicsLayer {}
                     .border(1.dp, theme.borderColor, ChainShape)
                     .onClick(addInteraction) {
                         val values = entries.map { it.value }
@@ -266,8 +270,8 @@ fun NumberChainOption(data: NumberChainOptionData) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Icon("plus", modifier = Modifier.size(14.dp), color = addColor)
-                Text("Add", color = addColor, fontSize = 13.sp)
+                Icon("plus", modifier = Modifier.size(14.dp), tint = { addColor.value })
+                Text("Add", color = Color.Unspecified, colorProducer = { addColor.value }, fontSize = 13.sp)
             }
         }
     }

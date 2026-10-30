@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.ui.hud
 
 import java.util.concurrent.CopyOnWriteArrayList
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
 import org.slf4j.LoggerFactory
 
 //? if > 1.8.9 {
@@ -24,7 +23,7 @@ object CompatOverlayRenderer {
     fun hasHooks(): Boolean = hooks.isNotEmpty()
 
     @JvmStatic
-    fun oneConfigScreenOpen(): Boolean = HudManager.isEditing || SkiaCtx.suppressInGameHudRender
+    fun oneConfigScreenOpen(): Boolean = HudManager.isEditing
 
     @JvmStatic
     //~ if = 1.8.9 '(ctx: GuiGraphicsExtractor)' -> '()'

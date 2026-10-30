@@ -6,6 +6,7 @@ import org.jetbrains.skia.Image
 import org.polyfrost.compose.layout.LayoutType
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.node.*
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyApplier
@@ -25,7 +26,7 @@ fun PolyBox(
 @Composable
 fun PolyImage(
     modifier: PolyModifier = PolyModifier,
-    image: Image,
+    image: PolyBitmap,
 ) {
     ComposeNode<ImageNode, PolyApplier>(
         factory = { ImageNode(image).also { it.style.layoutType = LayoutType.Box; it.remeasure() } },
@@ -125,6 +126,28 @@ fun PolyMcText(
 }
 
 @Composable
+fun PolyMcText(
+    text: () -> String,
+    outlineColor: PolyColor?,
+    color: PolyColor = PolyColor.WHITE,
+    shadow: Boolean = true,
+    scale: Float = 1f,
+    modifier: PolyModifier = PolyModifier,
+) {
+    ComposeNode<McTextNode, PolyApplier>(
+        factory = { McTextNode() },
+        update = {
+            set(text) { textProvider = it; this.text = it(); remeasure() }
+            set(scale) { this.scale = it; remeasure() }
+            set(color) { this.color = it }
+            set(shadow) { this.shadow = it }
+            set(outlineColor) { this.outlineColor = it }
+            set(modifier) { modifier.applyTo(style); remeasure() }
+        },
+    )
+}
+
+@Composable
 fun PolySpacer(width: Float = 0f, height: Float = 0f) {
     ComposeNode<SpacerNode, PolyApplier>(
         factory = { SpacerNode() },
@@ -135,14 +158,25 @@ fun PolySpacer(width: Float = 0f, height: Float = 0f) {
     )
 }
 
+@Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+@Composable
+fun PolyImage(modifier: PolyModifier = PolyModifier, image: Image?) {}
+
+@Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+fun PolyCanvas(modifier: PolyModifier, onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit) =
+    PolyCanvas(modifier, false, onDraw)
+
 @Composable
 fun PolyCanvas(
     modifier: PolyModifier,
+    live: Boolean = false,
     onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit,
 ) {
     ComposeNode<CanvasNode, PolyApplier>(
         factory = { CanvasNode() },
         update = {
+            set(live) { this.live = it }
             set(modifier) { modifier.applyTo(style) }
             set(onDraw) { this.onDraw = it }
         },

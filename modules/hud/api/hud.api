@@ -28,6 +28,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun clearAnchor ()V
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	protected final fun contentChanged ()V
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
 	public final fun getAlignment ()Lorg/polyfrost/compose/layout/PolyAlign;

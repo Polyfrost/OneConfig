@@ -11,12 +11,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
-import org.jetbrains.skia.Rect
+import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -81,13 +79,9 @@ fun ItemIcon(
                 val surfaceScale = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
                 itemIcon.setRenderSizePx(ceil(maxOf(coords.size.width, coords.size.height) * surfaceScale).toInt())
             }) {
-                drawIntoCanvas { canvas ->
-                    itemIcon.draw(
-                        canvas.skiaCanvas,
-                        Rect.makeWH(size.width, size.height),
-                        alpha,
-                    )
-                }
+                val w = size.width
+                val h = size.height
+                drawPoly { itemIcon.draw(it, 0f, 0f, w, h, alpha) }
             }
         } else {
             Icon(

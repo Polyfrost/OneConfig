@@ -5,32 +5,62 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.PlatformContext
+import androidx.compose.ui.platform.WindowInfo
+import androidx.compose.ui.scene.CanvasLayersComposeScene
+import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntSize
 import com.mojang.blaze3d.platform.InputConstants
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.pow
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.compose.backend.PolyCanvas
+import org.polyfrost.compose.backend.PolyCompose
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyGlyphPage
+import org.polyfrost.compose.render.PolyRenderer
+import org.polyfrost.compose.render.PolyTessellator
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.internal.ClassPreloader
 import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.api.ModCardTypeCollapseStore
+import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
+import org.polyfrost.oneconfig.internal.ui.api.ModHidden
+import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
-import org.polyfrost.oneconfig.internal.ui.compose.BlurRenderer
-import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport
+import org.polyfrost.oneconfig.internal.ui.compose.sceneDensity
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
+import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -43,6 +73,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
+import org.polyfrost.oneconfig.utils.v1.Multithreading
 
 //? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -61,6 +92,21 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override val retainsScene: Boolean get() = this === sharedScreen
 
+    // over the blur, legacy HUDs stay as sharp as the HUD previews next to them
+    override val underlay get() = LegacyHudRenderer.liveDraw
+
+    override fun blurAlpha(): Float {
+        if (!OneConfigConfig.enableBackgroundBlur) return 0f
+        val now = System.currentTimeMillis()
+        val progress = if (closeRequested) {
+            if (closeAnimationMs <= 0L) 0f
+            else 1f - easeOutExpo((now - closeRequestedAt).toFloat() / closeAnimationMs)
+        } else {
+            (now - openedAt).toFloat() / OPEN_ANIMATION_MS
+        }
+        return progress.coerceIn(0f, 1f)
+    }
+
     companion object {
         private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
@@ -69,7 +115,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         private var sharedScreen: OneConfigUIScreen? = null
 
         private fun shared(): OneConfigUIScreen =
-            sharedScreen ?: OneConfigUIScreen().also { sharedScreen = it }
+            sharedScreen ?: run { ClassPreloader.recordFirstOpen(); dropPrerasteredLater(); OneConfigUIScreen() }.also { sharedScreen = it }
 
         @JvmStatic
         fun forRoute(route: Any?): OneConfigUIScreen = shared().also {
@@ -90,7 +136,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             it.resumeNext = true
         }
 
-        private const val FULLSCREEN_BLUR_RADIUS = 8f
         private const val OPEN_ANIMATION_MS = 250L
 
         /** Serialized so two closes in quick succession cannot write the same files at once */
@@ -123,38 +168,131 @@ class OneConfigUIScreen @JvmOverloads constructor(
             return OpeningRoute(route, restored = true)
         }
 
-        @JvmStatic
-        fun prewarmShared(): Boolean = shared().runPrewarm()
+        private const val WARM_FRAMES = 6
+
+        private const val WARM_STOP_WAIT_MS = 250L
+
+        private const val PRERASTER_DROP_DELAY_S = 5L
+
+        private val warmLock = ReentrantLock()
+
+        @Volatile
+        private var warmStopped = false
 
         @JvmStatic
-        fun endPrewarmShared() {
-            sharedScreen?.let {
-                if (!it.everOpened && Platform.screen().current<Any?>() !== it) {
-                    it.restorePrewarmScroll()
-                    it.restorePrewarmNavigation()
-                }
-                it.endPrewarm()
+        fun stopWarmUp() {
+            if (warmStopped) return
+            warmStopped = true
+            val start = System.nanoTime()
+            if (!warmLock.tryLock(WARM_STOP_WAIT_MS, TimeUnit.MILLISECONDS)) {
+                LOGGER.warn("The OneConfig UI warm-up did not stop within {}ms", WARM_STOP_WAIT_MS)
+                return
+            }
+            warmLock.unlock()
+            val waited = (System.nanoTime() - start) / 1_000_000L
+            if (waited > 0) LOGGER.info("Waited {}ms for the OneConfig UI warm-up to stop", waited)
+        }
+
+        private fun dropPrerasteredLater() {
+            Multithreading.schedule({
+                LOGGER.info("Dropped {} unused prerasterized glyphs", PolyGlyphPage.dropPrerastered())
+            }, PRERASTER_DROP_DELAY_S, TimeUnit.SECONDS)
+        }
+
+        @JvmStatic
+        fun prepareWarmUp(): Runnable? {
+            if (java.lang.Boolean.getBoolean("oneconfig.debug.noWarmCompose") || sharedScreen != null || !ComposeSupport.isAvailable) return null
+            val w = Platform.screen().windowWidth()
+            val h = Platform.screen().windowHeight()
+            if (w <= 0 || h <= 0) return null
+            ModFavorites.contains("")
+            ModHidden.contains("")
+            ModSortStore.selectedId
+            ModCardTypeCollapseStore.isCollapsed("")
+            KeybindGroupCollapseStore.isCollapsed("")
+            val density = sceneDensity()
+            val surface = Platform.screen().viewportWidth().toFloat() / w
+            return Runnable { warmUp(w, h, density, surface) }
+        }
+
+        private fun warmUp(w: Int, h: Int, density: Float, surface: Float) {
+            warmLock.lock()
+            try {
+                if (!warmStopped) warmFrames(w, h, density, surface)
+            } finally {
+                warmLock.unlock()
             }
         }
 
-        private const val PREWARM_FRAME_BUDGET = 1
-
-        private const val PREWARM_OPEN_FRAME = 1
-
-        private val PREWARM_SCROLL_FRAMES = 5..17
-        private const val PREWARM_RESTORE_FRAME = 18
-
-        private val PREWARM_ROUTES = listOf(PreferencesGraph, ThemesGraph, KeybindsGraph, ModsGraph)
-        private const val PREWARM_FRAMES_PER_PAGE = 2
-        private val PREWARM_PAGE_FRAMES = PREWARM_RESTORE_FRAME + 1..
-            PREWARM_RESTORE_FRAME + PREWARM_ROUTES.size * PREWARM_FRAMES_PER_PAGE
-
-        private val PREWARM_FORGET_FRAME = PREWARM_PAGE_FRAMES.last + 1
-        private val PREWARM_CLOSE_FRAME = PREWARM_FORGET_FRAME + 1
-
-        private val PREWARM_FRAMES = PREWARM_CLOSE_FRAME + 1
-
-        private const val MOD_GRID_KEY = "mods"
+        @OptIn(InternalComposeUiApi::class)
+        private fun warmFrames(w: Int, h: Int, density: Float, surface: Float) {
+            val start = System.nanoTime()
+            val thread = Thread.currentThread()
+            val queue = ConcurrentLinkedQueue<Runnable>()
+            val dispatcher = object : CoroutineDispatcher() {
+                override fun isDispatchNeeded(context: CoroutineContext) = Thread.currentThread() !== thread
+                override fun dispatch(context: CoroutineContext, block: Runnable) {
+                    queue += block
+                }
+            }
+            fun drain() {
+                while (true) (queue.poll() ?: return).run()
+            }
+            val failure = AtomicReference<Throwable?>()
+            var frames = 0
+            try {
+                PolyCompose.install()
+                val recomposer = FrameRecomposer(dispatcher + CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }) {}
+                val scope = SingleComposeSceneRenderingScope {}
+                val scene = try {
+                    CanvasLayersComposeScene(
+                        frameRecomposer = recomposer,
+                        platformContext = WarmPlatformContext(IntSize(w, h)),
+                        invalidateLayout = scope::onSceneInvalidation,
+                        invalidateDraw = scope::onSceneInvalidation,
+                    )
+                } catch (t: Throwable) {
+                    recomposer.close()
+                    throw t
+                }
+                val shell = ShellController(warming = true)
+                try {
+                    scene.density = Density(density)
+                    scene.size = IntSize(w, h)
+                    shell.session.resume()
+                    if (OneConfigConfig.instantSearch) shell.search.requestFocus(SearchFocus.SelectAll)
+                    scene.setContent { OneConfigInterface(w.toFloat(), h.toFloat(), shell = shell) }
+                    val renderer = WarmRenderer()
+                    val canvas = PolyCanvas(renderer)
+                    var nanos = System.nanoTime()
+                    while (frames < WARM_FRAMES && !warmStopped) {
+                        drain()
+                        recomposer.performFrame(nanos)
+                        scene.measureAndLayout()
+                        scene.sendPointerEvent(PointerEventType.Move, Offset(1f, 1f))
+                        renderer.save()
+                        renderer.scale(surface, surface)
+                        with(scope) { scene.render(recomposer, canvas, nanos) }
+                        renderer.restore()
+                        failure.get()?.let { throw it }
+                        nanos += 16_666_667L
+                        frames++
+                    }
+                } finally {
+                    try {
+                        scene.close()
+                        recomposer.close()
+                        shell.session.stop()
+                        drain()
+                    } catch (t: Throwable) {
+                        LOGGER.debug("Ignoring failure while closing the OneConfig UI warm-up scene", t)
+                    }
+                }
+                LOGGER.info("Warmed the OneConfig UI ({} frames) in {}ms", frames, (System.nanoTime() - start) / 1_000_000L)
+            } catch (t: Throwable) {
+                LOGGER.warn("Failed to warm the OneConfig UI after {} frames; it will start cold", frames, t)
+            }
+        }
 
         @JvmStatic
         fun openLastSession() {
@@ -169,7 +307,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     @Volatile private var openedAt = 0L
 
     private fun beginClose() {
-        if (prewarming || closeRequested) return
+        if (closeRequested) return
         closeRequested = true
         closeRequestedAt = System.currentTimeMillis()
         closeAnimationMs = guiCloseAnimationMillis()
@@ -203,63 +341,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     private var openRevision by mutableIntStateOf(0)
 
-    private var prewarming = false
-
     @Volatile private var everOpened = false
-
-    private fun restorePrewarmScroll() {
-        scrollModGrid(0)
-    }
-
-    private fun restorePrewarmNavigation() {
-        warmRoute(ModsGraph)
-        shell.navigation.reset()
-        shell.navigation.recordLastRoute(null)
-    }
-
-    private fun runPrewarm(): Boolean {
-        if (everOpened || Platform.screen().current<Any?>() === this) return true
-        prewarming = true
-        return try {
-            ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
-            warmIconCache(ConfigRegistry.modCardConfigs.mapNotNull { it.icon })
-            prewarm(PREWARM_FRAMES, PREWARM_FRAME_BUDGET) { frame ->
-                when (frame) {
-                    PREWARM_OPEN_FRAME -> requestOpenCallback?.invoke()
-                    PREWARM_CLOSE_FRAME -> requestCloseCallback?.invoke()
-                    PREWARM_RESTORE_FRAME -> restorePrewarmScroll()
-                    in PREWARM_PAGE_FRAMES -> {
-                        val step = frame - PREWARM_PAGE_FRAMES.first
-                        if (step % PREWARM_FRAMES_PER_PAGE == 0) {
-                            warmRoute(PREWARM_ROUTES[step / PREWARM_FRAMES_PER_PAGE])
-                        }
-                    }
-                    PREWARM_FORGET_FRAME -> restorePrewarmNavigation()
-                    in PREWARM_SCROLL_FRAMES -> {
-                        val grid = shell.scroll.grid(MOD_GRID_KEY) ?: return@prewarm
-                        val last = (grid.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
-                        val step = frame - PREWARM_SCROLL_FRAMES.first
-                        val span = PREWARM_SCROLL_FRAMES.last - PREWARM_SCROLL_FRAMES.first
-                        scrollModGrid(last * step / span)
-                    }
-                }
-            }
-        } catch (t: Throwable) {
-            endPrewarm()
-            ComposePreloader.fail("menu warm-up failed", t)
-            false
-        } finally {
-            prewarming = false
-        }
-    }
-
-    private fun scrollModGrid(index: Int) {
-        runCatching { shell.scroll.grid(MOD_GRID_KEY)?.requestScrollToItem(index) }
-    }
-
-    private fun warmRoute(route: Any) {
-        runCatching { if (shell.navigation.isReady) shell.navigation.navigate(route) }
-    }
 
     private fun markClosed() {
         shell.session.markClosed(System.currentTimeMillis())
@@ -328,13 +410,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             shell.session.updateVersionLabel("OneConfig")
         }
 
-        //? if < 1.21.8 {
-        /*// Compose normally creates its surface after the HUD pass.
-        // Create the surface now to avoid drawing the HUD twice.
-        SkiaCtx.prepareComposeSurface()
-        *///?}
-
-        SkiaCtx.suppressInGameHudRender = true
         HudManager.overrideShowInScreens = true
         HudManager.isConfigUiOpen = true
 
@@ -362,7 +437,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun removed() {
-        SkiaCtx.suppressInGameHudRender = false
         HudManager.overrideShowInScreens = false
         HudManager.isConfigUiOpen = false
         shell.layout.updateShellBounds(null)
@@ -446,17 +520,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             //? if < 1.21.8 && > 1.8.9
             //renderBackground(ctx, mouseX, mouseY, tickDelta)
             Platform.screen().close()
-            //? if >= 1.21.8 {
-            // This frame skipped normal HUD rendering because OneConfig was open.
-            // Closing removes the Compose copy as well, so add the normal HUD back.
-            OneConfig.render(ctx)
-            //?} else {
-            /*if (closeAnimationMs <= 0L) {
-                SkiaCtx.discardComposeFrame()
-                //~ if = 1.8.9 '(ctx)' -> '()'
-                OneConfig.render(ctx)
-            }
-            *///?}
             return
         }
         if (client.level == null) {
@@ -469,32 +532,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
             ItemCatalog.renderHudIcons()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
-        if (OneConfigConfig.enableBackgroundBlur) {
-            //? if >= 1.21.10 {
-            if (SkiaCtx.isDeferredComposeBackend) {
-                ctx.nextStratum()
-                ctx.blurBeforeThisStratum()
-                SkiaCtx.requestBlurSnapshot()
-            }
-            //? }
-            BlurRenderer.drawBlur(fullscreenBlurRadius())
-        }
         //? if > 1.8.9 {
         //~ if >= 26.1 'render' -> 'extractRenderState'
         super.extractRenderState(ctx, mouseX, mouseY, tickDelta)
         //?} else
         //super.render(mouseX, mouseY, tickDelta)
-    }
-
-    private fun fullscreenBlurRadius(): Float {
-        val now = System.currentTimeMillis()
-        val progress = if (closeRequested) {
-            if (closeAnimationMs <= 0L) 0f
-            else 1f - easeOutExpo((now - closeRequestedAt).toFloat() / closeAnimationMs)
-        } else {
-            (now - openedAt).toFloat() / OPEN_ANIMATION_MS
-        }
-        return FULLSCREEN_BLUR_RADIUS * progress.coerceIn(0f, 1f)
     }
 
     private fun easeOutExpo(progress: Float): Float {
@@ -525,4 +567,22 @@ class OneConfigUIScreen @JvmOverloads constructor(
             },
         ) { }
     }
+}
+
+@OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
+private class WarmPlatformContext(size: IntSize) : PlatformContext by PlatformContext.Empty() {
+    override val windowInfo: WindowInfo = object : WindowInfo {
+        override val isWindowFocused: Boolean get() = true
+        override val containerSize: IntSize = size
+    }
+}
+
+private class WarmRenderer : PolyTessellator() {
+    override val cpuOnly: Boolean get() = true
+
+    override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {}
+
+    override fun bitmapTexture(bitmap: PolyBitmap): Any = bitmap
+
+    override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
 }

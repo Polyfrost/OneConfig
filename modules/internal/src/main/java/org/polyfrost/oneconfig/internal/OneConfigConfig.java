@@ -21,6 +21,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
+import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
@@ -297,34 +298,34 @@ public class OneConfigConfig extends Config {
     )
     public static boolean pauseGame = false;
 
+    @Slider(
+        title = "oneconfig.preferences.ui_scale.title",
+        titleTranslation = true,
+        subcategory = "oneconfig.preferences.category.gui",
+        subcategoryTranslation = true,
+        min = 50f,
+        max = 200f,
+        step = 5f,
+        description = "oneconfig.preferences.ui_scale.description",
+        descriptionTranslation = true
+    )
+    public static float uiScale = 100f;
+
     @Dropdown(
-        title = "oneconfig.preferences.reduced_res_filter.title",
+        title = "oneconfig.preferences.pixel_grid.title",
         titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
         subcategoryTranslation = true,
         options = {
-            "oneconfig.preferences.reduced_res_filter.off",
-            "oneconfig.preferences.reduced_res_filter.sharpen",
-            "oneconfig.preferences.reduced_res_filter.harden"
+            "oneconfig.preferences.pixel_grid.auto",
+            "oneconfig.preferences.pixel_grid.always",
+            "oneconfig.preferences.pixel_grid.never"
         },
         optionsTranslation = true,
-        description = "oneconfig.preferences.reduced_res_filter.description",
+        description = "oneconfig.preferences.pixel_grid.description",
         descriptionTranslation = true
     )
-    public static int reducedResFilter = 0;
-
-    @Slider(
-        title = "oneconfig.preferences.ui_sharpening.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 0f,
-        max = 1f,
-        step = 0.05f,
-        description = "oneconfig.preferences.ui_sharpening.description",
-        descriptionTranslation = true
-    )
-    public static float uiSharpening = 0.4f;
+    public static int pixelGrid = 0;
 
     @Dropdown(
         title = "oneconfig.preferences.remember_last_page.title",
@@ -664,10 +665,6 @@ public class OneConfigConfig extends Config {
         if (tree == null) {
             return;
         }
-        addDependency(
-            "uiSharpening",
-            "Reduced-resolution filter",
-            () -> reducedResFilter != 0 ? Property.Display.SHOWN : Property.Display.DISABLED);
         migrateOpeningBehavior();
         addDependency(
             "restoreHudEditor",
@@ -705,6 +702,18 @@ public class OneConfigConfig extends Config {
         addCallback(
             "glowOpacity", (java.lang.Number v) -> {
                 ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, v.floatValue());
+                return false;
+            });
+        ProviderKt.setUiScalePercent(uiScale);
+        ProviderKt.setPixelGridMode(pixelGrid);
+        addCallback(
+            "uiScale", (java.lang.Number v) -> {
+                ProviderKt.setUiScalePercent(v.floatValue());
+                return false;
+            });
+        addCallback(
+            "pixelGrid", (java.lang.Number v) -> {
+                ProviderKt.setPixelGridMode(v.intValue());
                 return false;
             });
         addCallback(

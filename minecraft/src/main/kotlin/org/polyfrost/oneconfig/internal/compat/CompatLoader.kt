@@ -11,7 +11,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
+import org.polyfrost.oneconfig.internal.ui.GpuBackend
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.resyncTextureBindCache
 
 object CompatLoader {
@@ -53,8 +53,6 @@ object CompatLoader {
         "kotlinx",
         "androidx.compose",
         "org.jetbrains.compose",
-        "org.jetbrains.skia",
-        "org.jetbrains.skiko",
         "org.polyfrost.compose",
         "org.polyfrost.polyui"
     )
@@ -162,7 +160,7 @@ object CompatLoader {
 
     private fun runNextScreenWarmup() {
         val warmup = screenWarmups.poll() ?: return
-        if (!SkiaCtx.isVulkanMode) runCatching { resyncTextureBindCache() }
+        if (!GpuBackend.isVulkan) runCatching { resyncTextureBindCache() }
         runCatching { warmup() }.onFailure { LOGGER.warn("Config screen warmup failed", it) }
     }
 

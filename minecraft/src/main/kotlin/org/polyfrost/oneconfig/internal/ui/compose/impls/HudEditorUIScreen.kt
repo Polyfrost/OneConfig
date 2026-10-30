@@ -16,7 +16,6 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.compose.ComposePreloader
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
@@ -40,8 +39,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudEditor")
 
-private const val PREWARM_FRAMES = 2
-
 class HudEditorUIScreen private constructor() : ComposeScreen() {
     companion object {
         private var instance: HudEditorUIScreen? = null
@@ -52,27 +49,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             screen.enteredFromOneConfig = fromOneConfig
             return screen
         }
-
-        @JvmStatic
-        fun prewarmShared(): Boolean = open(false).runPrewarm()
-
-        @JvmStatic
-        fun endPrewarmShared() {
-            instance?.endPrewarm()
-        }
     }
 
     @Volatile private var everOpened = false
-
-    private fun runPrewarm(): Boolean {
-        if (everOpened || Platform.screen().current<Any?>() === this) return true
-        return try {
-            prewarm(PREWARM_FRAMES, budget = 1) { }
-        } catch (t: Throwable) {
-            ComposePreloader.fail("HUD editor warm-up failed", t)
-            false
-        }
-    }
 
     override val retainsScene: Boolean get() = true
 
@@ -109,8 +88,6 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     private var requestCloseCallback: (() -> Unit)? = null
     private var requestOpenCallback: (() -> Unit)? = null
-
-    override val scrollSpeed: Float get() = 0.5f
 
     override fun init() {
         everOpened = true

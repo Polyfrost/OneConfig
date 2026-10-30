@@ -1,0 +1,62 @@
+{
+    "targets": {
+        "oneconfig:ui_blur_a": {},
+        "oneconfig:ui_blur_b": {}
+    },
+    "passes": [
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "oneconfig:post/ui_blur_down",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "minecraft:main",
+                    "bilinear": true
+                }
+            ],
+            "output": "oneconfig:ui_blur_a"
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "oneconfig:post/ui_blur",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "oneconfig:ui_blur_a",
+                    "bilinear": true
+                }
+            ],
+            "output": "oneconfig:ui_blur_b",
+            "uniforms": {
+                "BlurConfig": [
+                    {
+                        "name": "BlurDir",
+                        "type": "vec2",
+                        "value": [ 1.0, 0.0 ]
+                    }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "oneconfig:post/ui_blur",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "oneconfig:ui_blur_b",
+                    "bilinear": true
+                }
+            ],
+            "output": "oneconfig:ui_blur_out",
+            "uniforms": {
+                "BlurConfig": [
+                    {
+                        "name": "BlurDir",
+                        "type": "vec2",
+                        "value": [ 0.0, 1.0 ]
+                    }
+                ]
+            }
+        }
+    ]
+}
