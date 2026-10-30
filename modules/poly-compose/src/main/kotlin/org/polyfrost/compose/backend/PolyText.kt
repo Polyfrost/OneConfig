@@ -582,8 +582,9 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         if (run.style.background.isSpecified && run.style.background.alpha > 0f) r.rect(x, l.top, w, l.bottom - l.top, run.style.background.toArgb(), 0f)
         val sh = run.spanShadow ?: shadow ?: run.style.shadow
         val letter = intr.px(run.style.letterSpacing, 0f)
-        if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font, letter)
-        r.text(str, x, l.baseline, c, run.font, letter)
+        val skew = run.style.textGeometricTransform?.skewX ?: 0f
+        if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font, letter, skew)
+        r.text(str, x, l.baseline, c, run.font, letter, skew)
         val deco = run.spanDecoration ?: decoration ?: run.style.textDecoration
         if (deco != null) {
             val m = run.metrics

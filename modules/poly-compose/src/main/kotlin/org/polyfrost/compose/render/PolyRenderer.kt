@@ -39,6 +39,10 @@ interface PolyRenderer {
         }
     }
 
+    /** Draws [text] sheared so a point `d` above the baseline shifts right by `d * skewX`. */
+    fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float, skewX: Float) =
+        text(text, x, y, color, font, letterSpacing)
+
     fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float)
 
     fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float)

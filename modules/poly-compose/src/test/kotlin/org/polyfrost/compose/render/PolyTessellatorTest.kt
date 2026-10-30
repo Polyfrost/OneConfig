@@ -603,6 +603,24 @@ class PolyTessellatorTest {
     }
 
     @Test
+    fun skewedTextShearsAboutBaseline() {
+        val face = object : PolyGlyphPage.Face {
+            override fun glyph(codepoint: Int) = 1
+            override fun advance(glyph: Int) = 1f
+            override fun raster(glyph: Int, pixelSize: Float) = PolyGlyphPage.Raster(0, -4, 2, 4, ByteArray(8) { -1 })
+        }
+        val old = PolyGlyphPage.rasterizer
+        PolyGlyphPage.rasterizer = object : PolyGlyphPage.Rasterizer { override fun face(name: String) = face }
+        try {
+            val b = Recorder().run { text("a", 10f, 20f, -1, PolyFont("skew", 4f), 0f, 0.5f); done() }.single()
+            val corners = (0 until b.colors.size).map { b.verts[it * 4] to b.verts[it * 4 + 1] }.toSet()
+            assertEquals(setOf(12f to 16f, 14f to 16f, 10f to 20f, 12f to 20f), corners)
+        } finally {
+            PolyGlyphPage.rasterizer = old
+        }
+    }
+
+    @Test
     fun mcOutlineCoversEachPixelOnce() {
         val face = object : PolyGlyphPage.Face {
             override fun glyph(codepoint: Int) = 1

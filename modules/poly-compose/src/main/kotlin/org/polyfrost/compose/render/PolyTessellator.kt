@@ -505,6 +505,14 @@ abstract class PolyTessellator : PolyRenderer {
 
     override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float) = glyphs(text, x, y, color, font, 0f, false, true, letterSpacing)
 
+    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float, skewX: Float) {
+        if (skewX == 0f || state.sy == 0f) return text(text, x, y, color, font, letterSpacing)
+        shearX = skewX * state.sx / state.sy
+        shearBase = y * state.sy + state.ty
+        glyphs(text, x, y, color, font, 0f, false, true, letterSpacing)
+        shearX = 0f
+    }
+
     override fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float) =
         glyphs(text, x, y, color, font, width * scaleAvg(), true, true)
 
@@ -601,14 +609,14 @@ abstract class PolyTessellator : PolyRenderer {
         mcText(text, x, y, color, false, scale)
     }
 
-    private var italicTop = Float.NaN
-    private var italicX = 0f
-    private var italicY = 0f
+    // device-space horizontal shear: x += shearX * (shearBase - y)
+    private var shearX = 0f
+    private var shearBase = 0f
 
     private fun glyphQuad(x0: Float, y0: Float, x1: Float, y1: Float, u0: Float, v0: Float, u1: Float, v1: Float, c: Int) {
-        if (italicTop.isNaN()) return quadPx(x0, y0, x1, y1, u0, v0, u1, v1, c)
-        val s0 = italicX * (1f - 0.25f * (y0 - italicTop) / italicY)
-        val s1 = italicX * (1f - 0.25f * (y1 - italicTop) / italicY)
+        if (shearX == 0f) return quadPx(x0, y0, x1, y1, u0, v0, u1, v1, c)
+        val s0 = shearX * (shearBase - y0)
+        val s1 = shearX * (shearBase - y1)
         vertex(x0 + s0, y0, u0, v0, c)
         vertex(x0 + s1, y1, u0, v1, c)
         vertex(x1 + s1, y1, u1, v1, c)
@@ -651,9 +659,8 @@ abstract class PolyTessellator : PolyRenderer {
                 continue
             }
             val drawn = if (shadow) (c and -0x1000000) or ((c and 0xFCFCFC) shr 2) else c
-            italicTop = if (italic) top * state.sy + state.ty else Float.NaN
-            italicX = scale * state.sx
-            italicY = scale * state.sy
+            shearX = if (italic) 0.25f * state.sx / state.sy else 0f
+            shearBase = (top + 4f * scale) * state.sy + state.ty
             val start = pen
             val main = PolyGlyphPage.rasterizer?.face(if (bold) "minecraft-bold" else "minecraft")
             val s = String(Character.toChars(cp))
@@ -670,7 +677,7 @@ abstract class PolyTessellator : PolyRenderer {
             if (under) mcEffect(start - scale, top + 8f * scale, pen, top + 9f * scale, drawn)
             if (strike) mcEffect(start - scale, top + 3.5f * scale, pen, top + 4.5f * scale, drawn)
         }
-        italicTop = Float.NaN
+        shearX = 0f
     }
 
     override fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality) {

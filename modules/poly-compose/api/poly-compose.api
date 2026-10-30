@@ -1150,6 +1150,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
 	public abstract fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
+	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;FF)V
 	public abstract fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public abstract fun translate (FF)V
 }
@@ -1175,6 +1176,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun strokePolyline (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFII)V
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
 	public static fun text (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
+	public static fun text (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;FF)V
 }
 
 public final class org/polyfrost/compose/render/PolyShadow {
@@ -1263,6 +1265,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	protected abstract fun submit (Ljava/lang/Object;ZZ[F[I[F)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
+	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;FF)V
 	public fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	protected final fun touch (FFFF)V
 	protected final fun touchAll ()V
