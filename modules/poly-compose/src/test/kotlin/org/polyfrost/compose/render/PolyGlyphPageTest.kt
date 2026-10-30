@@ -27,6 +27,16 @@ class PolyGlyphPageTest {
     }
 
     @Test
+    fun glyphPagesDontUseUpBitmapPages() {
+        val face = CountingFace { raster(1000, 1000) }
+        val atlas = PolyGlyphPage.atlas(face, 4000)
+        repeat(5) { PolyGlyphPage.glyph(atlas, face, 4000, it) }
+        val bitmap = PolyBitmap(200, 200, ByteArray(200 * 200 * 4))
+        val g = PolyGlyphPage.bitmap(bitmap)
+        assertTrue(g != null && g.page === PolyGlyphPage.pages.last())
+    }
+
+    @Test
     fun blankGlyphsAreRasterizedOnce() {
         val face = CountingFace { null }
         repeat(3) { assertNull(PolyGlyphPage.glyph(PolyGlyphPage.atlas(face, 64), face, 64, 1)) }

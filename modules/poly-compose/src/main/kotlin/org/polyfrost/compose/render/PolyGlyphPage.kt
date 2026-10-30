@@ -219,6 +219,7 @@ object PolyGlyphPage {
     private const val BITMAP_PAGES = 4
 
     private val bitmaps = WeakHashMap<PolyBitmap, Glyph>()
+    private var bitmapPages = 0
     private var placedSince = 0L
     private var placed = 0
 
@@ -229,7 +230,7 @@ object PolyGlyphPage {
         val now = System.nanoTime()
         if (now - placedSince > 1_000_000_000L) { placedSince = now; placed = 0 }
         if (++placed > 128) return null
-        val g = _pages.last().place(b) ?: (if (_pages.size < BITMAP_PAGES) Page().also { _pages += it }.place(b) else null) ?: return null
+        val g = _pages.last().place(b) ?: (if (bitmapPages < BITMAP_PAGES) Page().also { _pages += it; bitmapPages++ }.place(b) else null) ?: return null
         bitmaps[b] = g
         return g
     }
