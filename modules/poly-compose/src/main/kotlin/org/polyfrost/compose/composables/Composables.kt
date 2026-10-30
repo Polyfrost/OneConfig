@@ -157,6 +157,11 @@ fun PolySpacer(width: Float = 0f, height: Float = 0f) {
     )
 }
 
+@Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+fun PolyCanvas(modifier: PolyModifier, onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit) =
+    PolyCanvas(modifier, false, onDraw)
+
 @Composable
 fun PolyCanvas(
     modifier: PolyModifier,

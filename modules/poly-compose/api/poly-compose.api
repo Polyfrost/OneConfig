@@ -341,6 +341,7 @@ public final class org/polyfrost/compose/composables/ComposableSingletons$Compos
 
 public final class org/polyfrost/compose/composables/ComposablesKt {
 	public static final fun PolyBox (Lorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun PolyCanvas (Lorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;I)V
 	public static final fun PolyCanvas (Lorg/polyfrost/compose/composables/PolyModifier;ZLkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyColumn (FLorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyImage (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/render/PolyBitmap;Landroidx/compose/runtime/Composer;II)V
@@ -580,11 +581,15 @@ public final class org/polyfrost/compose/mc/McFontQueue {
 	public static final field INSTANCE Lorg/polyfrost/compose/mc/McFontQueue;
 	public final fun getMeasureHeight ()Lkotlin/jvm/functions/Function1;
 	public final fun getMeasureWidth ()Lkotlin/jvm/functions/Function2;
+	public final synthetic fun getOutlineRenderer ()Lkotlin/jvm/functions/Function7;
+	public final synthetic fun getRenderer ()Lkotlin/jvm/functions/Function7;
 	public final fun measureBlockHeight (IF)F
 	public final fun measureTextHeight (F)F
 	public final fun measureTextWidth (Ljava/lang/String;F)F
 	public final fun setMeasureHeight (Lkotlin/jvm/functions/Function1;)V
 	public final fun setMeasureWidth (Lkotlin/jvm/functions/Function2;)V
+	public final synthetic fun setOutlineRenderer (Lkotlin/jvm/functions/Function7;)V
+	public final synthetic fun setRenderer (Lkotlin/jvm/functions/Function7;)V
 }
 
 public final class org/polyfrost/compose/mc/McGlyph {
@@ -723,14 +728,16 @@ public final class org/polyfrost/compose/render/FontManager {
 	public static final field $stable I
 	public static final field DEFAULT_KEY Ljava/lang/String;
 	public static final field INSTANCE Lorg/polyfrost/compose/render/FontManager;
+	public final synthetic fun clearCache ()V
+	public final synthetic fun flushCache (Ljava/lang/String;)V
 	public final fun fontData (Ljava/lang/String;)[B
 	public final fun getRevision ()I
 	public final fun invalidateMetrics ()V
 	public final fun isPixelAligned (Ljava/lang/String;)Z
-	public final fun loadFromResource (Ljava/lang/String;)Z
-	public final fun loadFromResource (Ljava/lang/String;Ljava/lang/String;)Z
-	public final fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Z
+	public final synthetic fun loadFromResource (Ljava/lang/String;)V
+	public final synthetic fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Z
 	public final fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;Z)Z
+	public static synthetic fun loadFromResource$default (Lorg/polyfrost/compose/render/FontManager;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;ILjava/lang/Object;)Z
 	public static synthetic fun loadFromResource$default (Lorg/polyfrost/compose/render/FontManager;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;ZILjava/lang/Object;)Z
 	public final fun register (Ljava/lang/String;[B)V
 	public final fun register (Ljava/lang/String;[BZ)V
