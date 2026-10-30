@@ -906,16 +906,18 @@ public final class org/polyfrost/compose/render/PolyGlyphPage {
 	public static final field SIZE I
 	public static final field SUBPIXELS I
 	public static final field WHITE_UV F
-	public final fun atlas (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;I)Ljava/util/HashMap;
-	public final fun atlas (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IFZ)Ljava/util/HashMap;
+	public final fun atlas (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IFZI)Ljava/util/HashMap;
+	public final fun atlas (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;II)Ljava/util/HashMap;
+	public static synthetic fun atlas$default (Lorg/polyfrost/compose/render/PolyGlyphPage;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IFZIILjava/lang/Object;)Ljava/util/HashMap;
+	public static synthetic fun atlas$default (Lorg/polyfrost/compose/render/PolyGlyphPage;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIILjava/lang/Object;)Ljava/util/HashMap;
 	public static final fun bitmap (Lorg/polyfrost/compose/render/PolyBitmap;)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
 	public static final fun dropPrerastered ()I
 	public static final fun getPages ()Ljava/util/List;
 	public static final fun getRasterizer ()Lorg/polyfrost/compose/render/PolyGlyphPage$Rasterizer;
 	public static final fun getRecorder ()Lkotlin/jvm/functions/Function4;
 	public static final fun getRevision ()J
-	public final fun glyph (Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZI)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
-	public static synthetic fun glyph$default (Lorg/polyfrost/compose/render/PolyGlyphPage;Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZIILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
+	public final fun glyph (Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZII)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
+	public static synthetic fun glyph$default (Lorg/polyfrost/compose/render/PolyGlyphPage;Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZIIILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
 	public static final fun prerasterize (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;III)V
 	public static final fun setRasterizer (Lorg/polyfrost/compose/render/PolyGlyphPage$Rasterizer;)V
 	public static final fun setRecorder (Lkotlin/jvm/functions/Function4;)V
@@ -1078,6 +1080,15 @@ public final class org/polyfrost/compose/render/PolyGradient$Sweep : org/polyfro
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class org/polyfrost/compose/render/PolyMaskGamma {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/compose/render/PolyMaskGamma;
+	public final fun apply (Lorg/polyfrost/compose/render/PolyGlyphPage$Raster;I)Lorg/polyfrost/compose/render/PolyGlyphPage$Raster;
+	public final fun bucket (I)I
+	public final fun scale255 (I)I
+	public final fun table (IF)[B
+}
+
 public final class org/polyfrost/compose/render/PolyPath {
 	public static final field $stable I
 	public static final field ARC I
@@ -1138,6 +1149,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public fun strokePolyline ([FZIFII)V
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
 	public abstract fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
+	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public abstract fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public abstract fun translate (FF)V
 }
@@ -1162,6 +1174,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun shadowWithHole (Lorg/polyfrost/compose/render/PolyRenderer;FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
 	public static fun strokePolyline (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFII)V
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
+	public static fun text (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 }
 
 public final class org/polyfrost/compose/render/PolyShadow {
@@ -1249,6 +1262,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun strokePolyline ([FZIFII)V
 	protected abstract fun submit (Ljava/lang/Object;ZZ[F[I[F)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
+	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public fun textOutline (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	protected final fun touch (FFFF)V
 	protected final fun touchAll ()V
