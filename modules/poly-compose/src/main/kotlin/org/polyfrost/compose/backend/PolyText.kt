@@ -145,6 +145,8 @@ internal class PolyIntrinsics(
     val runs: List<TextRun>
     val glyphs = Arabic.shape(text)
     val advances = FloatArray(text.length)
+    // prefix sums keep width lookups O(1) for line breaking and bidi hit testing
+    private val prefix = DoubleArray(text.length + 1)
     val lineHeightPx: Float
     val align: TextAlign = style.textAlign
 
@@ -193,6 +195,7 @@ internal class PolyIntrinsics(
                 i += n
             }
         }
+        for (i in advances.indices) prefix[i + 1] = prefix[i] + advances[i]
         val natural = runs.maxOf { it.metrics.spacing }
         lineHeightPx = if (style.lineHeight.isSpecified) px(style.lineHeight, natural) else round(natural)
     }
@@ -203,7 +206,7 @@ internal class PolyIntrinsics(
 
     fun runAt(offset: Int): TextRun = runs.firstOrNull { offset < it.end } ?: runs.last()
 
-    fun width(start: Int, end: Int): Float { var w = 0f; for (i in start until end) w += advances[i]; return w }
+    fun width(start: Int, end: Int): Float = if (end <= start) 0f else (prefix[end] - prefix[start]).toFloat()
 
     override val maxIntrinsicWidth: Float by lazy {
         var best = 0f; var cur = 0f
