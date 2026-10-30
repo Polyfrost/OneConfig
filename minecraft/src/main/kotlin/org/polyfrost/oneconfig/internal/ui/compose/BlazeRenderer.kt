@@ -987,8 +987,8 @@ internal object KeptMeshes {
 object BlazeHud {
     private var dirty = true
     private var scale = 0f
-    private val stable = Recording(coalesce = true)
-    private val volatile = Recording()
+    private val stable = Recording(coalesceFrames = COALESCE_FRAMES)
+    private val volatile = Recording(coalesce = false)
     private var stableRenderer: BlazeRenderer? = null
     private var volatileRenderer: BlazeRenderer? = null
 
@@ -1047,7 +1047,7 @@ object BlazeToasts {
     }
 }
 
-internal class Recording(private val coalesce: Boolean = false) {
+internal class Recording(private val coalesce: Boolean = true, private val coalesceFrames: Int = SCREEN_COALESCE_FRAMES) {
     private var ops: List<(GuiGraphicsExtractor) -> Unit> = emptyList()
     private var raw: List<(GuiGraphicsExtractor) -> Unit> = emptyList()
     private var stable = 0
@@ -1086,7 +1086,7 @@ internal class Recording(private val coalesce: Boolean = false) {
 
     fun idle() {
         BitmapTextures.touch(bitmaps)
-        if (coalesce && ++stable == COALESCE_FRAMES) ops = BlazeRenderer.coalesce(raw)
+        if (coalesce && ++stable == coalesceFrames) ops = BlazeRenderer.coalesce(raw)
         if (ops !== raw && ops.any { it is BlazeRenderer.MeshOp && it.mesh.closed }) ops = raw
     }
 
@@ -1263,6 +1263,8 @@ private inline fun stacking(gfx: GuiGraphicsExtractor, draw: () -> Unit) {
 }
 
 private const val COALESCE_FRAMES = 60
+// screens re-record on every caret blink or clock tick, so they merge on their first idle frame, before the unmerged meshes are kept
+private const val SCREEN_COALESCE_FRAMES = 1
 
 interface StackingGuiRenderState {
     fun `oneconfig$setStacking`(stacking: Boolean)
