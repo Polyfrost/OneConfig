@@ -1263,7 +1263,8 @@ private inline fun stacking(gfx: GuiGraphicsExtractor, draw: () -> Unit) {
 }
 
 private const val COALESCE_FRAMES = 60
-// screens re-record on every caret blink or clock tick, so they merge on their first idle frame, before the unmerged meshes are kept
+// screens re-record on every caret blink or clock tick, so they merge on their first idle frame, before the unmerged meshes are kept;
+// re-merging the whole screen after such a change costs a few small uploads, far less than drawing every mesh separately each frame
 private const val SCREEN_COALESCE_FRAMES = 1
 
 interface StackingGuiRenderState {
