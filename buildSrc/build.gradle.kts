@@ -25,7 +25,7 @@ dependencies {
     implementation("org.ow2.asm:asm-commons:9.11.1")
     implementation("com.google.guava:guava:33.0.0-jre")
 
-    implementation("org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.10")
+    implementation("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.21")
     implementation(plugin(libs.plugins.kotlin))
     implementation(plugin(libs.plugins.kotlin.compose))
     implementation(plugin(libs.plugins.google.ksp))
