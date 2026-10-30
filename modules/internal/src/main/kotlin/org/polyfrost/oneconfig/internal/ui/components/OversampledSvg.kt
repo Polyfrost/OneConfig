@@ -46,9 +46,12 @@ import org.polyfrost.oneconfig.api.notifications.v1.SvgMask
 
 val LocalUiOversample = staticCompositionLocalOf { 1f }
 
-private class Raster(val image: ImageBitmap?)
+private class Raster(val image: ImageBitmap?, val key: String = "")
 
 private val svgRasters = ConcurrentHashMap<String, Raster>()
+
+// unnamed SVGs (e.g. from painterResource) share their latest raster by content; one size each keeps resizes from piling up
+private val contentRasters = ConcurrentHashMap<String, Raster>()
 
 private val svgSizes = ConcurrentHashMap<String, Size>()
 
@@ -104,7 +107,7 @@ class OversampledSvgPainter(
         var img = cached
         if (img == null || cachedKey != key) {
             val shared = cacheKey
-            img = if (shared == null) rasterize(px, mask)
+            img = if (shared == null) contentRasters.compute(svg) { _, old -> old?.takeIf { it.key == key } ?: Raster(rasterize(px, mask), key) }?.image
             else svgRasters.getOrPut("$shared@$key") { Raster(rasterize(px, mask)) }.image
             cached = img
             cachedKey = key
