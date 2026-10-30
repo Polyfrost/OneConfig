@@ -75,6 +75,15 @@ class ImageBitmapCanvasTest {
     }
 
     @Test
+    fun perCornerRoundRectsKeepEachRadius() {
+        PolyCompose.install()
+        val shape = RoundRect(0f, 0f, 20f, 20f, bottomRightCornerRadius = CornerRadius(10f))
+        val out = drawInto(ImageBitmap(20, 20)) { drawPath(Path().apply { addRoundRect(shape) }, Color.Red) }
+        assertEquals(0xFFFF0000.toInt(), out.argb(0, 0))
+        assertEquals(0, out.argb(19, 19) ushr 24)
+    }
+
+    @Test
     fun imagesAreSampledIntoBitmaps() {
         PolyCompose.install()
         // 300 pixels is too wide for the atlas, so that image is sampled from its own bytes

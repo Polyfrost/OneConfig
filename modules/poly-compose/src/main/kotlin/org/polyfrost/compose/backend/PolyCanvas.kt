@@ -255,7 +255,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     override fun drawPath(path: Path, paint: Paint) = clearing(paint) { fillOrStroke(path as PolyComposePath, paint as PolyPaint) }
 
     private fun fillOrStroke(p: PolyComposePath, pp: PolyPaint) {
-        p.roundRect?.let { return shape(it.left, it.top, it.width, it.height, it.topLeftCornerRadius.x, pp) }
+        p.roundRect?.takeIf { it.isSimple }?.let { return shape(it.left, it.top, it.width, it.height, it.topLeftCornerRadius.x, pp) }
         p.plainRect?.let { return shape(it.left, it.top, it.width, it.height, 0f, pp) }
         if (pp.style == PaintingStyle.Stroke) {
             p.allContours().forEachIndexed { i, c -> strokeContour(c, p.closedAt(i), pp) }
