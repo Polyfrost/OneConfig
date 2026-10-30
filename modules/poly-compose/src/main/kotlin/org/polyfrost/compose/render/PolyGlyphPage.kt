@@ -122,6 +122,9 @@ object PolyGlyphPage {
 
     private data class Prekey(val face: Face, val bucket: Int, val slot: Int)
 
+    // Stands in for glyphs without a bitmap, such as spaces, so they're only rasterized once
+    private val BLANK = Raster(0, 0, 0, 0, ByteArray(0))
+
     private val prerastered = ConcurrentHashMap<Prekey, Raster>()
     private val rasters = HashMap<Prekey, Raster>()
 
@@ -147,18 +150,26 @@ object PolyGlyphPage {
         if (prerasterDropped) return
         val key = Prekey(face, bucket, id * SUBPIXELS + phase)
         if (prerastered.containsKey(key)) return
-        prerastered.putIfAbsent(key, raster(face, bucket, id, phase) ?: return)
+        prerastered.putIfAbsent(key, raster(face, bucket, id, phase) ?: BLANK)
         if (prerasterDropped) prerastered.remove(key)
     }
 
-    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int, outlinePx: Float = 0f, round: Boolean = false, phase: Int = 0, lum: Int = -1): Glyph? = atlas.getOrPut(id * SUBPIXELS + phase) {
-        if (outlinePx > 0f) return@getOrPut place(dilate(raster(face, bucket, id, phase) ?: return@getOrPut null, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
+    fun glyph(atlas: HashMap<Int, Glyph?>, face: Face, bucket: Int, id: Int, outlinePx: Float = 0f, round: Boolean = false, phase: Int = 0, lum: Int = -1): Glyph? {
+        val slot = id * SUBPIXELS + phase
+        atlas[slot]?.let { return it }
+        if (atlas.containsKey(slot)) return null
+        return newGlyph(face, bucket, id, outlinePx, round, phase, lum).also { atlas[slot] = it }
+    }
+
+    private fun newGlyph(face: Face, bucket: Int, id: Int, outlinePx: Float, round: Boolean, phase: Int, lum: Int): Glyph? {
+        if (outlinePx > 0f) return place(dilate(raster(face, bucket, id, phase) ?: return null, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
         val key = Prekey(face, bucket, id * SUBPIXELS + phase)
-        val r = rasters[key] ?: run {
+        val r = rasters.getOrPut(key) {
             recorder?.invoke(face, bucket, id, phase)
-            (prerastered.remove(key) ?: raster(face, bucket, id, phase))?.also { rasters[key] = it }
-        } ?: return@getOrPut null
-        place(if (lum < 0) r else PolyMaskGamma.apply(r, lum))
+            prerastered.remove(key) ?: raster(face, bucket, id, phase) ?: BLANK
+        }
+        if (r === BLANK) return null
+        return place(if (lum < 0) r else PolyMaskGamma.apply(r, lum))
     }
 
     private fun dilate(r: Raster, radius: Float, round: Boolean): Raster {
