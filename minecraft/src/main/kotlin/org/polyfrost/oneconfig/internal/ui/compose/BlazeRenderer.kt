@@ -723,9 +723,15 @@ internal object McOutlines {
     private val entries = LinkedHashMap<Key, Outline>(16, 0.75f, true)
     private val pool = ArrayList<OffscreenTarget>()
     private var gui: Pair<GuiRenderState, GuiRenderer>? = null
+    private var generation = 0
 
     init {
-        EventManager.register(ResourceFinishedLoading::class.java, Runnable { entries.values.forEach { it.dirty = true } })
+        // sizes depend on the font, so outlines from before a reload are dropped rather than redrawn
+        EventManager.register(ResourceFinishedLoading::class.java, Runnable {
+            generation++
+            entries.values.forEach { it.release() }
+            entries.clear()
+        })
     }
 
     fun get(text: String, rgb: Int, kx: Float, ky: Float, fx: Float, fy: Float): Outline? {
@@ -738,7 +744,7 @@ internal object McOutlines {
         val pad = ceil(PAD_FONT_PX * max(kx, ky))
         val w = ceil(pad * 2f + width * kx + 1f)
         val h = ceil(pad * 2f + lines.size * font.lineHeight * ky + 1f)
-        val outline = Outline(key, lines, pad, w, h)
+        val outline = Outline(key, lines, pad, w, h, generation)
         entries[key] = outline
         evict()
         return outline
@@ -760,15 +766,15 @@ internal object McOutlines {
         seq.accept { index, style, codePoint -> sink.accept(index, style.withColor(null as TextColor?), codePoint) }
     }
 
-    class Outline internal constructor(internal val key: Key, private val lines: List<String>, val pad: Float, val w: Float, val h: Float) {
+    class Outline internal constructor(internal val key: Key, private val lines: List<String>, val pad: Float, val w: Float, val h: Float, private val generation: Int) {
         private val obfuscated = key.text.contains("§k", ignoreCase = true)
         private var target: OffscreenTarget? = null
-        internal var dirty = true
+        private var dirty = true
         internal var lastUsed = System.nanoTime()
 
         fun draw(g: GuiGraphicsExtractor, pose: Matrix3x2f, x0: Float, y0: Float, color: Int, bounds: ScreenRectangle, scissor: ScreenRectangle?) {
             lastUsed = System.nanoTime()
-            if (target == null) entries.putIfAbsent(key, this)
+            if (target == null && generation == McOutlines.generation) entries.putIfAbsent(key, this)
             if (dirty || obfuscated || target?.target == null) render()
             val rt = target?.target ?: return
             val view = rt.colorTextureView ?: return
