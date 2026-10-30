@@ -218,6 +218,13 @@ class ComposeBackendTest {
     }
 
     @Test
+    fun selectionEndingAtWrapCoversLine() {
+        val p = paragraph("abcdefgh", maxWidth = 28)
+        assertEquals(2, p.lineCount)
+        assertEquals(0f to 28f, p.getPathForRange(0, 4).getBounds().let { it.left to it.right })
+    }
+
+    @Test
     fun caretAndHitTestRoundTrip() {
         for (text in listOf("abc אבג def", "אבג", "אבג abc דהו", "abc")) {
             val p = paragraph(text)

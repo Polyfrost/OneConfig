@@ -530,8 +530,9 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
             val s = max(start, l.start)
             val e = min(end, l.visibleEnd)
             if (s >= e && !(start < l.end && end > l.visibleEnd && s <= l.visibleEnd)) continue
-            val x0 = getHorizontalPosition(s, true)
-            val x1 = if (end > l.visibleEnd && l.end > l.visibleEnd) getHorizontalPosition(l.visibleEnd, true) + intr.advances.getOrElse(l.visibleEnd) { 0f } else getHorizontalPosition(e, true)
+            // measured from this line's start because a wrapped line's end offset resolves to the next line
+            val x0 = l.left + intr.width(l.start, s)
+            val x1 = if (end > l.visibleEnd && l.end > l.visibleEnd) l.left + intr.width(l.start, l.visibleEnd) + intr.advances.getOrElse(l.visibleEnd) { 0f } else l.left + intr.width(l.start, e)
             p.addRect(Rect(x0, l.top, max(x1, x0), l.bottom))
         }
         return p
