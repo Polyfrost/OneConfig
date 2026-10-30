@@ -157,7 +157,7 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
             val alpha = (r as GlRenderer).state.alpha
             val c = mulAlpha(color(), alpha)
             if (c ushr 24 != 0) {
-                val sc = mulAlpha((c and -0x1000000) or ((c and 0xFCFCFC) shr 2), alpha)
+                val sc = (c and -0x1000000) or ((c and 0xFCFCFC) shr 2)
                 for (k in baked.indices) {
                     val dst = baked[k].colors
                     val src = base[k]
