@@ -52,7 +52,10 @@ import org.polyfrost.compose.render.PolyFade
 import org.polyfrost.compose.render.PolyGradient
 
 object PolyGraphics : PlatformGraphics {
-    override fun createCanvas(image: ImageBitmap): Canvas = error("drawing into ImageBitmap is not supported")
+    override fun createCanvas(image: ImageBitmap): Canvas {
+        val target = image as PolyImageBitmap
+        return PolyCanvas(BitmapRenderer(target).also { target.renderer = it })
+    }
     override fun createPaint(): Paint = PolyPaint()
     override fun isBlendModeSupported(blendMode: BlendMode) = blendMode == BlendMode.SrcOver
     override fun isTileModeSupported(tileMode: TileMode) = tileMode == TileMode.Clamp
@@ -62,7 +65,7 @@ object PolyGraphics : PlatformGraphics {
     override fun createPathMeasure(): PathMeasure = error("PathMeasure is not supported")
 
     override fun createImageBitmap(width: Int, height: Int, config: ImageBitmapConfig, hasAlpha: Boolean, colorSpace: ColorSpace): ImageBitmap =
-        PolyImageBitmap(PolyBitmap(width, height, ByteArray(width * height * 4)))
+        PolyImageBitmap(PolyBitmap(width, height, ByteArray(width * height * 4)), config)
 
     override fun decodeImageBitmap(bytes: ByteArray): ImageBitmap =
         PolyImageBitmap(PolyBitmap.decode(bytes) ?: error("cannot decode image (${bytes.size} bytes)"))
@@ -139,17 +142,39 @@ internal object NoPathEffect : PathEffect
 internal object NoEffect : PlatformRenderEffect
 internal class PolyBlurEffect(val sigma: Float) : PlatformRenderEffect
 
-class PolyImageBitmap(val bitmap: PolyBitmap) : ImageBitmap {
-    override val width get() = bitmap.width
-    override val height get() = bitmap.height
+class PolyImageBitmap internal constructor(private var current: PolyBitmap, override val config: ImageBitmapConfig) : ImageBitmap {
+    constructor(bitmap: PolyBitmap) : this(bitmap, ImageBitmapConfig.Argb8888)
+
+    internal var renderer: BitmapRenderer? = null
+    private var handedOut = false
+
+    /** The pixels drawn so far, including any drawing through a `Canvas` created for this image. */
+    val bitmap: PolyBitmap
+        get() {
+            renderer?.sync()
+            handedOut = true
+            return current
+        }
+
+    override val width get() = current.width
+    override val height get() = current.height
     override val colorSpace: ColorSpace get() = ColorSpaces.Srgb
     override val hasAlpha get() = true
-    override val config get() = ImageBitmapConfig.Argb8888
+
+    // Renderers cache textures by PolyBitmap identity, so a bitmap that may have been uploaded must not change in place
+    internal fun pixelsForDrawing(): ByteArray {
+        if (handedOut) {
+            current = PolyBitmap(current.width, current.height, current.pixels.copyOf())
+            handedOut = false
+        }
+        return current.pixels
+    }
 
     override fun readPixels(buffer: IntArray, startX: Int, startY: Int, width: Int, height: Int, bufferOffset: Int, stride: Int) {
-        val px = bitmap.pixels
+        renderer?.sync()
+        val px = current.pixels
         for (y in 0 until height) for (x in 0 until width) {
-            val o = ((startY + y) * bitmap.width + startX + x) * 4
+            val o = ((startY + y) * current.width + startX + x) * 4
             buffer[bufferOffset + y * stride + x] = ((px[o + 3].toInt() and 0xFF) shl 24) or ((px[o].toInt() and 0xFF) shl 16) or
                 ((px[o + 1].toInt() and 0xFF) shl 8) or (px[o + 2].toInt() and 0xFF)
         }

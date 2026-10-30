@@ -190,7 +190,15 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     }
 
     override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) =
-        shape(left, top, right - left, bottom - top, 0f, paint as PolyPaint)
+        clearing(paint) { shape(left, top, right - left, bottom - top, 0f, paint as PolyPaint) }
+
+    private inline fun clearing(paint: Paint, draw: () -> Unit) {
+        if (paint.blendMode != BlendMode.Clear) return draw()
+        // Only image bitmaps can be cleared; Compose clears them before redrawing cached content
+        val bitmap = r as? BitmapRenderer ?: return
+        bitmap.erasing = true
+        try { draw() } finally { bitmap.erasing = false }
+    }
 
     override fun drawRoundRect(left: Float, top: Float, right: Float, bottom: Float, radiusX: Float, radiusY: Float, paint: Paint) =
         shape(left, top, right - left, bottom - top, radiusX, paint as PolyPaint)
@@ -213,9 +221,9 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         drawPath(p, paint)
     }
 
-    override fun drawPath(path: Path, paint: Paint) {
-        val p = path as PolyComposePath
-        val pp = paint as PolyPaint
+    override fun drawPath(path: Path, paint: Paint) = clearing(paint) { fillOrStroke(path as PolyComposePath, paint as PolyPaint) }
+
+    private fun fillOrStroke(p: PolyComposePath, pp: PolyPaint) {
         p.roundRect?.let { return shape(it.left, it.top, it.width, it.height, it.topLeftCornerRadius.x, pp) }
         p.plainRect?.let { return shape(it.left, it.top, it.width, it.height, 0f, pp) }
         val color = pp.argb()
