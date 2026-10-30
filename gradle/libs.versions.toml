@@ -9,7 +9,7 @@ google-ksp = "2.3.12"
 annotations = "26.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
-icu4j = "72.1" # compile baseline only, Minecraft provides ICU4J at runtime
+icu4j = "79.1" # compile baseline only, Minecraft provides ICU4J at runtime
 
 # Not in risk of needing to be relaunched / bumped by JiJ
 snakeyaml = "1.33"
