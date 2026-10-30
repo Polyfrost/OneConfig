@@ -57,8 +57,11 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
 
+private val italicFonts = ConcurrentHashMap.newKeySet<String>()
+
 class PolyFontSource(val key: String, private val bytes: () -> ByteArray, override val weight: FontWeight, override val style: FontStyle) : Font {
     internal fun register(): String {
+        if (style == FontStyle.Italic) italicFonts += key
         if (FontManager.fontData(key) == null) FontManager.register(key, bytes())
         return key
     }
@@ -105,7 +108,7 @@ object PolyText : PlatformText {
 
 internal class TextRun(
     val start: Int, val end: Int, val font: PolyFont, val style: SpanStyle,
-    val spanColor: Color = Color.Unspecified, val spanDecoration: TextDecoration? = null, val spanShadow: Shadow? = null,
+    val spanColor: Color = Color.Unspecified, val spanDecoration: TextDecoration? = null, val spanShadow: Shadow? = null, val skew: Float = 0f,
 ) {
     val metrics get() = font.metrics
 }
@@ -144,7 +147,11 @@ internal class PolyIntrinsics(
             val name = resolver.resolve(s.fontFamily, s.fontWeight ?: FontWeight.Normal, s.fontStyle ?: FontStyle.Normal, s.fontSynthesis ?: FontSynthesis.All).value as? String
                 ?: FontManager.DEFAULT_KEY
             val size = px(s.fontSize, 14f)
-            runs += TextRun(a, b, fontCache.getOrPut(name to size) { PolyFont(name, size) }, s, spanColor, spanDecoration, spanShadow)
+            val synthesis = s.fontSynthesis ?: FontSynthesis.All
+            // like Skia, slant upright faces when italic is requested and the family has no italic face
+            val fakeItalic = s.fontStyle == FontStyle.Italic && name !in italicFonts && (synthesis == FontSynthesis.All || synthesis == FontSynthesis.Style)
+            val skew = (s.textGeometricTransform?.skewX ?: 0f) + if (fakeItalic) 0.25f else 0f
+            runs += TextRun(a, b, fontCache.getOrPut(name to size) { PolyFont(name, size) }, s, spanColor, spanDecoration, spanShadow, skew)
         }
         if (runs.isEmpty()) {
             val name = resolver.resolve(base.fontFamily, base.fontWeight ?: FontWeight.Normal, base.fontStyle ?: FontStyle.Normal).value as? String ?: FontManager.DEFAULT_KEY
@@ -582,9 +589,8 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
         if (run.style.background.isSpecified && run.style.background.alpha > 0f) r.rect(x, l.top, w, l.bottom - l.top, run.style.background.toArgb(), 0f)
         val sh = run.spanShadow ?: shadow ?: run.style.shadow
         val letter = intr.px(run.style.letterSpacing, 0f)
-        val skew = run.style.textGeometricTransform?.skewX ?: 0f
-        if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font, letter, skew)
-        r.text(str, x, l.baseline, c, run.font, letter, skew)
+        if (sh != null && sh != Shadow.None && sh.color.alpha > 0f) r.text(str, x + sh.offset.x, l.baseline + sh.offset.y, sh.color.toArgb(), run.font, letter, run.skew)
+        r.text(str, x, l.baseline, c, run.font, letter, run.skew)
         val deco = run.spanDecoration ?: decoration ?: run.style.textDecoration
         if (deco != null) {
             val m = run.metrics

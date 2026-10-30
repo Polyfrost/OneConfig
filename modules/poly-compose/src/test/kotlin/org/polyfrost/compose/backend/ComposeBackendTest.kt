@@ -26,6 +26,8 @@ import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
 import androidx.compose.ui.text.PlatformParagraph
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
@@ -240,6 +242,21 @@ class ComposeBackendTest {
         }
         paragraph("a", TextStyle(color = Color.Black.copy(alpha = 0.5f))).paint(PolyCanvas(r), Color.Unspecified, null, null)
         assertEquals(0x80, argb ushr 24)
+    }
+
+    @Test
+    fun italicWithoutItalicFaceIsSlanted() {
+        fun skewOf(style: TextStyle): Float {
+            var skew = Float.NaN
+            val r = object : PolyRenderer by LogRenderer() {
+                override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float, skewX: Float) { skew = skewX }
+            }
+            paragraph("a", style).paint(PolyCanvas(r), Color.Unspecified, null, null)
+            return skew
+        }
+        assertEquals(0.25f, skewOf(TextStyle(fontStyle = FontStyle.Italic)))
+        assertEquals(0f, skewOf(TextStyle(fontStyle = FontStyle.Italic, fontSynthesis = FontSynthesis.None)))
+        assertEquals(0f, skewOf(TextStyle()))
     }
 
     @Test
