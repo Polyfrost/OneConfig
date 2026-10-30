@@ -43,6 +43,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.FilterQuality
+import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGradient
@@ -257,6 +258,20 @@ class ComposeBackendTest {
         assertEquals(0.25f, skewOf(TextStyle(fontStyle = FontStyle.Italic)))
         assertEquals(0f, skewOf(TextStyle(fontStyle = FontStyle.Italic, fontSynthesis = FontSynthesis.None)))
         assertEquals(0f, skewOf(TextStyle()))
+    }
+
+    @Test
+    fun advancesRefreshWhenFontsChange() {
+        var unit = 0.5f
+        PolyFont.engine = object : PolyFont.Engine {
+            override fun measureTextWidth(font: PolyFont, text: String) = text.codePointCount(0, text.length) * font.size * unit
+            override fun metrics(font: PolyFont) = PolyFont.Metrics(-font.size * 0.8f, font.size * 0.2f, 0f, font.size * 0.1f, 1f)
+        }
+        fun width() = PolyText.createParagraph("ab", TextStyle(), emptyList(), emptyList(), 0, TextOverflow.Clip, Constraints(), Density(1f), PolyText.createFontFamilyResolver()).maxIntrinsicWidth
+        assertEquals(14f, width())
+        unit = 1f
+        FontManager.invalidateMetrics()
+        assertEquals(28f, width())
     }
 
     @Test

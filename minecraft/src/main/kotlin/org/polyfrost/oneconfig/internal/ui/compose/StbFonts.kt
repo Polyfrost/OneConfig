@@ -21,7 +21,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
-    class Face(bytes: ByteArray) : PolyGlyphPage.Face {
+    class Face(val bytes: ByteArray) : PolyGlyphPage.Face {
         private val data = MemoryUtil.memAlloc(bytes.size).put(bytes).flip()
         val info: STBTTFontinfo = STBTTFontinfo.malloc()
         val emScale: Float
@@ -104,10 +104,15 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
         }
     }
 
-    private val faces = HashMap<String, Face?>()
+    private val faces = HashMap<String, Face>()
 
+    // replaced faces aren't freed because glyph caches may still rasterize from them
     @Synchronized
-    override fun face(name: String): Face? = faces.getOrPut(name) { FontManager.fontData(name)?.let(::Face) }
+    override fun face(name: String): Face? {
+        val bytes = FontManager.fontData(name) ?: return null
+        faces[name]?.let { if (it.bytes === bytes) return it }
+        return Face(bytes).also { faces[name] = it }
+    }
 
     @Synchronized
     private fun nameOf(face: PolyGlyphPage.Face): String? = faces.entries.firstOrNull { it.value === face }?.key

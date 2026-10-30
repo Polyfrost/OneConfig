@@ -205,9 +205,16 @@ internal class PolyIntrinsics(
 
 private object Advances {
     private val cache = ConcurrentHashMap<PolyFont, ConcurrentHashMap<Int, Float>>()
+    @Volatile private var fonts = -1
 
-    fun of(font: PolyFont, cp: Int): Float =
-        cache.getOrPut(font) { ConcurrentHashMap() }.getOrPut(cp) { font.measureTextWidth(String(Character.toChars(cp))) }
+    fun of(font: PolyFont, cp: Int): Float {
+        val revision = FontManager.revision
+        if (revision != fonts) {
+            cache.clear()
+            fonts = revision
+        }
+        return cache.getOrPut(font) { ConcurrentHashMap() }.getOrPut(cp) { font.measureTextWidth(String(Character.toChars(cp))) }
+    }
 }
 
 internal class Seg(val str: String, val x: Float, val w: Float, val run: TextRun)
