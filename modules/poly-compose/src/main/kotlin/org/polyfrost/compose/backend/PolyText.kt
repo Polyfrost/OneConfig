@@ -321,7 +321,7 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                 TextAlign.Left -> 0f
                 else -> if (rtl) boxW - w else 0f
             }
-            val baseline = if (intr.style.lineHeight.isSpecified) top + (lh - content) / 2f + ascent else top + lh - (content - ascent)
+            val baseline = top + (lh - content) / 2f + ascent
             val line = Line(s, e, vEnd, top, top + lh, baseline, max(0f, left), w, ellipsize, rtl)
             if (b == null || lv == null) line else bidiLine(line, b, paraStart, if (ellipsize) vEnd else min(e, paraEnd), ew, lv)
         }
