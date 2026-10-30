@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import java.util.Arrays
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.acos
@@ -512,8 +513,8 @@ internal object Raster {
         val direct = FloatArray(w + 2); val diff = FloatArray(w + 2)
         val left = bx0.toFloat(); val right = (bx1 + 1).toFloat()
         for (y in by0..by1) {
-            java.util.Arrays.fill(direct, bx0, bx1 + 2, 0f)
-            java.util.Arrays.fill(diff, bx0, bx1 + 2, 0f)
+            Arrays.fill(direct, bx0, bx1 + 2, 0f)
+            Arrays.fill(diff, bx0, bx1 + 2, 0f)
             for (s in 0 until SS) {
                 val sy = y + (s + 0.5f) / SS
                 while (next < n && ey0[order[next]] <= sy) active[na++] = order[next++]
