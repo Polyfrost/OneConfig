@@ -16,7 +16,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.scene.CanvasLayersComposeScene
@@ -30,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -215,6 +219,17 @@ class ComposeBackendTest {
         assertEquals(21f to 28f, span(3, 4))
         assertEquals(35f to 49f, span(4, 6))
         assertEquals(21f to 49f, span(3, 6))
+    }
+
+    @Test
+    fun paintColorReplacesBrushAlpha() {
+        PolyCompose.install()
+        val r = LogRenderer()
+        CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, PolyCanvas(r), Size(10f, 10f)) {
+            drawRect(Brush.horizontalGradient(listOf(Color.Red, Color.Blue)), alpha = 0.25f)
+            drawRect(Color.Red)
+        }
+        assertEquals("rect 0.0,0.0 10.0x10.0 #ffff0000 r=0.0", r.calls.last())
     }
 
     @Test

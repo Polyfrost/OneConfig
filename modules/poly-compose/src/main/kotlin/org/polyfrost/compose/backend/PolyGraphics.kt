@@ -161,9 +161,11 @@ class PolyImageBitmap(val bitmap: PolyBitmap) : ImageBitmap {
 fun PolyBitmap.asComposeImageBitmap(): ImageBitmap = PolyImageBitmap(this)
 
 class PolyPaint : Paint {
-    override var alpha = 1f
     override var isAntiAlias = true
     override var color = Color.Black
+    override var alpha: Float
+        get() = color.alpha
+        set(value) { color = color.copy(alpha = value) }
     override var blendMode = BlendMode.SrcOver
     override var style = PaintingStyle.Fill
     override var strokeWidth = 0f
@@ -177,16 +179,14 @@ class PolyPaint : Paint {
     var blur = 0f
 
     fun copy(): PolyPaint = PolyPaint().also {
-        it.alpha = alpha; it.isAntiAlias = isAntiAlias; it.color = color; it.blendMode = blendMode; it.style = style
+        it.isAntiAlias = isAntiAlias; it.color = color; it.blendMode = blendMode; it.style = style
         it.strokeWidth = strokeWidth; it.strokeCap = strokeCap; it.strokeJoin = strokeJoin; it.strokeMiterLimit = strokeMiterLimit
         it.filterQuality = filterQuality; it.shader = shader; it.colorFilter = colorFilter; it.pathEffect = pathEffect; it.blur = blur
     }
 
     fun argb(): Int {
-        val tint = colorFilter?.let { tintOf(it) }
-        val c = tint ?: color
-        val a = (c.alpha * alpha * (if (tint != null) color.alpha else 1f)).coerceIn(0f, 1f)
-        return c.copy(alpha = a).toArgb()
+        val tint = colorFilter?.let { tintOf(it) } ?: return color.toArgb()
+        return tint.copy(alpha = tint.alpha * color.alpha).toArgb()
     }
 
     private fun tintOf(filter: ColorFilter): Color? = (filterPlatform(filter) as? TintFilter)?.color
