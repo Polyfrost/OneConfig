@@ -44,12 +44,28 @@ object FontManager {
 
     fun isPixelAligned(name: String) = name in pixelFonts
 
-    // sfnt version tags for TrueType, CFF OpenType, Apple TrueType and font collections
-    private fun isFont(bytes: ByteArray): Boolean {
-        if (bytes.size < 12) return false
-        val tag = (bytes[0].toInt() and 0xFF shl 24) or (bytes[1].toInt() and 0xFF shl 16) or (bytes[2].toInt() and 0xFF shl 8) or (bytes[3].toInt() and 0xFF)
-        return tag == 0x00010000 || tag == 0x4F54544F || tag == 0x74727565 || tag == 0x74746366
+    // checks the table directory and the tables stb_truetype needs, so unreadable fonts fail here rather than when first drawn
+    private fun isFont(bytes: ByteArray, at: Int = 0): Boolean {
+        fun u16(o: Int) = (bytes[o].toInt() and 0xFF shl 8) or (bytes[o + 1].toInt() and 0xFF)
+        fun u32(o: Int) = (u16(o).toLong() shl 16) or u16(o + 2).toLong()
+        if (at < 0 || bytes.size - at < 12) return false
+        when (String(bytes, at, 4, Charsets.ISO_8859_1)) {
+            "ttcf" -> return at == 0 && bytes.size >= 16 && u32(12) < bytes.size && isFont(bytes, u32(12).toInt())
+            "\u0000\u0001\u0000\u0000", "OTTO", "true" -> {}
+            else -> return false
+        }
+        val count = u16(at + 4)
+        if (at + 12 + count * 16 > bytes.size) return false
+        val tables = HashSet<String>()
+        for (i in 0 until count) {
+            val record = at + 12 + i * 16
+            if (u32(record + 8) + u32(record + 12) > bytes.size) return false
+            tables += String(bytes, record, 4, Charsets.ISO_8859_1)
+        }
+        return tables.containsAll(REQUIRED_TABLES) && ("CFF " in tables || "glyf" in tables && "loca" in tables)
     }
+
+    private val REQUIRED_TABLES = listOf("cmap", "head", "hhea", "hmtx")
 
     @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmName("loadFromResource")

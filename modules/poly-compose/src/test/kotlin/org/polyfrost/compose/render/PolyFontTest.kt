@@ -27,5 +27,7 @@ class PolyFontTest {
         assertFalse(FontManager.loadFromResource("org/polyfrost/compose/render/FontManager.class", "not-a-font"))
         assertThrows<IllegalArgumentException> { FontManager.register("not-a-font", ByteArray(64)) }
         assertNull(FontManager.fontData("not-a-font"))
+        val truncated = ByteArray(12).also { it[1] = 1 }
+        assertThrows<IllegalArgumentException> { FontManager.register("not-a-font", truncated) }
     }
 }
