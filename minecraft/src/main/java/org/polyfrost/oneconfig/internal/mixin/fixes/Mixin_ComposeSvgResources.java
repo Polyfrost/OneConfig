@@ -17,6 +17,6 @@ public class Mixin_ComposeSvgResources {
      */
     @Overwrite
     public static Painter loadSvgPainter(InputStream inputStream, Density density) throws IOException {
-        return new OversampledSvgPainter(inputStream.readAllBytes(), 1f, null);
+        return new OversampledSvgPainter(inputStream.readAllBytes(), 1f, null, density.getDensity());
     }
 }

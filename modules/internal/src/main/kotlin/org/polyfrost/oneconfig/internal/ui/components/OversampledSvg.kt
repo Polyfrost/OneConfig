@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.BlendModeColorFilter
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
@@ -58,6 +59,7 @@ class OversampledSvgPainter(
     bytes: ByteArray,
     private val oversample: Float,
     private val cacheKey: String? = null,
+    density: Float = 1f,
 ) : Painter() {
     private val svg = String(bytes, Charsets.UTF_8)
 
@@ -74,7 +76,8 @@ class OversampledSvgPainter(
     private val defaultSize: Size =
         if (cacheKey == null) measure() else svgSizes.getOrPut(cacheKey, ::measure)
 
-    override val intrinsicSize: Size get() = defaultSize
+    // like Compose's SVG painter, unitless sizes are density-independent pixels
+    override val intrinsicSize: Size = if (defaultSize.isSpecified) defaultSize * density else defaultSize
 
     private var alpha = 1f
     private var colorFilter: ColorFilter? = null
