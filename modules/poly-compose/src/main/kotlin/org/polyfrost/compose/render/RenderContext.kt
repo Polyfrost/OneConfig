@@ -1,7 +1,14 @@
 package org.polyfrost.compose.render
 
+import org.jetbrains.skia.Canvas
+import org.jetbrains.skia.Font
+import org.jetbrains.skia.Image
+import org.jetbrains.skia.Paint
 
 class RenderContext(val renderer: PolyRenderer) {
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    constructor(canvas: Canvas?) : this(throw UnsupportedOperationException("Skia is no longer supported"))
+
     @JvmField
     var cacheNodes = false
 
@@ -121,4 +128,47 @@ class RenderContext(val renderer: PolyRenderer) {
 
     fun clipRect(x: Float, y: Float, w: Float, h: Float) = renderer.clipRect(x, y, w, h)
     fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = renderer.clipRRect(x, y, w, h, radius)
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    val canvas: Canvas? get() = null
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    val paint: Paint? get() = null
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("scale")
+    fun skiaScale(sx: Float, sy: Float): Canvas? {
+        scale(sx, sy)
+        return null
+    }
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("clipRect")
+    fun skiaClipRect(x: Float, y: Float, w: Float, h: Float): Canvas? {
+        clipRect(x, y, w, h)
+        return null
+    }
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("clipRRect")
+    fun skiaClipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float): Canvas? {
+        clipRRect(x, y, w, h, radius)
+        return null
+    }
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("text")
+    fun skiaText(text: String, x: Float, y: Float, color: PolyColor, font: Font?) {}
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("textOutline")
+    fun skiaTextOutline(text: String, x: Float, y: Float, color: PolyColor, font: Font?, width: Float) {}
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("measureText")
+    fun skiaMeasureText(text: String, font: Font?): Float = 0f
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("image")
+    fun skiaImage(image: Image?, x: Float, y: Float, w: Float, h: Float, paint: Paint?) {}
 }

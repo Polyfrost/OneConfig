@@ -1,6 +1,8 @@
 package org.polyfrost.compose.render
 
 import java.util.concurrent.ConcurrentHashMap
+import org.jetbrains.skia.Font
+import org.jetbrains.skia.Typeface
 
 object FontManager {
     private val fontData = ConcurrentHashMap<String, ByteArray>()
@@ -23,7 +25,6 @@ object FontManager {
         revision++
     }
 
-    @JvmOverloads
     fun loadFromResource(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null, pixelAligned: Boolean = false): Boolean {
         val cl = loader ?: FontManager::class.java.classLoader
         val bytes = (cl?.getResourceAsStream(path) ?: FontManager::class.java.getResourceAsStream(path))
@@ -40,4 +41,40 @@ object FontManager {
     fun fontData(name: String): ByteArray? = fontData[name]
 
     fun isPixelAligned(name: String) = name in pixelFonts
+
+    @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
+    @JvmName("loadFromResource")
+    fun loadFromResourceCompat(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null): Boolean =
+        loadFromResource(path, name, loader, false)
+
+    @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
+    @JvmName("loadFromResource")
+    fun loadDefaultFromResource(path: String) {
+        loadFromResource(path)
+    }
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    var typeface: Typeface?
+        get() = null
+        set(_) {}
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    @JvmName("register")
+    @JvmOverloads
+    fun registerTypeface(name: String, tf: Typeface?, pixelAligned: Boolean = false) {}
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    fun getFont(size: Float, name: String = DEFAULT_KEY): Font? = null
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    fun getBold(size: Float): Font? = null
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    fun getItalic(size: Float): Font? = null
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    fun flushCache(name: String) {}
+
+    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+    fun clearCache() {}
 }

@@ -2,6 +2,7 @@ package org.polyfrost.compose.composables
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
+import org.jetbrains.skia.Image
 import org.polyfrost.compose.layout.LayoutType
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.node.*
@@ -156,6 +157,15 @@ fun PolySpacer(width: Float = 0f, height: Float = 0f) {
         },
     )
 }
+
+@Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
+@Composable
+fun PolyImage(modifier: PolyModifier = PolyModifier, image: Image?) {}
+
+@Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+fun PolyCanvas(modifier: PolyModifier, onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit) =
+    PolyCanvas(modifier, false, onDraw)
 
 @Composable
 fun PolyCanvas(
