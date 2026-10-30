@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
-import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
 //? if = 1.8.9
@@ -95,7 +94,6 @@ public class ScreenPlatformImpl implements ScreenPlatform {
             return;
         }
         String unavailable = screen instanceof ComposeScreen ? ComposeSupport.INSTANCE.unavailableReason() : null;
-        if (unavailable == null && screen instanceof ComposeScreen) unavailable = GlHost.INSTANCE.unavailableReason();
         if (unavailable != null) {
             showMessage(unavailable);
             return;

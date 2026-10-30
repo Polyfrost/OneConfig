@@ -12,7 +12,7 @@ object ComposeSupport {
 
     private val probed: String? by lazy { probe() }
 
-    fun unavailableReason(): String? = recordedFailure ?: probed
+    fun unavailableReason(): String? = recordedFailure ?: probed ?: GlHost.unavailableReason()
 
     val isAvailable: Boolean get() = unavailableReason() == null
 
