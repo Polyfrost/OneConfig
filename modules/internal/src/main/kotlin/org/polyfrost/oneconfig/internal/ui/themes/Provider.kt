@@ -108,7 +108,8 @@ private fun pixelGridDensity(designWidth: Dp, designHeight: Dp, theme: UITheme):
             (window.height * EDGE_MARGIN_FRACTION) / designHeight.toPx(),
         )
     }
-    val base = pixelGridScale(1f, headroom)
+    val snap = pixelGridMode == 1 || (pixelGridMode == 0 && theme.isMinecraft)
+    val base = if (snap) pixelGridScale(1f, headroom) else headroom
     var percent by remember { mutableStateOf(uiScalePercent) }
     LaunchedEffect(uiScalePercent) {
         if (percent != uiScalePercent) {
@@ -117,7 +118,6 @@ private fun pixelGridDensity(designWidth: Dp, designHeight: Dp, theme: UITheme):
         }
     }
     val user = base * percent.coerceIn(50f, 200f) / 100f
-    val snap = pixelGridMode == 1 || (pixelGridMode == 0 && theme.isMinecraft)
     val scale = when {
         percent == 100f -> base
         snap -> user * snapScaleToNearestStep(gridAnchorPx(user))
