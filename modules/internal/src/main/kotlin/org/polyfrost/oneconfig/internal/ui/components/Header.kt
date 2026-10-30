@@ -68,8 +68,8 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireAddRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.isOn
-import org.polyfrost.oneconfig.internal.ui.screens.addHotwireMods
 import org.polyfrost.oneconfig.internal.ui.screens.hotwireTagline
+import org.polyfrost.oneconfig.internal.ui.screens.openHotwireScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
@@ -111,6 +111,8 @@ fun Header(modifier: Modifier = Modifier) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedContent(
                     title,
+                    // weighted so a long tagline ellipsizes rather than pushing the button below out of the header
+                    modifier = Modifier.weight(1f, fill = false),
                     transitionSpec = {
                         fadeIn() togetherWith fadeOut()
                     }
@@ -177,7 +179,6 @@ fun Header(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
-            title?.addMods?.let { HeaderButton("plus", translated("oneconfig.page.hotwire.add_mods", "Add mods"), it) }
             GlobalSearchBar()
             IconButton("close", Modifier.size(32.dp), hoverBorder = true) { closeRequest() }
         }
@@ -195,7 +196,6 @@ private data class HeaderTitle(
     val version: String? = null,
     val openOriginalScreen: Runnable? = null,
     val tagline: String? = null,
-    val addMods: Runnable? = null,
 )
 
 private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
@@ -216,10 +216,10 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
     }
 
     if (destination.hasRoute(HotwireAddRoute::class)) {
-        return HeaderTitle(translated("oneconfig.page.hotwire.add_mods", "Add mods"), tagline = hotwireTagline())
+        return HeaderTitle(translated("oneconfig.page.hotwire.add_mods", "Add mods"), tagline = hotwireTagline(), openOriginalScreen = openHotwireScreen)
     }
     if (entry.isOn(HotwireGraph)) {
-        return HeaderTitle(entry.currentPageTitle() ?: "Hotwire", tagline = hotwireTagline(), addMods = addHotwireMods)
+        return HeaderTitle(entry.currentPageTitle() ?: "Hotwire", tagline = hotwireTagline(), openOriginalScreen = openHotwireScreen)
     }
 
     return entry.currentPageTitle()?.let { HeaderTitle(it) }
@@ -228,6 +228,10 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
 @Composable
 private fun OpenOriginalScreenButton(runnable: Runnable) {
     val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val accentAlpha by animateFloatAsState(if (isHovered) 0.75f else 1f)
+
     Tooltip(
         text = {
             Text(
@@ -239,32 +243,22 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
         modifier = Modifier.widthIn(max = 260.dp),
         anchor = Alignment.BottomCenter,
     ) {
-        HeaderButton("external-link", translated("oneconfig.header.original_menu", "Original menu"), runnable)
-    }
-}
-
-@Composable
-private fun HeaderButton(icon: String, label: String, runnable: Runnable) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val accentAlpha by animateFloatAsState(if (isHovered) 0.75f else 1f)
-
-    Box(
-        modifier = Modifier
-            .pointerHoverIcon(PointerIcon.Hand)
-            .background(AccentBrush, theme.buttonShape, accentAlpha)
-            .onClick(interactionSource) { runnable.run() }
-            .border(1.dp, theme.borderColor, theme.buttonShape)
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        Box(
+            modifier = Modifier
+                .pointerHoverIcon(PointerIcon.Hand)
+                .background(AccentBrush, theme.buttonShape, accentAlpha)
+                .onClick(interactionSource) { runnable.run() }
+                .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, color = theme.accentTextColor, modifier = Modifier.size(14.dp))
-            Text(label, color = theme.accentTextColor, fontSize = 13.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon("external-link", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
+                Text(translated("oneconfig.header.original_menu", "Original menu"), color = theme.accentTextColor, fontSize = 13.sp)
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -21,9 +22,11 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -41,6 +44,8 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
@@ -51,6 +56,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.CheckboxIndicator
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireAddRoute
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController
@@ -94,17 +100,22 @@ object HotwireUpdates {
     fun refreshWhenDone() {
         checked = true
         Thread({
-            val start = System.nanoTime()
-            var sawWorking = false
-            while (true) {
-                Thread.sleep(100)
-                val working = HotwireBridge.isWorking()
-                if (working) sawWorking = true
-                if (sawWorking && !working || !sawWorking && System.nanoTime() - start > 3_000_000_000L) break
-            }
+            awaitIdle()
             val result = runCatching { HotwireBridge.findUpdates() }
             Platform.screen().runOnUiThread { apply(result) }
         }, "OneConfig Hotwire update check").apply { isDaemon = true }.start()
+    }
+
+    /** Blocks until Hotwire stops working after having started, or a few seconds if it never reports progress */
+    fun awaitIdle() {
+        val start = System.nanoTime()
+        var sawWorking = false
+        while (true) {
+            Thread.sleep(100)
+            val working = HotwireBridge.isWorking()
+            if (working) sawWorking = true
+            if (sawWorking && !working || !sawWorking && System.nanoTime() - start > 3_000_000_000L) return
+        }
     }
 
     private fun apply(result: Result<List<HotwireBridge.StoreUpdate>>) {
@@ -152,8 +163,21 @@ fun hotwireTagline(): String {
     ).joinToString(" ")
 }
 
-/** The header's "Add mods" action on the Hotwire page */
-val addHotwireMods = Runnable { ShellController.shared.navigation.navigate(HotwireAddRoute) }
+private val SwitchBarHeight = 56.dp
+
+private const val PromptWaitSeconds = 5
+
+/** The header's "Original menu" action on the Hotwire pages */
+val openHotwireScreen = Runnable { HotwireBridge.openScreen() }
+
+/** Reports what Hotwire says came of a change */
+internal fun notifyHotwireResult(result: HotwireBridge.Result) {
+    when {
+        result.ok -> Notifications.success("Hotwire", result.message.ifBlank { "Done." })
+        result.needsReopen -> Notifications.info("Hotwire", result.message.ifBlank { "Reopen your world to finish this." })
+        else -> Notifications.error("Hotwire", result.message.ifBlank { "That didn't work." })
+    }
+}
 
 /**
  * Every mod the loader has in a denser grid than the mods page, where picked mods are turned on or off live
@@ -161,6 +185,12 @@ val addHotwireMods = Runnable { ShellController.shared.navigation.navigate(Hotwi
  */
 @Composable
 fun Hotwire() {
+    var prompt by remember { mutableStateOf(HotwireBridge.openingPrompt()) }
+    prompt?.let {
+        OpeningPromptCard(it) { prompt = null }
+        return
+    }
+
     val revision = HotwireBridge.revision
     val states = remember(revision) { HotwireBridge.mods()?.associateBy { it.id } }
     LaunchedEffect(Unit) { HotwireUpdates.ensure() }
@@ -181,7 +211,6 @@ fun Hotwire() {
     // picked families by their root id
     val selected = remember { mutableStateSetOf<String>() }
     val gridState = rememberRestorableLazyGridState("hotwire")
-
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = PageGutter), horizontalArrangement = Arrangement.End) {
             IconSegments(
@@ -214,8 +243,60 @@ fun Hotwire() {
                 }
             }
         }
-        val picked = families.filterKeys { it.id in selected }
-        if (picked.isNotEmpty()) SwitchBar(picked, states, onClear = { selected.clear() })
+        Row(
+            // a fixed height the switch bar fills, so the button stays centred on it and doesn't move when it appears
+            Modifier.fillMaxWidth().padding(start = PageGutter, end = PageGutter, bottom = 19.dp).height(SwitchBarHeight),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+        ) {
+            val picked = families.filterKeys { it.id in selected }
+            if (picked.isNotEmpty()) SwitchBar(picked, states, Modifier.weight(1f), onClear = { selected.clear() })
+            Chip(translated("oneconfig.page.hotwire.add_mods", "Add mods"), selected = true, icon = "plus") {
+                ShellController.shared.navigation.navigate(HotwireAddRoute)
+            }
+        }
+    }
+}
+
+/** Hotwire's warning, which it requires be shown before it takes requests from this mod, with its reading delay */
+@Composable
+private fun OpeningPromptCard(prompt: HotwireBridge.OpeningPrompt, onDone: () -> Unit) {
+    val theme = LocalTheme.current
+    var wait by remember { mutableIntStateOf(minOf(prompt.waitSeconds, PromptWaitSeconds)) }
+    LaunchedEffect(Unit) {
+        while (wait > 0) {
+            delay(1000)
+            wait--
+        }
+    }
+    Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
+        Column(
+            Modifier.widthIn(max = 560.dp)
+                .background(theme.modCardBackground, theme.modCardShape)
+                .border(1.dp, theme.borderColor, theme.modCardShape)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(prompt.title, color = theme.textColor, fontSize = 18.sp, textAlign = TextAlign.Center)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                prompt.lines.forEach { Text(it, color = theme.textColor, fontSize = 13.sp, textAlign = TextAlign.Center) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Chip(if (wait > 0) "${prompt.acceptText} ($wait)" else prompt.acceptText, selected = wait == 0) {
+                    if (wait == 0) {
+                        prompt.accept()
+                        onDone()
+                    }
+                }
+                Chip(prompt.openHotwireText, selected = false) {
+                    if (wait == 0) {
+                        prompt.acceptAndOpenHotwire()
+                        onDone()
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -243,6 +324,7 @@ private fun modFamilies(mods: Collection<ModInfo>): Map<ModInfo, List<ModInfo>> 
 private fun SwitchBar(
     picked: Map<ModInfo, List<ModInfo>>,
     states: Map<String, HotwireBridge.ModState>?,
+    modifier: Modifier = Modifier,
     onClear: () -> Unit,
 ) {
     val theme = LocalTheme.current
@@ -260,6 +342,10 @@ private fun SwitchBar(
             turnOn.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, true) },
         )
     }
+    val pickedIds = picked.values.flatten().mapTo(HashSet()) { it.id }
+    val updates = HotwireUpdates.found?.getOrNull().orEmpty().filter { it.modId in pickedIds }
+    val scope = rememberCoroutineScope()
+    var updating by remember { mutableStateOf<String?>(null) }
     var running by remember { mutableStateOf(false) }
     var fraction by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(running) {
@@ -274,11 +360,53 @@ private fun SwitchBar(
         else -> "Turn on $onCount"
     }
     val message = when {
-        states == null -> "Hotwire isn't installed, so mods can't be switched here."
+        states == null -> "Hotwire is still starting, so mods can't be switched yet."
+        updating != null -> translated("oneconfig.page.hotwire.updates.running", "Updating %s…", updating)
         running -> "Switching… ${(fraction * 100).toInt()}%"
         else -> previews.joinToString(" ") { it.message }
     }
     val canSwitch = !running && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
+
+    /**
+     * Applies each picked update in turn with whatever Hotwire allows it, live or at the next launch, since Hotwire's
+     * own batch update waits on confirmations in its screen
+     */
+    fun startUpdates() {
+        running = true
+        scope.launch {
+            val problems = ArrayList<String>()
+            try {
+                for (update in updates) {
+                    updating = update.name
+                    val plan = withContext(Dispatchers.IO) {
+                        runCatching { HotwireBridge.planFor(HotwireBridge.downloadUpdate(update), update = true).get() }
+                    }
+                    val action = plan.getOrNull()?.actions?.firstOrNull { it.primary }
+                    if (action == null) {
+                        val reason = plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.firstOrNull()
+                        problems += "${update.name}: ${reason.orEmpty()}"
+                        continue
+                    }
+                    val failed = action.attempt()?.getNow(null)?.takeUnless { it.ok }
+                    if (failed != null) {
+                        problems += "${update.name}: ${failed.message}"
+                        continue
+                    }
+                    withContext(Dispatchers.IO) { HotwireUpdates.awaitIdle() }
+                }
+            } finally {
+                updating = null
+                running = false
+                HotwireUpdates.refreshWhenDone()
+            }
+            if (problems.isEmpty()) {
+                Notifications.success("Hotwire", translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat."))
+                onClear()
+            } else {
+                Notifications.error("Hotwire", problems.joinToString(" "))
+            }
+        }
+    }
 
     fun start() {
         running = true
@@ -295,30 +423,25 @@ private fun SwitchBar(
         }.whenComplete { result, error ->
             Platform.screen().runOnUiThread {
                 running = false
-                if (result?.ok == true) {
-                    Notifications.success("Hotwire", result.message.ifBlank { "Done." })
-                    onClear()
-                } else if (result?.needsReopen == true) {
-                    Notifications.info("Hotwire", result.message.ifBlank { "Reopen your world to finish this." })
-                } else {
-                    Notifications.error("Hotwire", result?.message?.ifBlank { null } ?: error?.message ?: "That didn't work.")
-                }
+                notifyHotwireResult(result ?: HotwireBridge.Result(false, error?.message ?: ""))
+                if (result?.ok == true) onClear()
             }
         }
     }
 
     Row(
-        modifier = Modifier.padding(horizontal = PageGutter).fillMaxWidth()
+        modifier = modifier
             .background(theme.modCardBackground, theme.modCardShape)
             .border(1.dp, theme.borderColor, theme.modCardShape)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .fillMaxHeight()
+            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("${picked.size} selected", color = theme.textColor, fontSize = 14.sp)
             if (message.isNotBlank()) {
-                Text(message, color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(message, color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (running) {
                 Box(Modifier.fillMaxWidth().height(3.dp).background(theme.borderColor, theme.modCardShape)) {
@@ -327,6 +450,9 @@ private fun SwitchBar(
             }
         }
         Chip("Clear", selected = false, onClick = onClear)
+        if (!running && updates.isNotEmpty()) {
+            Chip(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), selected = true, onClick = ::startUpdates)
+        }
         if (canSwitch) Chip(label, selected = true, onClick = ::start)
     }
 }
@@ -370,6 +496,7 @@ private fun HotwireTile(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
+                CheckboxIndicator(selected, onToggle = onSelect)
                 // keeps names lined up when a mod has no icon
                 Box(Modifier.size(36.dp)) {
                     if (icon != null) Icon(icon, color = theme.textColor, modifier = Modifier.fillMaxSize())
@@ -409,6 +536,9 @@ private fun HotwireTile(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.fillMaxWidth(),
                 )
+            }
+            Box(Modifier.align(Alignment.TopStart).padding(8.dp)) {
+                CheckboxIndicator(selected, onToggle = onSelect)
             }
             if (hasUpdate) {
                 Box(Modifier.align(Alignment.TopEnd).padding(10.dp)) {

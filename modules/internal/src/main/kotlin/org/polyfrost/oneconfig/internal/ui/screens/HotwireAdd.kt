@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -67,34 +69,33 @@ fun HotwireAdd() {
     // bumped whenever the preview is left, so a download still running then can't bring it back
     var request by remember { mutableIntStateOf(0) }
 
+    // leaving the page drops a pending add the same way Back does
+    DisposableEffect(Unit) { onDispose { plan?.onCancel?.invoke() } }
+
     fun leavePreview() {
         request++
         reading = false
+        plan?.onCancel?.invoke()
         plan = null
     }
 
-    /** Gets a jar and its icon off the UI thread, then asks Hotwire what it would do with it */
-    fun review(name: String, icon: () -> String?, update: Boolean = false, jar: () -> Path?) {
+    /** Loads a plan and its icon off the UI thread, since they can wait on a dialog, a download or Modrinth */
+    fun review(name: String, icon: () -> String?, load: () -> HotwireBridge.JarPlan?) {
         leavePreview()
         val id = request
         reading = true
         planIcon = null
         scope.launch {
-            val (iconPath, picked) = withContext(Dispatchers.IO) { runCatching(icon).getOrNull() to runCatching(jar) }
-            if (id != request) return@launch
-            planIcon = iconPath
-            val path = picked.getOrNull()
-            if (path == null) {
-                reading = false
-                picked.exceptionOrNull()?.let { plan = HotwireBridge.JarPlan(name, "", listOf(it.message ?: it.toString()), emptyList()) }
+            val (iconPath, loaded) = withContext(Dispatchers.IO) { runCatching(icon).getOrNull() to runCatching(load) }
+            if (id != request) {
+                loaded.getOrNull()?.onCancel?.invoke()
                 return@launch
             }
-            HotwireBridge.planFor(path, update).whenComplete { result, _ ->
-                Platform.screen().runOnUiThread {
-                    if (id != request) return@runOnUiThread
-                    reading = false
-                    plan = result ?: HotwireBridge.JarPlan(name, "", listOf("Hotwire couldn't read this jar."), emptyList())
-                }
+            planIcon = iconPath
+            reading = false
+            plan = loaded.getOrElse {
+                val reason = it.cause ?: it
+                HotwireBridge.JarPlan(name, "", listOf(reason.message ?: reason.toString()), emptyList())
             }
         }
     }
@@ -105,22 +106,26 @@ fun HotwireAdd() {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        Row(Modifier.padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Chip(translated("oneconfig.page.hotwire.source.updates", "Updates"), source == AddSource.Updates, "refresh") { show(AddSource.Updates) }
             Chip(translated("oneconfig.page.hotwire.source.modrinth", "Modrinth"), source == AddSource.Modrinth, "search") { show(AddSource.Modrinth) }
             Chip(translated("oneconfig.page.hotwire.source.file", "From file"), source == AddSource.File, "folder") { show(AddSource.File) }
+            Spacer(Modifier.weight(1f))
+            Chip(translated("oneconfig.page.hotwire.downloads_folder", "Downloads folder"), selected = false, icon = "external-link") { HotwireBridge.openDownloads() }
         }
+        fun reviewUpdate(update: HotwireBridge.StoreUpdate, icon: () -> String?) =
+            review(update.name, icon) { HotwireBridge.planFor(HotwireBridge.downloadUpdate(update), update = true).get() }
+
         if (reading || plan != null) {
             PlanCard(reading, plan, planIcon, onBack = ::leavePreview)
         } else {
             when (source) {
-                AddSource.File -> FileSource { jar -> review("", { null }, jar = jar) }
-                AddSource.Modrinth -> ModrinthSource { hit, update ->
-                    review(hit.title, { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }, update) { HotwireBridge.downloadLatest(hit.projectId) }
-                }
-                AddSource.Updates -> UpdatesSource { update ->
-                    review(update.name, { installedIcon(update.modId) }, update = true) { HotwireBridge.downloadUpdate(update) }
-                }
+                AddSource.File -> FileSource { jar -> review("", { null }) { jar()?.let { HotwireBridge.planFor(it).get() } } }
+                AddSource.Modrinth -> ModrinthSource(
+                    onInstall = { hit -> review(hit.title, { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }) { HotwireBridge.storePlan(hit) } },
+                    onUpdate = { update, hit -> reviewUpdate(update) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } } },
+                )
+                AddSource.Updates -> UpdatesSource { update -> reviewUpdate(update) { installedIcon(update.modId) } }
             }
         }
     }
@@ -185,76 +190,96 @@ private fun FileSource(onPicked: (() -> Path?) -> Unit) {
     }
 }
 
-/** Modrinth projects matching the header search, or Modrinth's own listing while it is empty */
+/** A name with only what identifies it, so "Fabric Language Kotlin" and fabric-language-kotlin are the same */
+private fun String.identity() = lowercase().filter(Char::isLetterOrDigit)
+
+/** A category's name from Hotwire's own translations, or the tag made readable, where a blank tag means every category */
 @Composable
-private fun ModrinthSource(onInstall: (HotwireBridge.StoreHit, Boolean) -> Unit) {
+private fun categoryLabel(tag: String): String {
+    val key = tag.ifBlank { "all" }
+    return translated("hotwire.store.category.$key", key.replace('-', ' ').replaceFirstChar { it.uppercase() })
+}
+
+/** Modrinth mods matching the header search, or Modrinth's own listing while it is empty */
+@Composable
+private fun ModrinthSource(
+    onInstall: (HotwireBridge.StoreHit) -> Unit,
+    onUpdate: (HotwireBridge.StoreUpdate, HotwireBridge.StoreHit) -> Unit,
+) {
     val theme = LocalTheme.current
     val query = ShellState.searchQuery.trim()
+    val categories = remember { HotwireBridge.storeCategories() }
+    var group by remember { mutableStateOf(categories.firstOrNull()) }
+    var category by remember { mutableStateOf("") }
     var hits by remember { mutableStateOf<Result<List<HotwireBridge.StoreHit>>?>(null) }
-    LaunchedEffect(query) {
+    LaunchedEffect(query, category) {
         // waits out typing so each keystroke doesn't hit Modrinth
         delay(350)
-        hits = withContext(Dispatchers.IO) { runCatching { HotwireBridge.searchModrinth(query) } }
+        hits = withContext(Dispatchers.IO) { runCatching { HotwireBridge.searchStore(query, category) } }
     }
-    // a failed check shows every hit rather than none
-    val installed by produceState<Result<HotwireBridge.InstalledProjects>?>(null) {
-        value = withContext(Dispatchers.IO) { runCatching { HotwireBridge.installedProjects() } }
+    LaunchedEffect(Unit) { HotwireUpdates.ensure() }
+
+    Row(Modifier.padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        categories.forEach {
+            Chip(categoryLabel(it.parts.singleOrNull() ?: it.name), group === it) {
+                group = it
+                category = it.parts.firstOrNull().orEmpty()
+            }
+        }
+    }
+    // only a group of several categories has anything to choose between
+    group?.parts?.takeIf { it.size > 1 }?.let { parts ->
+        Row(Modifier.padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            parts.forEach { Chip(categoryLabel(it), category == it) { category = it } }
+        }
     }
 
     val current = hits
-    val known = installed
     when {
-        current == null || known == null -> Card { Text(translated("oneconfig.page.hotwire.modrinth.loading", "Searching Modrinth…"), color = theme.textColorSecondary, fontSize = 14.sp) }
+        current == null -> Card { Text(translated("oneconfig.page.hotwire.modrinth.loading", "Searching Modrinth…"), color = theme.textColorSecondary, fontSize = 14.sp) }
         current.isFailure -> Card {
+            val reason = current.exceptionOrNull()?.let { it.cause ?: it }
             Text(
-                translated("oneconfig.page.hotwire.modrinth.failed", "Couldn't reach Modrinth: %s", current.exceptionOrNull()?.message ?: ""),
+                translated("oneconfig.page.hotwire.modrinth.failed", "Couldn't reach Modrinth: %s", reason?.message ?: ""),
                 color = theme.textColorSecondary,
                 fontSize = 14.sp,
             )
         }
         else -> {
-            // installed projects only show when there's a newer version to update to; the value says which is which
-            val shown = remember(current, known) {
-                val projects = known.getOrNull()
+            val updates = HotwireUpdates.found?.getOrNull().orEmpty()
+            val shown = remember(current, updates) {
+                // Hotwire only knows jars Modrinth recognises by hash, so also match what the loader says is running by
+                // id and name, which catches dev builds and projects whose slug isn't their mod id
+                val installed = HashSet<String>()
+                Platform.compatibility().mods.forEach { installed += it.id.identity(); installed += it.name.identity() }
+                HotwireBridge.mods()?.forEach { installed += it.id.identity(); installed += it.name.identity() }
                 current.getOrThrow().mapNotNull { hit ->
-                    val installedHit = projects?.isInstalled(hit) == true
-                    if (installedHit && hit.projectId !in projects.updatable) null else hit to installedHit
+                    val update = updates.firstOrNull { it.projectId == hit.projectId }
+                    val isInstalled = hit.installed || listOf(hit.slug, hit.projectId, hit.title).any { it.identity() in installed }
+                    // installed projects only show when there's a newer version to update to
+                    if (update == null && isInstalled) null else hit to update
                 }
             }
-            known.exceptionOrNull()?.let {
-                Text(
-                    translated("oneconfig.page.hotwire.modrinth.installed_failed", "Couldn't check which mods are installed, so all results are shown: %s", it.message ?: it.toString()),
-                    color = theme.textColorSecondary,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(horizontal = PageGutter),
-                )
+            ResultList(shown) { (hit, update) ->
+                RowIcon(hit.projectId) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(hit.title, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        listOf(hit.author.takeIf { it.isNotBlank() }?.let { translated("oneconfig.header.byline", "by %s", it) }, hit.description)
+                            .filterNotNull().joinToString(" · "),
+                        color = theme.textColorSecondary,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(translated("oneconfig.page.hotwire.modrinth.downloads", "%s downloads", "%,d".format(hit.downloads)), color = theme.textColorSecondary, fontSize = 12.sp)
+                when {
+                    update != null -> Chip(translated("oneconfig.page.hotwire.modrinth.update", "Update"), selected = true) { onUpdate(update, hit) }
+                    else -> Chip(translated("oneconfig.page.hotwire.modrinth.install", "Install"), selected = true) { onInstall(hit) }
+                }
             }
-            ModrinthResults(shown, onInstall)
         }
-    }
-}
-
-@Composable
-private fun ModrinthResults(shown: List<Pair<HotwireBridge.StoreHit, Boolean>>, onInstall: (HotwireBridge.StoreHit, Boolean) -> Unit) {
-    val theme = LocalTheme.current
-    ResultList(shown) { (hit, update) ->
-            RowIcon(hit.projectId) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(hit.title, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    listOf(hit.author.takeIf { it.isNotBlank() }?.let { translated("oneconfig.header.byline", "by %s", it) }, hit.description)
-                        .filterNotNull().joinToString(" · "),
-                    color = theme.textColorSecondary,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Text(translated("oneconfig.page.hotwire.modrinth.downloads", "%s downloads", "%,d".format(hit.downloads)), color = theme.textColorSecondary, fontSize = 12.sp)
-            Chip(
-                if (update) translated("oneconfig.page.hotwire.modrinth.update", "Update") else translated("oneconfig.page.hotwire.modrinth.install", "Install"),
-                selected = true,
-            ) { onInstall(hit, update) }
     }
 }
 
@@ -319,6 +344,9 @@ private fun <T> ResultList(items: List<T>, row: @Composable androidx.compose.fou
 private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: String?, onBack: () -> Unit) {
     val theme = LocalTheme.current
     var started by remember(plan) { mutableStateOf(false) }
+    // the outcome of an action that reports one, and whether one is on its way
+    var outcome by remember(plan) { mutableStateOf<HotwireBridge.Result?>(null) }
+    var awaiting by remember(plan) { mutableStateOf(false) }
     var working by remember { mutableStateOf(false) }
     var fraction by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(started) {
@@ -345,10 +373,11 @@ private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: Strin
         }
         if (started) {
             Text(
-                if (working) {
-                    translated("oneconfig.page.hotwire.add.working", "Hotwire is working on it… %s%%", (fraction * 100).toInt())
-                } else {
-                    translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat.")
+                when {
+                    outcome != null -> outcome!!.message
+                    working -> translated("oneconfig.page.hotwire.add.working", "Hotwire is working on it… %s%%", (fraction * 100).toInt())
+                    awaiting -> translated("oneconfig.page.hotwire.add.downloading", "Downloading…")
+                    else -> translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat.")
                 },
                 color = theme.textColorSecondary,
                 fontSize = 13.sp,
@@ -364,7 +393,17 @@ private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: Strin
                 plan.actions.forEach { action ->
                     Chip(action.label, selected = action.primary) {
                         started = true
-                        action.run()
+                        awaiting = true
+                        val pending = action.attempt()
+                        awaiting = pending != null
+                        pending?.whenComplete { result, error ->
+                            Platform.screen().runOnUiThread {
+                                val done = result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: "That didn't work.")
+                                outcome = done
+                                awaiting = false
+                                notifyHotwireResult(done)
+                            }
+                        }
                         HotwireUpdates.refreshWhenDone()
                     }
                 }

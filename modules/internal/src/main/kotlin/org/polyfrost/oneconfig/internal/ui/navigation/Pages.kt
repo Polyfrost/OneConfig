@@ -20,6 +20,7 @@ import org.polyfrost.oneconfig.internal.ui.components.resolve
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireAddRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -184,7 +185,13 @@ fun NavBackStackEntry?.currentPageTitle(): String? =
     currentPage()?.title?.resolve()
         ?: sidebarSections().asSequence().flatMap { it.entries }.firstOrNull { isOn(it.route) }?.label
 
-fun searchPlaceholder(entry: NavBackStackEntry?): String = searchPlaceholder(entry.currentPage(), entry.currentPageTitle())
+fun searchPlaceholder(entry: NavBackStackEntry?): String {
+    // the add page's search goes to Modrinth, not the Hotwire page it belongs to
+    if (entry?.destination?.hasRoute(HotwireAddRoute::class) == true) {
+        return translated("oneconfig.page.hotwire.modrinth.search", "Search Modrinth...")
+    }
+    return searchPlaceholder(entry.currentPage(), entry.currentPageTitle())
+}
 
 fun searchPlaceholder(page: OneConfigPage?, title: String?): String {
     page?.searchPlaceholder?.let { return it.resolve() }

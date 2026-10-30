@@ -3,8 +3,10 @@ package org.polyfrost.oneconfig.internal.ui.api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -76,15 +78,29 @@ object HotwireBridge {
     /** Whether Hotwire is running a switch, add or update right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
 
-    class JarAction(val label: String, val primary: Boolean, val run: () -> Unit)
+    /** [run] hands back the outcome when Hotwire reports one, and null when Hotwire only posts it to chat */
+    class JarAction(val label: String, val primary: Boolean, private val run: () -> CompletableFuture<Result>?) {
+        /** Runs the action from a click, where a failure inside Hotwire comes back as a failed result, not a throw */
+        fun attempt(): CompletableFuture<Result>? = runCatching(run).getOrElse {
+            val reason = it.cause ?: it
+            CompletableFuture.completedFuture(Result(false, reason.message ?: reason.toString()))
+        }
+    }
 
-    /** What Hotwire would do with a picked jar, and the choices it offers, as its own add and update panels show */
-    class JarPlan(val title: String, val detail: String, val lines: List<String>, val actions: List<JarAction>)
+    /** What Hotwire would do with a mod, and the choices it offers, as its own add and update panels show */
+    class JarPlan(
+        val title: String,
+        val detail: String,
+        val lines: List<String>,
+        val actions: List<JarAction>,
+        val onCancel: (() -> Unit)? = null,
+    )
 
-    // shortcut: Hotwire's public API has no add or update calls, so the jar flow reaches into its engine and may
-    // break on a Hotwire update, until Hotwire's API gains them
+    // shortcut: Hotwire's public API can't add a jar from disk or list updates, so those reach into its engine, which
+    // may break on a Hotwire update, until Hotwire's API gains them
+    // the engine lives in a package per game version, the same one as the API implementation
     private fun engine(): Any? = runCatching {
-        Class.forName("dev.moon.hotwire.fabric.HotwireClient").getMethod("findEngine").invoke(null)
+        Class.forName("${api!!.javaClass.packageName}.HotwireClient").getMethod("findEngine").invoke(null)
     }.getOrNull()
 
     private fun Any.callMethod(name: String, vararg args: Any): Any? =
@@ -95,6 +111,56 @@ object HotwireBridge {
         javaClass.methods.first { it.name == method && it.parameterCount == 2 }.parameterTypes[1]
             .enumConstants.first { (it as Enum<*>).name == constant }
 
+    // Hotwire implements its API interfaces with private classes, which reflection can only reach through the interface
+    private fun Any.through(apiInterface: String, method: String): Any? =
+        Class.forName("dev.moon.hotwire.api.$apiInterface").getMethod(method).invoke(this)
+
+    @Suppress("UNCHECKED_CAST")
+    private fun Any?.asResults(): CompletableFuture<Result> = (this as CompletableFuture<Any>).thenApply { result ->
+        val kind = (result.get("kind") as Enum<*>).name
+        Result(kind == "DONE", result.get("message") as String? ?: "", needsReopen = kind == "NEEDS_REOPEN")
+    }
+
+    class OpeningPrompt(
+        val title: String,
+        val lines: List<String>,
+        val acceptText: String,
+        val openHotwireText: String,
+        val waitSeconds: Int,
+        val accept: () -> Unit,
+        val acceptAndOpenHotwire: () -> Unit,
+    )
+
+    /** Hotwire's warning, which refuses this mod's requests until it has been shown; null once it's been accepted */
+    fun openingPrompt(): OpeningPrompt? = runCatching {
+        val prompt = call("findOpeningPrompt") ?: return null
+        fun text(method: String) = prompt.through("OpeningPrompt", method) as String
+        fun act(method: String): () -> Unit = {
+            prompt.through("OpeningPrompt", method)
+            revision++
+        }
+        @Suppress("UNCHECKED_CAST")
+        OpeningPrompt(
+            text("getTitle"),
+            prompt.through("OpeningPrompt", "getLines") as List<String>,
+            text("getAcceptText"),
+            text("getOpenHotwireText"),
+            prompt.through("OpeningPrompt", "getWaitSeconds") as Int,
+            act("accept"),
+            act("acceptAndOpenHotwire"),
+        )
+    }.getOrNull()
+
+    /** Opens the folder Hotwire saves downloads to in the system's file manager */
+    fun openDownloads() {
+        call("openDownloads")
+    }
+
+    /** Opens Hotwire's own screen */
+    fun openScreen() {
+        call("openScreen")
+    }
+
     class StoreHit(
         val projectId: String,
         val slug: String,
@@ -103,37 +169,17 @@ object HotwireBridge {
         val description: String,
         val downloads: Long,
         val iconUrl: String?,
+        val installed: Boolean,
     )
 
-    class StoreUpdate(internal val offer: Any, val modId: String, val name: String, val installedVersion: String, val newVersion: String)
-
-    /** Which Modrinth projects are installed, and which of those have a newer version for this game */
-    class InstalledProjects(private val model: Any, val updatable: Set<String>) {
-        // the same three checks Hotwire's own store cards make: a jar Modrinth knows by hash, or a loaded mod whose
-        // id is the project's slug or id, which catches jars Modrinth doesn't know such as dev builds
-        fun isInstalled(hit: StoreHit): Boolean =
-            listOf(hit.projectId, hit.slug).any { it.isNotBlank() && model.callMethod("isInstalledProject", it) == true }
-    }
-
-    /** Hotwire's Modrinth store, created the way Hotwire's own store screen does when it hasn't been opened yet */
-    private fun store(): Any {
-        val engine = engine()!!
-        engine.callMethod("getStore")?.let { return it }
-        val screens = engine.javaClass.getDeclaredField("stores").apply { isAccessible = true }.get(engine)
-        return screens.javaClass.getDeclaredMethod("findStore").apply { isAccessible = true }.invoke(screens)!!
-    }
-
-    /** Asks Hotwire which Modrinth projects are installed and which have updates; blocks on the network */
-    fun installedProjects(): InstalledProjects {
-        val store = store()
-        val model = store.callMethod("getModel")!!
-        store.callMethod("checkInstalled")
-        // the store's worker is a single thread, so this runs once the check queued just before it has finished
-        val checked = CompletableFuture<Unit>()
-        model.callMethod("run", Runnable { checked.complete(Unit) })
-        checked.get(60, TimeUnit.SECONDS)
-        return InstalledProjects(model, (model.callMethod("getUpdates") as Map<*, *>).keys.mapTo(HashSet()) { it as String })
-    }
+    class StoreUpdate(
+        internal val offer: Any,
+        val modId: String,
+        val projectId: String,
+        val name: String,
+        val installedVersion: String,
+        val newVersion: String,
+    )
 
     /** Downloads a Modrinth icon once and keeps it on disk for later opens; blocks on the network */
     fun iconFor(url: String): Path {
@@ -141,53 +187,107 @@ object HotwireBridge {
         // named by the url so a remote path can never pick where the file lands
         val ext = url.substringAfterLast('.').lowercase().takeIf { it.length in 3..4 && it.all(Char::isLetter) } ?: "png"
         val file = dir.resolve("${Integer.toHexString(url.hashCode())}-${url.length}.$ext")
-        if (!Files.exists(file)) Files.write(file, modrinth!!.callMethod("fetchFromCdn", url) as ByteArray)
+        if (!Files.exists(file)) {
+            val uri = URI(url)
+            require(uri.scheme == "https") { "Icons only load over https." }
+            Files.write(file, uri.toURL().openStream().use { it.readNBytes(MAX_ICON_BYTES) })
+        }
         return file
     }
 
-    /** Hotwire's Modrinth client, already limited to this game version and loader */
-    private val modrinth: Any? by lazy {
-        runCatching { Class.forName("dev.moon.hotwire.fabric.store.ModStore").getMethod("makeClient").invoke(null) }.getOrNull()
-    }
+    private fun storeQuery(words: String): Any =
+        Class.forName("dev.moon.hotwire.api.StoreQuery").getMethod("of", String::class.java).invoke(null, words)
 
-    /** Searches Modrinth for mods matching [query]; blocks on the network, so call it off the UI thread */
-    fun searchModrinth(query: String): List<StoreHit> {
-        val search = modrinth!!.callMethod("search", query, "", 0, 30)!!
-        return (search.get("hits") as List<*>).map {
+    class StoreCategory(val name: String, val parts: List<String>)
+
+    /** Modrinth's mod categories as Hotwire groups them, where [StoreCategory.parts] are what a search can filter by */
+    @Suppress("UNCHECKED_CAST")
+    fun storeCategories(): List<StoreCategory> = runCatching {
+        val mod = Class.forName("dev.moon.hotwire.api.StoreKind").enumConstants.first { (it as Enum<*>).name == "MOD" }
+        (call("getStoreCategories", mod) as List<*>).map { StoreCategory(it!!.get("name") as String, it.get("parts") as List<String>) }
+    }.getOrDefault(emptyList())
+
+    private var storeChecked = false
+
+    /**
+     * Searches Modrinth for mods matching [words] in [category], or every category when blank; blocks on the network,
+     * so call it off the UI thread
+     */
+    fun searchStore(words: String, category: String): List<StoreHit> {
+        val query = storeQuery(words).let { it.javaClass.getMethod("withCategory", String::class.java).invoke(it, category) }
+        fun search() = ((call("searchStore", query) as CompletableFuture<*>).get()!!.get("mods") as List<*>).map {
             StoreHit(
-                it!!.get("projectId") as String,
+                it!!.get("id") as String,
                 it.get("slug") as String? ?: "",
-                it.get("title") as String,
+                it.get("name") as String,
                 it.get("author") as String? ?: "",
                 it.get("description") as String? ?: "",
                 it.get("downloads") as Long,
                 (it.get("iconUrl") as String?)?.takeIf { url -> url.isNotBlank() },
+                it.get("installed") as Boolean,
             )
         }
+        val first = search()
+        if (storeChecked) return first
+        storeChecked = true
+        // the first search creates Hotwire's store, whose installed check is still queued on its single worker, so
+        // this runs once that has finished and only then are the installed flags right
+        val model = engine()?.callMethod("getStore")?.callMethod("getModel") ?: return first
+        val checked = CompletableFuture<Unit>()
+        model.callMethod("run", Runnable { checked.complete(Unit) })
+        checked.get(60, TimeUnit.SECONDS)
+        return search()
     }
 
-    /**
-     * Downloads the newest version of [projectId] that fits this game and returns the checked jar, ready for
-     * [planFor]; blocks on the network
-     */
-    fun downloadLatest(projectId: String): Path {
-        val client = modrinth!!
-        val version = (client.callMethod("findVersions", projectId) as List<*>).firstOrNull()
-            ?: error("No version of this mod fits this game.")
-        val bytes = client.callMethod("fetch", version) as ByteArray
-        // the download is untrusted until it matches the hash Modrinth published for it
-        check(client.javaClass.getMethod("hashOf", ByteArray::class.java).invoke(null, bytes) == version.get("sha512")) {
-            "The download didn't match Modrinth's checksum."
+    /** The newest version of a project that fits this game; blocks on the network */
+    private fun newestVersion(projectId: String): String {
+        val project = (call("findStoreProject", storeQuery(""), projectId) as CompletableFuture<*>).get() as Optional<*>
+        val version = (project.orElse(null)?.get("versions") as List<*>?)?.firstOrNull()
+            ?: error(translated("oneconfig.page.hotwire.modrinth.no_version", "No version of this fits this game."))
+        return version.get("id") as String
+    }
+
+    /** What adding [hit] would do, including what Hotwire adds along with it; blocks on the network */
+    fun storePlan(hit: StoreHit): JarPlan {
+        val version = newestVersion(hit.projectId)
+        val add = (call("requestAdd", hit.projectId, version) as CompletableFuture<*>).get()!!
+        var accepted = false
+        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false) {
+            accepted = true
+            add.through("StoreAdd", "cancel")
+            call("queueForNextStart", hit.projectId, version).asResults()
         }
-        val dir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-hotwire"))
-        return Files.write(dir.resolve(Path.of(version.get("fileName") as String).fileName), bytes)
+        val save = JarAction(translated("oneconfig.page.hotwire.add.save", "Save to Downloads"), false) {
+            accepted = true
+            add.through("StoreAdd", "cancel")
+            call("saveToDownloads", storeQuery(""), hit.projectId, version).asResults()
+        }
+        val now = JarAction(
+            if (add.through("StoreAdd", "needsReopen") == true) {
+                translated("oneconfig.page.hotwire.add.reopen", "Save and add")
+            } else {
+                translated("oneconfig.page.hotwire.add.now", "Add now")
+            },
+            true,
+        ) {
+            accepted = true
+            add.through("StoreAdd", "accept").asResults()
+        }
+        @Suppress("UNCHECKED_CAST")
+        return JarPlan(
+            add.through("StoreAdd", "getTitle") as String,
+            "",
+            add.through("StoreAdd", "getLines") as List<String>,
+            (if (add.through("StoreAdd", "canAdd") == true) listOf(now, later) else emptyList()) + save,
+            onCancel = { if (!accepted) add.through("StoreAdd", "cancel") },
+        )
     }
 
     /** Hotwire's update check against Modrinth for the installed mods; blocks on the network */
     fun findUpdates(): List<StoreUpdate> {
         val check = engine()!!.callMethod("getUpdateCheck")!!
         return (check.callMethod("findNow") as List<*>).map {
-            StoreUpdate(it!!, it.get("id") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
+            StoreUpdate(it!!, it.get("id") as String, it.get("projectId") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
         }
     }
 
@@ -223,12 +323,15 @@ object HotwireBridge {
 
     @Suppress("UNCHECKED_CAST")
     private fun addPlan(engine: Any, jar: Path, preview: Any): JarPlan {
-        fun add(mode: String) = { engine.callMethod("add", jar, engine.enumArg("add", mode)); Unit }
+        fun add(mode: String): () -> CompletableFuture<Result>? = {
+            engine.callMethod("add", jar, engine.enumArg("add", mode))
+            null
+        }
         val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false, add("NEXT_START"))
         val actions = when ((preview.get("mode") as Enum<*>).name) {
             "NOW" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.now", "Add now"), true, add("NOW")), later)
             "SAVE_AND_REOPEN" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.reopen", "Save and add"), true, add("SAVE_AND_REOPEN")), later)
-            "NEXT_START" -> listOf(JarAction(later.label, true, later.run))
+            "NEXT_START" -> listOf(JarAction(later.label, true, add("NEXT_START")))
             else -> emptyList()
         }
         return JarPlan(preview.get("name") as String, preview.get("version") as String? ?: "", preview.get("lines") as List<String>, actions)
@@ -236,7 +339,10 @@ object HotwireBridge {
 
     @Suppress("UNCHECKED_CAST")
     private fun updatePlan(engine: Any, jar: Path, preview: Any): JarPlan {
-        fun update(method: String) = { engine.callMethod("update", jar, engine.enumArg("update", method)); Unit }
+        fun update(method: String): () -> CompletableFuture<Result>? = {
+            engine.callMethod("update", jar, engine.enumArg("update", method))
+            null
+        }
         val later = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), false, update("NEXT_START"))
         return when (preview.javaClass.simpleName) {
             "Ready" -> {
@@ -254,7 +360,7 @@ object HotwireBridge {
                     if (inPlace) {
                         listOf(JarAction(translated("oneconfig.page.hotwire.update.now", "Update now"), true, update("IN_PLACE")), later)
                     } else {
-                        listOf(JarAction(later.label, true, later.run))
+                        listOf(JarAction(later.label, true, update("NEXT_START")))
                     },
                 )
             }
@@ -271,10 +377,8 @@ object HotwireBridge {
 
     /** Turns [ids] on or off, completing on whatever thread Hotwire finishes on */
     fun switch(ids: Collection<String>, on: Boolean): CompletableFuture<Result> = runCatching {
-        @Suppress("UNCHECKED_CAST")
-        (call(if (on) "turnOn" else "turnOff", ids.toList()) as CompletableFuture<Any>).thenApply { result ->
-            val kind = (result.get("kind") as Enum<*>).name
-            Result(kind == "DONE", result.get("message") as String? ?: "", needsReopen = kind == "NEEDS_REOPEN")
-        }
+        call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
     }.getOrElse { CompletableFuture.completedFuture(Result(false, "Hotwire is not available.")) }
+
+    private const val MAX_ICON_BYTES = 8 * 1024 * 1024
 }
