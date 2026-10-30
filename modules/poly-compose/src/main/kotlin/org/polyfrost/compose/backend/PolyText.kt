@@ -201,6 +201,8 @@ internal class PolyIntrinsics(
             val name = resolver.resolve(base.fontFamily, base.fontWeight ?: FontWeight.Normal, base.fontStyle ?: FontStyle.Normal).value as? String ?: FontManager.DEFAULT_KEY
             runs += TextRun(0, 0, PolyFont(name, px(base.fontSize, 14f)), base)
         }
+        // shortcut: one glyph per code point without OpenType shaping, so scripts that reorder or substitute glyphs
+        // (e.g. Devanagari) render unshaped; fixing that needs a shaping engine such as HarfBuzz
         for (run in runs) {
             val letter = px(run.style.letterSpacing, 0f)
             var i = run.start
