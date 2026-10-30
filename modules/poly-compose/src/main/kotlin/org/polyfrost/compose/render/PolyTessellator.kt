@@ -174,6 +174,13 @@ abstract class PolyTessellator : PolyRenderer {
 
     override fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float) {
         beginDraw()
+        shaded(gradient, x, y, w, h) { clippedFill(x, y, w, h, radius) { fillPolygonPx(it, it.size / 2, -1, convex = true) } }
+    }
+
+    // Set while drawing with a gradient, mapping each vertex to where the gradient's texture holds its color
+    private var shading: ((Float, Float, FloatArray) -> Unit)? = null
+
+    private fun shaded(gradient: PolyGradient, x: Float, y: Float, w: Float, h: Float, draw: () -> Unit) {
         if (w <= 0f || h <= 0f) return
         val s = state
         val tex: PolyBitmap
@@ -186,10 +193,24 @@ abstract class PolyTessellator : PolyRenderer {
             uv = { fx, fy, out -> out[0] = ((fx - s.tx) / s.sx - x) / w; out[1] = ((fy - s.ty) / s.sy - y) / h }
         }
         if (cpuOnly) return
-        val g = PolyGlyphPage.bitmap(tex)
+        // The atlas packs other textures next to the ramp, so a ramp read past its ends needs a texture of its own to clamp
+        val g = if (gradient.linear && !inRamp(gradient, x, y, w, h)) null else PolyGlyphPage.bitmap(tex)
         begin(g?.page ?: bitmapTexture(tex), false)
-        val pageUv: (Float, Float, FloatArray) -> Unit = if (g == null) uv else { fx, fy, out -> uv(fx, fy, out); out[0] = g.u(out[0]); out[1] = g.v(out[1]) }
-        clippedFill(x, y, w, h, radius) { fillPolygonPx(it, it.size / 2, -1, convex = true, uv = pageUv, keepBatch = true) }
+        shading = if (g == null) uv else { fx, fy, out -> uv(fx, fy, out); out[0] = g.u(out[0]); out[1] = g.v(out[1]) }
+        try {
+            draw()
+        } finally {
+            shading = null
+        }
+    }
+
+    // Linear positions are affine, so the box's corners bound them; the ramp's one-texel border covers that far past either end
+    private fun inRamp(g: PolyGradient, x: Float, y: Float, w: Float, h: Float): Boolean {
+        for (i in 0 until 4) {
+            val t = g.position(if (i and 1 == 0) x else x + w, if (i < 2) y else y + h, x, y, w, h)
+            if (t < -1f / 255f || t > 256f / 255f) return false
+        }
+        return true
     }
 
     override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float) =
@@ -239,6 +260,9 @@ abstract class PolyTessellator : PolyRenderer {
         transformInPlace(pts)
         fillPolygonPx(pts, 4, mulAlpha(color, alphaMul), convex = true)
     }
+
+    override fun fillPathGradient(path: PolyPath, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient) =
+        shaded(gradient, x, y, w, h) { fillPath(path, -1) }
 
     override fun fillPath(path: PolyPath, color: Int) {
         beginDraw()
@@ -396,6 +420,10 @@ abstract class PolyTessellator : PolyRenderer {
         for (i in m until no) put(outer, i)
         return out
     }
+
+    override fun strokePolylineGradient(
+        points: FloatArray, closed: Boolean, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, cap: Int, join: Int,
+    ) = shaded(gradient, x, y, w, h) { strokePolyline(points, closed, -1, strokeWidth, cap, join) }
 
     override fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int, join: Int) {
         beginDraw()
@@ -1074,7 +1102,8 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
-    private fun whitePage(): Any = batchTexture as? PolyGlyphPage.Page ?: PolyGlyphPage.pages[0]
+    // Geometry drawn with a gradient keeps sampling the gradient's texture
+    private fun whitePage(): Any = if (shading != null) batchTexture else batchTexture as? PolyGlyphPage.Page ?: PolyGlyphPage.pages[0]
 
     protected fun begin(texture: Any, premultiplied: Boolean, nearest: Boolean = false) {
         if (count > 0 && (texture !== batchTexture || premultiplied != batchPremul || nearest != batchNearest)) flush()
@@ -1471,7 +1500,9 @@ abstract class PolyTessellator : PolyRenderer {
     private fun vertex(x: Float, y: Float, u: Float, v: Float, color: Int) {
         val m = state.rot
         if (m == null) { qx[qn] = x; qy[qn] = y } else { qx[qn] = m[0] * x + m[1] * y + m[4]; qy[qn] = m[2] * x + m[3] * y + m[5] }
-        qu[qn] = u; qv[qn] = v; qc[qn] = color
+        val sh = shading
+        if (sh == null) { qu[qn] = u; qv[qn] = v } else { sh(x, y, uvTmp); qu[qn] = uvTmp[0]; qv[qn] = uvTmp[1] }
+        qc[qn] = color
         if (++qn < 4) return
         qn = 0
         val box = state.clip

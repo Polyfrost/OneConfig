@@ -372,13 +372,7 @@ class PolyComposePath : Path {
         plainRect = plainRect?.translate(offset)
     }
 
-    override fun getBounds(): Rect {
-        var l = Float.MAX_VALUE; var t = Float.MAX_VALUE; var r = -Float.MAX_VALUE; var b = -Float.MAX_VALUE
-        for (c in allContours()) for (k in c.indices step 2) {
-            l = min(l, c[k]); r = max(r, c[k]); t = min(t, c[k + 1]); b = max(b, c[k + 1])
-        }
-        return if (l > r) Rect.Zero else Rect(l, t, r, b)
-    }
+    override fun getBounds(): Rect = bounds(allContours())
 
     override fun op(path1: Path, path2: Path, operation: PathOperation): Boolean {
         reset()
@@ -394,6 +388,14 @@ class PolyComposePath : Path {
     internal fun closedAt(i: Int): Boolean = if (i < closed.size) closed[i] else false
 
     private fun segments(length: Float) = ceil(sqrt(max(length, 1f)) * 1.5f).toInt().coerceIn(1, 64)
+}
+
+internal fun bounds(contours: List<FloatArray>): Rect {
+    var l = Float.MAX_VALUE; var t = Float.MAX_VALUE; var r = -Float.MAX_VALUE; var b = -Float.MAX_VALUE
+    for (c in contours) for (k in c.indices step 2) {
+        l = min(l, c[k]); r = max(r, c[k]); t = min(t, c[k + 1]); b = max(b, c[k + 1])
+    }
+    return if (l > r) Rect.Zero else Rect(l, t, r, b)
 }
 
 internal class FloatArrayList {

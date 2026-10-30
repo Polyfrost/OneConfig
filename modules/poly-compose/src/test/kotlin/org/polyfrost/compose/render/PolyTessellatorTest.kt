@@ -1,6 +1,10 @@
 package org.polyfrost.compose.render
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.PaintingStyle
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import kotlin.math.abs
@@ -414,6 +418,35 @@ class PolyTessellatorTest {
         val hi = b.colors.indices.maxBy { b.verts[it * 4] }
         assertEquals(0xFF0000FF.toInt(), texel(b.verts[lo * 4 + 2], b.verts[lo * 4 + 3]))
         assertEquals(0xFFFF0000.toInt(), texel(b.verts[hi * 4 + 2], b.verts[hi * 4 + 3]))
+    }
+
+    @Test
+    fun gradientPathsSampleTheRampAndBatchWithShapes() {
+        PolyCompose.install()
+        val r = Recorder()
+        val canvas = PolyCanvas(r)
+        val gradient = PolyPaint().apply { shader = LinearGradientShader(Offset.Zero, Offset(100f, 0f), listOf(Color.Red, Color.Blue)) }
+        canvas.drawPath(Path().apply { moveTo(0f, 0f); lineTo(100f, 0f); lineTo(0f, 10f); close() }, gradient)
+        canvas.drawPath(Path().apply { moveTo(10f, 20f); lineTo(90f, 20f) }, gradient.copy().apply { style = PaintingStyle.Stroke; strokeWidth = 2f })
+        canvas.drawPath(Path().apply { moveTo(0f, 30f); lineTo(10f, 30f); lineTo(0f, 40f); close() }, PolyPaint())
+        val b = r.done().single()
+        val page = b.texture as PolyGlyphPage.Page
+        val s = PolyGlyphPage.SIZE
+        var shaded = 0
+        for (i in b.colors.indices) {
+            val texel = page.pixels[(b.verts[i * 4 + 3] * s).toInt() * s + (b.verts[i * 4 + 2] * s).toInt()]
+            val argb = (texel and -0x1000000) or (texel and 0xFF shl 16) or (texel and 0xFF00) or (texel ushr 16 and 0xFF)
+            if (b.verts[i * 4 + 1] > 25f) {
+                assertEquals(-1, argb, "solid fills sample white")
+            } else if (b.colors[i] ushr 24 == 255) {
+                shaded++
+                val expected = PolyGradient.lerpArgb(0xFFFF0000.toInt(), 0xFF0000FF.toInt(), b.verts[i * 4] / 100f)
+                for (shift in intArrayOf(0, 8, 16)) {
+                    assertTrue(abs((expected ushr shift and 0xFF) - (argb ushr shift and 0xFF)) <= 3, "%08x at x=%f".format(argb, b.verts[i * 4]))
+                }
+            }
+        }
+        assertTrue(shaded > 0)
     }
 
     @Test

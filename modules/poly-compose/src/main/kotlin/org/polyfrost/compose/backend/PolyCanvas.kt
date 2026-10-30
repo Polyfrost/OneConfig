@@ -36,6 +36,7 @@ import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFade
+import org.polyfrost.compose.render.PolyGradient
 import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyShadow
@@ -176,17 +177,38 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     override fun drawLine(p1: Offset, p2: Offset, paint: Paint) = segment(p1.x, p1.y, p2.x, p2.y, paint as PolyPaint)
 
     private fun segment(x1: Float, y1: Float, x2: Float, y2: Float, paint: PolyPaint) {
-        if (paint.strokeCap == StrokeCap.Butt && paint.pathEffect !is DashEffect) return r.line(x1, y1, x2, y2, paint.argb(), paint.strokeWidth.coerceAtLeast(1f))
+        if (paint.strokeCap == StrokeCap.Butt && paint.pathEffect !is DashEffect && paint.shader == null) {
+            return r.line(x1, y1, x2, y2, paint.argb(), paint.strokeWidth.coerceAtLeast(1f))
+        }
         strokeContour(floatArrayOf(x1, y1, x2, y2), false, paint)
     }
 
-    private fun strokeContour(c: FloatArray, closed: Boolean, paint: PolyPaint) {
+    private fun strokeContour(c: FloatArray, closed: Boolean, paint: PolyPaint) = shaded(paint) { g ->
         val color = paint.argb()
         val sw = paint.strokeWidth.coerceAtLeast(1f)
         val cap = when (paint.strokeCap) { StrokeCap.Round -> PolyRenderer.CAP_ROUND; StrokeCap.Square -> PolyRenderer.CAP_SQUARE; else -> PolyRenderer.CAP_BUTT }
         val join = if (paint.strokeJoin == StrokeJoin.Round) PolyRenderer.JOIN_ROUND else PolyRenderer.JOIN_MITER
-        val dash = paint.pathEffect as? DashEffect ?: return r.strokePolyline(c, closed, color, sw, cap, join)
-        for (d in dashes(c, closed, dash)) r.strokePolyline(d, false, color, sw, cap, join)
+        // The gradient is laid out over everything the stroke covers, which reaches half its width past the contour
+        val box = if (g == null) Rect.Zero else bounds(listOf(c)).inflate(sw / 2f)
+        val brush = g?.brushFor(box.left, box.top, box.width, box.height)
+        val dash = paint.pathEffect as? DashEffect
+        if (dash == null) polyline(c, closed, color, sw, cap, join, box, brush)
+        else for (d in dashes(c, closed, dash)) polyline(d, false, color, sw, cap, join, box, brush)
+    }
+
+    private fun polyline(p: FloatArray, closed: Boolean, color: Int, sw: Float, cap: Int, join: Int, box: Rect, gradient: PolyGradient?) =
+        if (gradient == null) r.strokePolyline(p, closed, color, sw, cap, join)
+        else r.strokePolylineGradient(p, closed, box.left, box.top, box.width, box.height, gradient, sw, cap, join)
+
+    // Paints with a gradient draw it in a layer applying the paint's alpha, and its mask if it has one
+    private inline fun shaded(paint: PolyPaint, draw: (GradientShader?) -> Unit) {
+        val s = paint.shader?.platformShader
+        val g = s as? GradientShader ?: (s as? MaskedShader)?.color ?: return draw(null)
+        if (paint.alpha < 1f) r.saveLayerAlpha(paint.alpha) else r.save()
+        if (s is MaskedShader) r.saveLayerFade(s.mask)
+        draw(g)
+        if (s is MaskedShader) r.restore()
+        r.restore()
     }
 
     override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) =
@@ -226,7 +248,6 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     private fun fillOrStroke(p: PolyComposePath, pp: PolyPaint) {
         p.roundRect?.let { return shape(it.left, it.top, it.width, it.height, it.topLeftCornerRadius.x, pp) }
         p.plainRect?.let { return shape(it.left, it.top, it.width, it.height, 0f, pp) }
-        val color = pp.argb()
         if (pp.style == PaintingStyle.Stroke) {
             p.allContours().forEachIndexed { i, c -> strokeContour(c, p.closedAt(i), pp) }
             return
@@ -239,7 +260,10 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
             for (k in 2 until c.size step 2) poly.lineTo(c[k], c[k + 1])
             poly.close()
         }
-        r.fillPath(poly, color)
+        shaded(pp) { g ->
+            if (g == null) r.fillPath(poly, pp.argb())
+            else p.getBounds().let { b -> r.fillPathGradient(poly, b.left, b.top, b.width, b.height, g.brushFor(b.left, b.top, b.width, b.height)) }
+        }
     }
 
     private fun shape(x: Float, y: Float, w: Float, h: Float, radius: Float, paint: PolyPaint) {
@@ -257,32 +281,13 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
                 return strokeContour(outline.allContours()[0], true, paint)
             }
             val sw = paint.strokeWidth.coerceAtLeast(1f)
-            val g = (paint.shader?.platformShader as? GradientShader)?.brushFor(x, y, w, h)
-            if (g == null) {
-                r.rectStroke(x, y, w, h, paint.argb(), sw, radius)
-            } else {
-                if (paint.alpha < 1f) r.saveLayerAlpha(paint.alpha) else r.save()
-                r.rectStrokeGradient(x, y, w, h, g, sw, radius)
-                r.restore()
+            return shaded(paint) { g ->
+                if (g == null) r.rectStroke(x, y, w, h, paint.argb(), sw, radius)
+                else r.rectStrokeGradient(x, y, w, h, g.brushFor(x, y, w, h), sw, radius)
             }
-            return
         }
-        when (val s = paint.shader?.platformShader) {
-            is GradientShader -> {
-                if (paint.alpha < 1f) r.saveLayerAlpha(paint.alpha) else r.save()
-                r.rectGradient(x, y, w, h, s.brushFor(x, y, w, h), radius)
-                r.restore()
-            }
-            is MaskedShader -> {
-                if (paint.alpha < 1f) r.saveLayerAlpha(paint.alpha) else r.save()
-                r.saveLayerFade(s.mask)
-                r.rectGradient(x, y, w, h, s.color.brushFor(x, y, w, h), radius)
-                r.restore()
-                r.restore()
-            }
-            is ImageShader -> image(s.image, 0f, 0f, s.image.width.toFloat(), s.image.height.toFloat(), x, y, w, h, paint)
-            else -> r.rect(x, y, w, h, paint.argb(), radius)
-        }
+        (paint.shader?.platformShader as? ImageShader)?.let { return image(it.image, 0f, 0f, it.image.width.toFloat(), it.image.height.toFloat(), x, y, w, h, paint) }
+        shaded(paint) { g -> if (g == null) r.rect(x, y, w, h, paint.argb(), radius) else r.rectGradient(x, y, w, h, g.brushFor(x, y, w, h), radius) }
     }
 
     override fun drawImage(image: ImageBitmap, topLeftOffset: Offset, paint: Paint) =

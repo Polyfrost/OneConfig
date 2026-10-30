@@ -1184,6 +1184,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public abstract fun clipRect (FFFF)V
 	public fun deviceTransform ()[F
 	public abstract fun fillPath (Lorg/polyfrost/compose/render/PolyPath;I)V
+	public fun fillPathGradient (Lorg/polyfrost/compose/render/PolyPath;FFFFLorg/polyfrost/compose/render/PolyGradient;)V
 	public abstract fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;)V
 	public fun image (Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
@@ -1208,6 +1209,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public fun shadowWithHole (FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
 	public fun strokePolyline ([FZIFII)V
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
+	public fun strokePolylineGradient ([FZFFFFLorg/polyfrost/compose/render/PolyGradient;FII)V
 	public abstract fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;FF)V
@@ -1226,6 +1228,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$Companion {
 public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun animatedScale (Lorg/polyfrost/compose/render/PolyRenderer;FF)V
 	public static fun deviceTransform (Lorg/polyfrost/compose/render/PolyRenderer;)[F
+	public static fun fillPathGradient (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyPath;FFFFLorg/polyfrost/compose/render/PolyGradient;)V
 	public static fun image (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
@@ -1235,6 +1238,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun shadowWithHole (Lorg/polyfrost/compose/render/PolyRenderer;FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
 	public static fun strokePolyline (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFII)V
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
+	public static fun strokePolylineGradient (Lorg/polyfrost/compose/render/PolyRenderer;[FZFFFFLorg/polyfrost/compose/render/PolyGradient;FII)V
 	public static fun text (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V
 	public static fun text (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;FF)V
 }
@@ -1286,6 +1290,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	protected final fun drawBoxesSince (I)[F
 	protected fun fade (Ljava/lang/Object;F)Z
 	public fun fillPath (Lorg/polyfrost/compose/render/PolyPath;I)V
+	public fun fillPathGradient (Lorg/polyfrost/compose/render/PolyPath;FFFFLorg/polyfrost/compose/render/PolyGradient;)V
 	protected final fun flush ()V
 	protected fun getCpuOnly ()Z
 	protected final fun getDrawBoxMark ()I
@@ -1322,6 +1327,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun shadowWithHole (FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
 	public final fun stateKey ()Ljava/lang/Object;
 	public fun strokePolyline ([FZIFII)V
+	public fun strokePolylineGradient ([FZFFFFLorg/polyfrost/compose/render/PolyGradient;FII)V
 	protected abstract fun submit (Ljava/lang/Object;ZZ[F[I[F)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;)V
 	public fun text (Ljava/lang/String;FFILorg/polyfrost/compose/render/PolyFont;F)V

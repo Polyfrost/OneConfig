@@ -17,6 +17,13 @@ interface PolyRenderer {
     fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float)
     fun fillPath(path: PolyPath, color: Int)
 
+    /**
+     * Fills [path] with [gradient] laid out over the box at [x], [y] sized [w] by [h], as [rectGradient] lays it out over its rectangle.
+     * Renderers without gradient support fill it with the gradient's color at the box's center.
+     */
+    fun fillPathGradient(path: PolyPath, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient) =
+        fillPath(path, gradient.colorAt(x + w / 2f, y + h / 2f, x, y, w, h))
+
     fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int, join: Int = JOIN_MITER) {
         val n = points.size / 2
         for (i in 0 until (if (closed) n else n - 1)) {
@@ -24,6 +31,14 @@ interface PolyRenderer {
             line(points[i * 2], points[i * 2 + 1], points[j * 2], points[j * 2 + 1], color, strokeWidth)
         }
     }
+
+    /**
+     * Strokes like [strokePolyline] with [gradient] laid out over the box at [x], [y] sized [w] by [h], as in [fillPathGradient].
+     * Renderers without gradient support stroke it with the gradient's color at the box's center.
+     */
+    fun strokePolylineGradient(
+        points: FloatArray, closed: Boolean, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, cap: Int, join: Int,
+    ) = strokePolyline(points, closed, gradient.colorAt(x + w / 2f, y + h / 2f, x, y, w, h), strokeWidth, cap, join)
 
     fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont)
 

@@ -86,17 +86,38 @@ class ImageBitmapCanvasTest {
         }
     }
 
+    private fun assertNear(expected: Int, actual: Int, at: String) {
+        for (shift in intArrayOf(0, 8, 16, 24)) {
+            val d = (actual ushr shift and 0xFF) - (expected ushr shift and 0xFF)
+            assertTrue(d in -2..2, "%08x at %s, expected %08x".format(actual, at, expected))
+        }
+    }
+
+    private fun redToBlue(t: Float) = PolyGradient.lerpArgb(0xFFFF0000.toInt(), 0xFF0000FF.toInt(), t)
+
     @Test
     fun gradientsAreSampledIntoBitmaps() {
         PolyCompose.install()
         val out = drawInto(ImageBitmap(16, 2)) { drawRect(Brush.horizontalGradient(listOf(Color.Red, Color.Blue))) }
-        for (x in 0 until 16) {
-            val expected = PolyGradient.lerpArgb(0xFFFF0000.toInt(), 0xFF0000FF.toInt(), (x + 0.5f) / 16f)
-            for (shift in intArrayOf(0, 8, 16, 24)) {
-                val d = (out.argb(x, 1) ushr shift and 0xFF) - (expected ushr shift and 0xFF)
-                assertTrue(d in -2..2, "%08x at $x, expected %08x".format(out.argb(x, 1), expected))
-            }
-        }
+        for (x in 0 until 16) assertNear(redToBlue((x + 0.5f) / 16f), out.argb(x, 1), "$x")
+    }
+
+    @Test
+    fun pathsAreFilledAndStrokedWithGradients() {
+        PolyCompose.install()
+        val triangle = Path().apply { moveTo(0f, 0f); lineTo(16f, 0f); lineTo(0f, 16f); close() }
+        val fill = drawInto(ImageBitmap(16, 16)) { drawPath(triangle, Brush.horizontalGradient(listOf(Color.Red, Color.Blue))) }
+        for (x in 1..10) assertNear(redToBlue((x + 0.5f) / 16f), fill.argb(x, 4), "($x, 4)")
+        assertEquals(0, fill.argb(15, 15))
+
+        val clamped = drawInto(ImageBitmap(16, 16)) { drawPath(triangle, Brush.horizontalGradient(listOf(Color.Red, Color.Blue), 4f, 8f)) }
+        for (x in 1..3) assertEquals(0xFFFF0000.toInt(), clamped.argb(x, 4), "before the gradient at $x")
+        for (x in 8..10) assertEquals(0xFF0000FF.toInt(), clamped.argb(x, 4), "past the gradient at $x")
+
+        val line = Path().apply { moveTo(2f, 2f); lineTo(2f, 14f) }
+        val stroke = drawInto(ImageBitmap(4, 16)) { drawPath(line, Brush.verticalGradient(listOf(Color.Red, Color.Blue)), style = Stroke(3f)) }
+        for (y in 3..12) for (x in 1..2) assertNear(redToBlue((y + 0.5f) / 16f), stroke.argb(x, y), "($x, $y)")
+        assertEquals(0, stroke.argb(1, 15))
     }
 
     @Test
