@@ -1,6 +1,7 @@
-## Unreleased changes
+## 1.6.0
 - Fixed uku's Armor HUD compatibility not working on 1.21.11
 - Removed Skia/Skiko in favor of our own Compose-based rendering logic
+  - Should significantly improve performance in the UI and HUDs
 - wWaypoints options that a server has switched off are now shown locked
 
 ### For mod developers
