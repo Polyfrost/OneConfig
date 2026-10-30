@@ -8,6 +8,11 @@ repositories {
     maven("https://maven.cloverclient.com/releases") {
         content { includeGroup("pl.tomgirl") }
     }
+    // Mojang's library repository only has STB natives for the platforms vanilla ships
+    exclusiveContent {
+        forRepository { mavenCentral() }
+        filter { includeModule("org.lwjgl", "lwjgl-stb") }
+    }
 }
 
 ploceus {
