@@ -31,29 +31,40 @@ class PolyFontTest {
         assertThrows<IllegalArgumentException> { FontManager.register("not-a-font", truncated) }
     }
 
-    private fun sfnt(vararg tables: Pair<String, Int>): ByteArray {
+    private fun sfnt(vararg tables: Pair<String, ByteArray>): ByteArray {
         val directory = 12 + tables.size * 16
-        val out = ByteArray(directory + tables.sumOf { it.second })
+        val out = ByteArray(directory + tables.sumOf { it.second.size })
         out[1] = 1
         out[5] = tables.size.toByte()
         var offset = directory
-        tables.forEachIndexed { i, (tag, length) ->
+        tables.forEachIndexed { i, (tag, data) ->
             val record = 12 + i * 16
             tag.toByteArray(Charsets.ISO_8859_1).copyInto(out, record)
             for (b in 0 until 4) {
                 out[record + 8 + b] = (offset shr (24 - b * 8)).toByte()
-                out[record + 12 + b] = (length shr (24 - b * 8)).toByte()
+                out[record + 12 + b] = (data.size shr (24 - b * 8)).toByte()
             }
-            offset += length
+            data.copyInto(out, offset)
+            offset += data.size
         }
         return out
     }
 
+    private val minimalFont = arrayOf(
+        "cmap" to ByteArray(4), "head" to ByteArray(54), "hhea" to ByteArray(36).also { it[35] = 1 }, "hmtx" to ByteArray(4),
+        "maxp" to ByteArray(6), "loca" to ByteArray(2), "glyf" to ByteArray(0),
+    )
+
+    private fun replaced(tag: String, data: ByteArray) = minimalFont.map { if (it.first == tag) tag to data else it }.toTypedArray()
+
     @Test
-    fun fontsWithTruncatedTablesAreRejected() {
-        val tables = arrayOf("cmap" to 4, "head" to 54, "hhea" to 36, "hmtx" to 0, "glyf" to 0, "loca" to 0)
-        FontManager.register("synthetic", sfnt(*tables))
-        assertThrows<IllegalArgumentException> { FontManager.register("synthetic", sfnt(*tables.map { if (it.first == "head") "head" to 53 else it }.toTypedArray())) }
-        assertThrows<IllegalArgumentException> { FontManager.register("synthetic", sfnt(*tables, "maxp" to 4)) }
+    fun damagedFontsAreRejected() {
+        FontManager.register("synthetic", sfnt(*minimalFont))
+        assertThrows<IllegalArgumentException> { FontManager.register("synthetic", sfnt(*replaced("head", ByteArray(53)))) }
+        assertThrows<IllegalArgumentException> { FontManager.register("synthetic", sfnt(*replaced("maxp", ByteArray(4)))) }
+        val farSubtable = byteArrayOf(0, 0, 0, 1, 0, 3, 0, 1, 0x7f, -1, -1, -1)
+        assertThrows<IllegalArgumentException> { FontManager.register("synthetic", sfnt(*replaced("cmap", farSubtable))) }
+        assertThrows<IllegalArgumentException> { FontManager.register("synthetic", sfnt(*replaced("hhea", ByteArray(36)))) }
+        assertThrows<IllegalArgumentException> { FontManager.register("synthetic", sfnt(*replaced("loca", byteArrayOf(0, 9)))) }
     }
 }
