@@ -20,6 +20,7 @@ import org.polyfrost.oneconfig.internal.ui.components.resolve
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.CreditsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
@@ -28,6 +29,8 @@ import org.polyfrost.oneconfig.internal.ui.navigation.graph.ProfilesGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ThemesGraph
 import org.polyfrost.oneconfig.internal.ui.screens.Changelog
 import org.polyfrost.oneconfig.internal.ui.screens.Credits
+import org.polyfrost.oneconfig.internal.ui.screens.Hotwire
+import org.polyfrost.oneconfig.internal.ui.screens.isHotwireInstalled
 import org.polyfrost.oneconfig.internal.ui.screens.Keybinds
 import org.polyfrost.oneconfig.internal.ui.screens.Mods
 import org.polyfrost.oneconfig.internal.ui.screens.Preferences
@@ -60,10 +63,13 @@ internal class BuiltinPage(
 }
 
 object BuiltinPages {
-    internal val all: List<BuiltinPage> = listOf(
+    internal val all: List<BuiltinPage> = listOfNotNull(
         BuiltinPage("mods", "Mods", "settings", PageGroup.MODS_AND_OPTIONS, 100, ModsGraph) { Mods() },
         BuiltinPage("profiles", "Profiles", "profiles", PageGroup.MODS_AND_OPTIONS, 200, ProfilesGraph) { Profiles() },
         BuiltinPage("keybinds", "Keybinds", "keyboard", PageGroup.MODS_AND_OPTIONS, 300, KeybindsGraph) { Keybinds() },
+        // the Hotwire page only does anything with Hotwire installed
+        BuiltinPage("hotwire", "Hotwire", "lightning-01", PageGroup.MODS_AND_OPTIONS, 400, HotwireGraph) { Hotwire() }
+            .takeIf { isHotwireInstalled },
         BuiltinPage("themes", "Themes", "paintbrush", PageGroup.PERSONALIZATION, 100, ThemesGraph) { Themes() },
         BuiltinPage("preferences", "Preferences", "cog", PageGroup.PERSONALIZATION, 200, PreferencesGraph) { Preferences() },
         BuiltinPage("changelog", "Changelog", "refresh", PageGroup.ONECONFIG, 100, ChangeLogGraph) { Changelog() },

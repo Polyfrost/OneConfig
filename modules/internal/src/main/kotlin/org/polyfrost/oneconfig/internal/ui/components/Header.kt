@@ -48,6 +48,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,7 +64,12 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireAddRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.isOn
+import org.polyfrost.oneconfig.internal.ui.screens.addHotwireMods
+import org.polyfrost.oneconfig.internal.ui.screens.hotwireTagline
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
@@ -90,6 +96,8 @@ fun Header(modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
+            // weighted so the search bar and buttons on the right keep their size and the title side gives way
+            modifier = Modifier.weight(1f).padding(end = 26.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
@@ -120,6 +128,16 @@ fun Header(modifier: Modifier = Modifier) {
                             )
                             TitleAuthorByline(info.authors)
                             TitleInfoTooltip(info)
+                            info.tagline?.let {
+                                Text(
+                                    it,
+                                    color = LocalTheme.current.textColorSecondary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }
@@ -159,6 +177,7 @@ fun Header(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
+            title?.addMods?.let { HeaderButton("plus", translated("oneconfig.page.hotwire.add_mods", "Add mods"), it) }
             GlobalSearchBar()
             IconButton("close", Modifier.size(32.dp), hoverBorder = true) { closeRequest() }
         }
@@ -175,6 +194,8 @@ private data class HeaderTitle(
     val credits: String? = null,
     val version: String? = null,
     val openOriginalScreen: Runnable? = null,
+    val tagline: String? = null,
+    val addMods: Runnable? = null,
 )
 
 private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
@@ -194,16 +215,19 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
         )
     }
 
+    if (destination.hasRoute(HotwireAddRoute::class)) {
+        return HeaderTitle(translated("oneconfig.page.hotwire.add_mods", "Add mods"), tagline = hotwireTagline())
+    }
+    if (entry.isOn(HotwireGraph)) {
+        return HeaderTitle(entry.currentPageTitle() ?: "Hotwire", tagline = hotwireTagline(), addMods = addHotwireMods)
+    }
+
     return entry.currentPageTitle()?.let { HeaderTitle(it) }
 }
 
 @Composable
 private fun OpenOriginalScreenButton(runnable: Runnable) {
     val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val accentAlpha by animateFloatAsState(if (isHovered) 0.75f else 1f)
-
     Tooltip(
         text = {
             Text(
@@ -215,22 +239,32 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
         modifier = Modifier.widthIn(max = 260.dp),
         anchor = Alignment.BottomCenter,
     ) {
-        Box(
-            modifier = Modifier
-                .pointerHoverIcon(PointerIcon.Hand)
-                .background(AccentBrush, theme.buttonShape, accentAlpha)
-                .onClick(interactionSource) { runnable.run() }
-                .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
-                .padding(horizontal = 16.dp, vertical = 6.dp),
-            contentAlignment = Alignment.Center,
+        HeaderButton("external-link", translated("oneconfig.header.original_menu", "Original menu"), runnable)
+    }
+}
+
+@Composable
+private fun HeaderButton(icon: String, label: String, runnable: Runnable) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val accentAlpha by animateFloatAsState(if (isHovered) 0.75f else 1f)
+
+    Box(
+        modifier = Modifier
+            .pointerHoverIcon(PointerIcon.Hand)
+            .background(AccentBrush, theme.buttonShape, accentAlpha)
+            .onClick(interactionSource) { runnable.run() }
+            .border(1.dp, theme.borderColor, theme.buttonShape)
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon("external-link", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
-                Text(translated("oneconfig.header.original_menu", "Original menu"), color = theme.accentTextColor, fontSize = 13.sp)
-            }
+            Icon(icon, color = theme.accentTextColor, modifier = Modifier.size(14.dp))
+            Text(label, color = theme.accentTextColor, fontSize = 13.sp)
         }
     }
 }

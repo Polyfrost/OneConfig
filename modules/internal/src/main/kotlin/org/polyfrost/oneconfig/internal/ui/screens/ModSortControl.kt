@@ -54,19 +54,12 @@ fun ModSortControl(modifier: Modifier = Modifier) {
     }
 
     Box(modifier.padding(end = PageGutter)) {
-        Row(
-            Modifier
-                .height(36.dp)
-                .background(theme.componentBackground, theme.buttonShape)
-                .border(1.dp, theme.borderColor, theme.buttonShape)
-                .padding(3.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            modes.forEach { mode ->
-                SortSegment(mode, mode.id == selectedId) {
-                    if (mode.confirmation != null) pending = mode else apply(mode)
-                }
-            }
+        IconSegments(
+            modes.map { IconSegment(it.icon, it.title) },
+            selected = modes.indexOfFirst { it.id == selectedId },
+        ) { index ->
+            val mode = modes[index]
+            if (mode.confirmation != null) pending = mode else apply(mode)
         }
         pending?.let { mode ->
             ShellPopup(
@@ -97,12 +90,37 @@ fun ModSortControl(modifier: Modifier = Modifier) {
     }
 }
 
+class IconSegment(val icon: String, val title: String)
+
+/** A row of icon-only choices with the [selected] one highlighted, as the mods page's sort control */
 @Composable
-private fun SortSegment(mode: ModSortMode, selected: Boolean, onSwitch: () -> Unit) {
+fun IconSegments(
+    segments: List<IconSegment>,
+    selected: Int,
+    modifier: Modifier = Modifier,
+    onSelect: (Int) -> Unit,
+) {
+    val theme = LocalTheme.current
+    Row(
+        modifier
+            .height(36.dp)
+            .background(theme.componentBackground, theme.buttonShape)
+            .border(1.dp, theme.borderColor, theme.buttonShape)
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        segments.forEachIndexed { index, segment ->
+            Segment(segment, index == selected) { onSelect(index) }
+        }
+    }
+}
+
+@Composable
+private fun Segment(segment: IconSegment, selected: Boolean, onSwitch: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     Tooltip(
-        text = { Text(mode.title, color = theme.textColor, fontSize = 12.sp) },
+        text = { Text(segment.title, color = theme.textColor, fontSize = 12.sp) },
         modifier = Modifier,
         anchor = Alignment.BottomCenter,
     ) {
@@ -117,7 +135,7 @@ private fun SortSegment(mode: ModSortMode, selected: Boolean, onSwitch: () -> Un
                 .padding(horizontal = 12.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(mode.icon, if (selected) theme.textColor else theme.textColorSecondary, Modifier.size(16.dp))
+            Icon(segment.icon, if (selected) theme.textColor else theme.textColorSecondary, Modifier.size(16.dp))
         }
     }
 }

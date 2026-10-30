@@ -13,6 +13,8 @@ data class ModInfo @JvmOverloads constructor(
     val authors: String? = null,
     val credits: String? = null,
     val description: String? = null,
+    /** Id of the mod whose jar this one is nested in, or null for a top-level mod */
+    val parentId: String? = null,
 ){
     /**
      * Resolves [modIconPath] against this mod's own jar root ([file])
