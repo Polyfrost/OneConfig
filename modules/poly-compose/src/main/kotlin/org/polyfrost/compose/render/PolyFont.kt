@@ -13,7 +13,15 @@ data class PolyFont(val name: String, val size: Float) {
         fun metrics(font: PolyFont): Metrics
     }
 
-    val metrics: Metrics by lazy(LazyThreadSafetyMode.NONE) { engine.metrics(this) }
+    private var cachedMetrics: Metrics? = null
+    private var metricsRevision = -1
+
+    val metrics: Metrics
+        get() {
+            val revision = FontManager.revision
+            cachedMetrics?.let { if (metricsRevision == revision) return it }
+            return engine.metrics(this).also { cachedMetrics = it; metricsRevision = revision }
+        }
 
     fun measureTextWidth(text: String): Float = engine.measureTextWidth(this, text)
 

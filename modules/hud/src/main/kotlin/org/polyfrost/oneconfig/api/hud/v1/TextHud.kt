@@ -43,6 +43,7 @@ import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.node.PolyNode
+import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyApplier
 import org.polyfrost.compose.render.PolyFont
@@ -298,13 +299,15 @@ private class PoppinsTextNode : PolyNode() {
     private var lines: List<String> = emptyList()
     private var measuredText: String? = null
     private var measuredSpec: PoppinsTextSpec? = null
+    private var measuredFonts = -1
 
     override fun measureContent() {
         val s = spec ?: return
         val t = text()
-        if (t == measuredText && s === measuredSpec) return
+        if (t == measuredText && s === measuredSpec && measuredFonts == FontManager.revision) return
         measuredText = t
         measuredSpec = s
+        measuredFonts = FontManager.revision
         lines = t.lines()
         val metrics = s.font.metrics
         style.width = PolySize.Px(lines.maxOf { s.font.measureTextWidth(it) })
