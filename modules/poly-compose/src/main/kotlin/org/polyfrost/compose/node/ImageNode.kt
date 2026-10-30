@@ -1,6 +1,5 @@
 package org.polyfrost.compose.node
 
-import org.jetbrains.skia.Image
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.layout.px
 import org.polyfrost.compose.render.RenderContext
@@ -8,9 +7,6 @@ import org.polyfrost.compose.render.RenderContext
 class ImageNode(
     private val image: PolyBitmap
 ) : PolyNode() {
-    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-    constructor(image: Image?) : this(PolyBitmap(1, 1, ByteArray(4)))
-
     fun remeasure() {
         style.width = image.width.px
         style.height = image.height.px

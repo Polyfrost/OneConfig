@@ -28,10 +28,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val skiaStub: SourceSet = sourceSets.create("skiaStub")
-
 dependencies {
-    compileOnly(skiaStub.output)
     compileOnly(libs.jetbrains.compose.runtime)
     compileOnly(libs.kotlinx.coroutines)
     compileOnly(libs.icu4j)

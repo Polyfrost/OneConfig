@@ -5,8 +5,6 @@ import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import org.jetbrains.skia.FilterTileMode
-import org.jetbrains.skia.Shader
 
 sealed class PolyGradient {
     abstract val colors: List<PolyColor>
@@ -17,9 +15,6 @@ sealed class PolyGradient {
     open val affine: Boolean get() = false
 
     open val linear: Boolean get() = false
-
-    @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-    fun toShader(x: Float, y: Float, w: Float, h: Float): Shader? = null
 
     fun colorAt(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Int = sample(position(px, py, x, y, w, h))
 
@@ -44,20 +39,6 @@ sealed class PolyGradient {
         override val stops: List<Float>? = null,
         val angle: Float = 0f,
     ) : PolyGradient() {
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        constructor(colors: List<PolyColor>, stops: List<Float>? = null, angle: Float = 0f, tileMode: FilterTileMode? = null) : this(colors, stops, angle)
-
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        val tileMode: FilterTileMode? get() = null
-
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        fun component4(): FilterTileMode? = null
-
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        @JvmName("copy")
-        fun skiaCopy(colors: List<PolyColor> = this.colors, stops: List<Float>? = this.stops, angle: Float = this.angle, tileMode: FilterTileMode? = null) =
-            copy(colors, stops, angle)
-
         override val affine get() = colors.size <= 2 && stops == null
         override val linear get() = true
 
@@ -82,24 +63,6 @@ sealed class PolyGradient {
         val centerY: Float = 0.5f,
         val radius: Float = 0.5f,
     ) : PolyGradient() {
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        constructor(
-            colors: List<PolyColor>, stops: List<Float>? = null, centerX: Float = 0.5f, centerY: Float = 0.5f, radius: Float = 0.5f, tileMode: FilterTileMode? = null,
-        ) : this(colors, stops, centerX, centerY, radius)
-
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        val tileMode: FilterTileMode? get() = null
-
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        fun component6(): FilterTileMode? = null
-
-        @Deprecated("Skia is no longer supported", level = DeprecationLevel.HIDDEN)
-        @JvmName("copy")
-        fun skiaCopy(
-            colors: List<PolyColor> = this.colors, stops: List<Float>? = this.stops, centerX: Float = this.centerX, centerY: Float = this.centerY,
-            radius: Float = this.radius, tileMode: FilterTileMode? = null,
-        ) = copy(colors, stops, centerX, centerY, radius)
-
         override fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float {
             val r = radius * minOf(w, h)
             if (r <= 0f) return 1f
