@@ -44,6 +44,31 @@ class SvgMaskTest {
     }
 
     @Test
+    fun fitsViewBoxIntoRootViewport() {
+        fun raster(par: String, content: String): (Int, Int) -> Int {
+            val bmp = SvgMask.rasterize("""<svg width="200" height="100" viewBox="0 0 10 10" preserveAspectRatio="$par">$content</svg>""", 40)!!
+            assertEquals(40, bmp.width)
+            assertEquals(20, bmp.height)
+            return { x, y -> bmp.pixels[(y * bmp.width + x) * 4 + 3].toInt() and 0xFF }
+        }
+        val full = """<rect width="10" height="10" fill="white"/>"""
+
+        val meet = raster("xMidYMid meet", full)
+        assertEquals(255, meet(20, 10))
+        assertEquals(255, meet(11, 1))
+        assertEquals(0, meet(8, 10))
+        assertEquals(0, meet(31, 10))
+
+        val none = raster("none", full)
+        assertEquals(255, none(1, 10))
+        assertEquals(255, none(38, 18))
+
+        val slice = raster("xMidYMid slice", """<rect width="10" height="5" fill="white"/>""")
+        assertEquals(255, slice(1, 8))
+        assertEquals(0, slice(1, 11))
+    }
+
+    @Test
     fun rasterisesLines() {
         val bmp = SvgMask.rasterize("""<svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2"><line x1="0" y1="5" x2="10" y2="5"/></svg>""", 10)!!
         fun a(x: Int, y: Int) = bmp.pixels[(y * bmp.width + x) * 4 + 3].toInt() and 0xFF

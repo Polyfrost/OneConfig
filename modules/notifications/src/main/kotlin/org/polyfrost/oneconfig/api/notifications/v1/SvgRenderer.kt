@@ -1085,15 +1085,17 @@ internal class SvgCanvas(private val doc: SvgDoc, val w: Int, val h: Int) {
                 when (u) { "pt" -> n * 1.25f; "pc" -> n * 15f; "mm" -> n * 90f / 25.4f; "cm" -> n * 90f / 2.54f; "in" -> n * 90f; "em" -> n * 16f; "ex" -> n * 8f; else -> n }
             }
             val aw = absLen(p["width"]); val ah = absLen(p["height"])
-            val vx = vb?.get(0) ?: 0f
-            val vy = vb?.get(1) ?: 0f
             val vw = vb?.get(2) ?: aw ?: ah ?: size.toFloat()
             val vh = vb?.get(3) ?: ah ?: aw ?: size.toFloat()
             if (vw <= 0f || vh <= 0f) return null
-            val scale = size / max(vw, vh)
-            val cw = max(1, (vw * scale).roundToInt())
-            val ch = max(1, (vh * scale).roundToInt())
-            val m = floatArrayOf(cw / vw, 0f, 0f, ch / vh, -vx * cw / vw, -vy * ch / vh)
+            // A single declared side takes the viewBox's aspect ratio, so only both sides change the viewport's shape
+            val pw = if (aw != null && ah != null) aw else vw
+            val ph = if (aw != null && ah != null) ah else vh
+            val scale = size / max(pw, ph)
+            val cw = max(1, (pw * scale).roundToInt())
+            val ch = max(1, (ph * scale).roundToInt())
+            val toPixels = Mat.scale(cw / pw, ch / ph)
+            val m = vb?.let { Mat.mul(toPixels, viewBoxMatrix(it, pw, ph, p["preserveAspectRatio"])) } ?: toPixels
             val acc = SvgCanvas(doc, cw, ch).render(root, m, vw, vh)
             val px = ByteArray(cw * ch * 4)
             val ta = tint?.let { (it ushr 24) / 255f }
