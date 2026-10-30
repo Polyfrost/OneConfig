@@ -297,6 +297,11 @@ class ComposeBackendTest {
     }
 
     @Test
+    fun rtlRunsMirrorBrackets() {
+        assertEquals(listOf("text '(\u05D2)\u05D1\u05D0' 65.0,11.2"), drawnText(paragraph("\u05D0\u05D1(\u05D2)")))
+    }
+
+    @Test
     fun caretAndHitTestRoundTrip() {
         for (text in listOf("abc אבג def", "אבג", "אבג abc דהו", "abc")) {
             val p = paragraph(text)

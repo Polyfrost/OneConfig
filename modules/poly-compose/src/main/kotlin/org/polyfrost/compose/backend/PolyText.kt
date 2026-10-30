@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
+import com.ibm.icu.lang.UCharacter
 import com.ibm.icu.text.ArabicShaping
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
@@ -62,9 +63,10 @@ private val italicFonts = ConcurrentHashMap.newKeySet<String>()
 
 private const val LIGATURE_PLACEHOLDER = '\uFFFF'
 
-// Minecraft ships ICU4J; without it Arabic is drawn unjoined
-private object Arabic {
+// Minecraft ships ICU4J; without it Arabic is drawn unjoined and right-to-left brackets unmirrored
+private object Icu {
     private val shaping = runCatching { ArabicShaping(ArabicShaping.LETTERS_SHAPE or ArabicShaping.LENGTH_FIXED_SPACES_NEAR) }.getOrNull()
+    private val mirroring = runCatching { UCharacter.getMirror('('.code) == ')'.code }.getOrDefault(false)
 
     // fixed length keeps offsets aligned with the logical text, leaving a space for each ligature that's replaced by a placeholder
     fun shape(text: String): String {
@@ -75,6 +77,8 @@ private object Arabic {
         for (i in out.indices) if (out[i] == ' ' && text[i] != ' ') out[i] = LIGATURE_PLACEHOLDER
         return String(out)
     }
+
+    fun mirror(cp: Int) = if (mirroring) UCharacter.getMirror(cp) else cp
 }
 
 // keeps combining marks after their base so they still draw over it
@@ -87,7 +91,7 @@ private fun reversedClusters(text: String): String {
         var i = start
         while (i < end) {
             val cp = text.codePointAt(i)
-            if (cp != LIGATURE_PLACEHOLDER.code) out.appendCodePoint(cp)
+            if (cp != LIGATURE_PLACEHOLDER.code) out.appendCodePoint(Icu.mirror(cp))
             i += Character.charCount(cp)
         }
         end = start
@@ -155,7 +159,7 @@ internal class PolyIntrinsics(
     val placeholderCount: Int, val density: Density, resolver: FontFamily.Resolver,
 ) : ParagraphIntrinsics {
     val runs: List<TextRun>
-    val glyphs = Arabic.shape(text)
+    val glyphs = Icu.shape(text)
     val advances = FloatArray(text.length)
     // prefix sums keep width lookups O(1) for line breaking and bidi hit testing
     private val prefix = DoubleArray(text.length + 1)
