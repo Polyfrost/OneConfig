@@ -163,6 +163,10 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     private val r get() = renderer
     val context by lazy(LazyThreadSafetyMode.NONE) { RenderContext(renderer) }
 
+    init {
+        PolyCompose.install()
+    }
+
     override fun polyOp(op: (PolyCanvas) -> Unit) = op(this)
 
     override fun save() = r.save()

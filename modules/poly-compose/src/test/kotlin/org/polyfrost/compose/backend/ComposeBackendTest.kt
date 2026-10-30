@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import kotlinx.coroutines.Dispatchers
+import androidx.compose.ui.graphics.platform.PlatformGraphicsRegistry
+import androidx.compose.ui.text.platform.PlatformTextRegistry
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -107,6 +109,16 @@ class ComposeBackendTest {
         override fun restoreState(saved: Any) {
             @Suppress("UNCHECKED_CAST") val (x, y, s) = saved as Triple<Float, Float, List<Pair<Float, Float>>>
             tx = x; ty = y; stack.clear(); stack.addAll(s)
+        }
+    }
+
+    @Test
+    fun polyCanvasInstallsBackendForDrawScopeWithoutScene() {
+        PlatformGraphicsRegistry.clear()
+        PlatformTextRegistry.clear()
+        PolyCompose::class.java.getDeclaredField("installed").apply { isAccessible = true }.setBoolean(null, false)
+        CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, PolyCanvas(LogRenderer()), Size(10f, 10f)) {
+            drawRect(Color.Red)
         }
     }
 
