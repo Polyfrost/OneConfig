@@ -9,8 +9,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -18,6 +20,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
@@ -33,9 +36,13 @@ import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.polyfrost.compose.render.FilterQuality
 import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.render.PolyGlyphPage
+import org.polyfrost.compose.render.PolyGradient
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
 
@@ -54,6 +61,62 @@ class ImageBitmapCanvasTest {
         val o = (y * width + x) * 4
         return ((pixels[o + 3].toInt() and 0xFF) shl 24) or ((pixels[o].toInt() and 0xFF) shl 16) or
             ((pixels[o + 1].toInt() and 0xFF) shl 8) or (pixels[o + 2].toInt() and 0xFF)
+    }
+
+    private fun drawInto(image: ImageBitmap, block: DrawScope.() -> Unit): PolyBitmap {
+        CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, Canvas(image), Size(image.width.toFloat(), image.height.toFloat()), block)
+        return (image as PolyImageBitmap).bitmap
+    }
+
+    @Test
+    fun imagesAreSampledIntoBitmaps() {
+        PolyCompose.install()
+        // 300 pixels is too wide for the atlas, so that image is sampled from its own bytes
+        for (w in intArrayOf(2, 300)) {
+            val red = byteArrayOf(-1, 0, 0, -1)
+            val blue = byteArrayOf(0, 0, -1, -1)
+            val stripes = PolyBitmap(w, 1, ByteArray(w * 4) { i -> (if (i / 4 % 2 == 0) red else blue)[i % 4] })
+            val out = drawInto(ImageBitmap(w + 2, 2)) { drawImage(stripes.asComposeImageBitmap(), Offset(1f, 0f)) }
+            assertEquals(0, out.argb(0, 0))
+            assertEquals(0xFFFF0000.toInt(), out.argb(1, 0))
+            assertEquals(0xFF0000FF.toInt(), out.argb(2, 0))
+            assertEquals(0xFF0000FF.toInt(), out.argb(w, 0))
+            assertEquals(0, out.argb(w + 1, 0))
+            assertEquals(0, out.argb(1, 1))
+        }
+    }
+
+    @Test
+    fun gradientsAreSampledIntoBitmaps() {
+        PolyCompose.install()
+        val out = drawInto(ImageBitmap(16, 2)) { drawRect(Brush.horizontalGradient(listOf(Color.Red, Color.Blue))) }
+        for (x in 0 until 16) {
+            val expected = PolyGradient.lerpArgb(0xFFFF0000.toInt(), 0xFF0000FF.toInt(), (x + 0.5f) / 16f)
+            for (shift in intArrayOf(0, 8, 16, 24)) {
+                val d = (out.argb(x, 1) ushr shift and 0xFF) - (expected ushr shift and 0xFF)
+                assertTrue(d in -2..2, "%08x at $x, expected %08x".format(out.argb(x, 1), expected))
+            }
+        }
+    }
+
+    @Test
+    fun textIsSampledIntoBitmaps() {
+        PolyCompose.install()
+        val face = object : PolyGlyphPage.Face {
+            override fun glyph(codepoint: Int) = 1
+            override fun advance(glyph: Int) = 1f
+            override fun raster(glyph: Int, pixelSize: Float) = PolyGlyphPage.Raster(0, -4, 2, 4, ByteArray(8) { -1 })
+        }
+        val old = PolyGlyphPage.rasterizer
+        PolyGlyphPage.rasterizer = object : PolyGlyphPage.Rasterizer { override fun face(name: String) = face }
+        try {
+            val out = drawInto(ImageBitmap(6, 8)) { drawPoly { it.renderer.text("a", 1f, 6f, 0xFFFF0000.toInt(), PolyFont("bitmap", 4f)) } }
+            for (y in 0 until 8) for (x in 0 until 6) {
+                assertEquals(if (x in 1..2 && y in 2..5) 0xFFFF0000.toInt() else 0, out.argb(x, y), "($x, $y)")
+            }
+        } finally {
+            PolyGlyphPage.rasterizer = old
+        }
     }
 
     @Test
