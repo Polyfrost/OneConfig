@@ -728,8 +728,6 @@ public final class org/polyfrost/compose/render/FontManager {
 	public static final field $stable I
 	public static final field DEFAULT_KEY Ljava/lang/String;
 	public static final field INSTANCE Lorg/polyfrost/compose/render/FontManager;
-	public final synthetic fun clearCache ()V
-	public final synthetic fun flushCache (Ljava/lang/String;)V
 	public final fun fontData (Ljava/lang/String;)[B
 	public final fun getRevision ()I
 	public final fun invalidateMetrics ()V
