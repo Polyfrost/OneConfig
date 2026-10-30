@@ -74,6 +74,27 @@ import com.mojang.blaze3d.vertex.VertexFormat
 /*import net.minecraft.resources.ResourceLocation
 *///?}
 
+//? if < 1.21.11
+//import net.minecraft.client.gui.components.DebugScreenOverlay
+
+//? if >= 1.21.8 && < 1.21.11 {
+/*import net.minecraft.client.gui.render.state.GuiRenderState
+import net.minecraft.client.renderer.fog.FogRenderer
+import org.polyfrost.oneconfig.internal.mixin.render.GameRendererAccessor
+import org.polyfrost.oneconfig.internal.mixin.render.GuiRendererAccessor
+*///?}
+
+//? if < 1.21.8
+//import org.polyfrost.oneconfig.internal.ui.withGuiProjection
+
+//? if = 1.8.9
+//import net.minecraft.client.render.Window
+
+//? if > 1.8.9 {
+internal typealias GuiDraw = (GuiGraphicsExtractor) -> Unit
+//?} else
+//internal typealias GuiDraw = () -> Unit
+
 object GlHost {
     private val LOG = LoggerFactory.getLogger(GlHost::class.java)
 
@@ -366,6 +387,24 @@ object GlHost {
 
     private var drawnBeforeBlit = false
 
+    // vanilla GUI drawn by the fallback below would land after the blit and never be seen
+    private var drawsGuiOverScreen = true
+
+    //? if < 1.21.11 {
+    /*private var drawingGui = false
+
+    //~ if = 1.8.9 'DebugScreenOverlay' -> 'DebugOverlay'
+    private var deferredDebugScreen: DebugScreenOverlay? = null
+
+    /** Holds back the F3 overlay while a OneConfig screen will be drawn over it, to draw it on top instead */
+    //~ if = 1.8.9 'DebugScreenOverlay' -> 'DebugOverlay'
+    fun deferDebugScreen(overlay: DebugScreenOverlay): Boolean {
+        if (drawingGui || !drawsGuiOverScreen || Platform.screen().current<Any?>() !is ComposeScreen) return false
+        deferredDebugScreen = overlay
+        return true
+    }
+    *///?}
+
     // VulkanMod also draws here: before 0.5.3 it submits the frame right before Window.updateDisplay
     fun drawBeforeBlit() {
         if (!legacyGl) return
@@ -385,6 +424,7 @@ object GlHost {
 
     private fun draw(fbo: Int) {
         if (!legacyGl) return
+        drawsGuiOverScreen = drawnBeforeBlit
         val paint = glScreen
         if (paint == null) {
             screenFrame = null
@@ -400,7 +440,63 @@ object GlHost {
             NotificationsRenderer.prepare(Platform.screen().guiWidth().toFloat(), Platform.screen().guiHeight().toFloat())
             NotificationsRenderer.draw(it)
         }
+        //? if < 1.21.11 {
+        /*deferredDebugScreen?.let { overlay ->
+            deferredDebugScreen = null
+            //~ if = 1.8.9 'overlay.render(it)' -> 'overlay.render(Window(client))'
+            drawGui { overlay.render(it) }
+        }
+        *///?}
     }
+
+    //? if < 1.21.11 {
+    /*private fun drawGui(draw: GuiDraw) {
+        drawingGui = true
+        try {
+            //? if >= 1.21.8 {
+            val gameRenderer = client.gameRenderer as GameRendererAccessor
+            val renderer = gameRenderer.`oneconfig$getGuiRenderer`()
+            val state = GuiRenderState()
+            draw(GuiGraphicsExtractor(client, state))
+            val accessor = renderer as GuiRendererAccessor
+            val previous = accessor.`oneconfig$getRenderState`()
+            accessor.`oneconfig$setRenderState`(state)
+            try {
+                renderer.render(gameRenderer.`oneconfig$getFogRenderer`().getBuffer(FogRenderer.FogMode.NONE))
+            } finally {
+                accessor.`oneconfig$setRenderState`(previous)
+            }
+            //?} else {
+            /*withGuiProjection(Platform.screen().guiWidth(), Platform.screen().guiHeight()) {
+                // depth left by the GUI pass would hide this behind HUD elements
+                //? if = 1.21.5 {
+                client.mainRenderTarget.depthTexture?.let { RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(it, 1.0) }
+                //?} else {
+                /*client.mainRenderTarget.bindWrite(true)
+                //? if >= 1.21.4 {
+                GlStateManager._clear(GL11.GL_DEPTH_BUFFER_BIT)
+                //?} elif > 1.8.9 {
+                /*GlStateManager._clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX)
+                *///?} else
+                //GlStateManager.clear(GL11.GL_DEPTH_BUFFER_BIT)
+                *///?}
+                //? if > 1.8.9 {
+                val graphics = GuiGraphicsExtractor(client, client.renderBuffers().bufferSource())
+                draw(graphics)
+                graphics.flush()
+                //?} else
+                //draw()
+                //? if < 1.21.5
+                //client.mainRenderTarget.unbindWrite()
+            }
+            *///?}
+        } catch (e: Throwable) {
+            LOG.warn("GlHost.drawGui() error", e)
+        } finally {
+            drawingGui = false
+        }
+    }
+    *///?}
 
     private fun drawBlur(fbo: Int, alpha: Float) {
         val w = Platform.screen().viewportWidth()

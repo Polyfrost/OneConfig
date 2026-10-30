@@ -67,16 +67,17 @@ import com.mojang.renderpearl.api.textures.TextureFormat
 *///?}
 
 //? if >= 1.21.4 && < 1.21.8 {
-/*import com.mojang.blaze3d.ProjectionType
-import net.minecraft.client.renderer.item.ItemStackRenderState
+/*import net.minecraft.client.renderer.item.ItemStackRenderState
 *///?}
 
 //? if < 1.21.8 && > 1.8.9 {
 /*import com.mojang.blaze3d.platform.Lighting
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.texture.OverlayTexture
-import org.joml.Matrix4f
 *///?}
+
+//? if < 1.21.8
+//import org.polyfrost.oneconfig.internal.ui.withGuiProjection
 
 //? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
@@ -85,8 +86,7 @@ import org.lwjgl.opengl.GL11
 *///?}
 
 //? if < 1.21.4 && > 1.8.9 {
-/*import com.mojang.blaze3d.vertex.VertexSorting
-import net.minecraft.client.renderer.ItemBlockRenderTypes
+/*import net.minecraft.client.renderer.ItemBlockRenderTypes
 import net.minecraft.client.resources.model.BakedModel
 import net.minecraft.client.resources.model.ModelResourceLocation
 import net.minecraft.resources.ResourceLocation
@@ -920,59 +920,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
         }
     }
     //? }
-
-    //? if < 1.21.8 {
-    /*private inline fun withGuiProjection(guiWidth: Int, guiHeight: Int, render: () -> Unit) {
-        //? if > 1.8.9 {
-        RenderSystem.backupProjectionMatrix()
-        val modelView = RenderSystem.getModelViewStack()
-        modelView.pushMatrix()
-        try {
-            val projection = Matrix4f().setOrtho(
-                0f,
-                guiWidth.toFloat(),
-                guiHeight.toFloat(),
-                0f,
-                1000f,
-                21000f,
-            )
-            //? if >= 1.21.4 {
-            RenderSystem.setProjectionMatrix(projection, ProjectionType.ORTHOGRAPHIC)
-            //? } else {
-            /*RenderSystem.setProjectionMatrix(projection, VertexSorting.ORTHOGRAPHIC_Z)
-            *///? }
-            modelView.translation(0f, 0f, -11000f)
-            //? if < 1.21.4
-            //RenderSystem.applyModelViewMatrix()
-            render()
-        } finally {
-            modelView.popMatrix()
-            //? if < 1.21.4
-            //RenderSystem.applyModelViewMatrix()
-            RenderSystem.restoreProjectionMatrix()
-        }
-        //?} else {
-        val previousMode = GL11.glGetInteger(GL11.GL_MATRIX_MODE)
-        GlStateManager.matrixMode(GL11.GL_PROJECTION)
-        GlStateManager.pushMatrix()
-        GlStateManager.loadIdentity()
-        GlStateManager.ortho(0.0, guiWidth.toDouble(), guiHeight.toDouble(), 0.0, 1000.0, 3000.0)
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW)
-        GlStateManager.pushMatrix()
-        GlStateManager.loadIdentity()
-        GlStateManager.translatef(0f, 0f, -2000f)
-        try {
-            render()
-        } finally {
-            GlStateManager.matrixMode(GL11.GL_MODELVIEW)
-            GlStateManager.popMatrix()
-            GlStateManager.matrixMode(GL11.GL_PROJECTION)
-            GlStateManager.popMatrix()
-            GlStateManager.matrixMode(previousMode)
-        }
-        //?}
-    }
-    *///? }
 
     private fun clearTarget(target: RenderTarget) {
         //? if >= 1.21.5 {
