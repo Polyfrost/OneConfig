@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlendModeColorFilter
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
@@ -97,7 +98,8 @@ class OversampledSvgPainter(
     override fun DrawScope.onDraw() {
         if (size.width <= 0f || size.height <= 0f) return
         val px = max(1, ceil(max(size.width, size.height) * max(1f, oversample)).toInt())
-        val mask = colorFilter is BlendModeColorFilter
+        // a white mask only stands in for the original colors when the filter replaces them
+        val mask = (colorFilter as? BlendModeColorFilter)?.blendMode == BlendMode.SrcIn
         val key = "$px@$mask"
         var img = cached
         if (img == null || cachedKey != key) {
