@@ -308,12 +308,28 @@ class PolyComposePath : Path {
     override fun addRect(rect: Rect, direction: Path.Direction) {
         val empty = isEmpty
         moveTo(rect.left, rect.top); lineTo(rect.right, rect.top); lineTo(rect.right, rect.bottom); lineTo(rect.left, rect.bottom); close()
+        wind(direction)
         if (empty) plainRect = rect
+    }
+
+    // shapes are built clockwise; counter-clockwise ones (Compose's default) are reversed after their first point, like Skia
+    private fun wind(direction: Path.Direction) {
+        if (direction != Path.Direction.CounterClockwise || contours.isEmpty()) return
+        val c = contours.last()
+        val n = c.size / 2
+        for (i in 0 until (n - 1) / 2) {
+            val a = (1 + i) * 2
+            val b = (n - 1 - i) * 2
+            val x = c[a]; val y = c[a + 1]
+            c[a] = c[b]; c[a + 1] = c[b + 1]
+            c[b] = x; c[b + 1] = y
+        }
     }
 
     override fun addOval(oval: Rect, direction: Path.Direction) {
         val empty = isEmpty
         arcTo(oval, 0f, 359.999f, true); close()
+        wind(direction)
         if (empty && oval.width == oval.height) roundRect = RoundRect(oval, CornerRadius(oval.width / 2f))
     }
 
@@ -334,6 +350,7 @@ class PolyComposePath : Path {
         corner(r.left + r.bottomLeftCornerRadius.x, r.bottom - r.bottomLeftCornerRadius.y, r.bottomLeftCornerRadius.x, r.bottomLeftCornerRadius.y, 90f)
         corner(r.left + r.topLeftCornerRadius.x, r.top + r.topLeftCornerRadius.y, r.topLeftCornerRadius.x, r.topLeftCornerRadius.y, 180f)
         close()
+        wind(direction)
         if (empty) this.roundRect = r
     }
 

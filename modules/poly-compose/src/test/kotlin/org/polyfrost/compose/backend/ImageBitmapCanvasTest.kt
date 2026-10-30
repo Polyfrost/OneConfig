@@ -11,6 +11,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -81,6 +82,18 @@ class ImageBitmapCanvasTest {
         val out = drawInto(ImageBitmap(20, 20)) { drawPath(Path().apply { addRoundRect(shape) }, Color.Red) }
         assertEquals(0xFFFF0000.toInt(), out.argb(0, 0))
         assertEquals(0, out.argb(19, 19) ushr 24)
+    }
+
+    @Test
+    fun oppositelyWoundShapesCutHoles() {
+        PolyCompose.install()
+        val ring = Path().apply {
+            addRect(Rect(0f, 0f, 20f, 20f))
+            addRect(Rect(5f, 5f, 15f, 15f), Path.Direction.Clockwise)
+        }
+        val out = drawInto(ImageBitmap(20, 20)) { drawPath(ring, Color.Red) }
+        assertEquals(0xFFFF0000.toInt(), out.argb(2, 10))
+        assertEquals(0, out.argb(10, 10) ushr 24)
     }
 
     @Test

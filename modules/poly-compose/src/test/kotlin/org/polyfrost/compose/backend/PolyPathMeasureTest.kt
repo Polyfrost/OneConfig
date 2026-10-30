@@ -41,9 +41,10 @@ class PolyPathMeasureTest {
         assertTrue(measure(square).getSegment(5f, 15f, dst))
         val m = measure(dst)
         assertEquals(10f, m.length)
-        assertEquals(Offset(5f, 0f), m.getPosition(0f))
-        assertEquals(Offset(10f, 0f), m.getPosition(5f))
-        assertEquals(Offset(10f, 5f), m.getPosition(10f))
+        // addRect defaults to counter-clockwise, which runs down the left edge first
+        assertEquals(Offset(0f, 5f), m.getPosition(0f))
+        assertEquals(Offset(0f, 10f), m.getPosition(5f))
+        assertEquals(Offset(5f, 10f), m.getPosition(10f))
         assertFalse(measure(square).getSegment(15f, 15f, dst))
     }
 
@@ -61,7 +62,7 @@ class PolyPathMeasureTest {
         assertEquals(Rect(0f, 0f, 5f, 5f), out.getBounds())
         val first = measure(out)
         assertEquals(5f, first.length)
-        assertEquals(Offset(0f, 5f), first.getPosition(0f))
-        assertEquals(Offset(0f, -1f), first.getTangent(0f))
+        assertEquals(Offset(5f, 0f), first.getPosition(0f))
+        assertEquals(Offset(-1f, 0f), first.getTangent(0f))
     }
 }
