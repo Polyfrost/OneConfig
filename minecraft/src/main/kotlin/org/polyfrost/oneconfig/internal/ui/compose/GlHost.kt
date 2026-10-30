@@ -366,8 +366,9 @@ object GlHost {
 
     private var drawnBeforeBlit = false
 
+    // VulkanMod also draws here: before 0.5.3 it submits the frame right before Window.updateDisplay
     fun drawBeforeBlit() {
-        if (!legacyGl || vanillaPipeline) return
+        if (!legacyGl) return
         drawnBeforeBlit = true
         //? if < 1.21.11 {
         /*draw(RenderTargetFbo.getFboId(client.mainRenderTarget))
