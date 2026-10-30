@@ -720,6 +720,35 @@ class PolyTessellatorTest {
     }
 
     @Test
+    fun mcOutlineMergesGlyphsOfAdjacentLinesOnce() {
+        // 16 outline cells tall, so the grown glyphs of the two lines share two rows
+        val face = object : PolyGlyphPage.Face {
+            override fun glyph(codepoint: Int) = if (codepoint == ' '.code) 2 else 1
+            override fun advance(glyph: Int) = 0.2f
+            override fun raster(glyph: Int, pixelSize: Float) =
+                if (glyph == 2) null else PolyGlyphPage.Raster(0, -13, 2, 16, ByteArray(32) { -1 })
+        }
+        val old = PolyGlyphPage.rasterizer
+        PolyGlyphPage.rasterizer = object : PolyGlyphPage.Rasterizer { override fun face(name: String) = face.takeIf { name == "minecraft" } }
+        try {
+            // at scale 2 a device pixel is one outline cell: the glyphs grow to 6x20 cells at (-2, -1) and (2, 17)
+            val b = Recorder().run { mcTextOutline("a\n a", 10f, 20f, -1, 0x40000000, 2f); done() }
+            b.forEach(::assertWinding)
+            var covered = 0
+            for (py in 0 until 80) for (px in 0 until 40) {
+                val a = b.alphaAt(px + 0.37f, py + 0.41f)
+                assertTrue(a == 0 || a == 0x40, "alpha $a at ($px, $py)")
+                if (a > 0) covered++
+            }
+            assertEquals(2 * 6 * 20 - 2 * 2, covered)
+            assertEquals(0x40, b.alphaAt(13.37f, 38.41f))
+            assertEquals(0, b.alphaAt(11.37f, 40.41f))
+        } finally {
+            PolyGlyphPage.rasterizer = old
+        }
+    }
+
+    @Test
     fun nearestImagesBatchApart() {
         val bmp = PolyBitmap(4, 4, ByteArray(64) { -1 })
         val b = Recorder().run {

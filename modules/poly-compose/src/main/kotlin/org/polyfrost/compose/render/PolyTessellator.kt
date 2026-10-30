@@ -2,6 +2,7 @@ package org.polyfrost.compose.render
 
 import java.util.Arrays
 import java.util.Collections
+import java.util.WeakHashMap
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.tan
@@ -1938,8 +1939,14 @@ abstract class PolyTessellator : PolyRenderer {
         private val masks = lru<Long, ShadowMask>(32)
         private val mcOutlines = lru<Pair<String, Int>, FloatArray>(256)
         private val mcRasters = HashMap<Pair<PolyGlyphPage.Face, Int>, PolyGlyphPage.Raster?>()
+        // upright and italic, keyed by the McGlyph or face raster
+        private val mcInks = Array(2) { WeakHashMap<Any, McInk?>() }
 
         private const val MC_GRID = 2
+        private const val MC_RUN_MASK = 0x1FFFFF
+
+        // a glyph's ink grown by the outline width, as [start, end) runs per row, relative to the pen on the baseline
+        private class McInk(val left: Int, val top: Int, val rows: Array<IntArray>)
 
         // nearest-samples the glyph's alpha at outline grid resolution, positioned like a face raster on the baseline
         private fun mcRaster(g: McGlyph): PolyGlyphPage.Raster? {
@@ -1955,10 +1962,38 @@ abstract class PolyTessellator : PolyRenderer {
             return PolyGlyphPage.Raster(0, ((g.top - 7f) * MC_GRID).roundToInt(), w, h, coverage)
         }
 
+        private fun mcInk(g: PolyGlyphPage.Raster, italic: Boolean): McInk? {
+            if (g.w <= 0 || g.h <= 0) return null
+            val grow = MC_GRID
+            // italic rows lean by their height above the line top, which sits 7 units over the baseline
+            val lean = IntArray(g.h) { if (italic) ((1f - 0.25f * ((7 * MC_GRID + g.offY + it + 0.5f) / MC_GRID)) * MC_GRID).roundToInt() else 0 }
+            val lo = lean.min() - grow
+            val w = g.w + lean.max() + grow - lo
+            val h = g.h + 2 * grow
+            val grown = BooleanArray(w * h)
+            for (py in 0 until g.h) for (px in 0 until g.w) {
+                if ((g.coverage[py * g.w + px].toInt() and 0xFF) < 128) continue
+                val x = px + lean[py] - lo - grow
+                for (y in py..py + 2 * grow) grown.fill(true, y * w + x, y * w + x + 2 * grow + 1)
+            }
+            val rows = Array(h) { y ->
+                val runs = ArrayList<Int>()
+                var x = 0
+                while (x < w) {
+                    if (!grown[y * w + x]) { x++; continue }
+                    val start = x
+                    while (x < w && grown[y * w + x]) x++
+                    runs += start + lo + g.offX; runs += x + lo + g.offX
+                }
+                runs.toIntArray()
+            }
+            return McInk(lo + g.offX, g.offY - grow, rows)
+        }
+
+        // unions the cached grown glyphs row by row, so a changed text costs its runs rather than its whole bounding block
         private fun mcOutline(r: PolyGlyphPage.Rasterizer, text: String): FloatArray {
-            val placed = ArrayList<PolyGlyphPage.Raster>()
+            val inks = ArrayList<McInk>()
             val at = ArrayList<Int>()
-            val slant = ArrayList<Int>()
             val effects = ArrayList<Int>()
             text.lines().forEachIndexed { index, line ->
                 val lineTop = index * 9
@@ -1983,17 +2018,17 @@ abstract class PolyTessellator : PolyRenderer {
                         }
                         continue
                     }
-                    fun place(g: PolyGlyphPage.Raster?, x: Float) {
-                        if (g == null || g.w <= 0 || g.h <= 0) return
-                        placed += g
-                        at += (x * MC_GRID).roundToInt() + g.offX
-                        at += baseline + g.offY
-                        slant += if (italic) lineTop * MC_GRID else Int.MIN_VALUE
+                    fun place(g: McInk?, x: Float) {
+                        if (g == null) return
+                        inks += g
+                        at += (x * MC_GRID).roundToInt()
+                        at += baseline
                     }
                     val start = pen
+                    val cache = mcInks[if (italic) 1 else 0]
                     val rg = McGlyphs.source?.invoke(cp)
                     if (rg != null) {
-                        val g = mcRaster(rg)
+                        val g = cache.getOrPut(rg) { mcRaster(rg)?.let { mcInk(it, italic) } }
                         place(g, pen)
                         if (bold) place(g, pen + rg.offset)
                         pen += rg.advance + if (bold) rg.offset else 0f
@@ -2003,7 +2038,8 @@ abstract class PolyTessellator : PolyRenderer {
                         val em: Float
                         if (main != null && main.glyph(cp) != 0) { face = main; em = 10f } else { face = r.face("unifont") ?: continue; em = 8f }
                         val id = face.glyph(cp)
-                        place(mcRasters.getOrPut(face to id) { face.raster(id, em * MC_GRID) }, pen)
+                        val raster = mcRasters.getOrPut(face to id) { face.raster(id, em * MC_GRID) }
+                        place(raster?.let { cache.getOrPut(it) { mcInk(it, italic) } }, pen)
                         pen += face.advance(id) * em
                     }
                     fun effect(top: Float) {
@@ -2014,69 +2050,63 @@ abstract class PolyTessellator : PolyRenderer {
                     if (strike) effect(3.5f)
                 }
             }
-            if (placed.isEmpty() && effects.isEmpty()) return FloatArray(0)
+            if (inks.isEmpty() && effects.isEmpty()) return FloatArray(0)
             val grow = MC_GRID
-            var x0 = Int.MAX_VALUE; var y0 = Int.MAX_VALUE; var x1 = Int.MIN_VALUE; var y1 = Int.MIN_VALUE
-            for (k in placed.indices) {
-                val pad = if (slant[k] == Int.MIN_VALUE) 0 else 3 * MC_GRID
-                x0 = min(x0, at[k * 2] - pad); y0 = min(y0, at[k * 2 + 1])
-                x1 = max(x1, at[k * 2] + placed[k].w + pad); y1 = max(y1, at[k * 2 + 1] + placed[k].h)
+            var x0 = Int.MAX_VALUE; var y0 = Int.MAX_VALUE; var y1 = Int.MIN_VALUE; var n = 0
+            for (k in inks.indices) {
+                val g = inks[k]
+                x0 = min(x0, at[k * 2] + g.left); y0 = min(y0, at[k * 2 + 1] + g.top); y1 = max(y1, at[k * 2 + 1] + g.top + g.rows.size)
+                for (row in g.rows) n += row.size / 2
             }
             for (k in effects.indices step 4) {
-                x0 = min(x0, effects[k]); y0 = min(y0, effects[k + 1]); x1 = max(x1, effects[k + 2]); y1 = max(y1, effects[k + 3])
+                x0 = min(x0, effects[k] - grow); y0 = min(y0, effects[k + 1] - grow); y1 = max(y1, effects[k + 3] + grow)
+                n += effects[k + 3] - effects[k + 1] + 2 * grow
             }
-            x0 -= grow; y0 -= grow; x1 += grow; y1 += grow
-            val w = x1 - x0
-            val h = y1 - y0
-            val ink = BooleanArray(w * h)
-            for (k in placed.indices) {
-                val g = placed[k]
-                val gx = at[k * 2] - x0
-                val gy = at[k * 2 + 1] - y0
-                val lt = slant[k]
-                for (py in 0 until g.h) {
-                    val dx = if (lt == Int.MIN_VALUE) 0 else ((1f - 0.25f * ((at[k * 2 + 1] + py + 0.5f - lt) / MC_GRID)) * MC_GRID).roundToInt()
-                    for (px in 0 until g.w) {
-                        if ((g.coverage[py * g.w + px].toInt() and 0xFF) >= 128) ink[(gy + py) * w + (gx + px + dx).coerceIn(0, w - 1)] = true
-                    }
-                }
+            // packed as (row, start, end) so that one sort orders them by row, then start
+            val runs = LongArray(n)
+            var m = 0
+            fun run(y: Int, s: Int, e: Int) { runs[m++] = ((y - y0).toLong() shl 42) or ((s - x0).toLong() shl 21) or (e - x0).toLong() }
+            for (k in inks.indices) {
+                val g = inks[k]
+                val x = at[k * 2]
+                val y = at[k * 2 + 1] + g.top
+                for (ry in g.rows.indices) { val row = g.rows[ry]; for (i in row.indices step 2) run(y + ry, x + row[i], x + row[i + 1]) }
             }
             for (k in effects.indices step 4) {
-                for (py in effects[k + 1] until effects[k + 3]) for (px in effects[k] until effects[k + 2]) ink[(py - y0) * w + px - x0] = true
+                if (effects[k + 2] <= effects[k] || effects[k + 3] <= effects[k + 1]) continue
+                for (y in effects[k + 1] - grow until effects[k + 3] + grow) run(y, effects[k] - grow, effects[k + 2] + grow)
             }
-            val wide = BooleanArray(w * h)
-            for (py in 0 until h) for (px in 0 until w) {
-                if (!ink[py * w + px]) continue
-                for (d in max(0, px - grow)..min(w - 1, px + grow)) wide[py * w + d] = true
+            runs.sort(0, m)
+            var out = FloatArray(64)
+            var o = 0
+            fun emit(s: Int, e: Int, top: Int, bottom: Int) {
+                if (o + 4 > out.size) out = out.copyOf(out.size * 2)
+                out[o++] = (s + x0).toFloat() / MC_GRID; out[o++] = (top + y0).toFloat() / MC_GRID
+                out[o++] = (e + x0).toFloat() / MC_GRID; out[o++] = (bottom + y0).toFloat() / MC_GRID
             }
-            val grown = BooleanArray(w * h)
-            for (py in 0 until h) for (px in 0 until w) {
-                if (!wide[py * w + px]) continue
-                for (d in max(0, py - grow)..min(h - 1, py + grow)) grown[d * w + px] = true
-            }
-            val out = ArrayList<Float>()
-            var open = HashMap<Long, Int>()
-            for (py in 0..h) {
-                val next = HashMap<Long, Int>()
-                if (py < h) {
-                    var px = 0
-                    while (px < w) {
-                        if (!grown[py * w + px]) { px++; continue }
-                        val start = px
-                        while (px < w && grown[py * w + px]) px++
-                        val key = (start.toLong() shl 32) or px.toLong()
-                        next[key] = open.remove(key) ?: py
-                    }
+            // (start, end, top) of the rects still growing down, sorted by start
+            var open = IntArray(48)
+            var next = IntArray(48)
+            var opened = 0
+            var i = 0
+            for (y in 0..y1 - y0) {
+                var j = 0
+                var count = 0
+                while (i < m && (runs[i] ushr 42).toInt() == y) {
+                    val s = (runs[i] ushr 21).toInt() and MC_RUN_MASK
+                    var e = runs[i++].toInt() and MC_RUN_MASK
+                    while (i < m && (runs[i] ushr 42).toInt() == y && ((runs[i] ushr 21).toInt() and MC_RUN_MASK) <= e) e = max(e, runs[i++].toInt() and MC_RUN_MASK)
+                    while (j < opened && open[j * 3] < s) { emit(open[j * 3], open[j * 3 + 1], open[j * 3 + 2], y); j++ }
+                    var top = y
+                    if (j < opened && open[j * 3] == s && open[j * 3 + 1] == e) top = open[j++ * 3 + 2]
+                    if (count * 3 + 3 > next.size) next = next.copyOf(next.size * 2)
+                    next[count * 3] = s; next[count * 3 + 1] = e; next[count * 3 + 2] = top
+                    count++
                 }
-                for ((key, top) in open) {
-                    out += ((key ushr 32).toInt() + x0).toFloat() / MC_GRID
-                    out += (top + y0).toFloat() / MC_GRID
-                    out += (key.toInt() + x0).toFloat() / MC_GRID
-                    out += (py + y0).toFloat() / MC_GRID
-                }
-                open = next
+                while (j < opened) { emit(open[j * 3], open[j * 3 + 1], open[j * 3 + 2], y); j++ }
+                val t = open; open = next; next = t; opened = count
             }
-            return out.toFloatArray()
+            return out.copyOf(o)
         }
 
         private fun bitmapOf(w: Int, h: Int, argb: (Int, Int) -> Int): PolyBitmap {
