@@ -578,7 +578,7 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
 
     private fun drawRun(r: PolyRenderer, l: Line, run: TextRun, str: String, x: Float, w: Float, color: Color?, alpha: Float, shadow: Shadow?, decoration: TextDecoration?) {
         val base = run.spanColor.takeIf { it.isSpecified } ?: color ?: run.style.color.takeIf { it.isSpecified } ?: Color.Black
-        val c = base.copy(alpha = base.alpha * alpha * (run.style.alpha.takeUnless { it.isNaN() } ?: 1f)).toArgb()
+        val c = base.copy(alpha = base.alpha * alpha).toArgb()
         if (run.style.background.isSpecified && run.style.background.alpha > 0f) r.rect(x, l.top, w, l.bottom - l.top, run.style.background.toArgb(), 0f)
         val sh = run.spanShadow ?: shadow ?: run.style.shadow
         val letter = intr.px(run.style.letterSpacing, 0f)

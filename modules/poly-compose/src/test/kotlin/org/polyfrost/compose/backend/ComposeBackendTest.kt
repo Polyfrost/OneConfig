@@ -233,6 +233,16 @@ class ComposeBackendTest {
     }
 
     @Test
+    fun translucentTextColorAppliesOnce() {
+        var argb = 0
+        val r = object : PolyRenderer by LogRenderer() {
+            override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float, skewX: Float) { argb = color }
+        }
+        paragraph("a", TextStyle(color = Color.Black.copy(alpha = 0.5f))).paint(PolyCanvas(r), Color.Unspecified, null, null)
+        assertEquals(0x80, argb ushr 24)
+    }
+
+    @Test
     fun selectionEndingAtWrapCoversLine() {
         val p = paragraph("abcdefgh", maxWidth = 28)
         assertEquals(2, p.lineCount)
