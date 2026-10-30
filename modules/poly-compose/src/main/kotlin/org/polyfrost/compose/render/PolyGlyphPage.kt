@@ -224,6 +224,8 @@ object PolyGlyphPage {
     private var placedSince = 0L
     private var placed = 0
 
+    // shortcut: placements are never reclaimed (see the note on _pages), so once the budget is used up later bitmaps
+    // fall back to their own textures; transient images should be cached by their content rather than re-created
     @JvmStatic
     fun bitmap(b: PolyBitmap): Glyph? {
         bitmaps[b]?.let { return it }
