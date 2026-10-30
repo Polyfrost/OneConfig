@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.scene.CanvasLayersComposeScene
@@ -104,5 +105,26 @@ class ImageBitmapCanvasTest {
         val (again, blue) = frames[1].single()
         assertEquals(0xFF0000FF.toInt(), blue)
         assertSame(bitmap, again, "an unchanged vector must not be rasterized again")
+    }
+
+    @Test
+    fun trimmedImageVectorDrawsOnlyItsSegment() {
+        PolyCompose.install()
+        val outline = ImageVector.Builder(defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 12f, viewportHeight = 12f)
+            .addPath(addPathNodes("M2,2 L10,2 L10,10 L2,10 Z"), stroke = SolidColor(Color.Black), strokeLineWidth = 2f, trimPathEnd = 0.5f)
+            .build()
+        val rec = FrameRecomposer(Dispatchers.Unconfined) {}
+        val scope = SingleComposeSceneRenderingScope {}
+        val scene = CanvasLayersComposeScene(frameRecomposer = rec, density = Density(1f), size = IntSize(100, 100))
+        scene.setContent { Image(outline, null) }
+        val images = ImageLog().also { r -> with(scope) { scene.render(rec, PolyCanvas(r), System.nanoTime()) } }.images
+        scene.close()
+        rec.close()
+
+        val bitmap = images.single().first
+        assertEquals(0xFF, bitmap.argb(12, 4) ushr 24, "top edge is in the first half")
+        assertEquals(0xFF, bitmap.argb(20, 12) ushr 24, "right edge is in the first half")
+        assertEquals(0, bitmap.argb(12, 20) ushr 24, "bottom edge is trimmed")
+        assertEquals(0, bitmap.argb(4, 12) ushr 24, "left edge is trimmed")
     }
 }
