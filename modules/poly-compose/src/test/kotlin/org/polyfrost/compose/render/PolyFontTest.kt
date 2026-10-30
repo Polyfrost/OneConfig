@@ -1,7 +1,10 @@
 package org.polyfrost.compose.render
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class PolyFontTest {
     @Test
@@ -17,5 +20,12 @@ class PolyFontTest {
         assertEquals(-8f, font.metrics.ascent)
         FontManager.invalidateMetrics()
         assertEquals(-9f, font.metrics.ascent)
+    }
+
+    @Test
+    fun nonFontResourcesAreRejected() {
+        assertFalse(FontManager.loadFromResource("org/polyfrost/compose/render/FontManager.class", "not-a-font"))
+        assertThrows<IllegalArgumentException> { FontManager.register("not-a-font", ByteArray(64)) }
+        assertNull(FontManager.fontData("not-a-font"))
     }
 }

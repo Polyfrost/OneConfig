@@ -18,8 +18,10 @@ object FontManager {
         revision++
     }
 
+    /** @throws IllegalArgumentException if [bytes] isn't a TrueType or OpenType font */
     @JvmOverloads
     fun register(name: String, bytes: ByteArray, pixelAligned: Boolean = false) {
+        require(isFont(bytes)) { "$name is not a TrueType or OpenType font" }
         fontData[name] = bytes
         if (pixelAligned) pixelFonts.add(name) else pixelFonts.remove(name)
         revision++
@@ -28,7 +30,7 @@ object FontManager {
     fun loadFromResource(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null, pixelAligned: Boolean = false): Boolean {
         val cl = loader ?: FontManager::class.java.classLoader
         val bytes = (cl?.getResourceAsStream(path) ?: FontManager::class.java.getResourceAsStream(path))
-            ?.use { it.readBytes() } ?: return false
+            ?.use { it.readBytes() }?.takeIf(::isFont) ?: return false
         register(name, bytes, pixelAligned)
         return true
     }
@@ -41,6 +43,13 @@ object FontManager {
     fun fontData(name: String): ByteArray? = fontData[name]
 
     fun isPixelAligned(name: String) = name in pixelFonts
+
+    // sfnt version tags for TrueType, CFF OpenType, Apple TrueType and font collections
+    private fun isFont(bytes: ByteArray): Boolean {
+        if (bytes.size < 12) return false
+        val tag = (bytes[0].toInt() and 0xFF shl 24) or (bytes[1].toInt() and 0xFF shl 16) or (bytes[2].toInt() and 0xFF shl 8) or (bytes[3].toInt() and 0xFF)
+        return tag == 0x00010000 || tag == 0x4F54544F || tag == 0x74727565 || tag == 0x74746366
+    }
 
     @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmName("loadFromResource")
