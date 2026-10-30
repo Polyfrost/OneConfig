@@ -48,6 +48,18 @@ interface PolyDrawCanvas : Canvas {
 }
 
 private val recolorCache = WeakHashMap<PolyBitmap, MutableMap<List<Float>, PolyBitmap>>()
+private val whiteCache = WeakHashMap<PolyBitmap, Boolean>()
+
+// keeps alpha and makes every color channel white, so multiplying by the tint afterwards gives SrcIn
+private val WHITEN = ColorMatrix(floatArrayOf(0f, 0f, 0f, 0f, 255f, 0f, 0f, 0f, 0f, 255f, 0f, 0f, 0f, 0f, 255f, 0f, 0f, 0f, 1f, 0f))
+
+// tinted images are usually already white masks, which SrcIn and multiplying treat the same, so those skip recoloring
+private fun isWhite(bitmap: PolyBitmap): Boolean = synchronized(whiteCache) {
+    whiteCache.getOrPut(bitmap) {
+        val px = bitmap.pixels
+        (px.indices step 4).all { o -> px[o + 3].toInt() == 0 || px[o].toInt() == -1 && px[o + 1].toInt() == -1 && px[o + 2].toInt() == -1 }
+    }
+}
 
 internal var imageBlur = 0f
 
@@ -312,16 +324,18 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         val ih = bmp.height.toFloat()
         if (imageBlur > 0f && w > 0f) bmp = blurred(bmp, imageBlur * sw / w)
         val filter = paint.colorFilter?.let { PolyPaint.filterPlatform(it) }
+        val whiten = filter is TintFilter && filter.blendMode == BlendMode.SrcIn && !isWhite(bmp)
         val matrix = when {
             filter is MatrixFilter -> filter.matrix
             filter is TintFilter && filter.blendMode == BlendMode.Multiply -> filter.color.let { c ->
                 val a = c.alpha
                 ColorMatrix().apply { setToScale(1f - a + a * c.red, 1f - a + a * c.green, 1f - a + a * c.blue, 1f) }
             }
+            whiten -> WHITEN
             else -> null
         }
         if (matrix != null) bmp = recolored(bmp, matrix)
-        val tint = if (paint.colorFilter != null && matrix == null) paint.argb() else ((paint.alpha * 255f).toInt().coerceIn(0, 255) shl 24) or 0xFFFFFF
+        val tint = if (paint.colorFilter != null && (matrix == null || whiten)) paint.argb() else ((paint.alpha * 255f).toInt().coerceIn(0, 255) shl 24) or 0xFFFFFF
         val fq = when (paint.filterQuality) {
             FilterQuality.None -> PolyFilterQuality.None
             FilterQuality.Low -> PolyFilterQuality.Low

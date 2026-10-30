@@ -84,6 +84,14 @@ class ImageBitmapCanvasTest {
     }
 
     @Test
+    fun tintReplacesImageColors() {
+        PolyCompose.install()
+        val red = PolyBitmap(2, 2, ByteArray(16) { i -> if (i % 4 == 0 || i % 4 == 3) -1 else 0 })
+        val out = drawInto(ImageBitmap(2, 2)) { drawImage(red.asComposeImageBitmap(), colorFilter = ColorFilter.tint(Color.Blue)) }
+        assertEquals(0xFF0000FF.toInt(), out.argb(0, 0))
+    }
+
+    @Test
     fun imagesAreSampledIntoBitmaps() {
         PolyCompose.install()
         // 300 pixels is too wide for the atlas, so that image is sampled from its own bytes
