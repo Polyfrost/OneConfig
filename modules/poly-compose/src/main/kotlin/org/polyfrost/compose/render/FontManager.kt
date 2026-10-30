@@ -56,16 +56,19 @@ object FontManager {
         }
         val count = u16(at + 4)
         if (at + 12 + count * 16 > bytes.size) return false
-        val tables = HashSet<String>()
+        val lengths = HashMap<String, Long>()
         for (i in 0 until count) {
             val record = at + 12 + i * 16
             if (u32(record + 8) + u32(record + 12) > bytes.size) return false
-            tables += String(bytes, record, 4, Charsets.ISO_8859_1)
+            lengths[String(bytes, record, 4, Charsets.ISO_8859_1)] = u32(record + 12)
         }
-        return tables.containsAll(REQUIRED_TABLES) && ("CFF " in tables || "glyf" in tables && "loca" in tables)
+        // stb_truetype reads these fields unchecked, so a shorter table would make it read past the font
+        if (MIN_TABLE_LENGTHS.any { (tag, min) -> (lengths[tag] ?: if (tag == "maxp") min else -1) < min }) return false
+        return "CFF " in lengths || "glyf" in lengths && "loca" in lengths
     }
 
-    private val REQUIRED_TABLES = listOf("cmap", "head", "hhea", "hmtx")
+    // maxp is optional; the rest are required
+    private val MIN_TABLE_LENGTHS = mapOf("cmap" to 4L, "head" to 54L, "hhea" to 36L, "hmtx" to 0L, "maxp" to 6L)
 
     @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmName("loadFromResource")

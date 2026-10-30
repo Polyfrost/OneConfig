@@ -34,10 +34,10 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
             emScale = stbtt_ScaleForMappingEmToPixels(info, 1f)
             val asc = IntArray(1); val desc = IntArray(1); val gap = IntArray(1)
             stbtt_GetFontVMetrics(info, asc, desc, gap)
-            val post = table(bytes, "post")
+            val post = table(bytes, "post", 12)
             val ulPos = if (post < 0) Float.NaN else -s16(bytes, post + 8) * emScale
             val ulThick = if (post < 0) Float.NaN else s16(bytes, post + 10) * emScale
-            val os2 = table(bytes, "OS/2")
+            val os2 = table(bytes, "OS/2", 30)
             val soThick = if (os2 < 0) Float.NaN else s16(bytes, os2 + 26) * emScale
             val soPos = if (os2 < 0) Float.NaN else -s16(bytes, os2 + 28) * emScale
             unitMetrics = floatArrayOf(-asc[0] * emScale, -desc[0] * emScale, gap[0] * emScale, ulPos, ulThick, soPos, soThick)
@@ -162,10 +162,14 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
     private fun s16(b: ByteArray, o: Int) = u16(b, o).toShort().toInt()
     private fun u32(b: ByteArray, o: Int) = (u16(b, o) shl 16) or u16(b, o + 2)
 
-    private fun table(b: ByteArray, tag: String): Int {
+    // tables too short for the fields read from them are treated as missing
+    private fun table(b: ByteArray, tag: String, minLength: Int): Int {
         for (i in 0 until u16(b, 4)) {
             val r = 12 + i * 16
-            if (String(b, r, 4, Charsets.ISO_8859_1) == tag) return u32(b, r + 8)
+            if (r + 16 > b.size) return -1
+            if (String(b, r, 4, Charsets.ISO_8859_1) != tag) continue
+            val offset = u32(b, r + 8)
+            return if (offset >= 0 && u32(b, r + 12) >= minLength && offset + minLength <= b.size) offset else -1
         }
         return -1
     }
