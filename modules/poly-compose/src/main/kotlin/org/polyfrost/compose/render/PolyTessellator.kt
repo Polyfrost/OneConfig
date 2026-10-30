@@ -23,9 +23,9 @@ abstract class PolyTessellator : PolyRenderer {
     protected class State(
         @JvmField var sx: Float, @JvmField var sy: Float, @JvmField var tx: Float, @JvmField var ty: Float,
         @JvmField var alpha: Float, @JvmField var clip: FloatArray?, @JvmField var rclip: RClip?, @JvmField var mask: Mask? = null,
-        @JvmField var glyphScale: Float = 1f, @JvmField var rot: FloatArray? = null,
+        @JvmField var glyphScale: Float = 1f, @JvmField var rot: FloatArray? = null, @JvmField var hole: RClip? = null,
     ) {
-        fun copy() = State(sx, sy, tx, ty, alpha, clip, rclip, mask, glyphScale, rot)
+        fun copy() = State(sx, sy, tx, ty, alpha, clip, rclip, mask, glyphScale, rot, hole)
     }
 
     protected class Mask(val fade: PolyFade, val parent: Mask?)
@@ -856,6 +856,8 @@ abstract class PolyTessellator : PolyRenderer {
         if (clip != null) for (v in clip) keyAdd(v) else keyAdd(-1f)
         var c = s.rclip
         while (c != null) { for (v in c.box) keyAdd(v); c = c.parent }
+        var h = s.hole
+        while (h != null) { keyAdd(-3f); for (v in h.edge) keyAdd(v); h = h.parent }
         var m = s.mask
         while (m != null) {
             keyAdd(if (m.fade.vertical) 1f else 0f)
@@ -1004,14 +1006,7 @@ abstract class PolyTessellator : PolyRenderer {
         clipRect(x, y, w, h)
         if (radius <= 0f || state.rot != null) return
         val p = rrectPoints(x, y, w, h, radius)
-        if (signedArea(p, p.size / 2) < 0f) {
-            for (i in 0 until p.size / 4) {
-                val j = p.size / 2 - 1 - i
-                val tx = p[i * 2]; val ty = p[i * 2 + 1]
-                p[i * 2] = p[j * 2]; p[i * 2 + 1] = p[j * 2 + 1]
-                p[j * 2] = tx; p[j * 2 + 1] = ty
-            }
-        }
+        orient(p)
         val n = p.size / 2
         val inner = FloatArray(p.size); val outer = FloatArray(p.size)
         offsetPolygon(p, n, 1f, inner, outer)
@@ -1020,6 +1015,35 @@ abstract class PolyTessellator : PolyRenderer {
         val rx = box[4] + 1f; val ry = box[5] + 1f
         val safe = floatArrayOf(l + rx, t + 1f, rt - rx, b - 1f, l + 1f, t + ry, rt - 1f, b - ry)
         state.rclip = RClip(p, inner, outer, state.rclip, safe, box)
+    }
+
+    override fun clipOutRect(x: Float, y: Float, w: Float, h: Float) {
+        // Narrower holes would need their soft edges to overlap; drawing over them misses less than a pixel
+        if (w * abs(state.sx) < 1f || h * abs(state.sy) < 1f) return
+        val p = floatArrayOf(x, y, x + w, y, x + w, y + h, x, y + h)
+        transformInPlace(p)
+        state.rot?.let { m ->
+            for (i in p.indices step 2) {
+                val px = p[i]
+                p[i] = m[0] * px + m[1] * p[i + 1] + m[4]
+                p[i + 1] = m[2] * px + m[3] * p[i + 1] + m[5]
+            }
+        }
+        orient(p)
+        val inner = FloatArray(8); val outer = FloatArray(8)
+        offsetPolygon(p, 4, 1f, inner, outer)
+        state.hole = RClip(p, inner, outer, state.hole, NONE, NONE)
+    }
+
+    // Winds a clip polygon so edgeSide is positive inside it
+    private fun orient(p: FloatArray) {
+        if (signedArea(p, p.size / 2) >= 0f) return
+        for (i in 0 until p.size / 4) {
+            val j = p.size / 2 - 1 - i
+            val tx = p[i * 2]; val ty = p[i * 2 + 1]
+            p[i * 2] = p[j * 2]; p[i * 2 + 1] = p[j * 2 + 1]
+            p[j * 2] = tx; p[j * 2 + 1] = ty
+        }
     }
 
     private fun boxPx(x: Float, y: Float, w: Float, h: Float, radius: Float): FloatArray {
@@ -1521,14 +1545,16 @@ abstract class PolyTessellator : PolyRenderer {
         while (rclip != null && quadInside(rclip)) rclip = rclip.parent
         var mask = state.mask
         while (mask != null && maskOpaque(mask.fade)) mask = mask.parent
-        if (crosses == 0 && rclip == null && mask == null) {
+        val hole = state.hole
+        if (crosses == 0 && rclip == null && mask == null && hole == null) {
             for (i in 0 until 4) emit(qx[i], qy[i], qu[i], qv[i], qc[i])
         } else {
             val quad = Poly()
             for (i in 0 until 4) quad.add(qx[i], qy[i], qu[i], qv[i], qc[i])
             var polys = listOf(quad)
             if (crosses != 0) polys = boxCut(quad, box!!, crosses)
-            if (rclip != null && polys.isNotEmpty()) polys = clipQuad(polys, rclip)
+            if (rclip != null && polys.isNotEmpty()) polys = clipQuad(polys, rclip, ::cut)
+            if (hole != null && polys.isNotEmpty()) polys = clipQuad(polys, hole, ::cutHole)
             while (mask != null) {
                 val m = mask.fade
                 polys = polys.flatMap { faded(it, m) }
@@ -1697,7 +1723,7 @@ abstract class PolyTessellator : PolyRenderer {
         return inside
     }
 
-    private fun clipQuad(quad: List<Poly>, clip: RClip): List<Poly> {
+    private inline fun clipQuad(quad: List<Poly>, clip: RClip, cut: (Poly, RClip, MutableList<Poly>) -> Unit): List<Poly> {
         var polys = quad
         var c: RClip? = clip
         while (c != null && polys.isNotEmpty()) {
@@ -1707,6 +1733,35 @@ abstract class PolyTessellator : PolyRenderer {
             c = c.parent
         }
         return polys
+    }
+
+    // Keeps what lies outside the hole, fading out across the pixel straddling its edge
+    private fun cutHole(p: Poly, hole: RClip, out: MutableList<Poly>) {
+        var rest = p
+        for (e in 0 until 4) {
+            val outside = Poly()
+            rest = split(rest, hole.outer, e, outside)
+            if (outside.size >= 3) out.add(outside)
+            if (rest.size < 3) return
+        }
+        // Corners are split off each side's fade, which then stays linear across its piece
+        for (e in 0 until 4) {
+            var band = Poly()
+            rest = split(rest, hole.inner, e, band)
+            for (f in e + 1 until 4) {
+                val corner = Poly()
+                band = split(band, hole.inner, f, corner)
+                fadeOutside(corner, hole, out)
+            }
+            fadeOutside(band, hole, out)
+            if (rest.size < 3) return
+        }
+    }
+
+    private fun fadeOutside(p: Poly, hole: RClip, out: MutableList<Poly>) {
+        if (p.size < 3) return
+        for (i in 0 until p.size) p.c[i] = coverColor(p.c[i], 1f - coverage(hole, p.x[i], p.y[i]), batchPremul)
+        out.add(p)
     }
 
     private fun cut(p: Poly, clip: RClip, out: MutableList<Poly>) {
@@ -1809,6 +1864,9 @@ abstract class PolyTessellator : PolyRenderer {
         private const val MAX_FADE_DRAWS = 16
 
         private const val NEAREST_TIE_BIAS = 1f / 256f
+
+        // Holes are only cut along their edges, so they need no safe areas or box
+        private val NONE = FloatArray(0)
 
         fun layerTargetSize(current: Int, needed: Int): Int = if (current >= needed) current else (needed + 63) / 64 * 64
         const val FALLBACK_FONT = "unifont"

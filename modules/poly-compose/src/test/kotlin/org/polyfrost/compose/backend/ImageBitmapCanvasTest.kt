@@ -9,11 +9,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
@@ -23,6 +25,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.graphics.vector.path
@@ -139,6 +142,19 @@ class ImageBitmapCanvasTest {
         } finally {
             PolyGlyphPage.rasterizer = old
         }
+    }
+
+    @Test
+    fun differenceClipLeavesTheRectangleOut() {
+        PolyCompose.install()
+        // How Compose draws a border whose stroke is wider than twice its corner radius
+        val out = drawInto(ImageBitmap(12, 12)) {
+            drawRect(Color.Red)
+            clipRect(3f, 3f, 9f, 9f, ClipOp.Difference) { drawRoundRect(Color.Blue, cornerRadius = CornerRadius(1f)) }
+        }
+        for (x in 1 until 11) assertEquals(if (x in 3..8) 0xFFFF0000.toInt() else 0xFF0000FF.toInt(), out.argb(x, 6), "($x, 6)")
+        assertEquals(0xFF0000FF.toInt(), out.argb(6, 2))
+        assertEquals(0xFFFF0000.toInt(), out.argb(6, 3))
     }
 
     @Test

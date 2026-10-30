@@ -89,6 +89,9 @@ interface PolyRenderer {
     fun clipRect(x: Float, y: Float, w: Float, h: Float)
     fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float)
 
+    /** Removes the rectangle from the clip. Renderers that can't remove areas from it keep drawing over the rectangle. */
+    fun clipOutRect(x: Float, y: Float, w: Float, h: Float) {}
+
     companion object {
         const val CAP_BUTT = 0
         const val CAP_ROUND = 1

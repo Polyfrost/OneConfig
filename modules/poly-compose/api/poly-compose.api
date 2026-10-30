@@ -1181,6 +1181,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public static final field JOIN_MITER I
 	public static final field JOIN_ROUND I
 	public fun animatedScale (FF)V
+	public fun clipOutRect (FFFF)V
 	public abstract fun clipRRect (FFFFF)V
 	public abstract fun clipRect (FFFF)V
 	public fun deviceTransform ()[F
@@ -1228,6 +1229,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$Companion {
 
 public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun animatedScale (Lorg/polyfrost/compose/render/PolyRenderer;FF)V
+	public static fun clipOutRect (Lorg/polyfrost/compose/render/PolyRenderer;FFFF)V
 	public static fun deviceTransform (Lorg/polyfrost/compose/render/PolyRenderer;)[F
 	public static fun fillPathGradient (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyPath;FFFFLorg/polyfrost/compose/render/PolyGradient;)V
 	public static fun image (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
@@ -1285,6 +1287,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public static synthetic fun begin$default (Lorg/polyfrost/compose/render/PolyTessellator;Ljava/lang/Object;ZZILjava/lang/Object;)V
 	protected final fun beginDraw ()V
 	protected abstract fun bitmapTexture (Lorg/polyfrost/compose/render/PolyBitmap;)Ljava/lang/Object;
+	public fun clipOutRect (FFFF)V
 	public fun clipRRect (FFFFF)V
 	public fun clipRect (FFFF)V
 	public fun deviceTransform ()[F
@@ -1365,6 +1368,7 @@ protected final class org/polyfrost/compose/render/PolyTessellator$State {
 	public field alpha F
 	public field clip [F
 	public field glyphScale F
+	public field hole Lorg/polyfrost/compose/render/PolyTessellator$RClip;
 	public field mask Lorg/polyfrost/compose/render/PolyTessellator$Mask;
 	public field rclip Lorg/polyfrost/compose/render/PolyTessellator$RClip;
 	public field rot [F
@@ -1372,8 +1376,8 @@ protected final class org/polyfrost/compose/render/PolyTessellator$State {
 	public field sy F
 	public field tx F
 	public field ty F
-	public fun <init> (FFFFF[FLorg/polyfrost/compose/render/PolyTessellator$RClip;Lorg/polyfrost/compose/render/PolyTessellator$Mask;F[F)V
-	public synthetic fun <init> (FFFFF[FLorg/polyfrost/compose/render/PolyTessellator$RClip;Lorg/polyfrost/compose/render/PolyTessellator$Mask;F[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFFF[FLorg/polyfrost/compose/render/PolyTessellator$RClip;Lorg/polyfrost/compose/render/PolyTessellator$Mask;F[FLorg/polyfrost/compose/render/PolyTessellator$RClip;)V
+	public synthetic fun <init> (FFFFF[FLorg/polyfrost/compose/render/PolyTessellator$RClip;Lorg/polyfrost/compose/render/PolyTessellator$Mask;F[FLorg/polyfrost/compose/render/PolyTessellator$RClip;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun copy ()Lorg/polyfrost/compose/render/PolyTessellator$State;
 }
 

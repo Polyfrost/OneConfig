@@ -3,6 +3,7 @@
 package org.polyfrost.compose.backend
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -79,6 +80,7 @@ class ComposeBackendTest {
         override fun scale(sx: Float, sy: Float) {}
         override fun clipRect(x: Float, y: Float, w: Float, h: Float) = log("clip ${x + tx},${y + ty} ${w}x$h")
         override fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = log("clipR ${x + tx},${y + ty} ${w}x$h r=$radius")
+        override fun clipOutRect(x: Float, y: Float, w: Float, h: Float) = log("clipOut ${x + tx},${y + ty} ${w}x$h")
     }
 
     private class CapturingLogRenderer : CapturingRenderer, PolyRenderer by LogRenderer() {
@@ -170,6 +172,12 @@ class ComposeBackendTest {
         assertTrue(calls.any { it.startsWith("rect 0.0,0.0 400.0x300.0") }, "full-size background")
         assertTrue(calls.any { it.startsWith("shadow") }, "shadow")
         assertEquals(1, calls.count { it.startsWith("text 'hi'") })
+    }
+
+    @Test
+    fun borderWiderThanItsCornersClipsOutItsInside() {
+        val calls = render { Box(Modifier.size(50.dp).border(4.dp, Color.Blue, RoundedCornerShape(1.dp))) }
+        assertTrue("clipOut 4.0,4.0 42.0x42.0" in calls, calls.toString())
     }
 
     private fun paragraph(text: String, style: TextStyle = TextStyle(), maxWidth: Int = 100): PlatformParagraph {

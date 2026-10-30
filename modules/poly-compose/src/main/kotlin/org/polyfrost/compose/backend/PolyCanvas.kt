@@ -162,11 +162,11 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         r.scale(sx, (a * v[Matrix.ScaleY] - b * v[Matrix.SkewX]) / sx)
     }
 
-    override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) {
-        if (clipOp == ClipOp.Intersect) r.clipRect(left, top, right - left, bottom - top)
-    }
+    override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) =
+        if (clipOp == ClipOp.Intersect) r.clipRect(left, top, right - left, bottom - top) else r.clipOutRect(left, top, right - left, bottom - top)
 
     override fun clipPath(path: Path, clipOp: ClipOp) {
+        // Compose itself only clips out rectangles, which go through clipRect
         if (clipOp != ClipOp.Intersect) return
         val p = path as PolyComposePath
         val rr = p.roundRect

@@ -344,6 +344,22 @@ class PolyTessellatorTest {
     }
 
     @Test
+    fun clipOutRectLeavesASoftEdgedHoleUntilRestored() {
+        val b = Recorder().run {
+            save(); scale(2f, 2f); clipOutRect(5f, 5f, 10f, 10f); rect(0f, 0f, 20f, 20f, -1, 0f); restore()
+            rect(50f, 0f, 10f, 10f, -1, 0f)
+            done()
+        }
+        b.forEach(::assertWinding)
+        assertEquals(255, b.alphaAt(5.3f, 22.9f))
+        assertEquals(255, b.alphaAt(20.7f, 9.4f), "just before the hole's soft edge")
+        assertEquals(0, b.alphaAt(20.7f, 20.3f), "inside the hole")
+        for (y in listOf(11.9f, 21.9f, 28.9f)) assertTrue(b.alphaAt(10.25f, y) in 60..68, "a quarter covered across the edge at $y")
+        for (y in listOf(11.9f, 21.9f, 28.9f)) assertTrue(b.alphaAt(29.75f, y) in 60..68, "a quarter covered across the far edge at $y")
+        assertEquals(255, b.alphaAt(55.3f, 5.7f), "restore keeps the hole from outliving its scope")
+    }
+
+    @Test
     fun nestedRoundedClipsIntersect() {
         val r = Recorder()
         r.save()
