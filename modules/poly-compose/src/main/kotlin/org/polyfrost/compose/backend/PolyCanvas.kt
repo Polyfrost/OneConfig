@@ -191,7 +191,8 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         if (clipOp == ClipOp.Intersect) r.clipRect(left, top, right - left, bottom - top) else r.clipOutRect(left, top, right - left, bottom - top)
 
     override fun clipPath(path: Path, clipOp: ClipOp) {
-        // Compose itself only clips out rectangles, which go through clipRect
+        // shortcut: clipping out a path is ignored; Compose itself only clips out rectangles (through clipRect),
+        // so only custom drawing is affected, and supporting it needs path clipping in the renderers
         if (clipOp == ClipOp.Intersect) r.clipTo(path)
     }
 
