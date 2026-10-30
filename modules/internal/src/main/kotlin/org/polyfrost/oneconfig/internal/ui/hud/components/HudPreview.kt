@@ -117,10 +117,11 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
             // Zero-size previews still count as measured so they don't block shortcut navigation
             state.measured = true
         }
-        if (static) return@LaunchedEffect
         // Values like FPS widen after the first measure. Never shrink, or the library reflows
         // whenever a value flips between digit counts.
         snapshotFlow { HudManager.previewRevision.intValue }.collect {
+            // text is read outside composition, so even fixed-size previews need a layout pass to pick up new values
+            if (static) return@collect state.runtime.layout(hud.staticW, hud.staticH)
             state.runtime.layout(MEASURE_BOUNDS, MEASURE_BOUNDS)
             state.naturalWidth = maxOf(state.naturalWidth, state.runtime.root.width)
             state.naturalHeight = maxOf(state.naturalHeight, state.runtime.root.height)
