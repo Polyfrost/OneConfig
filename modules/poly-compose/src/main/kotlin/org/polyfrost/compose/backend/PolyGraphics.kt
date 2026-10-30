@@ -61,7 +61,7 @@ object PolyGraphics : PlatformGraphics {
     override fun isTileModeSupported(tileMode: TileMode) = tileMode == TileMode.Clamp
     override fun createPath(): Path = PolyComposePath()
     override fun createPathIterator(path: Path, conicEvaluation: PathIterator.ConicEvaluation, tolerance: Float): PathIterator =
-        error("PathIterator is not supported")
+        PolyPathIterator(path, conicEvaluation, tolerance)
     override fun createPathMeasure(): PathMeasure = PolyPathMeasure()
 
     override fun createImageBitmap(width: Int, height: Int, config: ImageBitmapConfig, hasAlpha: Boolean, colorSpace: ColorSpace): ImageBitmap =
