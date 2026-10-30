@@ -54,7 +54,8 @@ import org.polyfrost.compose.render.PolyGradient
 object PolyGraphics : PlatformGraphics {
     override fun createCanvas(image: ImageBitmap): Canvas {
         val target = image as PolyImageBitmap
-        return PolyCanvas(BitmapRenderer(target).also { target.renderer = it })
+        // Canvases on one image share its renderer, so pending draws from each reach the pixels in order
+        return PolyCanvas(target.renderer ?: BitmapRenderer(target).also { target.renderer = it })
     }
     override fun createPaint(): Paint = PolyPaint()
     override fun isBlendModeSupported(blendMode: BlendMode) = blendMode == BlendMode.SrcOver

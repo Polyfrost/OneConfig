@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
@@ -159,6 +160,20 @@ class ImageBitmapCanvasTest {
         assertEquals(0x800000FF.toInt(), first.argb(4, 4))
         assertEquals(0xFFFF0000.toInt(), second.argb(4, 4))
         assertEquals(0, second.argb(4, 0) ushr 24)
+    }
+
+    @Test
+    fun canvasesOnOneImageKeepEachOthersDrawings() {
+        PolyCompose.install()
+        val image = ImageBitmap(3, 1)
+        val first = Canvas(image)
+        val paint = Paint()
+        first.drawRect(0f, 0f, 1f, 1f, paint.apply { color = Color.Red })
+        val second = Canvas(image)
+        second.drawRect(1f, 0f, 2f, 1f, paint.apply { color = Color.Blue })
+        first.drawRect(2f, 0f, 3f, 1f, paint.apply { color = Color.Green })
+        val out = (image as PolyImageBitmap).bitmap
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFF0000FF.toInt(), 0xFF00FF00.toInt()), List(3) { out.argb(it, 0) })
     }
 
     @Test
