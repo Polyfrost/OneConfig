@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
+import java.util.function.Consumer
 import java.util.function.Predicate
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
@@ -114,8 +115,14 @@ fun BooleanOption(data: BooleanOptionData) {
     // the same option can be flipped from elsewhere on screen, a mod's card for its master switch for one
     DisposableEffect(data.prop) {
         val listener = Predicate<Boolean> { value -> checked = value == true; false }
+        // whatever locks an option can also change what it shows in place of the value
+        val displayListener = Consumer<Property.Display> { checked = data.boolProp.shown() == true }
         data.boolProp.addCallback(listener)
-        onDispose { data.boolProp.removeCallback(listener) }
+        data.boolProp.addDisplayListener(displayListener)
+        onDispose {
+            data.boolProp.removeCallback(listener)
+            data.boolProp.removeDisplayListener(displayListener)
+        }
     }
     when (data.style) {
         BooleanOptionData.Style.Switch -> SwitchControl(checked) { checked = it; data.boolProp.set(it) }
