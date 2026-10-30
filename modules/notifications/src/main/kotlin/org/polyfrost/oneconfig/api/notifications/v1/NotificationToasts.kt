@@ -255,19 +255,21 @@ private fun ToastIcon(notification: Notification) {
             image(custom, x + (w - custom.width * s) / 2f, y + (h - custom.height * s) / 2f, custom.width * s, custom.height * s)
         }
     } else {
-        val accent = NotificationTheme.accentFor(notification.type).argb
+        val accent = NotificationTheme.accentFor(notification.type)
         val iconFolder = NotificationTheme.iconFolder
         PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
             val name = notification.type.iconName
-            val img = iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, accent) }
-                ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, accent)
-            if (img != null) image(img, x, y, w, h)
+            // white masks tinted when drawn, so animating theme colours don't rasterize and cache a mask per colour
+            val img = iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, WHITE) }
+                ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, WHITE)
+            if (img != null) image(img, x, y, w, h, 0f, 0f, 1f, 1f, accent)
         }
     }
 }
 
 private const val TEXT_WIDTH = CONTENT_WIDTH - ICON_SIZE - ICON_GAP
+private const val WHITE = -1
 
 private fun messageFont(): PolyFont = NotificationTheme.fontBody?.let { PolyFont(it, MESSAGE_SIZE) } ?: PolyFont.default(MESSAGE_SIZE)
 
