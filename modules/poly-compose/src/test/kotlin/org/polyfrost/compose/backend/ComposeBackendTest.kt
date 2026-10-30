@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -291,6 +292,11 @@ class ComposeBackendTest {
         unit = 1f
         FontManager.invalidateMetrics()
         assertEquals(28f, width())
+    }
+
+    @Test
+    fun emParagraphSizesResolveAgainstTheDefault() {
+        assertEquals(14f, paragraph("a", TextStyle(fontSize = 2.em)).maxIntrinsicWidth)
     }
 
     @Test

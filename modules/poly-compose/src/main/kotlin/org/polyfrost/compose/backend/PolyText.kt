@@ -158,6 +158,8 @@ internal class PolyIntrinsics(
     val text: String, val style: TextStyle, annotations: List<AnnotatedString.Range<out AnnotatedString.Annotation>>,
     val placeholderCount: Int, val density: Density, resolver: FontFamily.Resolver,
 ) : ParagraphIntrinsics {
+    // an em paragraph size has no parent to resolve against, so it's relative to the 14 sp default
+    private val baseSize = style.fontSize.let { if (!it.isSpecified) 14f else if (it.isEm) it.value * 14f else with(density) { it.toPx() } }
     val runs: List<TextRun>
     val glyphs = Icu.shape(text)
     val advances = FloatArray(text.length)
@@ -190,7 +192,7 @@ internal class PolyIntrinsics(
             }
             val name = resolver.resolve(s.fontFamily, s.fontWeight ?: FontWeight.Normal, s.fontStyle ?: FontStyle.Normal, s.fontSynthesis ?: FontSynthesis.All).value as? String
                 ?: FontManager.DEFAULT_KEY
-            val size = px(s.fontSize, 14f)
+            val size = if (s.fontSize == style.fontSize) baseSize else px(s.fontSize, baseSize)
             val synthesis = s.fontSynthesis ?: FontSynthesis.All
             // like Skia, slant upright faces when italic is requested and the family has no italic face
             val fakeItalic = s.fontStyle == FontStyle.Italic && name !in italicFonts && (synthesis == FontSynthesis.All || synthesis == FontSynthesis.Style)
@@ -199,7 +201,7 @@ internal class PolyIntrinsics(
         }
         if (runs.isEmpty()) {
             val name = resolver.resolve(base.fontFamily, base.fontWeight ?: FontWeight.Normal, base.fontStyle ?: FontStyle.Normal).value as? String ?: FontManager.DEFAULT_KEY
-            runs += TextRun(0, 0, PolyFont(name, px(base.fontSize, 14f)), base)
+            runs += TextRun(0, 0, PolyFont(name, baseSize), base)
         }
         // shortcut: one glyph per code point without OpenType shaping, so scripts that reorder or substitute glyphs
         // (e.g. Devanagari) render unshaped; fixing that needs a shaping engine such as HarfBuzz
@@ -219,7 +221,7 @@ internal class PolyIntrinsics(
     }
 
     fun px(unit: TextUnit, fallback: Float): Float = if (!unit.isSpecified) fallback else with(density) {
-        if (unit.isEm) unit.value * px(style.fontSize, 14f) else unit.toPx()
+        if (unit.isEm) unit.value * baseSize else unit.toPx()
     }
 
     fun runAt(offset: Int): TextRun = runs.firstOrNull { offset < it.end } ?: runs.last()
