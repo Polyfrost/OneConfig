@@ -120,16 +120,11 @@ private class BakedLayer {
     }
 }
 
-private fun glowAt(x: Float, y: Float, alpha: Float): Float {
-    var a = 0f
-    for (g in glowCenters.indices step 2) a += glowAlphaAt(hypot(x - glowCenters[g], y - glowCenters[g + 1]) / GLOW_EXTENT) * alpha * (1f - a)
-    return a
-}
-
-// shadow, accent glow and fill, bottom to top
+// shadow, accent glow and fill, bottom to top; each glow center is its own full-strength mask, so opacity is applied
+// when drawing and stacking them composites the same as combining them in one bake
 private class GlowLayers {
     private val shadowLayer = BakedLayer()
-    private val glowLayer = BakedLayer()
+    private val glowLayers = Array(glowCenters.size / 2) { BakedLayer() }
 
     fun DrawScope.draw(x0: Float, x1: Float, accent: Color, alpha: Float, fill: Color, shadow: ShadowBake?) {
         val w = size.width
@@ -137,8 +132,13 @@ private class GlowLayers {
         val dstOffset = IntOffset(x0.roundToInt(), 0)
         val dstSize = IntSize((x1 - x0).roundToInt(), h.roundToInt())
         if (shadow != null) drawImage(shadowLayer.get(listOf(w, h, x0, x1, shadow), w, h, x0, x1, shadow.color, shadow::alphaAt), dstOffset = dstOffset, dstSize = dstSize)
-        val glow = glowLayer.get(listOf(w, h, x0, x1, alpha), w, h, x0, x1, Color.White) { x, y -> glowAt(x, y, alpha) }
-        drawImage(glow, dstOffset = dstOffset, dstSize = dstSize, colorFilter = ColorFilter.tint(accent))
+        val tint = ColorFilter.tint(accent.copy(alpha = alpha))
+        for ((i, layer) in glowLayers.withIndex()) {
+            val glow = layer.get(listOf(w, h, x0, x1), w, h, x0, x1, Color.White) { x, y ->
+                glowAlphaAt(hypot(x - glowCenters[i * 2], y - glowCenters[i * 2 + 1]) / GLOW_EXTENT)
+            }
+            drawImage(glow, dstOffset = dstOffset, dstSize = dstSize, colorFilter = tint)
+        }
         drawRect(fill, Offset(x0, 0f), Size(x1 - x0, h))
     }
 }
