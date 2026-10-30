@@ -35,7 +35,7 @@ compose = "1.13.0-alpha02"
 androidx-compose-runtime = "1.13.0-alpha03"
 compose-navigation = "2.10.0-rc01"
 lifecycle = "2.11.0"
-viewmodel = "2.11.0-beta01"
+viewmodel = "2.11.0"
 
 commonmark = "0.30.1"
 twelvemonkeys = "3.15.3"
