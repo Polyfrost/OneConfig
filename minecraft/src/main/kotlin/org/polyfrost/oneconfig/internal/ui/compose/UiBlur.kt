@@ -79,7 +79,7 @@ object UiBlur {
     }
 
     private fun downInfo(mainW: Int, mainH: Int, w: Int, h: Int): GpuBuffer {
-        val key = mainW.toLong() shl 32 or mainH.toLong()
+        val key = mainW.toLong() shl 48 or (mainH.toLong() shl 32) or (w.toLong() shl 16) or h.toLong()
         val down = downInfo
         if (down != null && key == infoKey) return down
         downInfo?.close()
