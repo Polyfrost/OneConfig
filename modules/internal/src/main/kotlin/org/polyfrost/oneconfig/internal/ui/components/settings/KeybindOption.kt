@@ -1,8 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -42,6 +41,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -148,14 +148,14 @@ fun KeybindOption(data: KeybindOptionData) {
         recording = false
     }
 
-    val bgColor by animateColorAsState(
+    val bgColor = animateColorAsState(
         when {
             recording -> Accent.copy(alpha = 0.2f)
             isHovered -> theme.componentBackground.copy(alpha = 0.8f)
             else -> theme.componentBackground
         }
     )
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         when {
             recording -> Accent
             hasConflict -> CONFLICT_COLOR
@@ -163,7 +163,7 @@ fun KeybindOption(data: KeybindOptionData) {
             else -> theme.borderColor
         }
     )
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         when {
             recording -> Accent
             hasConflict -> CONFLICT_COLOR
@@ -261,8 +261,8 @@ fun KeybindOption(data: KeybindOptionData) {
             }
             .focusRequester(focusRequester)
             .focusable()
-            .background(bgColor, KeybindShape)
-            .border(1.dp, borderColor, KeybindShape)
+            .graphicsLayer {}
+            .animatedFrame(KeybindShape, fill = { bgColor.value }, border = { borderColor.value })
             .onClick(interactionSource) { if (!recording) recording = true }
             .pointerHoverIcon(PointerIcon.Hand)
             .padding(horizontal = 12.dp, vertical = 7.dp),
@@ -271,7 +271,7 @@ fun KeybindOption(data: KeybindOptionData) {
     ) {
         Icon(
             "keyboard",
-            color = textColor,
+            tint = { textColor.value },
             modifier = Modifier.size(16.dp)
         )
         Text(
@@ -281,8 +281,9 @@ fun KeybindOption(data: KeybindOptionData) {
                     .joinToString(" + ")
                 else -> displayName
             },
-            color = textColor,
+            color = Color.Unspecified,
             fontSize = 13.sp,
+            colorProducer = { textColor.value },
         )
     }
 }

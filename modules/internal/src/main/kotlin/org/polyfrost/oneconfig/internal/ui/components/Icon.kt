@@ -23,14 +23,11 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.toComposeImageBitmap
-import androidx.compose.ui.res.loadImageBitmap
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -39,10 +36,8 @@ import javax.imageio.ImageIO
 import kotlin.math.sqrt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.skia.Image as SkImage
-import org.jetbrains.skia.Paint as SkPaint
-import org.jetbrains.skia.Rect as SkRect
-import org.jetbrains.skia.SamplingMode
+import org.polyfrost.compose.backend.asComposeImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.AccentGradient
@@ -55,17 +50,7 @@ private const val SvgHeaderBytes = 512
 private val SvgViewBox = Regex("""viewBox\s*=\s*"([^"]+)"""")
 private val SvgViewBoxSeparator = Regex("""[\s,]+""")
 
-/**
- * A decoded raster icon plus the filter quality it should be scaled with
- *
- * Pixel art is upscaled with nearest neighbour so it stays crisp
- */
-private class RasterIcon(val bitmap: ImageBitmap, filterQuality: FilterQuality) {
-    val image: SkImage by lazy { SkImage.makeFromBitmap(bitmap.asSkiaBitmap()) }
-
-    val sampling: SamplingMode =
-        if (filterQuality == FilterQuality.None) SamplingMode.DEFAULT else SamplingMode.LINEAR
-}
+private class RasterIcon(val bitmap: ImageBitmap, val filterQuality: FilterQuality)
 
 private object IconBitmapCache {
     private class Entry(val lastModified: Long, val icon: RasterIcon)
@@ -136,20 +121,14 @@ private fun rememberAsyncRasterIcon(key: String, lastModified: Long, read: () ->
     }.value
 }
 
-/**
- * Decodes raster icon [bytes] picking nearest neighbour filtering when the image looks like pixel art
- *
- * Falls back to Compose's own decoder if AWT cannot read the format
- */
-private fun decodeRasterIcon(bytes: ByteArray): RasterIcon {
+private fun decodeRasterIcon(bytes: ByteArray): RasterIcon? {
     val buffered = runCatching { ImageIO.read(ByteArrayInputStream(bytes)) }.getOrNull()
-        ?: return RasterIcon(loadImageBitmap(ByteArrayInputStream(bytes)), FilterQuality.Medium)
+        ?: return PolyBitmap.decode(bytes)?.let { RasterIcon(it.asComposeImageBitmap(), FilterQuality.Medium) }
     val quality = if (buffered.isPixelArt()) FilterQuality.None else FilterQuality.Medium
-    return RasterIcon(buffered.toComposeImageBitmap(), quality)
+    return RasterIcon(PolyBitmap.fromAwt(buffered).asComposeImageBitmap(), quality)
 }
 
 private class RasterIconPainter(private val icon: RasterIcon) : Painter() {
-    private val paint = SkPaint()
     private var alpha = 1f
 
     override val intrinsicSize = Size(icon.bitmap.width.toFloat(), icon.bitmap.height.toFloat())
@@ -160,20 +139,26 @@ private class RasterIconPainter(private val icon: RasterIcon) : Painter() {
     }
 
     override fun DrawScope.onDraw() {
-        val image = icon.image
-        paint.setAlphaf(alpha.coerceIn(0f, 1f))
-        drawIntoCanvas {
-            it.nativeCanvas.drawImageRect(
-                image,
-                SkRect.makeWH(image.width.toFloat(), image.height.toFloat()),
-                SkRect.makeWH(size.width, size.height),
-                icon.sampling,
-                paint,
-                true,
-            )
-        }
+        val image = icon.bitmap
+        drawImage(
+            image,
+            srcOffset = IntOffset.Zero,
+            srcSize = IntSize(image.width, image.height),
+            dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+            alpha = alpha.coerceIn(0f, 1f),
+            filterQuality = icon.filterQuality,
+        )
     }
 }
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+fun Icon(
+    iconName: String,
+    color: Color = Color.Unspecified,
+    modifier: Modifier = Modifier,
+    fitAspectRatio: Boolean = false,
+) = Icon(iconName, color, modifier, fitAspectRatio, null)
 
 @Composable
 fun Icon(
@@ -181,6 +166,7 @@ fun Icon(
     color: Color = Color.Unspecified,
     modifier: Modifier = Modifier,
     fitAspectRatio: Boolean = false,
+    tint: (() -> Color)? = null,
 ) {
     val theme = LocalTheme.current
     val resolvedColor = if (color == Color.Unspecified) theme.textColor else color
@@ -206,10 +192,10 @@ fun Icon(
                     if (fitAspectRatio) bytes?.let(::readSvgAspectRatio) else null
                 }
                 Image(
-                    painter = painter,
+                    painter = tinted(painter, tint),
                     contentDescription = null,
                     modifier = modifier.then(iconSizeModifier(aspectRatio)),
-                    colorFilter = ColorFilter.tint(resolvedColor)
+                    colorFilter = if (tint == null) ColorFilter.tint(resolvedColor) else null
                 )
                 return
             }
@@ -253,11 +239,33 @@ fun Icon(
         }
     }
     Image(
-        painter = painter,
+        painter = if (isSvg) tinted(painter, tint) else painter,
         contentDescription = null,
         modifier = clippedResourceModifier,
-        colorFilter = if (isSvg) ColorFilter.tint(resolvedColor) else null
+        colorFilter = if (isSvg && tint == null) ColorFilter.tint(resolvedColor) else null
     )
+}
+
+private class TintedPainter(val base: Painter) : Painter() {
+    var tint: () -> Color = { Color.Unspecified }
+    private var alpha = 1f
+
+    override val intrinsicSize get() = base.intrinsicSize
+
+    override fun applyAlpha(alpha: Float): Boolean {
+        this.alpha = alpha
+        return true
+    }
+
+    override fun DrawScope.onDraw() {
+        with(base) { draw(size, alpha, ColorFilter.tint(tint())) }
+    }
+}
+
+@Composable
+private fun tinted(painter: Painter, tint: (() -> Color)?): Painter {
+    if (tint == null) return painter
+    return remember(painter) { TintedPainter(painter) }.also { it.tint = tint }
 }
 
 @Composable

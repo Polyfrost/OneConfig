@@ -9,8 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,19 +68,19 @@ fun DropdownOption(data: DropdownOptionData) {
 
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (expanded) Accent
         else theme.borderColor
     )
-    val textColor by animateColorAsState(
+    val textColor = animateColorAsState(
         if (isHovered || expanded) theme.textColor
         else theme.textColorSecondary
     )
-    val backgroundColor by animateColorAsState(
+    val backgroundColor = animateColorAsState(
         if (expanded) Accent.copy(0.2f).compositeOver(theme.componentBackground)
         else theme.componentBackground
     )
-    val chevronRotation by animateFloatAsState(
+    val chevronRotation = animateFloatAsState(
         if (expanded) 0f else 180f
     )
 
@@ -88,12 +89,8 @@ fun DropdownOption(data: DropdownOptionData) {
             modifier = Modifier
                 .width(LocalOptionWidth.current)
                 .height(32.dp)
-                .background(backgroundColor, DropdownShape)
-                .border(
-                    1.dp,
-                    borderColor,
-                    DropdownShape,
-                )
+                .graphicsLayer {}
+                .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
                 .onClick(triggerInteraction) { expanded = !expanded }
                 .hoverable(triggerInteraction)
                 .pointerHoverIcon(PointerIcon.Hand)
@@ -104,12 +101,13 @@ fun DropdownOption(data: DropdownOptionData) {
             Text(
                 selectedName,
                 modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
-                color = textColor,
+                color = Color.Unspecified,
                 fontSize = 13.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                colorProducer = { textColor.value },
             )
-            Icon("up", modifier = Modifier.rotate(chevronRotation), color = textColor)
+            Icon("up", modifier = Modifier.graphicsLayer { rotationZ = chevronRotation.value }, tint = { textColor.value })
         }
 
         SimpleDropdownMenu(
@@ -130,6 +128,7 @@ fun DropdownOption(data: DropdownOptionData) {
                     modifier = Modifier
                         .heightIn(max = 280.dp)
                         .fadingEdges(scrollState, theme.componentBackground)
+                        .wheelScroll(scrollState)
                         .verticalScroll(scrollState)
                         .padding(MenuPadding)
                         .fillMaxWidth(),
@@ -140,7 +139,7 @@ fun DropdownOption(data: DropdownOptionData) {
                         val selected = index == selectedIdx
                         val isHovered by optionSource.collectIsHoveredAsState()
 
-                        val backgroundColor by animateColorAsState(
+                        val backgroundColor = animateColorAsState(
                             if (selected) Accent
                             else if (isHovered) theme.modCardBackground
                             else theme.modCardBackground.copy(0f)
@@ -149,7 +148,8 @@ fun DropdownOption(data: DropdownOptionData) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(backgroundColor, itemShape)
+                                .graphicsLayer {}
+                                .animatedFrame(itemShape, fill = { backgroundColor.value }, border = { Color.Transparent })
                                 .onClick(optionSource) {
                                     selectedIdx = index
                                     @Suppress("UNCHECKED_CAST")

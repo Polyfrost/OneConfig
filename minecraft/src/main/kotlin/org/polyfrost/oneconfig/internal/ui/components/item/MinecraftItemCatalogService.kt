@@ -12,20 +12,15 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
-import org.jetbrains.skia.Canvas
-import org.jetbrains.skia.ContentChangeMode
-import org.jetbrains.skia.Image
-import org.jetbrains.skia.Paint
-import org.jetbrains.skia.Rect
-import org.jetbrains.skia.SamplingMode
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.event.v1.events.ServerJoinEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.oneconfig.internal.ui.SkiaOffscreenTarget
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx
+import org.polyfrost.oneconfig.internal.ui.OffscreenTarget
+import org.polyfrost.oneconfig.internal.ui.TextureRenderer
+import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 import org.slf4j.LoggerFactory
 
@@ -72,16 +67,17 @@ import com.mojang.renderpearl.api.textures.TextureFormat
 *///?}
 
 //? if >= 1.21.4 && < 1.21.8 {
-/*import com.mojang.blaze3d.ProjectionType
-import net.minecraft.client.renderer.item.ItemStackRenderState
+/*import net.minecraft.client.renderer.item.ItemStackRenderState
 *///?}
 
 //? if < 1.21.8 && > 1.8.9 {
 /*import com.mojang.blaze3d.platform.Lighting
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.texture.OverlayTexture
-import org.joml.Matrix4f
 *///?}
+
+//? if < 1.21.8
+//import org.polyfrost.oneconfig.internal.ui.withGuiProjection
 
 //? if < 1.21.5 {
 /*import com.mojang.blaze3d.platform.GlStateManager
@@ -90,8 +86,7 @@ import org.lwjgl.opengl.GL11
 *///?}
 
 //? if < 1.21.4 && > 1.8.9 {
-/*import com.mojang.blaze3d.vertex.VertexSorting
-import net.minecraft.client.renderer.ItemBlockRenderTypes
+/*import net.minecraft.client.renderer.ItemBlockRenderTypes
 import net.minecraft.client.resources.model.BakedModel
 import net.minecraft.client.resources.model.ModelResourceLocation
 import net.minecraft.resources.ResourceLocation
@@ -99,6 +94,12 @@ import net.minecraft.resources.ResourceLocation
 
 //? if < 1.21.5 && > 1.8.9 {
 /*import net.minecraft.util.RandomSource
+*///?}
+
+//? if vulkanmod && = 1.21.1 {
+/*import net.vulkanmod.vulkan.Renderer
+import net.vulkanmod.vulkan.VRenderSystem
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost
 *///?}
 
 //? if = 1.8.9 {
@@ -200,13 +201,15 @@ class MinecraftItemCatalogService : ItemCatalogService {
         var slot = 0
         var x = 0
         var y = 0
-        var atlasSource: Rect = Rect.makeWH(0f, 0f)
+        val atlasSource = FloatArray(4)
         var atlas: AtlasState? = null
         var animated = false
         var special = false
         var specialRefreshAtNs = 0L
         var failed = false
         var identityInitialized = false
+        var resolvedTick = -1
+        var resolvedStack: ItemStack? = null
         var committedIdentity = IdentityBuffer()
         var scratchIdentity = IdentityBuffer()
         //? if >= 1.21.8 {
@@ -233,17 +236,26 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
         override fun update(stack: ItemStack) {
             synchronized(requestLock) {
-                if (!closed) this.stack = stack
+                if (closed || this.stack === stack) return
+                this.stack = stack
+                atlas?.cleanTick = -1
             }
         }
 
-        override fun draw(canvas: Canvas, bounds: Rect, alpha: Float): Boolean {
+        override fun draw(ctx: RenderContext, x: Float, y: Float, w: Float, h: Float, alpha: Float): Boolean {
             synchronized(requestLock) {
                 if (closed) return false
                 // Compose draw nodes re-record when this entry's pixels change.
                 revision.intValue
             }
-            return this@MinecraftItemCatalogService.draw(this, canvas, bounds, alpha)
+            val state = readyAtlas(this) ?: return false
+            val src = atlasSource
+            if (src[2] <= src[0] || src[3] <= src[1] || w <= 0f || h <= 0f) return false
+            val textures = ctx.renderer as? TextureRenderer ?: return false
+            val target = state.offscreenTarget.target ?: return false
+            val size = state.layout?.atlasSizePx?.toFloat() ?: return false
+            textures.texture(target, x, y, w, h, src[0] / size, 1f - src[1] / size, src[2] / size, 1f - src[3] / size, alpha.coerceIn(0f, 1f))
+            return true
         }
 
         override fun close() {
@@ -266,14 +278,14 @@ class MinecraftItemCatalogService : ItemCatalogService {
      * If every icon cannot fit at [renderSizePx] within the maximum texture size, smaller cells are used.
      */
     private class AtlasState(val renderSizePx: Int, val forHud: Boolean) {
-        val offscreenTarget = SkiaOffscreenTarget()
+        val offscreenTarget = OffscreenTarget()
         val entries = ArrayList<IconEntry>()
         val changed = ArrayList<IconEntry>()
         var layout: AtlasLayout? = null
-        var atlasImage: Image? = null
         var readyForSampling = false
         var rebuild = true
         var animatedTick = -1
+        var cleanTick = -1
         val freeSlots = ArrayDeque<Int>()
         var nextUnusedSlot = 0
         //? if >= 1.21.8
@@ -295,12 +307,12 @@ class MinecraftItemCatalogService : ItemCatalogService {
         *///?}
     }
     private val entriesById: Map<String, RegistryEntry> by lazy { entries.associateBy(RegistryEntry::id) }
-    private val atlasPaint = Paint()
     private val requestLock = Any()
     private val atlases = HashMap<Pair<Int, Boolean>, AtlasState>()
     private val activeEntries = LinkedHashSet<IconEntry>()
     //? if = 1.21.5
     //private val clearTiles = HashMap<Int, GpuTexture>()
+    @Volatile
     private var topologyDirty = true
     private var iconInitializationStarted = false
 
@@ -332,20 +344,25 @@ class MinecraftItemCatalogService : ItemCatalogService {
             destroyAtlases(queueRendererDisposal = true)
         }
         recover()
+        HudManager.invalidate()
     }
 
     /** Clears rendering failures so the atlas and failed items can retry after a reload or resize. */
     private fun recover() {
+        var changed = renderingFailed
         renderingFailed = false
         synchronized(requestLock) {
+            if (failedItems.isNotEmpty()) changed = true
             failedItems.clear()
             activeEntries.forEach { entry ->
                 if (!entry.failed) return@forEach
+                changed = true
                 entry.failed = false
                 entry.identityInitialized = false
+                entry.atlas?.cleanTick = -1
             }
         }
-        HudManager.invalidate()
+        if (changed) HudManager.invalidate()
     }
 
     private fun markFailed(entry: IconEntry, stage: String, throwable: Throwable) {
@@ -418,7 +435,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     /** Renders the pages owned by one consumer and returns whether any of its pixels changed. */
     private fun renderIcons(forHud: Boolean): Boolean {
-        if (!ItemCatalog.iconsAvailable || renderingFailed) return false
+        if (!ItemCatalog.iconsReady || renderingFailed) return false
         var changed = false
         try {
             reconcileTopology()
@@ -435,76 +452,57 @@ class MinecraftItemCatalogService : ItemCatalogService {
         return changed
     }
 
-    private fun draw(entry: IconEntry, canvas: Canvas, bounds: Rect, alpha: Float): Boolean {
-        val resolved = synchronized(requestLock) {
-            val state = entry.atlas
-            if (state == null || !atlasAvailable(state)) {
-                if (state?.entries?.isNotEmpty() == true) {
-                    resetAtlas(state, state.layout)
-                    invalidateEntries(state.entries)
-                }
-                null
-            } else {
-                val image = state.atlasImage ?: return@synchronized null
-                entry to image
+    private fun readyAtlas(entry: IconEntry): AtlasState? = synchronized(requestLock) {
+        val state = entry.atlas
+        if (state == null || !atlasAvailable(state)) {
+            if (state?.entries?.isNotEmpty() == true) {
+                resetAtlas(state, state.layout)
+                invalidateEntries(state.entries)
             }
-        }
-        if (resolved == null) {
-            return false
-        }
-        val (icon, image) = resolved
-        return runCatching {
-            val source = icon.atlasSource
-            if (source.width <= 0f || source.height <= 0f || bounds.width <= 0f || bounds.height <= 0f) {
-                return false
-            }
-
-            atlasPaint.alpha = (alpha.coerceIn(0f, 1f) * 255f).roundToInt()
-            canvas.drawImageRect(image, source, bounds, SamplingMode.DEFAULT, atlasPaint, true)
-            true
-        }.getOrElse {
-            LOG.debug("Failed to draw an item icon from the atlas", it)
-            false
+            null
+        } else {
+            state.takeIf { it.readyForSampling }
         }
     }
 
-    private fun atlasAvailable(state: AtlasState): Boolean = state.offscreenTarget.target != null && state.offscreenTarget.surface != null
+    private fun atlasAvailable(state: AtlasState): Boolean = state.offscreenTarget.target != null
 
     private fun renderAtlas(atlasState: AtlasState): Boolean {
         val layout = atlasState.layout ?: return false
         if (atlasState.entries.isEmpty()) return false
+        if (atlasState.cleanTick == clientTick && !atlasState.rebuild && atlasState.offscreenTarget.target != null) return false
 
         val offscreenTarget = atlasState.offscreenTarget
         val previousTarget = offscreenTarget.target
-        if (previousTarget == null || offscreenTarget.surface == null) discardAtlasImage(atlasState)
 
-        val resolved = offscreenTarget.resolveTarget(layout.atlasSizePx, layout.atlasSizePx)
+        val resolved = offscreenTarget.resolve(layout.atlasSizePx, layout.atlasSizePx)
         val target = offscreenTarget.target
-        val surface = offscreenTarget.surface
-        check(resolved && target != null && surface != null) {
+        check(resolved && target != null) {
             "Failed to create a ${layout.iconSizePx}px item icon atlas"
         }
 
         val guiSize = layout.iconsPerSide * CELL_SIZE
         val targetChanged = target !== previousTarget
-        if (targetChanged) {
-            discardAtlasImage(atlasState)
-            atlasState.readyForSampling = false
-        }
+        if (targetChanged) atlasState.readyForSampling = false
 
         val changed = atlasState.changed
         changed.clear()
         val rebuild = targetChanged || atlasState.rebuild
         val now = System.nanoTime()
+        var special = false
         for (entry in atlasState.entries) {
             if (entry.failed) continue
-            val resolvedChanged = try {
+            if (entry.special) special = true
+            val stale = rebuild || !entry.identityInitialized || entry.resolvedTick != clientTick || entry.resolvedStack !== entry.stack
+            val resolvedChanged = stale && try {
                 resolveIconState(entry)
             } catch (throwable: Throwable) {
                 markFailed(entry, "resolving its model", throwable)
                 changed.add(entry)
                 continue
             }
+            entry.resolvedTick = clientTick
+            entry.resolvedStack = entry.stack
             val specialRefresh = entry.special && now - entry.specialRefreshAtNs >= 0
             if (resolvedChanged || (entry.animated && atlasState.animatedTick != clientTick) || rebuild || specialRefresh) {
                 changed.add(entry)
@@ -512,19 +510,13 @@ class MinecraftItemCatalogService : ItemCatalogService {
             }
         }
         atlasState.animatedTick = clientTick
+        atlasState.cleanTick = if (special) -1 else clientTick
 
         if (changed.isEmpty()) return false
 
-        val backend = SkiaCtx.vulkanService
-        discardAtlasImage(atlasState)
-        surface.notifyContentWillChange(if (rebuild) ContentChangeMode.DISCARD else ContentChangeMode.RETAIN)
-        if (atlasState.readyForSampling) backend?.transitionOffscreenForRendering(target)
         if (rebuild) clearTarget(target) else clearCells(target, changed, layout)
 
         renderItemsIsolated(atlasState, target, layout, changed, guiSize)
-        backend?.transitionOffscreenForSampling(target)
-        backend?.midFrameFlush()
-        atlasState.atlasImage = surface.makeImageSnapshot()
         atlasState.readyForSampling = true
         atlasState.rebuild = false
         // Rebuilds may move every atlas cell.
@@ -929,59 +921,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
     //? }
 
-    //? if < 1.21.8 {
-    /*private inline fun withGuiProjection(guiWidth: Int, guiHeight: Int, render: () -> Unit) {
-        //? if > 1.8.9 {
-        RenderSystem.backupProjectionMatrix()
-        val modelView = RenderSystem.getModelViewStack()
-        modelView.pushMatrix()
-        try {
-            val projection = Matrix4f().setOrtho(
-                0f,
-                guiWidth.toFloat(),
-                guiHeight.toFloat(),
-                0f,
-                1000f,
-                21000f,
-            )
-            //? if >= 1.21.4 {
-            RenderSystem.setProjectionMatrix(projection, ProjectionType.ORTHOGRAPHIC)
-            //? } else {
-            /*RenderSystem.setProjectionMatrix(projection, VertexSorting.ORTHOGRAPHIC_Z)
-            *///? }
-            modelView.translation(0f, 0f, -11000f)
-            //? if < 1.21.4
-            //RenderSystem.applyModelViewMatrix()
-            render()
-        } finally {
-            modelView.popMatrix()
-            //? if < 1.21.4
-            //RenderSystem.applyModelViewMatrix()
-            RenderSystem.restoreProjectionMatrix()
-        }
-        //?} else {
-        val previousMode = GL11.glGetInteger(GL11.GL_MATRIX_MODE)
-        GlStateManager.matrixMode(GL11.GL_PROJECTION)
-        GlStateManager.pushMatrix()
-        GlStateManager.loadIdentity()
-        GlStateManager.ortho(0.0, guiWidth.toDouble(), guiHeight.toDouble(), 0.0, 1000.0, 3000.0)
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW)
-        GlStateManager.pushMatrix()
-        GlStateManager.loadIdentity()
-        GlStateManager.translatef(0f, 0f, -2000f)
-        try {
-            render()
-        } finally {
-            GlStateManager.matrixMode(GL11.GL_MODELVIEW)
-            GlStateManager.popMatrix()
-            GlStateManager.matrixMode(GL11.GL_PROJECTION)
-            GlStateManager.popMatrix()
-            GlStateManager.matrixMode(previousMode)
-        }
-        //?}
-    }
-    *///? }
-
     private fun clearTarget(target: RenderTarget) {
         //? if >= 1.21.5 {
         val encoder = RenderSystem.getDevice().createCommandEncoder()
@@ -1081,15 +1020,20 @@ class MinecraftItemCatalogService : ItemCatalogService {
                 val width = right - left
                 val height = bottom - top
 
-                //? if > 1.8.9 {
-                // VulkanMod's glClear ignores the scissor box.
-                if (SkiaCtx.vulkanService?.clearOffscreenRect(left, top, width, height) != true) {
-                    GlStateManager._scissorBox(left, target.height - bottom, width, height)
-                    //? if >= 1.21.4 {
-                    GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
-                    //?} else
-                    //GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX)
+                //? if vulkanmod && = 1.21.1 {
+                /*if (GlHost.vanillaPipeline) {
+                    VRenderSystem.setClearColor(0f, 0f, 0f, 0f)
+                    VRenderSystem.clearDepth(1.0)
+                    Renderer.clearAttachments(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT, left, top, width, height)
+                    return@forEach
                 }
+                *///?}
+                //? if > 1.8.9 {
+                GlStateManager._scissorBox(left, target.height - bottom, width, height)
+                //? if >= 1.21.4 {
+                GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
+                //?} else
+                //GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX)
                 //?} else {
                 /*GL11.glScissor(left, target.height - bottom, width, height)
                 GlStateManager.clear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
@@ -1107,6 +1051,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     /** Assigns active icon handles to atlas pages and stable slots. */
     private fun reconcileTopology() {
+        if (!topologyDirty) return
         synchronized(requestLock) {
             if (!topologyDirty) return
             if (activeEntries.isEmpty()) {
@@ -1186,6 +1131,7 @@ class MinecraftItemCatalogService : ItemCatalogService {
         place(entry, slot, checkNotNull(page.layout))
         page.entries.add(entry)
         entry.identityInitialized = false
+        page.cleanTick = -1
     }
 
     private fun releaseSlot(entry: IconEntry) {
@@ -1209,7 +1155,6 @@ class MinecraftItemCatalogService : ItemCatalogService {
 
     private fun resetAtlas(state: AtlasState, layout: AtlasLayout?) {
         synchronized(requestLock) {
-            discardAtlasImage(state)
             state.layout = layout
             state.rebuild = true
         }
@@ -1233,17 +1178,11 @@ class MinecraftItemCatalogService : ItemCatalogService {
     }
 
     private fun disposeAtlas(state: AtlasState) {
-        discardAtlasImage(state)
         state.offscreenTarget.dispose()
         state.entries.forEach { it.atlas = null }
         state.entries.clear()
         state.freeSlots.clear()
         state.nextUnusedSlot = 0
-    }
-
-    private fun discardAtlasImage(state: AtlasState) {
-        state.atlasImage?.close()
-        state.atlasImage = null
     }
 
     private fun place(entry: IconEntry, slot: Int, layout: AtlasLayout) {
@@ -1253,12 +1192,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         entry.slot = slot
         entry.x = x
         entry.y = y
-        entry.atlasSource = Rect.makeLTRB(
-            x * scale,
-            y * scale,
-            (x + CELL_SIZE) * scale,
-            (y + CELL_SIZE) * scale,
-        )
+        entry.atlasSource[0] = x * scale
+        entry.atlasSource[1] = y * scale
+        entry.atlasSource[2] = (x + CELL_SIZE) * scale
+        entry.atlasSource[3] = (y + CELL_SIZE) * scale
     }
 
     private companion object {

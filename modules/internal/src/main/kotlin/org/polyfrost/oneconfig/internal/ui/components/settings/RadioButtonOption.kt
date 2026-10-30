@@ -12,11 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,23 +80,26 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
             modifier = Modifier.padding(RadioPadding)
         ) {
             if (indicatorReady) {
-                val indicatorOffset by animateDpAsState(
+                val indicatorOffset = animateDpAsState(
                     targetValue = with(density) { itemWidths.take(selectedIdx).sumOf { it.intValue }.toDp() },
                     animationSpec = spring(),
                 )
-                val indicatorWidth by animateDpAsState(
+                val indicatorWidth = animateDpAsState(
                     targetValue = with(density) { itemWidths[selectedIdx].intValue.toDp() },
                     animationSpec = spring(),
                 )
-                val indicatorHeight by animateDpAsState(
+                val indicatorHeight = animateDpAsState(
                     targetValue = with(density) { rowHeight.toDp() }.coerceAtLeast(RadioItemMinHeight),
                     animationSpec = spring(),
                 )
                 Box(
                     modifier = Modifier
-                        .height(indicatorHeight)
-                        .width(indicatorWidth)
-                        .offset { IntOffset(indicatorOffset.roundToPx(), 0) }
+                        .layout { measurable, _ ->
+                            val w = indicatorWidth.value.roundToPx()
+                            val h = indicatorHeight.value.roundToPx()
+                            val placeable = measurable.measure(Constraints.fixed(w, h))
+                            layout(w, h) { placeable.place(indicatorOffset.value.roundToPx(), 0) }
+                        }
                         .clip(RadioItemShape)
                         .background(Accent),
                 )
@@ -108,7 +113,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
                     val interactionSource = rememberInteractionSource()
                     val isHovered by interactionSource.collectIsHoveredAsState()
                     val selected = index == selectedIdx
-                    val color by animateColorAsState(
+                    val color = animateColorAsState(
                         if (selected || isHovered) theme.textColor else theme.textColorSecondary
                     )
                     Box(
@@ -132,8 +137,9 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
                     ) {
                         Text(
                             option,
-                            color = color,
+                            color = Color.Unspecified,
                             fontSize = 12.sp,
+                            colorProducer = { color.value },
                         )
                     }
                 }

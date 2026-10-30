@@ -30,7 +30,7 @@
       }
     ],
     "preLaunch": [
-      "org.polyfrost.oneconfig.internal.SkikoDataPathPreLaunch"
+      "org.polyfrost.oneconfig.internal.OneConfigPreLaunch"
     ]
   },
   "depends": {

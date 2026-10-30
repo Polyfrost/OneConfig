@@ -94,6 +94,13 @@ class PixelGridScaleTest {
     }
 
     @Test
+    void aChosenScaleRoundsToTheNearestGridStepEvenPastTheWindow() {
+        assertEquals(15f / 16.5f, ProviderKt.snapScaleToNearestStep(16.5f), 1e-4f);
+        assertEquals(25f / 23f, ProviderKt.snapScaleToNearestStep(23f), 1e-4f);
+        assertEquals(10f / 6f, ProviderKt.snapScaleToNearestStep(6f), 1e-4f);
+    }
+
+    @Test
     void aDegenerateAnchorIsLeftAlone() {
         assertEquals(1f, ProviderKt.snapScaleToPixelGrid(0f, 2f), 1e-4f);
     }

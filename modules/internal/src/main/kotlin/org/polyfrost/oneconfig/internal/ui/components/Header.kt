@@ -36,8 +36,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -74,7 +76,6 @@ import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
-import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -230,7 +231,7 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val accentAlpha by animateFloatAsState(if (isHovered) 0.75f else 1f)
+    val accentAlpha = animateFloatAsState(if (isHovered) 0.75f else 1f)
 
     Tooltip(
         text = {
@@ -246,9 +247,9 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
         Box(
             modifier = Modifier
                 .pointerHoverIcon(PointerIcon.Hand)
-                .background(AccentBrush, theme.buttonShape, accentAlpha)
+                .graphicsLayer {}
+                .animatedFrame(theme.buttonShape, accentAlpha = { accentAlpha.value }, border = { theme.borderColor })
                 .onClick(interactionSource) { runnable.run() }
-                .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                 .padding(horizontal = 16.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -346,6 +347,7 @@ fun GlobalSearchBar() {
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val focusRequester = remember { FocusRequester() }
+    val searchFocused = LocalSearchFieldFocused.current
 
     LaunchedEffect(searchText.text) { search.update(searchText.text) }
     LaunchedEffect(search.query) {
@@ -394,7 +396,9 @@ fun GlobalSearchBar() {
         cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
         textStyle = searchTextStyle,
         interactionSource = interactionSource,
-        modifier = Modifier.trackTextInputFocus().focusRequester(focusRequester)
+        modifier = Modifier.trackTextInputFocus()
+            .focusRequester(focusRequester)
+            .onFocusChanged { searchFocused?.value = it.isFocused }
     ) { innerTextField ->
         Box(
             modifier = Modifier

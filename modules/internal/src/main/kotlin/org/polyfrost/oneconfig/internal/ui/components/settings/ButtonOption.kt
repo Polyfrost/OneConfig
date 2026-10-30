@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -16,15 +15,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.ButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val DangerColor = Color(0xFFE35B5B)
@@ -39,22 +39,22 @@ fun ButtonOption(data: ButtonOptionData) {
     val confirmText = data.confirmText
     var firstClickAt by remember { mutableStateOf<Long?>(null) }
     val confirming = firstClickAt != null
-    val bgColor by animateColorAsState(
+    val bgColor = animateColorAsState(
         when {
             !confirming -> Color.Transparent
             isHovered -> DangerColor.copy(alpha = 0.75f)
             else -> DangerColor
         }
     )
-    val accentAlpha by animateFloatAsState(if (confirming) 0f else if (isHovered) 0.75f else 1f)
+    val accentAlpha = animateFloatAsState(if (confirming) 0f else if (isHovered) 0.75f else 1f)
     val textColor = LocalTheme.current.accentTextColor
 
     Box(
         modifier = Modifier
             .widthIn(max = LocalOptionWidth.current)
             .pointerHoverIcon(PointerIcon.Hand)
-            .background(bgColor, LocalTheme.current.buttonShape)
-            .background(AccentBrush, LocalTheme.current.buttonShape, accentAlpha)
+            .graphicsLayer {}
+            .animatedFrame(LocalTheme.current.buttonShape, fill = { bgColor.value }, accentAlpha = { accentAlpha.value }, border = { Color.Transparent })
             .onClick(interactionSource) {
                 val clickedAt = firstClickAt
                 when {

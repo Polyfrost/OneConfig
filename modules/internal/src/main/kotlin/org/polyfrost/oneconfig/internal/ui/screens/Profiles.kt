@@ -9,7 +9,6 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -24,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -64,6 +64,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -86,6 +91,7 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -379,32 +385,46 @@ private suspend fun awaitOverlayDrawn() {
 }
 
 @Composable
-private fun BoxScope.ProfileBusyOverlay() {
+private fun ProfileBusyOverlay() {
     val theme = LocalTheme.current
-    Box(
-        modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.55f)),
-        contentAlignment = Alignment.Center,
+    ShellPopup(
+        popupPositionProvider = WindowOriginPositionProvider,
+        properties = PopupProperties(focusable = true, dismissOnBackPress = false, dismissOnClickOutside = false),
     ) {
-        Column(
-            modifier = Modifier
-                .background(theme.modCardBackground, theme.modCardShape)
-                .padding(horizontal = 32.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                "Applying profile changes\u2026",
-                color = theme.textColor,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                "The game will stop responding until it finishes.",
-                color = theme.textColorSecondary,
-                fontSize = 14.sp,
-            )
+            Column(
+                modifier = Modifier
+                    .background(theme.modCardBackground, theme.modCardShape)
+                    .padding(horizontal = 32.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    "Applying profile changes\u2026",
+                    color = theme.textColor,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    "The game will stop responding until it finishes.",
+                    color = theme.textColorSecondary,
+                    fontSize = 14.sp,
+                )
+            }
         }
     }
+}
+
+private object WindowOriginPositionProvider : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = IntOffset.Zero
 }
 
 private fun Throwable.messageOrType(): String = message ?: this::class.java.simpleName
@@ -472,8 +492,10 @@ private fun ColumnScope.ProfilesGrid(
         return
     }
 
+    val gridState = rememberLazyGridState()
     LazyVerticalGrid(
-        modifier = Modifier.weight(1f),
+        state = gridState,
+        modifier = Modifier.weight(1f).wheelScroll(gridState),
         columns = GridCells.Fixed(5),
         verticalArrangement = Arrangement.spacedBy(19.dp),
         horizontalArrangement = Arrangement.spacedBy(19.dp),

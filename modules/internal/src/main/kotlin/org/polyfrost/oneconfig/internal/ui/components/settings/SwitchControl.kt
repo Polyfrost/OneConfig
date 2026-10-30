@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,15 +16,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -33,9 +34,9 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val accentAlpha by animateFloatAsState(if (checked) 1f else 0f)
-    val thumbOffset by animateDpAsState(if (checked) 24.dp else 3.dp, animationSpec = spring())
-    val borderColor by animateColorAsState(
+    val accentAlpha = animateFloatAsState(if (checked) 1f else 0f)
+    val thumbOffset = animateDpAsState(if (checked) 24.dp else 3.dp, animationSpec = spring())
+    val borderColor = animateColorAsState(
         if (isHovered) LocalTheme.current.textColor.copy(alpha = 0.15f) else Color.Transparent
     )
 
@@ -47,17 +48,17 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         Box(
             modifier = Modifier
                 .size(42.dp, 21.dp)
+                .graphicsLayer {}
                 .clip(LocalTheme.current.circleShape)
                 .background(LocalTheme.current.controlTrackColor)
-                .background(AccentBrush, alpha = accentAlpha)
-                .border(1.dp, borderColor, LocalTheme.current.circleShape)
+                .animatedFrame(LocalTheme.current.circleShape, accentAlpha = { accentAlpha.value }, border = { borderColor.value })
                 .onClick(interactionSource) { onCheckedChange(!checked) }
                 .pointerHoverIcon(PointerIcon.Hand),
         ) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = thumbOffset)
+                    .offset { IntOffset(thumbOffset.value.roundToPx(), 0) }
                     .size(15.dp)
                     .background(LocalTheme.current.controlThumbColor, LocalTheme.current.circleShape),
             )

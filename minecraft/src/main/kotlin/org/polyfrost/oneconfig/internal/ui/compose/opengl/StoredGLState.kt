@@ -153,6 +153,7 @@ class StoredGLState(private val glVersion: Int) {
 
             // Skia's resetGLAll changes real GL without updating GlStateManager's cache and raw
             // glEnable/glDisable leaves it stale so toggle through GlStateManager to resync both
+            // TODO: is this still relevant after Skia removal?
             //? if >= 26.2 {
             forceToggle(lastEnableBlend, { GlStateManager._enableBlend(0) }, { GlStateManager._disableBlend(0) })
             //?} else {

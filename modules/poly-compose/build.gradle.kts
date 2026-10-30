@@ -30,6 +30,14 @@ plugins {
 
 dependencies {
     compileOnly(libs.jetbrains.compose.runtime)
-    compileOnly(libs.jetbrains.skiko.awt)
     compileOnly(libs.kotlinx.coroutines)
+    compileOnly(libs.icu4j)
+    api(libs.jetbrains.compose.foundation)
+    api(libs.jetbrains.compose.material)
+    api(libs.jetbrains.compose.ui)
+    api(libs.jetbrains.compose.ui.util)
+    implementation(libs.bundles.twelvemonkeys)
+    testImplementation(libs.jetbrains.compose.runtime)
+    testImplementation(libs.kotlinx.coroutines)
+    testImplementation(libs.icu4j)
 }

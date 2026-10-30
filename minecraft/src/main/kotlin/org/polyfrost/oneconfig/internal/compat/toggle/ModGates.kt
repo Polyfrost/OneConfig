@@ -462,15 +462,18 @@ internal object ModGates {
         gates.forEach { gate -> gate.mask?.takeIf { it.isFor(configClassName) }?.reapplyIfOverwritten() }
     }
 
-    private val enumConstants = ConcurrentHashMap<String, Any>()
+    private val enumConstants = ConcurrentHashMap<String, ConcurrentHashMap<String, Any>>()
 
     @JvmStatic
-    fun enumConstant(className: String, name: String): Any? = enumConstants["$className.$name"] ?: try {
-        Class.forName(className, true, ModGates::class.java.classLoader).enumConstants
-            ?.firstOrNull { (it as Enum<*>).name == name }
-            ?.also { enumConstants["$className.$name"] = it }
-    } catch (_: Throwable) {
-        null
+    fun enumConstant(className: String, name: String): Any? {
+        val byName = enumConstants.computeIfAbsent(className) { ConcurrentHashMap() }
+        return byName[name] ?: try {
+            Class.forName(className, true, ModGates::class.java.classLoader).enumConstants
+                ?.firstOrNull { (it as Enum<*>).name == name }
+                ?.also { byName[name] = it }
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     private val zoomifyState by lazy {

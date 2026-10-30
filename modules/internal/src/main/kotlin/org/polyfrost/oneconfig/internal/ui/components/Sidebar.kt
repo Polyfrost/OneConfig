@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
@@ -40,19 +41,19 @@ import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
-import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
 
+internal val SidebarWidth = 264.dp
+
 @Composable
-fun Sidebar() {
+fun Sidebar(background: Boolean = true) {
     val appearance = LocalShell.current.appearance
     val flipTopOrder = appearance.flipTopOptionOrder
     Column(
         modifier = Modifier.fillMaxHeight()
-            .width(264.dp)
-            .background(LocalTheme.current.sidebarBackground.withOpacityPercent(appearance.sidebarOpacity))
-            .rightBorder(LocalTheme.current.borderColor, 1f),
+            .width(SidebarWidth)
+            .then(if (background) Modifier.background(LocalTheme.current.sidebarBackground.withOpacityPercent(appearance.sidebarOpacity)).rightBorder(LocalTheme.current.borderColor, 1f) else Modifier),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Navigation(showTopOptions = !flipTopOrder)
@@ -166,28 +167,32 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val selectedAlpha by animateFloatAsState(if (isSelected) 1f else 0f)
-    val textAndIconColor by animateColorAsState(
+    val selectedAlpha = animateFloatAsState(if (isSelected) 1f else 0f)
+    val textAndIconColor = animateColorAsState(
         if (isSelected) LocalTheme.current.accentTextColor
         else if (isHovered) LocalTheme.current.textColor
         else LocalTheme.current.textColor.copy(0.8f)
     )
-    val borderColor by animateColorAsState(
+    val borderColor = animateColorAsState(
         if (isHovered || isSelected) LocalTheme.current.borderColor
         else LocalTheme.current.borderColor.copy(0f)
     )
 
     Row(
         modifier = Modifier.size(225.dp, 33.dp)
-            .background(AccentBrush, LocalTheme.current.sideBarNavigationEntryShape, selectedAlpha)
-            .border(1.dp, borderColor, LocalTheme.current.sideBarNavigationEntryShape)
+            .graphicsLayer {}
+            .animatedFrame(
+                LocalTheme.current.sideBarNavigationEntryShape,
+                accentAlpha = { selectedAlpha.value },
+                border = { borderColor.value },
+            )
             .onClick(interactionSource) { onSelect(route) }
             .pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Icon(icon, modifier = Modifier.padding(start = 12.dp), color = textAndIconColor, fitAspectRatio = true)
-        Text(title, color = textAndIconColor)
+        Icon(icon, modifier = Modifier.padding(start = 12.dp), fitAspectRatio = true, tint = { textAndIconColor.value })
+        Text(title, color = Color.Unspecified, colorProducer = { textAndIconColor.value })
     }
 }
 

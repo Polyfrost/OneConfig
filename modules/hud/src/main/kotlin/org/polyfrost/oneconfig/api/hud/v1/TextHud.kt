@@ -27,22 +27,26 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.ComposeNode
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.padding
 import org.polyfrost.compose.composables.size
+import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.layout.PolyInsets
+import org.polyfrost.compose.layout.PolySize
+import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.compose.runtime.PolyApplier
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
@@ -72,20 +76,17 @@ abstract class TextHud(
         staticH = UNMEASURED
     }
 
-    private var displayTextState: MutableState<String> = mutableStateOf("")
-    private var displayText: String
-        get() = displayTextState.value
-        set(value) {
-            displayTextState.value = value
-        }
+    @Volatile private var displayText: String = ""
+
+    private fun casedText(case: Int): String = when (case) {
+        1 -> displayText.uppercase()
+        2 -> displayText.lowercase()
+        else -> displayText
+    }
 
     @Composable
     override fun Content() {
-        val text = when (caseType) {
-            1 -> displayText.uppercase()
-            2 -> displayText.lowercase()
-            else -> displayText
-        }
+        val case = caseType
 
         val contentAlign = alignment
         val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
@@ -104,75 +105,36 @@ abstract class TextHud(
 
         PolyBox(modifier = outerModifier) {
             if (font == Font.Poppins) {
-                val fontName = getPoppinsFontName()
-                val fontSize = 8f * textScale
-                val skiaFont = FontManager.getFont(fontSize, fontName)
-                val metrics = skiaFont.metrics
-                val lines = text.lines()
-                val lineHeight = skiaFont.spacing
-                val blockW = lines.maxOf { skiaFont.measureTextWidth(it) }
-                val blockH = (lines.size - 1) * lineHeight + (metrics.descent - metrics.ascent)
-                val underlinePos = metrics.underlinePosition ?: (fontSize * 0.08f)
-                val underlineThick = metrics.underlineThickness ?: (fontSize * 0.06f)
-                val shadowCol = if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null
-                val outline = textScale
-
-                PolyCanvas(
-                    modifier = PolyModifier.size(blockW, blockH)
-                        .let { if (isStaticValid) it.align(contentAlign) else it }) { x, y, _, _ ->
-                    lines.forEachIndexed { index, lineText ->
-                        if (lineText.isEmpty()) return@forEachIndexed
-                        val baseline = y + index * lineHeight - metrics.ascent
-                        val lineW = skiaFont.measureTextWidth(lineText)
-                        if (shadowCol != null && fullShadow) {
-                            textOutline(lineText, x, baseline, shadowCol, skiaFont, outline)
-                            if (textUnderline) {
-                                line(
-                                    x - outline,
-                                    baseline + underlinePos,
-                                    x + lineW + outline,
-                                    baseline + underlinePos,
-                                    shadowCol,
-                                    underlineThick + outline * 2f
-                                )
-                            }
-                        } else if (shadowCol != null) {
-                            text(lineText, x + shadowOffsetX, baseline + shadowOffsetY, shadowCol, skiaFont)
-                            if (textUnderline) {
-                                line(
-                                    x + shadowOffsetX,
-                                    baseline + shadowOffsetY + underlinePos,
-                                    x + shadowOffsetX + lineW,
-                                    baseline + shadowOffsetY + underlinePos,
-                                    shadowCol,
-                                    underlineThick
-                                )
-                            }
-                        }
-                        text(lineText, x, baseline, fgColor, skiaFont)
-                        if (textUnderline) {
-                            line(
-                                x,
-                                baseline + underlinePos,
-                                x + lineW,
-                                baseline + underlinePos,
-                                fgColor,
-                                underlineThick
-                            )
-                        }
-                    }
-                }
+                val spec = PoppinsTextSpec(
+                    PolyFont(getPoppinsFontName(), 8f * textScale),
+                    fgColor,
+                    if (showShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null,
+                    fullShadow,
+                    textUnderline,
+                    shadowOffsetX,
+                    shadowOffsetY,
+                    textScale,
+                )
+                val provider = { casedText(case) }
+                ComposeNode<PoppinsTextNode, PolyApplier>(
+                    factory = { PoppinsTextNode() },
+                    update = {
+                        set(provider) { text = it }
+                        set(spec) { this.spec = it }
+                        set(if (isStaticValid) contentAlign else PolyAlign.TopLeft) { style.align = it }
+                    },
+                )
             } else {
-                val formatted = buildString {
+                val head = buildString {
                     if (textBold) append("§l")
                     if (textItalic) append("§o")
                     if (textUnderline) append("§n")
-                    append(text)
-                    if (textBold || textItalic || textUnderline) append("§r")
                 }
+                val tail = if (textBold || textItalic || textUnderline) "§r" else ""
+                val provider = { head + casedText(case) + tail }
 
                 PolyMcText(
-                    text = formatted,
+                    text = provider,
                     color = fgColor,
                     shadow = showShadow && !fullShadow,
                     outlineColor = if (showShadow && fullShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null,
@@ -201,8 +163,25 @@ abstract class TextHud(
     protected fun decorate(text: String): String =
         if (brackets && text.isNotEmpty()) "[$text]" else text
 
+    @Transient private var lastValue: String? = null
+    @Transient private var lastPrefix: String? = null
+    @Transient private var lastSuffix: String? = null
+    @Transient private var lastBrackets = false
+
     override fun update(): Boolean {
-        displayText = decorate(concat(prefix, getText(), suffix))
+        val value = getText()
+        val p = prefix
+        val sfx = suffix
+        if (lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && value == lastValue && plainConcat.get(javaClass)) return true
+        lastValue = value
+        lastPrefix = p
+        lastSuffix = sfx
+        lastBrackets = brackets
+        val text = decorate(concat(p, value, sfx))
+        if (text != displayText) {
+            displayText = text
+            contentChanged()
+        }
         return true
     }
 
@@ -224,7 +203,8 @@ abstract class TextHud(
     protected abstract fun getText(): String?
 
     override fun clone(): Hud = (super.clone() as TextHud).also {
-        it.displayTextState = mutableStateOf("")
+        it.displayText = ""
+        it.lastPrefix = null
     }
 
     @ApiStatus.Internal
@@ -267,11 +247,21 @@ abstract class TextHud(
                 }
             }
 
-        override fun updateFrequency(): Long = when {
-            'S' in template -> 100_000_000L
-            's' in template -> 1_000_000_000L
-            'm' in template -> 60_000_000_000L
-            else -> 300_000_000_000L
+        private var frequencyTemplate: String? = null
+        private var frequency = 0L
+
+        override fun updateFrequency(): Long {
+            val t = template
+            if (t !== frequencyTemplate) {
+                frequencyTemplate = t
+                frequency = when {
+                    'S' in t -> 100_000_000L
+                    's' in t -> 1_000_000_000L
+                    'm' in t -> 60_000_000_000L
+                    else -> 300_000_000_000L
+                }
+            }
+            return frequency
         }
 
         override fun setup() {
@@ -290,4 +280,81 @@ abstract class TextHud(
             it._formatterTemplate = null
         }
     }
+}
+
+private class PoppinsTextSpec(
+    val font: PolyFont,
+    val color: PolyColor,
+    val shadow: PolyColor?,
+    val fullShadow: Boolean,
+    val underline: Boolean,
+    val shadowX: Float,
+    val shadowY: Float,
+    val outline: Float,
+)
+
+private class PoppinsTextNode : PolyNode() {
+    var text: () -> String = { "" }
+    var spec: PoppinsTextSpec? = null
+    private var lines: List<String> = emptyList()
+    private var measuredText: String? = null
+    private var measuredSpec: PoppinsTextSpec? = null
+    private var measuredFonts = -1
+
+    override fun measureContent() {
+        val s = spec ?: return
+        val t = text()
+        if (t == measuredText && s === measuredSpec && measuredFonts == FontManager.revision) return
+        measuredText = t
+        measuredSpec = s
+        measuredFonts = FontManager.revision
+        lines = t.lines()
+        val metrics = s.font.metrics
+        style.width = PolySize.Px(lines.maxOf { s.font.measureTextWidth(it) })
+        style.height = PolySize.Px((lines.size - 1) * metrics.spacing + (metrics.descent - metrics.ascent))
+    }
+
+    override fun render(ctx: RenderContext) {
+        val s = spec ?: return
+        if (s.color.chroma || s.shadow?.chroma == true) {
+            val ls = lines; val px = x; val py = y
+            ctx.live { draw(this, s, ls, px, py) }
+        } else {
+            draw(ctx, s, lines, x, y)
+        }
+    }
+
+    private fun draw(ctx: RenderContext, s: PoppinsTextSpec, lines: List<String>, x: Float, y: Float) {
+        val font = s.font
+        val metrics = font.metrics
+        val underlinePos = metrics.underlinePosition
+        val underlineThick = metrics.underlineThickness
+        val shadowCol = s.shadow
+        val outline = s.outline
+        lines.forEachIndexed { index, lineText ->
+            if (lineText.isEmpty()) return@forEachIndexed
+            val baseline = y + index * metrics.spacing - metrics.ascent
+            val lineW = font.measureTextWidth(lineText)
+            if (shadowCol != null && s.fullShadow) {
+                ctx.textOutline(lineText, x, baseline, shadowCol, font, outline)
+                if (s.underline) {
+                    ctx.line(x - outline, baseline + underlinePos, x + lineW + outline, baseline + underlinePos, shadowCol, underlineThick + outline * 2f)
+                }
+            } else if (shadowCol != null) {
+                ctx.text(lineText, x + s.shadowX, baseline + s.shadowY, shadowCol, font)
+                if (s.underline) {
+                    ctx.line(x + s.shadowX, baseline + s.shadowY + underlinePos, x + s.shadowX + lineW, baseline + s.shadowY + underlinePos, shadowCol, underlineThick)
+                }
+            }
+            ctx.text(lineText, x, baseline, s.color, font)
+            if (s.underline) ctx.line(x, baseline + underlinePos, x + lineW, baseline + underlinePos, s.color, underlineThick)
+        }
+    }
+}
+
+private val plainConcat = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean = runCatching {
+        type.getMethod("concat", String::class.java, String::class.java, String::class.java).declaringClass == TextHud::class.java &&
+            type.getMethod("getConcatString").declaringClass == TextHud::class.java
+    }.getOrDefault(false)
 }

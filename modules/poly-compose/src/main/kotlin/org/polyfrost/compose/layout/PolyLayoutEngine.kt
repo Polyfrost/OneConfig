@@ -10,6 +10,7 @@ object PolyLayoutEngine {
     }
 
     private fun measure(node: PolyNode, parentWidth: Float, parentHeight: Float) {
+        node.measureContent()
         for (child in node.children) {
             if (child.style.width != PolySize.Fill && child.style.height != PolySize.Fill) {
                 measure(child, parentWidth, parentHeight)

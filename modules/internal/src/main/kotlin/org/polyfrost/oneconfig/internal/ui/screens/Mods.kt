@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
@@ -55,8 +55,8 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
@@ -275,11 +275,11 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             .weight(1f)
             // see overlayActive above: the overlay card has to be able to leave the grid while it exists
             .then(if (overlayActive) Modifier else Modifier.clipToBounds())
-            // cards can't take focus, so clear it on press to unfocus the search field
+            // cards and their buttons consume their clicks, so only a click on empty space unfocuses the search field
             .pointerInput(focusManager) {
                 awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                    focusManager.clearFocus()
+                    awaitFirstDown(requireUnconsumed = false)
+                    if (waitForUpOrCancellation() != null) focusManager.clearFocus()
                 }
             }
             .reorderContainer(reorderState),
@@ -511,7 +511,7 @@ fun ModCard(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                val preview = mod.preview
+                val preview = if (LocalShell.current.warming) null else mod.preview
                 val icon = remember(mod.icon) { mod.icon?.takeIf(::canRenderIcon) }
                 if (preview != null) {
                     preview(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp))
@@ -683,7 +683,7 @@ private fun FavoriteStar(
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha by animateFloatAsState(
+    val alpha = animateFloatAsState(
         when {
             favorite -> 1f
             !hoverHint -> 0f
@@ -697,7 +697,7 @@ private fun FavoriteStar(
     Box(
         modifier = modifier
             .size(24.dp)
-            .alpha(alpha)
+            .graphicsLayer { this.alpha = alpha.value }
             .then(
                 if (interactive) {
                     Modifier
@@ -724,7 +724,7 @@ private fun HideToggle(
     val interactionSource = rememberInteractionSource()
     val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha by animateFloatAsState(
+    val alpha = animateFloatAsState(
         when {
             hidden || hovered -> 1f
             cardHovered -> 0.6f
@@ -735,7 +735,7 @@ private fun HideToggle(
     Box(
         modifier = modifier
             .size(24.dp)
-            .alpha(alpha)
+            .graphicsLayer { this.alpha = alpha.value }
             .onClick(interactionSource) { ModHidden.toggle(mod.id) }
             .pointerHoverIcon(PointerIcon.Hand),
         contentAlignment = Alignment.Center,

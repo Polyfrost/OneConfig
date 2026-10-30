@@ -11,6 +11,7 @@ import java.util.function.Predicate
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
+import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 
 /** Whether [toggle] is on, kept current when it is flipped from anywhere else */
 @Composable
@@ -18,7 +19,7 @@ internal fun rememberModEnabled(toggle: ModToggle?): MutableState<Boolean> {
     val revision = ModToggles.revision
     val state = remember(toggle, revision) { mutableStateOf(toggle?.isEnabled() ?: true) }
     // a switch that is one of the mod's own options changes without ModToggles hearing of it
-    val property = (toggle as? PropertyModToggle)?.property
+    val property = if (LocalShell.current.warming) null else (toggle as? PropertyModToggle)?.property
     DisposableEffect(System.identityHashCode(property), state) {
         val listener = Predicate<Boolean> { value -> state.value = value != false; false }
         property?.addCallback(listener)

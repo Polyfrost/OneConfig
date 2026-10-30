@@ -77,7 +77,7 @@ private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val hoverInteraction = rememberInteractionSource()
     val hovered by hoverInteraction.collectIsHoveredAsState()
-    val color by animateColorAsState(
+    val color = animateColorAsState(
         when {
             !enabled -> theme.textColorSecondary.copy(alpha = 0.4f)
             hovered -> theme.textColor
@@ -92,7 +92,7 @@ private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
             .onClick(rememberInteractionSource(), enabled, onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, modifier = Modifier.size(14.dp), color = color)
+        Icon(icon, modifier = Modifier.size(14.dp), tint = { color.value })
     }
 }
 

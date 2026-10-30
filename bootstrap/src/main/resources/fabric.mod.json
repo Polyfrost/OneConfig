@@ -26,6 +26,10 @@
     "fabric-language-kotlin": ">=${flk_version}"
   },
   "breaks": {
-    "polyplus": "<1.2.49"
+    "chattweaks": "<1.2.3",
+    "crashpatch": "<2.2.3",
+    "evergreenhud": "<3.9.12",
+    "polydium": "<1.2.0-beta.2",
+    "polyplus": "<1.3.16"
   }
 }

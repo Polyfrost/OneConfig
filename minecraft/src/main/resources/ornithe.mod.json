@@ -30,13 +30,13 @@
       }
     ],
     "preLaunch": [
-      "org.polyfrost.oneconfig.internal.SkikoDataPathPreLaunch"
+      "org.polyfrost.oneconfig.internal.OneConfigPreLaunch"
     ]
   },
   "depends": {
     "fabricloader": ">=${loader_version}",
     "minecraft": "${fabric_mc_version}",
-    "pylon": ">=0.1.7",
+    "pylon": ">=0.2.4",
     "osl-core": ">=0.10.0",
     "osl-config": ">=0.6.2",
     "osl-localization": ">=0.1.1",

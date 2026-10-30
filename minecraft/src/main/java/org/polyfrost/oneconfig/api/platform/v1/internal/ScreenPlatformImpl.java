@@ -36,7 +36,6 @@ import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
-import org.polyfrost.oneconfig.internal.ui.compose.SkiaCtx;
 //? if = 1.8.9
 //import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker;
 
@@ -90,19 +89,13 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 
     @Override
     public void display(@Nullable Object screen, int frames) {
-        if (screen instanceof ComposeScreen) {
-            String unavailable = ComposeSupport.INSTANCE.unavailableReason();
-            if (unavailable != null) {
-                showMessage(unavailable);
-                return;
-            }
-            if (!SkiaCtx.INSTANCE.isReady()) {
-                showMessage(SkiaCtx.INSTANCE.unavailableReason());
-                return;
-            }
-        }
         if (!Minecraft.getInstance().isSameThread()) {
             Minecraft.getInstance().schedule(() -> display(screen, frames));
+            return;
+        }
+        String unavailable = screen instanceof ComposeScreen ? ComposeSupport.INSTANCE.unavailableReason() : null;
+        if (unavailable != null) {
+            showMessage(unavailable);
             return;
         }
         //? if >= 26.2 {

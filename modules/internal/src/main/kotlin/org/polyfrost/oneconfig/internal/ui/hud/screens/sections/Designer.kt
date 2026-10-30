@@ -23,8 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -34,10 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
-import org.jetbrains.skia.Paint
+import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.mc.McFontQueue
-import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
@@ -247,28 +245,23 @@ fun Designer(hud: Hud?, query: String) {
             val density = LocalDensity.current.density
             if (font == Font.Poppins) {
                 val fontName = hud.getPoppinsFontName()
-                val skiaFont = FontManager.getFont(14f * textScale, fontName)
-                val metrics = skiaFont.metrics
+                val polyFont = PolyFont(fontName, 14f * textScale)
+                val metrics = polyFont.metrics
                 val previewLines = previewText.lines()
-                val lineHeight = skiaFont.spacing
-                val textW = previewLines.maxOf { skiaFont.measureTextWidth(it) }
+                val lineHeight = metrics.spacing
+                val textW = previewLines.maxOf { polyFont.measureTextWidth(it) }
                 val textH = (previewLines.size - 1) * lineHeight + (metrics.descent - metrics.ascent)
+                val argb = textColor.toArgb()
                 Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
-                    drawIntoCanvas { canvas ->
-                        val paint = Paint().apply { color = textColor.toArgb() }
+                    drawPoly { ctx ->
+                        val r = ctx.renderer
                         previewLines.forEachIndexed { index, lineText ->
                             if (lineText.isEmpty()) return@forEachIndexed
                             val baseline = index * lineHeight - metrics.ascent
-                            canvas.nativeCanvas.drawString(lineText, 0f, baseline, skiaFont, paint)
+                            r.text(lineText, 0f, baseline, argb, polyFont)
                             if (textUnderline) {
-                                val underlinePos = metrics.underlinePosition ?: (14f * textScale * 0.08f)
-                                val underlineThick = metrics.underlineThickness ?: (14f * textScale * 0.06f)
-                                val linePaint = Paint().apply {
-                                    color = textColor.toArgb()
-                                    strokeWidth = underlineThick
-                                }
-                                val lineW = skiaFont.measureTextWidth(lineText)
-                                canvas.nativeCanvas.drawLine(0f, baseline + underlinePos, lineW, baseline + underlinePos, linePaint)
+                                val lineW = polyFont.measureTextWidth(lineText)
+                                r.line(0f, baseline + metrics.underlinePosition, lineW, baseline + metrics.underlinePosition, argb, metrics.underlineThickness)
                             }
                         }
                     }
@@ -282,23 +275,13 @@ fun Designer(hud: Hud?, query: String) {
                 }
                 val scale = textScale
                 val textW = mcText.lines().maxOf { McFontQueue.measureTextWidth(it, scale) }
-                val textH = mcText.lines().size * McFontQueue.measureTextHeight(scale)
+                val textH = McFontQueue.measureBlockHeight(mcText.lines().size, scale)
+                val argb = textColor.toArgb()
+                val shadowColor = hud.shadowColor
                 Canvas(modifier = Modifier.size((textW / density).dp, (textH / density).dp)) {
-                    drawIntoCanvas { canvas ->
-                        val outlineRenderer = McFontQueue.outlineRenderer
-                        if (showShadow && fullShadow && outlineRenderer != null) {
-                            outlineRenderer(canvas.nativeCanvas, mcText, 0f, 0f, textColor.toArgb(), hud.shadowColor, scale)
-                        } else {
-                            McFontQueue.renderer?.invoke(
-                                canvas.nativeCanvas,
-                                mcText,
-                                0f,
-                                0f,
-                                textColor.toArgb(),
-                                showShadow,
-                                scale
-                            )
-                        }
+                    drawPoly { ctx ->
+                        if (showShadow && fullShadow) ctx.renderer.mcTextOutline(mcText, 0f, 0f, argb, shadowColor, scale)
+                        else ctx.renderer.mcText(mcText, 0f, 0f, argb, showShadow, scale)
                     }
                 }
             }

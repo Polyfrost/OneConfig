@@ -2,31 +2,30 @@ package org.polyfrost.compose.render
 
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import org.jetbrains.skia.Image
 
 object ImageLoader {
-    private val cache = ConcurrentHashMap<String, Image>()
+    private val cache = ConcurrentHashMap<String, PolyBitmap>()
 
-    fun fromResource(path: String, loader: ClassLoader? = null): Image? =
+    fun fromResource(path: String, loader: ClassLoader? = null): PolyBitmap? =
         cache.getOrPut("res:$path") {
             val cl = loader ?: ImageLoader::class.java.classLoader
             (cl?.getResourceAsStream(path) ?: ImageLoader::class.java.getResourceAsStream(path))
                 ?.use { fromBytes(it.readBytes()) }
         }
 
-    fun fromFile(path: String): Image? =
+    fun fromFile(path: String): PolyBitmap? =
         cache.getOrPut("file:$path") {
             runCatching { fromBytes(File(path).readBytes()) }.getOrNull()
         }
 
-    fun fromBytes(bytes: ByteArray): Image? =
-        runCatching { Image.makeFromEncoded(bytes) }.getOrNull()
+    fun fromBytes(bytes: ByteArray): PolyBitmap? =
+        PolyBitmap.decode(bytes)
 
-    fun put(key: String, image: Image) {
+    fun put(key: String, image: PolyBitmap) {
         cache["custom:$key"] = image
     }
 
-    fun get(key: String): Image? = cache["custom:$key"]
+    fun get(key: String): PolyBitmap? = cache["custom:$key"]
 
     fun evict(resourcePath: String) {
         cache.remove("res:$resourcePath")

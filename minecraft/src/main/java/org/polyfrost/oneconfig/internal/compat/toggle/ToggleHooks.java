@@ -33,6 +33,7 @@ public final class ToggleHooks {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/ModToggles");
     private static final String MIXIN_PACKAGE = "org.polyfrost.oneconfig.internal.mixin.";
     private static final String PREFIX = "compat.toggle.Mixin_Toggle_";
+    private static final String MODIFY_RETURN_VALUE = "/injector/ModifyReturnValue;";
 
     /** The key of the hooks every config saved by YACL relies on */
     public static final String YACL = "yacl";
@@ -141,7 +142,7 @@ public final class ToggleHooks {
         for (MethodNode handler : mixin.methods) {
             if (handler.visibleAnnotations == null) continue;
             for (AnnotationNode annotation : handler.visibleAnnotations) {
-                if (!annotation.desc.endsWith("/injection/Inject;") || annotation.values == null) continue;
+                if (!isHook(annotation) || annotation.values == null) continue;
                 int at = annotation.values.indexOf("method");
                 if (at < 0) continue;
                 for (String spec : (List<String>) annotation.values.get(at + 1)) {
@@ -218,13 +219,13 @@ public final class ToggleHooks {
         for (MethodNode handler : mixin.methods) {
             if (handler.visibleAnnotations == null) continue;
             for (AnnotationNode annotation : handler.visibleAnnotations) {
-                if (!annotation.desc.endsWith("/injection/Inject;") || annotation.values == null) continue;
+                if (!isHook(annotation) || annotation.values == null) continue;
                 int at = annotation.values.indexOf("method");
                 if (at < 0) continue;
                 List<String> specs = (List<String>) annotation.values.get(at + 1);
                 boolean hooked = false;
                 for (String spec : specs) {
-                    String problem = hookProblem(target, handler, spec);
+                    String problem = hookProblem(target, handler, spec, annotation.desc.endsWith(MODIFY_RETURN_VALUE));
                     if (problem != null) return spec + " " + problem;
                     hooked |= declares(target, spec);
                 }
@@ -244,7 +245,11 @@ public final class ToggleHooks {
         return false;
     }
 
-    private static String hookProblem(ClassNode target, MethodNode handler, String spec) {
+    private static boolean isHook(AnnotationNode annotation) {
+        return annotation.desc.endsWith("/injection/Inject;") || annotation.desc.endsWith(MODIFY_RETURN_VALUE);
+    }
+
+    private static String hookProblem(ClassNode target, MethodNode handler, String spec, boolean modifiesReturn) {
         int paren = spec.indexOf('(');
         String name = paren < 0 ? spec : spec.substring(0, paren);
         String desc = paren < 0 ? null : spec.substring(paren);
@@ -258,7 +263,9 @@ public final class ToggleHooks {
                 return handlerStatic ? "is not static in this build" : "is static in this build";
             }
             Type type = Type.getReturnType(method.desc);
-            if (!returnable) {
+            if (modifiesReturn) {
+                if (!type.equals(Type.getReturnType(handler.desc))) return "returns " + type.getClassName() + " in this build";
+            } else if (!returnable) {
                 if (type.getSort() != Type.VOID) return "returns a value in this build";
             } else if (type.getSort() == Type.VOID) {
                 return "returns nothing in this build";

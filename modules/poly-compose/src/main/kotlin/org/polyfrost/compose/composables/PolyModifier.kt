@@ -23,6 +23,7 @@ open class PolyModifier internal constructor(internal val block: PolyLayoutStyle
         style.borderWidth = 0f
         style.clipToBounds = false
         style.alpha = 1f
+        style.fade = null
         style.tag = null
         style.layoutType = lt
         style.gap = g
@@ -59,6 +60,7 @@ fun PolyModifier.border(color: PolyColor, width: Float = 1f, radius: Float = 0f)
 fun PolyModifier.radius(r: Float) = then(PolyModifier { radius = r })
 fun PolyModifier.clip(radius: Float = 0f) = then(PolyModifier { clipToBounds = true; if (radius > 0f) this.radius = radius })
 fun PolyModifier.alpha(a: Float) = then(PolyModifier { alpha = a })
+fun PolyModifier.fade(alpha: (() -> Float)?) = then(PolyModifier { fade = alpha })
 fun PolyModifier.align(a: PolyAlign) = then(PolyModifier { align = a })
 
 fun PolyModifier.tag(value: Any?) = then(PolyModifier { tag = value })

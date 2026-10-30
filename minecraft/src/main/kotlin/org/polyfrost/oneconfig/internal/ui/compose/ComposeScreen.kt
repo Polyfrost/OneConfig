@@ -5,7 +5,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.pointer.PointerButton
@@ -16,7 +15,6 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.registerSkikoComposeImplementation
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
@@ -30,25 +28,25 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
+import kotlin.math.round
 import kotlinx.coroutines.CoroutineDispatcher
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import org.apache.logging.log4j.LogManager
-import org.jetbrains.skia.FilterTileMode
-import org.jetbrains.skia.ImageFilter
-import org.jetbrains.skia.ImageInfo
-import org.jetbrains.skia.Paint
-import org.jetbrains.skia.RuntimeEffect
-import org.jetbrains.skia.RuntimeShaderBuilder
-import org.jetbrains.skia.Surface
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
+import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
+import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.hud.DebugOverlayOffscreen
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
+import org.polyfrost.compose.backend.PolyCanvas
+import org.polyfrost.compose.backend.PolyCompose
+import org.polyfrost.compose.render.RenderContext
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineExceptionHandler
 
@@ -70,8 +68,7 @@ import net.minecraft.network.chat.CommonComponents
 //?}
 
 //? if = 1.8.9 {
-/*import kotlin.math.sign
-import com.mojang.blaze3d.platform.GlStateManager
+/*import com.mojang.blaze3d.platform.GlStateManager
 import net.minecraft.client.gui.screens.TitleScreen
 import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
@@ -204,11 +201,7 @@ abstract class ComposeScreen(
     private fun poisonScene(cause: Throwable) {
         if (scenePoisoned) return
         scenePoisoned = true
-        try {
-            SkiaCtx.clearComposeFrame()
-        } catch (t: Throwable) {
-            cause.addSuppressed(t)
-        }
+        sceneDirty = true
         LOGGER.error(
             "Compose scene for ${this::class.java.simpleName} failed and has been discarded; " +
                 "it will be rebuilt on the next frame.",
@@ -243,7 +236,6 @@ abstract class ComposeScreen(
     }
 
     private fun closeSceneQuietly() {
-        releasePrewarmSurface()
         val scene = sceneOrNull
         val recomposer = recomposerOrNull
         if (scene == null && recomposer == null) return
@@ -269,13 +261,13 @@ abstract class ComposeScreen(
     }
 
     private fun createScene(): ComposeScene {
+        OneConfigUIScreen.stopWarmUp()
         val failure = AtomicReference<Throwable?>()
         val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
         val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
         val sceneContext = SceneContext { showing }
-        // upstream only registers this from its own scene/window constructors, which we bypass
-        registerSkikoComposeImplementation()
+        PolyCompose.install()
         val scene = try {
             CanvasLayersComposeScene(
                 frameRecomposer = recomposer,
@@ -298,10 +290,6 @@ abstract class ComposeScreen(
         return scene
     }
 
-    private var clockSkewNanos = 0L
-
-    private fun frameNanos(): Long = System.nanoTime() + clockSkewNanos
-
     @Volatile
     private var sceneDirty = true
 
@@ -316,72 +304,15 @@ abstract class ComposeScreen(
     private var cachedSurfaceScale = -1f
 
     protected val client get() = Minecraft.getInstance()
-    //? if !sdl {
-    /*private val contentScaleX = FloatArray(1)
-    private val contentScaleY = FloatArray(1)
-    private val monScaleX = FloatArray(1)
-    private val monScaleY = FloatArray(1)
-    *///?}
-
-    private var filterPaintKey = -1 to -1f
-    private var filterPaintCached: Paint? = null
-
-    private fun filterPaint(mode: Int, amount: Float): Paint {
-        val cached = filterPaintCached
-        if (cached != null && filterPaintKey == (mode to amount)) return cached
-        cached?.close()
-        val paint = Paint().apply { imageFilter = if (mode == 2) hardenFilter(amount) else sharpenFilter(amount) }
-        filterPaintCached = paint
-        filterPaintKey = mode to amount
-        return paint
-    }
-
-    private fun sharpenFilter(amount: Float): ImageFilter {
-        val a = amount
-        val kernel = floatArrayOf(
-            0f, -a, 0f,
-            -a, 1f + 4f * a, -a,
-            0f, -a, 0f,
-        )
-        return ImageFilter.makeMatrixConvolution(
-            3, 3, kernel, 1f, 0f, 1, 1, FilterTileMode.CLAMP, false, null, null,
-        )
-    }
-
-    private fun hardenFilter(amount: Float): ImageFilter {
-        val w = (0.5f - 0.48f * amount).coerceIn(0.02f, 0.5f)
-        val effect = RuntimeEffect.makeForShader(HARDEN_SKSL)
-        val builder = RuntimeShaderBuilder(effect)
-        builder.uniform("w", w)
-        return ImageFilter.makeRuntimeShader(builder, "content", null)
-    }
-
-    private fun osUpscaleFactor(): Float {
-        val handle = Platform.compatibility().windowHandle()
-        //? if sdl {
-        val winCS = SDL_GetWindowDisplayScale(handle).coerceAtLeast(1f)
-        val display = SDL_GetDisplayForWindow(handle).takeIf { it != 0 } ?: SDL_GetPrimaryDisplay()
-        if (display == 0) return 1f
-        val monCS = SDL_GetDisplayContentScale(display).coerceAtLeast(1f)
-        //?} else {
-        /*GLFW.glfwGetWindowContentScale(handle, contentScaleX, contentScaleY)
-        val winCS = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
-        val mon = GLFW.glfwGetWindowMonitor(handle).takeIf { it != 0L } ?: GLFW.glfwGetPrimaryMonitor()
-        if (mon == 0L) return 1f
-        GLFW.glfwGetMonitorContentScale(mon, monScaleX, monScaleY)
-        val monCS = maxOf(monScaleX[0], monScaleY[0]).coerceAtLeast(1f)
-        *///?}
-        return (monCS / winCS).coerceAtLeast(1f)
-    }
-
     override fun init() {
-        endPrewarm()
         val hadScene = sceneOrNull != null
         val scene = ensureScene()
         if (scene == null) {
             reportUnavailableAndClose()
             return
         }
+        //? if sdl
+        if (DesktopHelper.isMac) MacScrollEvent.watchWheel()
         //? if = 1.8.9
         //Keyboard.enableRepeatEvents(true)
 
@@ -411,105 +342,6 @@ abstract class ComposeScreen(
         sceneContextOrNull?.sync()
     }
 
-    private var prewarmCursor = 0
-
-    private var prewarmSurfaceOrNull: Surface? = null
-    private var prewarmSurfaceW = 0
-    private var prewarmSurfaceH = 0
-
-    private fun prewarmSurface(): Surface? {
-        prewarmSurfaceOrNull?.let { if (prewarmSurfaceW == lastSceneW && prewarmSurfaceH == lastSceneH) return it }
-        releasePrewarmSurface()
-        return try {
-            Surface.makeRenderTarget(
-                SkiaCtx.directContext,
-                false,
-                ImageInfo.makeN32Premul(lastSceneW, lastSceneH),
-            ).also {
-                prewarmSurfaceOrNull = it
-                prewarmSurfaceW = lastSceneW
-                prewarmSurfaceH = lastSceneH
-            }
-        } catch (t: Throwable) {
-            LOGGER.debug("Compose warm-up could not allocate a surface", t)
-            null
-        }
-    }
-
-    private fun releasePrewarmSurface() {
-        prewarmSurfaceOrNull?.let { runCatching { it.close() } }
-        prewarmSurfaceOrNull = null
-        prewarmSurfaceW = 0
-        prewarmSurfaceH = 0
-    }
-
-    fun endPrewarm() {
-        prewarmCursor = 0
-        releasePrewarmSurface()
-    }
-
-    protected fun prewarm(frames: Int, budget: Int = frames, step: (Int) -> Unit): Boolean {
-        val name = this::class.java.simpleName
-        if (ensureScene() == null) {
-            ComposePreloader.fail("$name: no scene (${ComposeSupport.unavailableReason() ?: "createScene failed"})")
-            return false
-        }
-        syncSceneMetrics()
-        if (lastSceneW <= 0 || lastSceneH <= 0) {
-            closeSceneQuietly()
-            ComposePreloader.fail("$name: window is ${lastSceneW}x${lastSceneH}")
-            return false
-        }
-        val hadContent = contentSet
-        if (!bindContent()) {
-            val reason = "$name: setContent did not take (poisoned=$scenePoisoned)"
-            closeSceneQuietly()
-            ComposePreloader.fail(reason)
-            return false
-        }
-        if (!hadContent) return false
-        val surface = prewarmSurface() ?: run {
-            closeSceneQuietly()
-            ComposePreloader.fail("$name: could not allocate warm-up surface")
-            return false
-        }
-        try {
-            val canvas = surface.canvas.asComposeCanvas()
-            val until = minOf(frames, prewarmCursor + budget.coerceAtLeast(1))
-            val recomposer = recomposerOrNull
-            val scope = renderScopeOrNull
-            if (recomposer == null || scope == null) {
-                closeSceneQuietly()
-                ComposePreloader.fail("$name: missing recomposer or render scope")
-                return false
-            }
-            while (prewarmCursor < until) {
-                step(prewarmCursor)
-                withScene { with(scope) { it.render(recomposer, canvas, frameNanos()) } }
-                if (scenePoisoned) break
-                clockSkewNanos += PREWARM_FRAME_NANOS
-                prewarmCursor++
-            }
-            surface.flushAndSubmit()
-        } catch (t: Throwable) {
-            prewarmCursor = 0
-            releasePrewarmSurface()
-            closeSceneQuietly()
-            ComposePreloader.fail("Compose warm-up failed; the first open will build the UI instead", t)
-            return false
-        }
-        if (scenePoisoned) {
-            prewarmCursor = 0
-            closeSceneQuietly()
-            ComposePreloader.fail("$name: a warm-up frame failed; the first open will build the UI instead")
-            return false
-        }
-        sceneDirty = true
-        if (prewarmCursor < frames) return false
-        endPrewarm()
-        return true
-    }
-
     private fun bindContent(): Boolean {
         if (contentSet) return true
         withScene { setContentOn(it) } ?: return false
@@ -523,7 +355,9 @@ abstract class ComposeScreen(
             CompositionLocalProvider(
                 LocalClipboardManager provides SystemClipboardManager,
                 LocalClipboard provides SystemClipboard,
-                LocalUiOversample provides (Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f),
+                LocalUiOversample provides surfaceScale(),
+                FixedScrollConfig.provided(),
+                LocalWheelRouter provides wheelRouter,
             ) {
                 compose()
             }
@@ -573,13 +407,22 @@ abstract class ComposeScreen(
             //~ if >= 26.1 'renderPanorama' -> 'extractPanorama'
             extractPanorama(ctx, tickDelta)
         }
+        //? if >= 1.21.11 {
+        UiBlur.extract(ctx, blurAlpha())
+        underlay?.invoke(ctx)
+        //?}
     }
     //?}
+
+    protected open fun blurAlpha(): Float = 0f
+
+    /** Vanilla GUI drawn between the blur and this screen */
+    internal open val underlay: GuiDraw? get() = null
 
     protected open val retainsScene: Boolean get() = false
 
     private fun disposeScene() {
-        SkiaCtx.clearComposeFrame()
+        sceneDirty = true
         closeSceneQuietly()
     }
 
@@ -588,7 +431,7 @@ abstract class ComposeScreen(
             disposeScene()
             return
         }
-        SkiaCtx.clearComposeFrame()
+        sceneDirty = true
     }
 
     //? if > 1.8.9 {
@@ -619,7 +462,10 @@ abstract class ComposeScreen(
     //override fun render(mouseX: Int, mouseY: Int, tickDelta: Float) {
         if (Platform.screen().current<Any?>() !== this) return
         //? if = 1.8.9 {
-        /*if (client.level == null) {
+        /*// read inputs every frame like modern for smooth scrolling
+        handleInputs()
+        if (Platform.screen().current<Any?>() !== this) return
+        if (client.level == null) {
             panorama?.let {
                 panoramaGlState.capture()
                 try {
@@ -664,7 +510,7 @@ abstract class ComposeScreen(
         }
         val metricsChanged = syncSceneMetrics()
 
-        val focused = client.isWindowActive
+        val focused = client.isWindowActive || testPointer != null
         if (wasFocused && !focused) releaseHeldButtons()
         wasFocused = focused
         if (focused) {
@@ -680,71 +526,48 @@ abstract class ComposeScreen(
         }
 
         // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
-        val nanos = frameNanos()
+        val nanos = System.nanoTime()
         withScene { scene ->
             recomposerOrNull?.performFrame(nanos)
             scene.measureAndLayout()
         }
         if (ItemCatalog.renderIcons()) sceneDirty = true
 
-        //? if > 1.8.9 {
-        val debugOverlayOnTop = DebugOverlayOffscreen.shouldSuppressVanilla()
-        if (renderMode == RenderMode.ON_DEMAND && !sceneDirty && !awaitingFirstFrame &&
-            SkiaCtx.isDeferredComposeBackend && !debugOverlayOnTop
-        ) {
-            if (SkiaCtx.blitComposeCached(ctx)) return
-        }
-        //?}
-
         if (liveScene() == null) return
-
-       val renderBlock = Runnable {
-            try {
-                val canvas = SkiaCtx.canvas
-                val pixelRatio = surfaceScale()
-                val mode = OneConfigConfig.reducedResFilter
-                val amount = OneConfigConfig.uiSharpening
-                val filter = mode != 0 && amount > 0f &&
-                    DesktopHelper.isMac && osUpscaleFactor() > 1.05f
-                val depth = canvas.save()
-                try {
-                    if (filter) canvas.saveLayer(null, filterPaint(mode, amount))
-                    if (pixelRatio != 1f) {
-                        canvas.scale(pixelRatio, pixelRatio)
-                    }
-                    val recomposer = recomposerOrNull
-                    val scope = renderScopeOrNull
-                    val composeCanvas = canvas.asComposeCanvas()
-                    val rendered = if (recomposer == null || scope == null) null else withScene {
-                        with(scope) { it.render(recomposer, composeCanvas, nanos) }
-                    }
-                    if (rendered != null) {
-                        sceneRebuilds = 0
-                    }
-                } finally {
-                    canvas.restoreToCount(depth)
-                }
-            } catch (t: Throwable) {
-                poisonScene(t)
-            }
-        }
 
         val wasDirty = sceneDirty || awaitingFirstFrame || renderMode == RenderMode.CONTINUOUS
         sceneDirty = false
         awaitingFirstFrame = false
-        when {
-            //? if > 1.8.9
-            SkiaCtx.isDeferredComposeBackend -> SkiaCtx.drawComposeBlit(ctx, renderBlock)
-            SkiaCtx.isVulkanMode -> SkiaCtx.queueDraw(renderBlock) // non-deferred Vulkan draws straight to the main RT
-            else -> SkiaCtx.submitComposeFrame(wasDirty, renderBlock) // GL uses a cached FBO and re-renders only when dirty
+        //? if >= 1.21.11 {
+        recording.render(ctx, wasDirty) { paint(it, nanos) }
+        //?} else
+        //GlHost.screen(wasDirty, blurAlpha(), underlay) { paint(it, nanos) }
+    }
+
+    //? if >= 1.21.11
+    private val recording = Recording()
+
+    private fun paint(ctx: RenderContext, nanos: Long) {
+        try {
+            val pixelRatio = surfaceScale()
+            if (pixelRatio != 1f) ctx.renderer.scale(pixelRatio, pixelRatio)
+            val recomposer = recomposerOrNull
+            val scope = renderScopeOrNull
+            val canvas = PolyCanvas(ctx.renderer)
+            val rendered = if (recomposer == null || scope == null) null else withScene {
+                with(scope) { it.render(recomposer, canvas, nanos) }
+            }
+            if (rendered != null) sceneRebuilds = 0
+        } catch (t: Throwable) {
+            poisonScene(t)
         }
     }
 
     //? if = 1.8.9 {
     /*override fun handleMouse() {
-        val wheel = Mouse.getEventDWheel()
-        if (wheel != 0) {
-            mouseScrolled(wheel.sign)
+        val wheel = Mouse.getEventDWheelPrecise()
+        if (wheel != 0.0) {
+            mouseScrolled(wheel)
         }
 
         super.handleMouse()
@@ -828,16 +651,14 @@ abstract class ComposeScreen(
         //super.mouseReleased(x, y, button)
     }
 
-    protected open val scrollSpeed: Float get() = 1f
-
     //? if > 1.8.9 {
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
         sendScrollEvent(scrollX, scrollY)
         return super.mouseScrolled(x, y, scrollX, scrollY)
     }
     //?} else {
-    /*private fun mouseScrolled(scrollY: Int) {
-        sendScrollEvent(0.0, scrollY.toDouble())
+    /*private fun mouseScrolled(scrollY: Double) {
+        sendScrollEvent(0.0, scrollY)
     }
     *///?}
 
@@ -868,18 +689,50 @@ abstract class ComposeScreen(
         withScene { it.sendPointerEvent(type, button = pointerButton, position = pointerPosition()) }
     }
 
+    private val wheelRouter = WheelRouter()
+
+    private var lastPreciseScrollNanos = 0L
+
     private fun sendScrollEvent(scrollX: Double, scrollY: Double) {
-        val scrollScale = (if (DesktopHelper.isMac) 2f else 8f) * scrollSpeed
+        val now = System.nanoTime()
+        //? if > 1.8.9 {
+        val rawX = RawScroll.x
+        val rawY = RawScroll.y
+        // discrete scrolling asks for every scroll to count as a notch
+        val discrete = client.options.discreteMouseScroll().get()
+        //?} else {
+        /*val rawX = scrollX
+        val rawY = scrollY
+        val discrete = false
+        *///?}
+        //~ if !sdl 'takeScroll(rawX, rawY)' -> 'readScroll()'
+        val macPrecise = if (DesktopHelper.isMac) MacScrollEvent.takeScroll(rawX, rawY) else null
+        val precise = !discrete && isPreciseScroll(rawX, rawY, now, macPrecise)
+        val scrollScale = if (precise) PRECISE_UNIT_DP else WHEEL_UNIT_DP
+
+        //~ if = 1.8.9 '(-scrollX * scrollScale).toFloat()' -> '0f'
+        val delta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat())
         val position = pointerPosition()
-        withScene {
-            it.sendPointerEvent(PointerEventType.Move, position)
-            it.sendPointerEvent(
-                eventType = PointerEventType.Scroll,
-                position = position,
-                //~ if = 1.8.9 '(-scrollX * scrollScale).toFloat()' -> '0f'
-                scrollDelta = Offset((-scrollX * scrollScale).toFloat(), (-scrollY * scrollScale).toFloat()),
-            )
+        val dispatch: () -> Unit = {
+            withScene {
+                it.sendPointerEvent(PointerEventType.Move, position)
+                it.sendPointerEvent(PointerEventType.Scroll, position, scrollDelta = delta)
+            }
         }
+        if (precise) dispatch() else wheelRouter.route(delta, dispatch)
+    }
+
+    /** Whether a scroll came from a trackpad, which is applied directly instead of gliding */
+    private fun isPreciseScroll(scrollX: Double, scrollY: Double, now: Long, macPrecise: Boolean?): Boolean {
+        if (macPrecise != null) {
+            if (macPrecise) lastPreciseScrollNanos = now
+            return macPrecise
+        }
+
+        // Trackpads usually send fractional amounts, but Linux high-res wheels do too in 1/120 notch steps
+        val wheelSteps = DesktopHelper.isLinux && isWheelStep(scrollX) && isWheelStep(scrollY)
+        if ((scrollX % 1.0 != 0.0 || scrollY % 1.0 != 0.0) && !wheelSteps) lastPreciseScrollNanos = now
+        return lastPreciseScrollNanos != 0L && now - lastPreciseScrollNanos < PRECISE_SCROLL_HOLD_NANOS
     }
 
     //? >= 1.21.10 {
@@ -887,7 +740,7 @@ abstract class ComposeScreen(
         val char = if (Character.isBmpCodePoint(event.codepoint)) Char(event.codepoint) else Char(0)
         val codepoint = event.codepoint
         //? >= 26.1 {
-        val modifiers = 0 //dropped from the event in 26.1 because glfw no longer passes them
+        val modifiers = 0
         //? } else
         //val modifiers = event.modifiers
     //?} elif > 1.8.9 {
@@ -1113,17 +966,6 @@ abstract class ComposeScreen(
         return changed
     }
 
-    private fun sceneDensity(): Float {
-        val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
-        //? if sdl {
-        val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
-        //?} else {
-        /*GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
-        val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
-        *///?}
-        return (contentScale / pixelRatio).coerceAtLeast(1f)
-    }
-
     private fun surfaceScale(): Float {
         cachedSurfaceScale.takeIf { it > 0f }?.let { return it }
         val screenW = Platform.screen().windowWidth()
@@ -1133,7 +975,10 @@ abstract class ComposeScreen(
         return scale
     }
 
+    internal var testPointer: Offset? = null
+
     protected fun pointerPosition(): Offset {
+        testPointer?.let { return it }
         //? if > 1.8.9 {
         val mouse = client.mouseHandler
         return Offset(mouse.xpos().toFloat(), mouse.ypos().toFloat())
@@ -1148,22 +993,42 @@ abstract class ComposeScreen(
     private companion object {
         const val SETTLE_FRAMES = 4
 
-        const val PREWARM_FRAME_NANOS = 500_000_000L
+        const val WHEEL_NOTCH_DP = 150f
+
+        /** Dp per reported wheel unit. Wheels report 1.0 per notch, but per line on macOS. */
+        val WHEEL_UNIT_DP = if (DesktopHelper.isMac) 50f else WHEEL_NOTCH_DP
+
+        /** Dp per reported trackpad unit. Trackpads report 1.0 per notch on Windows, but per 10px on macOS and Wayland. */
+        val PRECISE_UNIT_DP = if (DesktopHelper.isWindows) WHEEL_NOTCH_DP else 10f
+
+        const val PRECISE_SCROLL_HOLD_NANOS = 250_000_000L
+
+        fun isWheelStep(value: Double) = abs(value * 120 - round(value * 120)) < 1e-3
 
         const val MAX_SCENE_REBUILDS = 3
-
-        const val HARDEN_SKSL = """
-            uniform shader content;
-            uniform float w;
-            half4 main(float2 xy) {
-                half4 c = content.eval(xy);
-                half a = c.a;
-                if (a <= 0.0) return half4(0.0);
-                half na = smoothstep(0.5 - w, 0.5 + w, a);
-                return half4(c.rgb / a * na, na);
-            }
-        """
     }
+}
+
+internal fun sceneDensity(): Float {
+    val pixelRatio = Platform.screen().pixelRatio().takeIf { it > 0f } ?: 1f
+    //? if sdl {
+    val contentScale = SDL_GetWindowDisplayScale(Platform.compatibility().windowHandle()).coerceAtLeast(1f)
+    //?} else {
+    /*val contentScaleX = FloatArray(1)
+    val contentScaleY = FloatArray(1)
+    GLFW.glfwGetWindowContentScale(Platform.compatibility().windowHandle(), contentScaleX, contentScaleY)
+    val contentScale = maxOf(contentScaleX[0], contentScaleY[0]).coerceAtLeast(1f)
+    *///?}
+    return (contentScale / pixelRatio).coerceAtLeast(1f)
+}
+
+/** The latest scroll, recorded by `Mixin_MouseInputEvent` before wheel sensitivity and discrete scrolling change it */
+internal object RawScroll {
+    @JvmField
+    var x = 0.0
+
+    @JvmField
+    var y = 0.0
 }
 
 internal object RenderThreadDispatcher : CoroutineDispatcher() {

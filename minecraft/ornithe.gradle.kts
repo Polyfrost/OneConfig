@@ -8,6 +8,11 @@ repositories {
     maven("https://maven.cloverclient.com/releases") {
         content { includeGroup("pl.tomgirl") }
     }
+    // Mojang's library repository only has STB natives for the platforms vanilla ships
+    exclusiveContent {
+        forRepository { mavenCentral() }
+        filter { includeModule("org.lwjgl", "lwjgl-stb") }
+    }
 }
 
 ploceus {
@@ -31,6 +36,13 @@ dependencies {
     }
 
     modApi(versionedCatalog["pylon"])
+    val lwjglStb = "org.lwjgl:lwjgl-stb:3.4.3"
+    api(lwjglStb) { isTransitive = false }
+    // Pylon doesn't provide lwjgl_stb
+    val platforms = listOf("linux", "linux-arm64", "macos", "macos-arm64", "windows", "windows-x86", "windows-arm64")
+    for (natives in platforms) {
+        api("$lwjglStb:natives-$natives") { isTransitive = false }
+    }
 
     api("com.mojang:brigadier:1.0.18")
 }

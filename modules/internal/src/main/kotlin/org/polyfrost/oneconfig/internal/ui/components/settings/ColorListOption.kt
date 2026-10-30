@@ -75,7 +75,7 @@ private fun RowScope.ColorSwatch(
     val color = remember(argb) { Color(argb).let { if (hasAlpha) it else it.copy(alpha = 1f) } }
     val model = remember(hasAlpha) { ColorPickerModel(color, hasAlpha) }
 
-    val textColor by animateColorAsState(if (color.luminance() > 0.6f) Color.Black else Color.White)
+    val textColor = animateColorAsState(if (color.luminance() > 0.6f) Color.Black else Color.White)
 
     Box(modifier = Modifier.weight(1f)) {
         Row(
@@ -91,8 +91,8 @@ private fun RowScope.ColorSwatch(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon("paintbrush", color = textColor, modifier = Modifier.size(12.dp))
-            Text("#${colorToHex(color)}", color = textColor, fontSize = 12.sp)
+            Icon("paintbrush", tint = { textColor.value }, modifier = Modifier.size(12.dp))
+            Text("#${colorToHex(color)}", color = Color.Unspecified, fontSize = 12.sp, colorProducer = { textColor.value })
         }
 
         if (expanded) {

@@ -62,6 +62,7 @@ import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -210,7 +211,8 @@ fun <T : PickerEntry> TileGrid(
             gridState,
             gutter,
             modifier = modifier.fillMaxWidth().heightIn(max = maxHeight)
-                .containVerticalScroll { gridState.canScrollBackward || gridState.canScrollForward },
+                .containVerticalScroll { gridState.canScrollBackward || gridState.canScrollForward }
+                .wheelScroll(gridState, contain = { gridState.canScrollBackward || gridState.canScrollForward }),
         ) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(cellSize),

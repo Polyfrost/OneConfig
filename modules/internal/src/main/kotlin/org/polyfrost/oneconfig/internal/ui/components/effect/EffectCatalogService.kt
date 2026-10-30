@@ -4,7 +4,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import java.util.Locale
 import java.util.ServiceLoader
-import org.jetbrains.skia.Image
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
 import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
 
@@ -20,7 +20,7 @@ data class EffectDescriptor(
 interface EffectCatalogService {
     fun effects(): List<EffectDescriptor>
 
-    fun icon(id: String): Image?
+    fun icon(id: String): PolyBitmap?
 }
 
 object EffectCatalog {
@@ -40,7 +40,7 @@ object EffectCatalog {
 
     fun effects(): List<EffectDescriptor> = service?.effects().orEmpty()
 
-    fun icon(id: String): Image? = service?.icon(normalizeEffectId(id))
+    fun icon(id: String): PolyBitmap? = service?.icon(normalizeEffectId(id))
 
     fun invalidate() {
         Snapshot.withMutableSnapshot { _revision.intValue++ }

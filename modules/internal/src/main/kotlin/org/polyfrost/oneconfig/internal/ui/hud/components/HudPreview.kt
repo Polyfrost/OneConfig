@@ -16,8 +16,6 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
@@ -31,7 +29,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.apache.logging.log4j.LogManager
-import org.jetbrains.skia.Rect
+import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyComposeHost
 import org.polyfrost.compose.runtime.PolyComposeRuntime
@@ -119,10 +117,11 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
             // Zero-size previews still count as measured so they don't block shortcut navigation
             state.measured = true
         }
-        if (static) return@LaunchedEffect
         // Values like FPS widen after the first measure. Never shrink, or the library reflows
         // whenever a value flips between digit counts.
         snapshotFlow { HudManager.previewRevision.intValue }.collect {
+            // text is read outside composition, so even fixed-size previews need a layout pass to pick up new values
+            if (static) return@collect state.runtime.layout(hud.staticW, hud.staticH)
             state.runtime.layout(MEASURE_BOUNDS, MEASURE_BOUNDS)
             state.naturalWidth = maxOf(state.naturalWidth, state.runtime.root.width)
             state.naturalHeight = maxOf(state.naturalHeight, state.runtime.root.height)
@@ -154,15 +153,15 @@ internal fun HudPreviewCanvas(
     Canvas(modifier) {
         HudManager.previewRevision.intValue
         if (alwaysRedraw) animationRevision
-        drawIntoCanvas { canvas ->
-            val skia = canvas.skiaCanvas
-            skia.save()
-            skia.clipRect(Rect.makeWH(size.width, size.height))
-            skia.scale(scale, scale)
-            Snapshot.withoutReadObservation {
-                state.runtime.root.render(RenderContext(skia))
-            }
-            skia.restore()
+        val w = size.width
+        val h = size.height
+        drawPoly { ctx ->
+            val r = ctx.renderer
+            r.save()
+            r.clipRect(0f, 0f, w, h)
+            r.scale(scale, scale)
+            Snapshot.withoutReadObservation { state.runtime.root.render(ctx) }
+            r.restore()
         }
     }
 }

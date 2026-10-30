@@ -13,7 +13,6 @@ import kotlinx.coroutines.withContext
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import org.jetbrains.skia.Rect
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyMcText
@@ -75,7 +74,7 @@ fun PolyItemIcon(
             line(x, y, x + w, y + h, placeholderColor, strokeWidth = 1f)
         } else {
             itemIcon.setRenderSizePx(polyItemRenderSizePx(w, hud))
-            itemIcon.draw(canvas, Rect.makeLTRB(x, y, x + w, y + h))
+            itemIcon.draw(this, x, y, w, h)
         }
     }
 }
@@ -115,7 +114,7 @@ fun PolyItemIcon(
         PolyCanvas(modifier = PolyModifier.size(size, size)) { x, y, w, h ->
             if (icon == null) return@PolyCanvas
             icon.setRenderSizePx(polyItemRenderSizePx(w, hud))
-            icon.draw(canvas, Rect.makeLTRB(x, y, x + w, y + h))
+            icon.draw(this, x, y, w, h)
         }
         if (!visible || !decorations || stack.isEmpty) return@PolyBox
 

@@ -30,15 +30,18 @@ subprojects {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
         maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
-        maven("https://redirector.kotlinlang.org/maven/compose-dev") {
-            content { includeGroup("org.jetbrains.skiko") }
-        }
         google()
     }
 
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    configurations.configureEach {
+        exclude(group = "org.jetbrains.skiko")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
     }
 
     dependencies {

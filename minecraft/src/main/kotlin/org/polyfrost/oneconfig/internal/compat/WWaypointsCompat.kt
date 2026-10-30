@@ -27,6 +27,8 @@ import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec
+import org.polyfrost.oneconfig.internal.ui.api.HELD_VALUE
+import org.polyfrost.oneconfig.internal.ui.api.HeldValue
 import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar
 
 /**
@@ -80,7 +82,15 @@ object WWaypointsCompat {
         buildControls(tree)
         buildData(tree)
         buildPresets(tree)
+        lockWhileDisabledByServer(tree)
         return tree
+    }
+
+    /** The mod closes its own screens while the server switches it off so every row is locked then */
+    private fun lockWhileDisabledByServer(tree: Tree) {
+        val props = tree.map.values.filterIsInstance<Property<*>>()
+        props.forEach { it.lockedByServer("ENTIRE_MOD") }
+        WWaypointsBridge.addServerPolicyListener { onClientThread { props.forEach { it.revaluateDisplay() } } }
     }
 
     private fun buildGeneral(tree: Tree) {
@@ -476,7 +486,7 @@ object WWaypointsCompat {
                 name = "Sign GUI popup",
                 description = "When OFF, placing signs will not open the sign editor.",
                 tags = SIGN_TAGS,
-            ).integrations("Extras")
+            ).integrations("Extras").lockedByServer("SIGN_MODIFICATIONS")
         )
         tree.put(
             switch(
@@ -503,7 +513,7 @@ object WWaypointsCompat {
                 name = "Stay Sneaked in Containers",
                 description = "Keeps Toggle Sneak active while inventory and container screens are open.",
                 tags = SNEAK_TAGS + listOf("container", "inventory", "chest"),
-            ).integrations("Toggle Sneak")
+            ).integrations("Toggle Sneak").lockedByServer("SNEAK_MODIFICATIONS", shownOff = true)
         )
         tree.put(
             switch(
@@ -511,7 +521,7 @@ object WWaypointsCompat {
                 name = "Better Sneak Interactions",
                 description = "Lets container clicks work with items in hand and waterlogs slabs while toggle-sneaking.",
                 tags = SNEAK_TAGS + listOf("interactions", "waterlog", "slab"),
-            ).integrations("Toggle Sneak")
+            ).integrations("Toggle Sneak").lockedByServer("SNEAK_MODIFICATIONS", shownOff = true)
         )
         tree.put(
             switch(
@@ -519,7 +529,7 @@ object WWaypointsCompat {
                 name = "Sneak Keybind Overrides",
                 description = "While Toggle Sneak is enabled, tapping Sneak will cancel Toggle Sneak when you release it.",
                 tags = SNEAK_TAGS + listOf("override", "cancel", "release", "tap"),
-            ).integrations("Toggle Sneak")
+            ).integrations("Toggle Sneak").lockedByServer("SNEAK_MODIFICATIONS", shownOff = true)
         )
         tree.put(
             enumDropdown(
@@ -615,7 +625,7 @@ object WWaypointsCompat {
                 description = "Toggles the Sign GUI popup feature on or off.",
                 subcategory = "Extras",
                 tags = SIGN_TAGS,
-            )
+            ).lockedByServer("SIGN_MODIFICATIONS")
         )
     }
 
@@ -1122,6 +1132,21 @@ object WWaypointsCompat {
     private fun <T> Property<T>.defaults(subcategory: String): Property<T> = apply {
         category = "Defaults"
         this.subcategory = subcategory
+    }
+
+    /**
+     * Greys the row out while the server's policy switches off the named `WaypointsFeature`
+     *
+     * [shownOff] also shows the switch as off meanwhile like the mod's own screen does, without touching the
+     * stored value
+     */
+    private fun <T> Property<T>.lockedByServer(feature: String, shownOff: Boolean = false): Property<T> = apply {
+        addDisplayCondition(Supplier {
+            val locked = WWaypointsBridge.disabledByServer(feature)
+            // kept in step here because display listeners are only told after every condition was evaluated
+            if (shownOff) if (locked) addMetadata(HELD_VALUE, HeldValue(false)) else removeMetadata(HELD_VALUE)
+            if (locked) Property.Display.DISABLED else Property.Display.SHOWN
+        })
     }
 
     /** Greys the row out rather than hiding it while [condition] is off matching the first-party screen */

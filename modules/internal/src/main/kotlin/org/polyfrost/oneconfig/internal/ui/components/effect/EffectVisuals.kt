@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.toComposeImageBitmap
+import org.polyfrost.compose.backend.asComposeImageBitmap
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
@@ -36,7 +36,7 @@ fun EffectIcon(
     placeholder: String = "eye-off",
 ) {
     val revision = EffectCatalog.revision
-    val bitmap = remember(id, revision) { EffectCatalog.icon(id)?.toComposeImageBitmap() }
+    val bitmap = remember(id, revision) { EffectCatalog.icon(id)?.asComposeImageBitmap() }
     if (bitmap == null) {
         Icon(
             placeholder,

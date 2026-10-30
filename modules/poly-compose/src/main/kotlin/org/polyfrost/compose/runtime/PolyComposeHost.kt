@@ -39,6 +39,8 @@ class PolyComposeClock {
 
     var appliedChange = false
         private set
+
+    val changeCount: Long get() = recomposerImpl.changeCount
 }
 
 object PolyComposeHost {
