@@ -39,8 +39,21 @@ object PolyGlyphPage {
         var version = 1
             private set
 
+        private val rowVersions = IntArray(SIZE).also { it.fill(1, PAD, PAD + WHITE) }
+
         init {
             revision++
+        }
+
+        /** The rows written to since [version] was [since], so only those need uploading again. Empty if there are none. */
+        fun dirtyRows(since: Int): IntRange {
+            var first = -1
+            var last = -1
+            for (y in 0 until SIZE) if (rowVersions[y] > since) {
+                if (first < 0) first = y
+                last = y
+            }
+            return if (first < 0) IntRange.EMPTY else first..last
         }
 
         private var penX = PAD * 2 + WHITE
@@ -58,6 +71,7 @@ object PolyGlyphPage {
             rowH = max(row, h)
             version++
             revision++
+            rowVersions.fill(version, y, y + h)
             return (x shl 16) or y
         }
 

@@ -1298,9 +1298,15 @@ internal object GlyphAtlas {
         for (page in PolyGlyphPage.pages) {
             val e = entry(page)
             if (e.uploaded == page.version) continue
+            // DynamicTexture already uploaded the blank image, so even a new page only needs its written rows
+            val rows = page.dirtyRows(e.uploaded)
             e.uploaded = page.version
-            MemoryUtil.memIntBuffer(e.image.pointer, SIZE * SIZE).put(page.pixels)
-            e.ref.texture.upload()
+            if (rows.isEmpty()) continue
+            val h = rows.last - rows.first + 1
+            val at = e.image.pointer + rows.first * SIZE * 4L
+            MemoryUtil.memIntBuffer(at, h * SIZE).put(page.pixels, rows.first * SIZE, h * SIZE)
+            //~ if < 26.2 ', 0, 0, 0,' -> ', NativeImage.Format.RGBA, 0, 0, 0,'
+            RenderSystem.getDevice().createCommandEncoder().writeToTexture(e.ref.texture.texture, MemoryUtil.memByteBuffer(at, h * SIZE * 4), 0, 0, 0, rows.first, SIZE, h)
         }
     }
 }

@@ -1000,6 +1000,7 @@ public final class org/polyfrost/compose/render/PolyGlyphPage$Glyph {
 public final class org/polyfrost/compose/render/PolyGlyphPage$Page {
 	public static final field $stable I
 	public final field pixels [I
+	public final fun dirtyRows (I)Lkotlin/ranges/IntRange;
 	public final fun getVersion ()I
 }
 

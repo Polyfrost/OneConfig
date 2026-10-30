@@ -39,6 +39,7 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import com.mojang.blaze3d.vertex.VertexSorting
 import net.minecraft.client.renderer.GameRenderer
 import org.joml.Matrix4f
+import org.lwjgl.system.MemoryUtil
 *///?}
 
 class GlRenderer private constructor(private val inLive: Boolean) : PolyTessellator(), TextureRenderer, CapturingRenderer {
@@ -870,13 +871,16 @@ internal object GlTextures {
     private fun glyphPage(page: PolyGlyphPage.Page): Int {
         val tex = pages.getOrPut(page) { intArrayOf(newTexture(), 0) }
         if (tex[1] != page.version) {
+            val size = PolyGlyphPage.SIZE
+            val rows = if (tex[1] == 0) 0 until size else page.dirtyRows(tex[1])
+            val h = rows.last - rows.first + 1
             tex[1] = page.version
             bind(tex[0])
             val px = (pagePixels ?: BufferUtils.createIntBuffer(page.pixels.size).also { pagePixels = it })
             px.clear()
-            px.put(page.pixels).flip()
+            px.put(page.pixels, rows.first * size, h * size).flip()
             unpackDefaults()
-            texImage(PolyGlyphPage.SIZE, PolyGlyphPage.SIZE, px)
+            if (h == size) texImage(size, size, px) else texSubImage(rows.first, size, h, px)
         }
         return tex[0]
     }
@@ -935,6 +939,12 @@ internal object GlTextures {
         //? if = 1.21.1
         //if (GlHost.vanillaPipeline) return GlStateManager._texImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, w, h, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, px)
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, w, h, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, px)
+    }
+
+    private fun texSubImage(y: Int, w: Int, h: Int, px: IntBuffer) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return GlStateManager._texSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, y, w, h, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, MemoryUtil.memAddress(px))
+        GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, y, w, h, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, px)
     }
 
     private fun deleteTexture(id: Int) {
