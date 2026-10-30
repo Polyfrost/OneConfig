@@ -377,18 +377,24 @@ object GlHost {
     private var glScreen: ((RenderContext) -> Unit)? = null
     private var glScreenDirty = false
     private var glBlurAlpha = 0f
+    private var glUnderlay: GuiDraw? = null
     private var screenFrame: GlRenderer? = null
 
-    fun screen(dirty: Boolean, blurAlpha: Float, paint: (RenderContext) -> Unit) {
+    fun screen(dirty: Boolean, blurAlpha: Float, underlay: GuiDraw?, paint: (RenderContext) -> Unit) {
         glScreen = paint
         glBlurAlpha = blurAlpha
+        glUnderlay = underlay
         if (dirty) glScreenDirty = true
     }
 
     private var drawnBeforeBlit = false
 
-    // vanilla GUI drawn by the fallback below would land after the blit and never be seen
-    private var drawsGuiOverScreen = true
+    /**
+     * Whether vanilla GUI can be drawn between the blur and the OneConfig screen, which the fallback below
+     * can't do since it draws after the blit
+     */
+    var drawsGuiOverScreen = true
+        private set
 
     //? if < 1.21.11 {
     /*private var drawingGui = false
@@ -432,6 +438,8 @@ object GlHost {
         } else {
             glScreen = null
             if (glBlurAlpha > 0f && !vanillaPipeline) drawBlur(fbo, glBlurAlpha)
+            //? if < 1.21.11
+            //if (drawsGuiOverScreen) glUnderlay?.let { drawGui(it) }
             val reuse = screenFrame?.takeUnless { glScreenDirty }
             glScreenDirty = false
             screenFrame = drawGl(fbo, reuse, true, paint)

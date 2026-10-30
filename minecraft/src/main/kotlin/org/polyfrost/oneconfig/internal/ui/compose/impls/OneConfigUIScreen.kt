@@ -58,6 +58,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport
 import org.polyfrost.oneconfig.internal.ui.compose.sceneDensity
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
+import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -90,6 +91,9 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private var initialRoute: Any? = null
 
     override val retainsScene: Boolean get() = this === sharedScreen
+
+    // over the blur, legacy HUDs stay as sharp as the HUD previews next to them
+    override val underlay get() = LegacyHudRenderer.liveDraw
 
     override fun blurAlpha(): Float {
         if (!OneConfigConfig.enableBackgroundBlur) return 0f

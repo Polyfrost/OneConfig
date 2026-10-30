@@ -267,11 +267,13 @@ public class OneConfig
         *///?}
     }
 
-    /** Submits the legacy HUDs (when not captured offscreen) and the GlHost HUD blit into the vanilla HUD */
+    /** Submits the legacy HUDs (unless the OneConfig menu draws them) and the GlHost HUD blit into the vanilla HUD */
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void submitHud(GuiGraphicsExtractor graphics) {
-        //~ if = 1.8.9 '(graphics)' -> '()'
-        LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        if (!HudManager.isConfigUiOpen || !GlHost.INSTANCE.getDrawsGuiOverScreen()) {
+            //~ if = 1.8.9 '(graphics)' -> '()'
+            LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        }
         if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
         //? if >= 1.21.11 {
         BlazeHud.render(graphics);

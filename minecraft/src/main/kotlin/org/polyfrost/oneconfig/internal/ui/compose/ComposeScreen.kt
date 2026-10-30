@@ -407,12 +407,17 @@ abstract class ComposeScreen(
             //~ if >= 26.1 'renderPanorama' -> 'extractPanorama'
             extractPanorama(ctx, tickDelta)
         }
-        //? if >= 1.21.11
+        //? if >= 1.21.11 {
         UiBlur.extract(ctx, blurAlpha())
+        underlay?.invoke(ctx)
+        //?}
     }
     //?}
 
     protected open fun blurAlpha(): Float = 0f
+
+    /** Vanilla GUI drawn between the blur and this screen */
+    internal open val underlay: GuiDraw? get() = null
 
     protected open val retainsScene: Boolean get() = false
 
@@ -536,7 +541,7 @@ abstract class ComposeScreen(
         //? if >= 1.21.11 {
         recording.render(ctx, wasDirty) { paint(it, nanos) }
         //?} else
-        //GlHost.screen(wasDirty, blurAlpha()) { paint(it, nanos) }
+        //GlHost.screen(wasDirty, blurAlpha(), underlay) { paint(it, nanos) }
     }
 
     //? if >= 1.21.11
