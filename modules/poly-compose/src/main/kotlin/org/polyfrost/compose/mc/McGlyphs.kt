@@ -1,5 +1,6 @@
 package org.polyfrost.compose.mc
 
+import kotlin.math.roundToInt
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
@@ -13,7 +14,30 @@ class McGlyph(
     val u0: Float, val v0: Float, val u1: Float, val v1: Float,
     val top: Float, val width: Float, val height: Float,
     val advance: Float, val offset: Float,
-)
+) {
+    private val pixelX = bitmap?.let { (u0 * it.width).roundToInt() } ?: 0
+    private val pixelY = bitmap?.let { (v0 * it.height).roundToInt() } ?: 0
+    internal val pixelWidth = bitmap?.let { (u1 * it.width).roundToInt() - pixelX } ?: 0
+    internal val pixelHeight = bitmap?.let { (v1 * it.height).roundToInt() - pixelY } ?: 0
+
+    internal val linearBitmap: PolyBitmap? by lazy {
+        val b = bitmap ?: return@lazy null
+        val w = pixelWidth
+        val h = pixelHeight
+        val pixels = ByteArray(w * h * 4)
+        for (row in 0 until h) {
+            val start = ((pixelY + row) * b.width + pixelX) * 4
+            b.pixels.copyInto(pixels, row * w * 4, start, start + w * 4)
+        }
+        for (i in pixels.indices step 4) {
+            val alpha = pixels[i + 3].toInt() and 0xFF
+            for (channel in 0..2) {
+                pixels[i + channel] = (((pixels[i + channel].toInt() and 0xFF) * alpha + 127) / 255).toByte()
+            }
+        }
+        PolyBitmap(w, h, pixels)
+    }
+}
 
 object McGlyphs {
     /**

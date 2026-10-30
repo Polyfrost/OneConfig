@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.PolyCompose
 import org.polyfrost.compose.backend.PolyPaint
+import org.polyfrost.compose.mc.McGlyph
+import org.polyfrost.compose.mc.McGlyphs
 
 class PolyTessellatorTest {
     private class Batch(val texture: Any, val verts: FloatArray, val colors: IntArray, val nearest: Boolean = false)
@@ -38,6 +40,16 @@ class PolyTessellatorTest {
     }
 
     private class Group(val items: List<Any>, val alpha: Float)
+
+    private class GlyphRecorder : PolyTessellator() {
+        private val nearest = ArrayList<Boolean>()
+        override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
+            this.nearest += nearest
+        }
+        override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
+        override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
+        fun done(): List<Boolean> = also { flush() }.nearest
+    }
 
     private class Layered : PolyTessellator() {
         val ops = ArrayList<Any>()
@@ -745,6 +757,57 @@ class PolyTessellatorTest {
             assertEquals(0, b.alphaAt(11.37f, 40.41f))
         } finally {
             PolyGlyphPage.rasterizer = old
+        }
+    }
+
+    @Test
+    fun nativeMcGlyphsUseNearestWithFractionalSheetUvs() {
+        val sheet = PolyBitmap(384, 384, ByteArray(384 * 384 * 4) { -1 })
+        val source = McGlyphs.source
+        try {
+            for ((x, y) in listOf(24 to 0, 0 to 24, 24 to 24)) {
+                val glyph = McGlyph(sheet, x / 384f, y / 384f, (x + 2) / 384f, (y + 2) / 384f, 0f, 2f, 2f, 3f, 1f)
+                McGlyphs.source = { glyph }
+                fun nearestAt(sx: Float, sy: Float) = GlyphRecorder().run {
+                    translate(0.49f, 0.49f)
+                    scale(sx, sy)
+                    mcText("a", 0f, 0f, -1, false, 1f)
+                    done()
+                }.single()
+                for ((sx, sy) in listOf(1f to 1f, -1f to 1f, 1f to -1f, -1f to -1f)) {
+                    assertTrue(nearestAt(sx, sy), "native scale ($sx, $sy), cell ($x, $y)")
+                    assertFalse(nearestAt(sx * 0.99f, sy), "horizontal downscale, cell ($x, $y)")
+                    assertFalse(nearestAt(sx, sy * 0.99f), "vertical downscale, cell ($x, $y)")
+                }
+            }
+        } finally {
+            McGlyphs.source = source
+        }
+    }
+
+    @Test
+    fun mcGlyphsSampleLinearlyOnlyWhenDownscaled() {
+        val sheet = PolyBitmap(16, 16, ByteArray(16 * 16 * 4) { -1 })
+        val glyph = McGlyph(sheet, 0f, 0f, 0.5f, 0.5f, 0f, 8f, 8f, 8f, 1f)
+        val source = McGlyphs.source
+        McGlyphs.source = { glyph }
+        try {
+            fun nearestAt(sx: Float, sy: Float = sx) = GlyphRecorder().run {
+                scale(sx, sy)
+                mcText("a", 0f, 0f, -1, false, 1f)
+                done()
+            }.single()
+            assertTrue(nearestAt(1f))
+            assertTrue(nearestAt(2f))
+            assertFalse(nearestAt(0.66f))
+            for ((sx, sy) in listOf(-1f to 1f, 1f to -1f, -1f to -1f)) {
+                assertTrue(nearestAt(sx, sy), "nearest at mirrored native scale ($sx, $sy)")
+                assertTrue(nearestAt(sx * 2f, sy * 2f), "nearest at mirrored magnification ($sx, $sy)")
+                assertFalse(nearestAt(sx * 0.66f, sy), "linear at mirrored horizontal downscale ($sx, $sy)")
+                assertFalse(nearestAt(sx, sy * 0.66f), "linear at mirrored vertical downscale ($sx, $sy)")
+            }
+        } finally {
+            McGlyphs.source = source
         }
     }
 

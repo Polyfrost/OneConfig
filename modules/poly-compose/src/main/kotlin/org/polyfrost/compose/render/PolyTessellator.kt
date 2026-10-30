@@ -724,19 +724,25 @@ abstract class PolyTessellator : PolyRenderer {
     }
 
     private fun mcGlyph(g: McGlyph, x: Float, top: Float, scale: Float, color: Int) {
-        val b = g.bitmap ?: return
+        val sheet = g.bitmap ?: return
         val c = mulAlpha(color, state.alpha)
         if (c ushr 24 == 0) return
-        val p = PolyGlyphPage.bitmap(b)
-        begin(p?.page ?: bitmapTexture(b), false, nearest = true)
         val s = state
+        val nearest = abs(g.width * scale * s.sx) >= g.pixelWidth && abs(g.height * scale * s.sy) >= g.pixelHeight
+        val b = if (nearest) sheet else g.linearBitmap ?: return
+        val p = PolyGlyphPage.bitmap(b)
+        begin(p?.page ?: bitmapTexture(b), !nearest, nearest)
+        val tint = if (nearest) c else scaleArgb(c or -0x1000000, (c ushr 24) / 255f)
         val x0 = x * s.sx + s.tx
         val y0 = (top + g.top * scale) * s.sy + s.ty
-        val tu = (p?.let { it.u1 - it.u0 } ?: 1f) / b.width * NEAREST_TIE_BIAS
-        val tv = (p?.let { it.v1 - it.v0 } ?: 1f) / b.height * NEAREST_TIE_BIAS
+        val tu = if (nearest) (p?.let { it.u1 - it.u0 } ?: 1f) / b.width * NEAREST_TIE_BIAS else 0f
+        val tv = if (nearest) (p?.let { it.v1 - it.v0 } ?: 1f) / b.height * NEAREST_TIE_BIAS else 0f
         glyphQuad(
             x0, y0, x0 + g.width * scale * s.sx, y0 + g.height * scale * s.sy,
-            (p?.u(g.u0) ?: g.u0) + tu, (p?.v(g.v0) ?: g.v0) + tv, (p?.u(g.u1) ?: g.u1) + tu, (p?.v(g.v1) ?: g.v1) + tv, c,
+            (if (nearest) p?.u(g.u0) ?: g.u0 else p?.u0 ?: 0f) + tu,
+            (if (nearest) p?.v(g.v0) ?: g.v0 else p?.v0 ?: 0f) + tv,
+            (if (nearest) p?.u(g.u1) ?: g.u1 else p?.u1 ?: 1f) + tu,
+            (if (nearest) p?.v(g.v1) ?: g.v1 else p?.v1 ?: 1f) + tv, tint,
         )
     }
 

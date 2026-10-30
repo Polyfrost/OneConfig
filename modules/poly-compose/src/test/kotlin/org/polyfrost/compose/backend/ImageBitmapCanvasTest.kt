@@ -45,6 +45,8 @@ import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.polyfrost.compose.mc.McGlyph
+import org.polyfrost.compose.mc.McGlyphs
 import org.polyfrost.compose.render.FilterQuality
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyFont
@@ -54,6 +56,90 @@ import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
 
 class ImageBitmapCanvasTest {
+    @Test
+    fun downscaledMcGlyphsPreserveColorsAtTransparentEdges() {
+        PolyCompose.install()
+        val source = McGlyphs.source
+        try {
+            for (width in listOf(2, 258)) for (cropped in listOf(false, true)) {
+                for ((ink, tint, alpha) in listOf(
+                    Triple(-1, -1, 1f),
+                    Triple(-1, 0x80FF8000.toInt(), 0.5f),
+                    Triple(0x8040C080.toInt(), -1, 1f),
+                )) {
+                    val sheetWidth = if (cropped) width * 3 else width
+                    val x0 = if (cropped) width else 0
+                    val bitmap = PolyBitmap(sheetWidth, 2, ByteArray(sheetWidth * 2 * 4) { -1 })
+                    for (y in 0..1) for (x in 0 until width) {
+                        val color = if (x % 2 == 0) ink else 0x00FF00FF
+                        val at = (y * sheetWidth + x0 + x) * 4
+                        bitmap.pixels[at] = (color ushr 16).toByte()
+                        bitmap.pixels[at + 1] = (color ushr 8).toByte()
+                        bitmap.pixels[at + 2] = color.toByte()
+                        bitmap.pixels[at + 3] = (color ushr 24).toByte()
+                    }
+                    val glyph = McGlyph(bitmap, x0.toFloat() / sheetWidth, 0f, (x0 + width).toFloat() / sheetWidth, 1f,
+                        0f, width / 2f, 1f, width / 2f, 0.5f)
+                    McGlyphs.source = { glyph }
+                    val target = PolyImageBitmap(PolyBitmap(width / 2, 1, ByteArray(width / 2 * 4)))
+                    val renderer = (Canvas(target) as PolyCanvas).renderer
+                    renderer.saveLayerAlpha(alpha)
+                    renderer.mcText("a", 0f, 0f, tint, false, 1f)
+                    renderer.restore()
+                    var expected = ((ink ushr 24) * 0.5f * (tint ushr 24) / 255f * alpha + 0.5f).toInt() shl 24
+                    for (shift in listOf(0, 8, 16)) {
+                        expected = expected or ((((ink ushr shift and 0xFF) * (tint ushr shift and 0xFF) / 255f) + 0.5f).toInt() shl shift)
+                    }
+                    val actual = target.bitmap
+                    for (x in 0 until actual.width) assertNear(expected, actual.argb(x, 0), "x=$x, width=$width, cropped=$cropped, ink=$ink, tint=$tint, alpha=$alpha")
+                }
+            }
+        } finally {
+            McGlyphs.source = source
+        }
+    }
+
+    @Test
+    fun downscaledMcGlyphsDoNotSampleNeighboringCells() {
+        PolyCompose.install()
+        val source = McGlyphs.source
+        try {
+            for (size in listOf(8, 258)) {
+                val pixels = ByteArray(size * size * 4)
+                for (y in 2 until size - 2) for (x in 2 until size - 2) {
+                    pixels.fill(-1, (y * size + x) * 4, (y * size + x + 1) * 4)
+                }
+                val isolated = PolyBitmap(size, size, pixels)
+                val sheetSize = size * 3
+                val sheet = PolyBitmap(sheetSize, sheetSize, ByteArray(sheetSize * sheetSize * 4) { -1 })
+                for (y in 0 until size) {
+                    pixels.copyInto(sheet.pixels, ((y + size) * sheetSize + size) * 4, y * size * 4, (y + 1) * size * 4)
+                }
+                fun render(bitmap: PolyBitmap, u0: Float, u1: Float): PolyBitmap {
+                    McGlyphs.source = { McGlyph(bitmap, u0, u0, u1, u1, 0f, size.toFloat(), size.toFloat(), size.toFloat(), 1f) }
+                    val targetSize = (size * 0.66f).toInt() + 2
+                    val target = PolyImageBitmap(PolyBitmap(targetSize, targetSize, ByteArray(targetSize * targetSize * 4)))
+                    val renderer = (Canvas(target) as PolyCanvas).renderer
+                    renderer.translate(0.49f, 0.49f)
+                    renderer.scale(0.66f, 0.66f)
+                    renderer.mcText("a", 0f, 0f, -1, false, 1f)
+                    return target.bitmap
+                }
+                val expected = render(isolated, 0f, 1f)
+                val actual = render(sheet, 1f / 3f, 2f / 3f)
+                assertEquals(0, actual.argb(0, 2) ushr 24, "left neighbor at size $size")
+                assertEquals(0, actual.argb(2, 0) ushr 24, "top neighbor at size $size")
+                assertTrue((3 until expected.pixels.size step 4).any { (expected.pixels[it].toInt() and 0xFF) in 1..254 }, "linear coverage at size $size")
+                for (i in actual.pixels.indices) {
+                    val delta = (actual.pixels[i].toInt() and 0xFF) - (expected.pixels[i].toInt() and 0xFF)
+                    assertTrue(delta in -1..1, "channel ${i % 4} at (${i / 4 % actual.width}, ${i / 4 / actual.width}), size $size")
+                }
+            }
+        } finally {
+            McGlyphs.source = source
+        }
+    }
+
     private class ImageLog : PolyTessellator() {
         val images = ArrayList<Pair<PolyBitmap, Int>>()
         override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {}
