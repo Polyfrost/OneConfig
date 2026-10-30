@@ -7,6 +7,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.isSimple
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.ClipOp
@@ -134,6 +135,18 @@ fun DrawScope.drawPoly(block: (RenderContext) -> Unit) = drawIntoCanvas { c ->
     (c as? PolyDrawCanvas)?.polyOp(DynamicOp(block))
 }
 
+internal fun PolyRenderer.clipTo(path: Path) {
+    val p = path as PolyComposePath
+    val rr = p.roundRect
+    val contours = p.allContours()
+    when {
+        rr != null && rr.isSimple -> clipRRect(rr.left, rr.top, rr.width, rr.height, rr.topLeftCornerRadius.x)
+        // Paths with several contours are only clipped to their bounds
+        p.plainRect != null || contours.size != 1 -> p.getBounds().let { clipRect(it.left, it.top, it.width, it.height) }
+        else -> clipPolygon(contours[0])
+    }
+}
+
 class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
     private val r get() = renderer
     val context by lazy(LazyThreadSafetyMode.NONE) { RenderContext(renderer) }
@@ -167,11 +180,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
 
     override fun clipPath(path: Path, clipOp: ClipOp) {
         // Compose itself only clips out rectangles, which go through clipRect
-        if (clipOp != ClipOp.Intersect) return
-        val p = path as PolyComposePath
-        val rr = p.roundRect
-        if (rr != null) r.clipRRect(rr.left, rr.top, rr.width, rr.height, rr.topLeftCornerRadius.x)
-        else p.getBounds().let { r.clipRect(it.left, it.top, it.width, it.height) }
+        if (clipOp == ClipOp.Intersect) r.clipTo(path)
     }
 
     override fun drawLine(p1: Offset, p2: Offset, paint: Paint) = segment(p1.x, p1.y, p2.x, p2.y, paint as PolyPaint)

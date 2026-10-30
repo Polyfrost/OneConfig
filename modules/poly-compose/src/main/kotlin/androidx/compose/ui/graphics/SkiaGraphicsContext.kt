@@ -20,6 +20,7 @@ import org.polyfrost.compose.backend.DynamicOp
 import org.polyfrost.compose.backend.PolyBlurEffect
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.RecordingCanvas
+import org.polyfrost.compose.backend.clipTo
 import org.polyfrost.compose.backend.imageBlur
 import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.PolyColor
@@ -165,9 +166,11 @@ class PolyGraphicsLayer : PlatformGraphicsLayer {
             val b = o.bounds
             r.shadow(b.left, b.top + shadowElevation / 2f, b.width, b.height, radiusOf(o), PolyShadow(PolyColor(spotShadowColor.copy(alpha = spotShadowColor.alpha * 0.25f).toArgb()), shadowElevation, 0f, 0f, 0f))
         }
-        if (clip) {
-            if (o == null) r.clipRect(0f, 0f, size.width.toFloat(), size.height.toFloat())
-            else { val b = o.bounds; r.clipRRect(b.left, b.top, b.width, b.height, radiusOf(o)) }
+        if (clip) when (o) {
+            null -> r.clipRect(0f, 0f, size.width.toFloat(), size.height.toFloat())
+            // Rounded outlines whose corners differ also arrive as paths
+            is Outline.Generic -> r.clipTo(o.path)
+            else -> { val b = o.bounds; r.clipRRect(b.left, b.top, b.width, b.height, radiusOf(o)) }
         }
         val cap = capturing.lastOrNull()
         val cr = r as? CapturingRenderer

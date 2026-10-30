@@ -11,6 +11,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
@@ -155,6 +157,16 @@ class ImageBitmapCanvasTest {
         for (x in 1 until 11) assertEquals(if (x in 3..8) 0xFFFF0000.toInt() else 0xFF0000FF.toInt(), out.argb(x, 6), "($x, 6)")
         assertEquals(0xFF0000FF.toInt(), out.argb(6, 2))
         assertEquals(0xFFFF0000.toInt(), out.argb(6, 3))
+    }
+
+    @Test
+    fun clipPathKeepsEachCornersRadius() {
+        PolyCompose.install()
+        val corner = Path().apply { addRoundRect(RoundRect(0f, 0f, 20f, 20f, topLeftCornerRadius = CornerRadius(8f))) }
+        val out = drawInto(ImageBitmap(20, 20)) { clipPath(corner) { drawRect(Color.Red) } }
+        assertEquals(0, out.argb(1, 1) ushr 24, "outside the rounded corner")
+        assertEquals(0xFFFF0000.toInt(), out.argb(18, 1))
+        assertEquals(0xFFFF0000.toInt(), out.argb(18, 18))
     }
 
     @Test

@@ -1,5 +1,7 @@
 package org.polyfrost.compose.render
 
+import kotlin.math.max
+import kotlin.math.min
 
 interface PolyRenderer {
     fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float)
@@ -88,6 +90,19 @@ interface PolyRenderer {
     fun animatedScale(sx: Float, sy: Float) = scale(sx, sy)
     fun clipRect(x: Float, y: Float, w: Float, h: Float)
     fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float)
+
+    /**
+     * Clips to the closed polygon through [points], given as x, y pairs.
+     * Renderers that can't clip to its exact shape clip to its bounds instead.
+     */
+    fun clipPolygon(points: FloatArray) {
+        var l = Float.MAX_VALUE; var t = Float.MAX_VALUE; var r = -Float.MAX_VALUE; var b = -Float.MAX_VALUE
+        for (i in points.indices step 2) {
+            l = min(l, points[i]); r = max(r, points[i])
+            t = min(t, points[i + 1]); b = max(b, points[i + 1])
+        }
+        clipRect(l, t, r - l, b - t)
+    }
 
     /** Removes the rectangle from the clip. Renderers that can't remove areas from it keep drawing over the rectangle. */
     fun clipOutRect(x: Float, y: Float, w: Float, h: Float) {}

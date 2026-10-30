@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.FrameRecomposer
@@ -81,6 +83,7 @@ class ComposeBackendTest {
         override fun clipRect(x: Float, y: Float, w: Float, h: Float) = log("clip ${x + tx},${y + ty} ${w}x$h")
         override fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float) = log("clipR ${x + tx},${y + ty} ${w}x$h r=$radius")
         override fun clipOutRect(x: Float, y: Float, w: Float, h: Float) = log("clipOut ${x + tx},${y + ty} ${w}x$h")
+        override fun clipPolygon(points: FloatArray) = log("clipPolygon ${points.size / 2}")
     }
 
     private class CapturingLogRenderer : CapturingRenderer, PolyRenderer by LogRenderer() {
@@ -172,6 +175,14 @@ class ComposeBackendTest {
         assertTrue(calls.any { it.startsWith("rect 0.0,0.0 400.0x300.0") }, "full-size background")
         assertTrue(calls.any { it.startsWith("shadow") }, "shadow")
         assertEquals(1, calls.count { it.startsWith("text 'hi'") })
+    }
+
+    @Test
+    fun layersClipToTheirOutlines() {
+        fun clips(shape: Shape) = render { Box(Modifier.size(40.dp).clip(shape).background(Color.Red)) }.filter { it.startsWith("clip") }
+        assertEquals(listOf("clipPolygon 8"), clips(CutCornerShape(10.dp)))
+        assertTrue(clips(RoundedCornerShape(topStart = 10.dp)).single().startsWith("clipPolygon"))
+        assertEquals(listOf("clipR 0.0,0.0 40.0x40.0 r=10.0"), clips(RoundedCornerShape(10.dp)))
     }
 
     @Test

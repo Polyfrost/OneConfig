@@ -13,6 +13,7 @@ import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.polyfrost.compose.backend.PolyCanvas
@@ -357,6 +358,29 @@ class PolyTessellatorTest {
         for (y in listOf(11.9f, 21.9f, 28.9f)) assertTrue(b.alphaAt(10.25f, y) in 60..68, "a quarter covered across the edge at $y")
         for (y in listOf(11.9f, 21.9f, 28.9f)) assertTrue(b.alphaAt(29.75f, y) in 60..68, "a quarter covered across the far edge at $y")
         assertEquals(255, b.alphaAt(55.3f, 5.7f), "restore keeps the hole from outliving its scope")
+    }
+
+    @Test
+    fun polygonClipFollowsConvexOutlines() {
+        val octagon = floatArrayOf(10f, 0f, 30f, 0f, 40f, 10f, 40f, 30f, 30f, 40f, 10f, 40f, 0f, 30f, 0f, 10f, 10f, 0f)
+        fun draw(points: FloatArray, radius: Float = 0f) = Recorder().run { save(); clipPolygon(points); rect(0f, 0f, 40f, 40f, -1, radius); restore(); done() }
+        val cut = draw(octagon)
+        cut.forEach(::assertWinding)
+        assertEquals(255, cut.alphaAt(20.3f, 21.7f))
+        assertEquals(255, cut.alphaAt(12.3f, 1.9f))
+        assertEquals(0, cut.alphaAt(2.3f, 2.9f), "outside the cut corner")
+        assertEquals(0, draw(octagon, 4f).alphaAt(3.3f, 3.9f), "a rounded rect inside the outline's bounds is still cut")
+        val wide = Recorder().run { save(); clipPolygon(octagon); rect(-10f, -10f, 60f, 60f, -1, 5f); restore(); done() }
+        wide.forEach(::assertWinding)
+        for ((y, alpha) in listOf(0.1f to 153, 0.25f to 191)) assertTrue(wide.alphaAt(20.3f, y) in alpha - 6..alpha + 6, "fading across the edge at $y")
+        val notch = floatArrayOf(0f, 0f, 40f, 0f, 40f, 40f, 20f, 20f, 0f, 40f)
+        assertEquals(255, draw(notch).alphaAt(20.3f, 35.9f), "concave outlines clip to their bounds")
+
+        val r = Recorder()
+        r.save(); r.clipPolygon(octagon)
+        val key = r.stateKey()
+        r.restore(); r.clipPolygon(floatArrayOf(20f, 0f, 40f, 20f, 20f, 40f, 0f, 20f))
+        assertFalse(r.sameState(key), "cached layers must not outlive a change of shape within the same bounds")
     }
 
     @Test
