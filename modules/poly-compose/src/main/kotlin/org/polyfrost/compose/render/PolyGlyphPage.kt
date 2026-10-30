@@ -112,6 +112,8 @@ object PolyGlyphPage {
     @JvmStatic
     var rasterizer: Rasterizer? = null
 
+    // shortcut: pages are never evicted (4 MiB each, plus a renderer texture) since retained recordings, cached layers
+    // and kept meshes reuse their textures without revalidating; bound them once those can re-record or pin pages
     private val _pages = arrayListOf(Page())
 
     @JvmStatic
