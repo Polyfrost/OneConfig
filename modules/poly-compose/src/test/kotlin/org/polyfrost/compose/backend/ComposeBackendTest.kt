@@ -282,6 +282,16 @@ class ComposeBackendTest {
     }
 
     @Test
+    fun rtlRunsKeepMarksOnTheirBase() {
+        assertEquals(listOf("text 'באָ' 79.0,11.2"), drawnText(paragraph("אָב")))
+    }
+
+    @Test
+    fun arabicIsDrawnJoined() {
+        assertEquals(listOf("text 'ﺖﻴﺑ' 79.0,11.2"), drawnText(paragraph("بيت")))
+    }
+
+    @Test
     fun caretAndHitTestRoundTrip() {
         for (text in listOf("abc אבג def", "אבג", "אבג abc דהו", "abc")) {
             val p = paragraph(text)

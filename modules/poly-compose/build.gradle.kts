@@ -34,6 +34,7 @@ dependencies {
     compileOnly(skiaStub.output)
     compileOnly(libs.jetbrains.compose.runtime)
     compileOnly(libs.kotlinx.coroutines)
+    compileOnly(libs.icu4j)
     api(libs.jetbrains.compose.foundation)
     api(libs.jetbrains.compose.material)
     api(libs.jetbrains.compose.ui)
@@ -41,4 +42,5 @@ dependencies {
     implementation(libs.bundles.twelvemonkeys)
     testImplementation(libs.jetbrains.compose.runtime)
     testImplementation(libs.kotlinx.coroutines)
+    testImplementation(libs.icu4j)
 }

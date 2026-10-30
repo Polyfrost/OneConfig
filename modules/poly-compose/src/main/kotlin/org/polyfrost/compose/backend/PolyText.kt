@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
+import com.ibm.icu.text.ArabicShaping
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyRenderer
@@ -58,6 +59,30 @@ import kotlin.math.min
 import kotlin.math.round
 
 private val italicFonts = ConcurrentHashMap.newKeySet<String>()
+
+// Minecraft ships ICU4J; fixed length keeps offsets aligned with the logical text
+private object Arabic {
+    private val shaping = runCatching { ArabicShaping(ArabicShaping.LETTERS_SHAPE or ArabicShaping.LENGTH_FIXED_SPACES_NEAR) }.getOrNull()
+
+    fun shape(text: String): String {
+        if (shaping == null || text.none { it in '\u0600'..'\u08FF' }) return text
+        return try { shaping.shape(text) } catch (_: Exception) { text }
+    }
+}
+
+// keeps combining marks after their base so they still draw over it
+private fun reversedClusters(text: String): String {
+    val it = BreakIterator.getCharacterInstance().also { b -> b.setText(text) }
+    val out = StringBuilder(text.length)
+    var end = it.last()
+    var start = it.previous()
+    while (start != BreakIterator.DONE) {
+        out.append(text, start, end)
+        end = start
+        start = it.previous()
+    }
+    return out.toString()
+}
 
 class PolyFontSource(val key: String, private val bytes: () -> ByteArray, override val weight: FontWeight, override val style: FontStyle) : Font {
     internal fun register(): String {
@@ -118,6 +143,7 @@ internal class PolyIntrinsics(
     val placeholderCount: Int, val density: Density, resolver: FontFamily.Resolver,
 ) : ParagraphIntrinsics {
     val runs: List<TextRun>
+    val glyphs = Arabic.shape(text)
     val advances = FloatArray(text.length)
     val lineHeightPx: Float
     val align: TextAlign = style.textAlign
@@ -161,7 +187,7 @@ internal class PolyIntrinsics(
             val letter = px(run.style.letterSpacing, 0f)
             var i = run.start
             while (i < run.end) {
-                val cp = text.codePointAt(i)
+                val cp = glyphs.codePointAt(i)
                 val n = Character.charCount(cp)
                 advances[i] = if (cp == '\n'.code) 0f else Advances.of(run.font, cp) + letter
                 i += n
@@ -307,8 +333,9 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                 val a = max(run.start, rs)
                 val e = min(min(run.end, re), l.visibleEnd)
                 if (a >= e) continue
-                segs += if (level and 1 == 0) Seg(text.substring(a, e), x + intr.width(rs, a), intr.width(a, e), run)
-                else Seg(StringBuilder(e - a).append(text, a, e).reverse().toString(), x + intr.width(e, re), intr.width(a, e), run)
+                val glyphs = intr.glyphs.substring(a, e)
+                segs += if (level and 1 == 0) Seg(glyphs, x + intr.width(rs, a), intr.width(a, e), run)
+                else Seg(reversedClusters(glyphs), x + intr.width(e, re), intr.width(a, e), run)
             }
             x += intr.width(rs, re)
         }
@@ -578,7 +605,7 @@ internal class PolyParagraph(private val intr: PolyIntrinsics, maxLines: Int, ov
                     val e = min(run.end, l.visibleEnd)
                     if (s >= e) continue
                     val w = intr.width(s, e)
-                    drawRun(r, l, run, text.substring(s, e), x, w, color, alpha, shadow, decoration)
+                    drawRun(r, l, run, intr.glyphs.substring(s, e), x, w, color, alpha, shadow, decoration)
                     x += w
                 }
                 if (l.ellipsis) {

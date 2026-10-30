@@ -9,6 +9,7 @@ google-ksp = "2.3.12"
 annotations = "26.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
+icu4j = "72.1" # compile baseline only, Minecraft provides ICU4J at runtime
 
 # Not in risk of needing to be relaunched / bumped by JiJ
 snakeyaml = "1.33"
@@ -81,6 +82,7 @@ kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "
 kotlin-stdlib-jdk7 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk7", version.ref = "kotlin" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 kotlinx-coroutines-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "kotlinx-coroutines" }
 fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric-language-kotlin" }
