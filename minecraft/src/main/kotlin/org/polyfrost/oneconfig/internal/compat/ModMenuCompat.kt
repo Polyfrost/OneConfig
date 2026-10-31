@@ -26,16 +26,16 @@ object ModMenuCompat {
     )
 
     fun preLoad() = CompatLoader.requireTranslations(-1000, true) {
-        ModMenu.ROOT_MODS.forEach { (_, mod) ->
-            if (mod.id in ownModIds) return@forEach
-            // never call getConfigScreen here
-            // it builds widgets that bake font glyphs and preLoad runs off-frame during
-            // ResourceFinishedLoading where that corrupts the vanilla font atlas
-            // hasConfigScreen only looks up the factory so the screen is built later in a render frame
-            if (runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)) {
-                mods.add(mod)
-            }
-        }
+        mods.addAll(findUnlisted())
+    }
+
+    private fun findUnlisted(): List<Mod> = ModMenu.ROOT_MODS.values.filter { mod ->
+        // never call getConfigScreen here
+        // it builds widgets that bake font glyphs and preLoad runs off-frame during
+        // ResourceFinishedLoading where that corrupts the vanilla font atlas
+        // hasConfigScreen only looks up the factory so the screen is built later in a render frame
+        mod.id !in ownModIds && mods.none { it.id == mod.id } &&
+            runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)
     }
 
     @JvmStatic
@@ -44,7 +44,16 @@ object ModMenuCompat {
         postLoad()
     }
 
-    fun postLoad() = CompatLoader.requireTranslations(1000, true) {
+    fun postLoad() = CompatLoader.requireTranslations(1000, true) { list(mods) }
+
+    @JvmStatic
+    fun refresh() = CompatLoader.requireTranslations(1001, true) {
+        val added = findUnlisted()
+        mods.addAll(added)
+        list(added)
+    }
+
+    private fun list(mods: List<Mod>) {
         val nativeCoveredMods = mods.mapNotNull { mod ->
             val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
             mod.aliasNativeChildConfig(nativeChild)

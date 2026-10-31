@@ -184,10 +184,13 @@ public final class ConfigEntrypoints {
         for (Provider provider : providers()) {
             if (!isDecided(provider.modId)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
         }
-        if (added.isEmpty()) return;
-        prepare(added.keySet());
-        ConfigManager.initializeLate(() -> added.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints))));
-        decidePending();
+        if (!added.isEmpty()) {
+            prepare(added.keySet());
+            ConfigManager.initializeLate(() -> added.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints))));
+            decidePending();
+        }
+        //? modmenu_compat
+        if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.refresh();
         //?}
     }
 

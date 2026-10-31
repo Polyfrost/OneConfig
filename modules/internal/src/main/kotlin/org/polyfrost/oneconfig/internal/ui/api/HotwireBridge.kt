@@ -355,8 +355,10 @@ object HotwireBridge {
     private fun installedCheck(): CompletableFuture<Unit>? {
         val state = installedState()
         if (state == storeCheckedState) return storeChecked
-        val store = engine()?.callMethod("getStore") ?: return null
-        store.callMethod("checkInstalled")
+        val engine = engine() ?: return null
+        val made = engine.callMethod("getStore")
+        val store = made ?: runCatching { onUiThread { engine.callHidden("findStore") } }.getOrNull() ?: return null
+        if (made != null) store.callMethod("checkInstalled")
         storeCheckedState = state
         return storeWorkerDone(store.callMethod("getModel")!!)
             .completeOnTimeout(Unit, STORE_WORKER_TIMEOUT_SECONDS, TimeUnit.SECONDS).also { storeChecked = it }
@@ -537,7 +539,8 @@ object HotwireBridge {
         val jars = downloadUpdate(update)
         val action = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
             CompletableFuture.supplyAsync {
-                jars.firstNotNullOfOrNull { jar -> queueAdd(engine, jar).takeUnless { it.ok } }
+                jars.dropLast(1).firstNotNullOfOrNull { jar -> queueAdd(engine, jar).takeUnless { it.ok } }
+                    ?: queueSelfUpdate(engine, update, jars.last()).takeUnless { it.ok }
                     ?: Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", update.name))
             }
         }
@@ -546,6 +549,47 @@ object HotwireBridge {
             "${update.installedVersion} → ${update.newVersion}",
             listOf(translated("oneconfig.page.hotwire.update.self", "Hotwire can't update itself while the game runs, so it updates at the next launch.")),
             listOf(action),
+        )
+    }
+
+    private fun queueSelfUpdate(engine: Any, update: StoreUpdate, jar: Path): Result {
+        val queued = queueAdd(engine, jar)
+        if (!queued.ok) return queued
+        val queue = engine.field("updateQueue")!!
+        return runCatching {
+            val running = engine.callMethod("findJarOf", update.modId) as Path
+            val hash = Class.forName("dev.moon.hotwire.jar.FileHashes").getMethod("findSha256", Path::class.java).invoke(null, running) as String
+            replaceQueued(queue, jar, update.installedVersion, running, hash)
+            Result(true, "")
+        }.getOrElse {
+            removeQueued(queue, jar)
+            queueFailed(jar)
+        }
+    }
+
+    private fun queuedEntry(queue: Any, jar: Path): Any =
+        (queue.callMethod("getEntries") as List<*>).first { Path.of(it!!.get("stagedJar") as String).fileName == jar.fileName }!!
+
+    private fun removeQueued(queue: Any, jar: Path) {
+        queue.callMethod("remove", queuedEntry(queue, jar).get("modId")!!)
+    }
+
+    fun replaceQueued(queue: Any, jar: Path, fromVersion: String, running: Path, runningSha256: String) {
+        val entry = queuedEntry(queue, jar)
+        queue.callMethod(
+            "add",
+            entry.javaClass.constructors.single().newInstance(
+                entry.get("modId"),
+                entry.get("name"),
+                fromVersion,
+                entry.get("toVersion"),
+                running.fileName.toString(),
+                runningSha256,
+                entry.get("stagedJar"),
+                entry.get("stagedSha256"),
+                entry.get("reason"),
+                entry.get("queuedAtMillis"),
+            ),
         )
     }
 
