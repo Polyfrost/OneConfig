@@ -335,7 +335,7 @@ class PolyComposePath : Path {
 
     override fun addRoundRect(roundRect: RoundRect, direction: Path.Direction) {
         val empty = isEmpty
-        val r = roundRect
+        val r = roundRect.withFittedRadii()
         fun corner(cx: Float, cy: Float, rx: Float, ry: Float, startDeg: Float) {
             if (rx <= 0f || ry <= 0f) { lineTo(cx + rx * cos(Math.toRadians(startDeg + 45.0)).toFloat() * 1.4142135f, cy + ry * sin(Math.toRadians(startDeg + 45.0)).toFloat() * 1.4142135f); return }
             val n = segments(PI.toFloat() / 2f * max(rx, ry))
@@ -408,6 +408,21 @@ class PolyComposePath : Path {
     internal fun closedAt(i: Int): Boolean = if (i < closed.size) closed[i] else false
 
     private fun segments(length: Float) = ceil(sqrt(max(length, 1f)) * 1.5f).toInt().coerceIn(1, 64)
+}
+
+private fun RoundRect.withFittedRadii(): RoundRect {
+    fun fit(side: Float, a: Float, b: Float) = if (a + b > side) (side / (a + b)).coerceAtLeast(0f) else 1f
+    val scale = minOf(
+        minOf(fit(width, topLeftCornerRadius.x, topRightCornerRadius.x), fit(width, bottomLeftCornerRadius.x, bottomRightCornerRadius.x)),
+        minOf(fit(height, topLeftCornerRadius.y, bottomLeftCornerRadius.y), fit(height, topRightCornerRadius.y, bottomRightCornerRadius.y)),
+    )
+    if (scale >= 1f) return this
+    return copy(
+        topLeftCornerRadius = topLeftCornerRadius * scale,
+        topRightCornerRadius = topRightCornerRadius * scale,
+        bottomRightCornerRadius = bottomRightCornerRadius * scale,
+        bottomLeftCornerRadius = bottomLeftCornerRadius * scale,
+    )
 }
 
 internal fun bounds(contours: List<FloatArray>): Rect {
