@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -114,7 +115,7 @@ fun HotwireAdd() {
             Chip(translated("oneconfig.page.hotwire.downloads_folder", "Downloads folder"), selected = false, icon = "external-link") { HotwireBridge.openDownloads() }
         }
         fun reviewUpdate(update: HotwireBridge.StoreUpdate, icon: () -> String?) =
-            review(update.name, icon) { HotwireBridge.planFor(HotwireBridge.downloadUpdate(update), update = true).get() }
+            review(update.name, icon) { HotwireBridge.planUpdate(HotwireBridge.downloadUpdate(update)) }
 
         if (reading || plan != null) {
             PlanCard(reading, plan, planIcon, onBack = ::leavePreview)
@@ -212,10 +213,17 @@ private fun ModrinthSource(
     var group by remember { mutableStateOf(categories.firstOrNull()) }
     var category by remember { mutableStateOf("") }
     var hits by remember { mutableStateOf<Result<List<HotwireBridge.StoreHit>>?>(null) }
-    LaunchedEffect(query, category) {
+    var total by remember { mutableIntStateOf(0) }
+    var searched by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var offset by remember(query, category) { mutableIntStateOf(0) }
+    LaunchedEffect(query, category, offset) {
         // waits out typing so each keystroke doesn't hit Modrinth
-        delay(350)
-        hits = withContext(Dispatchers.IO) { runCatching { HotwireBridge.searchStore(query, category) } }
+        if (offset == 0) delay(350)
+        val earlier = if (offset == 0) emptyList() else hits?.getOrNull().orEmpty()
+        val page = withContext(Dispatchers.IO) { runCatching { HotwireBridge.searchStore(query, category, offset) } }
+        total = page.getOrNull()?.total ?: 0
+        hits = page.map { earlier + it.hits }
+        searched = query to category
     }
     LaunchedEffect(Unit) { HotwireUpdates.ensure() }
 
@@ -223,7 +231,7 @@ private fun ModrinthSource(
         categories.forEach {
             Chip(categoryLabel(it.parts.singleOrNull() ?: it.name), group === it) {
                 group = it
-                category = it.parts.firstOrNull().orEmpty()
+                category = it.parts.firstOrNull() ?: it.name
             }
         }
     }
@@ -260,7 +268,15 @@ private fun ModrinthSource(
                     if (update == null && isInstalled) null else hit to update
                 }
             }
-            ResultList(shown) { (hit, update) ->
+            val loaded = current.getOrThrow().size
+            val footer: @Composable () -> Unit = {
+                if (searched == query to category && offset < loaded && loaded < total) {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Chip(translated("oneconfig.page.hotwire.modrinth.more", "Load more"), selected = false) { offset = loaded }
+                    }
+                }
+            }
+            ResultList(shown, footer) { (hit, update) ->
                 RowIcon(hit.projectId) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(hit.title, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -315,7 +331,7 @@ private fun UpdatesSource(onUpdate: (HotwireBridge.StoreUpdate) -> Unit) {
 
 /** A scrolling column of rows styled like the Hotwire page's list view */
 @Composable
-private fun <T> ResultList(items: List<T>, row: @Composable androidx.compose.foundation.layout.RowScope.(T) -> Unit) {
+private fun <T> ResultList(items: List<T>, footer: @Composable () -> Unit = {}, row: @Composable RowScope.(T) -> Unit) {
     val theme = LocalTheme.current
     val listState = rememberLazyListState()
     ScrollbarBox(listState, PageGutter, Modifier.fillMaxSize()) {
@@ -335,6 +351,7 @@ private fun <T> ResultList(items: List<T>, row: @Composable androidx.compose.fou
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) { row(item) }
             }
+            item { footer() }
         }
     }
 }
@@ -402,9 +419,10 @@ private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: Strin
                                 outcome = done
                                 awaiting = false
                                 notifyHotwireResult(done)
+                                HotwireUpdates.refreshWhenDone()
                             }
                         }
-                        HotwireUpdates.refreshWhenDone()
+                        if (pending == null) HotwireUpdates.refreshWhenDone()
                     }
                 }
             }

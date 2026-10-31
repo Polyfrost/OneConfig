@@ -78,6 +78,17 @@ object HotwireBridge {
     /** Whether Hotwire is running a switch, add or update right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
 
+    fun awaitIdle() {
+        val start = System.nanoTime()
+        var sawWorking = false
+        while (true) {
+            Thread.sleep(100)
+            val working = isWorking()
+            if (working) sawWorking = true
+            if (sawWorking && !working || !sawWorking && System.nanoTime() - start > 3_000_000_000L) return
+        }
+    }
+
     /** [run] hands back the outcome when Hotwire reports one, and null when Hotwire only posts it to chat */
     class JarAction(val label: String, val primary: Boolean, private val run: () -> CompletableFuture<Result>?) {
         /** Runs the action from a click, where a failure inside Hotwire comes back as a failed result, not a throw */
@@ -172,6 +183,8 @@ object HotwireBridge {
         val installed: Boolean,
     )
 
+    class StorePage(val hits: List<StoreHit>, val total: Int)
+
     class StoreUpdate(
         internal val offer: Any,
         val modId: String,
@@ -210,22 +223,28 @@ object HotwireBridge {
     private var storeChecked = false
 
     /**
-     * Searches Modrinth for mods matching [words] in [category], or every category when blank; blocks on the network,
-     * so call it off the UI thread
+     * Searches Modrinth for mods matching [words] in [category], or every category when blank, skipping the first
+     * [offset] results; blocks on the network, so call it off the UI thread
      */
-    fun searchStore(words: String, category: String): List<StoreHit> {
-        val query = storeQuery(words).let { it.javaClass.getMethod("withCategory", String::class.java).invoke(it, category) }
-        fun search() = ((call("searchStore", query) as CompletableFuture<*>).get()!!.get("mods") as List<*>).map {
-            StoreHit(
-                it!!.get("id") as String,
-                it.get("slug") as String? ?: "",
-                it.get("name") as String,
-                it.get("author") as String? ?: "",
-                it.get("description") as String? ?: "",
-                it.get("downloads") as Long,
-                (it.get("iconUrl") as String?)?.takeIf { url -> url.isNotBlank() },
-                it.get("installed") as Boolean,
-            )
+    fun searchStore(words: String, category: String, offset: Int): StorePage {
+        val query = storeQuery(words)
+            .let { it.javaClass.getMethod("withCategory", String::class.java).invoke(it, category) }
+            .let { it.javaClass.getMethod("withOffset", Int::class.java).invoke(it, offset) }
+        fun search(): StorePage {
+            val page = (call("searchStore", query) as CompletableFuture<*>).get()!!
+            val hits = (page.get("mods") as List<*>).map {
+                StoreHit(
+                    it!!.get("id") as String,
+                    it.get("slug") as String? ?: "",
+                    it.get("name") as String,
+                    it.get("author") as String? ?: "",
+                    it.get("description") as String? ?: "",
+                    it.get("downloads") as Long,
+                    (it.get("iconUrl") as String?)?.takeIf { url -> url.isNotBlank() },
+                    it.get("installed") as Boolean,
+                )
+            }
+            return StorePage(hits, page.get("total") as Int)
         }
         val first = search()
         if (storeChecked) return first
@@ -291,9 +310,43 @@ object HotwireBridge {
         }
     }
 
-    /** Downloads an offered update the way Hotwire does, returning the jar for [planFor]; blocks on the network */
-    fun downloadUpdate(update: StoreUpdate): Path =
-        engine()!!.callMethod("getUpdateCheck")!!.callMethod("fetch", update.offer) as Path
+    /** Downloads the mods an offered update newly needs and then the update's own jar, last; blocks on the network */
+    @Suppress("UNCHECKED_CAST")
+    fun downloadUpdate(update: StoreUpdate): List<Path> =
+        engine()!!.callMethod("getUpdateCheck")!!.callMethod("fetchWithNeeds", update.offer, Consumer<String> {}) as List<Path>
+
+    /** What applying [jars] from [downloadUpdate] would do; blocks until Hotwire has read them */
+    fun planUpdate(jars: List<Path>): JarPlan {
+        val plan = planFor(jars.last(), update = true).get()
+        val needs = jars.dropLast(1)
+        val engine = engine()
+        if (needs.isEmpty() || engine == null || engine.callMethod("canUpdate") != true) return plan
+        val adds = needs.map { (engine.callMethod("dryRunAdd", it) as CompletableFuture<*>).get()!! }
+        val refused = adds.firstOrNull { (it.get("mode") as Enum<*>).name == "REFUSED" }
+        @Suppress("UNCHECKED_CAST")
+        if (refused != null) return JarPlan(plan.title, plan.detail, refused.get("lines") as List<String>, emptyList())
+        val action = JarAction(translated("oneconfig.page.hotwire.update.with_needs", "Add and update"), true) {
+            CompletableFuture.supplyAsync {
+                runCatching { addThenUpdate(engine, needs.zip(adds), jars.last()) }
+                    .getOrElse { Result(false, (it.cause ?: it).message ?: it.toString()) }
+            }
+        }
+        val lines = adds.map { translated("oneconfig.page.hotwire.update.adds", "Adds %s, which this update needs.", it.get("name") as String) }
+        return JarPlan(plan.title, plan.detail, lines + plan.lines, listOf(action))
+    }
+
+    /** Adds [needs] and only then reads the update, since what Hotwire allows for it depends on them being in */
+    private fun addThenUpdate(engine: Any, needs: List<Pair<Path, Any>>, jar: Path): Result {
+        for ((need, preview) in needs) {
+            Platform.screen().runOnUiThread { engine.callMethod("add", need, preview.get("mode")!!) }
+            awaitIdle()
+        }
+        val plan = planFor(jar, update = true).get()
+        val action = plan.actions.firstOrNull { it.primary } ?: return Result(false, plan.lines.firstOrNull().orEmpty())
+        val attempt = CompletableFuture<CompletableFuture<Result>?>()
+        Platform.screen().runOnUiThread { attempt.complete(action.attempt()) }
+        return attempt.get()?.get() ?: Result(true, translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat."))
+    }
 
     /**
      * Reads [jar] the way Hotwire does before adding or updating
@@ -343,11 +396,10 @@ object HotwireBridge {
             engine.callMethod("update", jar, engine.enumArg("update", method))
             null
         }
-        val later = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), false, update("NEXT_START"))
         return when (preview.javaClass.simpleName) {
             "Ready" -> {
-                // Hotwire's own panel only offers a live swap when its preview allows one; the lines say what blocks it
-                val inPlace = (preview.get("method") as Enum<*>).name == "IN_PLACE"
+                val method = (preview.get("method") as Enum<*>).name
+                val inPlace = method == "IN_PLACE"
                 val lines = preview.get("lines") as List<String>
                 JarPlan(
                     preview.get("name") as String,
@@ -357,11 +409,17 @@ object HotwireBridge {
                     } else {
                         listOf(translated("oneconfig.page.hotwire.update.restart_only", "Hotwire can't swap this mod while the game runs, so it updates at the next launch.")) + lines
                     },
-                    if (inPlace) {
-                        listOf(JarAction(translated("oneconfig.page.hotwire.update.now", "Update now"), true, update("IN_PLACE")), later)
-                    } else {
-                        listOf(JarAction(later.label, true, update("NEXT_START")))
-                    },
+                    listOf(
+                        JarAction(
+                            if (inPlace) {
+                                translated("oneconfig.page.hotwire.update.now", "Update now")
+                            } else {
+                                translated("oneconfig.page.hotwire.update.next_start", "Update at next launch")
+                            },
+                            true,
+                            update(method),
+                        ),
+                    ),
                 )
             }
             "Refused" -> JarPlan(preview.get("name") as String, "", listOf(preview.get("reason") as String), emptyList())

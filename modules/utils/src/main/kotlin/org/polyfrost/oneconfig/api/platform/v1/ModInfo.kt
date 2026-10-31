@@ -13,9 +13,25 @@ data class ModInfo @JvmOverloads constructor(
     val authors: String? = null,
     val credits: String? = null,
     val description: String? = null,
-    /** Id of the mod whose jar this one is nested in, or null for a top-level mod */
-    val parentId: String? = null,
 ){
+    /** Id of the mod whose jar this one is nested in, or null for a top-level mod; [copy] does not carry it over */
+    var parentId: String? = null
+        private set
+
+    constructor(
+        id: String,
+        name: String,
+        version: String,
+        file: Path?,
+        modIconPath: String?,
+        authors: String?,
+        credits: String?,
+        description: String?,
+        parentId: String?,
+    ) : this(id, name, version, file, modIconPath, authors, credits, description) {
+        this.parentId = parentId
+    }
+
     /**
      * Resolves [modIconPath] against this mod's own jar root ([file])
      *

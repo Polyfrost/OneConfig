@@ -26,7 +26,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -40,10 +39,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,16 +82,17 @@ object HotwireUpdates {
 
     val modIds: Set<String> get() = found?.getOrNull()?.mapTo(HashSet()) { it.modId }.orEmpty()
 
+    /** The name of the update the running batch is on, or null when no batch is running */
+    var updating by mutableStateOf<String?>(null)
+        private set
+
     private var checked = false
 
-    /** Checks on first use only */
-    suspend fun ensure() {
-        if (!checked) refresh()
-    }
+    private val scope = CoroutineScope(SupervisorJob() + Executor { Platform.screen().runOnUiThread(it) }.asCoroutineDispatcher())
 
-    suspend fun refresh() {
-        checked = true
-        apply(withContext(Dispatchers.IO) { runCatching { HotwireBridge.findUpdates() } })
+    /** Checks on first use only */
+    fun ensure() {
+        if (!checked) refreshAfter {}
     }
 
     /**
@@ -97,24 +101,53 @@ object HotwireUpdates {
      *
      * Runs on its own thread so leaving the page doesn't cancel it
      */
-    fun refreshWhenDone() {
+    fun refreshWhenDone() = refreshAfter(HotwireBridge::awaitIdle)
+
+    private fun refreshAfter(wait: () -> Unit) {
         checked = true
         Thread({
-            awaitIdle()
+            wait()
             val result = runCatching { HotwireBridge.findUpdates() }
             Platform.screen().runOnUiThread { apply(result) }
         }, "OneConfig Hotwire update check").apply { isDaemon = true }.start()
     }
 
-    /** Blocks until Hotwire stops working after having started, or a few seconds if it never reports progress */
-    fun awaitIdle() {
-        val start = System.nanoTime()
-        var sawWorking = false
-        while (true) {
-            Thread.sleep(100)
-            val working = HotwireBridge.isWorking()
-            if (working) sawWorking = true
-            if (sawWorking && !working || !sawWorking && System.nanoTime() - start > 3_000_000_000L) return
+    /**
+     * Applies each update in turn with whatever Hotwire allows it, live or at the next launch, since Hotwire's own
+     * batch update waits on confirmations in its screen
+     */
+    fun updateAll(updates: List<HotwireBridge.StoreUpdate>, onDone: () -> Unit) {
+        scope.launch {
+            val problems = ArrayList<String>()
+            try {
+                for (update in updates) {
+                    updating = update.name
+                    val plan = withContext(Dispatchers.IO) {
+                        runCatching { HotwireBridge.planUpdate(HotwireBridge.downloadUpdate(update)) }
+                    }
+                    val action = plan.getOrNull()?.actions?.firstOrNull { it.primary }
+                    if (action == null) {
+                        val reason = plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.firstOrNull()
+                        problems += "${update.name}: ${reason.orEmpty()}"
+                        continue
+                    }
+                    val failed = action.attempt()?.let { withContext(Dispatchers.IO) { it.get() } }?.takeUnless { it.ok }
+                    if (failed != null) {
+                        problems += "${update.name}: ${failed.message}"
+                        continue
+                    }
+                    withContext(Dispatchers.IO) { HotwireBridge.awaitIdle() }
+                }
+            } finally {
+                updating = null
+                refreshWhenDone()
+            }
+            if (problems.isEmpty()) {
+                Notifications.success("Hotwire", translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat."))
+                onDone()
+            } else {
+                Notifications.error("Hotwire", problems.joinToString(" "))
+            }
         }
     }
 
@@ -196,8 +229,7 @@ fun Hotwire() {
     LaunchedEffect(Unit) { HotwireUpdates.ensure() }
     val availableUpdates = HotwireUpdates.modIds
     val families = remember(states) {
-        // mods Hotwire refuses to switch are left out, unless Hotwire is not there to ask
-        modFamilies(gridMods(states)).filterKeys { states == null || states[it.id]?.switchable == true }
+        modFamilies(gridMods(states)).filterValues { members -> states == null || members.any { states[it.id]?.switchable == true } }
     }
     val query = ShellState.searchQuery.trim()
     val mods = remember(families, query) {
@@ -234,7 +266,7 @@ fun Hotwire() {
                     HotwireTile(
                         mod,
                         families.getValue(mod),
-                        on = states?.get(mod.id)?.on,
+                        on = familyOn(families.getValue(mod), states),
                         hasUpdate = families.getValue(mod).any { it.id in availableUpdates },
                         list = listLayout,
                         selected = mod.id in selected,
@@ -319,6 +351,10 @@ private fun modFamilies(mods: Collection<ModInfo>): Map<ModInfo, List<ModInfo>> 
     }
 }
 
+/** Whether a family counts as on: its first member Hotwire can switch decides, which is the root unless that can't be */
+private fun familyOn(family: List<ModInfo>, states: Map<String, HotwireBridge.ModState>?): Boolean? =
+    family.firstNotNullOfOrNull { mod -> states?.get(mod.id)?.takeIf { it.switchable } }?.on
+
 /** The picked mods and what switching them does, with the button that does it, as Hotwire's own screen offers */
 @Composable
 private fun SwitchBar(
@@ -329,10 +365,10 @@ private fun SwitchBar(
 ) {
     val theme = LocalTheme.current
     // a picked entry switches as a whole, so every member Hotwire can switch goes along with its root
-    fun idsWhere(on: Boolean) = picked
-        .filterKeys { states?.get(it.id)?.on == on }
-        .values.flatten()
-        .filter { states?.get(it.id)?.switchable == true }
+    fun idsWhere(on: Boolean) = picked.values
+        .filter { familyOn(it, states) == on }
+        .flatten()
+        .filter { mod -> states?.get(mod.id)?.let { it.switchable && it.on == on } == true }
         .map { it.id }
     val turnOff = remember(picked, states) { idsWhere(true) }
     val turnOn = remember(picked, states) { idsWhere(false) }
@@ -344,16 +380,16 @@ private fun SwitchBar(
     }
     val pickedIds = picked.values.flatten().mapTo(HashSet()) { it.id }
     val updates = HotwireUpdates.found?.getOrNull().orEmpty().filter { it.modId in pickedIds }
-    val scope = rememberCoroutineScope()
-    var updating by remember { mutableStateOf<String?>(null) }
-    var running by remember { mutableStateOf(false) }
+    val updating = HotwireUpdates.updating
+    var switching by remember { mutableStateOf(false) }
+    val running = switching || updating != null
     var fraction by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(running) {
         while (running) withFrameNanos { fraction = HotwireBridge.progress() }
     }
 
-    val offCount = picked.keys.count { states?.get(it.id)?.on == true }
-    val onCount = picked.keys.count { states?.get(it.id)?.on == false }
+    val offCount = picked.values.count { familyOn(it, states) == true }
+    val onCount = picked.values.count { familyOn(it, states) == false }
     val label = when {
         offCount > 0 && onCount > 0 -> "Switch ${offCount + onCount}"
         offCount > 0 -> "Turn off $offCount"
@@ -367,49 +403,8 @@ private fun SwitchBar(
     }
     val canSwitch = !running && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
 
-    /**
-     * Applies each picked update in turn with whatever Hotwire allows it, live or at the next launch, since Hotwire's
-     * own batch update waits on confirmations in its screen
-     */
-    fun startUpdates() {
-        running = true
-        scope.launch {
-            val problems = ArrayList<String>()
-            try {
-                for (update in updates) {
-                    updating = update.name
-                    val plan = withContext(Dispatchers.IO) {
-                        runCatching { HotwireBridge.planFor(HotwireBridge.downloadUpdate(update), update = true).get() }
-                    }
-                    val action = plan.getOrNull()?.actions?.firstOrNull { it.primary }
-                    if (action == null) {
-                        val reason = plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.firstOrNull()
-                        problems += "${update.name}: ${reason.orEmpty()}"
-                        continue
-                    }
-                    val failed = action.attempt()?.getNow(null)?.takeUnless { it.ok }
-                    if (failed != null) {
-                        problems += "${update.name}: ${failed.message}"
-                        continue
-                    }
-                    withContext(Dispatchers.IO) { HotwireUpdates.awaitIdle() }
-                }
-            } finally {
-                updating = null
-                running = false
-                HotwireUpdates.refreshWhenDone()
-            }
-            if (problems.isEmpty()) {
-                Notifications.success("Hotwire", translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat."))
-                onClear()
-            } else {
-                Notifications.error("Hotwire", problems.joinToString(" "))
-            }
-        }
-    }
-
     fun start() {
-        running = true
+        switching = true
         val off = if (turnOff.isEmpty()) done("") else HotwireBridge.switch(turnOff, false)
         off.thenCompose { first ->
             if (!first.ok || turnOn.isEmpty()) return@thenCompose CompletableFuture.completedFuture(first)
@@ -422,7 +417,7 @@ private fun SwitchBar(
             }
         }.whenComplete { result, error ->
             Platform.screen().runOnUiThread {
-                running = false
+                switching = false
                 notifyHotwireResult(result ?: HotwireBridge.Result(false, error?.message ?: ""))
                 if (result?.ok == true) onClear()
             }
@@ -451,7 +446,7 @@ private fun SwitchBar(
         }
         Chip("Clear", selected = false, onClick = onClear)
         if (!running && updates.isNotEmpty()) {
-            Chip(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), selected = true, onClick = ::startUpdates)
+            Chip(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), selected = true) { HotwireUpdates.updateAll(updates, onClear) }
         }
         if (canSwitch) Chip(label, selected = true, onClick = ::start)
     }
