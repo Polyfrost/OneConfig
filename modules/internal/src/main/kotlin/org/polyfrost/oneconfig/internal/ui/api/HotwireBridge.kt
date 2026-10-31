@@ -299,6 +299,10 @@ object HotwireBridge {
     private fun storeQuery(words: String): Any =
         Class.forName("dev.moon.hotwire.api.StoreQuery").getMethod("of", String::class.java).invoke(null, words)
 
+    private fun directDownloadQuery(): Any = storeQuery("").let {
+        it.javaClass.getMethod("withBrowsing", String::class.java, String::class.java).invoke(it, "", MODRINTH_LOADER)
+    }
+
     class StoreCategory(val name: String, val parts: List<String>)
 
     /** Modrinth's mod categories as Hotwire groups them, where [StoreCategory.parts] are what a search can filter by */
@@ -395,7 +399,8 @@ object HotwireBridge {
         val save = JarAction(translated("oneconfig.page.hotwire.add.save", "Save to Downloads"), false) {
             accepted = true
             add.through("StoreAdd", "cancel")
-            call("saveToDownloads", storeQuery(""), hit.projectId, version).asResults()
+            val query = if (jars.isEmpty()) directDownloadQuery() else storeQuery("")
+            call("saveToDownloads", query, hit.slug.ifBlank { hit.projectId }, version).asResults()
         }
         val now = JarAction(
             if (reopen) {
@@ -464,7 +469,8 @@ object HotwireBridge {
         val scan = Class.forName("dev.moon.hotwire.jar.ContentScan")
         val classes = scan.getMethod("readClasses", Path::class.java).invoke(null, jar)
         val superOf = Function<String, String?> { adds.callMethod("findSuperOf", it) as String? }
-        (scan.getMethod("findKinds", classes.javaClass, Function::class.java).invoke(null, classes, superOf) as Set<*>).isNotEmpty()
+        val findKinds = scan.methods.first { it.name == "findKinds" && it.parameterTypes[0].isInstance(classes) }
+        (findKinds.invoke(null, classes, superOf) as Set<*>).isNotEmpty()
     }.getOrDefault(false)
 
     private fun Any.askAdder(type: String, method: String, arg: Any): String? =
@@ -680,7 +686,7 @@ object HotwireBridge {
     private fun isQueued(engine: Any, jar: Path): Boolean {
         val manifest = manifestOf(jar) ?: return false
         return (engine.callMethod("getPendingChanges") as List<*>).any {
-            it!!.javaClass.simpleName == "Update" && it.get("modId") == manifest.get("id") && it.get("toVersion") == manifest.get("version")
+            it!!.javaClass.simpleName == "Update" && it.get("newJar") == jar.fileName.toString() && it.get("toVersion") == manifest.get("version")
         }
     }
 
@@ -697,11 +703,9 @@ object HotwireBridge {
      * Hotwire's single worker after that update, and then sees the new version in, queued, or neither
      */
     @Suppress("UNCHECKED_CAST")
-    private fun updateResult(engine: Any, jar: Path, name: String, version: String): CompletableFuture<Result> =
+    private fun updateResult(engine: Any, jar: Path, name: String): CompletableFuture<Result> =
         (engine.callMethod("dryRunUpdate", jar) as CompletableFuture<Any>).thenApply { after ->
-            val queued = (engine.callMethod("getPendingChanges") as List<*>).any {
-                it!!.javaClass.simpleName == "Update" && it.get("name") == name && it.get("toVersion") == version
-            }
+            val queued = isQueued(engine, jar)
             val live = after.javaClass.simpleName == "SameVersion"
             when {
                 live && queued -> Result(true, translated("oneconfig.page.hotwire.update.done", "%s is updated.", name))
@@ -771,7 +775,7 @@ object HotwireBridge {
     private fun updatePlan(engine: Any, jar: Path, preview: Any): JarPlan {
         fun update(method: String): () -> CompletableFuture<Result>? = {
             engine.callMethod("update", jar, engine.enumArg("update", method))
-            updateResult(engine, jar, preview.get("name") as String, preview.get("newVersion") as String)
+            updateResult(engine, jar, preview.get("name") as String)
         }
         return when (preview.javaClass.simpleName) {
             "Ready" -> {
@@ -900,4 +904,6 @@ object HotwireBridge {
     private const val STORE_WORKER_TIMEOUT_SECONDS = 60L
 
     private const val STORE_REVISION = 5
+
+    private const val MODRINTH_LOADER = "fabric"
 }

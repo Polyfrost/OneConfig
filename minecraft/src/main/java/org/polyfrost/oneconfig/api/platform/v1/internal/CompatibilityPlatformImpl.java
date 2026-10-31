@@ -46,27 +46,30 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     public Set<ModInfo> getMods() {
         //? fabric || ornithe {
 
-        return FabricLoader.getInstance().getAllMods().stream()
-                .map(mod -> {
-                    var metadata = mod.getMetadata();
-                    return new ModInfo(
-                        metadata.getId(),
-                        metadata.getName(),
-                        metadata.getVersion().getFriendlyString(),
-                        mod.getRootPaths().getFirst(),
-                        metadata.getIconPath(Integer.MAX_VALUE).orElse(null),
-                        metadata.getAuthors().stream()
-                                .map(person -> person.getName())
-                                .filter(name -> !name.isBlank())
-                                .collect(Collectors.joining(", ")),
-                        metadata.getContributors().stream()
-                                .map(person -> person.getName())
-                                .filter(name -> !name.isBlank())
-                                .collect(Collectors.joining(", ")),
-                        metadata.getDescription(),
-                        mod.getContainingMod().map(parent -> parent.getMetadata().getId()).orElseGet(() -> modMenuParent(metadata))
-                    );
-                }).collect(Collectors.toSet());
+        FabricLoader loader = FabricLoader.getInstance();
+        synchronized (loader) {
+            return loader.getAllMods().stream()
+                    .map(mod -> {
+                        var metadata = mod.getMetadata();
+                        return new ModInfo(
+                            metadata.getId(),
+                            metadata.getName(),
+                            metadata.getVersion().getFriendlyString(),
+                            mod.getRootPaths().getFirst(),
+                            metadata.getIconPath(Integer.MAX_VALUE).orElse(null),
+                            metadata.getAuthors().stream()
+                                    .map(person -> person.getName())
+                                    .filter(name -> !name.isBlank())
+                                    .collect(Collectors.joining(", ")),
+                            metadata.getContributors().stream()
+                                    .map(person -> person.getName())
+                                    .filter(name -> !name.isBlank())
+                                    .collect(Collectors.joining(", ")),
+                            metadata.getDescription(),
+                            mod.getContainingMod().map(parent -> parent.getMetadata().getId()).orElseGet(() -> modMenuParent(metadata))
+                        );
+                    }).collect(Collectors.toSet());
+        }
         //? }
 
         //? neoforge {

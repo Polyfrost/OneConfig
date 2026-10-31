@@ -111,8 +111,10 @@ object HotwireUpdates {
         checked = true
         Thread({
             wait()
-            val result = runCatching { HotwireBridge.findUpdates() }
-            Platform.screen().runOnUiThread { apply(result) }
+            synchronized(this) {
+                val result = runCatching { HotwireBridge.findUpdates() }
+                Platform.screen().runOnUiThread { apply(result) }
+            }
         }, "OneConfig Hotwire update check").apply { isDaemon = true }.start()
     }
 
