@@ -68,6 +68,12 @@ data class ModInfo @JvmOverloads constructor(
         @get:JvmStatic
         val loadedMods: Set<ModInfo>
             get() = cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
+
+        @JvmStatic
+        fun refreshLoadedMods() {
+            val live = Platform.compatibility().mods
+            if (live.isNotEmpty()) cached = (loadedMods.associateBy { it.id } + live.associateBy { it.id }).values.toSet()
+        }
     }
 }
 

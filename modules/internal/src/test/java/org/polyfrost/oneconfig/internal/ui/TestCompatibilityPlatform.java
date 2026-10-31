@@ -39,9 +39,11 @@ public final class TestCompatibilityPlatform implements CompatibilityPlatform {
     public void displayChatMessage(Component text) {
     }
 
+    public static Set<ModInfo> mods = Set.of();
+
     @Override
     public Set<ModInfo> getMods() {
-        return Set.of();
+        return mods;
     }
 
     @Override

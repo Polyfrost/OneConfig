@@ -168,24 +168,17 @@ object HotwireUpdates {
 private val iconPaths = HashMap<String, String?>()
 
 /**
- * Every mod seen this session by id, starting from the startup list
- *
- * Hotwire takes a mod off the loader's list when it turns it off, so this keeps its icon and parent for the grid
- */
-private val seenMods by lazy { ModInfo.loadedMods.associateByTo(HashMap()) { it.id } }
-
-/**
  * The mods the grid shows: the loader's live list, the mods seen earlier that Hotwire still knows about, and any
  * other mod Hotwire knows, such as one it kept off since the last launch
  */
 private fun gridMods(states: Map<String, HotwireBridge.ModState>?): Collection<ModInfo> {
-    // read past ModInfo's cache, since Hotwire can add mods after it was filled
-    val live = Platform.compatibility().mods
-    live.forEach { seenMods[it.id] = it }
-    val liveIds = live.mapTo(HashSet()) { it.id }
-    val known = seenMods.values.filter { it.id in liveIds || states?.containsKey(it.id) == true }
+    ModInfo.refreshLoadedMods()
+    val seen = ModInfo.loadedMods
+    val seenIds = seen.mapTo(HashSet()) { it.id }
+    val liveIds = Platform.compatibility().mods.mapTo(HashSet()) { it.id }
+    val known = seen.filter { it.id in liveIds || states?.containsKey(it.id) == true }
     val unseen = states.orEmpty().values
-        .filter { it.id !in seenMods }
+        .filter { it.id !in seenIds }
         .map { ModInfo(it.id, it.name.ifBlank { it.id }, it.version, null, null) }
     return known + unseen
 }

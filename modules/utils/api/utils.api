@@ -145,11 +145,13 @@ public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo {
 	public final fun getParentId ()Ljava/lang/String;
 	public final fun getVersion ()Ljava/lang/String;
 	public fun hashCode ()I
+	public static final fun refreshLoadedMods ()V
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo$Companion {
 	public final fun getLoadedMods ()Ljava/util/Set;
+	public final fun refreshLoadedMods ()V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ModInfoProvider {

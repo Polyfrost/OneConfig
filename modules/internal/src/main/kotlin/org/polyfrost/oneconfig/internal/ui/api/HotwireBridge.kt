@@ -10,6 +10,8 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import java.util.function.Function
+import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.translated
 
@@ -31,6 +33,7 @@ object HotwireBridge {
         private set
 
     fun invalidate() {
+        ModInfo.refreshLoadedMods()
         revision++
     }
 
@@ -41,7 +44,7 @@ object HotwireBridge {
         runCatching {
             cls.getMethod("getInstance").invoke(null).also { api ->
                 cls.getMethod("addListener", Consumer::class.java).invoke(api, Consumer<Any?> {
-                    Platform.screen().runOnUiThread { revision++ }
+                    Platform.screen().runOnUiThread(::invalidate)
                 })
             }
         }.getOrNull()
@@ -355,8 +358,8 @@ object HotwireBridge {
         @Suppress("UNCHECKED_CAST")
         val jars = add.field("jars") as List<Path>
         val inOrder = engine()?.takeIf { !canAdd && fitTogether(it, jars) }
-        val reopen = add.through("StoreAdd", "needsReopen") == true
-        val modes = (add.field("previews") as List<*>).map { it!!.addMode() }
+        val reopen = add.through("StoreAdd", "needsReopen") == true || inOrder != null && jars.any { reopensOnceMet(inOrder, it) }
+        val modes =(add.field("previews") as List<*>).map { it!!.addMode() }
         val onlyLater = modes.lastOrNull() == "NEXT_START" || inOrder != null && "NEXT_START" in modes
         var accepted = false
         val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), onlyLater) {
@@ -424,6 +427,15 @@ object HotwireBridge {
         val planner = plannerWith(engine, read)
         (planner.callMethod("planOn", ids, (offMods() + ids).toSet())!!.get("refusals") as List<*>).isEmpty() &&
             ids.all { (planner.callMethod("findOldDependencies", it) as List<*>).isEmpty() }
+    }.getOrDefault(false)
+
+    private fun reopensOnceMet(engine: Any, jar: Path): Boolean = runCatching {
+        val adds = engine.callHidden("findParts")!!.field("adds")!!
+        if (adds.callMethod("isInWorld") != true) return false
+        val scan = Class.forName("dev.moon.hotwire.jar.ContentScan")
+        val classes = scan.getMethod("readClasses", Path::class.java).invoke(null, jar)
+        val superOf = Function<String, String?> { adds.callMethod("findSuperOf", it) as String? }
+        (scan.getMethod("findKinds", classes.javaClass, Function::class.java).invoke(null, classes, superOf) as Set<*>).isNotEmpty()
     }.getOrDefault(false)
 
     private fun addInOrder(engine: Any, jars: List<Path>, name: String, reopen: Boolean): Result {
@@ -525,7 +537,8 @@ object HotwireBridge {
         firstAdds.firstOrNull { it.addMode() == "REFUSED" }
             ?.let { return JarPlan(plan.title, plan.detail, it.get("lines") as List<String>, emptyList()) }
         if (!collected || steps.isEmpty()) return plan
-        val reopen = firstAdds.any { it.addMode() == "SAVE_AND_REOPEN" }
+        val reopen = firstAdds.any { it.addMode() == "SAVE_AND_REOPEN" } ||
+            steps.any { engine.callMethod("canUpdate", it) != true && reopensOnceMet(engine, it) }
         val label = if (reopen) {
             translated("oneconfig.page.hotwire.update.reopen", "Save and update")
         } else {
@@ -766,10 +779,13 @@ object HotwireBridge {
                         if (outcome.javaClass.simpleName != "Added") return@runCatching Result(false, outcome.get("reason") as String)
                         val enabled = runCatching {
                             Class.forName("${engine.javaClass.packageName}.DisabledJars")
-                                .getDeclaredMethod("enable", Path::class.java).apply { isAccessible = true }.invoke(null, jar)
-                        }.getOrDefault(jar)
-                        engine.field("installed")!!.callMethod("onBroughtBack", id, enabled!!)
-                        Result(true, "")
+                                .getDeclaredMethod("enable", Path::class.java).apply { isAccessible = true }.invoke(null, jar)!!
+                        }
+                        engine.field("installed")!!.callMethod("onBroughtBack", id, enabled.getOrDefault(jar))
+                        enabled.fold({ Result(true, "") }) {
+                            val name = engine.callMethod("nameOfMod", id) as String
+                            Result(false, translated("oneconfig.page.hotwire.switch.rename_failed", "%s is back on, but it will be off at the next launch: %s", name, failure(it).message))
+                        }
                     }.getOrElse(::failure),
                 )
             })
@@ -787,12 +803,12 @@ object HotwireBridge {
             val (id, jar) = entry
             if (mode == "SAVE_AND_REOPEN" && !reopen) return reopenNotAgreed(engine.callMethod("nameOfMod", id) as String)
             val result = if (mode == "NOW") call("turnOn", listOf(id)).asResults().get() else addBackWithReopen(engine, id, jar)
-            if (!result.ok) return result
             awaitWorker(engine, jar)
             val back = onUiThread {
                 invalidate()
                 mods().orEmpty().any { it.id == id && it.on }
             }
+            if (!result.ok) return result
             if (!back) {
                 return Result(false, translated("oneconfig.page.hotwire.switch.add_back_failed", "Hotwire couldn't add back %s - please check chat!", engine.callMethod("nameOfMod", id) as String))
             }
