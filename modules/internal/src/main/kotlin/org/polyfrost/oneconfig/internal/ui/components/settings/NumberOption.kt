@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,8 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -73,6 +79,24 @@ fun formatSpinnerValue(v: Float): String =
     if (v == v.toLong().toFloat()) v.toLong().toString() else String.format(Locale.ROOT, "%.2f", v)
 
 @Composable
+private fun rememberUnitSuffix(unit: String?): VisualTransformation {
+    val color = LocalTheme.current.textColorSecondary
+    return remember(unit, color) {
+        if (unit == null) VisualTransformation.None else VisualTransformation { typed ->
+            val shown = AnnotatedString.Builder(typed).apply {
+                pushStyle(SpanStyle(color = color))
+                append(unit)
+                pop()
+            }.toAnnotatedString()
+            TransformedText(shown, object : OffsetMapping {
+                override fun originalToTransformed(offset: Int) = offset
+                override fun transformedToOriginal(offset: Int) = offset.coerceAtMost(typed.length)
+            })
+        }
+    }
+}
+
+@Composable
 private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val hoverInteraction = rememberInteractionSource()
@@ -116,6 +140,9 @@ fun NumberSpinner(
     arrowMin: Float = min,
     arrowMax: Float = max,
     onEditEnd: (() -> Unit)? = null,
+    unit: String? = null,
+    label: String? = null,
+    icon: String? = null,
 ) {
     val theme = LocalTheme.current
     var focused by remember { mutableStateOf(false) }
@@ -153,12 +180,23 @@ fun NumberSpinner(
                 fontFamily = theme.typography.family,
             ),
             cursorBrush = SolidColor(theme.textColor),
+            visualTransformation = rememberUnitSuffix(unit),
             // the field itself stays in the tree while the formatted text covers it so clicking it still focuses it for editing
             decorationBox = { innerTextField ->
-                Box {
-                    Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
-                    if (formatted != null) {
-                        Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (label != null) Text(label, color = theme.textColor, fontSize = 13.sp)
+                    if (icon != null) Icon(icon, color = theme.textColor, modifier = Modifier.size(12.dp))
+                    Box {
+                        Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
+                        if (formatted != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                if (unit != null) Text(unit, color = theme.textColorSecondary, fontSize = 13.sp)
+                            }
+                        }
                     }
                 }
             },
