@@ -1,5 +1,10 @@
 package org.polyfrost.oneconfig.internal.compat;
 
+import java.lang.reflect.Proxy;
+import java.util.List;
+import java.util.Map;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 
@@ -153,5 +158,28 @@ class ConfigEntrypointsTest {
     }
 
     static class Derived extends Base {
+    }
+
+    private static ModContainer mod(String id) {
+        ClassLoader loader = ConfigEntrypointsTest.class.getClassLoader();
+        ModMetadata metadata = (ModMetadata) Proxy.newProxyInstance(loader, new Class<?>[]{ModMetadata.class}, (proxy, method, args) -> id);
+        return (ModContainer) Proxy.newProxyInstance(loader, new Class<?>[]{ModContainer.class}, (proxy, method, args) -> metadata);
+    }
+
+    @Test
+    void theSameContainersAreNoChange() {
+        ModContainer lib = mod("lib");
+        assertFalse(ConfigEntrypoints.modsChanged(List.of(lib), Map.of("lib", lib)));
+    }
+
+    @Test
+    void anAddedModIsAChange() {
+        ModContainer lib = mod("lib");
+        assertTrue(ConfigEntrypoints.modsChanged(List.of(lib, mod("added")), Map.of("lib", lib)));
+    }
+
+    @Test
+    void aContainerReplacedUnderTheSameIdIsAChange() {
+        assertTrue(ConfigEntrypoints.modsChanged(List.of(mod("lib")), Map.of("lib", mod("lib"))));
     }
 }

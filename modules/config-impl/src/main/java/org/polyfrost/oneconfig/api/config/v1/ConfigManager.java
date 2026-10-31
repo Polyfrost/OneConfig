@@ -82,7 +82,7 @@ public final class ConfigManager {
     private static ConfigManager active;
     private static boolean initialized = false;
     private static boolean isFirstRun = false;
-    private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
+    private static final Queue<Config> pendingInitialization = new ConcurrentLinkedQueue<>();
     private static final Queue<Config> createdAfterStartup = new ConcurrentLinkedQueue<>();
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
@@ -90,6 +90,7 @@ public final class ConfigManager {
     private static final long MINIMUM_WAIT_NANOS = TimeUnit.MILLISECONDS.toNanos(500L);
     private static final ThreadLocal<Long> PROFILE_OPERATION_DEADLINE = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> REBINDING_PROFILES = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static final ThreadLocal<Boolean> LATE_INITIALIZING = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static volatile Consumer<Runnable> profileSwitchDispatcher = Runnable::run;
     private static final CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new CopyOnWriteArrayList<>();
@@ -219,6 +220,10 @@ public final class ConfigManager {
             return;
         }
         initialized = true;
+        initializePending();
+    }
+
+    private static void initializePending() {
         long t1 = System.nanoTime();
         LOGGER.info("Initializing {} configs...", pendingInitialization.size());
         while (!pendingInitialization.isEmpty()) {
@@ -245,15 +250,21 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public static void initializeLate(Predicate<Config> added, Runnable creator) {
-        initialized = false;
+        LATE_INITIALIZING.set(Boolean.TRUE);
         try {
             for (Config config : createdAfterStartup) {
-                if (added.test(config) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
+                if (config.creator == Thread.currentThread() && added.test(config) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
             }
             creator.run();
         } finally {
-            initialize();
+            LATE_INITIALIZING.remove();
+            initializePending();
         }
+    }
+
+    @ApiStatus.Internal
+    public static synchronized void claimForLateInitialization(Config config) {
+        if (LATE_INITIALIZING.get() && !initializedConfigs.containsKey(config.id) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
     }
 
     private static final Set<String> failedInitialization = ConcurrentHashMap.newKeySet();
@@ -266,7 +277,7 @@ public final class ConfigManager {
     public static void submitForInitialization(Config config) {
         // never initialize synchronously here because this runs from the Config base constructor
         // before subclass field initializers have run so collect() would read uninitialized fields
-        (initialized ? createdAfterStartup : pendingInitialization).add(config);
+        (initialized && !LATE_INITIALIZING.get() ? createdAfterStartup : pendingInitialization).add(config);
         for (ConfigSubmissionListener listener : submissionListeners) {
             try {
                 listener.onConfigSubmitted(config);

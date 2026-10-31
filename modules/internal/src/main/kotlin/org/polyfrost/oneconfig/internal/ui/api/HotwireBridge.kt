@@ -401,6 +401,7 @@ object HotwireBridge {
         val fitting = engine()?.takeIf { !canAdd && fitTogether(it, jars) }
         val refusal = fitting?.let { refusalOnceMet(it, jars) }
         val inOrder = fitting.takeIf { refusal == null }
+        val nextLaunch = engine()?.takeIf { jars.isNotEmpty() && (canAdd || inOrder != null) }?.let { nextLaunchRefusal(it, jars) }
         val reopen = add.through("StoreAdd", "needsReopen") == true || inOrder != null && jars.any { reopensOnceMet(inOrder, it) }
         val modes =(add.field("previews") as List<*>).map { it!!.addMode() }
         val onlyLater = modes.lastOrNull() == "NEXT_START" || inOrder != null && "NEXT_START" in modes
@@ -440,8 +441,8 @@ object HotwireBridge {
             }
         }
         @Suppress("UNCHECKED_CAST")
-        val lines = if (refusal != null) {
-            listOf(refusal)
+        val lines = if (refusal != null || nextLaunch != null) {
+            listOf(nextLaunch ?: refusal!!)
         } else if (inOrder == null) {
             add.through("StoreAdd", "getLines") as List<String>
         } else {
@@ -454,7 +455,7 @@ object HotwireBridge {
             "",
             lines,
             when {
-                !canAdd && inOrder == null -> listOf(save)
+                nextLaunch != null || !canAdd && inOrder == null -> listOf(save)
                 onlyLater -> listOf(later, save)
                 else -> listOf(now, later, save)
             },
@@ -504,6 +505,7 @@ object HotwireBridge {
     }.getOrNull()
 
     private fun addInOrder(engine: Any, jars: List<Path>, name: String, reopen: Boolean, later: Boolean = false): Result {
+        nextLaunchRefusal(engine, jars)?.let { return Result(false, it) }
         var queueing = later
         for (jar in jars) {
             queueing = queueing || dryRunAdd(engine, jar).addMode() == "NEXT_START"
@@ -585,7 +587,7 @@ object HotwireBridge {
         }.map { oldDependency.newInstance(*it.toTypedArray()) }
         refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids, builtIns)?.let { describeRefusal(engine, it) }
     }.getOrElse {
-        translated("oneconfig.page.hotwire.update.self_unchecked", "Hotwire couldn't check this update against your other mods, so it wasn't queued.")
+        translated("oneconfig.page.hotwire.next_launch_unchecked", "Hotwire couldn't check this against your other mods, so nothing was changed.")
     }
 
     fun oldBuiltIns(mod: String, needs: Map<String, List<String>>, present: (String) -> String?, fits: (String, List<String>) -> Boolean): List<List<String>> =
@@ -715,7 +717,8 @@ object HotwireBridge {
             ?.let { return JarPlan(plan.title, plan.detail, it.get("lines") as List<String>, emptyList()) }
         if (!collected || steps.isEmpty()) return plan
         val adds = steps.filter { engine.callMethod("canUpdate", it) != true }
-        refusalOnceMet(engine, adds)?.let { return JarPlan(plan.title, plan.detail, listOf(it), emptyList()) }
+        (refusalOnceMet(engine, adds) ?: adds.takeIf { it.isNotEmpty() }?.let { nextLaunchRefusal(engine, steps + jar) })
+            ?.let { return JarPlan(plan.title, plan.detail, listOf(it), emptyList()) }
         val reopen = firstAdds.any { it.addMode() == "SAVE_AND_REOPEN" } || adds.any { reopensOnceMet(engine, it) }
         val label = if (reopen) {
             translated("oneconfig.page.hotwire.update.reopen", "Save and update")
@@ -891,7 +894,11 @@ object HotwireBridge {
             null
         }
         val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false, add("NEXT_START"))
-        val actions = when ((preview.get("mode") as Enum<*>).name) {
+        val mode = (preview.get("mode") as Enum<*>).name
+        if (mode != "REFUSED") {
+            nextLaunchRefusal(engine, listOf(jar))?.let { return JarPlan(preview.get("name") as String, preview.get("version") as String? ?: "", listOf(it), emptyList()) }
+        }
+        val actions = when (mode) {
             "NOW" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.now", "Add now"), true, add("NOW")), later)
             "SAVE_AND_REOPEN" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.reopen", "Save and add"), true, add("SAVE_AND_REOPEN")), later)
             "NEXT_START" -> listOf(JarAction(later.label, true, add("NEXT_START")))

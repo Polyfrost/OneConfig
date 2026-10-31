@@ -81,7 +81,8 @@ public final class ConfigEntrypoints {
     private static final AtomicBoolean registered = new AtomicBoolean();
     private static final AtomicBoolean listening = new AtomicBoolean();
     private static volatile boolean startupDecided;
-    private static Set<String> seenMods = Set.of();
+    //? if !neoforge
+    private static Map<String, ModContainer> seenMods = Map.of();
     private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
@@ -176,11 +177,12 @@ public final class ConfigEntrypoints {
     public static void registerAdded() {
         //? if !neoforge {
         if (!startupDecided || !modsChanged()) return;
-        Set<String> mods = loadedModIds();
-        Set<String> newIds = new HashSet<>(mods);
-        newIds.removeAll(seenMods);
+        Map<String, ModContainer> mods = loadedMods();
+        Set<String> newIds = new HashSet<>(mods.keySet());
+        newIds.removeAll(seenMods.keySet());
         if (HotwireBridge.INSTANCE.isStarting(newIds)) return;
         seenMods = mods;
+        HotwireBridge.INSTANCE.invalidate();
         rediscover();
         Map<String, List<Provider>> added = new LinkedHashMap<>();
         for (Provider provider : providers()) {
@@ -217,7 +219,7 @@ public final class ConfigEntrypoints {
             }
         } finally {
             //? if !neoforge
-            seenMods = loadedModIds();
+            seenMods = loadedMods();
             startupDecided = true;
             // caught so a broken CompatLoader never hides an exception from ConfigManager.initialize()
             try {
@@ -510,6 +512,7 @@ public final class ConfigEntrypoints {
                 LOGGER.warn("Mod {} registered config {} which already belongs to {}", modId, config.id, owner);
                 return config;
             }
+            ConfigManager.claimForLateInitialization(config);
             // registered on purpose, so it counts even if the entrypoint throws afterwards
             earlierConfigs.remove(config.id);
             // the tree normally only exists once the config initializes, where onTreeRegistered picks it up
@@ -585,21 +588,24 @@ public final class ConfigEntrypoints {
     //? if !neoforge {
     private static boolean modsChanged() {
         synchronized (FabricLoader.getInstance()) {
-            Collection<ModContainer> mods = FabricLoader.getInstance().getAllMods();
-            if (mods.size() != seenMods.size()) return true;
-            for (ModContainer mod : mods) {
-                if (!seenMods.contains(mod.getMetadata().getId())) return true;
-            }
-            return false;
+            return modsChanged(FabricLoader.getInstance().getAllMods(), seenMods);
         }
     }
 
-    private static Set<String> loadedModIds() {
-        Set<String> ids = new HashSet<>();
-        synchronized (FabricLoader.getInstance()) {
-            for (ModContainer mod : FabricLoader.getInstance().getAllMods()) ids.add(mod.getMetadata().getId());
+    static boolean modsChanged(Collection<ModContainer> mods, Map<String, ModContainer> seen) {
+        if (mods.size() != seen.size()) return true;
+        for (ModContainer mod : mods) {
+            if (seen.get(mod.getMetadata().getId()) != mod) return true;
         }
-        return ids;
+        return false;
+    }
+
+    private static Map<String, ModContainer> loadedMods() {
+        Map<String, ModContainer> mods = new HashMap<>();
+        synchronized (FabricLoader.getInstance()) {
+            for (ModContainer mod : FabricLoader.getInstance().getAllMods()) mods.put(mod.getMetadata().getId(), mod);
+        }
+        return mods;
     }
 
     // a nested mod that provides an entrypoint itself is left as its own provider
