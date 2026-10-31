@@ -573,18 +573,33 @@ object HotwireBridge {
         // the jars that land go first, since the graph keeps the first copy of a mod it sees
         val graph = Class.forName("dev.moon.hotwire.plan.ModGraph").getConstructor(Collection::class.java)
             .newInstance(incoming + queued.map { it.second } + staying)
-        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids)?.let { describeRefusal(engine, it) }
+        val depends = Class.forName("dev.moon.hotwire.jar.ModManifest\$Relation").enumConstants.first { (it as Enum<*>).name == "DEPENDS" }
+        val oldDependency = Class.forName("dev.moon.hotwire.plan.SwitchPlan\$Refusal\$OldDependency").constructors.single()
+        val builtIns = incoming.flatMap { it.parts() }.flatMap { part ->
+            oldBuiltIns(
+                part.modId(),
+                part.get("manifest")!!.callMethod("getRelation", depends) as Map<String, List<String>>,
+                { id -> (engine.callStatic("LoadedMods", "findVersion", id) as String?).takeIf { (graph.callMethod("find", id) as Optional<*>).isEmpty } },
+                { version, ranges -> engine.callStatic("ModPolicy", "satisfies", version, ranges) == true },
+            )
+        }.map { oldDependency.newInstance(*it.toTypedArray()) }
+        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids, builtIns)?.let { describeRefusal(engine, it) }
     }.getOrElse {
         translated("oneconfig.page.hotwire.update.self_unchecked", "Hotwire couldn't check this update against your other mods, so it wasn't queued.")
     }
 
+    fun oldBuiltIns(mod: String, needs: Map<String, List<String>>, present: (String) -> String?, fits: (String, List<String>) -> Boolean): List<List<String>> =
+        needs.mapNotNull { (id, ranges) ->
+            present(id)?.takeUnless { fits(it, ranges) }?.let { listOf(mod, id, ranges.joinToString(" or "), it) }
+        }
+
     @Suppress("UNCHECKED_CAST")
-    fun refusedPlan(planner: Any, graph: Any, ids: List<String>): Any? {
+    fun refusedPlan(planner: Any, graph: Any, ids: List<String>, builtIns: List<Any> = emptyList()): Any? {
         val plan = planner.callMethod("planOn", ids, ids.toSet())!!
         val old = (ids + ids.flatMap { graph.callMethod("getDependents", it) as Collection<String> }).distinct()
             .flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }
             .filter { it.get("mod") in ids || it.get("dependency") in ids }
-        val refusals = plan.get("refusals") as List<Any> + old
+        val refusals = plan.get("refusals") as List<Any> + old + builtIns
         if (refusals.isEmpty()) return null
         return plan.javaClass.constructors.single()
             .newInstance(plan.get("direction"), plan.get("order"), plan.get("why"), plan.get("enabledNested"), refusals)

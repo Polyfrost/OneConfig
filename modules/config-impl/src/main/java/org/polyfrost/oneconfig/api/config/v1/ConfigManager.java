@@ -40,6 +40,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -81,6 +82,7 @@ public final class ConfigManager {
     private static boolean initialized = false;
     private static boolean isFirstRun = false;
     private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
+    private static final Queue<Config> createdAfterStartup = new ConcurrentLinkedQueue<>();
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
@@ -243,6 +245,7 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static void initializeLate(Runnable creator) {
         initialized = false;
+        for (Config config; (config = createdAfterStartup.poll()) != null; ) pendingInitialization.add(config);
         try {
             creator.run();
         } finally {
@@ -260,9 +263,7 @@ public final class ConfigManager {
     public static void submitForInitialization(Config config) {
         // never initialize synchronously here because this runs from the Config base constructor
         // before subclass field initializers have run so collect() would read uninitialized fields
-        if (!initialized) {
-            pendingInitialization.add(config);
-        }
+        (initialized ? createdAfterStartup : pendingInitialization).add(config);
         for (ConfigSubmissionListener listener : submissionListeners) {
             try {
                 listener.onConfigSubmitted(config);
@@ -288,6 +289,7 @@ public final class ConfigManager {
 
     static void removePendingInitialization(Config config) {
         pendingInitialization.remove(config);
+        createdAfterStartup.remove(config);
     }
 
     /**
@@ -310,6 +312,7 @@ public final class ConfigManager {
     public static synchronized List<Config> createdConfigs() {
         List<Config> created = new ArrayList<>(initializedConfigs.values());
         created.addAll(pendingInitialization);
+        created.addAll(createdAfterStartup);
         return created;
     }
 

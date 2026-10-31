@@ -29,8 +29,8 @@ class HotwireSelfUpdateQueueTest {
         fun getDependents(id: String) = dependents[id].orEmpty()
     }
 
-    private fun refusals(planner: Planner, graph: Graph) =
-        (HotwireBridge.refusedPlan(planner, graph, listOf("hotwire")) as Plan?)?.refusals()
+    private fun refusals(planner: Planner, graph: Graph, builtIns: List<Any> = emptyList()) =
+        (HotwireBridge.refusedPlan(planner, graph, listOf("hotwire"), builtIns) as Plan?)?.refusals()
 
     @Test
     fun aNewVersionThatFitsIsNotRefused() {
@@ -53,6 +53,21 @@ class HotwireSelfUpdateQueueTest {
     @Test
     fun aRefusalOfThePlanIsKept() {
         assertEquals(listOf("breaks"), refusals(Planner(listOf("breaks"), emptyMap()), Graph(emptyMap())))
+    }
+
+    @Test
+    fun aBuiltInTooOldForTheNewVersionIsReported() {
+        val old = HotwireBridge.oldBuiltIns(
+            "hotwire",
+            mapOf("java" to listOf(">=25"), "minecraft" to listOf("26.3"), "fabric-api" to listOf(">=2")),
+            mapOf("java" to "21", "minecraft" to "26.3")::get,
+        ) { version, ranges -> version == ranges.single() }
+        assertEquals(listOf(listOf("hotwire", "java", ">=25", "21")), old)
+    }
+
+    @Test
+    fun aTooOldBuiltInRefusesThePlan() {
+        assertEquals(listOf("old java"), refusals(Planner(emptyList(), emptyMap()), Graph(emptyMap()), listOf("old java")))
     }
 
     data class Entry(

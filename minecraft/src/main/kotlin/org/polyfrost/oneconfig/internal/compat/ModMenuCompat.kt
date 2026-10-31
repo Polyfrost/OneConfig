@@ -49,16 +49,26 @@ object ModMenuCompat {
     @JvmStatic
     fun refresh() = CompatLoader.requireTranslations(1001, true) {
         val added = findUnlisted()
+        coveredByNativeChild(mods).forEach(::removePlaceholder)
         mods.addAll(added)
         list(added)
     }
 
+    private fun coveredByNativeChild(mods: List<Mod>): Set<String> = mods.mapNotNull { mod ->
+        val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
+        mod.aliasNativeChildConfig(nativeChild)
+        mod.id
+    }.toSet()
+
+    private fun removePlaceholder(id: String) {
+        val manager = ConfigManager.active()
+        if (!manager.exists(id) || manager.get(id).getMetadata<Boolean>(Backend.UI_PLACEHOLDER_METADATA) != true) return
+        manager.unregister(id)
+        ConfigRegistry.unregister(id)
+    }
+
     private fun list(mods: List<Mod>) {
-        val nativeCoveredMods = mods.mapNotNull { mod ->
-            val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
-            mod.aliasNativeChildConfig(nativeChild)
-            mod.id
-        }.toSet()
+        val nativeCoveredMods = coveredByNativeChild(mods)
 
         val foundMods = mods.filterNot {
             CompatLoader.nativeLoadedConfigs.contains(it.id) ||
