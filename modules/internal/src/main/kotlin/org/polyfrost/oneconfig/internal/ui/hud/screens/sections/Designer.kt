@@ -48,13 +48,12 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup
+import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
 import org.polyfrost.oneconfig.internal.ui.hud.components.Dropdown
-import org.polyfrost.oneconfig.internal.ui.hud.components.NumberSpinner
-import org.polyfrost.oneconfig.internal.ui.hud.components.NumberSpinnerWithIcon
 import org.polyfrost.oneconfig.internal.ui.hud.components.Radio
 import org.polyfrost.oneconfig.internal.ui.hud.components.RadioValue
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
@@ -151,16 +150,14 @@ fun Designer(hud: Hud?, query: String) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "staticW") {
                         NumberSpinner(
-                            "Width", "px",
                             staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
-                            20f, 2000f, 1f, width = 128.dp
+                            20f, 2000f, 1f, width = 132.dp, unit = "px", label = "Width"
                         )
                     }
                     HudSettingTarget(hud, "staticH") {
                         NumberSpinner(
-                            "Height", "px",
                             staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
-                            8f, 2000f, 1f, width = 128.dp
+                            8f, 2000f, 1f, width = 132.dp, unit = "px", label = "Height"
                         )
                     }
                 }
@@ -198,27 +195,27 @@ fun Designer(hud: Hud?, query: String) {
             Text("Edge padding", color = LocalTheme.current.textColor, fontSize = 14.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HudSettingTarget(hud, "padLeft") {
-                    NumberSpinnerWithIcon(
-                        "pad-left", "px",
-                        padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } }, 0f, 100f, 1f
+                    NumberSpinner(
+                        padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } },
+                        0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-left"
                     )
                 }
                 HudSettingTarget(hud, "padRight") {
-                    NumberSpinnerWithIcon(
-                        "pad-right", "px",
-                        padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } }, 0f, 100f, 1f
+                    NumberSpinner(
+                        padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } },
+                        0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-right"
                     )
                 }
                 HudSettingTarget(hud, "padTop") {
-                    NumberSpinnerWithIcon(
-                        "pad-top", "px",
-                        padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } }, 0f, 100f, 1f
+                    NumberSpinner(
+                        padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } },
+                        0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-top"
                     )
                 }
                 HudSettingTarget(hud, "padBottom") {
-                    NumberSpinnerWithIcon(
-                        "pad-bottom", "px",
-                        padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } }, 0f, 100f, 1f
+                    NumberSpinner(
+                        padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } },
+                        0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-bottom"
                     )
                 }
             }
@@ -295,11 +292,13 @@ fun Designer(hud: Hud?, query: String) {
                 )
             }
             HudSettingTarget(hud, "textScale") {
-                NumberSpinner(
-                    "Font size", "align", "px",
-                    textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
-                    6f, 64f, 1f, width = 112.dp
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Font size", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                    NumberSpinner(
+                        textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
+                        6f, 64f, 1f, width = 112.dp, unit = "px", icon = "align"
+                    )
+                }
             }
             HudSettingTarget(hud, "textBold") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
