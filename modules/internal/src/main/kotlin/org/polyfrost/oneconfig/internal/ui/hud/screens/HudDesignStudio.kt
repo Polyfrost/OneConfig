@@ -933,10 +933,10 @@ private fun HudActionBar(
 }
 
 private fun pickTourHud(): Hud? {
-    val visible = HudManager.activeInstances.filter { !it.hidden && hudBounds(it) != null }
+    val visible = HudManager.activeInstances.filter { it !is LegacyHud && !it.hidden && hudBounds(it) != null }
     val mergeable = visible.filter(::canTourMerge)
     return mergeable.firstOrNull { hud -> mergeable.any { canTourMergeInto(hud, it) } }
-        ?: visible.minByOrNull { if (it is LegacyHud) 1 else 0 }
+        ?: visible.firstOrNull()
 }
 
 private fun hasTourMergePair(): Boolean {
@@ -1170,7 +1170,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             if (step.focus == HudTourFocus.Panel && hud != null) {
                 selectedHuds = setOf(hud)
                 panelOpen = true
-                activeCategory = if (hud is LegacyHud) StudioCategory.Settings else step.category
+                activeCategory = step.category
             } else {
                 selectedHuds = emptySet()
                 panelOpen = false
