@@ -96,15 +96,19 @@ object HotwireBridge {
     @Suppress("UNCHECKED_CAST")
     fun previewTogether(off: List<String>, on: List<String>): Preview? {
         if (off.isEmpty() || on.isEmpty()) return null
-        val cameBack = runCatching {
+        val plan = runCatching {
             val engine = engine()!!
             val leaving = call("previewOff", off)!!.get("switched") as List<String>
             val disabled = engine.field("installed")!!.field("disabled") as Map<String, Any>
             val planner = plannerWith(engine, keptOff(on).map(disabled::getValue))
-            val plan = planner.callMethod("planOn", on, (offMods() + leaving).toSet())!!
-            (plan.get("order") as List<String>).any { it in leaving }
-        }.getOrDefault(true)
-        return if (cameBack) Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately.")) else null
+            planner.callMethod("planOn", on, (offMods() + leaving).toSet())!!.takeUnless { plan ->
+                (plan.get("order") as List<String>).any { it in leaving }
+            }
+        }.getOrNull() ?: return Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately."))
+        val alone = preview(on, true)
+        if (alone.possible || (plan.get("refusals") as List<*>).isNotEmpty()) return alone
+        val names = (plan.get("order") as List<String>).joinToString(", ") { engine()!!.callMethod("nameOfMod", it) as String }
+        return Preview(true, translated("oneconfig.page.hotwire.switch.after_off", "Turns on %s once the others are off.", names))
     }
 
     private fun offMods(): List<String> = mods().orEmpty().filterNot { it.on }.map { it.id }
@@ -155,6 +159,7 @@ object HotwireBridge {
         val actions: List<JarAction>,
         val onCancel: (() -> Unit)? = null,
         val upToDate: Boolean = false,
+        val reopens: Boolean = false,
     )
 
     // shortcut: Hotwire's public API can't add a jar from disk or list updates, so those reach into its engine, which
@@ -261,7 +266,11 @@ object HotwireBridge {
         if (!Files.exists(file)) {
             val uri = URI(url)
             require(uri.scheme == "https") { "Icons only load over https." }
-            Files.write(file, uri.toURL().openStream().use { it.readNBytes(MAX_ICON_BYTES) })
+            val connection = uri.toURL().openConnection().apply {
+                connectTimeout = ICON_TIMEOUT_MS
+                readTimeout = ICON_TIMEOUT_MS
+            }
+            Files.write(file, connection.getInputStream().use { it.readNBytes(MAX_ICON_BYTES) })
         }
         return file
     }
@@ -346,8 +355,11 @@ object HotwireBridge {
         @Suppress("UNCHECKED_CAST")
         val jars = add.field("jars") as List<Path>
         val inOrder = engine()?.takeIf { !canAdd && fitTogether(it, jars) }
+        val reopen = add.through("StoreAdd", "needsReopen") == true
+        val modes = (add.field("previews") as List<*>).map { it!!.addMode() }
+        val onlyLater = modes.lastOrNull() == "NEXT_START" || inOrder != null && "NEXT_START" in modes
         var accepted = false
-        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false) {
+        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), onlyLater) {
             accepted = true
             add.through("StoreAdd", "cancel")
             call("queueForNextStart", hit.projectId, version).asResults()
@@ -358,7 +370,7 @@ object HotwireBridge {
             call("saveToDownloads", storeQuery(""), hit.projectId, version).asResults()
         }
         val now = JarAction(
-            if (add.through("StoreAdd", "needsReopen") == true) {
+            if (reopen) {
                 translated("oneconfig.page.hotwire.add.reopen", "Save and add")
             } else {
                 translated("oneconfig.page.hotwire.add.now", "Add now")
@@ -370,7 +382,7 @@ object HotwireBridge {
                 add.through("StoreAdd", "accept").asResults()
             } else {
                 add.through("StoreAdd", "cancel")
-                CompletableFuture.supplyAsync { addInOrder(inOrder, jars, hit.title) }
+                CompletableFuture.supplyAsync { addInOrder(inOrder, jars, hit.title, reopen) }
             }
             added.thenApplyAsync { result ->
                 runCatching { refreshInstalled() }
@@ -390,7 +402,11 @@ object HotwireBridge {
             add.through("StoreAdd", "getTitle") as String,
             "",
             lines,
-            (if (canAdd || inOrder != null) listOf(now, later) else emptyList()) + save,
+            when {
+                !canAdd && inOrder == null -> listOf(save)
+                onlyLater -> listOf(later, save)
+                else -> listOf(now, later, save)
+            },
             onCancel = { if (!accepted) add.through("StoreAdd", "cancel") },
         )
     }
@@ -410,26 +426,30 @@ object HotwireBridge {
             ids.all { (planner.callMethod("findOldDependencies", it) as List<*>).isEmpty() }
     }.getOrDefault(false)
 
-    private fun addInOrder(engine: Any, jars: List<Path>, name: String): Result {
+    private fun addInOrder(engine: Any, jars: List<Path>, name: String, reopen: Boolean): Result {
         var queueing = false
         for (jar in jars) {
-            if (queueing) {
-                onUiThread { engine.callMethod("add", jar, engine.enumArg("add", "NEXT_START")) }
-                continue
-            }
-            queueing = (dryRunAdd(engine, jar).get("mode") as Enum<*>).name == "NEXT_START"
-            val result = addNow(engine, jar)
+            queueing = queueing || dryRunAdd(engine, jar).addMode() == "NEXT_START"
+            val result = if (queueing) queueAdd(engine, jar) else addNow(engine, jar, reopen)
             if (!result.ok) return result
         }
-        return Result(true, translated("oneconfig.page.hotwire.add.done", "Added %s.", name))
+        return Result(
+            true,
+            if (queueing) {
+                translated("oneconfig.page.hotwire.add.queued", "%s is added at the next launch.", name)
+            } else {
+                translated("oneconfig.page.hotwire.add.done", "Added %s.", name)
+            },
+        )
     }
 
     /** Hotwire's update check against Modrinth for the installed mods; blocks on the network */
     fun findUpdates(): List<StoreUpdate> {
-        val check = engine()!!.callMethod("getUpdateCheck")!!
-        val found = check.callMethod("findNow") as List<*>
+        val engine = engine()!!
+        val found = engine.callMethod("getUpdateCheck")!!.callMethod("findNow") as List<*>
         offers = found
-        return found.map {
+        val queued = (engine.callMethod("getPendingChanges") as List<*>).filter { it!!.javaClass.simpleName == "Update" }.map { it!!.get("modId") }
+        return found.filterNot { it!!.get("id") in queued }.map {
             StoreUpdate(it!!, it.get("id") as String, it.get("projectId") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
         }
     }
@@ -445,6 +465,8 @@ object HotwireBridge {
     private fun dryRunAdd(engine: Any, jar: Path): Any = (engine.callMethod("dryRunAdd", jar) as CompletableFuture<*>).get()!!
 
     private fun Any.lineOfAdd(): String = (get("lines") as List<*>).firstOrNull() as String? ?: get("name") as String
+
+    private fun Any.addMode(): String = (get("mode") as Enum<*>).name
 
     /** The mods stopping an update, or none when Hotwire can't plan it, which is how it answers any other refusal */
     private fun unmetNeeds(engine: Any, jar: Path): List<String> {
@@ -498,12 +520,19 @@ object HotwireBridge {
             (engine.callMethod("canUpdate", need) == true || meetOldDependencies(engine, need, seen, steps)).also { if (it) steps.add(need) }
         } && collectNeeds(engine, jar, seen, steps)
         // a later add can be refused now only for lacking an earlier one, so those are read again as they run
-        (if (collected) steps.take(1) else needs).filter { engine.callMethod("canUpdate", it) != true }
-            .map { dryRunAdd(engine, it) }.firstOrNull { (it.get("mode") as Enum<*>).name == "REFUSED" }
+        val firstAdds = (if (collected) steps.take(1) else needs).filter { engine.callMethod("canUpdate", it) != true }
+            .map { dryRunAdd(engine, it) }
+        firstAdds.firstOrNull { it.addMode() == "REFUSED" }
             ?.let { return JarPlan(plan.title, plan.detail, it.get("lines") as List<String>, emptyList()) }
         if (!collected || steps.isEmpty()) return plan
-        val action = JarAction(translated("oneconfig.page.hotwire.update.with_needs", "Update with dependencies"), true) {
-            CompletableFuture.supplyAsync { runSteps(engine, steps, jar) }
+        val reopen = firstAdds.any { it.addMode() == "SAVE_AND_REOPEN" }
+        val label = if (reopen) {
+            translated("oneconfig.page.hotwire.update.reopen", "Save and update")
+        } else {
+            translated("oneconfig.page.hotwire.update.with_needs", "Update with dependencies")
+        }
+        val action = JarAction(label, true) {
+            CompletableFuture.supplyAsync { runSteps(engine, steps, jar, reopen) }
         }
         val lines = steps.map {
             val name = manifestOf(it)?.get("name") as String? ?: it.fileName.toString()
@@ -513,13 +542,13 @@ object HotwireBridge {
                 translated("oneconfig.page.hotwire.update.adds", "Adds %s, which this update needs.", name)
             }
         }
-        return JarPlan(plan.title, plan.detail, lines + plan.lines.takeIf { plan.actions.isNotEmpty() }.orEmpty(), listOf(action))
+        return JarPlan(plan.title, plan.detail, lines + plan.lines.takeIf { plan.actions.isNotEmpty() }.orEmpty(), listOf(action), reopens = reopen)
     }
 
     /** Lands [steps] in order and then updates [jar], stopping at the first that fails, since each one's plan rests on those before */
-    private fun runSteps(engine: Any, steps: List<Path>, jar: Path): Result {
+    private fun runSteps(engine: Any, steps: List<Path>, jar: Path, reopen: Boolean): Result {
         for (step in steps) {
-            val result = if (engine.callMethod("canUpdate", step) == true) updateNow(step) else addNow(engine, step)
+            val result = if (engine.callMethod("canUpdate", step) == true) updateNow(step) else addNow(engine, step, reopen)
             if (!result.ok) return result
         }
         return updateNow(jar)
@@ -553,14 +582,32 @@ object HotwireBridge {
         return onUiThread(action::attempt)!!.get()
     }
 
-    private fun addNow(engine: Any, jar: Path): Result {
+    private fun reopenNotAgreed(name: String) =
+        Result(false, translated("oneconfig.page.hotwire.reopen_confirm", "%s has to save and reopen your world. Try again to confirm.", name), needsReopen = true)
+
+    private fun addNow(engine: Any, jar: Path, reopen: Boolean): Result {
         val preview = dryRunAdd(engine, jar)
         val mode = preview.get("mode") as Enum<*>
-        if (mode.name == "REFUSED") return Result(false, preview.lineOfAdd())
+        val name = preview.get("name") as String
+        when (mode.name) {
+            "REFUSED" -> return Result(false, preview.lineOfAdd())
+            "NEXT_START" -> return queueAdd(engine, jar)
+            "SAVE_AND_REOPEN" -> if (!reopen) return reopenNotAgreed(name)
+        }
         onUiThread { engine.callMethod("add", jar, mode) }
         dryRunAdd(engine, jar)
-        if (mode.name == "NEXT_START" || engine.callMethod("canUpdate", jar) == true) return Result(true, "")
-        return Result(false, translated("oneconfig.page.hotwire.add.failed", "Hotwire couldn't add %s. It posts why in chat.", preview.get("name") as String))
+        if (engine.callMethod("canUpdate", jar) == true) return Result(true, "")
+        return Result(false, translated("oneconfig.page.hotwire.add.failed", "Hotwire couldn't add %s. It posts why in chat.", name))
+    }
+
+    private fun queueAdd(engine: Any, jar: Path): Result {
+        onUiThread { engine.callMethod("add", jar, engine.enumArg("add", "NEXT_START")) }
+        val manifest = manifestOf(jar)
+        val queued = manifest != null && (engine.callMethod("getPendingChanges") as List<*>).any {
+            it!!.javaClass.simpleName == "Update" && it.get("modId") == manifest.get("id") && it.get("toVersion") == manifest.get("version")
+        }
+        if (queued) return Result(true, "")
+        return Result(false, translated("oneconfig.page.hotwire.add.queue_failed", "Hotwire couldn't queue %s - please check chat!", manifest?.get("name") as String? ?: jar.fileName.toString()))
     }
 
     /**
@@ -691,13 +738,17 @@ object HotwireBridge {
         }
     }
 
-    /** Turns [ids] on or off, completing on whatever thread Hotwire finishes on */
-    fun switch(ids: Collection<String>, on: Boolean): CompletableFuture<Result> = runCatching {
+    fun reopensToTurnOn(ids: Collection<String>): Boolean = runCatching {
+        val engine = engine()!!
+        keptOff(ids).any { dryRunAdd(engine, engine.callMethod("findJarOf", it) as Path).addMode() == "SAVE_AND_REOPEN" }
+    }.getOrDefault(false)
+
+    fun switch(ids: Collection<String>, on: Boolean, reopen: Boolean = false): CompletableFuture<Result> = runCatching {
         val kept = if (on) keptOff(ids) else emptyList()
         if (kept.isEmpty()) {
             call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
         } else {
-            CompletableFuture.supplyAsync { turnOnKeptOff(engine()!!, ids, kept) }
+            CompletableFuture.supplyAsync { turnOnKeptOff(engine()!!, ids, kept, reopen) }
         }
     }.getOrElse { CompletableFuture.completedFuture(Result(false, "Hotwire is not available.")) }
 
@@ -705,12 +756,37 @@ object HotwireBridge {
         runCatching { dryRunAdd(engine, jar) }
     }
 
-    private fun turnOnKeptOff(engine: Any, ids: Collection<String>, kept: List<String>): Result {
+    private fun addBackWithReopen(engine: Any, id: String, jar: Path): Result {
+        val added = CompletableFuture<Result>()
+        val mode = engine.enumArg("add", "SAVE_AND_REOPEN")
+        onUiThread {
+            engine.callHidden("add", jar, mode, Consumer<Any> { outcome ->
+                added.complete(
+                    runCatching {
+                        if (outcome.javaClass.simpleName != "Added") return@runCatching Result(false, outcome.get("reason") as String)
+                        val enabled = runCatching {
+                            Class.forName("${engine.javaClass.packageName}.DisabledJars")
+                                .getDeclaredMethod("enable", Path::class.java).apply { isAccessible = true }.invoke(null, jar)
+                        }.getOrDefault(jar)
+                        engine.field("installed")!!.callMethod("onBroughtBack", id, enabled!!)
+                        Result(true, "")
+                    }.getOrElse(::failure),
+                )
+            })
+        }
+        return added.get(REOPEN_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+    }
+
+    private fun turnOnKeptOff(engine: Any, ids: Collection<String>, kept: List<String>, reopen: Boolean): Result {
         val waiting = kept.associateWithTo(LinkedHashMap()) { engine.callMethod("findJarOf", it) as Path }
         while (waiting.isNotEmpty()) {
-            val (id, jar) = waiting.entries.firstOrNull { (dryRunAdd(engine, it.value).get("mode") as Enum<*>).name == "NOW" }
+            val modes = waiting.entries.map { it to dryRunAdd(engine, it.value).addMode() }
+            val (entry, mode) = modes.firstOrNull { it.second == "NOW" }
+                ?: modes.firstOrNull { it.second == "SAVE_AND_REOPEN" }
                 ?: return Result(false, dryRunAdd(engine, waiting.values.first()).lineOfAdd())
-            val result = call("turnOn", listOf(id)).asResults().get()
+            val (id, jar) = entry
+            if (mode == "SAVE_AND_REOPEN" && !reopen) return reopenNotAgreed(engine.callMethod("nameOfMod", id) as String)
+            val result = if (mode == "NOW") call("turnOn", listOf(id)).asResults().get() else addBackWithReopen(engine, id, jar)
             if (!result.ok) return result
             awaitWorker(engine, jar)
             val back = onUiThread {
@@ -727,6 +803,10 @@ object HotwireBridge {
     }
 
     private const val MAX_ICON_BYTES = 8 * 1024 * 1024
+
+    private const val ICON_TIMEOUT_MS = 10_000
+
+    private const val REOPEN_TIMEOUT_MINUTES = 15L
 
     private const val STORE_REVISION = 5
 }

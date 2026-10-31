@@ -87,12 +87,15 @@ fun HotwireAdd() {
         reading = true
         planIcon = null
         scope.launch {
-            val (iconPath, loaded) = withContext(Dispatchers.IO) { runCatching(icon).getOrNull() to runCatching(load) }
+            val iconPath = withContext(Dispatchers.IO) { runCatching(icon).getOrNull() }
+            if (id == request) planIcon = iconPath
+        }
+        scope.launch {
+            val loaded = withContext(Dispatchers.IO) { runCatching(load) }
             if (id != request) {
                 loaded.getOrNull()?.onCancel?.invoke()
                 return@launch
             }
-            planIcon = iconPath
             reading = false
             plan = loaded.getOrElse {
                 val reason = it.cause ?: it

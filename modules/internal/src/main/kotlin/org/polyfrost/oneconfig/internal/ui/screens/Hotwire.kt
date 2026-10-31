@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -130,6 +131,10 @@ object HotwireUpdates {
                     }
                     // an earlier update can already have brought this one along as a dependency
                     if (plan.getOrNull()?.upToDate == true) continue
+                    if (plan.getOrNull()?.reopens == true) {
+                        problems += "${update.name}: ${translated("oneconfig.page.hotwire.updates.reopen", "It has to save and reopen your world, so update it on its own.")}"
+                        continue
+                    }
                     val action = plan.getOrNull()?.actions?.firstOrNull { it.primary }
                     if (action == null) {
                         val reason = plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.firstOrNull()
@@ -384,10 +389,13 @@ private fun SwitchBar(
     val turnOn = remember(picked, states) { idsWhere(false) }
     val previews = remember(turnOff, turnOn) {
         listOfNotNull(
-            HotwireBridge.previewTogether(turnOff, turnOn),
             turnOff.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, false) },
-            turnOn.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, true) },
+            HotwireBridge.previewTogether(turnOff, turnOn) ?: turnOn.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, true) },
         )
+    }
+    val reopens by produceState<Boolean?>(null, turnOn) {
+        value = null
+        value = withContext(Dispatchers.IO) { HotwireBridge.reopensToTurnOn(turnOn) }
     }
     val pickedIds = picked.values.flatten().mapTo(HashSet()) { it.id }
     val updates = HotwireUpdates.found?.getOrNull().orEmpty().filter { it.modId in pickedIds }
@@ -402,6 +410,7 @@ private fun SwitchBar(
     val offCount = picked.values.count { familyOn(it, states) == true }
     val onCount = picked.values.count { familyOn(it, states) == false }
     val label = when {
+        reopens == true -> translated("oneconfig.page.hotwire.switch.reopen", "Save and switch")
         offCount > 0 && onCount > 0 -> "Switch ${offCount + onCount}"
         offCount > 0 -> "Turn off $offCount"
         else -> "Turn on $onCount"
@@ -412,14 +421,14 @@ private fun SwitchBar(
         running -> "Switching… ${(fraction * 100).toInt()}%"
         else -> previews.joinToString(" ") { it.message }
     }
-    val canSwitch = !running && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
+    val canSwitch = !running && reopens != null && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
 
     fun start() {
         switching = true
         val off = if (turnOff.isEmpty()) done("") else HotwireBridge.switch(turnOff, false)
         off.thenCompose { first ->
             if (!first.ok || turnOn.isEmpty()) return@thenCompose CompletableFuture.completedFuture(first)
-            HotwireBridge.switch(turnOn, true).thenApply { second ->
+            HotwireBridge.switch(turnOn, true, reopens == true).thenApply { second ->
                 HotwireBridge.Result(
                     second.ok,
                     listOf(first.message, second.message).filter { it.isNotBlank() }.joinToString(" "),
