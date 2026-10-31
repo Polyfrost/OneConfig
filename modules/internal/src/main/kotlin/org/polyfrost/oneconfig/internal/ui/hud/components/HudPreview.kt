@@ -47,6 +47,15 @@ private val LOGGER = LogManager.getLogger("OneConfig/HUD-Preview")
 @Suppress("DEPRECATION")
 private fun Throwable.isFatalPreviewFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
 
+private fun Hud.updateForPreview() {
+    try {
+        update()
+    } catch (failure: Throwable) {
+        if (failure.isFatalPreviewFailure()) throw failure
+        LOGGER.error("Failed to update HUD preview for $title", failure)
+    }
+}
+
 internal class HudPreviewState(val runtime: PolyComposeRuntime) {
     var naturalWidth by mutableStateOf(0f)
         internal set
@@ -93,7 +102,7 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
     val revision = HudManager.revision
     val state = remember(hud, revision) {
         HudPreviewCache.get(hud, revision) {
-            hud.update()
+            hud.updateForPreview()
             HudPreviewState(
                 PolyComposeRuntime(PolyComposeHost.previews).also { rt ->
                     rt.setContent { hud.Content() }
@@ -104,7 +113,7 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
     LaunchedEffect(state) {
         val static = hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f
         if (!state.ready) {
-            hud.update()
+            hud.updateForPreview()
             if (static) {
                 state.runtime.frame(hud.staticW, hud.staticH)
                 state.naturalWidth = hud.staticW
