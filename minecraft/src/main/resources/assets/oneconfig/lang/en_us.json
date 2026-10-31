@@ -261,6 +261,8 @@
   "oneconfig.page.hotwire.modrinth.no_version": "No version of this fits this game.",
   "oneconfig.page.hotwire.add.waiting": "Waiting for Hotwire…",
   "oneconfig.page.hotwire.add.failed": "Hotwire couldn't add %s - please check chat!",
+  "oneconfig.page.hotwire.add.adds": "Adds %s, which this mod needs.",
+  "oneconfig.page.hotwire.add.done": "Added %s.",
   "oneconfig.page.hotwire.add.reading": "Reading the jar…",
   "oneconfig.page.hotwire.add.now": "Add now",
   "oneconfig.page.hotwire.add.reopen": "Save and add",
