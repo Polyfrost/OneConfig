@@ -148,6 +148,11 @@ object HotwireBridge {
     /** Whether Hotwire is running a switch, add or update right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
 
+    fun isStarting(ids: Collection<String>): Boolean = isWorking() && runCatching {
+        val installed = engine()!!.field("installed")!!
+        ids.any { installed.callMethod("isAddedThisSession", it) != true }
+    }.getOrDefault(true)
+
     fun awaitIdle() {
         val start = System.nanoTime()
         var sawWorking = false
@@ -537,19 +542,52 @@ object HotwireBridge {
     private fun planSelfUpdate(update: StoreUpdate): JarPlan {
         val engine = engine()!!
         val jars = downloadUpdate(update)
+        val detail = "${update.installedVersion} → ${update.newVersion}"
+        nextLaunchRefusal(engine, jars)?.let { return JarPlan(update.name, detail, listOf(it), emptyList()) }
         val action = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
             CompletableFuture.supplyAsync {
-                jars.dropLast(1).firstNotNullOfOrNull { jar -> queueAdd(engine, jar).takeUnless { it.ok } }
+                nextLaunchRefusal(engine, jars)?.let { Result(false, it) }
+                    ?: jars.dropLast(1).firstNotNullOfOrNull { jar -> queueAdd(engine, jar).takeUnless { it.ok } }
                     ?: queueSelfUpdate(engine, update, jars.last()).takeUnless { it.ok }
                     ?: Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", update.name))
             }
         }
         return JarPlan(
             update.name,
-            "${update.installedVersion} → ${update.newVersion}",
+            detail,
             listOf(translated("oneconfig.page.hotwire.update.self", "Hotwire can't update itself while the game runs, so it updates at the next launch.")),
             listOf(action),
         )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun nextLaunchRefusal(engine: Any, jars: List<Path>): String? = runCatching {
+        val incoming = jars.map(::readJar)
+        val ids = incoming.map { it.modId() }
+        val queued = (engine.field("updateQueue")!!.callMethod("getEntries") as List<Any>).mapNotNull { entry ->
+            runCatching { readJar(Path.of(entry.get("stagedJar") as String)) }.getOrNull()?.let { entry.get("modId") as String to it }
+        }
+        val installed = engine.field("installed")!!
+        val leaving = ids + queued.flatMap { (id, jar) -> listOf(id, jar.modId()) } + (installed.field("disabled") as Map<String, Any>).keys
+        val staying = (installed.callHidden("getGraphJars") as List<Any>).filterNot { it.modId() in leaving }
+        // the jars that land go first, since the graph keeps the first copy of a mod it sees
+        val graph = Class.forName("dev.moon.hotwire.plan.ModGraph").getConstructor(Collection::class.java)
+            .newInstance(incoming + queued.map { it.second } + staying)
+        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids)?.let { describeRefusal(engine, it) }
+    }.getOrElse {
+        translated("oneconfig.page.hotwire.update.self_unchecked", "Hotwire couldn't check this update against your other mods, so it wasn't queued.")
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun refusedPlan(planner: Any, graph: Any, ids: List<String>): Any? {
+        val plan = planner.callMethod("planOn", ids, ids.toSet())!!
+        val old = (ids + ids.flatMap { graph.callMethod("getDependents", it) as Collection<String> }).distinct()
+            .flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }
+            .filter { it.get("mod") in ids || it.get("dependency") in ids }
+        val refusals = plan.get("refusals") as List<Any> + old
+        if (refusals.isEmpty()) return null
+        return plan.javaClass.constructors.single()
+            .newInstance(plan.get("direction"), plan.get("order"), plan.get("why"), plan.get("enabledNested"), refusals)
     }
 
     private fun queueSelfUpdate(engine: Any, update: StoreUpdate, jar: Path): Result {

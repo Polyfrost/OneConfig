@@ -2,9 +2,59 @@ package org.polyfrost.oneconfig.internal.ui.api
 
 import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class HotwireSelfUpdateQueueTest {
+    class Old(private val mod: String, private val dependency: String) {
+        fun mod() = mod
+        fun dependency() = dependency
+    }
+
+    class Plan(private val direction: String, private val order: List<*>, private val why: Map<*, *>, private val nested: List<*>, private val refusals: List<Any>) {
+        fun direction() = direction
+        fun order() = order
+        fun why() = why
+        fun enabledNested() = nested
+        fun refusals() = refusals
+    }
+
+    class Planner(private val refused: List<Any>, private val old: Map<String, List<Any>>) {
+        @Suppress("UNUSED_PARAMETER")
+        fun planOn(ids: Collection<String>, off: Set<String>) = Plan("ON", emptyList<Any>(), emptyMap<Any, Any>(), emptyList<Any>(), refused)
+        fun findOldDependencies(id: String) = old[id].orEmpty()
+    }
+
+    class Graph(private val dependents: Map<String, Set<String>>) {
+        fun getDependents(id: String) = dependents[id].orEmpty()
+    }
+
+    private fun refusals(planner: Planner, graph: Graph) =
+        (HotwireBridge.refusedPlan(planner, graph, listOf("hotwire")) as Plan?)?.refusals()
+
+    @Test
+    fun aNewVersionThatFitsIsNotRefused() {
+        val unrelated = Old("other", "lib")
+        assertNull(refusals(Planner(emptyList(), mapOf("other" to listOf(unrelated))), Graph(mapOf("hotwire" to setOf("other")))))
+    }
+
+    @Test
+    fun aDependencyTooOldForTheNewVersionIsRefused() {
+        val old = Old("hotwire", "fabric-api")
+        assertEquals(listOf(old), refusals(Planner(emptyList(), mapOf("hotwire" to listOf(old))), Graph(emptyMap())))
+    }
+
+    @Test
+    fun aModThatNeedsAnOlderVersionRefusesIt() {
+        val old = Old("other", "hotwire")
+        assertEquals(listOf(old), refusals(Planner(emptyList(), mapOf("other" to listOf(old))), Graph(mapOf("hotwire" to setOf("other")))))
+    }
+
+    @Test
+    fun aRefusalOfThePlanIsKept() {
+        assertEquals(listOf("breaks"), refusals(Planner(listOf("breaks"), emptyMap()), Graph(emptyMap())))
+    }
+
     data class Entry(
         val modId: String,
         val name: String,
