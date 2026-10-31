@@ -50,6 +50,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,7 +66,12 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireAddRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.isOn
+import org.polyfrost.oneconfig.internal.ui.screens.hotwireTagline
+import org.polyfrost.oneconfig.internal.ui.screens.openHotwireScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
@@ -91,6 +97,8 @@ fun Header(modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
+            // weighted so the search bar and buttons on the right keep their size and the title side gives way
+            modifier = Modifier.weight(1f).padding(end = 26.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
@@ -104,6 +112,8 @@ fun Header(modifier: Modifier = Modifier) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedContent(
                     title,
+                    // weighted so a long tagline ellipsizes rather than pushing the button below out of the header
+                    modifier = Modifier.weight(1f, fill = false),
                     transitionSpec = {
                         fadeIn() togetherWith fadeOut()
                     }
@@ -121,6 +131,16 @@ fun Header(modifier: Modifier = Modifier) {
                             )
                             TitleAuthorByline(info.authors)
                             TitleInfoTooltip(info)
+                            info.tagline?.let {
+                                Text(
+                                    it,
+                                    color = LocalTheme.current.textColorSecondary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }
@@ -176,6 +196,7 @@ private data class HeaderTitle(
     val credits: String? = null,
     val version: String? = null,
     val openOriginalScreen: Runnable? = null,
+    val tagline: String? = null,
 )
 
 private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
@@ -193,6 +214,13 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
             version = config.version,
             openOriginalScreen = tree?.getMetadata<Runnable>("open_original_screen"),
         )
+    }
+
+    if (destination.hasRoute(HotwireAddRoute::class)) {
+        return HeaderTitle(translated("oneconfig.page.hotwire.add_mods", "Add mods"), tagline = hotwireTagline(), openOriginalScreen = openHotwireScreen)
+    }
+    if (entry.isOn(HotwireGraph)) {
+        return HeaderTitle(entry.currentPageTitle() ?: "Hotwire", tagline = hotwireTagline(), openOriginalScreen = openHotwireScreen)
     }
 
     return entry.currentPageTitle()?.let { HeaderTitle(it) }
