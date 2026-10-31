@@ -77,9 +77,12 @@ object CompatLoader {
     @Volatile
     private var index = ModIndex(emptySet())
 
-    private fun currentIndex(): ModIndex {
+    private fun syncedIndex(): ModIndex {
         val mods = Platform.compatibility().mods
-        return index.takeIf { it.mods == mods } ?: ModIndex(mods).also { index = it }
+        return index.takeIf { it.mods == mods } ?: ModIndex(mods).also {
+            ModInfo.refreshLoadedMods()
+            index = it
+        }
     }
 
     fun findFirstMod(): ModInfo? {
@@ -88,7 +91,7 @@ object CompatLoader {
             if (forcedMod != null) return forcedMod
         }
         val callerClass = callerClassName() ?: return null
-        return currentIndex().ownerOf(callerClass)
+        return syncedIndex().ownerOf(callerClass)
     }
 
     private fun callerClassName(): String? =
@@ -96,7 +99,7 @@ object CompatLoader {
             illegalPaths.none { path -> element.className.startsWith(path) }
         }?.className
 
-    fun findModByClass(cls: Class<*>): ModInfo? = currentIndex().ownerOf(cls.name)
+    fun findModByClass(cls: Class<*>): ModInfo? = syncedIndex().ownerOf(cls.name)
 
     fun markFirstModAsSkip() {
         val mod = findFirstMod()
@@ -128,7 +131,7 @@ object CompatLoader {
     fun skipExtraction(modId: String?, key: Any, retry: Runnable): Boolean =
         ConfigEntrypoints.skipExtraction(modId, key, retry) || (modId != null && modId in nativeLoadedConfigs)
 
-    fun hasMod(id: String): Boolean = ModInfo.loadedMods.any { it.id == id }
+    fun hasMod(id: String): Boolean = syncedIndex().mods.any { it.id == id }
 
     private const val MOD_MENU_CLASS = "com.terraformersmc.modmenu.ModMenu"
 
@@ -226,6 +229,9 @@ object CompatLoader {
             if (!bypassDelay) list.add(priority to init)
             !bypassDelay
         }
-        if (!queued) init()
+        if (!queued) {
+            syncedIndex()
+            init()
+        }
     }
 }

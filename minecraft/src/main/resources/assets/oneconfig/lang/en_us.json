@@ -290,6 +290,7 @@
   "oneconfig.page.hotwire.switch.conflict":"Some of these mods need others you're turning off. Switch them separately.",
   "oneconfig.page.hotwire.switch.after_off": "Turns on %s once the others are off.",
   "oneconfig.page.hotwire.switch.reopen": "Save and switch",
+  "oneconfig.page.hotwire.switch.reopen_unsupported": "Update Hotwire to turn %s back on from here.",
   "oneconfig.page.hotwire.update.adds": "Adds %s, which this update needs.",
   "oneconfig.page.hotwire.update.same": "This version is already installed.",
   "oneconfig.page.hotwire.update.unavailable": "Hotwire can't update mods in this game session.",

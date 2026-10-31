@@ -694,10 +694,15 @@ object HotwireBridge {
             ?: live.firstOrNull { at -> !onUiThread { keptForNextLaunch(engine, jars[at]) } }?.let { notKept(jars[it]) }
     }
 
+    private fun unwrapped(engine: Any, jar: Path): Path = runCatching {
+        engine.callHidden("findParts")!!.field("updates")!!.field("updater")!!.callMethod("unwrap", jar) as Path
+    }.getOrDefault(jar)
+
     private fun isQueued(engine: Any, jar: Path): Boolean {
-        val manifest = manifestOf(jar) ?: return false
-        return (engine.callMethod("getPendingChanges") as List<*>).any {
-            it!!.javaClass.simpleName == "Update" && it.get("newJar") == jar.fileName.toString() && it.get("toVersion") == manifest.get("version")
+        val updates = (engine.callMethod("getPendingChanges") as List<*>).filter { it!!.javaClass.simpleName == "Update" }
+        return listOf(jar, unwrapped(engine, jar)).any { queued ->
+            val manifest = manifestOf(queued) ?: return@any false
+            updates.any { it!!.get("newJar") == queued.fileName.toString() && it.get("toVersion") == manifest.get("version") }
         }
     }
 
@@ -837,7 +842,7 @@ object HotwireBridge {
 
     fun reopensToTurnOn(ids: Collection<String>): Boolean = runCatching {
         val engine = engine()!!
-        worldRefusal(engine) == null && keptOff(ids).any {
+        canReopenToAddBack(engine) && worldRefusal(engine) == null && keptOff(ids).any {
             val jar = engine.callMethod("findJarOf", it) as Path
             dryRunAdd(engine, jar).addMode() == "SAVE_AND_REOPEN" || reopensOnceMet(engine, jar)
         }
@@ -855,6 +860,9 @@ object HotwireBridge {
     private fun awaitWorker(engine: Any, jar: Path) {
         runCatching { dryRunAdd(engine, jar) }
     }
+
+    private fun canReopenToAddBack(engine: Any): Boolean =
+        engine.javaClass.declaredMethods.any { it.name == "add" && it.parameterCount == 3 }
 
     private fun addBackWithReopen(engine: Any, id: String, jar: Path): Result {
         val added = CompletableFuture<Result>()
@@ -889,7 +897,13 @@ object HotwireBridge {
                 ?: modes.firstOrNull { it.second == "SAVE_AND_REOPEN" }
                 ?: return Result(false, dryRunAdd(engine, waiting.values.first()).lineOfAdd())
             val (id, jar) = entry
-            if (mode == "SAVE_AND_REOPEN" && !reopen) return reopenNotAgreed(engine.callMethod("nameOfMod", id) as String)
+            if (mode == "SAVE_AND_REOPEN") {
+                val name = engine.callMethod("nameOfMod", id) as String
+                if (!canReopenToAddBack(engine)) {
+                    return Result(false, translated("oneconfig.page.hotwire.switch.reopen_unsupported", "Update Hotwire to turn %s back on from here.", name))
+                }
+                if (!reopen) return reopenNotAgreed(name)
+            }
             val result = if (mode == "NOW") call("turnOn", listOf(id)).asResults().get() else addBackWithReopen(engine, id, jar)
             awaitWorker(engine, jar)
             val back = onUiThread {
