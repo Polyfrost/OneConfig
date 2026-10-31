@@ -48,6 +48,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -243,10 +244,12 @@ public final class ConfigManager {
     }
 
     @ApiStatus.Internal
-    public static void initializeLate(Runnable creator) {
+    public static void initializeLate(Predicate<Config> added, Runnable creator) {
         initialized = false;
-        for (Config config; (config = createdAfterStartup.poll()) != null; ) pendingInitialization.add(config);
         try {
+            for (Config config : createdAfterStartup) {
+                if (added.test(config) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
+            }
             creator.run();
         } finally {
             initialize();
@@ -317,7 +320,7 @@ public final class ConfigManager {
     }
 
     static boolean isPendingInitialization(Config config) {
-        return pendingInitialization.contains(config);
+        return pendingInitialization.contains(config) || createdAfterStartup.contains(config);
     }
 
     static void reportResetOptions(Config config, List<String> options) {
