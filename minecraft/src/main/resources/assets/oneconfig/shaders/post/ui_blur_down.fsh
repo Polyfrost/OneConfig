@@ -7,7 +7,7 @@ layout(std140) uniform SamplerInfo {
     vec2 InSize;
 };
 
-layout(location = 0) out vec4 fragColor;
+out vec4 fragColor;
 
 void main() {
     vec2 uv = gl_FragCoord.xy / OutSize;
