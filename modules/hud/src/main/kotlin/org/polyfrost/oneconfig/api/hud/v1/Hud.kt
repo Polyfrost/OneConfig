@@ -1103,6 +1103,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @JvmField
     var lastUpdate: Long = Long.MIN_VALUE
 
+    @Transient
+    internal var updateFailing = false
+
     @Transient private var revision = AtomicInteger()
 
     private fun bumpRevision() {

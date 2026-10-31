@@ -5,3 +5,4 @@
 - Fixed the HUD editor tour's highlight breaking for HUDs at the edge of the screen
 - Number spinners in the HUD editor now keep their unit next to the value
 - Fixed the OneConfig UI closing with a rendering error when a HUD fails to update outside a world, such as Legacy Skyblock's Pet Display on 26.x
+- HUDs that keep failing to update now only log the error once instead of every frame
