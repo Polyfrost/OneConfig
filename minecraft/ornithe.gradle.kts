@@ -40,8 +40,8 @@ dependencies {
     modApi(versionedCatalog["pylon"])
     val lwjglStb = "org.lwjgl:lwjgl-stb:3.4.3"
     api(lwjglStb) { isTransitive = false }
-    // Pylon doesn't provide lwjgl_stb
-    val platforms = listOf("linux", "linux-arm64", "macos", "macos-arm64", "windows", "windows-x86", "windows-arm64")
+    // every platform Pylon ships natives for, since it doesn't provide lwjgl_stb itself
+    val platforms = listOf("linux", "linux-arm32", "linux-arm64", "linux-ppc64le", "linux-riscv64", "freebsd", "macos", "macos-arm64", "windows", "windows-x86", "windows-arm64")
     for (natives in platforms) {
         stbNatives("$lwjglStb:natives-$natives")
     }
