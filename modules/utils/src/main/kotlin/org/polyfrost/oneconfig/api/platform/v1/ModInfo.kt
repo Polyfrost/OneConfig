@@ -65,14 +65,23 @@ data class ModInfo @JvmOverloads constructor(
         @Volatile
         private var cached: Set<ModInfo>? = null
 
+        @Volatile
+        private var seen: Map<String, ModInfo> = emptyMap()
+
         @get:JvmStatic
         val loadedMods: Set<ModInfo>
             get() = cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
 
+        @get:JvmStatic
+        val seenMods: Set<ModInfo>
+            get() = (seen + loadedMods.associateBy { it.id }).values.toSet()
+
         @JvmStatic
         fun refreshLoadedMods() {
             val live = Platform.compatibility().mods
-            if (live.isNotEmpty()) cached = (loadedMods.associateBy { it.id } + live.associateBy { it.id }).values.toSet()
+            if (live.isEmpty()) return
+            seen = seen + loadedMods.associateBy { it.id }
+            cached = live
         }
     }
 }

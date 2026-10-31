@@ -99,6 +99,7 @@ object HotwireBridge {
     @Suppress("UNCHECKED_CAST")
     fun previewTogether(off: List<String>, on: List<String>): Preview? {
         if (off.isEmpty() || on.isEmpty()) return null
+        val conflict = translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately.")
         val plan = runCatching {
             val engine = engine()!!
             val leaving = call("previewOff", off)!!.get("switched") as List<String>
@@ -107,11 +108,28 @@ object HotwireBridge {
             planner.callMethod("planOn", on, (offMods() + leaving).toSet())!!.takeUnless { plan ->
                 (plan.get("order") as List<String>).any { it in leaving }
             }
-        }.getOrNull() ?: return Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately."))
+        }.getOrNull() ?: return Preview(false, conflict)
+        val engine = engine()!!
+        if ((plan.get("refusals") as List<*>).isNotEmpty()) {
+            return Preview(false, runCatching { describeRefusal(engine, plan) }.getOrDefault(conflict))
+        }
+        refusalOnceMet(engine, keptOff(on).mapNotNull { engine.callMethod("findJarOf", it) as Path? })?.let { return Preview(false, it) }
         val alone = preview(on, true)
-        if (alone.possible || (plan.get("refusals") as List<*>).isNotEmpty()) return alone
-        val names = (plan.get("order") as List<String>).joinToString(", ") { engine()!!.callMethod("nameOfMod", it) as String }
+        if (alone.possible) return alone
+        val names = (plan.get("order") as List<String>).joinToString(", ") { engine.callMethod("nameOfMod", it) as String }
         return Preview(true, translated("oneconfig.page.hotwire.switch.after_off", "Turns on %s once the others are off.", names))
+    }
+
+    fun keptOnWhenOff(ids: Collection<String>): Set<String> = runCatching {
+        val plan = plannerWith(engine()!!, emptyList()).callMethod("planOff", ids, offMods().toSet())!!
+        (plan.get("enabledNested") as List<*>).mapTo(HashSet()) { it!!.get("mod") as String }
+    }.getOrDefault(emptySet())
+
+    private fun describeRefusal(engine: Any, plan: Any): String {
+        val refused = Class.forName("dev.moon.hotwire.switching.ModSwitcher\$Result\$Refused").constructors.single().newInstance(plan)
+        val nameOf = Function<String, String> { engine.callMethod("nameOfMod", it) as String }
+        return Class.forName("dev.moon.hotwire.switching.PlayerMessages").methods
+            .first { it.name == "describe" && it.parameterCount == 2 }.invoke(null, refused, nameOf) as String
     }
 
     private fun offMods(): List<String> = mods().orEmpty().filterNot { it.on }.map { it.id }
@@ -389,9 +407,8 @@ object HotwireBridge {
         ) {
             accepted = true
             val added = if (inOrder == null) {
-                add.through("StoreAdd", "accept").asResults().thenApply { result ->
-                    val lost = jars.filterIndexed { at, _ -> modes[at] == "NEXT_START" }.firstOrNull { !isQueued(engine()!!, it) }
-                    if (result.ok && lost != null) queueFailed(lost) else result
+                add.through("StoreAdd", "accept").asResults().thenApplyAsync { result ->
+                    if (result.ok) lostJar(engine()!!, jars, modes) ?: result else result
                 }
             } else {
                 add.through("StoreAdd", "cancel")
@@ -502,6 +519,8 @@ object HotwireBridge {
     private fun manifestOf(jar: Path): Any? =
         Class.forName("dev.moon.hotwire.jar.JarLookup").getMethod("findManifest", Path::class.java).invoke(null, jar)
 
+    private fun nameOfJar(jar: Path): String = manifestOf(jar)?.get("name") as String? ?: jar.fileName.toString()
+
     private fun dryRunAdd(engine: Any, jar: Path): Any = (engine.callMethod("dryRunAdd", jar) as CompletableFuture<*>).get()!!
 
     private fun Any.lineOfAdd(): String = (get("lines") as List<*>).firstOrNull() as String? ?: get("name") as String
@@ -577,7 +596,7 @@ object HotwireBridge {
             CompletableFuture.supplyAsync { runSteps(engine, steps, jar, reopen) }
         }
         val lines = steps.map {
-            val name = manifestOf(it)?.get("name") as String? ?: it.fileName.toString()
+            val name = nameOfJar(it)
             if (engine.callMethod("canUpdate", it) == true) {
                 translated("oneconfig.page.hotwire.update.updates", "Updates %s, which this update needs.", name)
             } else {
@@ -638,8 +657,24 @@ object HotwireBridge {
         }
         onUiThread { engine.callMethod("add", jar, mode) }
         dryRunAdd(engine, jar)
-        if (engine.callMethod("canUpdate", jar) == true) return Result(true, "")
-        return Result(false, translated("oneconfig.page.hotwire.add.failed", "Hotwire couldn't add %s. It posts why in chat.", name))
+        if (engine.callMethod("canUpdate", jar) != true) {
+            return Result(false, translated("oneconfig.page.hotwire.add.failed", "Hotwire couldn't add %s. It posts why in chat.", name))
+        }
+        return if (onUiThread { keptForNextLaunch(engine, jar) }) Result(true, "") else notKept(jar)
+    }
+
+    private fun keptForNextLaunch(engine: Any, jar: Path): Boolean {
+        val kept = (engine.field("updateFolders")!!.get("mods") as Path).resolve(jar.fileName.toString())
+        return Files.exists(kept) && Files.mismatch(kept, jar) == -1L
+    }
+
+    private fun notKept(jar: Path) =
+        Result(false, translated("oneconfig.page.hotwire.add.not_kept", "%s is added for now, but it won't stay after a restart - please check chat!", nameOfJar(jar)))
+
+    private fun lostJar(engine: Any, jars: List<Path>, modes: List<String>): Result? {
+        val (queued, live) = jars.indices.partition { modes[it] == "NEXT_START" }
+        return queued.firstOrNull { !isQueued(engine, jars[it]) }?.let { queueFailed(jars[it]) }
+            ?: live.firstOrNull { at -> !onUiThread { keptForNextLaunch(engine, jars[at]) } }?.let { notKept(jars[it]) }
     }
 
     private fun isQueued(engine: Any, jar: Path): Boolean {
@@ -650,7 +685,7 @@ object HotwireBridge {
     }
 
     private fun queueFailed(jar: Path) =
-        Result(false, translated("oneconfig.page.hotwire.add.queue_failed", "Hotwire couldn't queue %s - please check chat!", manifestOf(jar)?.get("name") as String? ?: jar.fileName.toString()))
+        Result(false, translated("oneconfig.page.hotwire.add.queue_failed", "Hotwire couldn't queue %s - please check chat!", nameOfJar(jar)))
 
     private fun queueAdd(engine: Any, jar: Path): Result {
         onUiThread { engine.callMethod("add", jar, engine.enumArg("add", "NEXT_START")) }

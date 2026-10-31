@@ -143,6 +143,7 @@ public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo {
 	public final fun getModIconPath ()Ljava/lang/String;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getParentId ()Ljava/lang/String;
+	public static final fun getSeenMods ()Ljava/util/Set;
 	public final fun getVersion ()Ljava/lang/String;
 	public fun hashCode ()I
 	public static final fun refreshLoadedMods ()V
@@ -151,6 +152,7 @@ public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo {
 
 public final class org/polyfrost/oneconfig/api/platform/v1/ModInfo$Companion {
 	public final fun getLoadedMods ()Ljava/util/Set;
+	public final fun getSeenMods ()Ljava/util/Set;
 	public final fun refreshLoadedMods ()V
 }
 

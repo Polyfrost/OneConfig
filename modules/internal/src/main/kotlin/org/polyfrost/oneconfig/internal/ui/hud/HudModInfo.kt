@@ -14,6 +14,6 @@ internal fun configForHud(configId: String): ConfigData? {
 
 internal fun modNameFor(configId: String): String? {
     val modId = configId.removeSuffix(".json").substringBefore('/')
-    ModInfo.loadedMods.firstOrNull { it.id == modId }?.name?.let { return it }
+    ModInfo.seenMods.firstOrNull { it.id == modId }?.name?.let { return it }
     return configForHud(configId)?.title?.asRenderText()
 }

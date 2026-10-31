@@ -173,9 +173,9 @@ private val iconPaths = HashMap<String, String?>()
  */
 private fun gridMods(states: Map<String, HotwireBridge.ModState>?): Collection<ModInfo> {
     ModInfo.refreshLoadedMods()
-    val seen = ModInfo.loadedMods
+    val seen = ModInfo.seenMods
     val seenIds = seen.mapTo(HashSet()) { it.id }
-    val liveIds = Platform.compatibility().mods.mapTo(HashSet()) { it.id }
+    val liveIds = ModInfo.loadedMods.mapTo(HashSet()) { it.id }
     val known = seen.filter { it.id in liveIds || states?.containsKey(it.id) == true }
     val unseen = states.orEmpty().values
         .filter { it.id !in seenIds }
@@ -373,13 +373,16 @@ private fun SwitchBar(
 ) {
     val theme = LocalTheme.current
     // a picked entry switches as a whole, so every member Hotwire can switch goes along with its root
-    fun idsWhere(on: Boolean) = picked.values
+    fun membersWhere(on: Boolean) = picked.values
         .filter { familyOn(it, states) == on }
         .flatten()
         .filter { mod -> states?.get(mod.id)?.let { it.switchable && it.on == on } == true }
-        .map { it.id }
-    val turnOff = remember(picked, states) { idsWhere(true) }
-    val turnOn = remember(picked, states) { idsWhere(false) }
+    val turnOff = remember(picked, states) {
+        val members = membersWhere(true)
+        val ids = members.map { it.id }
+        ids - HotwireBridge.keptOnWhenOff(members.filter { it.parentId !in ids }.map { it.id })
+    }
+    val turnOn = remember(picked, states) { membersWhere(false).map { it.id } }
     val previews = remember(turnOff, turnOn) {
         listOfNotNull(
             turnOff.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, false) },

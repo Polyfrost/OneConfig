@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.Map;
 import java.util.Set;
@@ -21,16 +22,21 @@ class LoadedModsRefreshTest {
     }
 
     @Test
-    void refreshAddsAndUpdatesWithoutDroppingModsLeftTheLoader() {
+    void modsThatLeftTheLoaderAreSeenButNotLoaded() {
         TestCompatibilityPlatform.mods = Set.of(mod("kept-off", "1"), mod("updated", "1"));
         ModInfo.refreshLoadedMods();
 
         TestCompatibilityPlatform.mods = Set.of(mod("updated", "2"), mod("added", "1"));
         ModInfo.refreshLoadedMods();
 
-        Map<String, String> versions = ModInfo.getLoadedMods().stream().collect(Collectors.toMap(ModInfo::getId, ModInfo::getVersion));
-        assertEquals("1", versions.get("kept-off"));
-        assertEquals("2", versions.get("updated"));
-        assertEquals("1", versions.get("added"));
+        Map<String, String> loaded = ModInfo.getLoadedMods().stream().collect(Collectors.toMap(ModInfo::getId, ModInfo::getVersion));
+        assertFalse(loaded.containsKey("kept-off"));
+        assertEquals("2", loaded.get("updated"));
+        assertEquals("1", loaded.get("added"));
+
+        Map<String, String> seen = ModInfo.getSeenMods().stream().collect(Collectors.toMap(ModInfo::getId, ModInfo::getVersion));
+        assertEquals("1", seen.get("kept-off"));
+        assertEquals("2", seen.get("updated"));
+        assertEquals("1", seen.get("added"));
     }
 }

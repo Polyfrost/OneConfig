@@ -267,6 +267,7 @@
   "oneconfig.page.hotwire.add.done": "Added %s.",
   "oneconfig.page.hotwire.add.queued": "%s is added at the next launch.",
   "oneconfig.page.hotwire.add.queue_failed": "Hotwire couldn't queue %s - please check chat!",
+  "oneconfig.page.hotwire.add.not_kept": "%s is added for now, but it won't stay after a restart - please check chat!",
   "oneconfig.page.hotwire.reopen_confirm": "%s has to save and reopen your world. Try again to confirm.",
   "oneconfig.page.hotwire.add.reading": "Reading the jar…",
   "oneconfig.page.hotwire.add.now": "Add now",

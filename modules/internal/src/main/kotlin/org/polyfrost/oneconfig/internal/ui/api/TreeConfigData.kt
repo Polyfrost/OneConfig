@@ -77,7 +77,7 @@ class TreeConfigData(
         get() = resolvedModInfo ?: findModInfo()?.also { resolvedModInfo = it }
 
     private fun findModInfo(): ModInfo? {
-        val mods = ModInfo.loadedMods
+        val mods = ModInfo.seenMods
         if (mods.isEmpty()) return null
         val ids = listOfNotNull(
             id.nonBlankOrNull(),

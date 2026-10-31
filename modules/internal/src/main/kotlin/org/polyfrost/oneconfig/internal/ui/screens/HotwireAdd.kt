@@ -148,7 +148,7 @@ fun HotwireAdd() {
 }
 
 /** The icon of an installed mod, read out of its jar */
-private fun installedIcon(modId: String): String? = ModInfo.loadedMods.firstOrNull { it.id == modId }?.extractIconFile()
+private fun installedIcon(modId: String): String? = ModInfo.seenMods.firstOrNull { it.id == modId }?.extractIconFile()
 
 /** A row's icon, loaded off the UI thread so scrolling never waits on a jar or the network */
 @Composable
