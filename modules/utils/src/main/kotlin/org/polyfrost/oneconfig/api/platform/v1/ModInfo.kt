@@ -79,7 +79,7 @@ data class ModInfo @JvmOverloads constructor(
         @JvmStatic
         fun refreshLoadedMods() {
             val live = Platform.compatibility().mods
-            if (live.isEmpty()) return
+            if (live.isEmpty() || live == cached) return
             seen = seen + loadedMods.associateBy { it.id }
             cached = live
         }

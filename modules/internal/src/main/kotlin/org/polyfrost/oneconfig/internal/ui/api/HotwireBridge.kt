@@ -81,6 +81,9 @@ object HotwireBridge {
         }
     }.getOrNull()
 
+    fun installedState(): List<Any?> = mods().orEmpty().map { listOf(it.id, it.version, it.on) } +
+        runCatching { engine()!!.callMethod("getPendingChanges") as List<*> }.getOrDefault(emptyList())
+
     val isSwitching: Boolean get() = call("isSwitching") as? Boolean ?: false
 
     /** How far the running switch is, from 0 to 1 */
@@ -377,9 +380,17 @@ object HotwireBridge {
         return version.get("id") as String
     }
 
+    private fun browseThisGame() {
+        val model = engine()?.callMethod("getStore")?.callMethod("getModel") ?: return
+        val client = model.callMethod("getClient")!!
+        if (client.callMethod("isBrowsingOwn") == true) return
+        model.callMethod("setBrowsing", client.callMethod("getLoader")!!, client.callMethod("getGameVersion")!!)
+    }
+
     /** What adding [hit] would do, including what Hotwire adds along with it; blocks on the network */
     fun storePlan(hit: StoreHit): JarPlan {
         val version = newestVersion(hit.projectId)
+        runCatching { onUiThread(::browseThisGame) }
         val add = (call("requestAdd", hit.projectId, version) as CompletableFuture<*>).get()!!
         val canAdd = add.through("StoreAdd", "canAdd") == true
         @Suppress("UNCHECKED_CAST")

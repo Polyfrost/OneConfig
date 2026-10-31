@@ -21,8 +21,6 @@ object CompatLoader {
 
     private var bypassDelay = false
 
-    private val pathFactory: MutableMap<ModInfo, (String) -> String> = mutableMapOf()
-
     // concurrent as compat hooks may fire on other threads while ConfigEntrypoints un-marks a failed mod
     val nativeLoadedConfigs: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
@@ -57,7 +55,32 @@ object CompatLoader {
         "org.polyfrost.polyui"
     )
 
-    private val ownerByClassName = ConcurrentHashMap<String, Optional<ModInfo>>()
+    private class ModIndex(val mods: Set<ModInfo>) {
+        private val roots = mods.mapNotNull { mod -> mod.file?.let { mod to it.toUri().toString() } }
+        private val ownerByClassName = ConcurrentHashMap<String, Optional<ModInfo>>()
+
+        fun ownerOf(className: String): ModInfo? =
+            ownerByClassName.computeIfAbsent(className) { Optional.ofNullable(resolveOwner(it)) }.orElse(null)
+
+        private fun resolveOwner(className: String): ModInfo? {
+            val resourcePath = className.replace(".", "/") + ".class"
+            roots.forEach { (mod, root) ->
+                runCatching {
+                    URI.create(root + resourcePath).toURL().openStream().use {} // throws if unable to open
+                    return mod
+                }
+            }
+            return null
+        }
+    }
+
+    @Volatile
+    private var index = ModIndex(emptySet())
+
+    private fun currentIndex(): ModIndex {
+        val mods = Platform.compatibility().mods
+        return index.takeIf { it.mods == mods } ?: ModIndex(mods).also { index = it }
+    }
 
     fun findFirstMod(): ModInfo? {
         forcedModId.get()?.let { forcedId ->
@@ -65,9 +88,7 @@ object CompatLoader {
             if (forcedMod != null) return forcedMod
         }
         val callerClass = callerClassName() ?: return null
-        return ownerByClassName
-            .computeIfAbsent(callerClass) { Optional.ofNullable(resolveOwner(it)) }
-            .orElse(null)
+        return currentIndex().ownerOf(callerClass)
     }
 
     private fun callerClassName(): String? =
@@ -75,20 +96,7 @@ object CompatLoader {
             illegalPaths.none { path -> element.className.startsWith(path) }
         }?.className
 
-    private fun resolveOwner(className: String): ModInfo? {
-        val resourcePath = className.replace(".", "/") + ".class"
-        pathFactory.entries.forEach { (mod, uri) ->
-            runCatching {
-                URI.create(uri(resourcePath)).toURL().openStream().use {} // throws if unable to open
-                return mod
-            }
-        }
-        return null
-    }
-
-    fun findModByClass(cls: Class<*>): ModInfo? = ownerByClassName
-        .computeIfAbsent(cls.name) { Optional.ofNullable(resolveOwner(it)) }
-        .orElse(null)
+    fun findModByClass(cls: Class<*>): ModInfo? = currentIndex().ownerOf(cls.name)
 
     fun markFirstModAsSkip() {
         val mod = findFirstMod()
@@ -171,12 +179,6 @@ object CompatLoader {
     private var entrypointsDecided = false
 
     init {
-        ModInfo.loadedMods.forEach { mod ->
-            mod.file?.let {
-                pathFactory[mod] = it.toUri().toString()::plus
-            }
-        }
-
         // filtered so a mod whose entrypoint already failed is never marked again
         nativeLoadedConfigs.addAll(ConfigEntrypoints.providerModIds().filter(ConfigEntrypoints::provides))
     }

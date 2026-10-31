@@ -2,12 +2,14 @@ package org.polyfrost.oneconfig.internal.ui.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.internal.ui.TestCompatibilityPlatform;
 
@@ -38,5 +40,22 @@ class LoadedModsRefreshTest {
         assertEquals("1", seen.get("kept-off"));
         assertEquals("2", seen.get("updated"));
         assertEquals("1", seen.get("added"));
+    }
+
+    @Test
+    void configDataFollowsAnUpdateAndKeepsItsLookupOtherwise() {
+        TestCompatibilityPlatform.mods = Set.of(mod("card", "1"));
+        ModInfo.refreshLoadedMods();
+        TreeConfigData data = new TreeConfigData(Tree.tree("card"), ConfigSource.OC, null);
+        assertEquals("1", data.getVersion());
+
+        Set<ModInfo> before = ModInfo.getLoadedMods();
+        TestCompatibilityPlatform.mods = Set.of(mod("card", "1"));
+        ModInfo.refreshLoadedMods();
+        assertSame(before, ModInfo.getLoadedMods());
+
+        TestCompatibilityPlatform.mods = Set.of(mod("card", "2"));
+        ModInfo.refreshLoadedMods();
+        assertEquals("2", data.getVersion());
     }
 }

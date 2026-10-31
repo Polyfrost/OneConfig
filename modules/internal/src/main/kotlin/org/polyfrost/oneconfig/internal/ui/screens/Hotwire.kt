@@ -74,7 +74,8 @@ private var listLayout by mutableStateOf(false)
 
 /**
  * The updates Hotwire found on Modrinth, checked once per session and again whenever an update or add made here
- * finishes, so the Hotwire page and the Updates tab share one answer instead of each asking Modrinth
+ * finishes or the mods changed in Hotwire's own screens, so the Hotwire page and the Updates tab share one answer
+ * instead of each asking Modrinth
  */
 object HotwireUpdates {
     /** Null until the first check has answered */
@@ -89,11 +90,19 @@ object HotwireUpdates {
 
     private var checked = false
 
+    @Volatile
+    private var checkedState: List<Any?>? = null
+
     private val scope = CoroutineScope(SupervisorJob() + Executor { Platform.screen().runOnUiThread(it) }.asCoroutineDispatcher())
 
-    /** Checks on first use only */
+    /** Checks on first use, and again when opened after the mods changed in Hotwire's own screens */
     fun ensure() {
-        if (!checked) refreshAfter {}
+        if (!checked) {
+            refreshAfter {}
+        } else if (HotwireBridge.installedState() != checkedState) {
+            HotwireBridge.invalidate()
+            refreshAfter {}
+        }
     }
 
     /**
@@ -112,6 +121,7 @@ object HotwireUpdates {
         Thread({
             wait()
             synchronized(this) {
+                checkedState = HotwireBridge.installedState()
                 val result = runCatching { HotwireBridge.findUpdates() }
                 Platform.screen().runOnUiThread { apply(result) }
             }
