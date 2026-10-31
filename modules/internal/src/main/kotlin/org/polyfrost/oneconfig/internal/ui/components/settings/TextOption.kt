@@ -22,13 +22,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -54,10 +61,15 @@ fun TextOption(data: TextOptionData) {
     val valid = regex == null || text.isEmpty() || regex.matches(text)
     val borderColor = animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
 
+    val secure = data.secure
+    val multiline = data.multiline && !secure
+    var revealed by remember(data.prop) { mutableStateOf(false) }
+    val masked = remember(data.prop) { VisualTransformation { TransformedText(AnnotatedString(data.mask(it.text)), OffsetMapping.Identity) } }
+
     BasicTextField(
         value = text,
         onValueChange = { text = it; if (regex == null || it.isEmpty() || regex.matches(it)) data.strProp.set(it) },
-        singleLine = !data.multiline,
+        singleLine = !multiline,
         textStyle = TextStyle(
             color = theme.textColor,
             fontSize = 14.sp,
@@ -65,23 +77,32 @@ fun TextOption(data: TextOptionData) {
         ),
         interactionSource = interactionSource,
         cursorBrush = SolidColor(theme.textColor),
+        visualTransformation = if (secure && !revealed) masked else VisualTransformation.None,
         modifier = Modifier.trackTextInputFocus()
             .width(LocalOptionWidth.current)
-            .then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier)
+            .then(if (multiline) Modifier.heightIn(min = 96.dp) else Modifier)
             .graphicsLayer {}
             .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, fill = { theme.modCardBackground }, border = { borderColor.value })
             .padding(horizontal = 12.dp, vertical = 7.dp),
         decorationBox = { innerTextField ->
             Row(
-                verticalAlignment = if (data.multiline) Alignment.Top else Alignment.CenterVertically,
+                verticalAlignment = if (multiline) Alignment.Top else Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon("text-input", tint = { iconColor.value }, modifier = Modifier.size(18.dp))
-                Box {
+                Box(Modifier.weight(1f)) {
                     if (text.isEmpty() && data.placeholder != null && !isFocused) {
                         Text(data.placeholder!!, color = theme.textColorSecondary, fontSize = 14.sp)
                     }
                     innerTextField()
+                }
+                if (secure) {
+                    IconButton(
+                        if (revealed) "eye" else "eye-off",
+                        modifier = Modifier.size(18.dp).pointerHoverIcon(PointerIcon.Hand),
+                        foreground = theme.textColorSecondary,
+                        hoveredForeground = theme.textColor,
+                    ) { revealed = !revealed }
                 }
             }
         },
