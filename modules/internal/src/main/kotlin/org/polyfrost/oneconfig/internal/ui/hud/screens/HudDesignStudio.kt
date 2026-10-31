@@ -1,11 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -48,7 +54,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
@@ -203,6 +211,11 @@ private enum class ResizeCorner {
 private const val SELECTION_BLUE_ARGB = 0xFF0D99FF.toInt()
 private const val HUD_SIZE_BADGE_HEIGHT = 16f
 private const val HUD_SIZE_BADGE_GAP = 9f
+/** How far the resize handles reach past a HUD's box */
+private const val SELECTION_HANDLE_REACH = 4f
+private const val NUDGE_SETTLE_MS = 300L
+/** How stiffly the settings panel resizes to a new tab, which a dodge alongside it shares */
+private const val PANEL_RESIZE_STIFFNESS = Spring.StiffnessMediumLow
 private val selectionBlue = Color(SELECTION_BLUE_ARGB)
 private val marqueeFillColor = Color(SELECTION_BLUE_ARGB).copy(alpha = 0.15f)
 
@@ -1032,6 +1045,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     var selectedHuds by remember { mutableStateOf<Set<Hud>>(emptySet()) }
     var panelOpen by remember { mutableStateOf(false) }
     var panelUserMoved by remember { mutableStateOf(false) }
+    var panelDragging by remember { mutableStateOf(false) }
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
     var dragOffsetX by remember { mutableStateOf(0f) }
     var dragOffsetY by remember { mutableStateOf(0f) }
@@ -1061,8 +1075,17 @@ fun HudDesignStudio(visible: Boolean = true) {
     var librarySectionIndexes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     val chromeRects = remember { mutableStateMapOf<String, Rect>() }
     val rootCoords = remember { arrayOfNulls<LayoutCoordinates>(1) }
-    var panelOffset by remember { mutableStateOf(Offset.Zero) }
-    var panelBoxWidth by remember { mutableStateOf(0) }
+    // x is a fraction of the free width so the panel keeps to its screen edge, and y is its top edge in pixels so a
+    // taller tab grows it downwards until the bottom of the screen pushes it up
+    var panelPos by remember { mutableStateOf(Offset(1f, 0f)) }
+    var panelSearch by remember { mutableStateOf("") }
+    var panelAcceptedOverlap by remember { mutableStateOf<Pair<Set<Hud>, List<Rect>>?>(null) }
+    val panelInteraction = remember { MutableInteractionSource() }
+    val panelHovered by panelInteraction.collectIsHoveredAsState()
+    val lastNudgeAt = remember { longArrayOf(0L) }
+    val panelDropPending = remember { booleanArrayOf(false) }
+    var panelBoxSize by remember { mutableStateOf(IntSize.Zero) }
+    var panelTargetHeight by remember { mutableStateOf<Int?>(null) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
     var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
     var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
@@ -1108,6 +1131,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     }
 
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
+    val panelVisible = panelHud != null
 
     fun clearTransientEditorState() {
         hudContextMenuTarget = null
@@ -1254,13 +1278,6 @@ fun HudDesignStudio(visible: Boolean = true) {
         val primary = primaryHud()
         primary?.let { repairHudStaticSize(it) }
         HudDesignSession.activeSelection = if (tourBlocksEditor) emptyList() else selectedHuds.toList()
-    }
-
-    LaunchedEffect(panelOpen) {
-        if (!panelOpen) {
-            panelOffset = Offset.Zero
-            panelUserMoved = false
-        }
     }
 
     val providers = remember { HudManager.providers().toList() }
@@ -1449,16 +1466,23 @@ fun HudDesignStudio(visible: Boolean = true) {
         return chromeRects.values.any { it.contains(point) }
     }
 
+    fun panelSpace(size: IntSize = panelBoxSize) = Offset(
+        (rootSize.width - size.width).toFloat().coerceAtLeast(0f),
+        (rootSize.height - size.height).toFloat().coerceAtLeast(0f),
+    )
+
+    fun panelPx(pos: Offset, size: IntSize = panelBoxSize): Offset {
+        val space = panelSpace(size)
+        return Offset(pos.x * space.x, pos.y.coerceIn(0f, space.y))
+    }
+
     fun movePanel(delta: Offset) {
         panelUserMoved = true
-        val rect = chromeRects[CHROME_SETTINGS_PANEL]
-        if (rect == null || rootSize.width <= 0 || rootSize.height <= 0) {
-            panelOffset += delta
-            return
-        }
-        val dx = delta.x.coerceIn(minOf(-rect.left, 0f), maxOf(rootSize.width - rect.right, 0f))
-        val dy = delta.y.coerceIn(minOf(-rect.top, 0f), maxOf(rootSize.height - rect.bottom, 0f))
-        panelOffset += Offset(dx, dy)
+        val space = panelSpace()
+        panelPos = Offset(
+            if (space.x > 0f) (panelPos.x + delta.x / space.x).coerceIn(0f, 1f) else panelPos.x,
+            (panelPx(panelPos).y + delta.y).coerceIn(0f, space.y),
+        )
     }
 
     /** Recomputes the marquee selection from [marqueeStart]..[marqueeCurrent] */
@@ -1907,35 +1931,109 @@ fun HudDesignStudio(visible: Boolean = true) {
         label = "sideChromeAlpha"
     )
 
-    var panelDockedLeft by remember { mutableStateOf(false) }
-    val panelWidthPx = panelBoxWidth.toFloat()
-    if (panelHud != null && !panelUserMoved && panelWidthPx > 0f && rootSize.width > 0) {
+    fun hudScreenBox(hud: Hud): Rect? {
+        val b = hudBounds(hud) ?: return null
         val mcToScreen = Platform.screen().mcToScreenScale()
-        val rootW = rootSize.width.toFloat()
-        val rootH = rootSize.height.toFloat()
-        val leftSlot = Rect(0f, 0f, panelWidthPx, rootH)
-        val rightSlot = Rect(rootW - panelWidthPx, 0f, rootW, rootH)
-        var leftScore = 0f
-        var rightScore = 0f
-        for (hud in HudManager.activeInstances) {
-            val b = hudBounds(hud) ?: continue
-            val box = Rect(
-                b.x * mcToScreen,
-                b.y * mcToScreen,
-                (b.x + b.width) * mcToScreen,
-                (b.y + b.height) * mcToScreen,
-            )
-            val weight = if (hud in selectedHuds) 8f else 1f
-            leftScore += overlapArea(box, leftSlot) * weight
-            rightScore += overlapArea(box, rightSlot) * weight
-        }
-        panelDockedLeft = leftScore < rightScore
+        return Rect(b.x * mcToScreen, b.y * mcToScreen, (b.x + b.width) * mcToScreen, (b.y + b.height) * mcToScreen)
     }
-    val panelDockX by animateFloatAsState(
-        targetValue = if (panelDockedLeft) -(rootSize.width - panelWidthPx) else 0f,
-        animationSpec = ReducedMotion.spec(tween(220)),
-        label = "panelDockX"
-    )
+
+    fun panelProtectedRects(): List<Rect> {
+        val mcToScreen = Platform.screen().mcToScreenScale()
+        return selectedHuds.mapNotNull { hud ->
+            val box = hudScreenBox(hud) ?: return@mapNotNull null
+            val bar = hudActionBarLayout(hud, mcToScreen, actionIconPx, actionBarGapPx)
+            Rect(
+                minOf(box.left - SELECTION_HANDLE_REACH, bar?.x ?: Float.MAX_VALUE),
+                minOf(box.top - HUD_SIZE_BADGE_GAP - HUD_SIZE_BADGE_HEIGHT, bar?.y ?: Float.MAX_VALUE),
+                maxOf(box.right + SELECTION_HANDLE_REACH, bar?.let { it.x + it.width } ?: -Float.MAX_VALUE),
+                maxOf(box.bottom + SELECTION_HANDLE_REACH, bar?.let { it.y + it.height } ?: -Float.MAX_VALUE),
+            )
+        }
+    }
+
+    fun panelEndSize() = IntSize(panelBoxSize.width, panelTargetHeight ?: panelBoxSize.height)
+
+    fun panelCoverage(pos: Offset, rects: List<Rect>): Float {
+        val size = panelEndSize()
+        val panel = Rect(panelPx(pos, size), size.toSize())
+        return rects.sumOf { overlapArea(it, panel).toDouble() }.toFloat()
+    }
+
+    fun panelDodgeTarget(rects: List<Rect>): Offset? {
+        val covered = panelCoverage(panelPos, rects)
+        if (covered <= 0f) return null
+        val space = panelSpace()
+        if (space.x <= 0f) return null
+        // it only ever moves sideways so the tabs stay at the height the user is used to
+        val xs = if (panelUserMoved) {
+            val size = panelEndSize()
+            val top = panelPx(panelPos, size).y
+            val band = rects.filter { it.bottom > top && it.top < top + size.height }
+            listOf(band.minOf { it.left } - panelBoxSize.width, band.maxOf { it.right })
+                .map { (it / space.x).coerceIn(0f, 1f) }
+                .sortedBy { abs(it - panelPos.x) }
+        } else {
+            listOf(if (panelPos.x < 0.5f) 1f else 0f)
+        }
+        val candidates = xs.map { Offset(it, panelPos.y) }
+        // with no clear spot it only moves when that hides clearly less
+        return candidates.firstOrNull { panelCoverage(it, rects) <= 0f }
+            ?: candidates.minBy { panelCoverage(it, rects) }.takeIf { panelCoverage(it, rects) < covered * 0.75f }
+    }
+
+    // once the bottom of the screen pushes the panel up it keeps that top so it grows downwards from there
+    LaunchedEffect(panelBoxSize, rootSize) {
+        if (panelBoxSize.height == 0) return@LaunchedEffect
+        val maxTop = panelSpace().y
+        if (panelPos.y > maxTop) panelPos = panelPos.copy(y = maxTop)
+    }
+
+    var panelEverPlaced by remember { mutableStateOf(false) }
+    var panelSettled by remember { mutableStateOf(false) }
+    val panelProtected = if (panelVisible) panelProtectedRects() else emptyList()
+    val panelHeld = isDragging || isResizing || marqueeActive || pendingPress != null
+    // cleared on open rather than close so the exit animation keeps what it was showing
+    LaunchedEffect(panelVisible) {
+        if (panelVisible) panelSearch = ""
+    }
+    LaunchedEffect(panelBoxSize, panelTargetHeight) {
+        if (panelBoxSize.height == panelTargetHeight) panelTargetHeight = null
+    }
+    LaunchedEffect(panelVisible, panelProtected, panelEndSize(), rootSize, panelHeld, panelHovered, panelDragging) {
+        if (!panelVisible) {
+            panelSettled = false
+            return@LaunchedEffect
+        }
+        if (panelBoxSize.width == 0 || rootSize.width == 0) return@LaunchedEffect
+        if (!panelSettled) {
+            // placed straight away when it appears since the cursor and any press were aimed before it was there
+            if (!panelUserMoved && panelProtected.isNotEmpty()) {
+                val selectionX = panelProtected.map { it.center.x }.average()
+                panelPos = panelPos.copy(x = if (selectionX < rootSize.width / 2.0) 0f else 1f)
+            }
+            panelDodgeTarget(panelProtected)?.let { panelPos = it }
+            panelSettled = true
+            panelEverPlaced = true
+            return@LaunchedEffect
+        }
+        // the cursor can briefly outrun the panel while it is dragged so dragging it counts on its own
+        if (panelDragging) return@LaunchedEffect
+        if (panelHeld) {
+            panelDropPending[0] = true
+            return@LaunchedEffect
+        }
+        if (panelHovered && !panelDropPending[0] && panelTargetHeight == null) return@LaunchedEffect
+        if (panelAcceptedOverlap == (selectedHuds to panelProtected)) return@LaunchedEffect
+        val sinceNudge = System.currentTimeMillis() - lastNudgeAt[0]
+        if (sinceNudge < NUDGE_SETTLE_MS) delay(NUDGE_SETTLE_MS - sinceNudge)
+        val target = panelDodgeTarget(panelProtected)
+        if (target != null) {
+            // moves with the tab resize's spring, settling to about a pixel since x is a fraction
+            val spec = if (panelTargetHeight != null) spring(stiffness = PANEL_RESIZE_STIFFNESS, visibilityThreshold = 0.001f) else tween<Float>(200)
+            animate(panelPos.x, target.x, animationSpec = ReducedMotion.spec(spec)) { value, _ -> panelPos = panelPos.copy(x = value) }
+        }
+        panelDropPending[0] = false
+    }
 
     Box(
         modifier = Modifier
@@ -2003,6 +2101,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     notifyHudLocked()
                     return@onKeyEvent true
                 }
+                lastNudgeAt[0] = System.currentTimeMillis()
                 Snapshot.withMutableSnapshot {
                     for (hud in selectedHuds) {
                         hud.setAbsolutePosition(hud.x + dx, hud.y + dy)
@@ -2277,25 +2376,31 @@ fun HudDesignStudio(visible: Boolean = true) {
         }
 
         Box(
-            modifier = Modifier.align(Alignment.CenterEnd)
-                .onSizeChanged { panelBoxWidth = it.width }
+            modifier = Modifier.align(Alignment.TopStart)
                 .offset {
-                    IntOffset(
-                        (panelDockX + panelOffset.x).roundToInt(),
-                        panelOffset.y.roundToInt(),
-                    )
+                    val pos = panelPx(panelPos)
+                    IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                 }
-                .graphicsLayer { alpha = chromeAlpha }
+                // results only grow down to the bottom of the screen and scroll from there so typing never pushes
+                // the panel up and moves the field being typed in
+                .then(
+                    if (panelSearch.isBlank()) Modifier
+                    else Modifier.heightIn(max = with(densityObj) { (rootSize.height - panelPx(panelPos).y).toDp() })
+                )
+                .onSizeChanged { panelBoxSize = it }
+                .hoverable(panelInteraction)
         ) {
         val panelContentHud = remember { mutableStateOf<Hud?>(null) }
         if (panelHud != null) panelContentHud.value = panelHud
+        val panelSlidePx = (if (panelPos.x < 0.5f) -1 else 1) * with(densityObj) { 24.dp.roundToPx() }
         AnimatedVisibility(
             visible = panelHud != null,
-            enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { it }) + fadeIn()),
-            exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { it }) + fadeOut()),
+            enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { panelSlidePx }) + fadeIn()),
+            exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { panelSlidePx }) + fadeOut()),
         ) {
             DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_SETTINGS_PANEL) } }
-            Box {
+            // inside the slide so it never clips, and hidden until first placed so it never flashes at the top left
+            Box(modifier = Modifier.graphicsLayer { alpha = if (panelEverPlaced) chromeAlpha else 0f }) {
                 DesignStudioPanel(
                     modifier = Modifier.chromeBlocker(CHROME_SETTINGS_PANEL),
                     selectedHud = panelContentHud.value,
@@ -2309,7 +2414,20 @@ fun HudDesignStudio(visible: Boolean = true) {
                             selectedHuds = emptySet()
                         }
                     },
-                    onDragPanel = { movePanel(it) },
+                    onDragPanel = {
+                        panelDragging = true
+                        movePanel(it)
+                    },
+                    onTabResize = { from, to ->
+                        panelTargetHeight = (panelBoxSize.height + to.height - from.height).coerceAtMost(rootSize.height)
+                    },
+                    onDragPanelEnd = {
+                        panelDragging = false
+                        val rects = panelProtectedRects()
+                        panelAcceptedOverlap = if (panelCoverage(panelPos, rects) > 0f) selectedHuds to rects else null
+                    },
+                    searchText = panelSearch,
+                    onSearchChange = { panelSearch = it },
                 )
             }
         }
@@ -2974,14 +3092,17 @@ private fun DesignStudioPanel(
     onSearchFocused: () -> Unit,
     onBack: () -> Unit,
     onDragPanel: (Offset) -> Unit,
+    onDragPanelEnd: () -> Unit,
+    onTabResize: (from: IntSize, to: IntSize) -> Unit,
+    searchText: String,
+    onSearchChange: (String) -> Unit,
 ) {
     val theme = LocalTheme.current
     val categories = remember(selectedHud) {
         StudioCategory.entries.filter {
             when (it) {
                 // hide settings tab for legacy HUDs that would leave it empty
-                StudioCategory.Settings -> selectedHud !is LegacyHud ||
-                    selectedHud.tree?.let(::hasHudOptions) == true || selectedHud.canDelete()
+                StudioCategory.Settings -> selectedHud !is LegacyHud || selectedHud.tree?.let(::hasHudOptions) == true
                 StudioCategory.Style -> selectedHud !is LegacyHud
                 StudioCategory.Layout -> true
             }
@@ -2989,86 +3110,140 @@ private fun DesignStudioPanel(
     }
     val shownCategory = activeCategory.takeIf { it in categories } ?: categories.first()
     LaunchedEffect(shownCategory) { onCategoryChange(shownCategory) }
-    var searchText by remember { mutableStateOf("") }
     val query = searchText.trim()
-    val subtitle = remember(selectedHud) {
-        selectedHud?.let { hud ->
-            val name = localizedLabel(hud.title) ?: return@let null
-            val modName = hud.configId?.let(::modNameFor)?.takeIf { it != name }
-            if (modName != null) "$name / $modName" else name
-        }
+    val title = remember(selectedHud) { selectedHud?.let { localizedLabel(it.title) } }
+    val subtitle = remember(selectedHud, title) {
+        selectedHud?.configId?.let(::modNameFor)?.takeIf { it != title }
     }
     Box(
         modifier = Modifier
-            .fillMaxHeight()
             .width(500.dp)
             .padding(16.dp)
             .then(modifier)
             .studioSurface(),
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(vertical = StudioPanelGutter),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = StudioPanelGutter),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            val titleInteraction = remember { MutableInteractionSource() }
+            val titleHovered by titleInteraction.collectIsHoveredAsState()
+            var titleDragging by remember { mutableStateOf(false) }
+            val handleAlpha by animateFloatAsState(if (titleHovered || titleDragging) 1f else 0.65f, tween(150))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .hoverable(titleInteraction)
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = { titleDragging = true },
+                            onDragEnd = {
+                                titleDragging = false
+                                onDragPanelEnd()
+                            },
+                            onDragCancel = {
+                                titleDragging = false
+                                onDragPanelEnd()
+                            },
+                        ) { change, dragAmount ->
+                            change.consume()
+                            onDragPanel(dragAmount)
+                        }
+                    }
+                    .padding(start = StudioPanelGutter, top = StudioPanelGutter, end = StudioPanelGutter, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton("close") { onBack() }
-                    SearchBar(searchText, { searchText = it }, "Search...", searchFocusRequested, onSearchFocused)
+                // sized to the icon's dots rather than its padded box so they line up with the tabs below
+                Box(modifier = Modifier.size(10.5.dp, 15.dp)) {
+                    Icon(
+                        "dots-grid",
+                        color = theme.textColor,
+                        modifier = Modifier
+                            .requiredSize(28.dp)
+                            .graphicsLayer { alpha = handleAlpha },
+                    )
                 }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(title ?: "HUD", color = theme.textColor, fontSize = 18.sp)
+                    subtitle?.let {
+                        Text(it, color = theme.textColorSecondary, fontSize = 12.sp)
+                    }
+                }
+                IconButton("close", modifier = Modifier.size(18.dp)) { onBack() }
+            }
+            var searchOpen by remember { mutableStateOf(false) }
+            var focusSearch by remember { mutableStateOf(false) }
+            LaunchedEffect(searchFocusRequested) {
+                if (searchFocusRequested) searchOpen = true
+            }
+            // 0 shows the tabs and 1 the whole field, which grows out of the search button in between
+            val searchProgress by animateFloatAsState(
+                if (searchOpen) 1f else 0f,
+                tween(if (ReducedMotion.enabled) 150 else 220, easing = FastOutSlowInEasing),
+            )
+            Box(modifier = Modifier.fillMaxWidth().padding(start = StudioPanelGutter, end = StudioPanelGutter, bottom = 16.dp)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                onDragPanel(dragAmount)
-                            }
+                        .height(IntrinsicSize.Min)
+                        // gone before the growing field reaches them and back once the shrinking one has passed
+                        .graphicsLayer {
+                            alpha = if (ReducedMotion.enabled) 1f - searchProgress
+                            else ((0.3f - searchProgress) / 0.25f).coerceIn(0f, 1f)
                         },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Icon(
-                        "dots-grid",
-                        color = theme.textColor.copy(0.5f),
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("HUD Design Studio", color = theme.textColor, fontSize = 24.sp)
-                        subtitle?.let {
-                            Text(it, color = theme.textColor.copy(0.5f), fontSize = 14.sp)
-                        }
+                    if (categories.size > 1) categories.forEach {
+                        Chip(it.title, it == shownCategory, it.icon) { onCategoryChange(it) }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    SearchToggle(Modifier.fillMaxHeight().aspectRatio(1f).graphicsLayer { alpha = if (searchProgress > 0f) 0f else 1f }) {
+                        searchOpen = true
+                        focusSearch = true
                     }
                 }
-                if (categories.size > 1 && query.isEmpty()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        categories.forEach {
-                            Chip(it.title, it == shownCategory, it.icon) { onCategoryChange(it) }
-                        }
-                    }
+                if (searchProgress > 0f) BoxWithConstraints(Modifier.matchParentSize(), contentAlignment = Alignment.CenterEnd) {
+                    SearchBar(
+                        searchText,
+                        onSearchChange,
+                        "Search settings...",
+                        focusRequested = focusSearch || searchFocusRequested,
+                        onFocused = {
+                            focusSearch = false
+                            onSearchFocused()
+                        },
+                        modifier = Modifier
+                            .width(if (ReducedMotion.enabled) maxWidth else lerp(maxHeight, maxWidth, searchProgress))
+                            .fillMaxHeight()
+                            .clip(theme.sideBarNavigationEntryShape)
+                            .graphicsLayer { if (ReducedMotion.enabled) alpha = searchProgress },
+                        onDismiss = {
+                            onSearchChange("")
+                            searchOpen = false
+                        },
+                        showClear = searchProgress >= 1f,
+                    )
                 }
             }
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f, fill = false).padding(bottom = StudioPanelGutter)) {
                 AnimatedContent(
                     targetState = shownCategory,
                     transitionSpec = {
                         val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
-                        if (ReducedMotion.enabled) fadeIn(tween(150)) togetherWith fadeOut(tween(150))
+                        val slide = if (ReducedMotion.enabled) fadeIn(tween(150)) togetherWith fadeOut(tween(150))
                         else (slideInHorizontally(tween(250)) { direction * it / 3 } + fadeIn(tween(250)))
                             .togetherWith(slideOutHorizontally(tween(250)) { -direction * it / 3 } + fadeOut(tween(250)))
+                        slide using SizeTransform { from, to ->
+                            onTabResize(from, to)
+                            spring(stiffness = PANEL_RESIZE_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)
+                        }
                     },
-                    modifier = Modifier.fillMaxSize()
                 ) { category ->
                     val panelScrollState = rememberScrollState()
-                    ScrollbarBox(panelScrollState, StudioPanelGutter, Modifier.fillMaxSize()) {
+                    ScrollbarBox(panelScrollState, StudioPanelGutter) {
                         Column(
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxWidth()
                                 .wheelScroll(panelScrollState)
                                 .verticalScroll(panelScrollState)
                                 .padding(horizontal = StudioPanelGutter),
@@ -3077,7 +3252,7 @@ private fun DesignStudioPanel(
                             // like the main config screen, a search spans every category rather than only the open one
                             categories.forEach {
                                 if (query.isNotEmpty() || it == category) when (it) {
-                                    StudioCategory.Settings -> Settings(selectedHud, query, onDeleted = onBack)
+                                    StudioCategory.Settings -> Settings(selectedHud, query)
                                     StudioCategory.Style -> Style(selectedHud, query)
                                     StudioCategory.Layout -> Layout(selectedHud, query)
                                 }
@@ -3087,6 +3262,24 @@ private fun DesignStudioPanel(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SearchToggle(modifier: Modifier, onClick: () -> Unit) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val iconColor by animateColorAsState(theme.textColor.copy(if (hovered) 1f else 0.7f))
+    Box(
+        modifier = modifier
+            .background(theme.chipBackground, theme.sideBarNavigationEntryShape)
+            .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .onClick(interactionSource) { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon("search", color = iconColor, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -3767,9 +3960,18 @@ private fun SearchBar(
     placeholder: String,
     focusRequested: Boolean = false,
     onFocused: () -> Unit = {},
+    modifier: Modifier = Modifier.size(181.dp, 32.dp),
+    onDismiss: (() -> Unit)? = null,
+    showClear: Boolean = true,
 ) {
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
+    // a dismissable field closes once it is left empty and unfocused
+    var hadFocus by remember { mutableStateOf(false) }
+    LaunchedEffect(isFocused) {
+        if (isFocused) hadFocus = true
+        else if (hadFocus && value.isEmpty()) onDismiss?.invoke()
+    }
     val focusRequester = remember { FocusRequester() }
     // holds the selection alongside the caller's text so a focus request can select the query
     var field by remember { mutableStateOf(TextFieldValue(value)) }
@@ -3800,7 +4002,19 @@ private fun SearchBar(
             field = it
             if (it.text != value) onValueChange(it.text)
         },
-        modifier = Modifier.trackTextInputFocus().focusRequester(focusRequester),
+        modifier = modifier
+            .trackTextInputFocus()
+            .focusRequester(focusRequester)
+            // clears the text first then dismisses the field so escape only closes the studio after both
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown || event.key != Key.Escape) return@onPreviewKeyEvent false
+                when {
+                    value.isNotEmpty() -> onValueChange("")
+                    onDismiss != null -> onDismiss()
+                    else -> return@onPreviewKeyEvent false
+                }
+                true
+            },
         interactionSource = interactionSource,
         textStyle = TextStyle(
             color = iconColor, fontSize = 12.sp,
@@ -3809,7 +4023,7 @@ private fun SearchBar(
         cursorBrush = SolidColor(iconColor)
     ) { innerTextField ->
         Row(
-            modifier = Modifier.width(181.dp).height(32.dp)
+            modifier = Modifier.fillMaxSize()
                 .border(1.dp, borderColor, theme.buttonShape)
                 .background(theme.componentBackground, theme.buttonShape),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -3821,9 +4035,10 @@ private fun SearchBar(
                     Text(placeholder, color = iconColor, fontSize = 12.sp)
                 innerTextField()
             }
-            if (value.isNotEmpty()) {
+            if (showClear && (value.isNotEmpty() || onDismiss != null)) {
                 IconButton("close", modifier = Modifier.padding(end = 4.dp).size(16.dp)) {
                     onValueChange("")
+                    onDismiss?.invoke()
                 }
             }
         }
