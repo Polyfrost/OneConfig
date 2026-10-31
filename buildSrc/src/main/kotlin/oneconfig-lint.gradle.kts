@@ -1,5 +1,6 @@
 import dev.detekt.gradle.Detekt
 import net.ltgt.gradle.errorprone.errorprone
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("dev.detekt")
@@ -15,6 +16,10 @@ tasks.withType<JavaCompile>().configureEach {
         disableAllChecks = true
         error("UnnecessarilyFullyQualified")
     }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    finalizedBy("detekt")
 }
 
 // the enabled Detekt rules need type resolution, which only the per-compilation tasks have

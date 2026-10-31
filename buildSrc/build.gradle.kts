@@ -1,4 +1,5 @@
 import dev.detekt.gradle.Detekt
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "2.3.20" // keep compatible with kotlin-dsl
@@ -65,6 +66,10 @@ tasks {
     }
 
     // mirrors oneconfig-lint.gradle.kts, which buildSrc can't apply to itself
+    withType<KotlinCompile>().configureEach {
+        finalizedBy("detekt")
+    }
+
     named<Detekt>("detekt") {
         enabled = false
         dependsOn(withType<Detekt>().matching { it.name != "detekt" && !it.name.endsWith("SourceSet") })

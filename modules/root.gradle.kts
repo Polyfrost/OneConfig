@@ -104,12 +104,17 @@ subprojects {
 
     base.archivesName = name
 
+    tasks.withType<JavaCompile>().configureEach {
+        finalizedBy("apiCheck")
+    }
+
     val kotlinModuleName = project.name
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName
         if (name.contains("Test")) {
             compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=warn")
         }
+        finalizedBy("apiCheck")
     }
 
     configure<JavaPluginExtension> {
