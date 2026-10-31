@@ -295,6 +295,7 @@
   "oneconfig.page.hotwire.update.same": "This version is already installed.",
   "oneconfig.page.hotwire.update.unavailable": "Hotwire can't update mods in this game session.",
   "oneconfig.page.hotwire.update.restart_only": "Hotwire can't swap this mod while the game runs, so it updates at the next launch.",
+  "oneconfig.page.hotwire.update.self": "Hotwire can't update itself while the game runs, so it updates at the next launch.",
   "oneconfig.page.hotwire.unreadable": "Hotwire can't read this jar.",
   "oneconfig.page.hotwire.upgrade.page": "This version of Hotwire is too old for this page. Update Hotwire to use it.",
   "oneconfig.page.hotwire.upgrade.store": "This version of Hotwire can't browse Modrinth here. Update Hotwire to use it.",

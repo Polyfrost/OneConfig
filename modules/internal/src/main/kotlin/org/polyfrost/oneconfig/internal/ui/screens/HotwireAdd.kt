@@ -120,7 +120,7 @@ fun HotwireAdd() {
             }
         }
         fun reviewUpdate(update: HotwireBridge.StoreUpdate, icon: () -> String?) =
-            review(update.name, icon) { HotwireBridge.planUpdate(HotwireBridge.downloadUpdate(update)) }
+            review(update.name, icon) { HotwireBridge.planUpdate(update) }
 
         if (reading || plan != null) {
             PlanCard(reading, plan, planIcon, onBack = ::leavePreview)

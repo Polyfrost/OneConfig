@@ -50,6 +50,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigEntrypoint;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
+import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge;
 //? if !neoforge {
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -78,6 +79,9 @@ public final class ConfigEntrypoints {
     // keyed so a hook that fires more than once before the mod is decided is only retried once
     private static final Map<String, Map<Object, Skipped>> skippedExtractions = new HashMap<>();
     private static final AtomicBoolean registered = new AtomicBoolean();
+    private static final AtomicBoolean listening = new AtomicBoolean();
+    private static volatile boolean startupDecided;
+    private static int seenModCount;
     private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
@@ -154,13 +158,37 @@ public final class ConfigEntrypoints {
     public static void registerAll() {
         if (!registered.compareAndSet(false, true)) return;
         if (providers().isEmpty()) return;
-        ConfigManager.addTreeRegistrationListener(ConfigEntrypoints::onTreeRegistered);
-        ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::onConfigSubmitted);
-        claimEarlierConfigs();
         // a mod may name more than one entrypoint, which only decide together whether its original is extracted
         Map<String, List<Provider>> byMod = new LinkedHashMap<>();
         for (Provider provider : providers()) byMod.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
+        prepare(byMod.keySet());
         byMod.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints)));
+    }
+
+    private static void prepare(Set<String> modIds) {
+        if (listening.compareAndSet(false, true)) {
+            ConfigManager.addTreeRegistrationListener(ConfigEntrypoints::onTreeRegistered);
+            ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::onConfigSubmitted);
+        }
+        claimEarlierConfigs(modIds);
+    }
+
+    public static void registerAdded() {
+        //? if !neoforge {
+        if (!startupDecided) return;
+        int modCount = FabricLoader.getInstance().getAllMods().size();
+        if (modCount == seenModCount || HotwireBridge.INSTANCE.isWorking()) return;
+        seenModCount = modCount;
+        rediscover();
+        Map<String, List<Provider>> added = new LinkedHashMap<>();
+        for (Provider provider : providers()) {
+            if (!isDecided(provider.modId)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
+        }
+        if (added.isEmpty()) return;
+        prepare(added.keySet());
+        ConfigManager.initializeLate(() -> added.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints))));
+        decidePending();
+        //?}
     }
 
     /**
@@ -170,21 +198,7 @@ public final class ConfigEntrypoints {
     // compat waits for this, so it always ends by releasing it even if deciding a mod threw
     public static void finishRegistration() {
         try {
-            Map<String, Boolean> pending = new LinkedHashMap<>(undecided);
-            undecided.clear();
-            pending.forEach((modId, broken) -> {
-                try {
-                    decide(modId, broken);
-                } catch (Throwable t) {
-                    // a mod already marked as succeeded keeps its configs, extracting its original too would show two cards
-                    if (isDecided(modId)) {
-                        LOGGER.error("Failed to finish deciding the OneConfig config entrypoint of {}", modId, t);
-                        return;
-                    }
-                    LOGGER.error("Failed to decide the OneConfig config entrypoint of {}, extracting its original config instead", modId, t);
-                    fallBackToOriginal(modId);
-                }
-            });
+            Map<String, Boolean> pending = decidePending();
             // providers registerAll never reached, such as when it threw partway, would otherwise stay skipped forever
             for (String modId : providerIds()) {
                 if (pending.containsKey(modId) || isDecided(modId)) continue;
@@ -196,6 +210,9 @@ public final class ConfigEntrypoints {
                 }
             }
         } finally {
+            //? if !neoforge
+            seenModCount = FabricLoader.getInstance().getAllMods().size();
+            startupDecided = true;
             // caught so a broken CompatLoader never hides an exception from ConfigManager.initialize()
             try {
                 CompatLoader.INSTANCE.onEntrypointsDecided();
@@ -205,11 +222,28 @@ public final class ConfigEntrypoints {
         }
     }
 
+    private static Map<String, Boolean> decidePending() {
+        Map<String, Boolean> pending = new LinkedHashMap<>(undecided);
+        undecided.clear();
+        pending.forEach((modId, broken) -> {
+            try {
+                decide(modId, broken);
+            } catch (Throwable t) {
+                if (isDecided(modId)) {
+                    LOGGER.error("Failed to finish deciding the OneConfig config entrypoint of {}", modId, t);
+                    return;
+                }
+                LOGGER.error("Failed to decide the OneConfig config entrypoint of {}, extracting its original config instead", modId, t);
+                fallBackToOriginal(modId);
+            }
+        });
+        return pending;
+    }
+
     // configs a mod created before its entrypoint ran, such as during its own initializer, belong to it too,
     // otherwise a mod that forgot Context.register would show them next to its extracted original
-    private static void claimEarlierConfigs() {
-        Set<String> ids = providerIds();
-        for (Config config : ConfigManager.pendingConfigs()) {
+    private static void claimEarlierConfigs(Set<String> ids) {
+        for (Config config : ConfigManager.createdConfigs()) {
             ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
             String modId = owner == null ? null : providerOf(owner.getId());
             if (modId == null || !ids.contains(modId)) continue;
@@ -345,6 +379,9 @@ public final class ConfigEntrypoints {
             // keep what it registered rather than also extracting the original, which would show two cards
             if (broken) LOGGER.warn("Keeping the OneConfig configs {} registered before its entrypoint failed", modId);
             markSucceeded(modId);
+            for (Tree tree : owned) {
+                if (tree.getMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN) == null) attachOpener(tree, modId);
+            }
             // CompatLoader only marked the providers it saw when it initialized
             CompatLoader.INSTANCE.getNativeLoadedConfigs().add(modId);
             LOGGER.info("Using the OneConfig configs registered by {}", modId);
@@ -495,10 +532,21 @@ public final class ConfigEntrypoints {
         List<Provider> cached = providers;
         if (cached != null) return cached;
         synchronized (DISCOVERY_LOCK) {
-            if (providers != null) return providers;
-            List<Provider> found = new ArrayList<>();
-            try {
-                //? if !neoforge {
+            return providers != null ? providers : discover();
+        }
+    }
+
+    public static void rediscover() {
+        synchronized (DISCOVERY_LOCK) {
+            if (providers != null) discover();
+        }
+    }
+
+    private static List<Provider> discover() {
+        List<Provider> found = new ArrayList<>();
+        try {
+            //? if !neoforge {
+            synchronized (FabricLoader.getInstance()) {
                 for (EntrypointContainer<ConfigEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(ConfigEntrypoint.ENTRYPOINT, ConfigEntrypoint.class)) {
                     found.add(new Provider(
                             container.getProvider().getMetadata().getId(),
@@ -506,26 +554,26 @@ public final class ConfigEntrypoints {
                             container::getEntrypoint
                     ));
                 }
-                //?}
-            } catch (Throwable t) {
-                // not cached so a discovery attempted too early is retried
-                if (!discoveryFailureLogged) LOGGER.error("Failed to discover OneConfig config entrypoints", t);
-                discoveryFailureLogged = true;
-                return Collections.emptyList();
-            }
-            Set<String> ids = new LinkedHashSet<>();
-            for (Provider provider : found) ids.add(provider.modId);
-            Map<String, String> nested = new HashMap<>();
-            //? if !neoforge {
-            for (String id : ids) {
-                FabricLoader.getInstance().getModContainer(id).ifPresent(container -> collectNested(container, id, ids, nested));
             }
             //?}
-            nestedIds = Collections.unmodifiableMap(nested);
-            providerIds = Collections.unmodifiableSet(ids);
-            providers = Collections.unmodifiableList(found);
-            return providers;
+        } catch (Throwable t) {
+            // not cached so a discovery attempted too early is retried
+            if (!discoveryFailureLogged) LOGGER.error("Failed to discover OneConfig config entrypoints", t);
+            discoveryFailureLogged = true;
+            return Collections.emptyList();
         }
+        Set<String> ids = new LinkedHashSet<>();
+        for (Provider provider : found) ids.add(provider.modId);
+        Map<String, String> nested = new HashMap<>();
+        //? if !neoforge {
+        for (String id : ids) {
+            FabricLoader.getInstance().getModContainer(id).ifPresent(container -> collectNested(container, id, ids, nested));
+        }
+        //?}
+        nestedIds = Collections.unmodifiableMap(nested);
+        providerIds = Collections.unmodifiableSet(ids);
+        providers = Collections.unmodifiableList(found);
+        return providers;
     }
 
     //? if !neoforge {

@@ -315,8 +315,9 @@ object HotwireBridge {
         (call("getStoreCategories", mod) as List<*>).map { StoreCategory(it!!.get("name") as String, it.get("parts") as List<String>) }
     }.getOrDefault(emptyList())
 
-    @Volatile
     private var storeChecked: CompletableFuture<Unit>? = null
+
+    private var storeCheckedState: List<Any?>? = null
 
     /** Hotwire's offers from the last update check, which it reuses when fetching what an update needs */
     @Volatile
@@ -346,30 +347,25 @@ object HotwireBridge {
             }
             return StorePage(hits, page.get("total") as Int)
         }
-        if (storeChecked?.isDone == true) return search()
-        val first = search()
-        val checked = installedCheck() ?: return first
-        checked.get()
+        installedCheck()?.get()
         return search()
     }
 
     @Synchronized
     private fun installedCheck(): CompletableFuture<Unit>? {
-        storeChecked?.let { return it }
-        val model = engine()?.callMethod("getStore")?.callMethod("getModel") ?: return null
-        return storeWorkerDone(model).completeOnTimeout(Unit, STORE_WORKER_TIMEOUT_SECONDS, TimeUnit.SECONDS).also { storeChecked = it }
+        val state = installedState()
+        if (state == storeCheckedState) return storeChecked
+        val store = engine()?.callMethod("getStore") ?: return null
+        store.callMethod("checkInstalled")
+        storeCheckedState = state
+        return storeWorkerDone(store.callMethod("getModel")!!)
+            .completeOnTimeout(Unit, STORE_WORKER_TIMEOUT_SECONDS, TimeUnit.SECONDS).also { storeChecked = it }
     }
 
     private fun storeWorkerDone(model: Any): CompletableFuture<Unit> {
         val done = CompletableFuture<Unit>()
         model.callMethod("run", Runnable { done.complete(Unit) })
         return done
-    }
-
-    private fun refreshInstalled() {
-        val store = engine()?.callMethod("getStore") ?: return
-        store.callMethod("checkInstalled")
-        storeWorkerDone(store.callMethod("getModel")!!).get(STORE_WORKER_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     }
 
     /** The newest version of a project that fits this game; blocks on the network */
@@ -431,7 +427,7 @@ object HotwireBridge {
                 CompletableFuture.supplyAsync { addInOrder(inOrder, jars, hit.title, reopen) }
             }
             added.thenApplyAsync { result ->
-                runCatching { refreshInstalled() }
+                runCatching { installedCheck()?.get() }
                 if (result.ok) engine()?.callMethod("getStore")?.callMethod("getModel")?.callMethod("markInstalled", hit.projectId)
                 result
             }
@@ -530,8 +526,28 @@ object HotwireBridge {
 
     /** Downloads the mods an offered update newly needs and then the update's own jar, last; blocks on the network */
     @Suppress("UNCHECKED_CAST")
-    fun downloadUpdate(update: StoreUpdate): List<Path> =
+    private fun downloadUpdate(update: StoreUpdate): List<Path> =
         engine()!!.callMethod("getUpdateCheck")!!.callMethod("fetchWithNeeds", update.offer, Consumer<String> {}) as List<Path>
+
+    fun planUpdate(update: StoreUpdate): JarPlan =
+        if (update.modId == "hotwire" || update.modId.startsWith("hotwire-")) planSelfUpdate(update) else planUpdate(downloadUpdate(update))
+
+    private fun planSelfUpdate(update: StoreUpdate): JarPlan {
+        val engine = engine()!!
+        val jars = downloadUpdate(update)
+        val action = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
+            CompletableFuture.supplyAsync {
+                jars.firstNotNullOfOrNull { jar -> queueAdd(engine, jar).takeUnless { it.ok } }
+                    ?: Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", update.name))
+            }
+        }
+        return JarPlan(
+            update.name,
+            "${update.installedVersion} → ${update.newVersion}",
+            listOf(translated("oneconfig.page.hotwire.update.self", "Hotwire can't update itself while the game runs, so it updates at the next launch.")),
+            listOf(action),
+        )
+    }
 
     private fun manifestOf(jar: Path): Any? =
         Class.forName("dev.moon.hotwire.jar.JarLookup").getMethod("findManifest", Path::class.java).invoke(null, jar)
@@ -584,7 +600,7 @@ object HotwireBridge {
 
     /** What applying [jars] from [downloadUpdate] would do; blocks on Hotwire reading them and on the network */
     @Suppress("UNCHECKED_CAST")
-    fun planUpdate(jars: List<Path>): JarPlan {
+    private fun planUpdate(jars: List<Path>): JarPlan {
         val jar = jars.last()
         val plan = planFor(jar, update = true).get()
         val engine = engine()

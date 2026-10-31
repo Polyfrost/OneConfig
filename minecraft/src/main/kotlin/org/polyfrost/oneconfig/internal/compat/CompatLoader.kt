@@ -81,6 +81,7 @@ object CompatLoader {
         val mods = Platform.compatibility().mods
         return index.takeIf { it.mods == mods } ?: ModIndex(mods).also {
             ModInfo.refreshLoadedMods()
+            ConfigEntrypoints.rediscover()
             index = it
         }
     }

@@ -240,6 +240,16 @@ public final class ConfigManager {
         LOGGER.info("Initialized configs in {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
 
+    @ApiStatus.Internal
+    public static void initializeLate(Runnable creator) {
+        initialized = false;
+        try {
+            creator.run();
+        } finally {
+            initialize();
+        }
+    }
+
     private static final Set<String> failedInitialization = ConcurrentHashMap.newKeySet();
 
     static boolean didInitializationFail(Config config) {
@@ -294,6 +304,13 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static List<Config> pendingConfigs() {
         return new ArrayList<>(pendingInitialization);
+    }
+
+    @ApiStatus.Internal
+    public static synchronized List<Config> createdConfigs() {
+        List<Config> created = new ArrayList<>(initializedConfigs.values());
+        created.addAll(pendingInitialization);
+        return created;
     }
 
     static boolean isPendingInitialization(Config config) {

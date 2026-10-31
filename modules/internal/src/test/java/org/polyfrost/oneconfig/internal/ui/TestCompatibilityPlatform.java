@@ -41,9 +41,14 @@ public final class TestCompatibilityPlatform implements CompatibilityPlatform {
 
     public static Set<ModInfo> mods = Set.of();
 
+    public static volatile Runnable afterRead = () -> {
+    };
+
     @Override
     public Set<ModInfo> getMods() {
-        return mods;
+        Set<ModInfo> read = mods;
+        afterRead.run();
+        return read;
     }
 
     @Override

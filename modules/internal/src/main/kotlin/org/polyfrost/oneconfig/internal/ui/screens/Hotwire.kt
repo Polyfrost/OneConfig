@@ -139,7 +139,7 @@ object HotwireUpdates {
                 for (update in updates) {
                     updating = update.name
                     val plan = withContext(Dispatchers.IO) {
-                        runCatching { HotwireBridge.planUpdate(HotwireBridge.downloadUpdate(update)) }
+                        runCatching { HotwireBridge.planUpdate(update) }
                     }
                     // an earlier update can already have brought this one along as a dependency
                     if (plan.getOrNull()?.upToDate == true) continue
