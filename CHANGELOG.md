@@ -1,8 +1,6 @@
-## 1.6.0
-- Fixed uku's Armor HUD compatibility not working on 1.21.11
-- Removed Skia/Skiko in favor of our own Compose-based rendering logic
-  - Should significantly improve performance in the UI and HUDs
-- wWaypoints options that a server has switched off are now shown locked
-
-### For mod developers
-- This release introduces ABI-breaking changes. Please review any uses of Compose or Skia/Skiko APIs in your mods and adjust them accordingly.
+## Unreleased changes
+- Fixed legacy HUDs being drawn behind the OneConfig UI outside a world
+- Fixed the HUD editor tour picking legacy HUDs
+- Fixed rounded corners rendering incorrectly on elements too small for their corner radius
+- Fixed the HUD editor tour's highlight breaking for HUDs at the edge of the screen
+- Number spinners in the HUD editor now keep their unit next to the value
