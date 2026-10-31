@@ -338,6 +338,11 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         texture(target.colorTextureView ?: return, x, y, w, h, u0, targetV(v0), u1, targetV(v1), alpha)
     }
 
+    override fun backdropSource(): BackdropSource? {
+        val view = UiBlur.backdrop ?: return null
+        return BackdropSource(view, UiBlur.backdropWidth.toFloat(), UiBlur.backdropHeight.toFloat(), topDownTargets)
+    }
+
     fun texture(view: GpuTextureView, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, alpha: Float) {
         beginDraw()
         val a = (alpha * state.alpha * 255f).roundToInt().coerceIn(0, 255)

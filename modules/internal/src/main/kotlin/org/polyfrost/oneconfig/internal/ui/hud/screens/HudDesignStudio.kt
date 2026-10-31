@@ -2020,9 +2020,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                     HudEditorViewport.observe()
                     drawContent()
                     val mcToScreen = Platform.screen().mcToScreenScale()
-                    if (!HudManager.inWorld) {
-                        drawHudContents(mcToScreen)
-                    }
                     if (HudEditorViewport.gridEnabled) drawHudGrid(HUD_GRID_SIZE, mcToScreen)
                     for (hud in HudManager.activeInstances) {
                         val bounds = hudBounds(hud) ?: continue
@@ -3007,11 +3004,7 @@ private fun DesignStudioPanel(
             .width(500.dp)
             .padding(16.dp)
             .then(modifier)
-            .background(
-                theme.surfaceOpacity(theme.pageBackground, ShellController.shared.appearance.pageOpacity, DEFAULT_PAGE_OPACITY),
-                theme.backgroundShape,
-            )
-            .border(1.dp, theme.borderColor, theme.backgroundShape),
+            .studioSurface(),
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(vertical = StudioPanelGutter),
@@ -3121,6 +3114,18 @@ private val Hud.addableToLibrary: Boolean
 private val HudLibraryGutter = 18.dp
 
 private val StudioPanelGutter = 16.dp
+
+/** The blurred page tinted card the editor's panel, HUD library and mod list float on, like the main screen's page */
+@Composable
+private fun Modifier.studioSurface(): Modifier {
+    val theme = LocalTheme.current
+    return backdropBlur(theme.backgroundShape)
+        .background(
+            theme.surfaceOpacity(theme.pageBackground, ShellController.shared.appearance.pageOpacity, DEFAULT_PAGE_OPACITY),
+            theme.backgroundShape,
+        )
+        .border(1.dp, theme.borderColor, theme.backgroundShape)
+}
 
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
 
@@ -3332,8 +3337,7 @@ private fun HudLibraryPanel(
             // the mod icon column normally supplies the gap to the screen edge
             .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = if (suggestEvergreenHud) 16.dp else 0.dp)
             .then(modifier)
-            .background(theme.popupBackground, theme.backgroundShape)
-            .border(1.dp, theme.borderColor, theme.backgroundShape)
+            .studioSurface()
             .padding(vertical = HudLibraryGutter),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -3484,11 +3488,9 @@ private fun ModIconColumn(
     libraryVisible: Boolean,
     onModClick: (String) -> Unit,
 ) {
-    val theme = LocalTheme.current
     Column(
         modifier = modifier
-            .background(theme.popupBackground, theme.backgroundShape)
-            .border(1.dp, theme.borderColor, theme.backgroundShape)
+            .studioSurface()
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally

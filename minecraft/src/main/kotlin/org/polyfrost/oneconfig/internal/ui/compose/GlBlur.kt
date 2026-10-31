@@ -30,7 +30,15 @@ internal object GlBlur {
     private val heights = IntArray(3)
     private var blurredAt = 0L
     private var blurredFrom = 0
+    private var blurredW = 0
+    private var blurredH = 0
 
+    /** The blurred copy of the screen left by [draw], stretched over [backdropWidth] by [backdropHeight] pixels, or 0 before one exists */
+    val backdropTexture: Int get() = if (blurredW > 0) textures[A] else 0
+    val backdropWidth: Int get() = blurredW
+    val backdropHeight: Int get() = blurredH
+
+    /** Blurs [dest] and draws the blur back over it at [alpha], where an [alpha] of 0 only leaves the [backdropTexture] */
     fun draw(dest: Int, w: Int, h: Int, alpha: Float, paused: Boolean) {
         if (program == 0) init()
         val hw = (w + 1) / 2
@@ -67,12 +75,16 @@ internal object GlBlur {
             pass(fbos[A], textures[B], qw, qh, 0f, 1f / qh, 1f)
             blurredAt = now
             blurredFrom = dest
+            blurredW = w
+            blurredH = h
         }
 
-        GL11.glEnable(GL11.GL_BLEND)
-        GL14.glBlendEquation(GL14.GL_FUNC_ADD)
-        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE)
-        pass(dest, textures[A], w, h, 0f, 0f, alpha)
+        if (alpha > 0f) {
+            GL11.glEnable(GL11.GL_BLEND)
+            GL14.glBlendEquation(GL14.GL_FUNC_ADD)
+            GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE)
+            pass(dest, textures[A], w, h, 0f, 0f, alpha)
+        }
 
         GL20.glDisableVertexAttribArray(0)
         if (core) GL30.glBindVertexArray(0)
@@ -88,6 +100,8 @@ internal object GlBlur {
             heights[i] = 0
         }
         blurredAt = 0L
+        blurredW = 0
+        blurredH = 0
     }
 
     private fun blit(from: Int, fw: Int, fh: Int, to: Int, tw: Int, th: Int) {
