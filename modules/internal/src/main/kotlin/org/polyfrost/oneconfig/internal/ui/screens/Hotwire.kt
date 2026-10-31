@@ -125,6 +125,8 @@ object HotwireUpdates {
                     val plan = withContext(Dispatchers.IO) {
                         runCatching { HotwireBridge.planUpdate(HotwireBridge.downloadUpdate(update)) }
                     }
+                    // an earlier update can already have brought this one along as a dependency
+                    if (plan.getOrNull()?.upToDate == true) continue
                     val action = plan.getOrNull()?.actions?.firstOrNull { it.primary }
                     if (action == null) {
                         val reason = plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.firstOrNull()
@@ -132,18 +134,14 @@ object HotwireUpdates {
                         continue
                     }
                     val failed = action.attempt()?.let { withContext(Dispatchers.IO) { it.get() } }?.takeUnless { it.ok }
-                    if (failed != null) {
-                        problems += "${update.name}: ${failed.message}"
-                        continue
-                    }
-                    withContext(Dispatchers.IO) { HotwireBridge.awaitIdle() }
+                    if (failed != null) problems += "${update.name}: ${failed.message}"
                 }
             } finally {
                 updating = null
                 refreshWhenDone()
             }
             if (problems.isEmpty()) {
-                Notifications.success("Hotwire", translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat."))
+                Notifications.success("Hotwire", translated("oneconfig.page.hotwire.updates.done", "Updates finished."))
                 onDone()
             } else {
                 Notifications.error("Hotwire", problems.joinToString(" "))
@@ -198,10 +196,7 @@ fun hotwireTagline(): String {
 
 private val SwitchBarHeight = 56.dp
 
-private const val PromptWaitSeconds = 5
-
-/** The header's "Original menu" action on the Hotwire pages */
-val openHotwireScreen = Runnable { HotwireBridge.openScreen() }
+val openHotwireScreen: Runnable? by lazy { Runnable { HotwireBridge.openScreen() }.takeIf { HotwireBridge.supportsOriginalScreen } }
 
 /** Reports what Hotwire says came of a change */
 internal fun notifyHotwireResult(result: HotwireBridge.Result) {
@@ -218,6 +213,18 @@ internal fun notifyHotwireResult(result: HotwireBridge.Result) {
  */
 @Composable
 fun Hotwire() {
+    if (!HotwireBridge.supportsSwitching) {
+        Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
+            Text(
+                translated("oneconfig.page.hotwire.upgrade.page", "This version of Hotwire is too old for this page. Update Hotwire to use it."),
+                color = LocalTheme.current.textColorSecondary,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+        return
+    }
+
     var prompt by remember { mutableStateOf(HotwireBridge.openingPrompt()) }
     prompt?.let {
         OpeningPromptCard(it) { prompt = null }
@@ -294,7 +301,7 @@ fun Hotwire() {
 @Composable
 private fun OpeningPromptCard(prompt: HotwireBridge.OpeningPrompt, onDone: () -> Unit) {
     val theme = LocalTheme.current
-    var wait by remember { mutableIntStateOf(minOf(prompt.waitSeconds, PromptWaitSeconds)) }
+    var wait by remember { mutableIntStateOf(prompt.waitSeconds) }
     LaunchedEffect(Unit) {
         while (wait > 0) {
             delay(1000)
