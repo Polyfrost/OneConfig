@@ -233,6 +233,14 @@ public class OneConfigCollector extends ReflectiveCollector {
             case ColorList color -> {
                 if (!color.alpha()) property.addMetadata("noAlpha", Unit.INSTANCE);
             }
+            case Text text -> {
+                if (text.secureShowLast() < 0) {
+                    throw new IllegalArgumentException(String.format(
+                        "@Text field '%s' has a negative secureShowLast value (%s).",
+                        field.getName(), text.secureShowLast()
+                    ));
+                }
+            }
             case ItemList itemList -> validateIdListField(field, "@ItemList", itemList.maxEntries());
             case EffectList effectList -> validateIdListField(field, "@EffectList", effectList.maxEntries());
             default -> {}

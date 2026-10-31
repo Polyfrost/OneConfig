@@ -69,6 +69,14 @@ public @interface Text {
      */
     boolean multiline() default false;
 
+    boolean secure() default false;
+
+    char secureMask() default '*';
+
+    int secureShowLast() default 0;
+
+    String secureShowChars() default "";
+
     String category() default "General";
 
     @Deprecated
