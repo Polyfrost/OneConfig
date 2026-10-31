@@ -290,7 +290,8 @@ object HotwireBridge {
         (call("getStoreCategories", mod) as List<*>).map { StoreCategory(it!!.get("name") as String, it.get("parts") as List<String>) }
     }.getOrDefault(emptyList())
 
-    private var storeChecked = false
+    @Volatile
+    private var storeChecked: CompletableFuture<Unit>? = null
 
     /** Hotwire's offers from the last update check, which it reuses when fetching what an update needs */
     @Volatile
@@ -320,26 +321,30 @@ object HotwireBridge {
             }
             return StorePage(hits, page.get("total") as Int)
         }
+        if (storeChecked?.isDone == true) return search()
         val first = search()
-        if (storeChecked) return first
-        storeChecked = true
-        // the first search creates Hotwire's store, whose installed check is still queued on its single worker, so
-        // this runs once that has finished and only then are the installed flags right
-        val model = engine()?.callMethod("getStore")?.callMethod("getModel") ?: return first
-        awaitStoreWorker(model)
+        val checked = installedCheck() ?: return first
+        checked.get()
         return search()
     }
 
-    private fun awaitStoreWorker(model: Any) {
-        val checked = CompletableFuture<Unit>()
-        model.callMethod("run", Runnable { checked.complete(Unit) })
-        checked.get(60, TimeUnit.SECONDS)
+    @Synchronized
+    private fun installedCheck(): CompletableFuture<Unit>? {
+        storeChecked?.let { return it }
+        val model = engine()?.callMethod("getStore")?.callMethod("getModel") ?: return null
+        return storeWorkerDone(model).completeOnTimeout(Unit, STORE_WORKER_TIMEOUT_SECONDS, TimeUnit.SECONDS).also { storeChecked = it }
+    }
+
+    private fun storeWorkerDone(model: Any): CompletableFuture<Unit> {
+        val done = CompletableFuture<Unit>()
+        model.callMethod("run", Runnable { done.complete(Unit) })
+        return done
     }
 
     private fun refreshInstalled() {
         val store = engine()?.callMethod("getStore") ?: return
         store.callMethod("checkInstalled")
-        awaitStoreWorker(store.callMethod("getModel")!!)
+        storeWorkerDone(store.callMethod("getModel")!!).get(STORE_WORKER_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     }
 
     /** The newest version of a project that fits this game; blocks on the network */
@@ -357,7 +362,9 @@ object HotwireBridge {
         val canAdd = add.through("StoreAdd", "canAdd") == true
         @Suppress("UNCHECKED_CAST")
         val jars = add.field("jars") as List<Path>
-        val inOrder = engine()?.takeIf { !canAdd && fitTogether(it, jars) }
+        val fitting = engine()?.takeIf { !canAdd && fitTogether(it, jars) }
+        val refusal = fitting?.let { refusalOnceMet(it, jars) }
+        val inOrder = fitting.takeIf { refusal == null }
         val reopen = add.through("StoreAdd", "needsReopen") == true || inOrder != null && jars.any { reopensOnceMet(inOrder, it) }
         val modes =(add.field("previews") as List<*>).map { it!!.addMode() }
         val onlyLater = modes.lastOrNull() == "NEXT_START" || inOrder != null && "NEXT_START" in modes
@@ -365,7 +372,7 @@ object HotwireBridge {
         val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), onlyLater) {
             accepted = true
             add.through("StoreAdd", "cancel")
-            call("queueForNextStart", hit.projectId, version).asResults()
+            CompletableFuture.supplyAsync { addInOrder(engine()!!, jars, hit.title, reopen = false, later = true) }
         }
         val save = JarAction(translated("oneconfig.page.hotwire.add.save", "Save to Downloads"), false) {
             accepted = true
@@ -382,7 +389,10 @@ object HotwireBridge {
         ) {
             accepted = true
             val added = if (inOrder == null) {
-                add.through("StoreAdd", "accept").asResults()
+                add.through("StoreAdd", "accept").asResults().thenApply { result ->
+                    val lost = jars.filterIndexed { at, _ -> modes[at] == "NEXT_START" }.firstOrNull { !isQueued(engine()!!, it) }
+                    if (result.ok && lost != null) queueFailed(lost) else result
+                }
             } else {
                 add.through("StoreAdd", "cancel")
                 CompletableFuture.supplyAsync { addInOrder(inOrder, jars, hit.title, reopen) }
@@ -394,7 +404,9 @@ object HotwireBridge {
             }
         }
         @Suppress("UNCHECKED_CAST")
-        val lines = if (inOrder == null) {
+        val lines = if (refusal != null) {
+            listOf(refusal)
+        } else if (inOrder == null) {
             add.through("StoreAdd", "getLines") as List<String>
         } else {
             (add.field("previews") as List<*>).dropLast(1).map {
@@ -438,8 +450,24 @@ object HotwireBridge {
         (scan.getMethod("findKinds", classes.javaClass, Function::class.java).invoke(null, classes, superOf) as Set<*>).isNotEmpty()
     }.getOrDefault(false)
 
-    private fun addInOrder(engine: Any, jars: List<Path>, name: String, reopen: Boolean): Result {
-        var queueing = false
+    private fun Any.askAdder(type: String, method: String, arg: Any): String? =
+        (Class.forName("${javaClass.packageName}.add.$type").declaredMethods.first { it.name == method }
+            .apply { isAccessible = true }.invoke(null, arg) as Optional<*>).orElse(null) as String?
+
+    private fun Any.parts(): List<Any> = listOf(this) + (get("nested") as List<*>).flatMap { it!!.parts() }
+
+    private fun worldRefusal(engine: Any): String? =
+        (engine.callStatic("add.WorldReopen", "findRefusal") as Optional<*>).orElse(null) as String?
+
+    private fun refusalOnceMet(engine: Any, jars: List<Path>): String? = runCatching {
+        jars.firstNotNullOfOrNull { jar ->
+            engine.askAdder("AddFirstLook", "findRefusal", jar)
+                ?: readJar(jar).parts().firstNotNullOfOrNull { engine.askAdder("AddDependencies", "findMissingRefusal", it) }
+        } ?: worldRefusal(engine)?.takeIf { jars.any { reopensOnceMet(engine, it) } }
+    }.getOrNull()
+
+    private fun addInOrder(engine: Any, jars: List<Path>, name: String, reopen: Boolean, later: Boolean = false): Result {
+        var queueing = later
         for (jar in jars) {
             queueing = queueing || dryRunAdd(engine, jar).addMode() == "NEXT_START"
             val result = if (queueing) queueAdd(engine, jar) else addNow(engine, jar, reopen)
@@ -537,8 +565,9 @@ object HotwireBridge {
         firstAdds.firstOrNull { it.addMode() == "REFUSED" }
             ?.let { return JarPlan(plan.title, plan.detail, it.get("lines") as List<String>, emptyList()) }
         if (!collected || steps.isEmpty()) return plan
-        val reopen = firstAdds.any { it.addMode() == "SAVE_AND_REOPEN" } ||
-            steps.any { engine.callMethod("canUpdate", it) != true && reopensOnceMet(engine, it) }
+        val adds = steps.filter { engine.callMethod("canUpdate", it) != true }
+        refusalOnceMet(engine, adds)?.let { return JarPlan(plan.title, plan.detail, listOf(it), emptyList()) }
+        val reopen = firstAdds.any { it.addMode() == "SAVE_AND_REOPEN" } || adds.any { reopensOnceMet(engine, it) }
         val label = if (reopen) {
             translated("oneconfig.page.hotwire.update.reopen", "Save and update")
         } else {
@@ -613,14 +642,19 @@ object HotwireBridge {
         return Result(false, translated("oneconfig.page.hotwire.add.failed", "Hotwire couldn't add %s. It posts why in chat.", name))
     }
 
-    private fun queueAdd(engine: Any, jar: Path): Result {
-        onUiThread { engine.callMethod("add", jar, engine.enumArg("add", "NEXT_START")) }
-        val manifest = manifestOf(jar)
-        val queued = manifest != null && (engine.callMethod("getPendingChanges") as List<*>).any {
+    private fun isQueued(engine: Any, jar: Path): Boolean {
+        val manifest = manifestOf(jar) ?: return false
+        return (engine.callMethod("getPendingChanges") as List<*>).any {
             it!!.javaClass.simpleName == "Update" && it.get("modId") == manifest.get("id") && it.get("toVersion") == manifest.get("version")
         }
-        if (queued) return Result(true, "")
-        return Result(false, translated("oneconfig.page.hotwire.add.queue_failed", "Hotwire couldn't queue %s - please check chat!", manifest?.get("name") as String? ?: jar.fileName.toString()))
+    }
+
+    private fun queueFailed(jar: Path) =
+        Result(false, translated("oneconfig.page.hotwire.add.queue_failed", "Hotwire couldn't queue %s - please check chat!", manifestOf(jar)?.get("name") as String? ?: jar.fileName.toString()))
+
+    private fun queueAdd(engine: Any, jar: Path): Result {
+        onUiThread { engine.callMethod("add", jar, engine.enumArg("add", "NEXT_START")) }
+        return if (isQueued(engine, jar)) Result(true, "") else queueFailed(jar)
     }
 
     /**
@@ -753,7 +787,10 @@ object HotwireBridge {
 
     fun reopensToTurnOn(ids: Collection<String>): Boolean = runCatching {
         val engine = engine()!!
-        keptOff(ids).any { dryRunAdd(engine, engine.callMethod("findJarOf", it) as Path).addMode() == "SAVE_AND_REOPEN" }
+        worldRefusal(engine) == null && keptOff(ids).any {
+            val jar = engine.callMethod("findJarOf", it) as Path
+            dryRunAdd(engine, jar).addMode() == "SAVE_AND_REOPEN" || reopensOnceMet(engine, jar)
+        }
     }.getOrDefault(false)
 
     fun switch(ids: Collection<String>, on: Boolean, reopen: Boolean = false): CompletableFuture<Result> = runCatching {
@@ -795,6 +832,7 @@ object HotwireBridge {
 
     private fun turnOnKeptOff(engine: Any, ids: Collection<String>, kept: List<String>, reopen: Boolean): Result {
         val waiting = kept.associateWithTo(LinkedHashMap()) { engine.callMethod("findJarOf", it) as Path }
+        refusalOnceMet(engine, waiting.values.toList())?.let { return Result(false, it) }
         while (waiting.isNotEmpty()) {
             val modes = waiting.entries.map { it to dryRunAdd(engine, it.value).addMode() }
             val (entry, mode) = modes.firstOrNull { it.second == "NOW" }
@@ -823,6 +861,8 @@ object HotwireBridge {
     private const val ICON_TIMEOUT_MS = 10_000
 
     private const val REOPEN_TIMEOUT_MINUTES = 15L
+
+    private const val STORE_WORKER_TIMEOUT_SECONDS = 60L
 
     private const val STORE_REVISION = 5
 }
