@@ -97,11 +97,14 @@ object HotwireUpdates {
 
     /**
      * Re-checks once the change Hotwire was just given has finished: when it stops working after having started, or
-     * after a few seconds if it never reports progress for it
+     * after a few seconds if it never reports progress for it, and has the grid read the changed mods
      *
      * Runs on its own thread so leaving the page doesn't cancel it
      */
-    fun refreshWhenDone() = refreshAfter(HotwireBridge::awaitIdle)
+    fun refreshWhenDone() = refreshAfter {
+        HotwireBridge.awaitIdle()
+        Platform.screen().runOnUiThread(HotwireBridge::invalidate)
+    }
 
     private fun refreshAfter(wait: () -> Unit) {
         checked = true
@@ -381,6 +384,7 @@ private fun SwitchBar(
     val turnOn = remember(picked, states) { idsWhere(false) }
     val previews = remember(turnOff, turnOn) {
         listOfNotNull(
+            HotwireBridge.previewTogether(turnOff, turnOn),
             turnOff.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, false) },
             turnOn.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, true) },
         )

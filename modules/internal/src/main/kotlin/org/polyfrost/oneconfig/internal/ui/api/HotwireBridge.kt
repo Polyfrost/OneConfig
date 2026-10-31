@@ -26,9 +26,13 @@ object HotwireBridge {
     /** [needsReopen] means nothing failed but the change only finishes once the world is reopened, which Hotwire's API does not do itself */
     class Result(val ok: Boolean, val message: String, val needsReopen: Boolean = false)
 
-    /** Bumped whenever Hotwire finishes a switch, whoever started it */
+    /** Bumped whenever Hotwire finishes a switch, whoever started it, or [invalidate] is called */
     var revision by mutableIntStateOf(0)
         private set
+
+    fun invalidate() {
+        revision++
+    }
 
     private val apiClass: Class<*>? by lazy { runCatching { Class.forName("dev.moon.hotwire.api.HotwireApi") }.getOrNull() }
 
@@ -81,9 +85,32 @@ object HotwireBridge {
 
     /** What turning [ids] on or off would do, including the mods Hotwire switches along with them */
     fun preview(ids: Collection<String>, on: Boolean): Preview = runCatching {
-        val preview = call(if (on) "previewOn" else "previewOff", ids.toList())!!
-        Preview(preview.get("possible") as Boolean, preview.get("message") as String? ?: "")
+        val kept = if (on) keptOff(ids) else emptyList()
+        val preview = (ids - kept.toSet()).takeIf { it.isNotEmpty() }?.let { call(if (on) "previewOn" else "previewOff", it)!! }
+        val addsBack = kept.takeIf { it.isNotEmpty() }?.let { mods ->
+            translated("oneconfig.page.hotwire.switch.adds_back", "Adds back %s.", mods.joinToString(", ") { engine()!!.callMethod("nameOfMod", it) as String })
+        }
+        Preview(preview?.get("possible") as Boolean? ?: true, listOfNotNull(preview?.get("message") as String?, addsBack).joinToString(" "))
     }.getOrElse { Preview(false, "Hotwire is not available.") }
+
+    @Suppress("UNCHECKED_CAST")
+    fun previewTogether(off: List<String>, on: List<String>): Preview? {
+        if (off.isEmpty() || on.isEmpty()) return null
+        val cameBack = runCatching {
+            val engine = engine()!!
+            val leaving = call("previewOff", off)!!.get("switched") as List<String>
+            val alreadyOff = mods().orEmpty().filterNot { it.on }.map { it.id }
+            val planner = engine.callStatic("ModPolicy", "makePlannerFor", engine.callHidden("getGraph")!!)!!
+            val plan = planner.callMethod("planOn", on - keptOff(on).toSet(), (alreadyOff + leaving).toSet())!!
+            (plan.get("order") as List<String>).any { it in leaving }
+        }.getOrDefault(true)
+        return if (cameBack) Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately.")) else null
+    }
+
+    private fun keptOff(ids: Collection<String>): List<String> = runCatching {
+        val disabled = engine()!!.callHidden("getDisabled")!!
+        ids.filter { disabled.callHidden("isDisabledSinceStart", it) == true }
+    }.getOrDefault(emptyList())
 
     /** Whether Hotwire is running a switch, add or update right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
@@ -134,6 +161,12 @@ object HotwireBridge {
 
     private fun Any.callMethod(name: String, vararg args: Any): Any? =
         javaClass.methods.first { it.name == name && it.parameterCount == args.size }.invoke(this, *args)
+
+    private fun Any.callHidden(name: String, vararg args: Any): Any? =
+        javaClass.declaredMethods.first { it.name == name && it.parameterCount == args.size }.apply { isAccessible = true }.invoke(this, *args)
+
+    private fun Any.callStatic(type: String, name: String, vararg args: Any): Any? =
+        Class.forName("${javaClass.packageName}.$type").methods.first { it.name == name && it.parameterCount == args.size }.invoke(null, *args)
 
     /** The constant named [constant] of the enum a two-argument [method] of the engine takes last */
     private fun Any.enumArg(method: String, constant: String): Any =
@@ -312,7 +345,10 @@ object HotwireBridge {
             true,
         ) {
             accepted = true
-            add.through("StoreAdd", "accept").asResults()
+            add.through("StoreAdd", "accept").asResults().thenApply { result ->
+                if (result.ok) engine()?.callMethod("getStore")?.callMethod("getModel")?.callMethod("markInstalled", hit.projectId)
+                result
+            }
         }
         @Suppress("UNCHECKED_CAST")
         return JarPlan(
@@ -415,6 +451,21 @@ object HotwireBridge {
         return updateNow(jar)
     }
 
+    @Suppress("UNCHECKED_CAST")
+    private fun waitingNeeds(engine: Any, jar: Path): List<String> {
+        val manifest = manifestOf(jar) ?: return emptyList()
+        val graph = engine.callHidden("getGraph")!!
+        val depends = Class.forName("dev.moon.hotwire.jar.ModManifest\$Relation").enumConstants.first { (it as Enum<*>).name == "DEPENDS" }
+        val needs = (manifest.callMethod("getRelation", depends) as Map<String, List<String>>).mapKeys { graph.callMethod("resolve", it.key) }
+        return (engine.callMethod("getPendingChanges") as List<*>).filter { change ->
+            if (change!!.javaClass.simpleName != "Update") return@filter false
+            val id = change.get("modId") as String
+            val ranges = needs[id] ?: return@filter false
+            val running = engine.callStatic("LoadedMods", "findVersion", id)
+            running == null || engine.callStatic("ModPolicy", "satisfies", running, ranges) != true
+        }.map { it!!.get("name") as String }
+    }
+
     private fun <T> onUiThread(block: () -> T): T {
         val done = CompletableFuture<T>()
         Platform.screen().runOnUiThread { runCatching(block).fold(done::complete, done::completeExceptionally) }
@@ -448,8 +499,10 @@ object HotwireBridge {
             val queued = (engine.callMethod("getPendingChanges") as List<*>).any {
                 it!!.javaClass.simpleName == "Update" && it.get("name") == name && it.get("toVersion") == version
             }
+            val live = after.javaClass.simpleName == "SameVersion"
             when {
-                after.javaClass.simpleName == "SameVersion" -> Result(true, translated("oneconfig.page.hotwire.update.done", "%s is updated.", name))
+                live && queued -> Result(true, translated("oneconfig.page.hotwire.update.done", "%s is updated.", name))
+                live -> Result(false, translated("oneconfig.page.hotwire.update.not_kept", "%s is updated for now, but the update won't stay after a restart - please check chat!", name))
                 queued -> Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", name))
                 after.javaClass.simpleName == "Refused" -> Result(false, after.get("reason") as String)
                 else -> Result(false, translated("oneconfig.page.hotwire.update.failed", "Hotwire couldn't update %s. It posts why in chat.", name))
@@ -509,6 +562,15 @@ object HotwireBridge {
                 val method = (preview.get("method") as Enum<*>).name
                 val inPlace = method == "IN_PLACE"
                 val lines = preview.get("lines") as List<String>
+                val waiting = if (inPlace) waitingNeeds(engine, jar) else emptyList()
+                if (waiting.isNotEmpty()) {
+                    return JarPlan(
+                        preview.get("name") as String,
+                        "${preview.get("installedVersion")} → ${preview.get("newVersion")}",
+                        listOf(translated("oneconfig.page.hotwire.update.waits", "This update needs %s, which only arrives at the next launch. Update this after restarting.", waiting.joinToString(", "))),
+                        emptyList(),
+                    )
+                }
                 JarPlan(
                     preview.get("name") as String,
                     "${preview.get("installedVersion")} → ${preview.get("newVersion")}",
@@ -544,8 +606,36 @@ object HotwireBridge {
 
     /** Turns [ids] on or off, completing on whatever thread Hotwire finishes on */
     fun switch(ids: Collection<String>, on: Boolean): CompletableFuture<Result> = runCatching {
-        call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
+        val kept = if (on) keptOff(ids) else emptyList()
+        if (kept.isEmpty()) {
+            call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
+        } else {
+            CompletableFuture.supplyAsync { turnOnKeptOff(engine()!!, ids, kept) }
+        }
     }.getOrElse { CompletableFuture.completedFuture(Result(false, "Hotwire is not available.")) }
+
+    private fun awaitWorker(engine: Any, jar: Path) {
+        runCatching { dryRunAdd(engine, jar) }
+    }
+
+    private fun turnOnKeptOff(engine: Any, ids: Collection<String>, kept: List<String>): Result {
+        val jars = kept.map { engine.callMethod("findJarOf", it) as Path }
+        for (jar in jars) {
+            val preview = dryRunAdd(engine, jar)
+            if ((preview.get("mode") as Enum<*>).name != "NOW") return Result(false, preview.lineOfAdd())
+        }
+        val result = call("turnOn", ids.toList()).asResults().get()
+        if (!result.ok) return result
+        awaitWorker(engine, jars.first())
+        val stillOff = onUiThread {
+            invalidate()
+            val on = mods().orEmpty().filter { it.on }.map { it.id }
+            kept.filter { it !in on }
+        }
+        if (stillOff.isEmpty()) return result
+        val names = stillOff.joinToString(", ") { engine.callMethod("nameOfMod", it) as String }
+        return Result(false, translated("oneconfig.page.hotwire.switch.add_back_failed", "Hotwire couldn't add back %s - please check chat!", names))
+    }
 
     private const val MAX_ICON_BYTES = 8 * 1024 * 1024
 
