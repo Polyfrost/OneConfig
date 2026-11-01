@@ -52,8 +52,6 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
     LaunchedEffect(hud) { repairHudStaticSize(hud) }
 
     HudSettingsContent(hud) {
-        var useGuiScale by remember { mutableStateOf(hud.useGuiScale) }
-        var customScale by remember { mutableStateOf(hud.customScale) }
         var showBackground by remember { mutableStateOf(hud.showBackground) }
         var bgColor by remember { mutableStateOf(Color(hud.bgColor)) }
         var bgChroma by remember { mutableStateOf(hud.bgChroma) }
@@ -98,8 +96,8 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                 Section("Scale", query) {
                     HudSettingTarget(hud, "customScale") {
                         NumberSpinner(
-                            customScale,
-                            { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
+                            hud.customScale,
+                            { Snapshot.withMutableSnapshot { hud.customScale = it } },
                             0.25f,
                             4f,
                             0.25f,
@@ -118,16 +116,16 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            SwitchControl(useGuiScale) {
-                                Snapshot.withMutableSnapshot { useGuiScale = it; hud.useGuiScale = it }
+                            SwitchControl(hud.useGuiScale) {
+                                Snapshot.withMutableSnapshot { hud.useGuiScale = it }
                             }
                             Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
                         }
                     }
                     HudSettingTarget(hud, "customScale") {
                         NumberSpinner(
-                            customScale,
-                            { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
+                            hud.customScale,
+                            { Snapshot.withMutableSnapshot { hud.customScale = it } },
                             0.25f,
                             4f,
                             0.25f,
