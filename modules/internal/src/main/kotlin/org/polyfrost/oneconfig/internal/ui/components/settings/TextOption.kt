@@ -23,7 +23,7 @@ fun TextOption(data: TextOptionData) {
     TextField(
         text,
         { text = it; if (regex == null || it.isEmpty() || regex.matches(it)) data.strProp.set(it) },
-        Modifier.width(LocalOptionWidth.current).then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier),
+        Modifier.width(LocalOptionWidth.current).heightIn(min = if (data.multiline) 96.dp else OptionControlHeight),
         data.placeholder,
         "text-input",
         Int.MAX_VALUE,

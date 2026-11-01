@@ -122,7 +122,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
         Row(
             modifier = Modifier
                 .width(LocalOptionWidth.current)
-                .height(32.dp)
+                .height(OptionControlHeight)
                 .graphicsLayer {}
                 .liquidGlass(DropdownShape)
                 .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })

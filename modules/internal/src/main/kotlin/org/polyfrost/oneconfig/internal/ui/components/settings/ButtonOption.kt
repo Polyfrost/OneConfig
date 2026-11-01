@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
@@ -54,6 +55,7 @@ fun ButtonOption(data: ButtonOptionData) {
     Box(
         modifier = Modifier
             .widthIn(max = LocalOptionWidth.current)
+            .heightIn(min = OptionControlHeight)
             .pointerHoverIcon(PointerIcon.Hand)
             .glassHover(LocalTheme.current.buttonShape)
             .graphicsLayer {}
@@ -70,7 +72,7 @@ fun ButtonOption(data: ButtonOptionData) {
                     }
                 }
             }
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
         // hidden label keeps the button width fixed

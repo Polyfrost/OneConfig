@@ -44,6 +44,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
 val LocalOptionWidth = compositionLocalOf { 300.dp }
+internal val OptionControlHeight = 32.dp
 
 /**
  * Per-property reset counters

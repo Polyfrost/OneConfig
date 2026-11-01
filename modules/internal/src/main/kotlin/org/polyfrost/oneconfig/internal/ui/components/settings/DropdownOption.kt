@@ -105,7 +105,7 @@ fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: 
         Row(
             modifier = Modifier
                 .width(width)
-                .height(32.dp)
+                .height(OptionControlHeight)
                 .graphicsLayer {}
                 .liquidGlass(DropdownShape)
                 .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })

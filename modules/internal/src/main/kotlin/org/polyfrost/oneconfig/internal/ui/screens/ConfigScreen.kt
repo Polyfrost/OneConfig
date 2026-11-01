@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -87,6 +88,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionControlHeight
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -817,7 +819,9 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = verticalPadding),
+                    .padding(horizontal = 16.dp, vertical = verticalPadding)
+                    // as tall as a dropdown even when the control is a smaller switch or checkbox
+                    .heightIn(min = OptionControlHeight),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {

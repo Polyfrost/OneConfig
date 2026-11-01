@@ -5,6 +5,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -218,6 +219,7 @@ fun KeybindOption(data: KeybindOptionData) {
         modifier = Modifier
             // long key combos wrap instead of squeezing the setting's label
             .widthIn(max = LocalOptionWidth.current)
+            .heightIn(min = OptionControlHeight)
             .onKeyEvent { event ->
                 if (!recording) return@onKeyEvent false
                 if (event.awtKeyEventId() == java.awt.event.KeyEvent.KEY_TYPED) return@onKeyEvent true
@@ -265,7 +267,7 @@ fun KeybindOption(data: KeybindOptionData) {
             .animatedFrame(KeybindShape, fill = { bgColor.value }, border = { borderColor.value })
             .onClick(interactionSource) { if (!recording) recording = true }
             .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
