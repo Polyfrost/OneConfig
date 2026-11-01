@@ -512,7 +512,6 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(displayAlpha(display))
             .background(theme.modCardBackground, theme.modCardShape)
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
@@ -533,7 +532,9 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
                 onDrawBehind { drawRect(gradient) }
             }
         )
-        SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
+        Box(Modifier.alpha(displayAlpha(display))) {
+            SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
+        }
     }
 }
 
