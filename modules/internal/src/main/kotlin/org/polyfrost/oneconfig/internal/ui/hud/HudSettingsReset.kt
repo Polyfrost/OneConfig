@@ -76,7 +76,10 @@ private val MenuPadding = 4.dp
 private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 
 private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
-private val POSITION_OPTIONS = setOf("section", "relativeX", "relativeY")
+private val POSITION_OPTIONS = setOf(
+    "section", "relativeX", "relativeY",
+    "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY",
+)
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
 fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
@@ -102,7 +105,7 @@ fun hudHasResettableDefaults(hud: Hud): Boolean {
 private fun treeHasResettableDefaults(tree: Tree): Boolean {
     for (node in tree.map.values) {
         when (node) {
-            is Property<*> -> if (optionHasDefault(node)) return true
+            is Property<*> -> if ((node.id ?: node.getID()) !in POSITION_OPTIONS && optionHasDefault(node)) return true
             is Tree -> if (treeHasResettableDefaults(node)) return true
         }
     }
@@ -124,10 +127,7 @@ private fun resetHudStaticSize(hud: Hud) {
     }
 }
 
-fun hudHasPositionDefaults(hud: Hud): Boolean =
-    POSITION_OPTIONS.any { id ->
-        hudProperty(hud, id)?.let { optionHasDefault(it) } == true
-    }
+fun hudHasPositionDefaults(hud: Hud): Boolean = hud.defaultPosition() != null
 
 fun resetHudPosition(hud: Hud) {
     var reset = false
@@ -184,7 +184,9 @@ private fun resetTreeDefaults(hud: Hud, tree: Tree, seen: MutableSet<Property<*>
         when (node) {
             is Property<*> -> {
                 val optionId = node.id ?: node.getID()
-                if (optionId !in STATIC_SIZE_OPTIONS && optionHasDefault(node)) resetOption(node, seen)
+                if (optionId !in STATIC_SIZE_OPTIONS && optionId !in POSITION_OPTIONS && optionHasDefault(node)) {
+                    resetOption(node, seen)
+                }
             }
             is Tree -> resetTreeDefaults(hud, node, seen)
         }
@@ -392,6 +394,12 @@ fun HudCanvasResetMenu(
                     onDismiss()
                 }
             }
+            if (actionTargets.any(::hudHasPositionDefaults)) {
+                HudMenuRow(icon = "refresh", text = "Reset position") {
+                    actionTargets.forEach(::resetHudPosition)
+                    onDismiss()
+                }
+            }
             HudMenuDivider()
             HudMenuRow(icon = "copy", text = "Copy", hint = copyHint) {
                 onCopy(hud)
@@ -431,7 +439,7 @@ fun HudCanvasResetMenu(
             HudMenuDivider()
             HudMenuRow(
                 icon = "refresh",
-                text = "Reset all to default",
+                text = "Reset HUD settings",
                 enabled = resetEnabled,
                 hint = resetHint,
             ) {

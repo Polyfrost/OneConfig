@@ -289,12 +289,16 @@ public abstract class Hud(
     }
 
     /**
-     * Stores the reset defaults for [section]/[relativeX]/[relativeY] derived from [defaultPosition]
+     * Stores the reset defaults for [section]/[relativeX]/[relativeY] derived from [defaultPosition], removing them
+     * when it is null so nothing resets the HUD to wherever it happened to be when its config was built
      */
     public fun capturePositionDefaults() {
         val t = tree ?: return
         if (!persistOwnState) return
-        val (dx, dy) = defaultPosition()
+        val (dx, dy) = defaultPosition() ?: run {
+            for (id in listOf("section", "relativeX", "relativeY")) t.getProp(id)?.removeMetadata("default")
+            return
+        }
         val curSection = section
         val curX = relativeX
         val curY = relativeY
@@ -1508,7 +1512,13 @@ public abstract class Hud(
     public open fun setup() {}
     public abstract fun update(): Boolean
     public open fun updateFrequency(): Long = -1L
-    public open fun defaultPosition(): Pair<Float, Float> = 10f to 10f
+    /**
+     * Where this HUD belongs on screen, for example the spot the vanilla element it replaces sits in
+     *
+     * Null when it has no natural place, in which case it starts in the top left corner and the editor offers no
+     * way to reset its position
+     */
+    public open fun defaultPosition(): Pair<Float, Float>? = null
 
     /**
      * Return `false` to skip drawing this HUD while it has nothing to show. Unlike [hidden], this
