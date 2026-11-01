@@ -379,19 +379,55 @@ private fun SubcategoryHeader(title: String) {
 
 @Composable
 private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) {
-    val theme = LocalTheme.current
-    val shape = theme.modCardShape
-
     var expanded by remember(node) {
         mutableStateOf(
             if (node.tree.getMetadata<Boolean>("collapsed") == true) false
             else node.head?.shown() != false
         )
     }
-    val headerInteraction = rememberInteractionSource()
-    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
     val headDisplay = node.head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
+    var headChecked by remember(node) { mutableStateOf(node.head?.shown() == true) }
+    if (node.head != null) {
+        DisposableEffect(node.head) {
+            val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
+            node.head.addCallback(listener)
+            onDispose { node.head.removeCallback(listener) }
+        }
+    }
 
+    Accordion(
+        title = node.tree.localizedTitle(),
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        checked = if (node.head != null) headChecked else null,
+        onCheckedChange = {
+            headChecked = it
+            node.head?.set(it)
+            expanded = it
+        },
+        headEnabled = headDisplay != Property.Display.DISABLED,
+        description = node.tree.localizedDescription(),
+        icon = node.tree.getMetadata<String>("icon"),
+    ) {
+        AccordionOptionsGrid(node.body, compact = compact)
+    }
+}
+
+@Composable
+private fun Accordion(
+    title: Any,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    checked: Boolean? = null,
+    onCheckedChange: (Boolean) -> Unit = {},
+    headEnabled: Boolean = true,
+    description: Any? = null,
+    icon: String? = null,
+    body: @Composable () -> Unit,
+) {
+    val theme = LocalTheme.current
+    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
+    val shape = theme.modCardShape
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -410,68 +446,25 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                 onDrawBehind { drawRect(gradient) }
             }
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .onClick(headerInteraction) { expanded = !expanded }
-                .alpha(displayAlpha(headDisplay))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        CardHeader(
+            title,
+            description,
+            icon,
+            Modifier
+                .onClick(rememberInteractionSource()) { onExpandedChange(!expanded) }
+                .alpha(if (headEnabled) 1f else displayAlpha(Property.Display.DISABLED)),
         ) {
             Row(
-                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                node.tree.getMetadata<String>("icon")?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        node.tree.localizedTitle(),
-                        color = theme.textColor,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    node.tree.localizedDescription()?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
-                    }
+                if (checked != null) {
+                    Box(Modifier.blockInteraction(!headEnabled)) { SwitchControl(checked, onCheckedChange) }
                 }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (node.head != null) {
-                    var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
-                    DisposableEffect(node.head) {
-                        val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
-                        node.head.addCallback(listener)
-                        onDispose { node.head.removeCallback(listener) }
-                    }
-                    Box(Modifier.blockInteraction(headDisplay == Property.Display.DISABLED)) {
-                        SwitchControl(headChecked) {
-                            headChecked = it
-                            node.head.set(it)
-                            expanded = it
-                        }
-                    }
-                }
-                Icon(
-                    "up",
-                    color = theme.textColorSecondary,
-                    modifier = Modifier
-                        .size(12.dp)
-                        .rotate(chevronRotation),
-                )
+                Icon("up", color = theme.textColorSecondary, modifier = Modifier.size(12.dp).rotate(chevronRotation))
             }
         }
-
-        AnimatedVisibility(
-            visible = expanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
-        ) {
+        AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -484,9 +477,38 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
                     )
                     .padding(bottom = 12.dp)
             ) {
-                AccordionOptionsGrid(node.body, compact = compact)
+                body()
             }
         }
+    }
+}
+
+@Composable
+private fun CardHeader(
+    title: Any,
+    description: Any? = null,
+    icon: String? = null,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            icon?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, color = theme.textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
+            }
+        }
+        trailing()
     }
 }
 
