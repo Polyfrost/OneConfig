@@ -100,6 +100,7 @@ object GlHost {
 
     private val client get() = Minecraft.getInstance()
 
+    @JvmStatic
     val isVulkanModInstalled: Boolean by lazy {
         try {
             ModInfo.loadedMods.any { it.id.equals("vulkanmod", ignoreCase = true) }

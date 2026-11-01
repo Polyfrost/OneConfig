@@ -8,6 +8,8 @@
 - HUDs that keep failing to update now only log the error once instead of every frame
 - Fixed OneConfig's UI being corrupted with VulkanMod on 1.21.1
 - Fixed a crash when opening the OneConfig menu with VulkanMod on 1.21.11
+- Fixed the OneConfig menu's background and animations rendering upside down with VulkanMod on 1.21.11 and 26.1
+- Fixed toasts and other GUI elements being partially cut off with VulkanMod on 1.21.11 and 26.1
 
 ### For mod developers
 - Fixed builds depending on OneConfig for 1.8.9 failing to resolve LWJGL STB natives
