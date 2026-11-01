@@ -1,4 +1,4 @@
-## Unreleased changes
+## 1.6.1
 - Fixed legacy HUDs being drawn behind the OneConfig UI outside a world
 - Fixed the HUD editor tour picking legacy HUDs
 - Fixed rounded corners rendering incorrectly on elements too small for their corner radius
