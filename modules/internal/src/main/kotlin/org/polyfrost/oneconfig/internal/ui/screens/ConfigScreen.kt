@@ -1,7 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
@@ -37,10 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
@@ -441,6 +443,8 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     }
 }
 
+private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
+
 @Composable
 private fun Accordion(
     title: Any,
@@ -455,26 +459,7 @@ private fun Accordion(
 ) {
     val theme = LocalTheme.current
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
-    val shape = theme.modCardShape
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .hoverGlow(shape)
-            .background(theme.modCardBackground, shape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, shape)
-            .drawWithCache {
-                val color = theme.textColor
-                val gradient = Brush.radialGradient(
-                    colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
-                    center = Offset(size.width / 2f, 0f),
-                    radius = size.width * 0.8f,
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-    ) {
+    Column(Modifier.optionCard()) {
         CardHeader(
             title,
             description,
@@ -495,23 +480,14 @@ private fun Accordion(
         }
         AnimatedVisibility(
             visible = expanded,
-            enter = ReducedMotion.enter(expandVertically()),
-            exit = ReducedMotion.exit(shrinkVertically()),
+            enter = ReducedMotion.enter(
+                expandVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
+            ),
+            exit = ReducedMotion.exit(
+                shrinkVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
+            ),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
-                        brush = remember(theme.borderColor) {
-                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
-                        },
-                        shape = shape
-                    )
-                    .padding(bottom = 12.dp)
-            ) {
-                body()
-            }
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body() }
         }
     }
 }
@@ -563,35 +539,24 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         return
     }
 
-    val theme = LocalTheme.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .hoverGlow(theme.modCardShape)
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, theme.modCardShape)
-    ) {
-        val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f)
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
+    Box(Modifier.optionCard()) {
         Box(Modifier.alpha(displayAlpha(display))) {
             SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
         }
     }
+}
+
+/** The card behind an option or accordion */
+@Composable
+private fun Modifier.optionCard(): Modifier {
+    val theme = LocalTheme.current
+    val shape = theme.modCardShape
+    val border = remember(theme.borderColor) { Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))) }
+    return fillMaxWidth()
+        .clip(shape)
+        .hoverGlow(shape)
+        .background(theme.modCardBackground, shape)
+        .border(1.dp, border, shape)
 }
 
 @Composable
