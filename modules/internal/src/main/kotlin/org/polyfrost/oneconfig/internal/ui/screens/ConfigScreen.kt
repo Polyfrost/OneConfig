@@ -1,7 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
@@ -29,6 +32,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,13 +43,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -53,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
@@ -413,6 +418,8 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     }
 }
 
+private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
+
 @Composable
 private fun Accordion(
     title: Any,
@@ -427,30 +434,15 @@ private fun Accordion(
 ) {
     val theme = LocalTheme.current
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
-    val shape = theme.modCardShape
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(theme.modCardBackground, shape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, shape)
-            .drawWithCache {
-                val color = theme.textColor
-                val gradient = Brush.radialGradient(
-                    colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
-                    center = Offset(size.width / 2f, 0f),
-                    radius = size.width * 0.8f,
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-    ) {
+    var headerHeight by remember { mutableIntStateOf(0) }
+    val openness by animateFloatAsState(if (expanded) 1f else 0f, spring(stiffness = FOLD_STIFFNESS))
+    Column(Modifier.optionCard(shineHeight = headerHeight).accordionBorder(openness)) {
         CardHeader(
             title,
             description,
             icon,
             Modifier
+                .onSizeChanged { headerHeight = it.height }
                 .onClick(rememberInteractionSource()) { onExpandedChange(!expanded) }
                 .alpha(if (headEnabled) 1f else displayAlpha(Property.Display.DISABLED)),
         ) {
@@ -464,21 +456,12 @@ private fun Accordion(
                 Icon("up", color = theme.textColorSecondary, modifier = Modifier.size(12.dp).rotate(chevronRotation))
             }
         }
-        AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
-                        brush = remember(theme.borderColor) {
-                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
-                        },
-                        shape = shape
-                    )
-                    .padding(bottom = 12.dp)
-            ) {
-                body()
-            }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)),
+            exit = shrinkVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)),
+        ) {
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body() }
         }
     }
 }
@@ -513,6 +496,14 @@ private fun CardHeader(
 }
 
 @Composable
+private fun Modifier.accordionBorder(alpha: Float): Modifier {
+    val theme = LocalTheme.current
+    val color = theme.borderColor
+    val border = remember(color, alpha) { Brush.verticalGradient(listOf(color.copy(0f), color.copy(color.alpha * alpha))) }
+    return border(1.dp, border, theme.modCardShape)
+}
+
+@Composable
 fun SettingRow(prop: Property<*>, compact: Boolean = false) {
     DecoratedSettingRow(SettingRowDecorators.all(), 0, prop, compact)
 }
@@ -530,34 +521,32 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         return
     }
 
-    val theme = LocalTheme.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, theme.modCardShape)
-    ) {
-        val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f)
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
+    Box(Modifier.optionCard()) {
         Box(Modifier.alpha(displayAlpha(display))) {
             SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
         }
     }
+}
+
+@Composable
+private fun Modifier.optionCard(shineHeight: Int = 0): Modifier {
+    val theme = LocalTheme.current
+    val shape = theme.modCardShape
+    val border = remember(theme.borderColor) { Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))) }
+    return fillMaxWidth()
+        .clip(shape)
+        .background(theme.modCardBackground, shape)
+        .border(1.dp, border, shape)
+        .drawWithCache {
+            val color = theme.textColor
+            val height = if (shineHeight > 0) shineHeight.toFloat() else size.height
+            val gradient = Brush.radialGradient(
+                colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
+                center = Offset(size.width / 2f, height / 2f),
+                radius = minOf(size.width, height) * 0.9f,
+            )
+            onDrawBehind { drawRect(gradient) }
+        }
 }
 
 @Composable
