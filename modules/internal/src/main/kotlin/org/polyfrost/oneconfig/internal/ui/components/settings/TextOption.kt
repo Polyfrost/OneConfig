@@ -64,10 +64,10 @@ fun TextOption(data: TextOptionData) {
         cursorBrush = SolidColor(theme.textColor),
         modifier = Modifier.trackTextInputFocus()
             .width(LocalOptionWidth.current)
-            .then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier)
+            .heightIn(min = if (data.multiline) 96.dp else OptionControlHeight)
             .graphicsLayer {}
             .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, fill = { theme.modCardBackground }, border = { borderColor.value })
-            .padding(horizontal = 12.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = if (data.multiline) 7.dp else 4.dp),
         decorationBox = { innerTextField ->
             Row(
                 verticalAlignment = if (data.multiline) Alignment.Top else Alignment.CenterVertically,

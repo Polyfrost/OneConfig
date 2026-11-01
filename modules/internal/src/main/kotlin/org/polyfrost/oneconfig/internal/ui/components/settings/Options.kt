@@ -55,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
 val LocalOptionWidth = compositionLocalOf { 300.dp }
+internal val OptionControlHeight = 32.dp
 
 private val ContextMenuPadding = 4.dp
 

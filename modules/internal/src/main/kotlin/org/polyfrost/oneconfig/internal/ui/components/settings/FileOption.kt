@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -107,9 +108,10 @@ fun FileOption(data: FileOptionData) {
         visualTransformation = pathTransformation,
         modifier = Modifier.trackTextInputFocus()
             .width(LocalOptionWidth.current)
+            .heightIn(min = OptionControlHeight)
             .graphicsLayer {}
             .animatedFrame(theme.sideBarNavigationEntryShape, fill = { theme.modCardBackground }, border = { borderColor.value })
-            .padding(start = 12.dp, end = 6.dp, top = 5.dp, bottom = 5.dp),
+            .padding(start = 12.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
         decorationBox = { innerTextField ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
