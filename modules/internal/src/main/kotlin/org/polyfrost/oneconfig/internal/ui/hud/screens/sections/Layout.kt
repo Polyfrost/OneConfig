@@ -30,6 +30,7 @@ import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -114,7 +115,7 @@ fun Layout(hud: Hud?, query: String) {
                     }
                 }
             } else {
-                Section("GUI Scale", query, "Use Minecraft GUI Scale", "Custom Scale") {
+                Section("GUI Scale", query, "Use Minecraft GUI Scale", "Scale") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         HudSettingTarget(hud, "useGuiScale") {
                             Row(
@@ -122,7 +123,7 @@ fun Layout(hud: Hud?, query: String) {
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 SwitchControl(hud.useGuiScale) {
-                                    Snapshot.withMutableSnapshot { hud.useGuiScale = it }
+                                    Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) }
                                 }
                                 Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
                             }
@@ -136,7 +137,7 @@ fun Layout(hud: Hud?, query: String) {
                                 0.25f,
                                 width = 176.dp,
                                 unit = "x",
-                                label = "Custom Scale",
+                                label = "Scale",
                             )
                         }
                     }
@@ -281,6 +282,14 @@ private fun ResetHudPositionButton(hud: Hud) {
     ) {
         Text("Reset to default position", color = textColor, fontSize = 13.sp)
     }
+}
+
+/** Keeps [hud] the same size on screen */
+private fun setFollowGuiScale(hud: Hud, follow: Boolean) {
+    if (hud.useGuiScale == follow) return
+    val gui = Platform.compatibility().options().guiScale.takeIf { it > 0f } ?: 1f
+    if (follow) hud.customScale *= hud.fixedGuiScale / gui else hud.fixedGuiScale = gui
+    hud.useGuiScale = follow
 }
 
 @Composable
