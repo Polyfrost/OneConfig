@@ -413,8 +413,8 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
         headEnabled = headDisplay != Property.Display.DISABLED,
         description = node.tree.localizedDescription(),
         icon = node.tree.getMetadata<String>("icon"),
-    ) {
-        AccordionOptionsGrid(node.body, compact = compact)
+    ) { enabled ->
+        AccordionOptionsGrid(node.body, compact = compact, enabled = enabled)
     }
 }
 
@@ -430,7 +430,7 @@ private fun Accordion(
     headEnabled: Boolean = true,
     description: Any? = null,
     icon: String? = null,
-    body: @Composable () -> Unit,
+    body: @Composable (enabled: Boolean) -> Unit,
 ) {
     val theme = LocalTheme.current
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
@@ -461,7 +461,7 @@ private fun Accordion(
             enter = expandVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)),
             exit = shrinkVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)),
         ) {
-            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body() }
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body(checked != false && headEnabled) }
         }
     }
 }
@@ -550,9 +550,16 @@ private fun Modifier.optionCard(shineHeight: Int = 0): Modifier {
 }
 
 @Composable
-private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, modifier: Modifier, compact: Boolean = false) {
-    Box(modifier.alpha(displayAlpha(display))) {
-        SettingContent(prop, nested = true, compact = compact, enabled = display != Property.Display.DISABLED)
+private fun AccordionSettingRow(
+    prop: Property<*>,
+    display: Property.Display,
+    groupEnabled: Boolean,
+    modifier: Modifier,
+    compact: Boolean = false,
+) {
+    val effectiveDisplay = if (groupEnabled) display else Property.Display.DISABLED
+    Box(modifier.alpha(displayAlpha(effectiveDisplay))) {
+        SettingContent(prop, nested = true, compact = compact, enabled = effectiveDisplay != Property.Display.DISABLED)
     }
 }
 
@@ -604,7 +611,7 @@ private inline fun buildOptionRows(body: List<Property<*>>, isWide: (Property<*>
 }
 
 @Composable
-private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
+private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean, enabled: Boolean) {
     val visible = rememberVisibleOptions(body)
     val displays = remember(visible) { visible.toMap() }
     val visibleProps = remember(visible) { visible.map { it.first } }
@@ -612,7 +619,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
     if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
             visible.forEach { (prop, display) ->
-                AccordionSettingRow(prop, display, Modifier.fillMaxWidth(), compact = true)
+                AccordionSettingRow(prop, display, enabled, Modifier.fillMaxWidth(), compact = true)
             }
         }
         return
@@ -645,17 +652,17 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
                 when (row) {
                     is OptionRow.Single -> {
                         if (row.wide) {
-                            AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.fillMaxWidth())
+                            AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.fillMaxWidth())
                         } else {
                             Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                                AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.weight(1f))
+                                AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.weight(1f))
                                 Spacer(Modifier.weight(1f))
                             }
                         }
                     }
                     is OptionRow.Pair -> Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                        AccordionSettingRow(row.first, displays.getValue(row.first), Modifier.weight(1f))
-                        AccordionSettingRow(row.second, displays.getValue(row.second), Modifier.weight(1f))
+                        AccordionSettingRow(row.first, displays.getValue(row.first), enabled, Modifier.weight(1f))
+                        AccordionSettingRow(row.second, displays.getValue(row.second), enabled, Modifier.weight(1f))
                     }
                 }
             }
