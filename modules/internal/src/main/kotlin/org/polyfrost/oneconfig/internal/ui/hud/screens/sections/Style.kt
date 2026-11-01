@@ -86,7 +86,7 @@ fun Style(hud: Hud?, query: String) {
 
     HudSettingsContent(hud) {
     var font by remember { mutableStateOf(hud.font) }
-    var textScale by remember { mutableStateOf(hud.textScale) }
+    val textScale = hud.textScale
     var textBold by remember { mutableStateOf(hud.textBold) }
     var textItalic by remember { mutableStateOf(hud.textItalic) }
     var textUnderline by remember { mutableStateOf(hud.textUnderline) }
@@ -201,8 +201,8 @@ fun Style(hud: Hud?, query: String) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("Font size", color = LocalTheme.current.textColor, fontSize = 14.sp)
                         NumberSpinner(
-                            textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
-                            6f, 64f, 1f, width = 112.dp, unit = "px", icon = "align"
+                            textScale * 100f, { Snapshot.withMutableSnapshot { hud.textScale = it / 100f } },
+                            25f, 500f, 5f, width = 112.dp, unit = "%", icon = "align"
                         )
                     }
                 }
