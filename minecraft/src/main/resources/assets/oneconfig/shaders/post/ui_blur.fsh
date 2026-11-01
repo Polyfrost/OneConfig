@@ -11,7 +11,9 @@ layout(std140) uniform BlurConfig {
     vec2 BlurDir;
 };
 
-out vec4 fragColor;
+// 26.3 needs explicit locations, but VulkanMod's GLSL parser rejects a bare `layout` on outputs
+#define FRAG_OUT layout(location = 0) out
+FRAG_OUT vec4 fragColor;
 
 void main() {
     vec2 uv = gl_FragCoord.xy / OutSize;
