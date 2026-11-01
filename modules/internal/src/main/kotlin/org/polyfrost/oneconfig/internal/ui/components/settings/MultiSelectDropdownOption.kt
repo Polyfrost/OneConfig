@@ -1,58 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.concentric
-
-private val MenuPadding = 4.dp
-private val DropdownShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-private val ItemShape @Composable get() = DropdownShape.concentric(MenuPadding)
 
 @Suppress("UNCHECKED_CAST")
 @Composable
@@ -90,21 +52,6 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
 
     var expanded by remember { mutableStateOf(false) }
 
-    val triggerInteraction = rememberInteractionSource()
-    val isHovered by triggerInteraction.collectIsHoveredAsState()
-
-    val borderColor = animateColorAsState(
-        if (expanded) Accent else theme.borderColor
-    )
-    val textColor = animateColorAsState(
-        if (isHovered || expanded) theme.textColor else theme.textColorSecondary
-    )
-    val backgroundColor = animateColorAsState(
-        if (expanded) Accent.copy(0.2f).compositeOver(theme.componentBackground)
-        else theme.componentBackground
-    )
-    val chevronRotation = animateFloatAsState(if (expanded) 0f else 180f)
-
     val triggerLabel = when {
         !data.checkable -> options.getOrElse(selectedIdx) { "—" }
         else -> {
@@ -117,170 +64,42 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
         }
     }
 
-    Box {
-        Row(
-            modifier = Modifier
-                .width(LocalOptionWidth.current)
-                .height(OptionControlHeight)
-                .graphicsLayer {}
-                .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
-                .onClick(triggerInteraction) { expanded = !expanded }
-                .hoverable(triggerInteraction)
-                .pointerHoverIcon(PointerIcon.Hand)
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                triggerLabel,
-                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
-                color = Color.Unspecified,
-                fontSize = 13.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                colorProducer = { textColor.value },
+    DropdownFrame(triggerLabel, expanded, { expanded = it }) {
+        if (data.checkable && options.size > 1) {
+            val allSelected = selectedFlags.count { it } == options.size
+            val toggleAll: () -> Unit = {
+                val updated = BooleanArray(options.size) { !allSelected }
+                selectedFlags = updated
+                (data.prop as Property<Any>).set(updated)
+            }
+            DropdownItem(
+                if (allSelected) "Deselect all" else "Select all",
+                leading = { CheckboxIndicator(checked = allSelected, onToggle = toggleAll) },
+                onClick = toggleAll,
             )
-            Icon("up", modifier = Modifier.graphicsLayer { rotationZ = chevronRotation.value }, tint = { textColor.value })
+            Box(Modifier.fillMaxWidth().height(1.dp).background(theme.borderColor))
         }
-
-        SimpleDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            offset = DpOffset(0.dp, 10.dp),
-        ) {
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .width(LocalOptionWidth.current)
-                    .clip(DropdownShape)
-                    .background(theme.componentBackground, DropdownShape)
-                    .border(1.dp, theme.borderColor, DropdownShape)
-                    .heightIn(max = 280.dp)
-                    .fadingEdges(scrollState, theme.componentBackground)
-                    .wheelScroll(scrollState)
-                    .verticalScroll(scrollState)
-                    .padding(MenuPadding),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                if (data.checkable && options.size > 1) {
-                    val allSelected = selectedFlags.count { it } == options.size
-                    CheckableListItem(
-                        label = if (allSelected) "Deselect all" else "Select all",
-                        icon = null,
-                        checked = allSelected,
-                        onToggle = {
-                            val updated = BooleanArray(options.size) { !allSelected }
-                            selectedFlags = updated
-                            (data.prop as Property<Any>).set(updated)
-                        },
-                    )
-                    Box(Modifier.fillMaxWidth().height(1.dp).background(theme.borderColor))
+        options.forEachIndexed { index, option ->
+            if (data.checkable) {
+                val toggle: () -> Unit = {
+                    val updated = selectedFlags.copyOf()
+                    updated[index] = !updated[index]
+                    selectedFlags = updated
+                    (data.prop as Property<Any>).set(updated)
                 }
-                options.forEachIndexed { index, option ->
-                    if (data.checkable) {
-                        CheckableListItem(
-                            label = option,
-                            icon = data.icon,
-                            checked = selectedFlags.getOrElse(index) { false },
-                            onToggle = {
-                                val updated = selectedFlags.copyOf()
-                                updated[index] = !updated[index]
-                                selectedFlags = updated
-                                (data.prop as Property<Any>).set(updated)
-                            },
-                        )
-                    } else {
-                        PlainListItem(
-                            label = option,
-                            icon = data.icon,
-                            selected = selectedIdx == index,
-                            onSelect = {
-                                selectedIdx = index
-                                (data.prop as Property<Any>).set(index)
-                                expanded = false
-                            },
-                        )
-                    }
+                DropdownItem(
+                    option,
+                    icon = data.icon,
+                    leading = { CheckboxIndicator(checked = selectedFlags.getOrElse(index) { false }, onToggle = toggle) },
+                    onClick = toggle,
+                )
+            } else {
+                DropdownItem(option, selected = selectedIdx == index, icon = data.icon) {
+                    selectedIdx = index
+                    (data.prop as Property<Any>).set(index)
+                    expanded = false
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun CheckableListItem(
-    label: Any,
-    icon: String?,
-    checked: Boolean,
-    onToggle: () -> Unit,
-) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    val bgColor = animateColorAsState(
-        if (isHovered) theme.modCardBackground else theme.modCardBackground.copy(0f)
-    )
-    val contentColor = animateColorAsState(
-        if (isHovered) theme.textColor else theme.textColorSecondary
-    )
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(ItemShape)
-            .graphicsLayer {}
-            .animatedFrame(ItemShape, fill = { bgColor.value }, border = { Color.Transparent })
-            .onClick(interactionSource, onToggle)
-            .hoverable(interactionSource)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(15.dp),
-    ) {
-        CheckboxIndicator(checked = checked, onToggle = onToggle)
-
-        icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), tint = { contentColor.value }) }
-
-        Text(label, color = Color.Unspecified, fontSize = 13.sp, colorProducer = { contentColor.value })
-    }
-}
-
-@Composable
-private fun PlainListItem(
-    label: Any,
-    icon: String?,
-    selected: Boolean,
-    onSelect: () -> Unit,
-) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    val bgColor = animateColorAsState(
-        if (selected) Accent
-        else if (isHovered) theme.modCardBackground
-        else theme.modCardBackground.copy(0f)
-    )
-    val contentColor = animateColorAsState(
-        if (selected || isHovered) theme.textColor else theme.textColorSecondary
-    )
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(ItemShape)
-            .graphicsLayer {}
-            .animatedFrame(ItemShape, fill = { bgColor.value }, border = { Color.Transparent })
-            .onClick(interactionSource, onSelect)
-            .hoverable(interactionSource)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(15.dp),
-    ) {
-        icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), tint = { contentColor.value }) }
-
-        Text(label, color = Color.Unspecified, fontSize = 13.sp, colorProducer = { contentColor.value })
     }
 }
