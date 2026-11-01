@@ -106,7 +106,7 @@ internal fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
         val nodes = subcategory.nodes.filter { node ->
             when (node) {
                 is SettingNode.Leaf -> !node.prop.isHidden()
-                is SettingNode.Accordion -> node.head?.isHidden() == false || node.body.any { !it.isHidden() }
+                is SettingNode.Accordion -> if (node.head != null) !node.head.isHidden() else node.body.any { !it.isHidden() }
             }
         }
         if (nodes.isEmpty()) null else subcategory.copy(nodes = nodes)
@@ -190,9 +190,10 @@ internal fun searchNode(node: SettingNode, documents: List<SearchDocument<*>>): 
     return when (node) {
         is SettingNode.Leaf -> node.takeUnless { it.prop.isHidden() }
         is SettingNode.Accordion -> {
+            if (node.head?.isHidden() == true) return null
             val whole = documents.any { it.payload === node.tree || it.payload === node.head }
             val body = if (whole) node.body else documents.mapNotNull { it.payload as? Property<*> }
-            val visible = body.any { !it.isHidden() } || (whole && node.head?.isHidden() == false)
+            val visible = body.any { !it.isHidden() } || (whole && node.head != null)
             if (visible) node.copy(body = body) else null
         }
     }
