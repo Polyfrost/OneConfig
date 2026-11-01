@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,9 +34,6 @@ private val MenuItemShape @Composable get() = DropdownShape.concentric(MenuPaddi
 
 @Composable
 fun DropdownOption(data: DropdownOptionData) {
-    val theme = LocalTheme.current
-    var expanded by remember { mutableStateOf(false) }
-
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
         data.prop.type.superclass?.isEnum == true -> data.prop.type.superclass
@@ -64,7 +62,26 @@ fun DropdownOption(data: DropdownOptionData) {
             }
         )
     }
-    val selectedName = options.getOrElse(selectedIdx) { "—" }
+
+    Dropdown(options, selectedIdx, onSelect = { index ->
+        selectedIdx = index
+        @Suppress("UNCHECKED_CAST")
+        if (enumClass != null) {
+            (data.prop as Property<Any>).set(values[index])
+        } else if (data.prop.type == String::class.java) {
+            (data.prop as Property<Any>).set(optionValues.getOrElse(index) { options[index] })
+        } else {
+            (data.prop as Property<Any>).set(index)
+        }
+    })
+}
+
+/** [options] can be anything [Text] can show, such as translated text */
+@Composable
+fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: Dp = LocalOptionWidth.current) {
+    val theme = LocalTheme.current
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = options.getOrElse(selected) { "—" }
 
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
@@ -87,7 +104,7 @@ fun DropdownOption(data: DropdownOptionData) {
     Box {
         Row(
             modifier = Modifier
-                .width(LocalOptionWidth.current)
+                .width(width)
                 .height(32.dp)
                 .graphicsLayer {}
                 .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
@@ -118,7 +135,7 @@ fun DropdownOption(data: DropdownOptionData) {
             val scrollState = rememberScrollState()
             Box(
                 modifier = Modifier
-                    .width(LocalOptionWidth.current)
+                    .width(width)
                     .clip(DropdownShape)
                     .background(theme.componentBackground, DropdownShape)
                     .border(1.dp, theme.borderColor, DropdownShape)
@@ -136,11 +153,11 @@ fun DropdownOption(data: DropdownOptionData) {
                 ) {
                     options.forEachIndexed { index, option ->
                         val optionSource = rememberInteractionSource()
-                        val selected = index == selectedIdx
+                        val isSelected = index == selected
                         val isHovered by optionSource.collectIsHoveredAsState()
 
                         val backgroundColor = animateColorAsState(
-                            if (selected) Accent
+                            if (isSelected) Accent
                             else if (isHovered) theme.modCardBackground
                             else theme.modCardBackground.copy(0f)
                         )
@@ -151,15 +168,7 @@ fun DropdownOption(data: DropdownOptionData) {
                                 .graphicsLayer {}
                                 .animatedFrame(itemShape, fill = { backgroundColor.value }, border = { Color.Transparent })
                                 .onClick(optionSource) {
-                                    selectedIdx = index
-                                    @Suppress("UNCHECKED_CAST")
-                                    if (enumClass != null) {
-                                        (data.prop as Property<Any>).set(values[index])
-                                    } else if (data.prop.type == String::class.java) {
-                                        (data.prop as Property<Any>).set(optionValues.getOrElse(index) { option })
-                                    } else {
-                                        (data.prop as Property<Any>).set(index)
-                                    }
+                                    onSelect(index)
                                     expanded = false
                                 }
                                 .hoverable(optionSource)

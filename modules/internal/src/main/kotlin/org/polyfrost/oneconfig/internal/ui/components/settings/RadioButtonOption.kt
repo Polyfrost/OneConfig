@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
+import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -39,9 +40,6 @@ private val RadioItemMinHeight = 32.dp
 
 @Composable
 fun RadioButtonOption(data: RadioButtonOptionData) {
-    val theme = LocalTheme.current
-    val density = LocalDensity.current
-
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
         data.prop.type.superclass?.isEnum == true -> data.prop.type.superclass
@@ -64,28 +62,59 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
     }
 
+    Radio(options, selectedIdx, Modifier.widthIn(max = LocalOptionWidth.current)) { index ->
+        selectedIdx = index
+        @Suppress("UNCHECKED_CAST")
+        if (enumClass != null) {
+            (data.prop as Property<Any>).set(values[index])
+        } else {
+            (data.prop as Property<Any>).set(index)
+        }
+    }
+}
+
+/**
+ * [options] can be anything [Text] can show, such as translated text, or null to show only the icon
+ *
+ * [fillWidth] stretches the row to the width it is given and splits it evenly between the options
+ *
+ * [icons] when given are drawn before each option's text
+ */
+@Composable
+fun Radio(
+    options: List<Any?>,
+    selected: Int,
+    modifier: Modifier = Modifier,
+    fillWidth: Boolean = false,
+    icons: List<String>? = null,
+    onSelect: (Int) -> Unit,
+) {
+    val theme = LocalTheme.current
+    val density = LocalDensity.current
+    val fill = if (fillWidth) Modifier.fillMaxWidth() else Modifier
+
     // each item's width is measured so the indicator can slide between them
     val itemWidths = remember(options.size) { Array(options.size) { mutableIntStateOf(0) } }
     var rowHeight by remember(options.size) { mutableIntStateOf(0) }
-    val indicatorReady = selectedIdx in itemWidths.indices && itemWidths[selectedIdx].intValue > 0
+    val indicatorReady = selected in itemWidths.indices && itemWidths[selected].intValue > 0
 
     Box(
-        modifier = Modifier
-            .widthIn(max = LocalOptionWidth.current)
+        modifier = modifier
+            .then(fill)
             .border(1.dp, theme.borderColor, RadioShape)
             .clip(RadioShape)
             .background(theme.componentBackground),
     ) {
         Box(
-            modifier = Modifier.padding(RadioPadding)
+            modifier = fill.padding(RadioPadding)
         ) {
             if (indicatorReady) {
                 val indicatorOffset = animateDpAsState(
-                    targetValue = with(density) { itemWidths.take(selectedIdx).sumOf { it.intValue }.toDp() },
+                    targetValue = with(density) { itemWidths.take(selected).sumOf { it.intValue }.toDp() },
                     animationSpec = spring(),
                 )
                 val indicatorWidth = animateDpAsState(
-                    targetValue = with(density) { itemWidths[selectedIdx].intValue.toDp() },
+                    targetValue = with(density) { itemWidths[selected].intValue.toDp() },
                     animationSpec = spring(),
                 )
                 val indicatorHeight = animateDpAsState(
@@ -106,41 +135,41 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
             }
 
             Row(
-                modifier = Modifier.onSizeChanged { rowHeight = it.height },
+                modifier = fill.onSizeChanged { rowHeight = it.height },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 options.forEachIndexed { index, option ->
                     val interactionSource = rememberInteractionSource()
                     val isHovered by interactionSource.collectIsHoveredAsState()
-                    val selected = index == selectedIdx
+                    val isSelected = index == selected
                     val color = animateColorAsState(
-                        if (selected || isHovered) theme.textColor else theme.textColorSecondary
+                        if (isSelected || isHovered) theme.textColor else theme.textColorSecondary
                     )
                     Box(
                         modifier = Modifier
-                            .weight(1f, fill = false)
+                            .weight(1f, fill = fillWidth)
                             .onSizeChanged { itemWidths[index].intValue = it.width }
-                            .onClick(interactionSource) {
-                                selectedIdx = index
-                                @Suppress("UNCHECKED_CAST")
-                                if (enumClass != null) {
-                                    (data.prop as Property<Any>).set(values[index])
-                                } else {
-                                    (data.prop as Property<Any>).set(index)
-                                }
-                            }
+                            .onClick(interactionSource) { onSelect(index) }
                             .hoverable(interactionSource)
                             .pointerHoverIcon(PointerIcon.Hand)
                             .heightIn(min = RadioItemMinHeight)
                             .padding(horizontal = 8.dp, vertical = 4.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            option,
-                            color = Color.Unspecified,
-                            fontSize = 12.sp,
-                            colorProducer = { color.value },
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            icons?.getOrNull(index)?.let { Icon(it, modifier = Modifier.size(16.dp), tint = { color.value }) }
+                            if (option != null) {
+                                Text(
+                                    option,
+                                    color = Color.Unspecified,
+                                    fontSize = 12.sp,
+                                    colorProducer = { color.value },
+                                )
+                            }
+                        }
                     }
                 }
             }
