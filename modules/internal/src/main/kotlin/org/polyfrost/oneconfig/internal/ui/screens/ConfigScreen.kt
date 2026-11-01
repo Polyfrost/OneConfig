@@ -421,6 +421,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             onDispose { node.head.removeCallback(listener) }
         }
     }
+    if (headDisplay == Property.Display.HIDDEN) return
 
     Accordion(
         title = node.tree.localizedTitle(),
