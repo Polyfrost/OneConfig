@@ -1,4 +1,4 @@
-//? if > 1.21.10 && fabric && moul_compat {
+//? if moul_compat {
 package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.observer.Property as MoulProperty

@@ -21,9 +21,7 @@ stonecutter {
 
             this["sdl"] = eval(current.version, ">= 26.3") || eval(current.version, "= 1.8.9")
 
-            this["moul_compat"] = current.project.endsWith("-fabric") &&
-                eval(current.version, "> 1.21.10") &&
-                catalogue.has("moulconfig")
+            this["moul_compat"] = current.project.endsWith("-fabric") && catalogue.has("moulconfig")
             this["yacl_compat"] = catalogue.has("yacl")
             this["clothconfig_compat"] = catalogue.has("clothconfig")
             this["midnightlib_compat"] = catalogue.has("midnightlib")
@@ -35,14 +33,9 @@ stonecutter {
             this["odin_compat"] = current.project.endsWith("-fabric") && catalogue.has("odin")
             this["mlib_compat"] = current.project.endsWith("-fabric") && catalogue.has("meowdding-lib")
             this["skyblocker_compat"] = current.project.endsWith("-fabric") && catalogue.has("skyblocker")
-            this["skyblocker_hud_v2"] = current.project.endsWith("-fabric") &&
-                catalogue.has("skyblocker") &&
-                eval(current.version, ">= 26.1")
-            this["skyblocker_legacy_hud"] = current.project.endsWith("-fabric") &&
-                catalogue.has("skyblocker") &&
-                eval(current.version, "< 26.1")
             this["stella_compat"] = current.project.endsWith("-fabric") && catalogue.has("stella")
-            this["apec_compat"] = current.project.endsWith("-fabric") && catalogue.has("apec")
+            // Hypixel SkyBlock can only be played on 26.1 and above
+            this["skyblock"] = eval(current.version, ">= 26.1")
             this["tr7zw_compat"] = true
             this["ukulib_compat"] = current.project.endsWith("-fabric")
             this["axolotlclient_config_compat"] = true

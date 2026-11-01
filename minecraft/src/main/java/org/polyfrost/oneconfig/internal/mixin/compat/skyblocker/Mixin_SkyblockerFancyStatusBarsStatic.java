@@ -20,7 +20,6 @@ public class Mixin_SkyblockerFancyStatusBarsStatic {
         SkyblockerCompat.initialize();
     }
 
-    //~ if >= 26.1 'render' -> 'extractRenderState'
     @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true, require = 0, expect = 0)
     private static void oneconfig$suppressWhileEditing(CallbackInfoReturnable<Boolean> cir) {
         if (CompatOverlayRenderer.oneConfigScreenOpen() && !SkyblockerCompat.isRedrawing() && SkyblockerCompat.isActive()) {

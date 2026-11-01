@@ -1,7 +1,6 @@
-//~ gui_graphics
 package org.polyfrost.oneconfig.internal.mixin.compat.firmament;
 
-//? if > 1.8.9 {
+//? if skyblock {
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -9,50 +8,34 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-//? if >= 1.21.8 {
 import org.joml.Matrix3x2f;
 import org.joml.Vector2f;
 import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 import org.spongepowered.asm.mixin.Unique;
-//?}
 
 @Mixin(GuiGraphicsExtractor.class)
 public class Mixin_FirmamentContentCapture {
 
     @Inject(
-        //? if >= 26.1 {
         method = "text(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V",
-        //?} else {
-        /*method = "drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V",
-        *///?}
         at = @At("HEAD"),
         require = 0
     )
     private void oneconfig$captureFirmamentText(Font font, Component text, int x, int y, int color, boolean shadow, CallbackInfo ci) {
-        //? >= 1.21.8 {
         if (text == null || !FirmamentHudCompat.isCapturing()) return;
         oneconfig$noteTextBounds(font, x, y, font.width(text));
-        //? }
     }
 
     @Inject(
-        //? if >= 26.1 {
         method = "text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)V",
-        //?} else {
-        /*method = "drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)V",
-        *///?}
         at = @At("HEAD"),
         require = 0
     )
     private void oneconfig$captureFirmamentString(Font font, String text, int x, int y, int color, boolean shadow, CallbackInfo ci) {
-        //? >= 1.21.8 {
         if (text == null || !FirmamentHudCompat.isCapturing()) return;
         oneconfig$noteTextBounds(font, x, y, font.width(text));
-        //? }
     }
 
-    //? >= 1.21.8 {
     @Unique
     private void oneconfig$noteTextBounds(Font font, int x, int y, int width) {
         Matrix3x2f pose = ((GuiGraphicsExtractor) (Object) this).pose();
@@ -68,6 +51,5 @@ public class Mixin_FirmamentContentCapture {
         }
         FirmamentHudCompat.noteContentDrawn(minX, minY, maxX, maxY);
     }
-    //? }
 }
 //?}

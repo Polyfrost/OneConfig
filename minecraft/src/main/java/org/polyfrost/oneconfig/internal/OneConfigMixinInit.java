@@ -149,30 +149,22 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                     : "compat.skyblocker.Mixin_SkyblockerFancyStatusBarsStatic");
         }
         mixins.add("compat.skyblocker.Mixin_SkyblockerWidgetManager");
+        mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
         *///? }
-
-        //? skyblocker_legacy_hud
-        //mixins.add("compat.skyblocker.Mixin_SkyblockerScreenBuilder");
-
-        //? skyblocker_hud_v2
-        //mixins.add("compat.skyblocker.Mixin_SkyblockerLayerBuilder");
 
         //? stella_compat
         //mixins.add("compat.stella.Mixin_Stella");
 
-        //? apec_compat
-        //mixins.add("compat.apec.Mixin_ApecMenu");
-
-        //? if > 1.8.9 {
+        //? if skyblock {
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
-
-        mixins.add("compat.armorhud.Mixin_ArmorHudWidgetShown");
-
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
         //?}
         // Firmament has no stable release for 26.2 yet
-        //? >= 1.21.8 && < 26.2
+        //? skyblock && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");
+
+        //? if > 1.8.9
+        mixins.add("compat.armorhud.Mixin_ArmorHudWidgetShown");
 
         // master switches for mods that do not have one, see ModGates
         mixins.addAll(ToggleHooks.mixins());

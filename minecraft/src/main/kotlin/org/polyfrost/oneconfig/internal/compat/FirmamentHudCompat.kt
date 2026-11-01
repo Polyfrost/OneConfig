@@ -29,7 +29,7 @@
 
 package org.polyfrost.oneconfig.internal.compat
 
-//? if > 1.8.9 {
+//? if skyblock {
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 import net.minecraft.client.gui.GuiGraphicsExtractor

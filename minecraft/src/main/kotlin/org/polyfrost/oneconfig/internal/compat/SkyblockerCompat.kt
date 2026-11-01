@@ -74,7 +74,6 @@ object SkyblockerCompat {
     private val updatePositionsMethod by lazy { method("updatePositions", java.lang.Boolean.TYPE) }
     private val healthFancyBarMethod by lazy { method("isHealthFancyBarEnabled") }
     private val renderBarsMethod by lazy {
-        //~ if >= 26.1 'render' -> 'extractRenderState'
         method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
     }
 

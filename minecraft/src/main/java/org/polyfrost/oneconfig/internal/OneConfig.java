@@ -87,8 +87,10 @@ import org.polyfrost.oneconfig.test.TestMod_Test;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.scores.DisplaySlot;
 import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
-import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 //?}
+
+//? if skyblock
+import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 
 //? if fabric {
 import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
@@ -339,10 +341,10 @@ public class OneConfig
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     BuiltinHudRegistrar.register();
                     ModGates.register();
-                    //? if > 1.8.9 {
+                    //? if skyblock
                     FirmamentHudCompat.register();
+                    //? if > 1.8.9
                     ArmorHudCompat.register();
-                    //?}
                     //? if wwaypoints_compat
                     WWaypointsCompat.register();
                     ThemeRegistry.INSTANCE.loadFromConfig();

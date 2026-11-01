@@ -41,7 +41,6 @@ object CompatLoader {
         "com.odtheking.odin",
         "de.hysky.skyblocker",
         "co.stellarskys.stella",
-        "uk.co.hexeption.apec",
         "moe.nea.firmament.deps.moulconfig",
         "io.github.notenoughupdates.moulconfig",
         "com.skysoft.deps.softconfig",

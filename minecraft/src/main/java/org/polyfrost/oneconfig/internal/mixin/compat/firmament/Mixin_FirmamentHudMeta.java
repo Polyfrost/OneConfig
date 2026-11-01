@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.firmament;
 
-//? if > 1.8.9 {
+//? if skyblock {
 import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;

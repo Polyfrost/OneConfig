@@ -1,14 +1,12 @@
 [versions]
 modmenu = "11.0.3"
 yacl = "3.7.1+1.21.1-fabric"
-moulconfig = "3.11.0"
 
 vulkanmod = "2eqroDKD"
 
 [libraries]
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
-moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
