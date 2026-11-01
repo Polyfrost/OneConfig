@@ -46,6 +46,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
@@ -347,6 +348,7 @@ public class OneConfig
                     WWaypointsCompat.register();
                     ThemeRegistry.INSTANCE.loadFromConfig();
                 });
+        EventManager.register(TickEvent.End.class, ConfigEntrypoints::registerAdded);
         EventManager.register(WorldEvent.Load.class, e -> {
             showFirstLaunchNotification();
             ItemCatalog.INSTANCE.markIconsAvailable();

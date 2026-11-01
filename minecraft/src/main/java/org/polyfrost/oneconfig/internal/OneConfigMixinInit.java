@@ -169,6 +169,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("compat.armorhud.Mixin_ArmorHudWidgetShown");
 
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
+
+        mixins.add("compat.Mixin_RegisterAddedConfigs");
         //?}
         // Firmament has no stable release for 26.2 yet
         //? >= 1.21.8 && < 26.2

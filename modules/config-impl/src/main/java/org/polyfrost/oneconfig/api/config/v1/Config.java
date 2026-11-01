@@ -56,6 +56,7 @@ public abstract class Config {
     private Map<String, Object> defaultSnapshot;
     private List<Runnable> deferredSetup;
     private boolean initializing;
+    final Thread creator = Thread.currentThread();
 
     public final String id, title, iconPath;
     public final Category category;

@@ -26,16 +26,16 @@ object ModMenuCompat {
     )
 
     fun preLoad() = CompatLoader.requireTranslations(-1000, true) {
-        ModMenu.ROOT_MODS.forEach { (_, mod) ->
-            if (mod.id in ownModIds) return@forEach
-            // never call getConfigScreen here
-            // it builds widgets that bake font glyphs and preLoad runs off-frame during
-            // ResourceFinishedLoading where that corrupts the vanilla font atlas
-            // hasConfigScreen only looks up the factory so the screen is built later in a render frame
-            if (runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)) {
-                mods.add(mod)
-            }
-        }
+        mods.addAll(findUnlisted())
+    }
+
+    private fun findUnlisted(): List<Mod> = ModMenu.ROOT_MODS.values.filter { mod ->
+        // never call getConfigScreen here
+        // it builds widgets that bake font glyphs and preLoad runs off-frame during
+        // ResourceFinishedLoading where that corrupts the vanilla font atlas
+        // hasConfigScreen only looks up the factory so the screen is built later in a render frame
+        mod.id !in ownModIds && mods.none { it.id == mod.id } &&
+            runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)
     }
 
     @JvmStatic
@@ -44,12 +44,31 @@ object ModMenuCompat {
         postLoad()
     }
 
-    fun postLoad() = CompatLoader.requireTranslations(1000, true) {
-        val nativeCoveredMods = mods.mapNotNull { mod ->
-            val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
-            mod.aliasNativeChildConfig(nativeChild)
-            mod.id
-        }.toSet()
+    fun postLoad() = CompatLoader.requireTranslations(1000, true) { list(mods) }
+
+    @JvmStatic
+    fun refresh() = CompatLoader.requireTranslations(1001, true) {
+        val added = findUnlisted()
+        coveredByNativeChild(mods).forEach(::removePlaceholder)
+        mods.addAll(added)
+        list(added)
+    }
+
+    private fun coveredByNativeChild(mods: List<Mod>): Set<String> = mods.mapNotNull { mod ->
+        val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
+        mod.aliasNativeChildConfig(nativeChild)
+        mod.id
+    }.toSet()
+
+    private fun removePlaceholder(id: String) {
+        val manager = ConfigManager.active()
+        if (!manager.exists(id) || manager.get(id).getMetadata<Boolean>(Backend.UI_PLACEHOLDER_METADATA) != true) return
+        manager.unregister(id)
+        ConfigRegistry.unregister(id)
+    }
+
+    private fun list(mods: List<Mod>) {
+        val nativeCoveredMods = coveredByNativeChild(mods)
 
         val foundMods = mods.filterNot {
             CompatLoader.nativeLoadedConfigs.contains(it.id) ||

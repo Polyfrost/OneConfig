@@ -14,6 +14,24 @@ data class ModInfo @JvmOverloads constructor(
     val credits: String? = null,
     val description: String? = null,
 ){
+    /** Id of the mod whose jar this one is nested in, or null for a top-level mod; [copy] does not carry it over */
+    var parentId: String? = null
+        private set
+
+    constructor(
+        id: String,
+        name: String,
+        version: String,
+        file: Path?,
+        modIconPath: String?,
+        authors: String?,
+        credits: String?,
+        description: String?,
+        parentId: String?,
+    ) : this(id, name, version, file, modIconPath, authors, credits, description) {
+        this.parentId = parentId
+    }
+
     /**
      * Resolves [modIconPath] against this mod's own jar root ([file])
      *
@@ -47,9 +65,28 @@ data class ModInfo @JvmOverloads constructor(
         @Volatile
         private var cached: Set<ModInfo>? = null
 
+        @Volatile
+        private var seen: Map<String, ModInfo> = emptyMap()
+
         @get:JvmStatic
         val loadedMods: Set<ModInfo>
-            get() = cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
+            get() = cached ?: synchronized(this) {
+                cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
+            }
+
+        @get:JvmStatic
+        val seenMods: Set<ModInfo>
+            get() = (seen + loadedMods.associateBy { it.id }).values.toSet()
+
+        @JvmStatic
+        fun refreshLoadedMods() {
+            synchronized(this) {
+                val live = Platform.compatibility().mods
+                if (live.isEmpty() || live == cached) return
+                seen = seen + loadedMods.associateBy { it.id }
+                cached = live
+            }
+        }
     }
 }
 
