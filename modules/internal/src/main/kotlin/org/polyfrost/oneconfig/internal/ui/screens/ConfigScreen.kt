@@ -1,7 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
@@ -29,6 +32,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,13 +43,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -53,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
@@ -379,115 +384,123 @@ private fun SubcategoryHeader(title: String) {
 
 @Composable
 private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) {
-    val theme = LocalTheme.current
-    val shape = theme.modCardShape
-
     var expanded by remember(node) {
         mutableStateOf(
             if (node.tree.getMetadata<Boolean>("collapsed") == true) false
             else node.head?.shown() != false
         )
     }
-    val headerInteraction = rememberInteractionSource()
-    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
     val headDisplay = node.head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(theme.modCardBackground, shape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, shape)
-            .drawWithCache {
-                val color = theme.textColor
-                val gradient = Brush.radialGradient(
-                    colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
-                    center = Offset(size.width / 2f, 0f),
-                    radius = size.width * 0.8f,
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .onClick(headerInteraction) { expanded = !expanded }
-                .alpha(displayAlpha(headDisplay))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                node.tree.getMetadata<String>("icon")?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        node.tree.localizedTitle(),
-                        color = theme.textColor,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    node.tree.localizedDescription()?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
-                    }
-                }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (node.head != null) {
-                    var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
-                    DisposableEffect(node.head) {
-                        val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
-                        node.head.addCallback(listener)
-                        onDispose { node.head.removeCallback(listener) }
-                    }
-                    Box(Modifier.blockInteraction(headDisplay == Property.Display.DISABLED)) {
-                        SwitchControl(headChecked) {
-                            headChecked = it
-                            node.head.set(it)
-                            expanded = it
-                        }
-                    }
-                }
-                Icon(
-                    "up",
-                    color = theme.textColorSecondary,
-                    modifier = Modifier
-                        .size(12.dp)
-                        .rotate(chevronRotation),
-                )
-            }
-        }
-
-        AnimatedVisibility(
-            visible = expanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
-                        brush = remember(theme.borderColor) {
-                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
-                        },
-                        shape = shape
-                    )
-                    .padding(bottom = 12.dp)
-            ) {
-                AccordionOptionsGrid(node.body, compact = compact)
-            }
+    var headChecked by remember(node) { mutableStateOf(node.head?.shown() == true) }
+    if (node.head != null) {
+        DisposableEffect(node.head) {
+            val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
+            node.head.addCallback(listener)
+            onDispose { node.head.removeCallback(listener) }
         }
     }
+
+    Accordion(
+        title = node.tree.localizedTitle(),
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        checked = if (node.head != null) headChecked else null,
+        onCheckedChange = {
+            headChecked = it
+            node.head?.set(it)
+            expanded = it
+        },
+        headEnabled = headDisplay != Property.Display.DISABLED,
+        description = node.tree.localizedDescription(),
+        icon = node.tree.getMetadata<String>("icon"),
+    ) { enabled ->
+        AccordionOptionsGrid(node.body, compact = compact, enabled = enabled)
+    }
+}
+
+private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
+
+@Composable
+private fun Accordion(
+    title: Any,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    checked: Boolean? = null,
+    onCheckedChange: (Boolean) -> Unit = {},
+    headEnabled: Boolean = true,
+    description: Any? = null,
+    icon: String? = null,
+    body: @Composable (enabled: Boolean) -> Unit,
+) {
+    val theme = LocalTheme.current
+    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
+    var headerHeight by remember { mutableIntStateOf(0) }
+    val openness by animateFloatAsState(if (expanded) 1f else 0f, spring(stiffness = FOLD_STIFFNESS))
+    Column(Modifier.optionCard(shineHeight = headerHeight).accordionBorder(openness)) {
+        CardHeader(
+            title,
+            description,
+            icon,
+            Modifier
+                .onSizeChanged { headerHeight = it.height }
+                .onClick(rememberInteractionSource()) { onExpandedChange(!expanded) }
+                .alpha(if (headEnabled) 1f else displayAlpha(Property.Display.DISABLED)),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (checked != null) {
+                    Box(Modifier.blockInteraction(!headEnabled)) { SwitchControl(checked, onCheckedChange) }
+                }
+                Icon("up", color = theme.textColorSecondary, modifier = Modifier.size(12.dp).rotate(chevronRotation))
+            }
+        }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)),
+            exit = shrinkVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)),
+        ) {
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body(checked != false && headEnabled) }
+        }
+    }
+}
+
+@Composable
+private fun CardHeader(
+    title: Any,
+    description: Any? = null,
+    icon: String? = null,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            icon?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, color = theme.textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
+            }
+        }
+        trailing()
+    }
+}
+
+@Composable
+private fun Modifier.accordionBorder(alpha: Float): Modifier {
+    val theme = LocalTheme.current
+    val color = theme.borderColor
+    val border = remember(color, alpha) { Brush.verticalGradient(listOf(color.copy(0f), color.copy(color.alpha * alpha))) }
+    return border(1.dp, border, theme.modCardShape)
 }
 
 @Composable
@@ -508,39 +521,45 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         return
     }
 
-    val theme = LocalTheme.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(displayAlpha(display))
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, theme.modCardShape)
-    ) {
-        val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f)
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
-        SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
+    Box(Modifier.optionCard()) {
+        Box(Modifier.alpha(displayAlpha(display))) {
+            SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
+        }
     }
 }
 
 @Composable
-private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, modifier: Modifier, compact: Boolean = false) {
-    Box(modifier.alpha(displayAlpha(display))) {
-        SettingContent(prop, nested = true, compact = compact, enabled = display != Property.Display.DISABLED)
+private fun Modifier.optionCard(shineHeight: Int = 0): Modifier {
+    val theme = LocalTheme.current
+    val shape = theme.modCardShape
+    val border = remember(theme.borderColor) { Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))) }
+    return fillMaxWidth()
+        .clip(shape)
+        .background(theme.modCardBackground, shape)
+        .border(1.dp, border, shape)
+        .drawWithCache {
+            val color = theme.textColor
+            val height = if (shineHeight > 0) shineHeight.toFloat() else size.height
+            val gradient = Brush.radialGradient(
+                colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
+                center = Offset(size.width / 2f, height / 2f),
+                radius = minOf(size.width, height) * 0.9f,
+            )
+            onDrawBehind { drawRect(gradient) }
+        }
+}
+
+@Composable
+private fun AccordionSettingRow(
+    prop: Property<*>,
+    display: Property.Display,
+    groupEnabled: Boolean,
+    modifier: Modifier,
+    compact: Boolean = false,
+) {
+    val effectiveDisplay = if (groupEnabled) display else Property.Display.DISABLED
+    Box(modifier.alpha(displayAlpha(effectiveDisplay))) {
+        SettingContent(prop, nested = true, compact = compact, enabled = effectiveDisplay != Property.Display.DISABLED)
     }
 }
 
@@ -592,7 +611,7 @@ private inline fun buildOptionRows(body: List<Property<*>>, isWide: (Property<*>
 }
 
 @Composable
-private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
+private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean, enabled: Boolean) {
     val visible = rememberVisibleOptions(body)
     val displays = remember(visible) { visible.toMap() }
     val visibleProps = remember(visible) { visible.map { it.first } }
@@ -600,7 +619,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
     if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
             visible.forEach { (prop, display) ->
-                AccordionSettingRow(prop, display, Modifier.fillMaxWidth(), compact = true)
+                AccordionSettingRow(prop, display, enabled, Modifier.fillMaxWidth(), compact = true)
             }
         }
         return
@@ -633,17 +652,17 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
                 when (row) {
                     is OptionRow.Single -> {
                         if (row.wide) {
-                            AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.fillMaxWidth())
+                            AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.fillMaxWidth())
                         } else {
                             Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                                AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.weight(1f))
+                                AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.weight(1f))
                                 Spacer(Modifier.weight(1f))
                             }
                         }
                     }
                     is OptionRow.Pair -> Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                        AccordionSettingRow(row.first, displays.getValue(row.first), Modifier.weight(1f))
-                        AccordionSettingRow(row.second, displays.getValue(row.second), Modifier.weight(1f))
+                        AccordionSettingRow(row.first, displays.getValue(row.first), enabled, Modifier.weight(1f))
+                        AccordionSettingRow(row.second, displays.getValue(row.second), enabled, Modifier.weight(1f))
                     }
                 }
             }
