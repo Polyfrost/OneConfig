@@ -36,7 +36,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.concentric
 private val RadioPadding = 3.dp
 private val RadioShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
 private val RadioItemShape @Composable get() = RadioShape.concentric(RadioPadding)
-private val RadioItemMinHeight = 32.dp
+private val RadioItemMinHeight = OptionControlHeight - RadioPadding * 2
 
 @Composable
 fun RadioButtonOption(data: RadioButtonOptionData) {

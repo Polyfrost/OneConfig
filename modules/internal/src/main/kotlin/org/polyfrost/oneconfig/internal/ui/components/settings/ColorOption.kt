@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -261,12 +262,13 @@ fun ColorOption(data: ColorOptionData) {
     Box {
         Row(
             modifier = Modifier
+                .heightIn(min = OptionControlHeight)
                 .onClick(interactionSource) { expanded = !expanded }
                 .pointerHoverIcon(PointerIcon.Hand)
                 .graphicsLayer {}
                 .background(swatch, LocalTheme.current.sideBarNavigationEntryShape)
                 .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, border = { borderColor.value })
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
