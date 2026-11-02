@@ -17,10 +17,18 @@ object OneConfigTheme {
     val POLYFROSTED_LIGHT: OneConfigUITheme by lazy { componentsBridge().polyfrostedLight() }
 
     @JvmStatic
-    val POLY_GLASS_DARK: OneConfigUITheme by lazy { componentsBridge().polyGlassDark() }
+    val GLASS_DARK: OneConfigUITheme by lazy { componentsBridge().glassDark() }
 
     @JvmStatic
-    val POLY_GLASS_LIGHT: OneConfigUITheme by lazy { componentsBridge().polyGlassLight() }
+    val GLASS_LIGHT: OneConfigUITheme by lazy { componentsBridge().glassLight() }
+
+    @JvmStatic
+    @Deprecated("Renamed to Polyfrosted", ReplaceWith("OneConfigTheme.POLYFROSTED_DARK"))
+    val POLY_GLASS_DARK: OneConfigUITheme get() = POLYFROSTED_DARK
+
+    @JvmStatic
+    @Deprecated("Renamed to Polyfrosted", ReplaceWith("OneConfigTheme.POLYFROSTED_LIGHT"))
+    val POLY_GLASS_LIGHT: OneConfigUITheme get() = POLYFROSTED_LIGHT
 
     @JvmStatic
     val MINECRAFT_DARK: OneConfigUITheme by lazy { componentsBridge().minecraftDark() }
@@ -41,7 +49,7 @@ object OneConfigTheme {
     @JvmStatic
     fun builtIn(): List<OneConfigUITheme> = listOf(
         POLYFROSTED_DARK, POLYFROSTED_LIGHT,
-        POLY_GLASS_DARK, POLY_GLASS_LIGHT,
+        GLASS_DARK, GLASS_LIGHT,
         MINECRAFT_DARK, MINECRAFT_LIGHT,
     )
 

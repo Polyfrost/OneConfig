@@ -54,9 +54,9 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
 
     override fun polyfrostedLight(): OneConfigUITheme = PolyfrostedLight
 
-    override fun polyGlassDark(): OneConfigUITheme = PolyGlassDark
+    override fun glassDark(): OneConfigUITheme = PolyGlassDark
 
-    override fun polyGlassLight(): OneConfigUITheme = PolyGlassLight
+    override fun glassLight(): OneConfigUITheme = PolyGlassLight
 
     override fun minecraftDark(): OneConfigUITheme = MinecraftDark
 

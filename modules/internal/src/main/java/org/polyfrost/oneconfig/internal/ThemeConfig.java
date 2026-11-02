@@ -16,6 +16,9 @@ public class ThemeConfig extends Config {
     @Switch(title = "Animations", description = "Smooth, clean animations in the OneConfig Interface", icon = "refresh")
     public static boolean animations = true;
 
+    @Switch(title = "Polyfrosted Rename Applied")
+    public static boolean polyfrostedRenameApplied = false;
+
     public ThemeConfig() {
         super("themes.json", "assets/oneconfig/brand/oneconfig-icon.svg", "Themes", Category.QOL);
     }
@@ -24,5 +27,6 @@ public class ThemeConfig extends Config {
     protected void initialize(boolean byConfigManager) {
         super.initialize(byConfigManager);
         hideIf("activeTheme", () -> true);
+        hideIf("polyfrostedRenameApplied", () -> true);
     }
 }
