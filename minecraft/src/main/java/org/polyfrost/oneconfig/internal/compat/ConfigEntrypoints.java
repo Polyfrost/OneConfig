@@ -45,11 +45,14 @@ import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.ConfigEntrypoint;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge;
 //? if !neoforge {
 import net.fabricmc.loader.api.FabricLoader;
@@ -76,6 +79,8 @@ public final class ConfigEntrypoints {
     // mods whose original config is extracted after all, read without the lock by provides()
     private static final Set<String> failed = ConcurrentHashMap.newKeySet();
     private static final Set<String> succeeded = new HashSet<>();
+    // failed mods running their entrypoints again after an update
+    private static final Set<String> retrying = new HashSet<>();
     // keyed so a hook that fires more than once before the mod is decided is only retried once
     private static final Map<String, Map<Object, Skipped>> skippedExtractions = new HashMap<>();
     private static final AtomicBoolean registered = new AtomicBoolean();
@@ -367,6 +372,7 @@ public final class ConfigEntrypoints {
     }
 
     private static void decide(String modId, boolean broken) {
+        boolean retried = retrying.remove(modId);
         List<Tree> owned = ownedTrees(modId);
         // an entrypoint that threw only keeps the configs it registered itself, not ones that existed before it ran
         if (broken) owned.removeIf(tree -> earlierConfigs.contains(tree.getID()));
@@ -379,11 +385,20 @@ public final class ConfigEntrypoints {
             }
             // CompatLoader only marked the providers it saw when it initialized
             CompatLoader.INSTANCE.getNativeLoadedConfigs().add(modId);
+            if (retried) dropExtracted(modId);
             LOGGER.info("Using the OneConfig configs registered by {}", modId);
             return;
         }
         if (!broken) LOGGER.info("Mod {} registered no working OneConfig configs from its entrypoint, extracting its original config instead", modId);
         fallBackToOriginal(modId);
+    }
+
+    private static void dropExtracted(String modId) {
+        ConfigManager manager = ConfigManager.active();
+        if (treeOwners.containsKey(modId) || !manager.exists(modId) || !Boolean.TRUE.equals(manager.get(modId).getMetadata(Backend.UI_ONLY_METADATA))) return;
+        manager.unregister(modId);
+        CompatSnapshots.untrack(modId);
+        ConfigRegistry.INSTANCE.unregister(modId);
     }
 
     private static void fallBackToOriginal(String modId) {
@@ -579,9 +594,13 @@ public final class ConfigEntrypoints {
         Set<String> newIds = new HashSet<>(changedIds);
         newIds.removeAll(seenMods.keySet());
         if (HotwireBridge.INSTANCE.isStarting(newIds) || changedIds.size() > newIds.size() && HotwireBridge.INSTANCE.isUpdating()) return;
+        Map<String, ModContainer> seen = seenMods;
         seenMods = mods;
         HotwireBridge.INSTANCE.invalidate();
         rediscover();
+        Set<String> retried = retriedIds(providerIds(), failed, changedIds, seen.keySet());
+        failed.removeAll(retried);
+        retrying.addAll(retried);
         Map<String, List<Provider>> added = new LinkedHashMap<>();
         for (Provider provider : providers()) {
             if (!isDecided(provider.modId)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
@@ -633,6 +652,14 @@ public final class ConfigEntrypoints {
             if (seen.get(id) != mod) changed.add(id);
         });
         return changed;
+    }
+
+    static Set<String> retriedIds(Set<String> providers, Set<String> failed, Set<String> changed, Set<String> seen) {
+        Set<String> retried = new HashSet<>(changed);
+        retried.retainAll(seen);
+        retried.retainAll(failed);
+        retried.retainAll(providers);
+        return retried;
     }
 
     private static Map<String, ModContainer> loadedMods() {

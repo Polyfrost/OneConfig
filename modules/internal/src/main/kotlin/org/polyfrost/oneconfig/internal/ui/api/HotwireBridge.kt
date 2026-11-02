@@ -575,6 +575,7 @@ object HotwireBridge {
     fun queueTogether(queue: Any, ids: List<String>, steps: List<() -> Result>): Result? {
         val before = (queue.callMethod("getEntries") as List<Any>).filter { it.get("modId") in ids }
         val failed = runCatching { steps.firstNotNullOfOrNull { step -> step().takeUnless { it.ok } } }.getOrElse(::failure) ?: return null
+        staged.forEach { (jar, bytes) -> runCatching { Files.write(jar, bytes) } }
         synchronized(queue) {
             queue.callHidden("replace", (queue.callMethod("getEntries") as List<Any>).filterNot { it.get("modId") in ids } + before)
         }
@@ -612,7 +613,7 @@ object HotwireBridge {
             )
         }.map { oldDependency.newInstance(*it.toTypedArray()) }
         val missing = Class.forName("dev.moon.hotwire.plan.SwitchPlan\$Refusal\$MissingDependency").constructors.single()
-        val lost = lostNeeds(graph, graphJars.filter { it.modId() in replaced }.flatMap { it.parts() }.map { it.modId() })
+        val lost = lostNeeds(graph, graphJars.filter { it.modId() in replaced }.flatMap(::namesIn))
             .map { (mod, dependency) -> missing.newInstance(mod, dependency) }
         val copies = landing.flatMap { it.parts() }.groupBy({ it.modId() }, { it.get("manifest")!!.get("version") as String })
         val nested = (incoming.flatMap { it.parts() }.map { it.modId() } - landing.map { it.modId() }.toSet()).associateWith(copies::getValue)
@@ -625,6 +626,10 @@ object HotwireBridge {
         needs.mapNotNull { (id, ranges) ->
             present(id)?.takeUnless { fits(it, ranges) }?.let { listOf(mod, id, ranges.joinToString(" or "), it) }
         }
+
+    @Suppress("UNCHECKED_CAST")
+    fun namesIn(jar: Any): List<String> =
+        jar.parts().flatMap { (it.get("manifest")!!.get("provides") as List<String>) + it.modId() }
 
     @Suppress("UNCHECKED_CAST")
     fun lostNeeds(graph: Any, outgoing: Collection<String>): List<Pair<String, String>> =

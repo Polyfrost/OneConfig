@@ -172,6 +172,24 @@ class HotwireSelfUpdateQueueTest {
         assertEquals(listOf("other" to "lib"), HotwireBridge.lostNeeds(graph, listOf("lib", "kept", "lib")))
     }
 
+    class JarManifest(private val id: String, private val provides: List<String>) {
+        fun id() = id
+        fun provides() = provides
+    }
+
+    class Jar(private val manifest: JarManifest, private val nested: List<Jar> = emptyList()) {
+        fun manifest() = manifest
+        fun nested() = nested
+    }
+
+    @Test
+    fun anAliasNoLandingModProvidesIsLost() {
+        val old = Jar(JarManifest("mod", listOf("mod-api")), listOf(Jar(JarManifest("inner", listOf("inner-api")))))
+        val graph = Graph(mapOf("mod-api" to setOf("other"), "inner-api" to setOf("other")), present = setOf("mod", "inner", "inner-api"))
+
+        assertEquals(listOf("other" to "mod-api"), HotwireBridge.lostNeeds(graph, HotwireBridge.namesIn(old)))
+    }
+
     private val ok = HotwireBridge.Result(true, "")
 
     @Test
@@ -222,6 +240,26 @@ class HotwireSelfUpdateQueueTest {
     }
 
     @Test
+    fun aFailureRestoresTheStagedJarItOverwrote(@TempDir staging: Path) {
+        val jar = Files.writeString(staging.resolve("need.jar"), "old")
+        val queue = RollbackQueue(listOf(Queued("need", jar.toString())))
+
+        HotwireBridge.queueTogether(queue, listOf("need"), listOf({ Files.writeString(jar, "new"); HotwireBridge.Result(false, "no") }))
+
+        assertEquals("old", Files.readString(jar))
+    }
+
+    @Test
+    fun stepsThatAllLandKeepTheNewStagedJar(@TempDir staging: Path) {
+        val jar = Files.writeString(staging.resolve("need.jar"), "old")
+        val queue = RollbackQueue(listOf(Queued("need", jar.toString())))
+
+        HotwireBridge.queueTogether(queue, listOf("need"), listOf({ Files.writeString(jar, "new"); ok }))
+
+        assertEquals("new", Files.readString(jar))
+    }
+
+    @Test
     fun aJarNameMayOnlyReplaceTheRunningJar(@TempDir mods: Path, @TempDir staging: Path) {
         val running = Files.writeString(mods.resolve("hotwire-1.jar"), "old")
         val other = Files.writeString(mods.resolve("other.jar"), "other")
@@ -245,6 +283,7 @@ class HotwireSelfUpdateQueueTest {
 
     data class Queued(private val id: String, val jar: String = "") {
         fun modId() = id
+        fun stagedJar() = jar
     }
 
     class RollbackQueue(start: List<Queued>) {

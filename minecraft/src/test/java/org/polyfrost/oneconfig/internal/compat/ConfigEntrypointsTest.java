@@ -189,6 +189,19 @@ class ConfigEntrypointsTest {
     }
 
     @Test
+    void onlyReplacedModsThatFailedRunAgain() {
+        assertEquals(
+                Set.of("fixed"),
+                ConfigEntrypoints.retriedIds(
+                        Set.of("fixed", "fine", "returned", "unchanged"),
+                        Set.of("fixed", "returned", "unchanged", "dropped"),
+                        Set.of("fixed", "fine", "returned", "dropped"),
+                        Set.of("fixed", "fine", "unchanged", "dropped")
+                )
+        );
+    }
+
+    @Test
     void aContainerReplacedUnderTheSameIdIsAChange() {
         assertTrue(ConfigEntrypoints.modsChanged(List.of(mod("lib")), Map.of("lib", mod("lib"))));
     }
