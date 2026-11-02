@@ -861,6 +861,7 @@ internal object OffscreenGuiRenderers {
     private const val SPREAD_SLOTS = 8
     *///?}
     private const val IDLE_FRAMES = 60
+    private val spreadSlots = if (GlHost.isVulkanModInstalled) Int.MAX_VALUE else SPREAD_SLOTS
 
     class Slot(val state: GuiRenderState, val renderer: GuiRenderer) {
         internal var renders = 0
@@ -889,7 +890,7 @@ internal object OffscreenGuiRenderers {
 
     fun acquire(mc: Minecraft): Slot {
         val least = slots.minByOrNull { if (it.held) Int.MAX_VALUE else it.renders }
-        val slot = least?.takeUnless { it.held || it.renders >= MAX_RENDERS_PER_FRAME || (it.renders > 0 && slots.size < SPREAD_SLOTS) }
+        val slot = least?.takeUnless { it.held || it.renders >= MAX_RENDERS_PER_FRAME || (it.renders > 0 && slots.size < spreadSlots) }
             ?: GuiRenderState().let { Slot(it, create(mc, it)) }.also(slots::add)
         slot.held = true
         slot.renders++
