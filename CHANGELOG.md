@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- API: `Backend.lastSaveFailure()` now also reports failures from `Backend.save(String)`
+
 ### Removed
 - Removed the `commands` module, which contained no code. If you were explicitly depending on it, you may have to update your build script.
 - Removed the `/oneconfig delete` command, which only printed a message and did nothing
