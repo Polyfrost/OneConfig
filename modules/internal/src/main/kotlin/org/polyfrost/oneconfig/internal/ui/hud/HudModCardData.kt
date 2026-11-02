@@ -115,12 +115,18 @@ internal class HudModCardData(
         override fun isEnabled(): Boolean {
             HudManager.revision
             HudManager.instancesRevision.intValue
-            return placed().any { !it.hidden }
+            return placed().any { it.hudEnabled }
         }
 
         override fun setEnabled(enabled: Boolean) {
             val huds = placed()
-            Snapshot.withMutableSnapshot { huds.forEach { it.hidden = !enabled } }
+            // switching HUDs on or off ends any keybind flip so they really end up as chosen
+            Snapshot.withMutableSnapshot {
+                huds.forEach {
+                    it.resetVisibilityKey()
+                    it.hudEnabled = enabled
+                }
+            }
             huds.forEach { runCatching { it.save() } }
             HudManager.invalidate()
         }

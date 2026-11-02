@@ -94,6 +94,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
+import org.polyfrost.oneconfig.internal.ui.hud.toggleHudVisibility
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Designer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -121,6 +122,16 @@ private fun notifyHudLocked() {
         "HUD element locked",
         "Unlock in settings to change its position.",
     )
+}
+
+private var allHudsHiddenToast: Notification? = null
+
+private fun notifyAllHudsHidden() {
+    allHudsHiddenToast?.let { if (NotificationsManager.contains(it)) return }
+    allHudsHiddenToast = Notifications.builder(
+        "All HUDs hidden",
+        "The Hide All HUDs keybind is hiding every HUD outside the editor.",
+    ).action("Show HUDs") { HudManager.resetAllHudsKey() }.send()
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -199,6 +210,9 @@ private val selectionBlue = Color(SELECTION_BLUE_ARGB)
 private val marqueeFillColor = Color(SELECTION_BLUE_ARGB).copy(alpha = 0.15f)
 
 private val idleHudBoxColor = Color.White.copy(0.2f)
+
+/** Outline of a HUD its visibility keybind is currently showing or hiding */
+private val temporaryHudBoxColor: Color get() = Accent.copy(0.8f)
 private val hoveredHudBoxColor = Color.White.copy(0.5f)
 private val hiddenHudBoxColor = Color.White.copy(0.4f)
 private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
@@ -509,9 +523,9 @@ private fun drawHudContents(ctx: RenderContext, mcToScreen: Float) {
         sk.save()
         sk.translate(bounds.x * mcToScreen, bounds.y * mcToScreen)
         if (contentScale != 1f) sk.scale(contentScale, contentScale)
-        if (hud.hidden) sk.saveLayerAlpha(0.35f)
+        if (hud.effectivelyHidden) sk.saveLayerAlpha(0.35f)
         try { root.render(ctx) } catch (_: Throwable) {}
-        if (hud.hidden) sk.restore()
+        if (hud.effectivelyHidden) sk.restore()
         sk.restore()
     }
 }
@@ -881,7 +895,8 @@ private fun HudActionBar(
     val barX = (layout.x / densityFloat).coerceAtLeast(0f)
     val barY = (layout.y / densityFloat).coerceAtLeast(0f)
     val barPadding = (actionBarPadding(actionBarGapPx) / densityFloat).dp
-    val isHidden = hud.hidden
+    val isHidden = hud.effectivelyHidden
+    val isTemporary = hud.visibilityKeyActive
     val isLocked = hud.locked
     Row(
         modifier = Modifier
@@ -904,11 +919,11 @@ private fun HudActionBar(
         HudActionButton(
             if (isHidden) "eye-off" else "eye",
             iconSize,
-            foreground = Color.White.copy(0.7f),
-            hoveredForeground = Color.White,
+            foreground = if (isTemporary) Accent else Color.White.copy(0.7f),
+            hoveredForeground = if (isTemporary) Accent else Color.White,
             sound = UiSoundEvent.CLICK,
         ) {
-            Snapshot.withMutableSnapshot { hud.hidden = !hud.hidden }
+            toggleHudVisibility(listOf(hud))
         }
         HudActionButton(
             if (isLocked) "lock" else "unlock",
@@ -1372,6 +1387,11 @@ fun HudDesignStudio(visible: Boolean = true) {
                 LOGGER.error("Failed to handle $command in the HUD Design Studio", e)
             }
         }
+    }
+
+    // the editor shows every HUD regardless, so say why they will all be gone again once it closes
+    LaunchedEffect(visible) {
+        if (visible && HudManager.allHudsHiddenByKey) notifyAllHudsHidden()
     }
 
     LaunchedEffect(Unit) {
@@ -2071,7 +2091,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 showHandles = isPrimary && singleSelection,
                                 showBadge = singleSelection,
                             )
-                        } else if (hud.hidden) {
+                        } else if (hud.effectivelyHidden) {
                             if (hud is LegacyHud) {
                                 drawRect(
                                     color = hiddenLegacyScrimColor,
@@ -2080,14 +2100,14 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 )
                             }
                             drawRect(
-                                color = if (isHovered) hoveredHudBoxColor else hiddenHudBoxColor,
+                                color = if (isHovered) hoveredHudBoxColor else if (hud.visibilityKeyActive) temporaryHudBoxColor else hiddenHudBoxColor,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f, pathEffect = hiddenHudDashEffect)
                             )
                         } else {
                             drawRect(
-                                color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,
+                                color = if (isHovered) hoveredHudBoxColor else if (hud.visibilityKeyActive) temporaryHudBoxColor else idleHudBoxColor,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f)
@@ -2906,7 +2926,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             size = Size(sw, sh),
                         )
                         drawSelectedHudBounds(bounds, mcToScreen, showHandles = false)
-                    } else if (hud.hidden) {
+                    } else if (hud.effectivelyHidden) {
                         if (hud is LegacyHud) {
                             drawRect(
                                 color = hiddenLegacyScrimColor,
@@ -2915,14 +2935,14 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             )
                         }
                         drawRect(
-                            color = if (isHovered) hoveredHudBoxColor else hiddenHudBoxColor,
+                            color = if (isHovered) hoveredHudBoxColor else if (hud.visibilityKeyActive) temporaryHudBoxColor else hiddenHudBoxColor,
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                             style = Stroke(width = 1f, pathEffect = hiddenHudDashEffect)
                         )
                     } else {
                         drawRect(
-                            color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,
+                            color = if (isHovered) hoveredHudBoxColor else if (hud.visibilityKeyActive) temporaryHudBoxColor else idleHudBoxColor,
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                             style = Stroke(width = 1f)

@@ -297,7 +297,8 @@ fun HudCanvasResetMenu(
     val anyAnchored = actionTargets.any { it.isAnchored }
     val resetEnabled = actionTargets.any { hudHasResettableDefaults(it) }
     val deletable = actionTargets.any { it.canDelete() }
-    val allHidden = actionTargets.all { it.hidden }
+    val allHidden = actionTargets.all { it.effectivelyHidden }
+    val anyTemporary = actionTargets.any { it.visibilityKeyActive }
     val allLocked = actionTargets.all { it.locked }
     val showHints = OneConfigConfig.showKeybindHints
     val settingsHint = if (showHints) keybindHint(OneConfigConfig.hudSettingsKeybind) else null
@@ -340,12 +341,10 @@ fun HudCanvasResetMenu(
             HudMenuRow(
                 icon = if (allHidden) "eye-off" else "eye",
                 text = if (allHidden) "Show" else "Hide",
+                color = if (anyTemporary) Accent else null,
                 hint = visibilityHint,
             ) {
-                Snapshot.withMutableSnapshot {
-                    val hide = actionTargets.any { !it.hidden }
-                    actionTargets.forEach { it.hidden = hide }
-                }
+                toggleHudVisibility(actionTargets)
                 onDismiss()
             }
             HudMenuRow(

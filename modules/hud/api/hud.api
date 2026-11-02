@@ -31,6 +31,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected final fun contentChanged ()V
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
+	public fun drawsWhileHidden ()Z
 	public final fun getAlignment ()Lorg/polyfrost/compose/layout/PolyAlign;
 	public fun getAlwaysRedraw ()Z
 	public final fun getAnchorOffsetX ()F
@@ -53,10 +54,12 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getEffectiveGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getEffectiveScale ()F
 	public final fun getEffectiveSelfAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public final fun getEffectivelyHidden ()Z
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getFullShadow ()Z
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
+	public fun getHudEnabled ()Z
 	public final fun getKeepBgWhenHidden ()Z
 	public fun getLocked ()Z
 	public final fun getMergeBackground ()Z
@@ -89,7 +92,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getShowInF3 ()Z
 	public final fun getShowInScreens ()Z
 	public final fun getShowInTab ()Z
-	public final fun getShowKey ()I
+	public final synthetic fun getShowKey ()I
 	public final fun getShowShadow ()Z
 	public fun getStaticH ()F
 	public fun getStaticW ()F
@@ -103,11 +106,17 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getTextScale ()F
 	public final fun getTextUnderline ()Z
 	public final fun getTextWeight ()Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
-	public final fun getToggleKey ()I
+	public final synthetic fun getToggleKey ()I
 	public final fun getUseGuiScale ()Z
+	public final fun getVisibilityKeyActive ()Z
+	public final fun getVisibilityKeyHoldThreshold ()I
+	public final fun getVisibilityKeyMode ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;
+	public final fun getVisibilityKeybind ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public fun getX ()F
 	public fun getY ()F
 	public fun hasBackground ()Z
+	public fun hasVisibilityKeyMode ()Z
+	public fun hasVisibilityKeybind ()Z
 	public final fun hudBackground ()Lorg/polyfrost/compose/composables/PolyModifier;
 	public final fun hudBackground (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/composables/PolyModifier;ILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
@@ -123,6 +132,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun reseedStaticHeight ()V
 	public final fun reseedStaticSizeIfNeeded ()V
 	public final fun reseedStaticWidth ()V
+	public fun resetVisibilityKey ()V
 	public final fun setAbsolutePosition (FF)V
 	public final fun setAlignment (Lorg/polyfrost/compose/layout/PolyAlign;)V
 	public final fun setAnchorOffsetX (F)V
@@ -141,6 +151,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setGrowthAnchor (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public final fun setGrowthAnchorKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun setHidden (Z)V
+	public fun setHudEnabled (Z)V
 	public final fun setKeepBgWhenHidden (Z)V
 	public final fun setLayoutRefH (F)V
 	public final fun setLayoutRefW (F)V
@@ -168,7 +179,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setShowInF3 (Z)V
 	public final fun setShowInScreens (Z)V
 	public final fun setShowInTab (Z)V
-	public final fun setShowKey (I)V
+	public final synthetic fun setShowKey (I)V
 	public final fun setShowShadow (Z)V
 	public fun setStaticH (F)V
 	public fun setStaticW (F)V
@@ -182,8 +193,11 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setTextScale (F)V
 	public final fun setTextUnderline (Z)V
 	public final fun setTextWeight (Lorg/polyfrost/oneconfig/api/hud/v1/Weight;)V
-	public final fun setToggleKey (I)V
+	public final synthetic fun setToggleKey (I)V
 	public final fun setUseGuiScale (Z)V
+	public final fun setVisibilityKeyHoldThreshold (I)V
+	public final fun setVisibilityKeyMode (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;)V
+	public final fun setVisibilityKeybind (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public fun setX (F)V
 	public fun setY (F)V
 	public fun setup ()V
@@ -195,6 +209,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected fun updateRelativeX (F)V
 	protected fun updateRelativeY (F)V
 	protected final fun updateWhenChanged (Ljava/lang/String;)V
+	public final fun visibilityKeyInput (Z)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
@@ -255,7 +270,9 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field layoutRefHeight F
 	public static field layoutRefWidth F
 	public static field overrideShowInScreens Z
+	public static field tabListVisibility Ljava/util/function/BooleanSupplier;
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
+	public static final fun getAllHudsHiddenByKey ()Z
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public static final fun getLayoutReferenceHeight ()F
 	public static final fun getLayoutReferenceWidth ()F
@@ -276,6 +293,8 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final fun register ([Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public final fun removeHud (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public static synthetic fun removeHud$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
+	public static final fun resetAllHudsKey ()V
+	public static final fun resetVisibilityKeys ()V
 	public final fun toggleAllHuds (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public final fun unregister (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZ)Ljava/util/ArrayList;
 	public static synthetic fun unregister$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZILjava/lang/Object;)Ljava/util/ArrayList;
