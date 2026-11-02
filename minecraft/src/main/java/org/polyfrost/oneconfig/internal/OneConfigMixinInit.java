@@ -42,7 +42,6 @@ import org.polyfrost.oneconfig.internal.compat.toggle.ToggleHooks;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-//todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 //? if moul_compat {
 import kotlin.Unit;
 import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;

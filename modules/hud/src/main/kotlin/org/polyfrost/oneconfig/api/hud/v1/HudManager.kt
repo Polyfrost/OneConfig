@@ -1667,7 +1667,6 @@ public object HudManager {
         invalidate()
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun loadFromActiveProfile(prefetched: Collection<Tree>? = null) {
         val now = System.nanoTime()
         loadingLayout = true

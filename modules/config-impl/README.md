@@ -16,8 +16,6 @@ The frontend system requires usage of `Visualizer`s, attached as metadata, which
 take properties and turn them into PolyUI drawable elements, and then this is handed to the UI and displayed to the user,
 with callbacks so the tree is updated accordingly.
 
-todo add some pictures here
-
 ## Item lists
 
 `@ItemList` provides a searchable selector for items registered by Minecraft or another mod. The

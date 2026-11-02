@@ -182,21 +182,10 @@ public final class ClipboardHelper {
         return (String) method.invoke(null);
     }
 
-    private static boolean invokeMacBoolean(String methodName, Object... args) throws ReflectiveOperationException {
+    private static boolean invokeMacBoolean(String methodName, String... args) throws ReflectiveOperationException {
         Class<?> clazz = Class.forName(MACOS_CLIPBOARD_CLASS);
-        Method method;
-        if (args.length == 0) {
-            method = clazz.getMethod(methodName);
-        } else if (args.length == 1 && args[0] instanceof String) {
-            method = clazz.getMethod(methodName, String.class);
-        } else {
-            Class<?>[] paramTypes = new Class<?>[args.length];
-            for (int i = 0; i < args.length; i++) {
-                paramTypes[i] = args[i].getClass();
-            }
-            method = clazz.getMethod(methodName, paramTypes);
-        }
-        return Boolean.TRUE.equals(method.invoke(null, args));
+        Method method = args.length == 0 ? clazz.getMethod(methodName) : clazz.getMethod(methodName, String.class);
+        return Boolean.TRUE.equals(method.invoke(null, (Object[]) args));
     }
 
     @Nullable

@@ -187,26 +187,6 @@ subprojects {
         }
     }
 
-    /*
-    todo
-    afterEvaluate {
-        publishing {
-            publications {
-                named<MavenPublication>("mavenJava") {
-                    artifactId = project.name
-                    groupId = project.group.toString()
-                    suppressAllPomMetadataWarnings()
-
-                    signing {
-                        isRequired = providers.gradleProperty("signing.keyId").isPresent
-                        sign(this@named)
-                    }
-                }
-            }
-        }
-    }
-     */
-
     tasks {
         named<Jar>("jar") {
             manifest {

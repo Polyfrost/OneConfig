@@ -299,8 +299,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
                     if (project.path != ":modules:compose-bundle") "bundle"(project(project.path))
                 }
             }
-
-            //api("dev.deftu:enhancedeventbus:2.0.0") // TODO
         }
 
         if (enableMoulRelocatorKsp) {
