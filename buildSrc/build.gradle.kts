@@ -66,9 +66,6 @@ tasks {
     }
 
     // mirrors oneconfig-lint.gradle.kts, which buildSrc can't apply to itself
-    named("compileKotlin") { finalizedBy("detektMain") }
-    named("compileTestKotlin") { finalizedBy("detektTest") }
-
     named<Detekt>("detekt") {
         enabled = false
         dependsOn(withType<Detekt>().matching { it.name != "detekt" && !it.name.endsWith("SourceSet") })
