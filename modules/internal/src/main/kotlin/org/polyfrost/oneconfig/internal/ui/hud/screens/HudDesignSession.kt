@@ -1,11 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
-import androidx.compose.runtime.snapshots.Snapshot
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.hud.resetAllHudProperties
+import org.polyfrost.oneconfig.internal.ui.hud.toggleHudVisibility
 
 internal sealed interface StudioCommand {
     data class Select(val huds: List<Hud>) : StudioCommand
@@ -89,10 +89,7 @@ object HudDesignSession {
         if (!HudManager.isEditorOpen) return false
         val huds = activeSelection
         if (huds.isEmpty()) return false
-        Snapshot.withMutableSnapshot {
-            val hide = huds.any { !it.hidden }
-            huds.forEach { it.hidden = hide }
-        }
+        toggleHudVisibility(huds)
         return true
     }
 

@@ -153,7 +153,7 @@ internal object HudBackgroundMerge {
     fun canMerge(hud: Hud): Boolean =
         hud !is LegacyHudMarker && hud.canMergeBackground() &&
             hud.showBackground && hud.mergeBackground && hud.hasBackground() &&
-            (!hud.hidden || hud.keepBgWhenHidden) &&
+            (!hud.effectivelyHidden || hud.keepBgWhenHidden) &&
             hud.renderedW > 0f && hud.renderedH > 0f
 
     fun sameStyle(a: Hud, b: Hud): Boolean =
@@ -496,7 +496,7 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.showBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
-            key = key * 31 + (if (hud.hidden) 1 else 0)
+            key = key * 31 + (if (hud.effectivelyHidden) 1 else 0)
             key = key * 31 + (if (hud.keepBgWhenHidden) 1 else 0)
         }
         return key
