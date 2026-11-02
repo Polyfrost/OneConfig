@@ -436,6 +436,7 @@ object GlHost {
         if (paint == null) {
             screenFrame = null
             GlBlur.release()
+            GlGlass.release()
         } else {
             glScreen = null
             if (glBlurAlpha > 0f && !vanillaPipeline) drawBlur(fbo, glBlurAlpha)
