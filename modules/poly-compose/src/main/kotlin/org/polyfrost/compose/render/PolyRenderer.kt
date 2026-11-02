@@ -42,6 +42,15 @@ interface PolyRenderer {
         points: FloatArray, closed: Boolean, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, cap: Int, join: Int,
     ) = strokePolyline(points, closed, gradient.colorAt(x + w / 2f, y + h / 2f, x, y, w, h), strokeWidth, cap, join)
 
+    fun strokeColorRing(points: FloatArray, normals: FloatArray, colors: IntArray, strokeWidth: Float, shape: FloatArray? = null) {
+        val n = colors.size
+        for (i in 0 until n) {
+            val j = (i + 1) % n
+            if (colors[i] ushr 24 == 0 && colors[j] ushr 24 == 0) continue
+            line(points[i * 2], points[i * 2 + 1], points[j * 2], points[j * 2 + 1], PolyGradient.lerpArgb(colors[i], colors[j], 0.5f), strokeWidth)
+        }
+    }
+
     fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont)
 
     fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float) {
@@ -75,6 +84,10 @@ interface PolyRenderer {
     fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality = FilterQuality.Low)
 
     fun live(draw: (PolyRenderer) -> Unit)
+
+    fun live(x: Float, y: Float, w: Float, h: Float, key: () -> Int, draw: (PolyRenderer) -> Unit) = live(draw)
+
+    fun backdropGlass(x: Float, y: Float, w: Float, h: Float, radius: Float, band: Float, refraction: Float, alpha: Float) {}
 
     fun save()
     fun restore()

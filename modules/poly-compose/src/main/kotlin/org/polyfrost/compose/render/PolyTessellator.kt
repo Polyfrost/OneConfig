@@ -249,6 +249,58 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
+    override fun strokeColorRing(points: FloatArray, normals: FloatArray, colors: IntArray, strokeWidth: Float, shape: FloatArray?) {
+        beginDraw()
+        if (shape == null) return colorRing(points, normals, colors, strokeWidth)
+        unclipped(shape[0], shape[1], shape[2], shape[3], shape[4]) { colorRing(points, normals, colors, strokeWidth) }
+    }
+
+    private var ringColors = IntArray(0)
+    private var ringPoints = FloatArray(0)
+
+    private fun colorRing(points: FloatArray, normals: FloatArray, colors: IntArray, strokeWidth: Float) {
+        val n = colors.size
+        if (n < 2) return
+        val scale = scaleAvg()
+        if (scale <= 0f) return
+        val swPx = strokeWidth * scale
+        val alphaMul = if (swPx < 1f) swPx else 1f
+        val halfPx = max(swPx, 1f) / 2f
+        val band = max(halfPx - 0.5f, 0f) / scale
+        val edge = (halfPx + 0.5f) / scale
+        if (ringColors.size < n) {
+            ringColors = IntArray(n)
+            ringPoints = FloatArray(n * 8)
+        }
+        val c = ringColors
+        val p = ringPoints
+        val alpha = alphaMul * state.alpha
+        for (i in 0 until n) c[i] = mulAlpha(colors[i], alpha)
+        val s = state
+        for (i in 0 until n) {
+            if (c[(i + n - 1) % n] ushr 24 == 0 && c[i] ushr 24 == 0 && c[(i + 1) % n] ushr 24 == 0) continue
+            val x = points[i * 2]; val y = points[i * 2 + 1]
+            val nx = normals[i * 2]; val ny = normals[i * 2 + 1]
+            val o = i * 8
+            p[o] = (x + nx * band) * s.sx + s.tx; p[o + 1] = (y + ny * band) * s.sy + s.ty
+            p[o + 2] = (x + nx * edge) * s.sx + s.tx; p[o + 3] = (y + ny * edge) * s.sy + s.ty
+            p[o + 4] = (x - nx * band) * s.sx + s.tx; p[o + 5] = (y - ny * band) * s.sy + s.ty
+            p[o + 6] = (x - nx * edge) * s.sx + s.tx; p[o + 7] = (y - ny * edge) * s.sy + s.ty
+        }
+        begin(whitePage(), false)
+        val w = PolyGlyphPage.WHITE_UV
+        for (i in 0 until n) {
+            val j = (i + 1) % n
+            val ci = c[i]; val cj = c[j]
+            if (ci ushr 24 == 0 && cj ushr 24 == 0) continue
+            val ti = ci and 0x00FFFFFF; val tj = cj and 0x00FFFFFF
+            val a = i * 8; val b = j * 8
+            if (band > 0f) quadVerts(p[a], p[a + 1], w, w, ci, p[a + 4], p[a + 5], w, w, ci, p[b + 4], p[b + 5], w, w, cj, p[b], p[b + 1], w, w, cj)
+            quadVerts(p[a], p[a + 1], w, w, ci, p[a + 2], p[a + 3], w, w, ti, p[b + 2], p[b + 3], w, w, tj, p[b], p[b + 1], w, w, cj)
+            quadVerts(p[a + 4], p[a + 5], w, w, ci, p[a + 6], p[a + 7], w, w, ti, p[b + 6], p[b + 7], w, w, tj, p[b + 4], p[b + 5], w, w, cj)
+        }
+    }
+
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float) {
         beginDraw()
         val dx = x2 - x1
