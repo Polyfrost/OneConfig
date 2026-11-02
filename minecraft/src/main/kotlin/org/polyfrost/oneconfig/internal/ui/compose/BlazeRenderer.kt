@@ -40,6 +40,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture
 import net.minecraft.client.gui.render.GuiRenderer
 import net.minecraft.network.chat.TextColor
 import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.internal.ui.OffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
@@ -724,7 +725,6 @@ internal object McOutlines {
 
     private val entries = LinkedHashMap<Key, Outline>(16, 0.75f, true)
     private val pool = ArrayList<OffscreenTarget>()
-    private var gui: Pair<GuiRenderState, GuiRenderer>? = null
     private var generation = 0
 
     init {
@@ -804,7 +804,16 @@ internal object McOutlines {
             val rt = offscreen.target ?: return
             offscreen.clear()
             val mc = Minecraft.getInstance()
-            val (state, renderer) = gui ?: GuiRenderState().let { s -> (s to createGuiRenderer(mc, s)).also { gui = it } }
+            val slot = OffscreenGuiRenderers.acquire(mc)
+            try {
+                renderInto(mc, slot.state, slot.renderer, rt)
+            } finally {
+                OffscreenGuiRenderers.release(slot)
+            }
+            dirty = false
+        }
+
+        private fun renderInto(mc: Minecraft, state: GuiRenderState, renderer: GuiRenderer, rt: RenderTarget) {
             val graphics = GuiGraphicsExtractor(mc, state, rt.width, rt.height)
             val font = mc.font
             val ox = pad + key.fx
@@ -839,11 +848,60 @@ internal object McOutlines {
             renderer.endFrame()
             //?} else
             //renderer.incrementFrameNumber()
-            dirty = false
+        }
+    }
+}
+
+internal object OffscreenGuiRenderers {
+    //? if >= 26.2 {
+    private const val MAX_RENDERS_PER_FRAME = Int.MAX_VALUE
+    private const val SPREAD_SLOTS = 0
+    //?} else {
+    /*private const val MAX_RENDERS_PER_FRAME = 3
+    private const val SPREAD_SLOTS = 8
+    *///?}
+    private const val IDLE_FRAMES = 60
+
+    class Slot(val state: GuiRenderState, val renderer: GuiRenderer) {
+        internal var renders = 0
+        internal var held = false
+        internal var lastFrame = 0L
+    }
+
+    private val slots = ArrayList<Slot>()
+    private var frame = 0L
+
+    init {
+        EventManager.register(FramebufferRenderEvent.End::class.java) { _ ->
+            frame++
+            val it = slots.iterator()
+            while (it.hasNext()) {
+                val slot = it.next()
+                if (frame - slot.lastFrame > IDLE_FRAMES) {
+                    it.remove()
+                    slot.renderer.close()
+                } else {
+                    slot.renders = 0
+                }
+            }
         }
     }
 
-    internal fun createGuiRenderer(mc: Minecraft, state: GuiRenderState): GuiRenderer {
+    fun acquire(mc: Minecraft): Slot {
+        val least = slots.minByOrNull { if (it.held) Int.MAX_VALUE else it.renders }
+        val slot = least?.takeUnless { it.held || it.renders >= MAX_RENDERS_PER_FRAME || (it.renders > 0 && slots.size < SPREAD_SLOTS) }
+            ?: GuiRenderState().let { Slot(it, create(mc, it)) }.also(slots::add)
+        slot.held = true
+        slot.renders++
+        slot.lastFrame = frame
+        return slot
+    }
+
+    fun release(slot: Slot) {
+        slot.held = false
+    }
+
+    private fun create(mc: Minecraft, state: GuiRenderState): GuiRenderer {
         //? if >= 26.2 {
         return GuiRenderer(state, mc.gameRenderer.featureRenderDispatcher(), emptyList())
         //?} else {
@@ -1149,14 +1207,27 @@ internal class LayerOp private constructor(
         val rt = offscreen.target ?: return null
         offscreen.clear()
         val mc = Minecraft.getInstance()
-        val (state, renderer) = gui.getOrNull(depth) ?: GuiRenderState().let { s -> (s to McOutlines.createGuiRenderer(mc, s)).also { gui.add(it) } }
-        depth++
+        val slot = OffscreenGuiRenderers.acquire(mc)
         try {
-            val graphics = GuiGraphicsExtractor(mc, state, bounds.width(), bounds.height())
-            stacking(graphics) { for (op in ops) op(graphics) }
+            renderInto(mc, slot.state, slot.renderer, rt, gs)
         } finally {
-            depth--
+            OffscreenGuiRenderers.release(slot)
         }
+        val view = rt.colorTextureView ?: return null
+        val a = (alpha * 255f).roundToInt().coerceIn(0, 255)
+        val l = bounds.left().toFloat(); val t = bounds.top().toFloat(); val r = bounds.right().toFloat(); val b = bounds.bottom().toFloat()
+        val u1 = w.toFloat() / rt.width
+        val v0 = targetV(1f)
+        val v1 = targetV(1f - h.toFloat() / rt.height)
+        val verts = floatArrayOf(l, t, 0f, v0, l, b, 0f, v1, r, b, u1, v1, r, t, u1, v0)
+        val setup = TextureSetup.singleTexture(view, sampler(true))
+        return BlazeRenderer.Mesh(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, setup, Matrix3x2f(), verts, IntArray(4) { a * 0x01010101 }, bounds, false)
+            .also { composite = it }
+    }
+
+    private fun renderInto(mc: Minecraft, state: GuiRenderState, renderer: GuiRenderer, rt: RenderTarget, gs: Int) {
+        val graphics = GuiGraphicsExtractor(mc, state, bounds.width(), bounds.height())
+        stacking(graphics) { for (op in ops) op(graphics) }
         val previousTarget = GuiTargetRedirect.target
         val previousScissor = GuiTargetRedirect.scissorTransform
         val previousSize = GuiTargetRedirect.itemRenderSizePx
@@ -1178,24 +1249,12 @@ internal class LayerOp private constructor(
         renderer.endFrame()
         //?} else
         //renderer.incrementFrameNumber()
-        val view = rt.colorTextureView ?: return null
-        val a = (alpha * 255f).roundToInt().coerceIn(0, 255)
-        val l = bounds.left().toFloat(); val t = bounds.top().toFloat(); val r = bounds.right().toFloat(); val b = bounds.bottom().toFloat()
-        val u1 = w.toFloat() / rt.width
-        val v0 = targetV(1f)
-        val v1 = targetV(1f - h.toFloat() / rt.height)
-        val verts = floatArrayOf(l, t, 0f, v0, l, b, 0f, v1, r, b, u1, v1, r, t, u1, v0)
-        val setup = TextureSetup.singleTexture(view, sampler(true))
-        return BlazeRenderer.Mesh(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, setup, Matrix3x2f(), verts, IntArray(4) { a * 0x01010101 }, bounds, false)
-            .also { composite = it }
     }
 
     companion object {
         private const val MAX_POOLED = 4
         private val pool = ArrayList<OffscreenTarget>()
         private val active = ArrayList<LayerOp>()
-        private val gui = ArrayList<Pair<GuiRenderState, GuiRenderer>>()
-        private var depth = 0
         private var sweptAt = 0L
 
         fun of(ops: List<(GuiGraphicsExtractor) -> Unit>, alpha: Float, guiScale: Float, screenW: Int, screenH: Int): LayerOp? {
