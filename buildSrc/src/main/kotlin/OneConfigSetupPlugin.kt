@@ -421,8 +421,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
         }
 
         tasks.withType<Jar>().configureEach {
-            exclude("**/*_Test.class")
-            exclude("**/*_Test\$*.class")
+            exclude("org/polyfrost/oneconfig/test/**")
         }
     }
 }
