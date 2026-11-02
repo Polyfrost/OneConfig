@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.skyhanni;
 
-//? if > 1.8.9 {
+//? if skyblock {
 import org.polyfrost.oneconfig.internal.compat.SkyHanniHudCompat;
 import org.polyfrost.oneconfig.internal.ui.hud.CompatOverlayRenderer;
 import org.spongepowered.asm.mixin.Mixin;

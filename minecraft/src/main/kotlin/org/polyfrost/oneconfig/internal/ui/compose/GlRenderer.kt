@@ -879,7 +879,7 @@ internal object GlTextures {
             val px = (pagePixels ?: BufferUtils.createIntBuffer(page.pixels.size).also { pagePixels = it })
             px.clear()
             px.put(page.pixels, rows.first * size, h * size).flip()
-            unpackDefaults()
+            unpackDefaults(size)
             if (h == size) texImage(size, size, px) else texSubImage(rows.first, size, h, px)
         }
         return tex[0]
@@ -889,14 +889,15 @@ internal object GlTextures {
         val id = newTexture()
         val px = BufferUtils.createByteBuffer(bitmap.pixels.size).put(bitmap.pixels)
         px.flip()
-        unpackDefaults()
+        unpackDefaults(bitmap.width)
         texImage(bitmap.width, bitmap.height, px.asIntBuffer())
         return id
     }
 
-    private fun unpackDefaults() {
+    private fun unpackDefaults(rowLength: Int) {
         pixelStore(GL11.GL_UNPACK_ALIGNMENT, 4)
-        pixelStore(GL11.GL_UNPACK_ROW_LENGTH, 0)
+        // VulkanMod sizes uploads by the row length, so 0 (tightly packed) uploads nothing there
+        pixelStore(GL11.GL_UNPACK_ROW_LENGTH, rowLength)
         pixelStore(GL11.GL_UNPACK_SKIP_PIXELS, 0)
         pixelStore(GL11.GL_UNPACK_SKIP_ROWS, 0)
     }

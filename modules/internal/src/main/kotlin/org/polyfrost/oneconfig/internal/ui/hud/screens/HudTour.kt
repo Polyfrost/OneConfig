@@ -177,7 +177,15 @@ internal fun HudTourOverlay(
             val radius = CornerRadius(8.dp.toPx())
             val cutout = Path().apply {
                 fillType = PathFillType.EvenOdd
-                addRect(Rect(Offset.Zero, size))
+                val margin = 2.dp.toPx()
+                addRect(
+                    Rect(
+                        minOf(0f, holeLeft - margin),
+                        minOf(0f, holeTop - margin),
+                        maxOf(size.width, holeRight + margin),
+                        maxOf(size.height, holeBottom + margin),
+                    )
+                )
                 addRoundRect(RoundRect(holeLeft, holeTop, holeRight, holeBottom, radius))
             }
             drawPath(cutout, tourScrimColor.copy(alpha = tourScrimColor.alpha * scrimAlpha))

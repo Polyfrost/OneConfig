@@ -76,9 +76,7 @@ java {
 
 private val stonecutter = project.extensions.getByName("stonecutter") as StonecutterBuildExtension
 val loader = stonecutter.current.project.substringAfterLast("-")
-val enableMoulRelocatorKsp = loader == "fabric"
-        && stonecutter.eval(stonecutter.current.version, "> 1.21.10")
-        && versionedCatalog.has("moulconfig")
+val enableMoulRelocatorKsp = loader == "fabric" && versionedCatalog.has("moulconfig")
 
 
 val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)

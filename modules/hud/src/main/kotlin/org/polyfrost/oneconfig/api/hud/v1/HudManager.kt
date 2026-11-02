@@ -586,8 +586,11 @@ object HudManager {
         }
         try {
             hud.update()
+            hud.updateFailing = false
         } catch (e: Throwable) {
-            LOGGER.error("Failed to update HUD ${hud.title}", e)
+            // HUDs update every frame by default, so only log until the next successful update
+            if (!hud.updateFailing) LOGGER.error("Failed to update HUD ${hud.title}", e)
+            hud.updateFailing = true
         }
     }
 

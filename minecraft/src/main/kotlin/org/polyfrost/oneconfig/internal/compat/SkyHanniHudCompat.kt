@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
-//? if > 1.8.9 {
+//? if skyblock {
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import kotlin.reflect.KClass

@@ -32,10 +32,10 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
-import org.polyfrost.oneconfig.internal.ui.hud.components.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.hud.hudHasPositionDefaults
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
@@ -98,14 +98,14 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                 Section("Scale", query) {
                     HudSettingTarget(hud, "customScale") {
                         NumberSpinner(
-                            "Scale",
-                            "x",
                             customScale,
                             { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
                             0.25f,
                             4f,
                             0.25f,
-                            width = 176.dp
+                            width = 176.dp,
+                            unit = "x",
+                            label = "Scale",
                         )
                     }
                 }
@@ -126,14 +126,14 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                     }
                     HudSettingTarget(hud, "customScale") {
                         NumberSpinner(
-                            "Custom Scale",
-                            "x",
                             customScale,
                             { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
                             0.25f,
                             4f,
                             0.25f,
-                            width = 176.dp
+                            width = 176.dp,
+                            unit = "x",
+                            label = "Custom Scale",
                         )
                     }
                 }
@@ -180,9 +180,8 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
                             }
                             HudSettingTarget(hud, "bgRadius") {
                                 NumberSpinner(
-                                    "Radius", "px",
                                     bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
-                                    0f, 32f, 1f, width = 100.dp
+                                    0f, 32f, 1f, width = 116.dp, unit = "px", label = "Radius"
                                 )
                             }
                         }

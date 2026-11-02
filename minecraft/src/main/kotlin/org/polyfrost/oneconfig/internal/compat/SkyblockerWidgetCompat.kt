@@ -1,4 +1,4 @@
-//? skyblocker_hud_v2 {
+//? skyblocker_compat {
 /*package org.polyfrost.oneconfig.internal.compat
 
 import com.google.gson.JsonObject

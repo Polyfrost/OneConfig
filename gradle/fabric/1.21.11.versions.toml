@@ -1,11 +1,7 @@
 [versions]
 modmenu = "17.0.0-alpha.1"
 yacl = "3.8.0+1.21.9-fabric"
-moulconfig = "3.11.0"
 dandelion = "1.0.0-alpha.15+1.21.11"
-odin = "0.2.1"
-skyblocker = "7MTtY24j"
-apec = "UpS7y8IB"
 
 vulkanmod = "0.6.8+1.21.11"
 
@@ -13,13 +9,8 @@ vulkanmod = "0.6.8+1.21.11"
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu"}
 yacl = { module = "dev.isxander:yet-another-config-lib", version.ref = "yacl" }
 dandelion = { module = "net.azureaaron:dandelion", version.ref = "dandelion" }
-odin = { module = "maven.modrinth:odin", version.ref = "odin" }
-skyblocker = { module = "maven.modrinth:skyblocker-liap", version.ref = "skyblocker" }
-apec = { module = "maven.modrinth:apec", version.ref = "apec" }
-
-moulconfig = { module = "org.notenoughupdates.moulconfig:common", version.ref = "moulconfig" }
 
 vulkanmod = { module = "maven.modrinth:vulkanmod", version.ref = "vulkanmod" }
 
 [bundles]
-compat = ["modmenu", "yacl", "dandelion", "odin", "skyblocker", "apec"]
+compat = ["modmenu", "yacl", "dandelion"]

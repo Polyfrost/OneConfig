@@ -242,7 +242,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             val oy = y * s.sy + s.ty
             val px = floor(ox)
             val py = floor(oy)
-            val outline = McOutlines.get(text, outlineColor and 0xFFFFFF, scale * s.sx, scale * s.sy, ox - px, oy - py)
+            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, ox - px, oy - py)
             if (outline != null) {
                 val x0 = px - outline.pad
                 val y0 = py - outline.pad
@@ -250,7 +250,9 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
                 if (bounds != null) {
                     beginDraw()
                     touch(x0, y0, x0 + outline.w, y0 + outline.h)
-                    val color4 = (a shl 24) or (a shl 16) or (a shl 8) or a
+                    // the cached mask is white, so the tint is applied here as a premultiplied vertex color
+                    val color4 = (a shl 24) or ((outlineColor ushr 16 and 0xFF) * a / 255 shl 16) or
+                        ((outlineColor ushr 8 and 0xFF) * a / 255 shl 8) or ((outlineColor and 0xFF) * a / 255)
                     ops.add { g -> outline.draw(g, elementPose, x0, y0, color4, bounds, scissor) }
                 }
             }
@@ -309,7 +311,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     override fun texture(target: RenderTarget, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, alpha: Float) {
-        texture(target.colorTextureView ?: return, x, y, w, h, u0, v0, u1, v1, alpha)
+        texture(target.colorTextureView ?: return, x, y, w, h, u0, targetV(v0), u1, targetV(v1), alpha)
     }
 
     fun texture(view: GpuTextureView, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, alpha: Float) {
@@ -718,7 +720,7 @@ internal object McOutlines {
     private const val PAD_FONT_PX = 2f
     private val OFFSETS = floatArrayOf(-1f, -1f, 0f, -1f, 1f, -1f, -1f, 0f, 1f, 0f, -1f, 1f, 0f, 1f, 1f, 1f)
 
-    internal data class Key(val text: String, val rgb: Int, val kx: Float, val ky: Float, val fx: Float, val fy: Float)
+    internal data class Key(val text: String, val kx: Float, val ky: Float, val fx: Float, val fy: Float)
 
     private val entries = LinkedHashMap<Key, Outline>(16, 0.75f, true)
     private val pool = ArrayList<OffscreenTarget>()
@@ -734,9 +736,9 @@ internal object McOutlines {
         })
     }
 
-    fun get(text: String, rgb: Int, kx: Float, ky: Float, fx: Float, fy: Float): Outline? {
+    fun get(text: String, kx: Float, ky: Float, fx: Float, fy: Float): Outline? {
         if (kx <= 0f || ky <= 0f) return null
-        val key = Key(text, rgb, kx, ky, (fx * 8f).roundToInt() / 8f, (fy * 8f).roundToInt() / 8f)
+        val key = Key(text, kx, ky, (fx * 8f).roundToInt() / 8f, (fy * 8f).roundToInt() / 8f)
         entries[key]?.let { return it }
         val font = Minecraft.getInstance().font
         val lines = text.lines()
@@ -779,10 +781,11 @@ internal object McOutlines {
             val rt = target?.target ?: return
             val view = rt.colorTextureView ?: return
             val u1 = w / rt.width
-            val v1 = 1f - h / rt.height
+            val v0 = targetV(1f)
+            val v1 = targetV(1f - h / rt.height)
             val x1 = x0 + w
             val y1 = y0 + h
-            val verts = floatArrayOf(x0, y0, 0f, 1f, x0, y1, 0f, v1, x1, y1, u1, v1, x1, y0, u1, 1f)
+            val verts = floatArrayOf(x0, y0, 0f, v0, x0, y1, 0f, v1, x1, y1, u1, v1, x1, y0, u1, v0)
             val setup = TextureSetup.singleTexture(view, sampler(true))
             val mesh = BlazeRenderer.Mesh(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, setup, pose, verts, IntArray(4) { color }, bounds, false, scissor)
             //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
@@ -804,7 +807,6 @@ internal object McOutlines {
             val (state, renderer) = gui ?: GuiRenderState().let { s -> (s to createGuiRenderer(mc, s)).also { gui = it } }
             val graphics = GuiGraphicsExtractor(mc, state, rt.width, rt.height)
             val font = mc.font
-            val color = 0xFF000000.toInt() or key.rgb
             val ox = pad + key.fx
             val oy = pad + key.fy
             lines.forEachIndexed { index, line ->
@@ -815,7 +817,7 @@ internal object McOutlines {
                     pose.pushMatrix()
                     pose.translate(ox, oy).scale(key.kx, key.ky).translate(OFFSETS[i], OFFSETS[i + 1] + index * font.lineHeight)
                     //~ if >= 26.1 'drawString' -> 'text'
-                    graphics.text(font, seq, 0, 0, color, false)
+                    graphics.text(font, seq, 0, 0, -1, false)
                     pose.popMatrix()
                 }
             }
@@ -849,6 +851,11 @@ internal object McOutlines {
         *///?}
     }
 }
+
+// VulkanMod renders into targets top-down, unlike GL and vanilla's Vulkan backend
+private val topDownTargets = GlHost.isVulkanModInstalled
+
+private fun targetV(v: Float) = if (topDownTargets) 1f - v else v
 
 //? if >= 26.2 {
 private const val TEXT_LIGHTMAP = false
@@ -1175,8 +1182,9 @@ internal class LayerOp private constructor(
         val a = (alpha * 255f).roundToInt().coerceIn(0, 255)
         val l = bounds.left().toFloat(); val t = bounds.top().toFloat(); val r = bounds.right().toFloat(); val b = bounds.bottom().toFloat()
         val u1 = w.toFloat() / rt.width
-        val v1 = 1f - h.toFloat() / rt.height
-        val verts = floatArrayOf(l, t, 0f, 1f, l, b, 0f, v1, r, b, u1, v1, r, t, u1, 1f)
+        val v0 = targetV(1f)
+        val v1 = targetV(1f - h.toFloat() / rt.height)
+        val verts = floatArrayOf(l, t, 0f, v0, l, b, 0f, v1, r, b, u1, v1, r, t, u1, v0)
         val setup = TextureSetup.singleTexture(view, sampler(true))
         return BlazeRenderer.Mesh(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, setup, Matrix3x2f(), verts, IntArray(4) { a * 0x01010101 }, bounds, false)
             .also { composite = it }

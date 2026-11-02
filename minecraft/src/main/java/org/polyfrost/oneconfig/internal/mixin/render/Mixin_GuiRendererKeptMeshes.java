@@ -7,6 +7,7 @@ import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 //?} else
 //import net.minecraft.client.gui.render.state.GuiElementRenderState;
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
 import org.polyfrost.oneconfig.internal.ui.compose.KeptMeshes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -47,7 +48,10 @@ public class Mixin_GuiRendererKeptMeshes {
 
     @Inject(method = "executeDraw", at = @At("HEAD"), cancellable = true)
     private void oneconfig$drawKept(@Coerce Object draw, RenderPass pass, @Coerce Object indexBuffer, @Coerce Object indexType, CallbackInfo ci) {
-        if (KeptMeshes.execute(draw, pass)) ci.cancel();
+        if (!KeptMeshes.execute(draw, pass)) return;
+        // VulkanMod's GuiRenderer patch stops vanilla from binding its own index buffer, so ours would truncate later draws
+        if (GlHost.isVulkanModInstalled()) pass.setIndexBuffer(null, null);
+        ci.cancel();
     }
     *///?}
 
