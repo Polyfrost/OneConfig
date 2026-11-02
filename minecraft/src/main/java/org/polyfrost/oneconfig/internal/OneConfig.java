@@ -104,6 +104,7 @@ import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
 import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
 //?}
 
+
 public class OneConfig implements ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
@@ -121,14 +122,6 @@ public class OneConfig implements ClientModInitializer {
 
         var node = CommandManager.literal("oneconfig")
                 .executes(executor)
-                .then(CommandManager.literal("delete")
-                        .executes((ctx) -> {
-                            ctx.getSource()
-                                    .sendFeedback(Component.literal(
-                                            "Deleted OneConfig UI. Please make a report if you were having issues!"));
-                            return 1;
-                        })
-                )
                 .then(CommandManager.literal("hud")
                         .executes((ctx) -> {
                             HudManager.INSTANCE.openEditor();
