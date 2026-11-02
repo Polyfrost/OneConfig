@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,7 +47,8 @@ enum class CaseType(val icon: String) {
 }
 enum class Modifiers(val icon: String) {
     Bold("bold"),
-    Italic("italic");
+    Italic("italic"),
+    Underline("underline");
 }
 
 private enum class ShadowMode(val title: String) {
@@ -71,6 +73,7 @@ fun Style(hud: Hud?, query: String) {
     var font by remember { mutableStateOf(hud.font) }
     var textBold by remember { mutableStateOf(hud.textBold) }
     var textItalic by remember { mutableStateOf(hud.textItalic) }
+    var textUnderline by remember { mutableStateOf(hud.textUnderline) }
     var textWeight by remember { mutableStateOf(hud.textWeight) }
     var caseType by remember {
         mutableStateOf(
@@ -99,7 +102,7 @@ fun Style(hud: Hud?, query: String) {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         CardSection(
-            "Text", query, "Font", "Size", "Font size", "Modifiers", "Bold", "Italic", "Weight", "Case", "Case Type",
+            "Text", query, "Font", "Size", "Font size", "Modifiers", "Bold", "Italic", "Underline", "Weight", "Case", "Case Type",
             "Color", "Text Color", "Shadow", "Normal", "Full", "Shadow color",
         ) { col1 ->
             GridRow(
@@ -128,12 +131,13 @@ fun Style(hud: Hud?, query: String) {
                         LabeledControl("Modifiers") {
                             Box(
                                 modifier = Modifier
+                                    .fillMaxWidth()
                                     .background(LocalTheme.current.componentBackground, LocalTheme.current.buttonShape)
                                     .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     SelectableIconButton(
@@ -153,6 +157,16 @@ fun Style(hud: Hud?, query: String) {
                                         onClick = {
                                             Snapshot.withMutableSnapshot {
                                                 textItalic = !textItalic; hud.textItalic = textItalic
+                                            }
+                                        }
+                                    )
+                                    SelectableIconButton(
+                                        Modifiers.Underline.icon,
+                                        selected = textUnderline,
+                                        modifier = Modifier.size(18.dp),
+                                        onClick = {
+                                            Snapshot.withMutableSnapshot {
+                                                textUnderline = !textUnderline; hud.textUnderline = textUnderline
                                             }
                                         }
                                     )
