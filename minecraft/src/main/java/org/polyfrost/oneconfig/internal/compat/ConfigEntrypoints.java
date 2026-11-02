@@ -82,7 +82,8 @@ public final class ConfigEntrypoints {
     private static final AtomicBoolean listening = new AtomicBoolean();
     private static volatile boolean startupDecided;
     //? if !neoforge
-    private static Map<String, ModContainer> seenMods = Map.of();
+    private static volatile Map<String, ModContainer> seenMods = Map.of();
+    private static volatile Set<String> lateIds = Set.of();
     private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
@@ -176,26 +177,10 @@ public final class ConfigEntrypoints {
 
     public static void registerAdded() {
         //? if !neoforge {
-        if (!startupDecided || !modsChanged()) return;
-        Map<String, ModContainer> mods = loadedMods();
-        Set<String> newIds = new HashSet<>(mods.keySet());
-        newIds.removeAll(seenMods.keySet());
-        if (HotwireBridge.INSTANCE.isStarting(newIds)) return;
-        seenMods = mods;
-        HotwireBridge.INSTANCE.invalidate();
-        rediscover();
-        Map<String, List<Provider>> added = new LinkedHashMap<>();
-        for (Provider provider : providers()) {
-            if (!isDecided(provider.modId)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
-        }
-        prepare(added.keySet());
-        ConfigManager.initializeLate(config -> {
-            ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
-            return owner != null && newIds.contains(owner.getId());
-        }, () -> added.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints))));
-        decidePending();
-        //? modmenu_compat
-        if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.refresh();
+        if (!startupDecided) return;
+        if (modsChanged()) registerChanged();
+        else if (!lateIds.isEmpty()) finishLate(() -> {
+        });
         //?}
     }
 
@@ -218,8 +203,10 @@ public final class ConfigEntrypoints {
                 }
             }
         } finally {
-            //? if !neoforge
+            //? if !neoforge {
             seenMods = loadedMods();
+            ConfigManager.setAwaitingLateWindow(ConfigEntrypoints::awaitsLateWindow);
+            //?}
             startupDecided = true;
             // caught so a broken CompatLoader never hides an exception from ConfigManager.initialize()
             try {
@@ -586,6 +573,46 @@ public final class ConfigEntrypoints {
     }
 
     //? if !neoforge {
+    private static void registerChanged() {
+        Map<String, ModContainer> mods = loadedMods();
+        Set<String> changedIds = changedIds(mods, seenMods);
+        Set<String> newIds = new HashSet<>(changedIds);
+        newIds.removeAll(seenMods.keySet());
+        if (HotwireBridge.INSTANCE.isStarting(newIds) || changedIds.size() > newIds.size() && HotwireBridge.INSTANCE.isUpdating()) return;
+        seenMods = mods;
+        HotwireBridge.INSTANCE.invalidate();
+        rediscover();
+        Map<String, List<Provider>> added = new LinkedHashMap<>();
+        for (Provider provider : providers()) {
+            if (!isDecided(provider.modId)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
+        }
+        prepare(added.keySet());
+        Set<String> late = new HashSet<>(lateIds);
+        late.addAll(changedIds);
+        lateIds = late;
+        finishLate(() -> added.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints))));
+    }
+
+    private static void finishLate(Runnable creator) {
+        Set<String> ids = lateIds;
+        if (ConfigManager.initializeLate(config -> ownedBy(config, ids), creator)) return;
+        lateIds = Set.of();
+        decidePending();
+        //? modmenu_compat
+        if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.refresh();
+    }
+
+    private static boolean ownedBy(Config config, Set<String> ids) {
+        ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
+        return owner != null && ids.contains(owner.getId());
+    }
+
+    private static boolean awaitsLateWindow(Config config) {
+        Set<String> ids = new HashSet<>(lateIds);
+        if (modsChanged()) ids.addAll(changedIds(loadedMods(), seenMods));
+        return !ids.isEmpty() && ownedBy(config, ids);
+    }
+
     private static boolean modsChanged() {
         synchronized (FabricLoader.getInstance()) {
             return modsChanged(FabricLoader.getInstance().getAllMods(), seenMods);
@@ -598,6 +625,14 @@ public final class ConfigEntrypoints {
             if (seen.get(mod.getMetadata().getId()) != mod) return true;
         }
         return false;
+    }
+
+    static Set<String> changedIds(Map<String, ModContainer> mods, Map<String, ModContainer> seen) {
+        Set<String> changed = new HashSet<>();
+        mods.forEach((id, mod) -> {
+            if (seen.get(id) != mod) changed.add(id);
+        });
+        return changed;
     }
 
     private static Map<String, ModContainer> loadedMods() {

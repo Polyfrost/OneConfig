@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -72,6 +73,7 @@ class LateInitializationTest {
 
     @AfterEach
     void reopenStartup() throws ReflectiveOperationException {
+        ConfigManager.setAwaitingLateWindow(config -> false);
         Field initialized = ConfigManager.class.getDeclaredField("initialized");
         initialized.setAccessible(true);
         initialized.setBoolean(null, false);
@@ -127,12 +129,47 @@ class LateInitializationTest {
     @Test
     void constructorSetupWaitsForLateInitialization() {
         finishStartup();
+        ConfigManager.setAwaitingLateWindow(config -> true);
         Config late = new SetupConfig("late-initialization-setup-test.json");
         assertTrue(ConfigManager.isPendingInitialization(late));
         ConfigManager.initializeLate(late::equals, () -> {
         });
         assertFalse(ConfigManager.isPendingInitialization(late));
         assertEquals(List.of("alias"), late.getProperty("value").getMetadata("aliases"));
+    }
+
+    @Test
+    void constructorSetupInitializesConfigsNoWindowIsComingFor() {
+        finishStartup();
+        Config late = new SetupConfig("late-initialization-ordinary-test.json");
+        assertNotNull(late.getTree());
+        assertEquals(List.of("alias"), late.getProperty("value").getMetadata("aliases"));
+    }
+
+    @Test
+    void aConfigStillBeingBuiltIsReportedUntilItCanJoin() throws InterruptedException {
+        finishStartup();
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicReference<Config> built = new AtomicReference<>();
+        Thread worker = new Thread(() -> {
+            try {
+                built.set(new BlockedConfig("late-initialization-retry-test.json", entered, release));
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        worker.start();
+        entered.await();
+
+        assertTrue(ConfigManager.initializeLate(BlockedConfig.class::isInstance, () -> {
+        }));
+        release.countDown();
+        worker.join();
+
+        assertFalse(ConfigManager.initializeLate(built.get()::equals, () -> {
+        }));
+        assertNotNull(built.get().getTree());
     }
 
     @Test
@@ -175,11 +212,54 @@ class LateInitializationTest {
     }
 
     @Test
+    void configsOtherThreadsFinishedBuildingJoinTheWindow() throws InterruptedException {
+        finishStartup();
+        AtomicReference<Config> built = new AtomicReference<>();
+        CountDownLatch done = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        Thread worker = new Thread(() -> {
+            built.set(new LateConfig("late-initialization-worker-test.json"));
+            done.countDown();
+            try {
+                release.await();
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        worker.start();
+        done.await();
+
+        ConfigManager.initializeLate(built.get()::equals, () -> {
+        });
+        release.countDown();
+        worker.join();
+        assertNotNull(built.get().getTree());
+    }
+
+    @Test
+    void aSecondInstanceInTheWindowKeepsSavedValues() throws IOException {
+        String id = "late-initialization-duplicate-test.json";
+        Files.write(ConfigManager.active().getFolder().resolve(id), "{\"value\": true}".getBytes(StandardCharsets.UTF_8));
+        try {
+            finishStartup();
+            ValueConfig first = new ValueConfig(id);
+            AtomicReference<Config> second = new AtomicReference<>();
+            ConfigManager.initializeLate(first::equals, () -> second.set(new ValueConfig(id)));
+            assertNull(second.get().getTree());
+            assertEquals(Boolean.TRUE, first.getProperty("value").get());
+            assertTrue(ConfigManager.createdConfigs().contains(second.get()));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
     void configsHandedOverInTheWindowAreInitialized() {
         finishStartup();
         Config library = new LateConfig("late-initialization-claimed-test.json");
         ConfigManager.claimForLateInitialization(library);
-        assertTrue(ConfigManager.isPendingInitialization(library));
+        assertTrue(ConfigManager.createdConfigs().contains(library));
         assertNull(library.getTree());
 
         ConfigManager.initializeLate(config -> false, () -> ConfigManager.claimForLateInitialization(library));

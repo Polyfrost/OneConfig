@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.compat;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.junit.jupiter.api.Test;
@@ -176,6 +177,15 @@ class ConfigEntrypointsTest {
     void anAddedModIsAChange() {
         ModContainer lib = mod("lib");
         assertTrue(ConfigEntrypoints.modsChanged(List.of(lib, mod("added")), Map.of("lib", lib)));
+    }
+
+    @Test
+    void addedAndReplacedModsAreChangedIds() {
+        ModContainer kept = mod("kept");
+        assertEquals(
+                Set.of("added", "replaced"),
+                ConfigEntrypoints.changedIds(Map.of("kept", kept, "added", mod("added"), "replaced", mod("replaced")), Map.of("kept", kept, "replaced", mod("replaced")))
+        );
     }
 
     @Test

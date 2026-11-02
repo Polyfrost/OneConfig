@@ -6,8 +6,10 @@ import androidx.compose.runtime.setValue
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
@@ -145,13 +147,17 @@ object HotwireBridge {
         ids.filter { disabled.callHidden("isDisabledSinceStart", it) == true }
     }.getOrDefault(emptyList())
 
-    /** Whether Hotwire is running a switch, add or update right now */
+    /** Whether Hotwire is running a switch or add right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
 
     fun isStarting(ids: Collection<String>): Boolean = isWorking() && runCatching {
         val installed = engine()!!.field("installed")!!
         ids.any { installed.callMethod("isAddedThisSession", it) != true }
     }.getOrDefault(true)
+
+    fun isUpdating(): Boolean = runCatching {
+        (engine()!!.field("tasks")!!.field("workers") as ThreadPoolExecutor).activeCount > 0
+    }.getOrDefault(false)
 
     fun awaitIdle() {
         val start = System.nanoTime()
@@ -548,9 +554,9 @@ object HotwireBridge {
         nextLaunchRefusal(engine, jars)?.let { return JarPlan(update.name, detail, listOf(it), emptyList()) }
         val action = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
             CompletableFuture.supplyAsync {
+                val needs = jars.dropLast(1).map { jar -> { nameClash(engine, jar, readJar(jar).modId(), null) ?: queueAdd(engine, jar) } }
                 nextLaunchRefusal(engine, jars)?.let { Result(false, it) }
-                    ?: jars.dropLast(1).firstNotNullOfOrNull { jar -> queueAdd(engine, jar).takeUnless { it.ok } }
-                    ?: queueSelfUpdate(engine, update, jars.last()).takeUnless { it.ok }
+                    ?: queueTogether(engine.field("updateQueue")!!, needs + { queueSelfUpdate(engine, update, jars.last()) })
                     ?: Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", update.name))
             }
         }
@@ -562,6 +568,13 @@ object HotwireBridge {
         )
     }
 
+    fun queueTogether(queue: Any, steps: List<() -> Result>): Result? {
+        val before = queue.callMethod("getEntries")!!
+        val failed = runCatching { steps.firstNotNullOfOrNull { step -> step().takeUnless { it.ok } } }.getOrElse(::failure) ?: return null
+        queue.callHidden("replace", before)
+        return failed
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun nextLaunchRefusal(engine: Any, jars: List<Path>): String? = runCatching {
         val incoming = jars.map(::readJar)
@@ -570,22 +583,30 @@ object HotwireBridge {
             runCatching { readJar(Path.of(entry.get("stagedJar") as String)) }.getOrNull()?.let { entry.get("modId") as String to it }
         }
         val installed = engine.field("installed")!!
-        val leaving = ids + queued.flatMap { (id, jar) -> listOf(id, jar.modId()) } + (installed.field("disabled") as Map<String, Any>).keys
-        val staying = (installed.callHidden("getGraphJars") as List<Any>).filterNot { it.modId() in leaving }
+        val replaced = ids + queued.flatMap { (id, jar) -> listOf(id, jar.modId()) }
+        val leaving = replaced + (installed.field("disabled") as Map<String, Any>).keys
+        val graphJars = installed.callHidden("getGraphJars") as List<Any>
+        val staying = graphJars.filterNot { it.modId() in leaving }
         // the jars that land go first, since the graph keeps the first copy of a mod it sees
-        val graph = Class.forName("dev.moon.hotwire.plan.ModGraph").getConstructor(Collection::class.java)
-            .newInstance(incoming + queued.map { it.second } + staying)
+        val landing = incoming + queued.map { it.second } + staying
+        val graph = Class.forName("dev.moon.hotwire.plan.ModGraph").getConstructor(Collection::class.java).newInstance(landing)
         val depends = Class.forName("dev.moon.hotwire.jar.ModManifest\$Relation").enumConstants.first { (it as Enum<*>).name == "DEPENDS" }
         val oldDependency = Class.forName("dev.moon.hotwire.plan.SwitchPlan\$Refusal\$OldDependency").constructors.single()
+        val fits = { version: String, ranges: List<String> -> engine.callStatic("ModPolicy", "satisfies", version, ranges) == true }
         val builtIns = incoming.flatMap { it.parts() }.flatMap { part ->
             oldBuiltIns(
                 part.modId(),
                 part.get("manifest")!!.callMethod("getRelation", depends) as Map<String, List<String>>,
                 { id -> (engine.callStatic("LoadedMods", "findVersion", id) as String?).takeIf { (graph.callMethod("find", id) as Optional<*>).isEmpty } },
-                { version, ranges -> engine.callStatic("ModPolicy", "satisfies", version, ranges) == true },
+                fits,
             )
         }.map { oldDependency.newInstance(*it.toTypedArray()) }
-        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids, builtIns)?.let { describeRefusal(engine, it) }
+        val missing = Class.forName("dev.moon.hotwire.plan.SwitchPlan\$Refusal\$MissingDependency").constructors.single()
+        val lost = lostNeeds(graph, graphJars.filter { it.modId() in replaced }.flatMap { it.parts() }.map { it.modId() })
+            .map { (mod, dependency) -> missing.newInstance(mod, dependency) }
+        val copies = landing.flatMap { it.parts() }.groupBy({ it.modId() }, { it.get("manifest")!!.get("version") as String })
+        val nested = (incoming.flatMap { it.parts() }.map { it.modId() } - landing.map { it.modId() }.toSet()).associateWith(copies::getValue)
+        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids, builtIns + lost, nested, fits)?.let { describeRefusal(engine, it) }
     }.getOrElse {
         translated("oneconfig.page.hotwire.next_launch_unchecked", "Hotwire couldn't check this against your other mods, so nothing was changed.")
     }
@@ -596,54 +617,101 @@ object HotwireBridge {
         }
 
     @Suppress("UNCHECKED_CAST")
-    fun refusedPlan(planner: Any, graph: Any, ids: List<String>, builtIns: List<Any> = emptyList()): Any? {
+    fun lostNeeds(graph: Any, outgoing: Collection<String>): List<Pair<String, String>> =
+        outgoing.distinct().filter { (graph.callMethod("find", it) as Optional<*>).isEmpty }.flatMap { id ->
+            (graph.callMethod("getDependents", id) as Collection<String>).filter { isNeeded(graph, it) }.map { it to id }
+        }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun isNeeded(graph: Any, id: String, seen: MutableSet<String> = HashSet()): Boolean =
+        graph.callMethod("isInstalledOnItsOwn", id) == true ||
+            seen.add(id) && (graph.callMethod("getDependents", id) as Collection<String>).any { isNeeded(graph, it, seen) }
+
+    @Suppress("UNCHECKED_CAST")
+    fun refusedPlan(
+        planner: Any,
+        graph: Any,
+        ids: List<String>,
+        extra: List<Any> = emptyList(),
+        nested: Map<String, List<String>> = emptyMap(),
+        fits: (String, List<String>) -> Boolean = { _, _ -> true },
+    ): Any? {
         val plan = planner.callMethod("planOn", ids, ids.toSet())!!
         val old = (ids + ids.flatMap { graph.callMethod("getDependents", it) as Collection<String> }).distinct()
             .flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }
             .filter { it.get("mod") in ids || it.get("dependency") in ids }
-        val refusals = plan.get("refusals") as List<Any> + old + builtIns
+        val oldNested = nested.flatMap { (id, versions) ->
+            (graph.callMethod("getDependents", id) as Collection<String>)
+                .flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }
+                .filter { refusal -> refusal.get("dependency") == id && versions.none { fits(it, (refusal.get("wanted") as String).split(" or ")) } }
+        }
+        val nestedRefusals = nested.filterValues { it.distinct().size == 1 }.keys.toList().takeIf { it.isNotEmpty() }
+            ?.let { only -> planner.callMethod("planOn", only, only.toSet())!!.get("refusals") as List<Any> }
+            .orEmpty().filter {
+                when (it.javaClass.simpleName) {
+                    "Breaks" -> true
+                    "MissingDependency" -> isNeeded(graph, it.get("mod") as String)
+                    else -> false
+                }
+            }
+        val refusals = (plan.get("refusals") as List<Any> + old + oldNested + nestedRefusals + extra).distinct()
         if (refusals.isEmpty()) return null
         return plan.javaClass.constructors.single()
             .newInstance(plan.get("direction"), plan.get("order"), plan.get("why"), plan.get("enabledNested"), refusals)
     }
 
-    private fun queueSelfUpdate(engine: Any, update: StoreUpdate, jar: Path): Result {
-        val queued = queueAdd(engine, jar)
-        if (!queued.ok) return queued
-        val queue = engine.field("updateQueue")!!
-        return runCatching {
-            val running = engine.callMethod("findJarOf", update.modId) as Path
-            val hash = Class.forName("dev.moon.hotwire.jar.FileHashes").getMethod("findSha256", Path::class.java).invoke(null, running) as String
-            replaceQueued(queue, jar, update.installedVersion, running, hash)
-            Result(true, "")
-        }.getOrElse {
-            removeQueued(queue, jar)
-            queueFailed(jar)
+    private fun queueSelfUpdate(engine: Any, update: StoreUpdate, jar: Path): Result = runCatching {
+        engine.askAdder("AddFirstLook", "findRefusal", jar)?.let { return Result(false, it) }
+        val running = engine.callMethod("findJarOf", update.modId) as Path
+        nameClash(engine, jar, update.modId, running)?.let { return it }
+        val staging = Files.createDirectories(engine.field("updateFolders")!!.get("staging") as Path)
+        val staged = staging.resolve(jar.fileName.toString())
+        Files.copy(jar, staged, StandardCopyOption.REPLACE_EXISTING)
+        queueReplacement(
+            engine.field("updateQueue")!!,
+            Class.forName("dev.moon.hotwire.update.UpdateQueue\$Entry"),
+            readJar(jar).get("manifest")!!,
+            update.installedVersion,
+            running,
+            sha256(running),
+            staged,
+            sha256(staged),
+        )
+        Result(true, "")
+    }.getOrElse { queueFailed(jar) }
+
+    private fun nameClash(engine: Any, jar: Path, modId: String, running: Path?): Result? {
+        val name = jar.fileName.toString()
+        val queued = (engine.field("updateQueue")!!.callMethod("getEntries") as List<*>)
+            .filter { it!!.get("modId") != modId }.map { it!!.get("stagedJar") as String }
+        val target = (engine.field("updateFolders")!!.get("mods") as Path).resolve(name)
+        return if (nameTaken(name, target, running, queued)) {
+            Result(false, translated("oneconfig.page.hotwire.update.name_taken", "A different jar named %s is already there, so nothing was changed.", name))
+        } else {
+            null
         }
     }
 
-    private fun queuedEntry(queue: Any, jar: Path): Any =
-        (queue.callMethod("getEntries") as List<*>).first { Path.of(it!!.get("stagedJar") as String).fileName == jar.fileName }!!
+    fun nameTaken(name: String, target: Path, running: Path?, queued: List<String>): Boolean =
+        queued.any { Path.of(it).fileName.toString() == name } || Files.exists(target) && (running == null || !Files.isSameFile(target, running))
 
-    private fun removeQueued(queue: Any, jar: Path) {
-        queue.callMethod("remove", queuedEntry(queue, jar).get("modId")!!)
-    }
+    private fun sha256(file: Path): String =
+        Class.forName("dev.moon.hotwire.jar.FileHashes").getMethod("findSha256", Path::class.java).invoke(null, file) as String
 
-    fun replaceQueued(queue: Any, jar: Path, fromVersion: String, running: Path, runningSha256: String) {
-        val entry = queuedEntry(queue, jar)
+    fun queueReplacement(queue: Any, entryType: Class<*>, manifest: Any, fromVersion: String, running: Path, runningSha256: String, staged: Path, stagedSha256: String) {
         queue.callMethod(
             "add",
-            entry.javaClass.constructors.single().newInstance(
-                entry.get("modId"),
-                entry.get("name"),
+            entryType.constructors.single().newInstance(
+                manifest.get("id"),
+                manifest.get("name"),
                 fromVersion,
-                entry.get("toVersion"),
+                manifest.get("version"),
                 running.fileName.toString(),
                 runningSha256,
-                entry.get("stagedJar"),
-                entry.get("stagedSha256"),
-                entry.get("reason"),
-                entry.get("queuedAtMillis"),
+                staged.toAbsolutePath().toString(),
+                stagedSha256,
+                "",
+                System.currentTimeMillis(),
             ),
         )
     }

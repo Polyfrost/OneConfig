@@ -1,14 +1,26 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 class HotwireSelfUpdateQueueTest {
-    class Old(private val mod: String, private val dependency: String) {
+    class Old(private val mod: String, private val dependency: String, private val wanted: String = "") {
         fun mod() = mod
         fun dependency() = dependency
+        fun wanted() = wanted
+    }
+
+    class Breaks
+
+    class MissingDependency(private val mod: String = "lib") {
+        fun mod() = mod
     }
 
     class Plan(private val direction: String, private val order: List<*>, private val why: Map<*, *>, private val nested: List<*>, private val refusals: List<Any>) {
@@ -19,14 +31,18 @@ class HotwireSelfUpdateQueueTest {
         fun refusals() = refusals
     }
 
-    class Planner(private val refused: List<Any>, private val old: Map<String, List<Any>>) {
+    class Planner(private val refused: List<Any>, private val old: Map<String, List<Any>>, private val nestedRefused: List<Any> = emptyList()) {
         @Suppress("UNUSED_PARAMETER")
-        fun planOn(ids: Collection<String>, off: Set<String>) = Plan("ON", emptyList<Any>(), emptyMap<Any, Any>(), emptyList<Any>(), refused)
+        fun planOn(ids: Collection<String>, off: Set<String>) =
+            Plan("ON", emptyList<Any>(), emptyMap<Any, Any>(), emptyList<Any>(), if ("hotwire" in ids) refused else nestedRefused)
+
         fun findOldDependencies(id: String) = old[id].orEmpty()
     }
 
-    class Graph(private val dependents: Map<String, Set<String>>) {
+    class Graph(private val dependents: Map<String, Set<String>>, private val roots: Set<String> = setOf("hotwire", "other"), private val present: Set<String> = emptySet()) {
         fun getDependents(id: String) = dependents[id].orEmpty()
+        fun isInstalledOnItsOwn(id: String) = id in roots
+        fun find(id: String): Optional<String> = Optional.ofNullable(id.takeIf { it in present })
     }
 
     private fun refusals(planner: Planner, graph: Graph, builtIns: List<Any> = emptyList()) =
@@ -70,6 +86,112 @@ class HotwireSelfUpdateQueueTest {
         assertEquals(listOf("old java"), refusals(Planner(emptyList(), emptyMap()), Graph(emptyMap()), listOf("old java")))
     }
 
+    private fun nestedRefusals(planner: Planner, graph: Graph, vararg versions: String) =
+        (HotwireBridge.refusedPlan(planner, graph, listOf("hotwire"), emptyList(), mapOf("lib" to versions.toList())) { version, ranges -> version in ranges } as Plan?)?.refusals()
+
+    @Test
+    fun aModNeedingAnotherVersionOfANestedModRefusesIt() {
+        val old = Old("other", "lib", "1")
+        assertEquals(listOf(old), nestedRefusals(Planner(emptyList(), mapOf("other" to listOf(old))), Graph(mapOf("lib" to setOf("other"))), "2"))
+    }
+
+    @Test
+    fun aNestedModWithACopyThatFitsIsNotRefused() {
+        val old = Old("other", "lib", "1 or 3")
+        assertNull(nestedRefusals(Planner(emptyList(), mapOf("other" to listOf(old))), Graph(mapOf("lib" to setOf("other"))), "2", "3"))
+    }
+
+    @Test
+    fun aDependentsOtherOldDependencyIsNotBlamedOnANestedMod() {
+        val old = Old("other", "unrelated", "1")
+        assertNull(nestedRefusals(Planner(emptyList(), mapOf("other" to listOf(old))), Graph(mapOf("lib" to setOf("other"))), "2"))
+    }
+
+    @Test
+    fun aNestedModInAConflictRefusesIt() {
+        val breaks = Breaks()
+        assertEquals(listOf(breaks), nestedRefusals(Planner(emptyList(), emptyMap(), listOf(breaks)), Graph(emptyMap()), "2"))
+    }
+
+    @Test
+    fun aConflictWithOneOfSeveralNestedVersionsIsNotRefused() {
+        assertNull(nestedRefusals(Planner(emptyList(), emptyMap(), listOf(Breaks())), Graph(emptyMap()), "2", "3"))
+    }
+
+    @Test
+    fun aNestedModsOwnMissingNeedIsNotRefused() {
+        assertNull(nestedRefusals(Planner(emptyList(), emptyMap(), listOf(MissingDependency())), Graph(emptyMap()), "2"))
+    }
+
+    @Test
+    fun aRequiredNestedModsMissingNeedRefusesIt() {
+        val missing = MissingDependency()
+        assertEquals(listOf(missing), nestedRefusals(Planner(emptyList(), emptyMap(), listOf(missing)), Graph(mapOf("lib" to setOf("hotwire"))), "2"))
+    }
+
+    @Test
+    fun aMissingNeedOfANestedModOnlyAnOptionalModWantsIsNotRefused() {
+        assertNull(nestedRefusals(Planner(emptyList(), emptyMap(), listOf(MissingDependency())), Graph(mapOf("lib" to setOf("unused"))), "2"))
+    }
+
+    @Test
+    fun aRemovedNestedModAStayingModNeedsIsReported() {
+        val graph = Graph(mapOf("lib" to setOf("other", "unused"), "kept" to setOf("other")), present = setOf("kept"))
+        assertEquals(listOf("other" to "lib"), HotwireBridge.lostNeeds(graph, listOf("lib", "kept", "lib")))
+    }
+
+    @Test
+    fun aFailedStepPutsTheQueueBack() {
+        val queue = RollbackQueue(listOf("earlier"))
+        val failed = HotwireBridge.Result(false, "no")
+
+        val result = HotwireBridge.queueTogether(queue, listOf({ queue.current += "need"; HotwireBridge.Result(true, "") }, { failed }))
+
+        assertEquals(failed, result)
+        assertEquals(listOf("earlier"), queue.current)
+    }
+
+    @Test
+    fun aThrowingStepPutsTheQueueBack() {
+        val queue = RollbackQueue(emptyList())
+
+        val result = HotwireBridge.queueTogether(queue, listOf({ queue.current += "need"; error("broken") }))
+
+        assertEquals("broken", result?.message)
+        assertEquals(emptyList<String>(), queue.current)
+    }
+
+    @Test
+    fun stepsThatAllLandStayQueued() {
+        val queue = RollbackQueue(emptyList())
+
+        assertNull(HotwireBridge.queueTogether(queue, listOf({ queue.current += "need"; HotwireBridge.Result(true, "") })))
+        assertEquals(listOf("need"), queue.current)
+    }
+
+    @Test
+    fun aJarNameMayOnlyReplaceTheRunningJar(@TempDir mods: Path) {
+        val running = Files.createFile(mods.resolve("hotwire-1.jar"))
+        val other = Files.createFile(mods.resolve("other.jar"))
+
+        assertFalse(HotwireBridge.nameTaken("hotwire-1.jar", running, running, emptyList()))
+        assertFalse(HotwireBridge.nameTaken("hotwire-2.jar", mods.resolve("hotwire-2.jar"), running, emptyList()))
+        assertTrue(HotwireBridge.nameTaken("other.jar", other, running, emptyList()))
+        assertTrue(HotwireBridge.nameTaken("other.jar", other, null, emptyList()))
+        assertTrue(HotwireBridge.nameTaken("hotwire-2.jar", mods.resolve("hotwire-2.jar"), running, listOf("/staging/hotwire-2.jar")))
+    }
+
+    class RollbackQueue(start: List<String>) {
+        var current = start
+
+        fun getEntries() = current
+
+        @Suppress("unused")
+        private fun replace(entries: List<String>) {
+            current = entries
+        }
+    }
+
     data class Entry(
         val modId: String,
         val name: String,
@@ -81,34 +203,31 @@ class HotwireSelfUpdateQueueTest {
         val stagedSha256: String,
         val reason: String,
         val queuedAtMillis: Long,
-    ) {
-        fun modId() = modId
-        fun name() = name
-        fun toVersion() = toVersion
-        fun stagedJar() = stagedJar
-        fun stagedSha256() = stagedSha256
-        fun reason() = reason
-        fun queuedAtMillis() = queuedAtMillis
+    )
+
+    class Manifest {
+        fun id() = "hotwire"
+        fun name() = "Hotwire"
+        fun version() = "2"
     }
 
-    class Queue(val entries: MutableList<Entry>) {
+    class Queue {
+        val writes = mutableListOf<Entry>()
+
         fun add(entry: Entry) {
-            entries.removeIf { it.modId == entry.modId }
-            entries.add(entry)
+            writes.add(entry)
         }
     }
 
     @Test
-    fun aQueuedAddBecomesAReplacementOfTheRunningJar() {
-        val other = Entry("other", "Other", "", "2", "", "", "/staging/other.jar", "o", "", 1)
-        val added = Entry("hotwire", "Hotwire", "", "2", "", "", "/staging/hotwire-2.jar", "new", "", 2)
-        val queue = Queue(mutableListOf(other, added))
+    fun aSelfUpdateIsQueuedAsAReplacementInOneWrite() {
+        val queue = Queue()
 
-        HotwireBridge.replaceQueued(queue, Path.of("/store/hotwire-2.jar"), "1", Path.of("/mods/hotwire-1.jar"), "old")
+        HotwireBridge.queueReplacement(queue, Entry::class.java, Manifest(), "1", Path.of("/mods/hotwire-1.jar"), "old", Path.of("/staging/hotwire-2.jar"), "new")
 
         assertEquals(
-            listOf(other, Entry("hotwire", "Hotwire", "1", "2", "hotwire-1.jar", "old", "/staging/hotwire-2.jar", "new", "", 2)),
-            queue.entries,
+            listOf(Entry("hotwire", "Hotwire", "1", "2", "hotwire-1.jar", "old", "/staging/hotwire-2.jar", "new", "", 0)),
+            queue.writes.map { it.copy(queuedAtMillis = 0) },
         )
     }
 }

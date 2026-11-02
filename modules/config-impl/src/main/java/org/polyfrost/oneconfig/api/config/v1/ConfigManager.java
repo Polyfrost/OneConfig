@@ -91,6 +91,7 @@ public final class ConfigManager {
     private static final ThreadLocal<Long> PROFILE_OPERATION_DEADLINE = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> REBINDING_PROFILES = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final ThreadLocal<Boolean> LATE_INITIALIZING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static volatile Predicate<Config> awaitingLateWindow = config -> false;
     private static volatile Consumer<Runnable> profileSwitchDispatcher = Runnable::run;
     private static final CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new CopyOnWriteArrayList<>();
@@ -249,22 +250,49 @@ public final class ConfigManager {
     }
 
     @ApiStatus.Internal
-    public static void initializeLate(Predicate<Config> added, Runnable creator) {
+    public static boolean initializeLate(Predicate<Config> added, Runnable creator) {
         LATE_INITIALIZING.set(Boolean.TRUE);
         try {
             for (Config config : createdAfterStartup) {
-                if (config.creator == Thread.currentThread() && added.test(config) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
+                if (isBuilt(config) && added.test(config) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
             }
             creator.run();
         } finally {
             LATE_INITIALIZING.remove();
-            initializePending();
+            holdBackDuplicates();
+            if (!pendingInitialization.isEmpty()) initializePending();
+        }
+        for (Config config : createdAfterStartup) {
+            if (!isBuilt(config) && added.test(config)) return true;
+        }
+        return false;
+    }
+
+    @ApiStatus.Internal
+    public static void setAwaitingLateWindow(Predicate<Config> awaiting) {
+        awaitingLateWindow = awaiting;
+    }
+
+    private static boolean isBuilt(Config config) {
+        if (config.creator == Thread.currentThread()) return true;
+        Set<String> chain = new HashSet<>();
+        for (Class<?> type = config.getClass(); type != Object.class; type = type.getSuperclass()) chain.add(type.getName());
+        for (StackTraceElement frame : config.creator.getStackTrace()) {
+            if ("<init>".equals(frame.getMethodName()) && chain.contains(frame.getClassName())) return false;
+        }
+        return true;
+    }
+
+    private static synchronized void holdBackDuplicates() {
+        Set<String> ids = new HashSet<>(initializedConfigs.keySet());
+        for (Config config : pendingInitialization) {
+            if (!ids.add(config.id) && pendingInitialization.remove(config)) createdAfterStartup.add(config);
         }
     }
 
     @ApiStatus.Internal
-    public static synchronized void claimForLateInitialization(Config config) {
-        if (LATE_INITIALIZING.get() && !initializedConfigs.containsKey(config.id) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
+    public static void claimForLateInitialization(Config config) {
+        if (LATE_INITIALIZING.get() && createdAfterStartup.remove(config)) pendingInitialization.add(config);
     }
 
     private static final Set<String> failedInitialization = ConcurrentHashMap.newKeySet();
@@ -331,7 +359,7 @@ public final class ConfigManager {
     }
 
     static boolean isPendingInitialization(Config config) {
-        return pendingInitialization.contains(config) || createdAfterStartup.contains(config);
+        return pendingInitialization.contains(config) || createdAfterStartup.contains(config) && awaitingLateWindow.test(config);
     }
 
     static void reportResetOptions(Config config, List<String> options) {
