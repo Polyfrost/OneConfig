@@ -3,10 +3,10 @@
 package org.polyfrost.oneconfig.api.ui.v1
 
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.internal.loadBridge
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
-import java.util.ServiceLoader
 
 /**
  * Utility for opening the OneConfig UI
@@ -34,13 +34,7 @@ public object OneConfigUI {
      * Bridge into the OneConfig UI screen if present
      */
     private val bridge: OneConfigUIBridge? by lazy {
-        try {
-            ServiceLoader.load(OneConfigUIBridge::class.java, OneConfigUIBridge::class.java.classLoader)
-                .iterator().let { if (it.hasNext()) it.next() else null }
-        } catch (t: Throwable) {
-            LOGGER.warn("Failed to load OneConfigUIBridge; the OneConfig UI cannot be opened", t)
-            null
-        }
+        loadBridge(OneConfigUIBridge::class.java, "the OneConfig UI cannot be opened")
     }
 
     @JvmStatic
