@@ -28,11 +28,11 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.colorToHex as internalColorToHex
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery as shellPageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.FrostedPolyglassDark
-import org.polyfrost.oneconfig.internal.ui.themes.FrostedPolyglassLight
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftDark
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftLight
+import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassDark
+import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassLight
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedDark
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedLight
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
@@ -54,9 +54,9 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
 
     override fun polyfrostedLight(): OneConfigUITheme = PolyfrostedLight
 
-    override fun frostedPolyglassDark(): OneConfigUITheme = FrostedPolyglassDark
+    override fun polyGlassDark(): OneConfigUITheme = PolyGlassDark
 
-    override fun frostedPolyglassLight(): OneConfigUITheme = FrostedPolyglassLight
+    override fun polyGlassLight(): OneConfigUITheme = PolyGlassLight
 
     override fun minecraftDark(): OneConfigUITheme = MinecraftDark
 

@@ -238,8 +238,8 @@ val MinecraftLight = UITheme(
     MinecraftIconOverrides
 ).withShapes(RoundedCornerShape(0.dp), RoundedCornerShape(0.dp))
 
-val FrostedPolyglassDark = UITheme(
-    "frosted-polyglass-dark", "Frosted Polyglass Dark",
+val PolyGlassDark = UITheme(
+    "polyglass-dark", "PolyGlass Dark",
 
     Color(0x8C16181D),
     Color(0x99121419),
@@ -271,8 +271,8 @@ val FrostedPolyglassDark = UITheme(
     PolyfrostedDark.typography,
 ).withoutGlow().withInsetModFooter().withTranslucentSelection().withLiquidGlass().withCursorEffects()
 
-val FrostedPolyglassLight = UITheme(
-    "frosted-polyglass-light", "Frosted Polyglass Light",
+val PolyGlassLight = UITheme(
+    "polyglass-light", "PolyGlass Light",
 
     Color(0xA6FAFBFF),
     Color(0xB8F2F4F9),

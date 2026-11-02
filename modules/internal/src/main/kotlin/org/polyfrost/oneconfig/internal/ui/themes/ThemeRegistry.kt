@@ -18,16 +18,11 @@ object ThemeRegistry {
 
     private const val DEFAULT_THEME_NAME = "Polyfrosted Dark"
 
-    private val renamedThemes = mapOf(
-        "PolyGlass Dark" to "Polyfrosted Dark",
-        "PolyGlass Light" to "Polyfrosted Light",
-    )
-
     init {
         register(PolyfrostedDark)
         register(PolyfrostedLight)
-        register(FrostedPolyglassDark)
-        register(FrostedPolyglassLight)
+        register(PolyGlassDark)
+        register(PolyGlassLight)
         register(MinecraftDark)
         register(MinecraftLight)
 
@@ -65,8 +60,7 @@ object ThemeRegistry {
     fun loadFromConfig() {
         updateAccent()
         try {
-            val saved = renamedThemes[ThemeConfig.activeTheme] ?: ThemeConfig.activeTheme
-            val theme = registry.find { it.name == saved }
+            val theme = registry.find { it.name == ThemeConfig.activeTheme }
                 ?: registry.find { it.name == DEFAULT_THEME_NAME }
             if (theme != null) {
                 activeTheme = theme

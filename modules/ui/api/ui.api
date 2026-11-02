@@ -586,8 +586,6 @@ public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme {
 	public final fun getAccent (Landroidx/compose/runtime/Composer;I)J
 	public static final fun getActive ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public final fun getCurrent (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
-	public static final fun getFROSTED_POLYGLASS_DARK ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
-	public static final fun getFROSTED_POLYGLASS_LIGHT ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public static final fun getLogoOverride ()Ljava/lang/String;
 	public static final fun getMINECRAFT_DARK ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public static final fun getMINECRAFT_LIGHT ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
