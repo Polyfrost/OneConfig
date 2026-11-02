@@ -74,8 +74,8 @@ private val MinecraftIconOverrides = mapOf(
     "x-circle" to "/assets/oneconfig/ico/minecraft/x-circle.svg",
 )
 
-val PolyGlassDark = UITheme(
-    "polyglass-dark", "PolyGlass Dark",
+val PolyfrostedDark = UITheme(
+    "polyfrosted-dark", "Polyfrosted Dark",
 
     Color(0xC411171C),
     Color(0xB3151C22),
@@ -118,8 +118,8 @@ val PolyGlassDark = UITheme(
     )
 )
 
-val PolyGlassLight = UITheme(
-    "polyglass-light", "PolyGlass Light",
+val PolyfrostedLight = UITheme(
+    "polyfrosted-light", "Polyfrosted Light",
 
     Color(0xB0D0D7F3),
     Color(0xB2D0D7F3),

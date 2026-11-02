@@ -16,16 +16,21 @@ object ThemeRegistry {
     internal val registry = mutableStateListOf<UITheme>()
     internal var activeTheme by mutableStateOf<UITheme?>(null)
 
-    private const val DEFAULT_THEME_NAME = "PolyGlass Dark"
+    private const val DEFAULT_THEME_NAME = "Polyfrosted Dark"
+
+    private val renamedThemes = mapOf(
+        "PolyGlass Dark" to "Polyfrosted Dark",
+        "PolyGlass Light" to "Polyfrosted Light",
+    )
 
     init {
-        register(PolyGlassDark)
-        register(PolyGlassLight)
+        register(PolyfrostedDark)
+        register(PolyfrostedLight)
         register(MinecraftDark)
         register(MinecraftLight)
 
-        activeTheme = PolyGlassDark
-        syncNotificationTheme(PolyGlassDark)
+        activeTheme = PolyfrostedDark
+        syncNotificationTheme(PolyfrostedDark)
 
         BuiltinVisualizers.register()
 
@@ -58,7 +63,8 @@ object ThemeRegistry {
     fun loadFromConfig() {
         updateAccent()
         try {
-            val theme = registry.find { it.name == ThemeConfig.activeTheme }
+            val saved = renamedThemes[ThemeConfig.activeTheme] ?: ThemeConfig.activeTheme
+            val theme = registry.find { it.name == saved }
                 ?: registry.find { it.name == DEFAULT_THEME_NAME }
             if (theme != null) {
                 activeTheme = theme

@@ -8,7 +8,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 
 public class ThemeConfig extends Config {
     @Text(title = "Active Theme")
-    public static String activeTheme = "PolyGlass Dark";
+    public static String activeTheme = "Polyfrosted Dark";
 
     @Color(title = "Accent Color", description = "The accent color of the OneConfig Interface", icon = "paintbrush", gradient = true)
     public static PolyColor accentColor = new PolyColor(0xFF2B4BFF);

@@ -11,10 +11,18 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 @ExperimentalOneConfigUiApi
 object OneConfigTheme {
     @JvmStatic
-    val POLY_GLASS_DARK: OneConfigUITheme by lazy { componentsBridge().polyGlassDark() }
+    val POLYFROSTED_DARK: OneConfigUITheme by lazy { componentsBridge().polyfrostedDark() }
 
     @JvmStatic
-    val POLY_GLASS_LIGHT: OneConfigUITheme by lazy { componentsBridge().polyGlassLight() }
+    val POLYFROSTED_LIGHT: OneConfigUITheme by lazy { componentsBridge().polyfrostedLight() }
+
+    @JvmStatic
+    @Deprecated("Renamed to Polyfrosted", ReplaceWith("OneConfigTheme.POLYFROSTED_DARK"))
+    val POLY_GLASS_DARK: OneConfigUITheme get() = POLYFROSTED_DARK
+
+    @JvmStatic
+    @Deprecated("Renamed to Polyfrosted", ReplaceWith("OneConfigTheme.POLYFROSTED_LIGHT"))
+    val POLY_GLASS_LIGHT: OneConfigUITheme get() = POLYFROSTED_LIGHT
 
     @JvmStatic
     val MINECRAFT_DARK: OneConfigUITheme by lazy { componentsBridge().minecraftDark() }
@@ -33,7 +41,7 @@ object OneConfigTheme {
         get() = componentsBridge().activeTheme()
 
     @JvmStatic
-    fun builtIn(): List<OneConfigUITheme> = listOf(POLY_GLASS_DARK, POLY_GLASS_LIGHT, MINECRAFT_DARK, MINECRAFT_LIGHT)
+    fun builtIn(): List<OneConfigUITheme> = listOf(POLYFROSTED_DARK, POLYFROSTED_LIGHT, MINECRAFT_DARK, MINECRAFT_LIGHT)
 
     @JvmStatic
     fun activate(theme: OneConfigUITheme) {
