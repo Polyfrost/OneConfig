@@ -92,10 +92,6 @@ import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
 //? if skyblock
 import org.polyfrost.oneconfig.internal.compat.FirmamentHudCompat;
 
-//? if fabric {
-import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
-//?}
-
 //? if < 1.21.11 {
 /*import kotlin.Unit;
 *///?}
