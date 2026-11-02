@@ -714,6 +714,23 @@ public abstract interface class org/polyfrost/compose/render/CapturingRenderer {
 	public abstract fun valid (Ljava/lang/Object;)Z
 }
 
+public final class org/polyfrost/compose/render/EmojiFace : org/polyfrost/compose/render/PolyGlyphPage$Face {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/compose/render/EmojiFace$Companion;
+	public fun <init> (Ljava/nio/ByteBuffer;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Ljava/nio/ByteBuffer;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun advance (I)F
+	public fun glyph (I)I
+	public fun pair (II)I
+	public fun raster (IF)Lorg/polyfrost/compose/render/PolyGlyphPage$Raster;
+	public fun raster (IFF)Lorg/polyfrost/compose/render/PolyGlyphPage$Raster;
+	public static final fun system (Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/render/EmojiFace;
+}
+
+public final class org/polyfrost/compose/render/EmojiFace$Companion {
+	public final fun system (Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/compose/render/EmojiFace;
+}
+
 public final class org/polyfrost/compose/render/FilterQuality : java/lang/Enum {
 	public static final field High Lorg/polyfrost/compose/render/FilterQuality;
 	public static final field Low Lorg/polyfrost/compose/render/FilterQuality;
@@ -930,6 +947,7 @@ public final class org/polyfrost/compose/render/PolyFont$Metrics {
 
 public final class org/polyfrost/compose/render/PolyGlyphPage {
 	public static final field $stable I
+	public static final field EMOJI_VARIATION I
 	public static final field INSTANCE Lorg/polyfrost/compose/render/PolyGlyphPage;
 	public static final field SIZE I
 	public static final field SUBPIXELS I
@@ -940,12 +958,15 @@ public final class org/polyfrost/compose/render/PolyGlyphPage {
 	public static synthetic fun atlas$default (Lorg/polyfrost/compose/render/PolyGlyphPage;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIILjava/lang/Object;)Ljava/util/HashMap;
 	public static final fun bitmap (Lorg/polyfrost/compose/render/PolyBitmap;)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
 	public static final fun dropPrerastered ()I
+	public static final fun fallback (II)Lorg/polyfrost/compose/render/PolyGlyphPage$Face;
 	public static final fun getPages ()Ljava/util/List;
 	public static final fun getRasterizer ()Lorg/polyfrost/compose/render/PolyGlyphPage$Rasterizer;
 	public static final fun getRecorder ()Lkotlin/jvm/functions/Function4;
 	public static final fun getRevision ()J
 	public final fun glyph (Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZII)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
 	public static synthetic fun glyph$default (Lorg/polyfrost/compose/render/PolyGlyphPage;Ljava/util/HashMap;Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IIFZIIILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyGlyphPage$Glyph;
+	public static final fun isIgnorable (I)Z
+	public static final fun isPair (II)Z
 	public static final fun prerasterize (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;III)V
 	public static final fun setRasterizer (Lorg/polyfrost/compose/render/PolyGlyphPage$Rasterizer;)V
 	public static final fun setRecorder (Lkotlin/jvm/functions/Function4;)V
@@ -954,17 +975,22 @@ public final class org/polyfrost/compose/render/PolyGlyphPage {
 public abstract interface class org/polyfrost/compose/render/PolyGlyphPage$Face {
 	public abstract fun advance (I)F
 	public abstract fun glyph (I)I
+	public fun pair (II)I
 	public abstract fun raster (IF)Lorg/polyfrost/compose/render/PolyGlyphPage$Raster;
 	public fun raster (IFF)Lorg/polyfrost/compose/render/PolyGlyphPage$Raster;
 }
 
 public final class org/polyfrost/compose/render/PolyGlyphPage$Face$DefaultImpls {
+	public static fun pair (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;II)I
 	public static fun raster (Lorg/polyfrost/compose/render/PolyGlyphPage$Face;IFF)Lorg/polyfrost/compose/render/PolyGlyphPage$Raster;
 }
 
 public final class org/polyfrost/compose/render/PolyGlyphPage$Glyph {
 	public static final field $stable I
 	public fun <init> (Lorg/polyfrost/compose/render/PolyGlyphPage$Page;IIIIFFFF)V
+	public fun <init> (Lorg/polyfrost/compose/render/PolyGlyphPage$Page;IIIIFFFFZ)V
+	public synthetic fun <init> (Lorg/polyfrost/compose/render/PolyGlyphPage$Page;IIIIFFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getColor ()Z
 	public final fun getH ()I
 	public final fun getOffX ()I
 	public final fun getOffY ()I
@@ -988,6 +1014,9 @@ public final class org/polyfrost/compose/render/PolyGlyphPage$Page {
 public final class org/polyfrost/compose/render/PolyGlyphPage$Raster {
 	public static final field $stable I
 	public fun <init> (IIII[B)V
+	public fun <init> (IIII[BZ)V
+	public synthetic fun <init> (IIII[BZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getColor ()Z
 	public final fun getCoverage ()[B
 	public final fun getH ()I
 	public final fun getOffX ()I
@@ -996,7 +1025,12 @@ public final class org/polyfrost/compose/render/PolyGlyphPage$Raster {
 }
 
 public abstract interface class org/polyfrost/compose/render/PolyGlyphPage$Rasterizer {
+	public fun emoji ()Lorg/polyfrost/compose/render/PolyGlyphPage$Face;
 	public abstract fun face (Ljava/lang/String;)Lorg/polyfrost/compose/render/PolyGlyphPage$Face;
+}
+
+public final class org/polyfrost/compose/render/PolyGlyphPage$Rasterizer$DefaultImpls {
+	public static fun emoji (Lorg/polyfrost/compose/render/PolyGlyphPage$Rasterizer;)Lorg/polyfrost/compose/render/PolyGlyphPage$Face;
 }
 
 public abstract class org/polyfrost/compose/render/PolyGradient {

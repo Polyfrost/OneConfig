@@ -49,6 +49,7 @@ import com.ibm.icu.lang.UCharacter
 import com.ibm.icu.text.ArabicShaping
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import java.text.Bidi
 import java.text.BreakIterator
@@ -211,7 +212,15 @@ internal class PolyIntrinsics(
             while (i < run.end) {
                 val cp = glyphs.codePointAt(i)
                 val n = Character.charCount(cp)
-                advances[i] = if (cp == '\n'.code || cp == LIGATURE_PLACEHOLDER.code) 0f else Advances.of(run.font, cp) + letter
+                val next = if (i + n < run.end) glyphs.codePointAt(i + n) else 0
+                if (PolyGlyphPage.isPair(cp, next)) {
+                    val end = i + n + Character.charCount(next)
+                    advances[i] = run.font.measureTextWidth(glyphs.substring(i, end)) + letter
+                    i = end
+                    continue
+                }
+                val emoji = i + n < glyphs.length && glyphs.codePointAt(i + n) == PolyGlyphPage.EMOJI_VARIATION
+                advances[i] = if (cp == '\n'.code || cp == LIGATURE_PLACEHOLDER.code || PolyGlyphPage.isIgnorable(cp)) 0f else Advances.of(run.font, cp, emoji) + letter
                 i += n
             }
         }
@@ -256,13 +265,16 @@ private object Advances {
     private val cache = ConcurrentHashMap<PolyFont, ConcurrentHashMap<Int, Float>>()
     @Volatile private var fonts = -1
 
-    fun of(font: PolyFont, cp: Int): Float {
+    fun of(font: PolyFont, cp: Int, emoji: Boolean): Float {
         val revision = FontManager.revision
         if (revision != fonts) {
             cache.clear()
             fonts = revision
         }
-        return cache.getOrPut(font) { ConcurrentHashMap() }.getOrPut(cp) { font.measureTextWidth(String(Character.toChars(cp))) }
+        return cache.getOrPut(font) { ConcurrentHashMap() }.getOrPut(if (emoji) cp.inv() else cp) {
+            val s = String(Character.toChars(cp))
+            font.measureTextWidth(if (emoji) s + String(Character.toChars(PolyGlyphPage.EMOJI_VARIATION)) else s)
+        }
     }
 }
 

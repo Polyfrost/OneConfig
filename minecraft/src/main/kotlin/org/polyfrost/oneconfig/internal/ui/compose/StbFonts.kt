@@ -12,10 +12,10 @@ import org.lwjgl.stb.STBTruetype.stbtt_InitFont
 import org.lwjgl.stb.STBTruetype.stbtt_MakeGlyphBitmapSubpixel
 import org.lwjgl.stb.STBTruetype.stbtt_ScaleForMappingEmToPixels
 import org.lwjgl.system.MemoryUtil
+import org.polyfrost.compose.render.EmojiFace
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGlyphPage
-import org.polyfrost.compose.render.PolyTessellator
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -114,6 +114,10 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
         return Face(bytes).also { faces[name] = it }
     }
 
+    private val emoji by lazy { runCatching { EmojiFace.system(::Face) }.getOrNull() }
+
+    override fun emoji() = emoji
+
     @Synchronized
     private fun nameOf(face: PolyGlyphPage.Face): String? = faces.entries.firstOrNull { it.value === face }?.key
 
@@ -143,9 +147,13 @@ internal object StbFonts : PolyFont.Engine, PolyGlyphPage.Rasterizer {
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
+            if (PolyGlyphPage.isIgnorable(cp)) continue
             val id = face.glyph(cp)
-            val fallback = if (id == 0 && !Character.isWhitespace(cp)) face(PolyTessellator.FALLBACK_FONT) else null
-            val fid = fallback?.glyph(cp) ?: 0
+            val next = if (i < text.length) text.codePointAt(i) else 0
+            val fallback = if (id == 0 && !Character.isWhitespace(cp)) PolyGlyphPage.fallback(cp, next) else null
+            val pair = fallback?.pair(cp, next) ?: 0
+            val fid = if (pair != 0) pair else fallback?.glyph(cp) ?: 0
+            if (pair != 0) i += Character.charCount(next)
             if (fid != 0) extra += fallback!!.advance(fid) else units += face.advanceUnits(id)
         }
         return (units * face.emScale + extra) * font.size

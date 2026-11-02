@@ -11,10 +11,14 @@ import kotlin.math.sqrt
 object PolyGlyphPage {
     interface Rasterizer {
         fun face(name: String): Face?
+
+        fun emoji(): Face? = null
     }
 
     interface Face {
         fun glyph(codepoint: Int): Int
+
+        fun pair(first: Int, second: Int): Int = 0
 
         fun advance(glyph: Int): Float
 
@@ -23,9 +27,9 @@ object PolyGlyphPage {
         fun raster(glyph: Int, pixelSize: Float, shiftX: Float): Raster? = raster(glyph, pixelSize)
     }
 
-    class Raster(val offX: Int, val offY: Int, val w: Int, val h: Int, val coverage: ByteArray)
+    class Raster @JvmOverloads constructor(val offX: Int, val offY: Int, val w: Int, val h: Int, val coverage: ByteArray, val color: Boolean = false)
 
-    class Glyph(val page: Page, val offX: Int, val offY: Int, val w: Int, val h: Int, val u0: Float, val v0: Float, val u1: Float, val v1: Float) {
+    class Glyph @JvmOverloads constructor(val page: Page, val offX: Int, val offY: Int, val w: Int, val h: Int, val u0: Float, val v0: Float, val u1: Float, val v1: Float, val color: Boolean = false) {
         fun u(t: Float) = u0 + (u1 - u0) * t
         fun v(t: Float) = v0 + (v1 - v0) * t
     }
@@ -76,6 +80,7 @@ object PolyGlyphPage {
         }
 
         internal fun place(r: Raster): Glyph? {
+            if (r.color) return place(PolyBitmap(r.w, r.h, r.coverage), r.offX, r.offY, true)
             val at = alloc(r.w, r.h)
             if (at < 0) return null
             val x = at ushr 16
@@ -86,7 +91,7 @@ object PolyGlyphPage {
             return Glyph(this, r.offX, r.offY, r.w, r.h, x / SIZE.toFloat(), y / SIZE.toFloat(), (x + r.w) / SIZE.toFloat(), (y + r.h) / SIZE.toFloat())
         }
 
-        internal fun place(b: PolyBitmap): Glyph? {
+        internal fun place(b: PolyBitmap, offX: Int = 0, offY: Int = 0, color: Boolean = false): Glyph? {
             val w = b.width
             val h = b.height
             val at = alloc(w + 2, h + 2)
@@ -99,7 +104,7 @@ object PolyGlyphPage {
                 pixels[(y + gy) * SIZE + x + gx] = ((px[o + 3].toInt() and 0xFF) shl 24) or ((px[o + 2].toInt() and 0xFF) shl 16) or
                     ((px[o + 1].toInt() and 0xFF) shl 8) or (px[o].toInt() and 0xFF)
             }
-            return Glyph(this, 0, 0, w, h, x / SIZE.toFloat(), y / SIZE.toFloat(), (x + w) / SIZE.toFloat(), (y + h) / SIZE.toFloat())
+            return Glyph(this, offX, offY, w, h, x / SIZE.toFloat(), y / SIZE.toFloat(), (x + w) / SIZE.toFloat(), (y + h) / SIZE.toFloat(), color)
         }
     }
 
@@ -137,6 +142,10 @@ object PolyGlyphPage {
 
     const val SUBPIXELS = 4
 
+    const val EMOJI_VARIATION = 0xFE0F
+
+    private val REGIONAL = 0x1F1E6..0x1F1FF
+
     private data class Prekey(val face: Face, val bucket: Int, val slot: Int)
 
     // Stands in for glyphs without a bitmap, such as spaces, so they're only rasterized once
@@ -147,6 +156,21 @@ object PolyGlyphPage {
 
     @JvmStatic
     var recorder: ((face: Face, bucket: Int, id: Int, phase: Int) -> Unit)? = null
+
+    @JvmStatic
+    fun isIgnorable(cp: Int) = cp == 0x200D || cp in 0xFE00..EMOJI_VARIATION
+
+    @JvmStatic
+    fun fallback(cp: Int, next: Int): Face? {
+        val r = rasterizer ?: return null
+        if (Character.isEmojiPresentation(cp) || (next == EMOJI_VARIATION && Character.isEmoji(cp))) {
+            r.emoji()?.let { if (it.glyph(cp) != 0) return it }
+        }
+        return r.face(PolyTessellator.FALLBACK_FONT)
+    }
+
+    @JvmStatic
+    fun isPair(cp: Int, next: Int) = cp in REGIONAL && next in REGIONAL && fallback(cp, next)?.pair(cp, next).let { it != null && it != 0 }
 
     private fun raster(face: Face, bucket: Int, id: Int, phase: Int): Raster? =
         if (phase == 0) face.raster(id, bucket / 4f) else face.raster(id, bucket / 4f, phase / SUBPIXELS.toFloat())
@@ -179,14 +203,17 @@ object PolyGlyphPage {
     }
 
     private fun newGlyph(face: Face, bucket: Int, id: Int, outlinePx: Float, round: Boolean, phase: Int, lum: Int): Glyph? {
-        if (outlinePx > 0f) return place(dilate(raster(face, bucket, id, phase) ?: return null, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
+        if (outlinePx > 0f) {
+            val r = raster(face, bucket, id, phase) ?: return null
+            return if (r.color) null else place(dilate(r, max(1, (outlinePx * 4f).roundToInt()) / 4f, round))
+        }
         val key = Prekey(face, bucket, id * SUBPIXELS + phase)
         val r = rasters.getOrPut(key) {
             recorder?.invoke(face, bucket, id, phase)
             prerastered.remove(key) ?: raster(face, bucket, id, phase) ?: BLANK
         }
         if (r === BLANK) return null
-        return place(if (lum < 0) r else PolyMaskGamma.apply(r, lum))
+        return place(if (lum < 0 || r.color) r else PolyMaskGamma.apply(r, lum))
     }
 
     private fun dilate(r: Raster, radius: Float, round: Boolean): Raster {
@@ -239,7 +266,8 @@ object PolyGlyphPage {
     }
 
     private fun place(r: Raster): Glyph? {
-        if (r.w <= 0 || r.h <= 0 || r.w + PAD * 2 > SIZE || r.h + PAD * 2 > SIZE) return null
+        val edge = if (r.color) PAD + 1 else PAD
+        if (r.w <= 0 || r.h <= 0 || r.w + edge * 2 > SIZE || r.h + edge * 2 > SIZE) return null
         return _pages.last().place(r) ?: Page().also { _pages += it }.place(r)
     }
 }

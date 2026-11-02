@@ -563,6 +563,10 @@ abstract class PolyTessellator : PolyRenderer {
         var fallback: PolyGlyphPage.Face? = null
         var fallbackAtlas: HashMap<Int, PolyGlyphPage.Glyph?>? = null
         fun glyph(f: PolyGlyphPage.Face, id: Int, phase: Int): PolyGlyphPage.Glyph? {
+            if (f !== face && f !== fallback) {
+                fallback = f
+                if (!cpuOnly) fallbackAtlas = PolyGlyphPage.atlas(f, bucket, outline, round, lum)
+            }
             val a = if (f === face) atlas else fallbackAtlas
             if (a != null) return PolyGlyphPage.glyph(a, f, bucket, id, outline, round, phase, lum)
             if (outline <= 0f) PolyGlyphPage.prerasterize(f, bucket, id, phase)
@@ -573,15 +577,16 @@ abstract class PolyTessellator : PolyRenderer {
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
+            if (PolyGlyphPage.isIgnorable(cp)) continue
             var f = face
             var id = face.glyph(cp)
             if (id == 0 && !Character.isWhitespace(cp)) {
-                if (fallback == null) {
-                    fallback = PolyGlyphPage.rasterizer?.face(FALLBACK_FONT)
-                    if (fallback != null && !cpuOnly) fallbackAtlas = PolyGlyphPage.atlas(fallback, bucket, outline, round, lum)
-                }
-                val fid = fallback?.glyph(cp) ?: 0
-                if (fid != 0) { f = fallback!!; id = fid }
+                val next = if (i < text.length) text.codePointAt(i) else 0
+                val other = PolyGlyphPage.fallback(cp, next)
+                val pair = other?.pair(cp, next) ?: 0
+                val fid = if (pair != 0) pair else other?.glyph(cp) ?: 0
+                if (fid != 0) { f = other!!; id = fid }
+                if (pair != 0) i += Character.charCount(next)
             }
             val sx = penX * state.sx + state.tx
             if (k != 1f) {
@@ -591,7 +596,7 @@ abstract class PolyTessellator : PolyRenderer {
                     val px = sx + (g.offX - phase.toFloat() / PolyGlyphPage.SUBPIXELS) * k
                     val py = y * state.sy + state.ty + g.offY * k
                     begin(g.page, false)
-                    glyphQuad(px, py, px + g.w * k, py + g.h * k, g.u0, g.v0, g.u1, g.v1, c)
+                    glyphQuad(px, py, px + g.w * k, py + g.h * k, g.u0, g.v0, g.u1, g.v1, if (g.color) c or 0xFFFFFF else c)
                 }
                 penX += f.advance(id) * font.size + letterSpacing
                 continue
@@ -604,7 +609,7 @@ abstract class PolyTessellator : PolyRenderer {
                 val px = base + g.offX
                 val py = (y * state.sy + state.ty).roundToInt() + g.offY
                 begin(g.page, false)
-                glyphQuad(px.toFloat(), py.toFloat(), (px + g.w).toFloat(), (py + g.h).toFloat(), g.u0, g.v0, g.u1, g.v1, c)
+                glyphQuad(px.toFloat(), py.toFloat(), (px + g.w).toFloat(), (py + g.h).toFloat(), g.u0, g.v0, g.u1, g.v1, if (g.color) c or 0xFFFFFF else c)
             }
             penX += f.advance(id) * font.size + letterSpacing
         }
