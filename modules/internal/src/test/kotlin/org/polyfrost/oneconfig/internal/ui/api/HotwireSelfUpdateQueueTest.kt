@@ -86,8 +86,19 @@ class HotwireSelfUpdateQueueTest {
         assertEquals(listOf("old java"), refusals(Planner(emptyList(), emptyMap()), Graph(emptyMap()), listOf("old java")))
     }
 
-    private fun nestedRefusals(planner: Planner, graph: Graph, vararg versions: String) =
-        (HotwireBridge.refusedPlan(planner, graph, listOf("hotwire"), emptyList(), mapOf("lib" to versions.toList())) { version, ranges -> version in ranges } as Plan?)?.refusals()
+    private fun nestedRefusals(planner: Planner, graph: Graph, vararg versions: String, wants: Map<String, List<String>>? = null) =
+        (HotwireBridge.refusedPlan(
+            planner,
+            graph,
+            listOf("hotwire"),
+            emptyList(),
+            mapOf("lib" to versions.toList()),
+            { version, ranges -> version in ranges },
+            { mod, dependency ->
+                wants?.get(mod)?.let(::listOf)
+                    ?: planner.findOldDependencies(mod).filterIsInstance<Old>().filter { it.dependency() == dependency }.map { it.wanted().split(" or ") }
+            },
+        ) as Plan?)?.refusals()
 
     @Test
     fun aModNeedingAnotherVersionOfANestedModRefusesIt() {
@@ -105,6 +116,27 @@ class HotwireSelfUpdateQueueTest {
     fun aDependentsOtherOldDependencyIsNotBlamedOnANestedMod() {
         val old = Old("other", "unrelated", "1")
         assertNull(nestedRefusals(Planner(emptyList(), mapOf("other" to listOf(old))), Graph(mapOf("lib" to setOf("other"))), "2"))
+    }
+
+    @Test
+    fun nestedCopiesThatEachSuitOnlyOneDependentRefuseIt() {
+        val old = Old("b", "lib", "2")
+        val graph = Graph(mapOf("lib" to setOf("a", "b")), roots = setOf("a", "b"))
+        assertEquals(listOf(old), nestedRefusals(Planner(emptyList(), mapOf("b" to listOf(old))), graph, "1", "2", wants = mapOf("a" to listOf("1"), "b" to listOf("2"))))
+    }
+
+    @Test
+    fun aNestedCopySuitingEveryDependentIsNotRefused() {
+        val old = Old("b", "lib", "2")
+        val graph = Graph(mapOf("lib" to setOf("a", "b")), roots = setOf("a", "b"))
+        assertNull(nestedRefusals(Planner(emptyList(), mapOf("b" to listOf(old))), graph, "1", "2", wants = mapOf("a" to listOf("1", "2"), "b" to listOf("2"))))
+    }
+
+    @Test
+    fun anOptionalDependentDoesNotNarrowTheNestedCopies() {
+        val old = Old("b", "lib", "2")
+        val graph = Graph(mapOf("lib" to setOf("unused", "b")), roots = setOf("b"))
+        assertNull(nestedRefusals(Planner(emptyList(), mapOf("b" to listOf(old))), graph, "1", "2", wants = mapOf("unused" to listOf("1"), "b" to listOf("2"))))
     }
 
     @Test
@@ -140,33 +172,53 @@ class HotwireSelfUpdateQueueTest {
         assertEquals(listOf("other" to "lib"), HotwireBridge.lostNeeds(graph, listOf("lib", "kept", "lib")))
     }
 
+    private val ok = HotwireBridge.Result(true, "")
+
     @Test
     fun aFailedStepPutsTheQueueBack() {
-        val queue = RollbackQueue(listOf("earlier"))
+        val queue = RollbackQueue(listOf(Queued("earlier")))
         val failed = HotwireBridge.Result(false, "no")
 
-        val result = HotwireBridge.queueTogether(queue, listOf({ queue.current += "need"; HotwireBridge.Result(true, "") }, { failed }))
+        val result = HotwireBridge.queueTogether(queue, listOf("need"), listOf({ queue.current += Queued("need"); ok }, { failed }))
 
         assertEquals(failed, result)
-        assertEquals(listOf("earlier"), queue.current)
+        assertEquals(listOf(Queued("earlier")), queue.current)
     }
 
     @Test
     fun aThrowingStepPutsTheQueueBack() {
         val queue = RollbackQueue(emptyList())
 
-        val result = HotwireBridge.queueTogether(queue, listOf({ queue.current += "need"; error("broken") }))
+        val result = HotwireBridge.queueTogether(queue, listOf("need"), listOf({ queue.current += Queued("need"); error("broken") }))
 
         assertEquals("broken", result?.message)
-        assertEquals(emptyList<String>(), queue.current)
+        assertEquals(emptyList<Queued>(), queue.current)
     }
 
     @Test
     fun stepsThatAllLandStayQueued() {
         val queue = RollbackQueue(emptyList())
 
-        assertNull(HotwireBridge.queueTogether(queue, listOf({ queue.current += "need"; HotwireBridge.Result(true, "") })))
-        assertEquals(listOf("need"), queue.current)
+        assertNull(HotwireBridge.queueTogether(queue, listOf("need"), listOf({ queue.current += Queued("need"); ok })))
+        assertEquals(listOf(Queued("need")), queue.current)
+    }
+
+    @Test
+    fun aFailureKeepsWhatAnotherOperationQueuedMeanwhile() {
+        val queue = RollbackQueue(emptyList())
+
+        HotwireBridge.queueTogether(queue, listOf("need"), listOf({ queue.current += Queued("need"); queue.current += Queued("other"); HotwireBridge.Result(false, "no") }))
+
+        assertEquals(listOf(Queued("other")), queue.current)
+    }
+
+    @Test
+    fun aFailureRestoresTheEntryItReplaced() {
+        val queue = RollbackQueue(listOf(Queued("need", "old")))
+
+        HotwireBridge.queueTogether(queue, listOf("need"), listOf({ queue.current = listOf(Queued("need", "new")); HotwireBridge.Result(false, "no") }))
+
+        assertEquals(listOf(Queued("need", "old")), queue.current)
     }
 
     @Test
@@ -191,13 +243,17 @@ class HotwireSelfUpdateQueueTest {
         assertFalse(HotwireBridge.nameTaken(Files.writeString(staging.resolve("mod.jar"), "bytes"), present, null, emptyList()))
     }
 
-    class RollbackQueue(start: List<String>) {
+    data class Queued(private val id: String, val jar: String = "") {
+        fun modId() = id
+    }
+
+    class RollbackQueue(start: List<Queued>) {
         var current = start
 
         fun getEntries() = current
 
         @Suppress("unused")
-        private fun replace(entries: List<String>) {
+        private fun replace(entries: List<Queued>) {
             current = entries
         }
     }

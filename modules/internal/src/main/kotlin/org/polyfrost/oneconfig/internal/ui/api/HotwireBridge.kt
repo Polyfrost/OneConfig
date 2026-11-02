@@ -514,11 +514,13 @@ object HotwireBridge {
     private fun addInOrder(engine: Any, jars: List<Path>, name: String, reopen: Boolean, later: Boolean = false): Result {
         nextLaunchRefusal(engine, jars)?.let { return Result(false, it) }
         var queueing = later
-        for (jar in jars) {
-            queueing = queueing || dryRunAdd(engine, jar).addMode() == "NEXT_START"
-            val result = if (queueing) queueAdd(engine, jar) else addNow(engine, jar, reopen)
-            if (!result.ok) return result
+        val steps = jars.map { jar ->
+            {
+                queueing = queueing || dryRunAdd(engine, jar).addMode() == "NEXT_START"
+                if (queueing) queueAdd(engine, jar) else addNow(engine, jar, reopen)
+            }
         }
+        queueTogether(engine.field("updateQueue")!!, jars.map { readJar(it).modId() }, steps)?.let { return it }
         return Result(
             true,
             if (queueing) {
@@ -557,7 +559,7 @@ object HotwireBridge {
             CompletableFuture.supplyAsync {
                 val needs = jars.dropLast(1).map { jar -> { queueAdd(engine, jar) } }
                 nextLaunchRefusal(engine, jars)?.let { Result(false, it) }
-                    ?: queueTogether(engine.field("updateQueue")!!, needs + { queueSelfUpdate(engine, update, jars.last()) })
+                    ?: queueTogether(engine.field("updateQueue")!!, jars.map { readJar(it).modId() }, needs + { queueSelfUpdate(engine, update, jars.last()) })
                     ?: Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", update.name))
             }
         }
@@ -569,10 +571,13 @@ object HotwireBridge {
         )
     }
 
-    fun queueTogether(queue: Any, steps: List<() -> Result>): Result? {
-        val before = queue.callMethod("getEntries")!!
+    @Suppress("UNCHECKED_CAST")
+    fun queueTogether(queue: Any, ids: List<String>, steps: List<() -> Result>): Result? {
+        val before = (queue.callMethod("getEntries") as List<Any>).filter { it.get("modId") in ids }
         val failed = runCatching { steps.firstNotNullOfOrNull { step -> step().takeUnless { it.ok } } }.getOrElse(::failure) ?: return null
-        queue.callHidden("replace", before)
+        synchronized(queue) {
+            queue.callHidden("replace", (queue.callMethod("getEntries") as List<Any>).filterNot { it.get("modId") in ids } + before)
+        }
         return failed
     }
 
@@ -580,7 +585,7 @@ object HotwireBridge {
     private fun nextLaunchRefusal(engine: Any, jars: List<Path>): String? = runCatching {
         val incoming = jars.map(::readJar)
         val ids = incoming.map { it.modId() }
-        val queued = (engine.field("updateQueue")!!.callMethod("getEntries") as List<Any>).mapNotNull { entry ->
+        val queued = (engine.field("updateQueue")!!.callMethod("getEntries") as List<Any>).filterNot { it.get("modId") in ids }.mapNotNull { entry ->
             runCatching { readJar(Path.of(entry.get("stagedJar") as String)) }.getOrNull()?.let { entry.get("modId") as String to it }
         }
         val installed = engine.field("installed")!!
@@ -594,6 +599,10 @@ object HotwireBridge {
         val depends = Class.forName("dev.moon.hotwire.jar.ModManifest\$Relation").enumConstants.first { (it as Enum<*>).name == "DEPENDS" }
         val oldDependency = Class.forName("dev.moon.hotwire.plan.SwitchPlan\$Refusal\$OldDependency").constructors.single()
         val fits = { version: String, ranges: List<String> -> engine.callStatic("ModPolicy", "satisfies", version, ranges) == true }
+        val wants = { mod: String, dependency: String ->
+            ((graph.callMethod("find", mod) as Optional<*>).orElseThrow().callMethod("getRelation", depends) as Map<String, List<String>>)
+                .filterKeys { graph.callMethod("resolve", it) == dependency }.values.toList()
+        }
         val builtIns = incoming.flatMap { it.parts() }.flatMap { part ->
             oldBuiltIns(
                 part.modId(),
@@ -607,7 +616,7 @@ object HotwireBridge {
             .map { (mod, dependency) -> missing.newInstance(mod, dependency) }
         val copies = landing.flatMap { it.parts() }.groupBy({ it.modId() }, { it.get("manifest")!!.get("version") as String })
         val nested = (incoming.flatMap { it.parts() }.map { it.modId() } - landing.map { it.modId() }.toSet()).associateWith(copies::getValue)
-        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids, builtIns + lost, nested, fits)?.let { describeRefusal(engine, it) }
+        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids, builtIns + lost, nested, fits, wants)?.let { describeRefusal(engine, it) }
     }.getOrElse {
         translated("oneconfig.page.hotwire.next_launch_unchecked", "Hotwire couldn't check this against your other mods, so nothing was changed.")
     }
@@ -636,15 +645,17 @@ object HotwireBridge {
         extra: List<Any> = emptyList(),
         nested: Map<String, List<String>> = emptyMap(),
         fits: (String, List<String>) -> Boolean = { _, _ -> true },
+        wants: (String, String) -> List<List<String>> = { _, _ -> emptyList() },
     ): Any? {
         val plan = planner.callMethod("planOn", ids, ids.toSet())!!
         val old = (ids + ids.flatMap { graph.callMethod("getDependents", it) as Collection<String> }).distinct()
             .flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }
             .filter { it.get("mod") in ids || it.get("dependency") in ids }
         val oldNested = nested.flatMap { (id, versions) ->
-            (graph.callMethod("getDependents", id) as Collection<String>)
-                .flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }
-                .filter { refusal -> refusal.get("dependency") == id && versions.none { fits(it, (refusal.get("wanted") as String).split(" or ")) } }
+            val dependents = (graph.callMethod("getDependents", id) as Collection<String>).filter { isNeeded(graph, it) }
+            val needs = dependents.flatMap { wants(it, id) }
+            if (versions.any { version -> needs.all { fits(version, it) } }) return@flatMap emptyList()
+            dependents.flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }.filter { it.get("dependency") == id }
         }
         val nestedRefusals = nested.filterValues { it.distinct().size == 1 }.keys.toList().takeIf { it.isNotEmpty() }
             ?.let { only -> planner.callMethod("planOn", only, only.toSet())!!.get("refusals") as List<Any> }
@@ -827,11 +838,10 @@ object HotwireBridge {
 
     /** Lands [steps] in order and then updates [jar], stopping at the first that fails, since each one's plan rests on those before */
     private fun runSteps(engine: Any, steps: List<Path>, jar: Path, reopen: Boolean): Result {
-        for (step in steps) {
-            val result = if (engine.callMethod("canUpdate", step) == true) updateNow(step) else addNow(engine, step, reopen)
-            if (!result.ok) return result
-        }
-        return updateNow(jar)
+        val adds = steps.filter { engine.callMethod("canUpdate", it) != true }
+        val landing = steps.map { step -> { if (step in adds) addNow(engine, step, reopen) else updateNow(step) } }
+        lateinit var updated: Result
+        return queueTogether(engine.field("updateQueue")!!, adds.map { readJar(it).modId() }, landing + { updateNow(jar).also { updated = it } }) ?: updated
     }
 
     @Suppress("UNCHECKED_CAST")
