@@ -290,6 +290,9 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         return meshes
     }
 
+    // Sodium's warning about optimized vertex writing code paths is safe to ignore. It is meant for real GPU buffers
+    // writing straight into native memory. We only copy vertices into float arrays here. Adding compatibility for it
+    // would just make performance worse.
     internal class GlyphCapture : VertexConsumer {
         var verts = FloatArray(64)
         var colors = IntArray(16)
