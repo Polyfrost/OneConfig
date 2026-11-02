@@ -417,6 +417,7 @@ private fun SwitchBar(
 
     val offCount = picked.values.count { familyOn(it, states) == true }
     val onCount = picked.values.count { familyOn(it, states) == false }
+    val tooMany = offCount + onCount > MaxSwitchedMods
     val label = when {
         reopens == true -> translated("oneconfig.page.hotwire.switch.reopen", "Save and switch")
         offCount > 0 && onCount > 0 -> "Switch ${offCount + onCount}"
@@ -427,9 +428,10 @@ private fun SwitchBar(
         states == null -> "Hotwire is still starting, so mods can't be switched yet."
         updating != null -> translated("oneconfig.page.hotwire.updates.running", "Updating %s…", updating)
         running -> "Switching… ${(fraction * 100).toInt()}%"
+        tooMany -> translated("oneconfig.page.hotwire.switch.too_many", "Only %s mods can be switched at once.", MaxSwitchedMods)
         else -> previews.joinToString(" ") { it.message }
     }
-    val canSwitch = !running && reopens != null && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
+    val canSwitch = !running && !tooMany && reopens != null && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
 
     fun start() {
         switching = true
@@ -479,6 +481,8 @@ private fun SwitchBar(
         if (canSwitch) Chip(label, selected = true, onClick = ::start)
     }
 }
+
+private const val MaxSwitchedMods = 5
 
 private fun done(message: String) = CompletableFuture.completedFuture(HotwireBridge.Result(true, message))
 

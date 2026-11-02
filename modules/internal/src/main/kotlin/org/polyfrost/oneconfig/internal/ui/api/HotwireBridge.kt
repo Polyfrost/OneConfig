@@ -574,6 +574,8 @@ object HotwireBridge {
     @Suppress("UNCHECKED_CAST")
     fun queueTogether(queue: Any, ids: List<String>, steps: List<() -> Result>): Result? {
         val before = (queue.callMethod("getEntries") as List<Any>).filter { it.get("modId") in ids }
+        // a step may overwrite a staged jar in place, so keep its bytes to put back
+        val staged = before.mapNotNull { entry -> runCatching { Path.of(entry.get("stagedJar") as String).let { it to Files.readAllBytes(it) } }.getOrNull() }
         val failed = runCatching { steps.firstNotNullOfOrNull { step -> step().takeUnless { it.ok } } }.getOrElse(::failure) ?: return null
         staged.forEach { (jar, bytes) -> runCatching { Files.write(jar, bytes) } }
         synchronized(queue) {
