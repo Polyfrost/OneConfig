@@ -225,7 +225,6 @@ public class FileBackend extends Backend {
         Path p = folder.resolve(tree.getID());
         if (!Files.exists(p)) return false;
         Files.delete(p);
-        dodge(p.getFileName().toString());
         return true;
     }
 
