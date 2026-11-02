@@ -432,13 +432,14 @@ object HotwireBridge {
             true,
         ) {
             accepted = true
-            val added = if (inOrder == null) {
+            val ordered = inOrder ?: engine()?.takeIf { "NEXT_START" in modes }
+            val added = if (ordered == null) {
                 add.through("StoreAdd", "accept").asResults().thenApplyAsync { result ->
-                    if (result.ok) lostJar(engine()!!, jars, modes) ?: result else result
+                    if (result.ok) lostJar(engine()!!, jars) ?: result else result
                 }
             } else {
                 add.through("StoreAdd", "cancel")
-                CompletableFuture.supplyAsync { addInOrder(inOrder, jars, hit.title, reopen) }
+                CompletableFuture.supplyAsync { addInOrder(ordered, jars, hit.title, reopen) }
             }
             added.thenApplyAsync { result ->
                 runCatching { installedCheck()?.get() }
@@ -554,7 +555,7 @@ object HotwireBridge {
         nextLaunchRefusal(engine, jars)?.let { return JarPlan(update.name, detail, listOf(it), emptyList()) }
         val action = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
             CompletableFuture.supplyAsync {
-                val needs = jars.dropLast(1).map { jar -> { nameClash(engine, jar, readJar(jar).modId(), null) ?: queueAdd(engine, jar) } }
+                val needs = jars.dropLast(1).map { jar -> { queueAdd(engine, jar) } }
                 nextLaunchRefusal(engine, jars)?.let { Result(false, it) }
                     ?: queueTogether(engine.field("updateQueue")!!, needs + { queueSelfUpdate(engine, update, jars.last()) })
                     ?: Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", update.name))
@@ -685,15 +686,32 @@ object HotwireBridge {
         val queued = (engine.field("updateQueue")!!.callMethod("getEntries") as List<*>)
             .filter { it!!.get("modId") != modId }.map { it!!.get("stagedJar") as String }
         val target = (engine.field("updateFolders")!!.get("mods") as Path).resolve(name)
-        return if (nameTaken(name, target, running, queued)) {
+        return if (nameTaken(jar, target, running, queued)) {
             Result(false, translated("oneconfig.page.hotwire.update.name_taken", "A different jar named %s is already there, so nothing was changed.", name))
         } else {
             null
         }
     }
 
-    fun nameTaken(name: String, target: Path, running: Path?, queued: List<String>): Boolean =
-        queued.any { Path.of(it).fileName.toString() == name } || Files.exists(target) && (running == null || !Files.isSameFile(target, running))
+    fun nameTaken(jar: Path, target: Path, running: Path?, queued: List<String>): Boolean {
+        val name = jar.fileName.toString()
+        return queued.any { Path.of(it).fileName.toString() == name } ||
+            Files.exists(target) && name != running?.fileName?.toString() && Files.mismatch(target, jar) != -1L
+    }
+
+    private fun updateClash(engine: Any, jar: Path): Result? {
+        val incoming = unwrapped(engine, jar)
+        val manifest = manifestOf(incoming) ?: return null
+        val id = manifest.get("id") as String
+        val replaced = if (engine.callMethod("findJarOf", id) != null) {
+            id
+        } else {
+            runCatching {
+                engine.callHidden("findParts")!!.field("updates")!!.field("updater")!!.field("idChanged")!!.callHidden("findReplacedBy", manifest) as String?
+            }.getOrNull()
+        }
+        return nameClash(engine, incoming, replaced ?: id, replaced?.let { engine.callMethod("findJarOf", it) as Path? })
+    }
 
     private fun sha256(file: Path): String =
         Class.forName("dev.moon.hotwire.jar.FileHashes").getMethod("findSha256", Path::class.java).invoke(null, file) as String
@@ -872,11 +890,8 @@ object HotwireBridge {
     private fun notKept(jar: Path) =
         Result(false, translated("oneconfig.page.hotwire.add.not_kept", "%s is added for now, but it won't stay after a restart - please check chat!", nameOfJar(jar)))
 
-    private fun lostJar(engine: Any, jars: List<Path>, modes: List<String>): Result? {
-        val (queued, live) = jars.indices.partition { modes[it] == "NEXT_START" }
-        return queued.firstOrNull { !isQueued(engine, jars[it]) }?.let { queueFailed(jars[it]) }
-            ?: live.firstOrNull { at -> !onUiThread { keptForNextLaunch(engine, jars[at]) } }?.let { notKept(jars[it]) }
-    }
+    private fun lostJar(engine: Any, jars: List<Path>): Result? =
+        jars.firstOrNull { !onUiThread { keptForNextLaunch(engine, it) } }?.let(::notKept)
 
     private fun unwrapped(engine: Any, jar: Path): Path = runCatching {
         engine.callHidden("findParts")!!.field("updates")!!.field("updater")!!.callMethod("unwrap", jar) as Path
@@ -894,6 +909,7 @@ object HotwireBridge {
         Result(false, translated("oneconfig.page.hotwire.add.queue_failed", "Hotwire couldn't queue %s - please check chat!", nameOfJar(jar)))
 
     private fun queueAdd(engine: Any, jar: Path): Result {
+        nameClash(engine, jar, readJar(jar).modId(), null)?.let { return it }
         onUiThread { engine.callMethod("add", jar, engine.enumArg("add", "NEXT_START")) }
         return if (isQueued(engine, jar)) Result(true, "") else queueFailed(jar)
     }
@@ -961,7 +977,10 @@ object HotwireBridge {
             engine.callMethod("add", jar, engine.enumArg("add", mode))
             null
         }
-        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false, add("NEXT_START"))
+        val addLater: () -> CompletableFuture<Result>? = {
+            CompletableFuture.supplyAsync { addInOrder(engine, listOf(jar), preview.get("name") as String, reopen = false, later = true) }
+        }
+        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false, addLater)
         val mode = (preview.get("mode") as Enum<*>).name
         if (mode != "REFUSED") {
             nextLaunchRefusal(engine, listOf(jar))?.let { return JarPlan(preview.get("name") as String, preview.get("version") as String? ?: "", listOf(it), emptyList()) }
@@ -969,7 +988,7 @@ object HotwireBridge {
         val actions = when (mode) {
             "NOW" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.now", "Add now"), true, add("NOW")), later)
             "SAVE_AND_REOPEN" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.reopen", "Save and add"), true, add("SAVE_AND_REOPEN")), later)
-            "NEXT_START" -> listOf(JarAction(later.label, true, add("NEXT_START")))
+            "NEXT_START" -> listOf(JarAction(later.label, true, addLater))
             else -> emptyList()
         }
         return JarPlan(preview.get("name") as String, preview.get("version") as String? ?: "", preview.get("lines") as List<String>, actions)
@@ -978,8 +997,10 @@ object HotwireBridge {
     @Suppress("UNCHECKED_CAST")
     private fun updatePlan(engine: Any, jar: Path, preview: Any): JarPlan {
         fun update(method: String): () -> CompletableFuture<Result>? = {
-            engine.callMethod("update", jar, engine.enumArg("update", method))
-            updateResult(engine, jar, preview.get("name") as String)
+            updateClash(engine, jar)?.let { CompletableFuture.completedFuture(it) } ?: run {
+                engine.callMethod("update", jar, engine.enumArg("update", method))
+                updateResult(engine, jar, preview.get("name") as String)
+            }
         }
         return when (preview.javaClass.simpleName) {
             "Ready" -> {

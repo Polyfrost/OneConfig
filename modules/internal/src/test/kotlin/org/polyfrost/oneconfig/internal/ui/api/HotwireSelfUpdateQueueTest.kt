@@ -170,15 +170,25 @@ class HotwireSelfUpdateQueueTest {
     }
 
     @Test
-    fun aJarNameMayOnlyReplaceTheRunningJar(@TempDir mods: Path) {
-        val running = Files.createFile(mods.resolve("hotwire-1.jar"))
-        val other = Files.createFile(mods.resolve("other.jar"))
+    fun aJarNameMayOnlyReplaceTheRunningJar(@TempDir mods: Path, @TempDir staging: Path) {
+        val running = Files.writeString(mods.resolve("hotwire-1.jar"), "old")
+        val other = Files.writeString(mods.resolve("other.jar"), "other")
+        fun incoming(name: String, content: String = "new") = Files.writeString(staging.resolve(name), content)
 
-        assertFalse(HotwireBridge.nameTaken("hotwire-1.jar", running, running, emptyList()))
-        assertFalse(HotwireBridge.nameTaken("hotwire-2.jar", mods.resolve("hotwire-2.jar"), running, emptyList()))
-        assertTrue(HotwireBridge.nameTaken("other.jar", other, running, emptyList()))
-        assertTrue(HotwireBridge.nameTaken("other.jar", other, null, emptyList()))
-        assertTrue(HotwireBridge.nameTaken("hotwire-2.jar", mods.resolve("hotwire-2.jar"), running, listOf("/staging/hotwire-2.jar")))
+        assertFalse(HotwireBridge.nameTaken(incoming("hotwire-1.jar"), running, running, emptyList()))
+        assertFalse(HotwireBridge.nameTaken(incoming("hotwire-1.jar"), running, Path.of("/hotwire/added/hotwire-1.jar"), emptyList()))
+        assertFalse(HotwireBridge.nameTaken(incoming("hotwire-2.jar"), mods.resolve("hotwire-2.jar"), running, emptyList()))
+        assertTrue(HotwireBridge.nameTaken(incoming("other.jar"), other, running, emptyList()))
+        assertTrue(HotwireBridge.nameTaken(incoming("other.jar"), other, null, emptyList()))
+        assertTrue(HotwireBridge.nameTaken(incoming("hotwire-2.jar"), mods.resolve("hotwire-2.jar"), running, listOf("/staging/hotwire-2.jar")))
+    }
+
+    @Test
+    fun theSameJarIsNotAClash(@TempDir mods: Path, @TempDir staging: Path) {
+        val present = Files.writeString(mods.resolve("mod.jar"), "bytes")
+
+        assertFalse(HotwireBridge.nameTaken(present, present, null, emptyList()))
+        assertFalse(HotwireBridge.nameTaken(Files.writeString(staging.resolve("mod.jar"), "bytes"), present, null, emptyList()))
     }
 
     class RollbackQueue(start: List<String>) {
