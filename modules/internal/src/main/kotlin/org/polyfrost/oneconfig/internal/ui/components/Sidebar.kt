@@ -41,8 +41,9 @@ import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
+import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_SIDEBAR_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
+import org.polyfrost.oneconfig.internal.ui.themes.surfaceOpacity
 
 internal val SidebarWidth = 264.dp
 
@@ -53,7 +54,7 @@ fun Sidebar(background: Boolean = true) {
     Column(
         modifier = Modifier.fillMaxHeight()
             .width(SidebarWidth)
-            .then(if (background) Modifier.background(LocalTheme.current.sidebarBackground.withOpacityPercent(appearance.sidebarOpacity)).rightBorder(LocalTheme.current.borderColor, 1f) else Modifier),
+            .then(if (background) Modifier.background(LocalTheme.current.surfaceOpacity(LocalTheme.current.sidebarBackground, appearance.sidebarOpacity, DEFAULT_SIDEBAR_OPACITY)).rightBorder(LocalTheme.current.borderColor, 1f) else Modifier),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Navigation(showTopOptions = !flipTopOrder)
@@ -167,25 +168,32 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
+    val theme = LocalTheme.current
+    val translucent = theme.translucentSelection
     val selectedAlpha = animateFloatAsState(if (isSelected) 1f else 0f)
     val textAndIconColor = animateColorAsState(
-        if (isSelected) LocalTheme.current.accentTextColor
-        else if (isHovered) LocalTheme.current.textColor
-        else LocalTheme.current.textColor.copy(0.8f)
+        if (isSelected && translucent) theme.textColor
+        else if (isSelected) theme.accentTextColor
+        else if (isHovered) theme.textColor
+        else theme.textColor.copy(0.8f)
     )
     val borderColor = animateColorAsState(
-        if (isHovered || isSelected) LocalTheme.current.borderColor
-        else LocalTheme.current.borderColor.copy(0f)
+        if (isSelected && translucent) theme.borderColor.copy(0f)
+        else if (isHovered || isSelected) theme.borderColor
+        else theme.borderColor.copy(0f)
     )
 
     Row(
         modifier = Modifier.size(225.dp, 33.dp)
+            .glassHover(theme.sideBarNavigationEntryShape, pull = 0.75.dp)
             .graphicsLayer {}
             .animatedFrame(
-                LocalTheme.current.sideBarNavigationEntryShape,
-                accentAlpha = { selectedAlpha.value },
+                theme.sideBarNavigationEntryShape,
+                fill = { if (translucent) theme.textColor.copy(alpha = 0.12f * selectedAlpha.value) else Color.Transparent },
+                accentAlpha = { if (translucent) 0f else selectedAlpha.value },
                 border = { borderColor.value },
             )
+            .then(if (translucent) Modifier.liquidGlass(theme.sideBarNavigationEntryShape) { selectedAlpha.value } else Modifier)
             .onClick(interactionSource) { onSelect(route) }
             .pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.CenterVertically,

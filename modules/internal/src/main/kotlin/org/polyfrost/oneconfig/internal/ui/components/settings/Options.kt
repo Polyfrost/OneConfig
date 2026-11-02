@@ -46,6 +46,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
@@ -198,6 +199,7 @@ fun OptionContextMenu(
             modifier = Modifier
                 .width(IntrinsicSize.Max)
                 .shellTransition()
+                .liquidGlass(theme.popupShape, frosted = true)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(ContextMenuPadding),

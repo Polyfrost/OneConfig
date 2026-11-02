@@ -87,6 +87,8 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
@@ -397,6 +399,7 @@ private fun ProfileBusyOverlay() {
         ) {
             Column(
                 modifier = Modifier
+                    .liquidGlass(theme.modCardShape, frosted = true)
                     .background(theme.modCardBackground, theme.modCardShape)
                     .padding(horizontal = 32.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -610,6 +613,7 @@ private fun CreateProfileCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(ProfileCardHeight)
+            .hoverGlow(shape)
             .background(theme.modCardBackground, shape)
             .border(
                 1.dp, Brush.verticalGradient(
@@ -754,6 +758,7 @@ private fun ProfileCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(ProfileCardHeight)
+            .hoverGlow(shape)
             .background(theme.modCardBackground, shape)
             .border(3.dp, selectionBorderColor, shape)
             .border(
@@ -937,6 +942,7 @@ private fun ProfileActionsMenu(
             modifier = Modifier
                 .width(IntrinsicSize.Max)
                 .shellTransition()
+                .liquidGlass(theme.popupShape, frosted = true)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(4.dp),

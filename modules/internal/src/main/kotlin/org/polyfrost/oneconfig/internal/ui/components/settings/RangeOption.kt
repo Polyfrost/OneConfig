@@ -41,6 +41,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.api.settings.RangeOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
@@ -256,6 +257,7 @@ internal fun RangeSliderTrack(
                 .height(trackHeight)
                 .clip(theme.checkBoxShape)
                 .background(AccentBrush)
+                .accentSheen()
         )
         listOf(startFraction to false, endFraction to true).forEach { (fraction, pointsLeft) ->
             TriangleThumb(

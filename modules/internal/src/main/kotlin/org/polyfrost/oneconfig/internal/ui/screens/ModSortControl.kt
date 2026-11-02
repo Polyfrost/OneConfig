@@ -32,6 +32,8 @@ import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.glassHover
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -57,6 +59,7 @@ fun ModSortControl(modifier: Modifier = Modifier) {
         Row(
             Modifier
                 .height(36.dp)
+                .liquidGlass(theme.buttonShape)
                 .background(theme.componentBackground, theme.buttonShape)
                 .border(1.dp, theme.borderColor, theme.buttonShape)
                 .padding(3.dp),
@@ -78,6 +81,7 @@ fun ModSortControl(modifier: Modifier = Modifier) {
                 Column(
                     Modifier
                         .width(280.dp)
+                        .liquidGlass(theme.popupShape, frosted = true)
                         .background(theme.popupBackground, theme.popupShape)
                         .border(1.dp, theme.borderColor, theme.popupShape)
                         .padding(12.dp),
@@ -109,6 +113,7 @@ private fun SortSegment(mode: ModSortMode, selected: Boolean, onSwitch: () -> Un
         Box(
             Modifier
                 .fillMaxHeight()
+                .glassHover(theme.buttonShape.concentric(3.dp), pull = 0.75.dp)
                 .background(
                     if (selected) theme.textColor.copy(alpha = 0.08f) else Color.Transparent,
                     theme.buttonShape.concentric(3.dp),

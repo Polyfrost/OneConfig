@@ -28,6 +28,8 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.colorToHex as internalColorToHex
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery as shellPageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.FrostedPolyglassDark
+import org.polyfrost.oneconfig.internal.ui.themes.FrostedPolyglassLight
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftDark
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftLight
@@ -51,6 +53,10 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     override fun polyfrostedDark(): OneConfigUITheme = PolyfrostedDark
 
     override fun polyfrostedLight(): OneConfigUITheme = PolyfrostedLight
+
+    override fun frostedPolyglassDark(): OneConfigUITheme = FrostedPolyglassDark
+
+    override fun frostedPolyglassLight(): OneConfigUITheme = FrostedPolyglassLight
 
     override fun minecraftDark(): OneConfigUITheme = MinecraftDark
 

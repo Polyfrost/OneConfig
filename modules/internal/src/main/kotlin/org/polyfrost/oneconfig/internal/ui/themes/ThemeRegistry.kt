@@ -26,6 +26,8 @@ object ThemeRegistry {
     init {
         register(PolyfrostedDark)
         register(PolyfrostedLight)
+        register(FrostedPolyglassDark)
+        register(FrostedPolyglassLight)
         register(MinecraftDark)
         register(MinecraftLight)
 

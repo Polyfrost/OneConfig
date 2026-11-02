@@ -57,13 +57,16 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.Header
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
 import org.polyfrost.oneconfig.internal.ui.components.SidebarWidth
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.navigation
 import org.polyfrost.oneconfig.internal.ui.screens.SearchResultsScreen
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_PAGE_OPACITY
+import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_SIDEBAR_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.withOpacityPercent
+import org.polyfrost.oneconfig.internal.ui.themes.surfaceOpacity
 import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
 
 private const val GLOW_RADIUS = 500f
@@ -162,11 +165,11 @@ fun Shell(
     }
 
     val shell = LocalShell.current
-    val glowAlpha = (shell.appearance.glowOpacity / 100f).coerceIn(0f, 1f)
+    val glowAlpha = if (theme.glowEnabled) (shell.appearance.glowOpacity / 100f).coerceIn(0f, 1f) else 0f
     val sidebarGlow = remember { GlowLayers() }
     val pageGlow = remember { GlowLayers() }
-    val sidebarColor = theme.sidebarBackground.withOpacityPercent(shell.appearance.sidebarOpacity)
-    val pageColor = theme.pageBackground.withOpacityPercent(shell.appearance.pageOpacity)
+    val sidebarColor = theme.surfaceOpacity(theme.sidebarBackground, shell.appearance.sidebarOpacity, DEFAULT_SIDEBAR_OPACITY)
+    val pageColor = theme.surfaceOpacity(theme.pageBackground, shell.appearance.pageOpacity, DEFAULT_PAGE_OPACITY)
     Row(
         modifier = Modifier.onGloballyPositioned {
             windowOffset = it.positionInRoot()
@@ -175,6 +178,7 @@ fun Shell(
         ).let { mod ->
                 if (theme.shadowEnabled) mod.cachedDropShadow(theme.backgroundShape, backgroundShadow, hole = glowAlpha > 0f) else mod
             }.clip(theme.backgroundShape)
+            .liquidGlass(theme.backgroundShape, frosted = true)
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .drawBehind {
                 backdrop(windowOffset)

@@ -38,6 +38,7 @@ import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.api.settings.InheritableSliderOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -184,6 +185,7 @@ private fun InheritChip(label: String, active: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .graphicsLayer {}
+            .liquidGlass(theme.sideBarNavigationEntryShape)
             .animatedFrame(theme.sideBarNavigationEntryShape, fill = { background.value }, border = { border.value })
             .onClick(interactionSource, onClick)
             .pointerHoverIcon(PointerIcon.Hand)

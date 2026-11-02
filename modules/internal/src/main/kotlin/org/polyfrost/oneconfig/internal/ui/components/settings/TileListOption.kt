@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.internal.ui.api.settings.TileListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerLabel
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerStrings
@@ -91,6 +92,7 @@ fun <T : PickerEntry> TileListOption(
                 icon = icon,
                 modifier = Modifier
                     .clip(SelectorShape)
+                    .liquidGlass(SelectorShape, frosted = true)
                     .background(theme.popupBackground, SelectorShape)
                     .border(1.dp, theme.borderColor, SelectorShape)
                     .padding(vertical = 12.dp),

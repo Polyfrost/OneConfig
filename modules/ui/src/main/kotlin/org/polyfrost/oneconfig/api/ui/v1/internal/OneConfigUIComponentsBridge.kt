@@ -32,6 +32,10 @@ interface OneConfigUIComponentsBridge {
 
     fun polyfrostedLight(): OneConfigUITheme
 
+    fun frostedPolyglassDark(): OneConfigUITheme
+
+    fun frostedPolyglassLight(): OneConfigUITheme
+
     fun minecraftDark(): OneConfigUITheme
 
     fun minecraftLight(): OneConfigUITheme

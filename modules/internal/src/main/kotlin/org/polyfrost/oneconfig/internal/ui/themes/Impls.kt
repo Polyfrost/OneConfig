@@ -237,3 +237,69 @@ val MinecraftLight = UITheme(
     ),
     MinecraftIconOverrides
 ).withShapes(RoundedCornerShape(0.dp), RoundedCornerShape(0.dp))
+
+val FrostedPolyglassDark = UITheme(
+    "frosted-polyglass-dark", "Frosted Polyglass Dark",
+
+    Color(0x8C16181D),
+    Color(0x99121419),
+    Color(0x7322252C),
+    Color(0x6620232A),
+    Color(0x7322252C),
+    Color(0xCC16181D),
+
+    Color(0x14FFFFFF),
+    Color(0xFFFFFFFF),
+    Color(0xB3FFFFFF),
+    Color(0xFFFFFFFF),
+
+    Color(0xFF000000),
+    Color(0xFFFFFFFF),
+    Color(0xFFFFD60A),
+
+    true,
+
+    RoundedCornerShape(Radii.LG),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
+    RoundedCornerShape(Radii.XS),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
+    CircleShape,
+
+    UIBranding("assets/oneconfig/brand/oneconfig-white.svg"),
+    PolyfrostedDark.typography,
+).withoutGlow().withInsetModFooter().withTranslucentSelection().withLiquidGlass().withCursorEffects()
+
+val FrostedPolyglassLight = UITheme(
+    "frosted-polyglass-light", "Frosted Polyglass Light",
+
+    Color(0xA6FAFBFF),
+    Color(0xB8F2F4F9),
+    Color(0x66FFFFFF),
+    Color(0x57FFFFFF),
+    Color(0x66FFFFFF),
+    Color(0xD1F6F8FC),
+
+    Color(0x8CFFFFFF),
+    Color(0xFF0E1118),
+    Color(0x9E0E1118),
+    Color(0xFFFFFFFF),
+
+    Color(0xFF1A2440),
+    Color(0xFFFFFFFF),
+    Color(0xFFC98A00),
+
+    true,
+
+    RoundedCornerShape(Radii.LG),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
+    RoundedCornerShape(Radii.XS),
+    RoundedCornerShape(Radii.SM),
+    RoundedCornerShape(Radii.MD),
+    CircleShape,
+
+    UIBranding("assets/oneconfig/brand/oneconfig-light.svg"),
+    PolyfrostedLight.typography,
+).withoutGlow().withInsetModFooter().withTranslucentSelection().withLiquidGlass().withCursorEffects()

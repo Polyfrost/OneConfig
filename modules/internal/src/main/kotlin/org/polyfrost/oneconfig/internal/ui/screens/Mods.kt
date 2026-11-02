@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -94,8 +95,12 @@ import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.canRenderIcon
+import org.polyfrost.oneconfig.internal.ui.components.glassHover
+import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberGridReorderState
@@ -444,6 +449,8 @@ private val ModCardFooterHeight = 36.dp
 
 private val ModCardGlowHeight = 50.dp
 
+private val ModCardInsetFooterShape = RoundedCornerShape(10.dp)
+
 private val FavoriteStarColor = Color(0xFFFFD700)
 
 private val ModCardToggleDot = 6.dp
@@ -474,8 +481,9 @@ fun ModCard(
     val toggle = remember(mod, toggleRevision) { mod.toggle }
     var enabled by rememberModEnabled(toggle)
     val footerAccent by animateFloatAsState(if (enabled) 1f else 0f)
+    val insetFooter = theme.insetModFooter
     val footerTextColor by animateColorAsState(
-        if (enabled) theme.accentTextColor else theme.textColor.copy(alpha = 0.75f)
+        if (enabled) (if (insetFooter) theme.textColor else theme.accentTextColor) else theme.textColor.copy(alpha = 0.75f)
     )
     val glowStrength by animateFloatAsState(if (enabled) 0.5f else 0f)
     val navigation = LocalShell.current.navigation
@@ -489,6 +497,7 @@ fun ModCard(
 
     Box(
         modifier = modifier.fillMaxWidth().height(140.dp)
+            .hoverGlow(theme.modCardShape)
             .background(theme.modCardBackground, theme.modCardShape)
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
@@ -530,10 +539,22 @@ fun ModCard(
             }
             Box(
                 modifier = Modifier
+                    .then(
+                        if (insetFooter) {
+                            Modifier
+                                .padding(start = 5.dp, end = 5.dp, bottom = 5.dp)
+                                .glassHover(ModCardInsetFooterShape, pull = 0.75.dp)
+                                .liquidGlass(ModCardInsetFooterShape)
+                                .clip(ModCardInsetFooterShape)
+                        } else {
+                            Modifier
+                        },
+                    )
                     .fillMaxWidth()
                     .heightIn(min = ModCardFooterHeight)
                     .background(theme.textColor.copy(alpha = 0.08f * (1f - footerAccent)))
                     .background(AccentBrush, alpha = footerAccent)
+                    .accentSheen(alpha = footerAccent)
                     .then(
                         if (toggle != null && interactive) {
                             Modifier
@@ -565,7 +586,7 @@ fun ModCard(
             }
         }
 
-        if (LocalTheme.current.shadowEnabled) {
+        if (LocalTheme.current.shadowEnabled && !insetFooter) {
             val vignetteColor = theme.textColor
             Box(
                 Modifier.fillMaxSize().drawWithCache {

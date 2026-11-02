@@ -13,6 +13,16 @@ import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 fun Color.withOpacityPercent(percent: Float): Color =
     copy(alpha = (percent / 100f).coerceIn(0f, 1f))
 
+const val DEFAULT_PAGE_OPACITY = 88f
+
+const val DEFAULT_SIDEBAR_OPACITY = 80f
+
+fun Color.scaleOpacity(percent: Float, defaultPercent: Float): Color =
+    copy(alpha = (alpha * percent / defaultPercent).coerceIn(0f, 1f))
+
+fun UITheme.surfaceOpacity(color: Color, percent: Float, defaultPercent: Float): Color =
+    if (liquidGlass) color.scaleOpacity(percent, defaultPercent) else color.withOpacityPercent(percent)
+
 data class UITheme(
     val previewImage: String,
     override val name: String,
@@ -67,12 +77,47 @@ data class UITheme(
     fun withShapes(modIconShape: Shape, scrollBarShape: Shape): UITheme =
         also { extraShapes[previewImage] = modIconShape to scrollBarShape }
 
+    val glowEnabled: Boolean get() = previewImage !in glowlessThemes
+
+    fun withoutGlow(): UITheme =
+        also { glowlessThemes += previewImage }
+
+    val insetModFooter: Boolean get() = previewImage in insetFooterThemes
+
+    fun withInsetModFooter(): UITheme =
+        also { insetFooterThemes += previewImage }
+
+    val translucentSelection: Boolean get() = previewImage in translucentSelectionThemes
+
+    fun withTranslucentSelection(): UITheme =
+        also { translucentSelectionThemes += previewImage }
+
+    val liquidGlass: Boolean get() = previewImage in liquidGlassThemes
+
+    fun withLiquidGlass(): UITheme =
+        also { liquidGlassThemes += previewImage }
+
+    val cursorEffects: Boolean get() = previewImage in cursorEffectThemes
+
+    fun withCursorEffects(): UITheme =
+        also { cursorEffectThemes += previewImage }
+
     companion object {
         val DefaultControlTrackColor = Color(0xFF74777F)
 
         private val DefaultExtraShapes: Pair<Shape, Shape> = RoundedCornerShape(4.dp) to RoundedCornerShape(8.dp)
 
         private val extraShapes = ConcurrentHashMap<String, Pair<Shape, Shape>>()
+
+        private val glowlessThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val insetFooterThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val translucentSelectionThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val liquidGlassThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val cursorEffectThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
     }
 }
 
