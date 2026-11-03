@@ -1269,12 +1269,34 @@ fun HudConfigScreen(tree: Tree, searchQuery: String) {
     key(System.identityHashCode(tree)) { HudConfigScreenContent(tree, searchQuery) }
 }
 
+/** One option laid out the way [HudConfigScreen] lays out the options of a HUD */
+@Composable
+fun HudOptionRow(prop: Property<*>) {
+    CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
+        SettingRow(prop, compact = isWideControl(prop))
+    }
+}
+
 @Composable
 private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     val categories = remember(tree) { buildCategories(tree) }
+    HudCategoryList(categories, searchQuery)
+}
+
+/**
+ * The category chips and rows of [categories], laid out the way the HUD editor lays out the options of a HUD
+ *
+ * [row] draws one entry, which a caller replaces to draw its own options
+ */
+@Composable
+internal fun HudCategoryList(
+    categories: List<CategoryGroup>,
+    searchQuery: String,
+    row: @Composable (ConfigListEntry) -> Unit = { ConfigListRow(it, ::hasWideControl) },
+) {
     val revision = rememberDisplayRevision(categories)
     val visibleCategories = remember(categories, revision) { categories.filter { filterHiddenNodes(it) != null } }
-    var chosenCategory by remember(tree) { mutableStateOf<CategoryGroup?>(null) }
+    var chosenCategory by remember(categories) { mutableStateOf<CategoryGroup?>(null) }
     val selectedCategory = chosenCategory?.takeIf { it in visibleCategories } ?: visibleCategories.firstOrNull()
     val entries = remember(visibleCategories, selectedCategory, searchQuery, revision) {
         if (searchQuery.isEmpty()) {
@@ -1305,7 +1327,7 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            entries.forEach { entry -> ConfigListRow(entry, ::hasWideControl) }
+            entries.forEach { entry -> row(entry) }
         }
     }
     }

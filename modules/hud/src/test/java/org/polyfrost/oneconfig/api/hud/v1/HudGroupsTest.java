@@ -42,6 +42,7 @@ class HudGroupsTest {
     private Hud b;
     private Hud c;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() throws Exception {
         ConfigManager.active();
@@ -61,6 +62,10 @@ class HudGroupsTest {
             hud.setGroupPath("");
             hud.clearAnchor();
             hud.setCustomScale(1f);
+            hud.setCustomScale(1f);
+            hud.setLocked(false);
+            hud.setRenderedW(40f);
+            hud.setRenderedH(10f);
         }
         a.setAbsolutePosition(100f, 100f);
         b.setAbsolutePosition(140f, 100f);
@@ -232,7 +237,9 @@ class HudGroupsTest {
         float used = scaling.apply(2f);
         assertEquals(2f, used, 0.001f);
 
-        for (Hud hud : group.getHuds()) assertEquals(2f, hud.getCustomScale(), 0.001f);
+        for (Hud hud : group.getHuds()) {
+            assertEquals(2f, hud.getCustomScale(), 0.001f, "the group scales the value the corner handles change");
+        }
         assertEquals(100f, a.getX(), 0.001f, "the pivot stays put");
         assertEquals(100f, a.getY(), 0.001f);
         assertEquals(80f, a.getScaledWidth(), 0.001f);
@@ -252,13 +259,117 @@ class HudGroupsTest {
 
     @Test
     void scalingStopsAtTheScaleLimits() {
+        float max = 4f;
+        float min = 0.25f;
         a.setCustomScale(2f);
         HudGroups.Scaling scaling = HudGroups.scaling(Arrays.asList(a, b), 100f, 100f);
-        assertEquals(2f, scaling.getMaxFactor(), 0.001f, "a is already at 2x so the group can only double");
-        assertEquals(2f, scaling.apply(10f), 0.001f);
-        assertEquals(4f, a.getCustomScale(), 0.001f);
+        assertEquals(max / 2f, scaling.getMaxFactor(), 0.001f, "a is already at 2x so it reaches the limit first");
+        assertEquals(max / 2f, scaling.apply(10f), 0.001f);
+        assertEquals(max, a.getCustomScale(), 0.001f);
+        assertEquals(max / 2f, b.getCustomScale(), 0.001f, "the group keeps its proportions at the limit");
+        assertEquals(min, scaling.getMinFactor(), 0.001f, "b at 1x reaches the lower limit first");
+    }
+
+    @Test
+    void groupScaleKeepsProportionsAndMatchEnforcesOne() {
+        a.setCustomScale(4f);
+        b.setCustomScale(2f);
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        assertEquals(4f, group.getScale(), 0.001f);
+        assertFalse(group.getUniformScale());
+
+        HudGroups.setScale(group, 2f);
+        assertEquals(2f, a.getCustomScale(), 0.001f);
+        assertEquals(1f, b.getCustomScale(), 0.001f, "the ratio between them survives");
+
+        HudGroups.matchScale(group, 2f);
         assertEquals(2f, b.getCustomScale(), 0.001f);
-        assertEquals(0.25f, scaling.getMinFactor(), 0.001f);
+        assertTrue(group.getUniformScale());
+    }
+
+    @Test
+    void groupScaleHoldsTheEdgeTheGroupSitsNearest() {
+        a.setAbsolutePosition(460f, 500f);
+        b.setAbsolutePosition(500f, 500f);
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+
+        HudGroups.setScale(group, 2f);
+        float[] box = HudGroups.bounds(group.getHuds());
+        assertNotNull(box);
+        assertEquals(510f, box[1] + box[3], 0.001f, "a group along the bottom keeps its bottom edge");
+        assertEquals(500f, box[0] + box[2] / 2f, 0.001f, "and stays centred");
+    }
+
+    @Test
+    void aGroupIsOnlyLockedWhenEveryHudIs() {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        a.setLocked(true);
+        assertFalse(group.getLocked(), "one locked HUD does not hold the group");
+
+        Map<Hud, Pair<Float, Float>> starts = new HashMap<>();
+        for (Hud hud : group.getHuds()) starts.put(hud, new Pair<>(hud.getX(), hud.getY()));
+        HudGroups.moveFrom(group.getHuds(), starts, 10f, 0f);
+        assertEquals(110f, a.getX(), 0.001f, "the locked HUD moves with its group");
+
+        HudGroups.setLocked(group, true);
+        assertTrue(group.getLocked());
+        HudGroups.setLocked(group, false);
+        assertFalse(a.getLocked(), "unlocking the group frees the HUD locked on its own too");
+    }
+
+    @Test
+    void looseHudsScaleThroughTheSameCodeAsAGroup() {
+        a.setCustomScale(4f);
+        b.setCustomScale(2f);
+        List<Hud> loose = Arrays.asList(a, b);
+        assertEquals(4f, HudGroups.scaleOf(loose), 0.001f, "the biggest scale stands for the selection");
+        assertFalse(HudGroups.hasUniformScale(loose));
+
+        HudGroups.setScale(loose, 2f);
+        assertEquals(2f, a.getCustomScale(), 0.001f);
+        assertEquals(1f, b.getCustomScale(), 0.001f, "the ratio between them survives");
+
+        HudGroups.matchScale(loose, 2f);
+        assertEquals(2f, b.getCustomScale(), 0.001f);
+        assertTrue(HudGroups.hasUniformScale(loose));
+        assertEquals(1f, c.getCustomScale(), 0.001f, "a HUD outside the selection is left alone");
+    }
+
+    @Test
+    void groupScaleCodeDelegatesToTheLooseOverloads() {
+        a.setCustomScale(4f);
+        b.setCustomScale(2f);
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+
+        assertEquals(HudGroups.scaleOf(group.getHuds()), group.getScale(), 0.001f);
+        assertEquals(HudGroups.hasUniformScale(group.getHuds()), group.getUniformScale());
+        assertEquals(HudGroups.scaleRange(group.getHuds()), HudGroups.scaleRange(group));
+    }
+
+    @Test
+    void looseScaleRangeStopsAtTheFirstHudToReachALimit() {
+        float max = 4f;
+        a.setCustomScale(2f);
+        List<Hud> loose = Arrays.asList(a, b);
+        assertEquals(max, HudGroups.scaleRange(loose).getEndInclusive(), 0.001f, "the biggest HUD reaches the limit first");
+        assertEquals(2f, HudGroups.scaleOf(loose), 0.001f);
+        assertTrue(HudGroups.scaleRange(loose).getStart() < 2f);
+    }
+
+    @Test
+    void looseHudsLockTogether() {
+        List<Hud> loose = Arrays.asList(a, b);
+        HudGroups.setLocked(loose, true);
+        assertTrue(a.getLocked());
+        assertTrue(b.getLocked());
+        assertFalse(c.getLocked(), "a HUD outside the selection stays free");
+        HudGroups.setLocked(loose, false);
+        assertFalse(a.getLocked());
+        assertFalse(b.getLocked());
     }
 
     @Test

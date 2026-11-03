@@ -261,6 +261,10 @@ fun SpinnerArrows(value: Float, min: Float, max: Float, step: Float, onStep: (Fl
     }
 }
 
+/**
+ * @param mixed reads "Mixed" in place of [value] until the field is focused, for a setting that differs
+ * between several things
+ */
 @Composable
 fun NumberSpinner(
     value: Float,
@@ -281,11 +285,17 @@ fun NumberSpinner(
     enabled: Boolean = true,
     onEditStart: (() -> Unit)? = null,
     liveValue: (() -> Float)? = null,
+    mixed: Boolean = false,
 ) {
     val theme = LocalTheme.current
     val focusManager = LocalFocusManager.current
     var focused by remember { mutableStateOf(false) }
-    val formatted = if (format != null && !focused) format(value) else null
+    val showMixed = mixed && !focused
+    val formatted = when {
+        showMixed -> "Mixed"
+        format != null && !focused -> format(value)
+        else -> null
+    }
     val textState = remember(if (math && focused) null else value) { mutableStateOf(formatSpinnerValue(value, step)) }
     var text by textState
     var edited by remember { mutableStateOf(false) }
@@ -405,7 +415,7 @@ fun NumberSpinner(
                     Box {
                         Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
                         if (formatted != null) {
-                            Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(formatted, color = if (showMixed) theme.textColorSecondary else theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }

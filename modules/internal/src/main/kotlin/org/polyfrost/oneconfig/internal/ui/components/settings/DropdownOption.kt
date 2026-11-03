@@ -79,11 +79,17 @@ fun DropdownOption(data: DropdownOptionData) {
 
 /** [options] can be anything [Text] can show, such as translated text */
 @Composable
-fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: Dp = LocalOptionWidth.current) {
+fun Dropdown(
+    options: List<Any>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    width: Dp = LocalOptionWidth.current,
+    mixed: Boolean = false,
+) {
     var expanded by remember { mutableStateOf(false) }
-    DropdownFrame(options.getOrElse(selected) { "—" }, expanded, { expanded = it }, width) {
+    DropdownFrame(if (mixed) "Mixed" else options.getOrElse(selected) { "—" }, expanded, { expanded = it }, width) {
         options.forEachIndexed { index, option ->
-            DropdownItem(option, selected = index == selected) {
+            DropdownItem(option, selected = !mixed && index == selected) {
                 onSelect(index)
                 expanded = false
             }

@@ -317,6 +317,15 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
     }
 }
 
+/** [HudSettingsContent] for a panel editing several HUDs at once, which is recreated when any one of them is */
+@Composable
+fun HudSettingsContent(huds: Collection<Hud>, content: @Composable () -> Unit) {
+    val list = huds.toList()
+    key(list, list.map(::hudUiEpoch)) {
+        content()
+    }
+}
+
 private val DeleteMenuColor = Color(0xFFE5484D)
 
 /**
@@ -333,7 +342,6 @@ fun HudCanvasResetMenu(
     onDismiss: () -> Unit,
     targets: List<Hud> = emptyList(),
     onSettings: (Hud) -> Unit = {},
-    settingsEnabled: Boolean = true,
     onCopy: (Hud) -> Unit = {},
     onCut: (Hud) -> Unit = {},
     onPaste: (Hud) -> Unit = {},
@@ -398,7 +406,6 @@ fun HudCanvasResetMenu(
             HudMenuRow(
                 icon = "settings",
                 text = "Settings",
-                enabled = settingsEnabled,
                 hint = settingsHint,
             ) {
                 onSettings(hud)

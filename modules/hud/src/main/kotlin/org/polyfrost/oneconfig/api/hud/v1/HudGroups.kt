@@ -66,6 +66,19 @@ public class HudGroup internal constructor(
     /** The live HUDs sitting directly in this group rather than in one of its sub-groups */
     public val directHuds: List<Hud> get() = HudManager.activeInstances.filter { it.groupPath == path }
 
+    /**
+     * Whether the whole group is locked in place, which is when every HUD in it is locked
+     *
+     * A HUD locked on its own only holds still inside the group and still moves with it
+     */
+    public val locked: Boolean get() = huds.let { members -> members.isNotEmpty() && members.all { it.locked } }
+
+    /** The largest [Hud.customScale] among the HUDs that can be scaled */
+    public val scale: Float get() = HudGroups.scaleOf(huds)
+
+    /** Whether every HUD that can be scaled is at the same [Hud.customScale] */
+    public val uniformScale: Boolean get() = HudGroups.hasUniformScale(huds)
+
     /** The groups nested directly in this one */
     public val subGroups: List<HudGroup> get() {
         val prefix = path + HudGroups.SEPARATOR
@@ -91,6 +104,8 @@ public class HudGroup internal constructor(
     override fun toString(): String = "HudGroup($path)"
 }
 
+private val HUD_SCALE_RANGE = 0.25f..4f
+
 /**
  * Creates, changes and lays out [HudGroup]s
  *
@@ -100,9 +115,6 @@ public class HudGroup internal constructor(
 @ApiStatus.Experimental
 public object HudGroups {
     public const val SEPARATOR: Char = '/'
-
-    private const val MIN_SCALE = 0.25f
-    private const val MAX_SCALE = 4f
 
     /** Backstop for walking a chain of HUDs anchored to one another */
     private const val MAX_ANCHOR_DEPTH = 16
@@ -211,6 +223,107 @@ public object HudGroups {
     public fun removeFromGroup(group: HudGroup) {
         val parent = group.parent ?: return
         move(listOf(Moving(group.huds, parent.path)), parent.parent?.path.orEmpty())
+    }
+
+    /** Locks or unlocks every HUD in [group] */
+    @JvmStatic
+    public fun setLocked(group: HudGroup, locked: Boolean): Unit = setLocked(group.huds, locked)
+
+    /** Locks or unlocks every HUD in [huds] */
+    @JvmStatic
+    public fun setLocked(huds: Collection<Hud>, locked: Boolean) {
+        Snapshot.withMutableSnapshot { for (hud in huds) hud.locked = locked }
+    }
+
+    /** The largest [Hud.customScale] among the HUDs of [huds] that can be scaled */
+    @JvmStatic
+    public fun scaleOf(huds: Collection<Hud>): Float = scalable(huds).maxOfOrNull { it.customScale } ?: 1f
+
+    /** Whether every HUD of [huds] that can be scaled is at the same [Hud.customScale] */
+    @JvmStatic
+    public fun hasUniformScale(huds: Collection<Hud>): Boolean = scalable(huds).map { it.customScale }.distinct().size <= 1
+
+    /** The values [HudGroup.scale] can take while every HUD stays inside its own [HUD_SCALE_RANGE] */
+    @JvmStatic
+    public fun scaleRange(group: HudGroup): ClosedFloatingPointRange<Float> = scaleRange(group.huds)
+
+    /** The values [scaleOf] can take for [huds] while every HUD stays inside its own [HUD_SCALE_RANGE] */
+    @JvmStatic
+    public fun scaleRange(huds: Collection<Hud>): ClosedFloatingPointRange<Float> {
+        val scaling = Scaling(huds, 0f, 0f)
+        val scale = scaleOf(huds)
+        return scale * scaling.minFactor..scale * scaling.maxFactor
+    }
+
+    /**
+     * Sets [HudGroup.scale], scaling the whole group as one block so HUDs at different scales keep
+     * their proportions
+     *
+     * The group stays against the edge of the screen it sits nearest
+     */
+    @JvmStatic
+    public fun setScale(group: HudGroup, scale: Float): Unit = setScale(group.huds, scale)
+
+    /**
+     * Sets [scaleOf] for [huds], scaling them as one block so HUDs at different scales keep their
+     * proportions
+     *
+     * The block stays against the edge of the screen it sits nearest
+     */
+    @JvmStatic
+    public fun setScale(huds: Collection<Hud>, scale: Float) {
+        val current = scaleOf(huds)
+        val box = bounds(huds) ?: return
+        if (current <= 0f) return
+        val sw = HudManager.guiScreenWidth
+        val sh = HudManager.guiScreenHeight
+        Snapshot.withMutableSnapshot {
+            Scaling(huds, box[0] + box[2] * pivotFraction(box[0] + box[2] / 2f, sw), box[1] + box[3] * pivotFraction(box[1] + box[3] / 2f, sh))
+                .apply(scale / current)
+        }
+    }
+
+    /** Puts every HUD in [group] that can be scaled at the same [scale] */
+    @JvmStatic
+    public fun matchScale(group: HudGroup, scale: Float): Unit = matchScale(group.huds, scale)
+
+    /** Puts every HUD in [huds] that can be scaled at the same [scale] */
+    @JvmStatic
+    public fun matchScale(huds: Collection<Hud>, scale: Float) {
+        Snapshot.withMutableSnapshot {
+            for (hud in parentsFirst(scalable(huds), huds)) {
+                val previous = hud.customScale
+                hud.customScale = scale.coerceIn(HUD_SCALE_RANGE)
+                resized(hud, hud.renderedW, hud.renderedH, if (previous > 0f) hud.customScale / previous else 1f)
+            }
+        }
+    }
+
+    private fun pivotFraction(center: Float, screen: Float): Float = when {
+        screen <= 0f || center < screen / GRID_SIZE -> 0f
+        center < screen * 2f / GRID_SIZE -> 0.5f
+        else -> 1f
+    }
+
+    /**
+     * Tells [hud] the size it will have after its scale changed by [factor] from a box of [w] by [h]
+     *
+     * The laid out size only catches up on the next frame, so without this every anchor and growth
+     * point would be worked out against the old size
+     */
+    private fun resized(hud: Hud, w: Float, h: Float, factor: Float) {
+        hud.forgetMinimumSize()
+        if (w > 0f) hud.renderedW = w * factor
+        if (h > 0f) hud.renderedH = h * factor
+    }
+
+    /**
+     * The HUDs of [huds] the corner handles can resize
+     *
+     * The rest keep their size when their group scales and only move with it
+     */
+    internal fun scalable(huds: Collection<Hud>): List<Hud> = huds.filter {
+        it.resizeAxes == HudResize.Both && (it as? LegacyHudMarker)?.supportsScale != false
     }
 
     /**
@@ -322,6 +435,7 @@ public object HudGroups {
 
     public class Scaling internal constructor(huds: Collection<Hud>, private val pivotX: Float, private val pivotY: Float) {
         private val members: List<Hud>
+        private val scales: BooleanArray
         private val startScale: FloatArray
         private val startX: FloatArray
         private val startY: FloatArray
@@ -335,6 +449,10 @@ public object HudGroups {
         init {
             // anchor parents first so every HUD is placed against where its parent already ended up
             members = parentsFirst(huds, huds)
+            scales = BooleanArray(members.size).also { flags ->
+                val can = identitySet(scalable(members))
+                for (i in members.indices) flags[i] = members[i] in can
+            }
             startScale = FloatArray(members.size) { members[it].customScale }
             startX = FloatArray(members.size) { members[it].x }
             startY = FloatArray(members.size) { members[it].y }
@@ -342,10 +460,12 @@ public object HudGroups {
             startH = FloatArray(members.size) { members[it].renderedH }
             var lo = 0f
             var hi = Float.POSITIVE_INFINITY
-            for (s in startScale) {
-                if (s <= 0f) continue
-                lo = maxOf(lo, MIN_SCALE / s)
-                hi = minOf(hi, MAX_SCALE / s)
+            for (i in members.indices) {
+                val s = startScale[i]
+                if (!scales[i] || s <= 0f) continue
+                val range = HUD_SCALE_RANGE
+                lo = maxOf(lo, range.start / s)
+                hi = minOf(hi, range.endInclusive / s)
             }
             minFactor = lo.coerceAtMost(1f)
             maxFactor = if (hi.isInfinite()) 1f else hi.coerceAtLeast(1f)
@@ -354,13 +474,11 @@ public object HudGroups {
         /** Scales everything to [factor] times its starting size and returns the factor actually used */
         public fun apply(factor: Float): Float {
             val f = factor.coerceIn(minFactor, maxFactor)
-            // the laid out size only catches up on the next frame, so set it now or every anchor and
-            // growth point below would be worked out against the old size
             for (i in members.indices) {
+                if (!scales[i]) continue
                 val hud = members[i]
                 hud.customScale = startScale[i] * f
-                if (startW[i] > 0f) hud.renderedW = startW[i] * f
-                if (startH[i] > 0f) hud.renderedH = startH[i] * f
+                resized(hud, startW[i], startH[i], f)
             }
             for (i in members.indices) {
                 members[i].setAbsolutePosition(pivotX + (startX[i] - pivotX) * f, pivotY + (startY[i] - pivotY) * f)

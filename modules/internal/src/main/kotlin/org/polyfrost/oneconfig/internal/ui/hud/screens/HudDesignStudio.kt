@@ -108,8 +108,14 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.GroupSettings
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Layout
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedLayout
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedOptions
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedSettings
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedStyle
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedTab
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Style
 import org.polyfrost.oneconfig.internal.ui.screens.rememberHasHudOptions
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -381,13 +387,13 @@ internal enum class HudAlign(val icon: String, val label: String) {
 internal fun alignHuds(units: List<Collection<Hud>>, align: HudAlign) {
     val boxes = units.mapNotNull { unit -> boundsOf(unit)?.let { unit to it } }
     if (boxes.isEmpty()) return
-    if (boxes.any { (unit, _) -> unit.any { it.locked } }) notifyHudLocked()
+    if (boxes.any { (unit, _) -> unit.all { it.locked } }) notifyHudLocked()
     val single = boxes.size == 1
     val x0 = if (single) 0f else boxes.minOf { it.second.x }
     val y0 = if (single) 0f else boxes.minOf { it.second.y }
     val x1 = if (single) HudManager.guiScreenWidth else boxes.maxOf { it.second.x + it.second.width }
     val y1 = if (single) HudManager.guiScreenHeight else boxes.maxOf { it.second.y + it.second.height }
-    val moves = boxes.filter { (unit, _) -> unit.none { it.locked } }.map { (unit, b) ->
+    val moves = boxes.filter { (unit, _) -> !unit.all { it.locked } }.map { (unit, b) ->
         val dx = when (align) {
             HudAlign.Left -> x0 - b.x
             HudAlign.CenterX -> (x0 + x1 - b.width) / 2f - b.x
@@ -463,6 +469,17 @@ private fun unitOf(hud: Hud, entered: HudGroup?): Set<Hud> {
     return out
 }
 
+/**
+ * Whether a click on [hud] picks something that cannot move
+ *
+ * A locked HUD in a group only holds still inside it, so a group is held only once all of it is locked
+ */
+private fun unitLocked(hud: Hud, entered: HudGroup?): Boolean = unitOf(hud, entered).all { it.locked }
+
+/** Every HUD that can be picked and moved at the level the user is working at */
+private fun movableHuds(entered: HudGroup?): Set<Hud> =
+    HudManager.activeInstances.filterNot { unitLocked(it, entered) }.flatMapTo(LinkedHashSet()) { unitOf(it, entered) }
+
 /** The groups whose every HUD is in [selected] at the level the user is currently picking at */
 private fun selectedGroupsIn(selected: Set<Hud>, entered: HudGroup?): List<HudGroup> {
     val out = ArrayList<HudGroup>()
@@ -480,15 +497,6 @@ private fun selectionUnits(selected: Set<Hud>, entered: HudGroup?): List<Collect
     for (group in groups) out.add(group.huds)
     for (hud in selected) if (groups.none { hud in it }) out.add(listOf(hud))
     return out
-}
-
-internal fun hudGroupLabel(group: HudGroup): String {
-    group.name?.let { return it }
-    val titles = group.huds.map { localizedLabel(it.title) ?: it.title }
-    return when {
-        titles.size <= 2 -> titles.joinToString(", ")
-        else -> "${titles[0]}, ${titles[1]} +${titles.size - 2}"
-    }
 }
 
 /** The nine points of a HUD box the user can pin another HUD to in reading order */
@@ -616,15 +624,16 @@ private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
  *
  * Locked huds are only considered when nothing unlocked is under the cursor
  */
-private fun hudStackAt(screenX: Float, screenY: Float): List<Hud> {
+private fun hudStackAt(screenX: Float, screenY: Float, entered: HudGroup?): List<Hud> {
     val stack = orderedInstances().filter { hitTestHud(it, screenX, screenY) }
-    return stack.filter { !it.locked }.ifEmpty { stack }
+    return stack.filter { !unitLocked(it, entered) }.ifEmpty { stack }
 }
 
-private fun topHudAt(screenX: Float, screenY: Float): Hud? = hudStackAt(screenX, screenY).lastOrNull()
+private fun topHudAt(screenX: Float, screenY: Float, entered: HudGroup? = null): Hud? =
+    hudStackAt(screenX, screenY, entered).lastOrNull()
 
-private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?): Hud? {
-    val stack = hudStackAt(screenX, screenY)
+private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?, entered: HudGroup?): Hud? {
+    val stack = hudStackAt(screenX, screenY, entered)
     if (stack.isEmpty()) return null
     val index = stack.indexOfFirst { it === current }
     if (index < 0) return stack.last()
@@ -1271,6 +1280,16 @@ fun HudDesignStudio(visible: Boolean = true) {
     fun soleGroup(): HudGroup? =
         selectedGroupsIn(selectedHuds, enteredGroup).singleOrNull()?.takeIf { it.huds.size == selectedHuds.size }
 
+    /** Steps out of the group the user went into one level, selecting it */
+    fun stepOutOfGroup() {
+        val entered = enteredGroup ?: return
+        val member = entered.huds.firstOrNull()
+        Snapshot.withMutableSnapshot {
+            enteredGroup = entered.parent
+            if (member != null) selectedHuds = unitOf(member, entered.parent)
+        }
+    }
+
     fun groupSelection() {
         val groups = selectedGroupsIn(selectedHuds, enteredGroup)
         val loose = selectedHuds.filter { hud -> groups.none { hud in it } }
@@ -1293,6 +1312,9 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
     val panelVisible = panelHud != null
+    val panelGroup: HudGroup? = if (panelOpen) soleGroup() else null
+    // several HUDs that are not one group have no panel of their own so the panel shows what they share
+    val panelHuds: List<Hud> = if (panelOpen && panelGroup == null && selectedHuds.size > 1) selectedHuds.toList() else emptyList()
 
     fun clearTransientEditorState() {
         hudContextMenuTarget = null
@@ -1408,7 +1430,7 @@ fun HudDesignStudio(visible: Boolean = true) {
         } else if (pending != null) {
             if (pending in HudManager.activeInstances) {
                 Snapshot.withMutableSnapshot {
-                    selectedHuds = setOf(pending)
+                    selectedHuds = unitOf(pending, null)
                     panelOpen = true
                 }
             }
@@ -1431,14 +1453,16 @@ fun HudDesignStudio(visible: Boolean = true) {
     DisposableEffect(Unit) {
         onDispose {
             HudDesignSession.activeSelection = emptyList()
+            HudDesignSession.activeGroup = null
             HudDesignSession.clearCommands()
         }
     }
 
-    LaunchedEffect(selectedHuds, tourBlocksEditor) {
+    LaunchedEffect(selectedHuds, enteredGroup, tourBlocksEditor) {
         val primary = primaryHud()
         primary?.let { repairHudStaticSize(it) }
         HudDesignSession.activeSelection = if (tourBlocksEditor) emptyList() else selectedHuds.toList()
+        HudDesignSession.activeGroup = if (tourBlocksEditor) null else soleGroup()
     }
 
     val providers = remember { HudManager.providers().toList() }
@@ -1499,7 +1523,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     StudioCommand.Delete -> deleteHuds(selectedHuds)
 
                     StudioCommand.SelectAll -> Snapshot.withMutableSnapshot {
-                        selectedHuds = HudManager.activeInstances.filter { !it.locked }.toSet()
+                        selectedHuds = movableHuds(enteredGroup)
                     }
 
                     StudioCommand.Lock -> {
@@ -1676,7 +1700,7 @@ fun HudDesignStudio(visible: Boolean = true) {
         val right = maxOf(start.x, cur.x) * s
         val bottom = maxOf(start.y, cur.y) * s
         val intersecting = HudManager.activeInstances.filter { hud ->
-            if (hud.locked) return@filter false
+            if (unitLocked(hud, enteredGroup)) return@filter false
             val b = hudBounds(hud) ?: return@filter false
             b.x < right && b.x + b.width > left && b.y < bottom && b.y + b.height > top
         }.flatMapTo(LinkedHashSet()) { unitOf(it, enteredGroup) }
@@ -1732,7 +1756,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             }
             if (event.buttons.isSecondaryPressed) {
                 val hit = primaryHud()?.takeIf { hitTestHud(it, pos.x, pos.y) }
-                    ?: topHudAt(pos.x, pos.y)
+                    ?: topHudAt(pos.x, pos.y, enteredGroup)
                 event.changes.forEach { it.consume() }
                 Snapshot.withMutableSnapshot {
                     pressWasSecondary = true
@@ -1762,7 +1786,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             val groupHandle = groupBounds?.let { hitTestResizeHandle(it, pos.x, pos.y, mcToScreen) }
             if (groupBounds != null && groupHandle != null) {
                 event.changes.forEach { it.consume() }
-                if (groupHuds.any { it.locked }) {
+                if (groupHuds.all { it.locked }) {
                     notifyHudLocked()
                     return@safePointerEvent
                 }
@@ -1818,12 +1842,24 @@ fun HudDesignStudio(visible: Boolean = true) {
             val s = Platform.screen().screenToMcScale()
             val actionPressed = KeybindUtils.isActionModifierPressed(event.keyboardModifiers)
             val shift = event.keyboardModifiers.isShiftPressed
-            val hit = pickHudAt(pos.x, pos.y, primaryHud())
+            val hit = pickHudAt(pos.x, pos.y, primaryHud(), enteredGroup)
             // a click outside the group the user stepped into steps back out of it
             if (hit == null && !actionPressed && !shift || hit != null && enteredGroup?.let { it !in HudGroups.chainOf(hit) } == true) {
                 enteredGroup = null
             }
-            if (hit != null && hit.locked) {
+            // a second click on a grouped HUD steps into the group and picks what is under the cursor inside it,
+            // which has to work on locked HUDs too or the only way to reach one to unlock it would be to ungroup
+            val now = System.currentTimeMillis()
+            // overlapping HUDs take turns under repeated clicks, so two clicks on one group count even when the HUD differs
+            val lastHud = lastClickHud
+            val sameTarget = hit != null && lastHud != null && (lastHud === hit ||
+                unitGroupOf(hit, enteredGroup)?.let { it == unitGroupOf(lastHud, enteredGroup) } == true)
+            val doubleClick = sameTarget && !actionPressed && !shift && now - lastClickTime[0] <= DOUBLE_CLICK_MS
+            val stepInto = if (doubleClick) unitGroupOf(hit, enteredGroup) else null
+            if (stepInto != null) enteredGroup = stepInto
+            lastClickHud = if (doubleClick) null else hit
+            lastClickTime[0] = now
+            if (hit != null && unitLocked(hit, enteredGroup)) {
                 event.changes.forEach { it.consume() }
                 if (hit !in selectedHuds) UiSounds.play(UiSoundEvent.HUD_SELECT)
                 Snapshot.withMutableSnapshot {
@@ -1838,14 +1874,6 @@ fun HudDesignStudio(visible: Boolean = true) {
             if (hit != null) event.changes.forEach { it.consume() }
             Snapshot.withMutableSnapshot {
                 if (hit != null) {
-                    // a second click on a grouped HUD steps into the group and picks what is under the cursor inside it
-                    val now = System.currentTimeMillis()
-                    val doubleClick = !actionPressed && !shift && lastClickHud === hit &&
-                        now - lastClickTime[0] <= DOUBLE_CLICK_MS
-                    val stepInto = if (doubleClick) unitGroupOf(hit, enteredGroup) else null
-                    if (stepInto != null) enteredGroup = stepInto
-                    lastClickHud = if (doubleClick) null else hit
-                    lastClickTime[0] = now
                     val unit = unitOf(hit, enteredGroup)
                     val wasSelected = stepInto == null && unit.all { it in selectedHuds }
                     val newSelection = when {
@@ -1897,16 +1925,13 @@ fun HudDesignStudio(visible: Boolean = true) {
                 if (event.changes.none { it.pressed }) {
                     pendingPress = null
                 } else {
-                    if (press.hud !in selectedHuds || press.hud.locked) return@safePointerEvent
+                    if (press.hud !in selectedHuds || press.unit.all { it.locked }) return@safePointerEvent
                     if ((pos - press.origin).getDistance() <= DRAG_SLOP_PX) return@safePointerEvent
-                    // a group only moves whole so one locked HUD in it holds the group in place
-                    if (press.unit.any { it.locked }) {
-                        pendingPress = null
-                        notifyHudLocked()
-                        return@safePointerEvent
-                    }
                     UiSounds.play(UiSoundEvent.HUD_DRAG_START)
-                    val movable = selectedHuds.filterTo(LinkedHashSet()) { !it.locked }
+                    // a locked HUD in a group rides along with the group
+                    val movable = selectionUnits(selectedHuds, enteredGroup)
+                        .filterNot { unit -> unit.all { it.locked } }
+                        .flatMapTo(LinkedHashSet()) { it }
                     // grabbing an unselected HUD drags the whole fused shape while grabbing an already selected
                     // one pulls it back out of that shape
                     val detach = press.wasSelected
@@ -2019,7 +2044,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     hoveredHud = null
                     return@safePointerEvent
                 }
-                val hit = topHudAt(pos.x, pos.y)
+                val hit = topHudAt(pos.x, pos.y, enteredGroup)
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val hovered = hoveredHud
                 // over the bar or on the way to it the hover must stick even over another HUD or the
@@ -2104,7 +2129,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                 if (hoveredHud?.let { hoverBar(it, mcToScreen)?.second?.contains(pos.x, pos.y) } == true) {
                     return@safePointerEvent
                 }
-                val hit = pickHudAt(pos.x, pos.y, primaryHud())
+                val hit = pickHudAt(pos.x, pos.y, primaryHud(), enteredGroup)
                 if (hit != null) {
                     if (hit !in selectedHuds) UiSounds.play(UiSoundEvent.HUD_SELECT)
                     Snapshot.withMutableSnapshot {
@@ -2309,13 +2334,9 @@ fun HudDesignStudio(visible: Boolean = true) {
                     }
                     return@onKeyEvent true
                 }
-                // escape climbs out of a group the user stepped into one level at a time, selecting it
-                enteredGroup?.takeIf { keyEvent.key == Key.Escape }?.let { entered ->
-                    val member = entered.huds.firstOrNull()
-                    Snapshot.withMutableSnapshot {
-                        enteredGroup = entered.parent
-                        if (member != null) selectedHuds = unitOf(member, entered.parent)
-                    }
+                // escape climbs out of a group the user stepped into one level at a time
+                if (keyEvent.key == Key.Escape && enteredGroup != null) {
+                    stepOutOfGroup()
                     return@onKeyEvent true
                 }
                 if (keyEvent.key == Key.Escape && (selectedHuds.isNotEmpty() || panelOpen)) {
@@ -2345,7 +2366,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     Key.DirectionDown -> 0f to step
                     else -> return@onKeyEvent false
                 }
-                if (selectedHuds.any { it.locked }) {
+                if (selectionUnits(selectedHuds, enteredGroup).any { unit -> unit.all { it.locked } }) {
                     notifyHudLocked()
                     return@onKeyEvent true
                 }
@@ -2484,13 +2505,16 @@ fun HudDesignStudio(visible: Boolean = true) {
                         val members = group.huds
                         val b = boundsOf(members) ?: continue
                         val alone = group == soleGroup
-                        drawSelectedHudBounds(
-                            b,
-                            mcToScreen,
-                            badgeRadius = badgeRadius,
-                            showHandles = alone && members.none { it.locked },
-                            showBadge = alone,
-                        )
+                        if (members.all { it.locked }) {
+                            drawRect(
+                                color = lockedHudBoxColor,
+                                topLeft = Offset(b.x * mcToScreen, b.y * mcToScreen),
+                                size = Size(b.width * mcToScreen, b.height * mcToScreen),
+                                style = Stroke(width = 1f, pathEffect = lockedHudDashEffect),
+                            )
+                            continue
+                        }
+                        drawSelectedHudBounds(b, mcToScreen, showHandles = alone, badgeRadius = badgeRadius, showBadge = alone)
                     }
                     // hovering an anchored HUD traces the link back to the point it hangs off
                     hoveredHud?.let { hovered ->
@@ -2625,7 +2649,9 @@ fun HudDesignStudio(visible: Boolean = true) {
                     onDelete = { deleteHuds(unit) },
                 ) {
                     Snapshot.withMutableSnapshot {
-                        selectedHuds = unit
+                        // part of a larger selection opens the settings of all of it
+                        val inLargerSelection = selectedHuds.size > unit.size && selectedHuds.containsAll(unit)
+                        if (!inLargerSelection) selectedHuds = unit
                         panelOpen = true
                     }
                 }
@@ -2639,13 +2665,13 @@ fun HudDesignStudio(visible: Boolean = true) {
             anchorPickSources.isNotEmpty() ->
                 "Click the point to anchor it to  ·  Right click to remove the anchor  ·  Esc to go back"
             isDragging -> null
-            lockedPressHud != null || hoveredHud?.locked == true ->
+            lockedPressHud != null || hoveredHud?.let { unitLocked(it, enteredGroup) } == true ->
                 "This HUD is locked  ·  Use the lock button above it to move or resize it"
-            hoveredHud?.let { !it.locked && unitGroupOf(it, enteredGroup) != null } == true ->
+            hoveredHud?.let { unitGroupOf(it, enteredGroup) != null } == true ->
                 "Drag to move the group  ·  Drag a corner to scale it  ·  Double-click to edit inside it"
             enteredGroup != null && hoveredHud == null ->
                 "Editing inside a group  ·  Esc to step out"
-            hoveredHud?.let { it.bgMerged && !it.locked } == true ->
+            hoveredHud?.let { it.bgMerged && !unitLocked(it, enteredGroup) } == true ->
                 "Drag to move the merged HUDs together  ·  Click it first, then drag, to pull it out"
             else -> null
         }
@@ -2708,7 +2734,13 @@ fun HudDesignStudio(visible: Boolean = true) {
                 .hoverable(panelInteraction)
         ) {
         val panelContentHud = remember { mutableStateOf<Hud?>(null) }
-        if (panelHud != null) panelContentHud.value = panelHud
+        val panelContentGroup = remember { mutableStateOf<HudGroup?>(null) }
+        val panelContentHuds = remember { mutableStateOf<List<Hud>>(emptyList()) }
+        if (panelHud != null) {
+            panelContentHud.value = panelHud
+            panelContentGroup.value = panelGroup
+            panelContentHuds.value = panelHuds
+        }
         val panelSlidePx = (if (panelPos.x < 0.5f) -1 else 1) * with(densityObj) { 24.dp.roundToPx() }
         AnimatedVisibility(
             visible = panelHud != null,
@@ -2721,6 +2753,15 @@ fun HudDesignStudio(visible: Boolean = true) {
                 DesignStudioPanel(
                     modifier = Modifier.chromeBlocker(CHROME_SETTINGS_PANEL),
                     selectedHud = panelContentHud.value,
+                    selectedGroup = panelContentGroup.value,
+                    sharedHuds = panelContentHuds.value,
+                    onStepOut = if (enteredGroup != null) ({ stepOutOfGroup() }) else null,
+                    onOpenGroupMember = { members ->
+                        Snapshot.withMutableSnapshot {
+                            enteredGroup = panelGroup
+                            selectedHuds = members
+                        }
+                    },
                     activeCategory = activeCategory,
                     onCategoryChange = { activeCategory = it },
                     searchFocusRequested = searchFocusTarget == StudioSearch.Panel,
@@ -2890,11 +2931,11 @@ fun HudDesignStudio(visible: Boolean = true) {
             offset = hudContextMenuOffset,
             onDismiss = { hudContextMenuTarget = null },
             targets = contextMenuTargets,
-            settingsEnabled = menuUnits.size <= 1,
             onSettings = { hud ->
                 Snapshot.withMutableSnapshot {
                     hudContextMenuTarget = null
-                    selectedHuds = unitOf(hud, enteredGroup)
+                    // several HUDs or groups keep the whole selection so the panel shows what they share
+                    selectedHuds = if (menuUnits.size > 1) menuTargetSet else unitOf(hud, enteredGroup)
                     panelOpen = true
                 }
             },
@@ -2990,7 +3031,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             },
             onSelectAll = {
                 Snapshot.withMutableSnapshot {
-                    selectedHuds = HudManager.activeInstances.filter { !it.locked }.toSet()
+                    selectedHuds = movableHuds(enteredGroup)
                 }
                 UiSounds.play(UiSoundEvent.CLICK)
             },
@@ -3250,6 +3291,13 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
 
     fun overShell(px: Float, py: Float) = shellLayout.shellBounds?.contains(Offset(px, py)) == true
 
+    /** The box the action bar for hovering [hud] hangs off and the bar, which is its whole group's when it is grouped */
+    fun hoverBar(hud: Hud, mcToScreen: Float): Pair<HudBounds, HudActionBarLayout>? {
+        val unit = unitOf(hud, null)
+        val bounds = boundsOf(unit) ?: return null
+        return bounds to hudActionBarLayout(bounds, actionBarIcons(unit, null), mcToScreen, actionIconPx, actionBarGapPx)
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -3260,17 +3308,15 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 if (overShell(pos.x, pos.y)) return@safePointerEvent
                 if (!isDragging) {
                     val actionTarget = hoveredHud
-                    if (actionTarget != null && hitTestHudActionBar(
-                            actionTarget, pos.x, pos.y,
-                            Platform.screen().mcToScreenScale(), actionIconPx, actionBarGapPx,
-                        )
+                    if (actionTarget != null &&
+                        hoverBar(actionTarget, Platform.screen().mcToScreenScale())?.second?.contains(pos.x, pos.y) == true
                     ) return@safePointerEvent
                 }
                 val s = Platform.screen().screenToMcScale()
-                val hit = orderedInstances().lastOrNull { !it.locked && hitTestHud(it, pos.x, pos.y) }
+                val hit = orderedInstances().lastOrNull { !unitLocked(it, null) && hitTestHud(it, pos.x, pos.y) }
                 val unit = hit?.let { unitOf(it, null) }
-                if (hit == null || unit == null || unit.any { it.locked }) {
-                    (hit ?: orderedInstances().lastOrNull { it.locked && hitTestHud(it, pos.x, pos.y) })?.let {
+                if (hit == null || unit == null) {
+                    orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }?.let {
                         Snapshot.withMutableSnapshot {
                             lockedPressHud = it
                             lockedPressOrigin = pos
@@ -3327,11 +3373,12 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     val hit = if (overShell(pos.x, pos.y)) null else topHudAt(pos.x, pos.y)
                     val hovered = hoveredHud
                     val mcToScreen = Platform.screen().mcToScreenScale()
-                    val overActionBar = hovered?.let {
-                        hitTestHudActionBarZone(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
+                    val hoveredBar = hovered?.let { hoverBar(it, mcToScreen) }
+                    val overActionBar = hoveredBar?.let { (bounds, bar) ->
+                        hitTestHudActionBarZone(bounds, bar, pos.x, pos.y, mcToScreen)
                     } == true
-                    val inExpandedZone = hovered?.let {
-                        hitTestHudWithActionBar(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx)
+                    val inExpandedZone = hoveredBar?.let { (bounds, bar) ->
+                        hitTestHudWithActionBar(bounds, bar, pos.x, pos.y, mcToScreen)
                     } == true
                     val next = when {
                         overShell(pos.x, pos.y) -> null
@@ -3361,9 +3408,9 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     val sy = bounds.y * mcToScreen
                     val sw = bounds.width * mcToScreen
                     val sh = bounds.height * mcToScreen
-                    val isBeingDragged = hud === draggedHud && isDragging
+                    val isBeingDragged = isDragging && hud in dragSet
                     val isHovered = hud === hoveredHud
-                    if (hud.locked) {
+                    if (hud.locked && !isBeingDragged) {
                         if (isHovered) {
                             drawRect(
                                 color = lockedHudBoxColor,
@@ -3411,28 +3458,31 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
         val actionBarTarget = hoveredHud
         if (actionBarTarget != null && !isDragging) {
             val mcToScreen = Platform.screen().mcToScreenScale()
-            val bounds = hudBounds(actionBarTarget)
-            val layout = hudActionBarLayout(actionBarTarget, mcToScreen, actionIconPx, actionBarGapPx)
+            val unit = unitOf(actionBarTarget, null)
+            val bar = hoverBar(actionBarTarget, mcToScreen)
+            val bounds = bar?.first
+            val layout = bar?.second
             // HudDragLayer is composed outside OneConfigInterface's Theme scope so provide one for the
             // icons since IconButton reads LocalTheme
             if (bounds != null && bounds.width > 0f && bounds.height > 0f && layout != null) Theme {
                 HudActionBar(
-                    huds = listOf(actionBarTarget),
+                    huds = unit.toList(),
                     layout = layout,
                     densityFloat = densityFloat,
                     actionIconPx = actionIconPx,
                     actionBarGapPx = actionBarGapPx,
                     chromeAlpha = 1f,
                     onDelete = {
-                        if (actionBarTarget.canDelete()) {
+                        val removed = unit.filter { it.canDelete() }
+                        if (removed.isNotEmpty()) {
                             Snapshot.withMutableSnapshot {
                                 hoveredHud = null
-                                if (draggedHud === actionBarTarget) {
+                                if (removed.any { it === draggedHud }) {
                                     draggedHud = null
                                     isDragging = false
                                     shellLayout.markHudDragging(false)
                                 }
-                                HudManager.removeHud(actionBarTarget, delete = true)
+                                removed.forEach { HudManager.removeHud(it, delete = true) }
                             }
                         }
                     },
@@ -3449,6 +3499,12 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
 private fun DesignStudioPanel(
     modifier: Modifier = Modifier,
     selectedHud: Hud?,
+    selectedGroup: HudGroup?,
+    /** Several HUDs which are not one group, which the panel shows the settings they share for */
+    sharedHuds: List<Hud>,
+    /** Steps out of the group being edited inside, or `null` when not editing inside one */
+    onStepOut: (() -> Unit)?,
+    onOpenGroupMember: (Set<Hud>) -> Unit,
     activeCategory: StudioCategory,
     onCategoryChange: (StudioCategory) -> Unit,
     searchFocusRequested: Boolean,
@@ -3462,22 +3518,47 @@ private fun DesignStudioPanel(
 ) {
     val theme = LocalTheme.current
     val legacyHasOptions = rememberHasHudOptions(selectedHud?.takeIf { it is LegacyHud }?.tree)
-    val categories = remember(selectedHud, legacyHasOptions) {
+    val shared = selectedGroup == null && sharedHuds.size > 1
+    val sharing = selectedGroup?.huds ?: sharedHuds.takeIf { shared }
+    val categories = remember(selectedHud, selectedGroup, sharedHuds, legacyHasOptions) {
         StudioCategory.entries.filter {
-            when (it) {
+            when {
+                // a group or several HUDs only have the style options all of them share
+                sharing != null -> it != StudioCategory.Style || SharedOptions.anyShared(SharedTab.Style, sharing)
                 // hide settings tab for legacy HUDs that would leave it empty
-                StudioCategory.Settings -> selectedHud !is LegacyHud || legacyHasOptions
-                StudioCategory.Style -> selectedHud !is LegacyHud
-                StudioCategory.Layout -> true
+                it == StudioCategory.Settings -> selectedHud !is LegacyHud || legacyHasOptions
+                it == StudioCategory.Style -> selectedHud !is LegacyHud
+                else -> true
             }
         }
     }
     val shownCategory = activeCategory.takeIf { it in categories } ?: categories.first()
     LaunchedEffect(shownCategory) { onCategoryChange(shownCategory) }
     val query = searchText.trim()
-    val title = remember(selectedHud) { selectedHud?.let { localizedLabel(it.title) } }
-    val subtitle = remember(selectedHud, title) {
-        selectedHud?.configId?.let(::modNameFor)?.takeIf { it != title }
+    // what the panel is showing the settings of, so scrolling starts over when it changes
+    val view: Any? = selectedGroup ?: if (shared) "shared" else selectedHud
+    // a group's label and member count follow its HUDs, which the group itself cannot tell has changed
+    val instancesRevision = HudManager.instancesRevision.intValue
+    val title = remember(selectedHud, selectedGroup, sharedHuds, instancesRevision) {
+        when {
+            selectedGroup != null -> hudGroupLabel(selectedGroup)
+            shared -> "${sharedHuds.size} HUDs"
+            else -> selectedHud?.let { localizedLabel(it.title) }
+        }
+    }
+    val subtitle = remember(selectedHud, selectedGroup, sharedHuds, title, instancesRevision) {
+        when {
+            selectedGroup != null -> {
+                val count = selectedGroup.huds.size
+                val ancestors = generateSequence(selectedGroup.parent) { it.parent }.toList().asReversed()
+                (ancestors.map(::hudGroupLabel) + "Group · $count HUD${if (count == 1) "" else "s"}").joinToString(" › ")
+            }
+            shared -> "Shared settings"
+            else -> selectedHud?.let { hud ->
+                val modName = hud.configId?.let(::modNameFor)?.takeIf { it != title }
+                (HudGroups.chainOf(hud).map(::hudGroupLabel) + listOfNotNull(modName)).joinToString(" › ").ifEmpty { null }
+            }
+        }
     }
     Box(
         modifier = Modifier
@@ -3534,6 +3615,7 @@ private fun DesignStudioPanel(
                         Text(it, color = theme.textColorSecondary, fontSize = 12.sp)
                     }
                 }
+                if (onStepOut != null) IconButton("left-arrow", modifier = Modifier.size(32.dp), hoverBorder = true) { onStepOut() }
                 IconButton("close", modifier = Modifier.size(32.dp), hoverBorder = true) { onBack() }
             }
             var searchOpen by remember { mutableStateOf(false) }
@@ -3602,7 +3684,7 @@ private fun DesignStudioPanel(
                         }
                     },
                 ) { category ->
-                    val panelScrollState = rememberScrollState()
+                    val panelScrollState = key(view) { rememberScrollState() }
                     ScrollbarBox(panelScrollState, StudioPanelGutter) {
                         SectionStack(
                             Modifier.fillMaxWidth()
@@ -3613,9 +3695,21 @@ private fun DesignStudioPanel(
                             // like the main config screen, a search spans every category rather than only the open one
                             categories.forEach {
                                 if (query.isNotEmpty() || it == category) when (it) {
-                                    StudioCategory.Settings -> Settings(selectedHud, query)
-                                    StudioCategory.Style -> Style(selectedHud, query)
-                                    StudioCategory.Layout -> Layout(selectedHud, query)
+                                    StudioCategory.Settings -> when {
+                                        selectedGroup != null -> GroupSettings(selectedGroup, query, onOpenGroupMember)
+                                        shared -> SharedSettings(sharedHuds, query)
+                                        else -> Settings(selectedHud, query)
+                                    }
+                                    StudioCategory.Style -> when {
+                                        selectedGroup != null -> SharedStyle(selectedGroup.huds, query)
+                                        shared -> SharedStyle(sharedHuds, query)
+                                        else -> Style(selectedHud, query)
+                                    }
+                                    StudioCategory.Layout -> when {
+                                        selectedGroup != null -> SharedLayout(selectedGroup.huds, query, selectedGroup)
+                                        shared -> SharedLayout(sharedHuds, query)
+                                        else -> Layout(selectedHud, query)
+                                    }
                                 }
                             }
                         }

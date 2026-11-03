@@ -30,13 +30,20 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+/**
+ * @param mixed shows the switch halfway between on and off for a setting that differs between several
+ * things, and a click then turns it on for all of them
+ */
 @Composable
-fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) = SwitchControl(checked, false, onCheckedChange)
+
+@Composable
+fun SwitchControl(checked: Boolean, mixed: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val accentAlpha = animateFloatAsState(if (checked) 1f else 0f)
-    val thumbOffset = animateDpAsState(if (checked) 24.dp else 3.dp, animationSpec = ReducedMotion.spec(spring()))
+    val accentAlpha = animateFloatAsState(if (mixed) 0.5f else if (checked) 1f else 0f)
+    val thumbOffset = animateDpAsState(if (mixed) 13.5.dp else if (checked) 24.dp else 3.dp, animationSpec = ReducedMotion.spec(spring()))
     val borderColor = animateColorAsState(
         if (isHovered) LocalTheme.current.textColor.copy(alpha = 0.15f) else Color.Transparent
     )
@@ -45,7 +52,7 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(if (checked) "On" else "Off", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+        Text(if (mixed) "Mixed" else if (checked) "On" else "Off", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
         Box(
             modifier = Modifier
                 .size(42.dp, 21.dp)
@@ -53,7 +60,7 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
                 .clip(LocalTheme.current.circleShape)
                 .background(LocalTheme.current.controlTrackColor)
                 .animatedFrame(LocalTheme.current.circleShape, accentAlpha = { accentAlpha.value }, border = { borderColor.value })
-                .onClick(interactionSource) { onCheckedChange(!checked) }
+                .onClick(interactionSource) { onCheckedChange(mixed || !checked) }
                 .pointerHoverIcon(PointerIcon.Hand),
         ) {
             Box(

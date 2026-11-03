@@ -389,6 +389,11 @@ public abstract class Hud(
         return minSize
     }
 
+    /** Drops the size measured this frame for a caller which has just changed what it depends on */
+    internal fun forgetMinimumSize() {
+        minSizeFrame = Long.MIN_VALUE
+    }
+
     public open val scaledWidth: Float get() {
         val scale = effectiveScale
         val w = if (staticWidth || renderedW <= 0f) staticW * scale else renderedW

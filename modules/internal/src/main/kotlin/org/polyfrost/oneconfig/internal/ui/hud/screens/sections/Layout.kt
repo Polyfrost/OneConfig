@@ -253,7 +253,7 @@ fun Layout(hud: Hud?, query: String) {
 }
 
 @Composable
-private fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float) -> Unit) {
+internal fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float) -> Unit) {
     LabeledControl(label) {
         NumberSpinner(value, { Snapshot.withMutableSnapshot { onChange(it) } }, 0f, 100f, 1f, width = width, unit = "px")
     }
@@ -261,7 +261,7 @@ private fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float)
 
 /** X and Y of the selection's top left corner, moving every selected HUD together, with [third] in the last column */
 @Composable
-private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit) {
+internal fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit) {
     HudEditorViewport.observe()
     val selection = designerSelection(hud)
     val origin = selectionOrigin(selection) ?: Offset(hud.x, hud.y)
