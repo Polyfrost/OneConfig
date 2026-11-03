@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.HudResize
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -45,6 +46,25 @@ import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val DeleteButtonColor = Color(0xFFE5484D)
+
+/** [Hud.hudScale], read straight from the HUD so dragging a corner handle updates it while the panel is open */
+@Composable
+private fun HudScaleSpinner(hud: Hud, optionId: String) {
+    val range = hud.hudScaleRange
+    HudSettingTarget(hud, optionId) {
+        NumberSpinner(
+            hud.hudScale,
+            { Snapshot.withMutableSnapshot { hud.hudScale = it } },
+            range.start,
+            range.endInclusive,
+            0.25f,
+            width = 176.dp,
+            format = { "%.2f".format(it) },
+            unit = "x",
+            label = "Scale",
+        )
+    }
+}
 
 @Composable
 fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
@@ -106,21 +126,15 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
         if (hud is LegacyHudMarker) {
             if (hud.supportsScale) {
                 Section("Scale", query) {
-                    HudSettingTarget(hud, "customScale") {
-                        NumberSpinner(
-                            customScale,
-                            { Snapshot.withMutableSnapshot { customScale = it; hud.customScale = it } },
-                            0.25f,
-                            4f,
-                            0.25f,
-                            width = 176.dp,
-                            unit = "x",
-                            label = "Scale",
-                        )
-                    }
+                    HudScaleSpinner(hud, "customScale")
                 }
             }
         } else {
+            if (hud.resizeAxes == HudResize.Both) {
+                Section("Scale", query) {
+                    HudScaleSpinner(hud, "textScale")
+                }
+            }
             Section("GUI Scale", query, "Use Minecraft GUI Scale", "Custom Scale") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     HudSettingTarget(hud, "useGuiScale") {

@@ -698,14 +698,28 @@ private fun hitTestResizeHandle(hud: Hud, screenX: Float, screenY: Float, mcToSc
     }
 }
 
+/**
+ * How far a resize from [corner] has scaled a box that started as [start] with the cursor at
+ * ([mouseX], [mouseY])
+ *
+ * The cursor is projected onto the diagonal from the fixed corner to the dragged one because a
+ * per-axis factor turns small moves on the short axis into huge jumps
+ */
+private fun cornerScaleFactor(corner: ResizeCorner, start: HudBounds, mouseX: Float, mouseY: Float): Float {
+    val anchorX = if (corner.isLeft) start.x + start.width else start.x
+    val anchorY = if (corner.isTop) start.y + start.height else start.y
+    val cornerVecX = if (corner.isLeft) -start.width else start.width
+    val cornerVecY = if (corner.isTop) -start.height else start.height
+    val diagLenSq = cornerVecX * cornerVecX + cornerVecY * cornerVecY
+    if (diagLenSq <= 0f) return 1f
+    return ((mouseX - anchorX) * cornerVecX + (mouseY - anchorY) * cornerVecY) / diagLenSq
+}
+
 private fun resizeHud(
     hud: Hud,
     corner: ResizeCorner,
     startBounds: HudBounds,
-    startTextScale: Float,
     startScale: Float,
-    startStaticW: Float,
-    startStaticH: Float,
     mouseX: Float,
     mouseY: Float,
     freeResize: Boolean,
@@ -720,22 +734,7 @@ private fun resizeHud(
         return
     }
 
-    if (hud is LegacyHud) {
-        val cornerVecX = if (corner.isLeft) -startBounds.width else startBounds.width
-        val cornerVecY = if (corner.isTop) -startBounds.height else startBounds.height
-        val mouseVecX = mouseX - anchorX
-        val mouseVecY = mouseY - anchorY
-        val diagLenSq = cornerVecX * cornerVecX + cornerVecY * cornerVecY
-        val rawFactor = if (diagLenSq > 0f) {
-            (mouseVecX * cornerVecX + mouseVecY * cornerVecY) / diagLenSq
-        } else 1f
-        val baseScale = startScale.coerceAtLeast(0.001f)
-        val newScale = (baseScale * rawFactor).coerceIn(0.25f, 4f)
-        hud.customScale = newScale
-        return
-    }
-
-    if (freeResize) {
+    if (freeResize && hud !is LegacyHud) {
         val effectiveScale = hud.effectiveScale.coerceAtLeast(0.001f)
         val (minStaticW, minStaticH) = hud.minimumSize()
         val newWidth = targetWidth.coerceAtLeast(minStaticW * effectiveScale)
@@ -747,26 +746,7 @@ private fun resizeHud(
         return
     }
 
-    // scale proportionally by projecting the mouse onto the diagonal from the anchor to the dragged
-    // corner because a per-axis max-deviation factor turns small moves on the short axis into huge jumps
-    val cornerVecX = if (corner.isLeft) -startBounds.width else startBounds.width
-    val cornerVecY = if (corner.isTop) -startBounds.height else startBounds.height
-    val mouseVecX = mouseX - anchorX
-    val mouseVecY = mouseY - anchorY
-    val diagLenSq = cornerVecX * cornerVecX + cornerVecY * cornerVecY
-    val rawFactor = if (diagLenSq > 0f) {
-        (mouseVecX * cornerVecX + mouseVecY * cornerVecY) / diagLenSq
-    } else 1f
-    val minTextScale = 6f / 14f
-    val maxTextScale = 64f / 14f
-    val newTextScale = (startTextScale * rawFactor).coerceIn(minTextScale, maxTextScale)
-    val factor = if (startTextScale > 0f) newTextScale / startTextScale else 1f
-
-    hud.textScale = newTextScale
-    if (hud.staticWidth && startStaticW > 0f && startStaticH > 0f) {
-        hud.staticW = startStaticW * factor
-        hud.staticH = startStaticH * factor
-    }
+    hud.hudScale = startScale * cornerScaleFactor(corner, startBounds, mouseX, mouseY)
 }
 
 private fun DrawScope.drawSelectedHudBounds(
@@ -1081,10 +1061,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     var resizedHud by remember { mutableStateOf<Hud?>(null) }
     var resizeCorner by remember { mutableStateOf<ResizeCorner?>(null) }
     var resizeStartBounds by remember { mutableStateOf<HudBounds?>(null) }
-    var resizeStartTextScale by remember { mutableStateOf(1f) }
     var resizeStartScale by remember { mutableStateOf(1f) }
-    var resizeStartStaticW by remember { mutableStateOf(0f) }
-    var resizeStartStaticH by remember { mutableStateOf(0f) }
     var libraryVisible by remember { mutableStateOf(true) }
     var searchText by remember { mutableStateOf("") }
     var searchFocusTarget by remember { mutableStateOf<StudioSearch?>(null) }
@@ -1603,10 +1580,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         resizedHud = selected
                         resizeCorner = handle
                         resizeStartBounds = bounds
-                        resizeStartTextScale = selected.textScale
-                        resizeStartScale = selected.customScale
-                        resizeStartStaticW = selected.staticW
-                        resizeStartStaticH = selected.staticH
+                        resizeStartScale = selected.hudScale
                         hoveredHud = selected
                         closeLibrary()
                         pasteMenuOffset = null
@@ -1728,10 +1702,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         hud = hit,
                         corner = corner,
                         startBounds = bounds,
-                        startTextScale = resizeStartTextScale,
                         startScale = resizeStartScale,
-                        startStaticW = resizeStartStaticW,
-                        startStaticH = resizeStartStaticH,
                         mouseX = pos.x * s,
                         mouseY = pos.y * s,
                         freeResize = event.keyboardModifiers.isShiftPressed,

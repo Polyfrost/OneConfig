@@ -99,7 +99,8 @@ fun Designer(hud: Hud?, query: String) {
     var padTop by remember { mutableStateOf(hud.padTop) }
     var padBottom by remember { mutableStateOf(hud.padBottom) }
     var font by remember { mutableStateOf(hud.font) }
-    var textScale by remember { mutableStateOf(hud.textScale) }
+    // read straight from the HUD so dragging a corner handle updates the panel while it is open
+    val textScale = hud.textScale
     var textBold by remember { mutableStateOf(hud.textBold) }
     var textItalic by remember { mutableStateOf(hud.textItalic) }
     var textUnderline by remember { mutableStateOf(hud.textUnderline) }
@@ -295,7 +296,7 @@ fun Designer(hud: Hud?, query: String) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Font size", color = LocalTheme.current.textColor, fontSize = 14.sp)
                     NumberSpinner(
-                        textScale * 14f, { Snapshot.withMutableSnapshot { val s = it / 14f; textScale = s; hud.textScale = s } },
+                        textScale * 14f, { Snapshot.withMutableSnapshot { hud.hudScale = it / 14f } },
                         6f, 64f, 1f, width = 112.dp, unit = "px", icon = "align"
                     )
                 }

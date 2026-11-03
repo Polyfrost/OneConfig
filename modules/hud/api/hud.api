@@ -74,6 +74,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getFullShadow ()Z
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public fun getHidden ()Z
+	public final fun getHudScale ()F
+	public final fun getHudScaleRange ()Lkotlin/ranges/ClosedFloatingPointRange;
 	public final fun getKeepBgWhenHidden ()Z
 	public fun getLocked ()Z
 	public final fun getMergeBackground ()Z
@@ -158,6 +160,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setGrowthAnchor (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public final fun setGrowthAnchorKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public fun setHidden (Z)V
+	public final fun setHudScale (F)V
 	public final fun setKeepBgWhenHidden (Z)V
 	public final fun setLayoutRefH (F)V
 	public final fun setLayoutRefW (F)V
