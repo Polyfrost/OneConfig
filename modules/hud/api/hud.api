@@ -82,6 +82,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getPadLeft ()F
 	public final fun getPadRight ()F
 	public final fun getPadTop ()F
+	public final fun getPivotFractionX ()F
+	public final fun getPivotFractionY ()F
 	public final fun getPoppinsFontName ()Ljava/lang/String;
 	public final fun getPosSchema ()I
 	public fun getRelativeX ()F
