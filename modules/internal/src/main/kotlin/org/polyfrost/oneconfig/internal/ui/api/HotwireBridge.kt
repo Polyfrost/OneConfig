@@ -19,7 +19,7 @@ import org.polyfrost.oneconfig.internal.ui.components.translated
  * Every call falls back to "Hotwire is not there" when the API is missing or one of its calls throws
  */
 object HotwireBridge {
-    class ModState(val id: String, val name: String, val version: String, val on: Boolean, val switchable: Boolean)
+    class ModState(val id: String, val name: String, val version: String, val on: Boolean, val switchable: Boolean, val offSinceStart: Boolean)
 
     /** [switched] is every mod the change would move, including the ones Hotwire switches along with those asked for */
     class Preview(val possible: Boolean, val message: String, val switched: List<String> = emptyList())
@@ -59,8 +59,13 @@ object HotwireBridge {
 
     private fun supports(call: String) = apiClass?.methods?.any { it.name == call } == true
 
-    /** Whether this Hotwire has the change plans every part of the page goes through */
-    val supportsSwitching: Boolean by lazy { supports("planChange") }
+    /**
+     * Whether this Hotwire has the change plans every part of the page goes through, and the fields [mods] and
+     * [findUpdates] read, which arrived without a new API revision
+     */
+    val supportsSwitching: Boolean by lazy {
+        supports("planChange") && runCatching { Class.forName("dev.moon.hotwire.api.ModState").getMethod("offSinceStart") }.isSuccess
+    }
 
     val supportsOriginalScreen: Boolean by lazy { supports("openScreen") }
 
@@ -73,6 +78,7 @@ object HotwireBridge {
                 it.get("version") as String? ?: "",
                 it.get("on") as Boolean,
                 it.get("switchable") as Boolean,
+                it.get("offSinceStart") as Boolean,
             )
         }
     }.getOrNull()
@@ -86,53 +92,23 @@ object HotwireBridge {
     /** How far the running switch is, from 0 to 1 */
     fun progress(): Float = runCatching { (call("getProgress")!!.get("fraction") as Double).toFloat() }.getOrDefault(0f)
 
-    private fun nameOf(id: String): String = mods().orEmpty().firstOrNull { it.id == id }?.name ?: id
-
-    private fun addsBack(kept: List<String>): String? = kept.takeIf { it.isNotEmpty() }?.let { mods ->
-        translated("oneconfig.page.hotwire.switch.adds_back", "Adds back %s.", mods.joinToString(", ", transform = ::nameOf))
-    }
-
     /** What turning [ids] on or off would do, including the mods Hotwire switches along with them */
     @Suppress("UNCHECKED_CAST")
     fun preview(ids: Collection<String>, on: Boolean): Preview = runCatching {
-        val kept = if (on) keptOff(ids) else emptyList()
-        val preview = (ids - kept.toSet()).takeIf { it.isNotEmpty() }?.let { call(if (on) "previewOn" else "previewOff", it)!! }
-        Preview(
-            preview?.get("possible") as Boolean? ?: true,
-            listOfNotNull(preview?.get("message") as String?, addsBack(kept)).joinToString(" "),
-            preview?.get("switched") as List<String>? ?: emptyList(),
-        )
+        val preview = call(if (on) "previewOn" else "previewOff", ids)!!
+        Preview(preview.get("possible") as Boolean, preview.get("message") as String, preview.get("switched") as List<String>)
     }.getOrElse { Preview(false, "Hotwire is not available.") }
 
     @Suppress("UNCHECKED_CAST")
     fun previewTogether(off: List<String>, on: List<String>): Preview? {
         if (off.isEmpty() || on.isEmpty()) return null
         return runCatching {
-            val kept = keptOff(on)
-            val plan = changePlan(off = off, on = on - kept.toSet())
-            Preview(
-                plan.through("ChangePlan", "canApply") == true,
-                (plan.through("ChangePlan", "getLines") as List<String> + listOfNotNull(addsBack(kept))).joinToString(" "),
-            )
+            val plan = changePlan(off = off, on = on)
+            Preview(plan.through("ChangePlan", "canApply") == true, (plan.through("ChangePlan", "getLines") as List<String>).joinToString(" "))
         }.getOrElse {
             Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately."))
         }
     }
-
-    // shortcut: Hotwire's API can't tell which mods were kept off since the last launch, and refuses to preview them
-    // though its turnOn brings them back, so this one question reaches into its engine until the API can answer it
-    // the engine lives in a package per game version, the same one as the API implementation
-    private fun engine(): Any? = runCatching {
-        Class.forName("${api!!.javaClass.packageName}.HotwireClient").getMethod("findEngine").invoke(null)
-    }.getOrNull()
-
-    private fun Any.callHidden(name: String, vararg args: Any): Any? =
-        javaClass.declaredMethods.first { it.name == name && it.parameterCount == args.size }.apply { isAccessible = true }.invoke(this, *args)
-
-    fun keptOff(ids: Collection<String>): List<String> = runCatching {
-        val disabled = engine()!!.callHidden("getDisabled")!!
-        ids.filter { disabled.callHidden("isDisabledSinceStart", it) == true }
-    }.getOrDefault(emptyList())
 
     /** Whether Hotwire is running a switch or add right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
@@ -243,6 +219,7 @@ object HotwireBridge {
 
     class StoreUpdate(
         val modId: String,
+        val projectId: String,
         val name: String,
         val installedVersion: String,
         val newVersion: String,
@@ -359,7 +336,7 @@ object HotwireBridge {
         (found.get("failure") as String).takeIf { it.isNotBlank() }?.let { error(it) }
         val queued = pendingTasks().map { it!!.get("modId") }
         return (found.get("updates") as List<*>).filterNot { it!!.get("id") in queued }.map {
-            StoreUpdate(it!!.get("id") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
+            StoreUpdate(it!!.get("id") as String, it.get("projectId") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
         }
     }
 

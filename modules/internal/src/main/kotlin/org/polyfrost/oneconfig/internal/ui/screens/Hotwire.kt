@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -272,38 +273,41 @@ fun Hotwire() {
                 selected = if (listLayout) 1 else 0,
             ) { listLayout = it == 1 }
         }
-        ScrollbarBox(gridState, PageGutter, Modifier.weight(1f).fillMaxWidth()) {
-            LazyVerticalGrid(
-                state = gridState,
-                columns = if (listLayout) GridCells.Fixed(1) else GridCells.Adaptive(140.dp),
-                verticalArrangement = Arrangement.spacedBy(if (listLayout) 8.dp else 19.dp),
-                horizontalArrangement = Arrangement.spacedBy(19.dp),
-                contentPadding = PaddingValues(horizontal = PageGutter),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(mods, key = { it.id }) { mod ->
-                    HotwireTile(
-                        mod,
-                        families.getValue(mod),
-                        on = familyOn(families.getValue(mod), states),
-                        hasUpdate = families.getValue(mod).any { it.id in availableUpdates },
-                        list = listLayout,
-                        selected = mod.id in selected,
-                        onSelect = { if (!selected.remove(mod.id)) selected.add(mod.id) },
-                    )
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            ScrollbarBox(gridState, PageGutter, Modifier.fillMaxSize()) {
+                LazyVerticalGrid(
+                    state = gridState,
+                    columns = if (listLayout) GridCells.Fixed(1) else GridCells.Adaptive(140.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (listLayout) 8.dp else 19.dp),
+                    horizontalArrangement = Arrangement.spacedBy(19.dp),
+                    // the last row can still scroll clear of the bar drawn over the grid
+                    contentPadding = PaddingValues(start = PageGutter, end = PageGutter, bottom = SwitchBarHeight + 38.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(mods, key = { it.id }) { mod ->
+                        HotwireTile(
+                            mod,
+                            families.getValue(mod),
+                            on = familyOn(families.getValue(mod), states),
+                            hasUpdate = families.getValue(mod).any { it.id in availableUpdates },
+                            list = listLayout,
+                            selected = mod.id in selected,
+                            onSelect = { if (!selected.remove(mod.id)) selected.add(mod.id) },
+                        )
+                    }
                 }
             }
-        }
-        Row(
-            // a fixed height the switch bar fills, so the button stays centred on it and doesn't move when it appears
-            Modifier.fillMaxWidth().padding(start = PageGutter, end = PageGutter, bottom = 19.dp).height(SwitchBarHeight),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-        ) {
-            val picked = families.filterKeys { it.id in selected }
-            if (picked.isNotEmpty()) SwitchBar(picked, states, Modifier.weight(1f), onClear = { selected.clear() })
-            Chip(translated("oneconfig.page.hotwire.add_mods", "Add mods"), selected = true, icon = "plus") {
-                ShellController.shared.navigation.navigate(HotwireAddRoute)
+            Row(
+                // a fixed height the switch bar fills, so the button stays centred on it and doesn't move when it appears
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = PageGutter, end = PageGutter, bottom = 19.dp).height(SwitchBarHeight),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+            ) {
+                val picked = families.filterKeys { it.id in selected }
+                if (picked.isNotEmpty()) SwitchBar(picked, states, Modifier.weight(1f), onClear = { selected.clear() })
+                Chip(translated("oneconfig.page.hotwire.add_mods", "Add mods"), selected = true, icon = "plus") {
+                    ShellController.shared.navigation.navigate(HotwireAddRoute)
+                }
             }
         }
     }
@@ -432,7 +436,7 @@ private fun SwitchBar(
     fun start() {
         switching = true
         // Hotwire answers for these before it has added them back, so the grid has to look again once it's done
-        val bringsBack = HotwireBridge.keptOff(turnOn).isNotEmpty()
+        val bringsBack = turnOn.any { states?.get(it)?.offSinceStart == true }
         val off = if (turnOff.isEmpty()) done("") else HotwireBridge.switch(turnOff, false)
         off.thenCompose { first ->
             if (!first.ok || turnOn.isEmpty()) return@thenCompose CompletableFuture.completedFuture(first)
@@ -455,9 +459,12 @@ private fun SwitchBar(
 
     Row(
         modifier = modifier
-            .background(theme.modCardBackground, theme.modCardShape)
+            // opaque, since the card background would let the tiles underneath show through the text
+            .background(theme.popupBackground, theme.modCardShape)
             .border(1.dp, theme.borderColor, theme.modCardShape)
             .fillMaxHeight()
+            // it sits over the grid, so a click on the bar mustn't pick the tile underneath
+            .pointerInput(Unit) {}
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

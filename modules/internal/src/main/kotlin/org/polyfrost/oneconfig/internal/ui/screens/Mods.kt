@@ -104,6 +104,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -399,6 +400,8 @@ private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
 private fun openModCard(mod: ConfigData, navigation: ShellNavigation) {
     val onOpen = mod.onOpen
     when {
+        // Hotwire's card would open its own screen, but OneConfig has a page for it
+        mod.id == "hotwire" -> navigation.navigate(HotwireGraph)
         onOpen != null -> onOpen()
         mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
     }
@@ -479,13 +482,7 @@ fun ModCard(
     )
     val glowStrength by animateFloatAsState(if (enabled) 0.5f else 0f)
     val navigation = LocalShell.current.navigation
-    val open = {
-        val onOpen = mod.onOpen
-        when {
-            onOpen != null -> onOpen()
-            mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
-        }
-    }
+    val open = { openModCard(mod, navigation) }
 
     Box(
         modifier = modifier.fillMaxWidth().height(140.dp)

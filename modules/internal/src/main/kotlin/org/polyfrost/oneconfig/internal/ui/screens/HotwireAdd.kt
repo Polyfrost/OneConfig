@@ -257,9 +257,7 @@ private fun ModrinthSource(
             val updates = HotwireUpdates.found?.getOrNull().orEmpty()
             val shown = remember(current, updates) {
                 current.getOrThrow().mapNotNull { hit ->
-                    // shortcut: Hotwire's updates don't name their Modrinth project, so an installed hit is paired by name
-                    // and one named differently only offers its update in the Updates tab, until the API gives the project
-                    val update = updates.firstOrNull { hit.installed && it.name == hit.title }
+                    val update = updates.firstOrNull { it.projectId == hit.projectId }
                     // only Hotwire's own answer hides a project, since a mod's name or id can match another project; a
                     // dev build it can't recognise stays listed and Hotwire says it's installed when asked to add it
                     if (update == null && hit.installed) null else hit to update

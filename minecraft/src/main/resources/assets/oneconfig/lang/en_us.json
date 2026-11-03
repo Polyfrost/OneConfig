@@ -273,7 +273,6 @@
   "oneconfig.page.hotwire.add.sent": "Sent to Hotwire. It posts the result in chat.",
   "oneconfig.page.hotwire.update.now": "Update now",
   "oneconfig.page.hotwire.update.next_start": "Update at next launch",
-  "oneconfig.page.hotwire.switch.adds_back": "Adds back %s.",
   "oneconfig.page.hotwire.switch.conflict":"Some of these mods need others you're turning off. Switch them separately.",
   "oneconfig.page.hotwire.switch.too_many": "Only %s mods can be switched at once.",
   "oneconfig.page.hotwire.update.self": "Hotwire can't update itself while the game runs, so it updates at the next launch.",
