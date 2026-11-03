@@ -73,6 +73,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getFullShadow ()Z
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	protected fun getHasCustomX ()Z
+	protected fun getHasCustomY ()Z
 	public fun getHidden ()Z
 	public final fun getKeepBgWhenHidden ()Z
 	public fun getLocked ()Z
@@ -82,6 +84,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getPadLeft ()F
 	public final fun getPadRight ()F
 	public final fun getPadTop ()F
+	public fun getPivotFractionX ()F
+	public fun getPivotFractionY ()F
 	public final fun getPoppinsFontName ()Ljava/lang/String;
 	public final fun getPosSchema ()I
 	public fun getRelativeX ()F
@@ -89,6 +93,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getRenderedH ()F
 	public fun getRenderedW ()F
 	public fun getResizeAxes ()Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	protected fun getResizePin ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getRuntime ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public final fun getRuntimeOrNull ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public fun getScaledHeight ()F
@@ -212,6 +217,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected fun updateRelativeX (F)V
 	protected fun updateRelativeY (F)V
 	protected final fun updateWhenChanged (Ljava/lang/String;)V
+	public fun xForWidth (F)F
+	public fun yForHeight (F)F
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
@@ -315,6 +322,8 @@ public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudW
 	public fun getOwnsPlacement ()Z
 	public fun getPlacementReady ()Z
 	public fun getResizeAxes ()Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	public fun getResizePivotX ()F
+	public fun getResizePivotY ()F
 	public abstract fun getScale ()F
 	public abstract fun getScaledHeight ()F
 	public abstract fun getScaledWidth ()F
@@ -342,6 +351,8 @@ public final class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper$Defaul
 	public static fun getOwnsPlacement (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
 	public static fun getPlacementReady (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
 	public static fun getResizeAxes (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	public static fun getResizePivotX (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)F
+	public static fun getResizePivotY (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)F
 	public static fun getSupportsScale (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Z
 	public static fun linkedProperties (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)Ljava/util/List;
 	public static fun onDragEnd (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V

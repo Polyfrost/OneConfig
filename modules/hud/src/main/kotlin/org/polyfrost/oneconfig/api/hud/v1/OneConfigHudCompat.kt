@@ -135,9 +135,37 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     }
 
     // the size updates immediately so no deferred unpin is needed
-    private var pin: HudAnchor? = null
+    private val pinState = mutableStateOf<HudAnchor?>(null)
+    private var pin: HudAnchor?
+        get() = pinState.value
+        set(v) { pinState.value = v }
     private var pinX = 0f
     private var pinY = 0f
+
+    override val hasCustomX: Boolean get() = true
+    override val hasCustomY: Boolean get() = true
+
+    // unpinned the wrapper decides which point holds still when it resizes
+    override val pivotFractionX: Float get() =
+        pin?.let { fracOf(it).first } ?: guard("resizePivotX", 0f) { wrapper.resizePivotX }
+
+    override val pivotFractionY: Float get() =
+        pin?.let { fracOf(it).second } ?: guard("resizePivotY", 0f) { wrapper.resizePivotY }
+
+    override fun xForWidth(width: Float): Float =
+        pin?.let { pinX - fracOf(it).first * width } ?: (x + pivotFractionX * (scaledWidth - width))
+
+    override fun yForHeight(height: Float): Float =
+        pin?.let { pinY - fracOf(it).second * height } ?: (y + pivotFractionY * (scaledHeight - height))
+
+    private fun fracOf(p: HudAnchor): Pair<Float, Float> {
+        val w = scaledWidth
+        val h = scaledHeight
+        return Pair(
+            if (w == 0f) 0f else (anchorPointX(p) - x) / w,
+            if (h == 0f) 0f else (anchorPointY(p) - y) / h,
+        )
+    }
 
     override fun pinCorner(pin: HudAnchor) {
         this.pin = pin
@@ -243,6 +271,12 @@ public interface OneConfigHudWrapper {
     public val ownsPlacement: Boolean get() = false
 
     public val resizeAxes: HudResize get() = HudResize.Both
+
+    /** How far across the box the point that stays put sits when this resizes horizontally, 0 for left and 1 for right */
+    public val resizePivotX: Float get() = 0f
+
+    /** How far down the box the point that stays put sits when this resizes vertically, 0 for top and 1 for bottom */
+    public val resizePivotY: Float get() = 0f
 
     public fun onDragStart() {}
 

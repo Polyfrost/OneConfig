@@ -643,13 +643,19 @@ public abstract class Hud(
         staticW = width
     }
 
-    private var pinnedCorner: HudAnchor? = null
-        set(v) {
-            if (field == v) return
-            field = v
-            bumpRevision()
-        }
+    // compose state so a composable reading the pivot is invalidated when an editor resize pins or unpins
+    private var _pinnedCorner: MutableState<HudAnchor?> = mutableStateOf(null)
+    private var pinnedCorner: HudAnchor?
+        get() = _pinnedCorner.value
+        set(v) { _pinnedCorner.put(v) }
     private var unpinPending = false
+
+    /**
+     * The corner that holds still while this HUD is resized, or `null` to use the anchor
+     *
+     * Subclasses that track their own pin override this
+     */
+    protected open val resizePin: HudAnchor? get() = pinnedCorner
 
     @ApiStatus.Internal
     public open fun pinCorner(pin: HudAnchor) {
@@ -732,6 +738,69 @@ public abstract class Hud(
         isAnchored -> selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
         else -> (mergeLinkX ?: mergeLinkY)?.selfPoint
             ?: selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
+    }
+
+    /**
+     * `true` if [x] is overridden to geometry that does not come from this HUD's anchor and so does not follow the pivot
+     *
+     * Such a HUD keeps its [x] when its width changes unless it overrides [pivotFractionX] and [xForWidth]
+     */
+    protected open val hasCustomX: Boolean get() = false
+
+    /** Same as [hasCustomX] for [y] */
+    protected open val hasCustomY: Boolean get() = false
+
+    /**
+     * How far across this HUD's box the point that holds still while it resizes horizontally sits
+     *
+     * 0 is the left edge and 1 the right
+     *
+     * A merge can hold each axis against a different neighbour so this can disagree with
+     * [effectiveSelfAnchorPoint]
+     */
+    public open val pivotFractionX: Float get() {
+        observeInstances()
+        if (hasCustomX) return 0f
+        return fracX(resizePin ?: resolvedAnchorX?.selfPoint ?: growthAnchor)
+    }
+
+    /**
+     * How far down this HUD's box the point that holds still while it resizes vertically sits
+     *
+     * 0 is the top edge and 1 the bottom
+     *
+     * A merge can hold each axis against a different neighbour so this can disagree with
+     * [effectiveSelfAnchorPoint]
+     */
+    public open val pivotFractionY: Float get() {
+        observeInstances()
+        if (hasCustomY) return 0f
+        return fracY(resizePin ?: resolvedAnchorY?.selfPoint ?: growthAnchor)
+    }
+
+    // anchor targets resolve by instance so a late loaded target changes the pivot without any state write
+    private fun observeInstances() {
+        HudManager.instancesRevision.intValue
+    }
+
+    /**
+     * Where [x] ends up if this HUD's width becomes [width], including the keep-on-screen clamp
+     *
+     * Predicting from [pivotFractionX] alone ignores that clamp, which depends on the width
+     */
+    public open fun xForWidth(width: Float): Float {
+        if (hasCustomX) return x
+        val a = resolvedAnchorX
+        val raw = rawX(a, width)
+        return if (a != null) raw else keepVisibleX(raw, width)
+    }
+
+    /** Where [y] ends up if this HUD's height becomes [height], including the keep-on-screen clamp */
+    public open fun yForHeight(height: Float): Float {
+        if (hasCustomY) return y
+        val a = resolvedAnchorY
+        val raw = rawY(a, height)
+        return if (a != null) raw else keepVisibleY(raw, height)
     }
 
     /** Moves this HUD's own anchor point to [point] without moving the HUD on screen */
@@ -1601,7 +1670,7 @@ public abstract class Hud(
         _runtime = null
         lastDraw = null
         revision = AtomicInteger(this@Hud.revision.get())
-        pinnedCorner = null
+        _pinnedCorner = mutableStateOf(null)
         unpinPending = false
         isVisible = mutableStateOf(false)
         chainExternal = emptyList()
