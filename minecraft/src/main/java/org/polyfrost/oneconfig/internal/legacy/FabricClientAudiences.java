@@ -9,6 +9,7 @@ import net.minecraft.text.Text;
 
 public final class FabricClientAudiences {
     private static final FabricClientAudiences INSTANCE = new FabricClientAudiences();
+    private static final GsonComponentSerializer LEGACY_JSON = GsonComponentSerializer.colorDownsamplingGson();
     private final Audience audience = new Audience() {
         @Override
         public void sendMessage(Component message) {
@@ -28,14 +29,14 @@ public final class FabricClientAudiences {
     }
 
     public Text toNative(Component component) {
-        return Text.Serializer.fromJson(GsonComponentSerializer.gson().serialize(component));
+        return Text.Serializer.fromJson(LEGACY_JSON.serialize(component));
     }
 
     public Component asAdventure(Text component) {
         if (component instanceof net.minecraft.network.chat.Component) {
             return ((net.minecraft.network.chat.Component) component).asComponent();
         }
-        return GsonComponentSerializer.gson().deserialize(Text.Serializer.toJson(component));
+        return LEGACY_JSON.deserialize(Text.Serializer.toJson(component));
     }
 }
 *///?}
