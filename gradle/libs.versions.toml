@@ -5,7 +5,7 @@
 kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 fabric-language-kotlin = "1.14.1+kotlin.2.4.20"
-google-ksp = "2.3.12"
+google-ksp = "2.3.13"
 annotations = "26.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
@@ -25,7 +25,7 @@ mixin-squared = "0.3.7-beta.1"
 # Gradle
 detekt = "2.0.0-alpha.6"
 errorprone = "2.51.0"
-errorprone-plugin = "5.1.1"
+errorprone-plugin = "5.2.0"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
