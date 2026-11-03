@@ -120,6 +120,11 @@ private const val MIN_VISIBLE = 12f
 
 internal const val POS_SCHEMA = 1
 
+private const val MIN_TEXT_SCALE = 6f / 14f
+private const val MAX_TEXT_SCALE = 64f / 14f
+private const val MIN_LEGACY_SCALE = 0.25f
+private const val MAX_LEGACY_SCALE = 4f
+
 // every open getter the cached frame geometry or the background merge key reads
 // a subclass overriding one of these is read live, so a new open geometry property must be added here
 // or an override of it would be served a stale cached value
@@ -985,6 +990,35 @@ abstract class Hud(
     private var _customScale: MutableState<Float> = mutableStateOf(1f)
     open var customScale: Float get() = _customScale.value; set(v) { _customScale.put(v) }
 
+    /** The values [hudScale] can take */
+    @get:ApiStatus.Experimental
+    val hudScaleRange: ClosedFloatingPointRange<Float>
+        get() = if (this is LegacyHudMarker) MIN_LEGACY_SCALE..MAX_LEGACY_SCALE else MIN_TEXT_SCALE..MAX_TEXT_SCALE
+
+    /**
+     * The size of this HUD as set by the editor's corner handles and the Scale setting
+     *
+     * That is [textScale], or [customScale] for a legacy HUD which draws its own content
+     *
+     * Setting it keeps a static size in proportion, which setting [textScale] directly does not
+     */
+    @get:ApiStatus.Experimental
+    var hudScale: Float
+        get() = if (this is LegacyHudMarker) customScale else textScale
+        set(v) {
+            val next = v.coerceIn(hudScaleRange)
+            if (this is LegacyHudMarker) {
+                customScale = next
+                return
+            }
+            val previous = textScale
+            textScale = next
+            if (staticWidth && previous > 0f && staticW > 0f && staticH > 0f) {
+                staticW *= next / previous
+                staticH *= next / previous
+            }
+        }
+
     val effectiveScale: Float
         get() {
             if (useGuiScale) return customScale
@@ -1429,7 +1463,10 @@ abstract class Hud(
             }
             tree["font"] = ktProperty(out::font).apply { addDisplayCondition(hideFromConfigUi) }
             tree["caseType"] = ktProperty(out::caseType).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["textScale"] = ktProperty(out::textScale).apply { addDisplayCondition(hideFromConfigUi) }
+            tree["textScale"] = ktProperty(out::textScale).apply {
+                description = "The size of this HUD. The corner handles in the HUD editor change the same value."
+                addDisplayCondition(hideFromConfigUi)
+            }
             tree["textBold"] = ktProperty(out::textBold).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textItalic"] = ktProperty(out::textItalic).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textUnderline"] = ktProperty(out::textUnderline).apply { addDisplayCondition(hideFromConfigUi) }
@@ -1440,7 +1477,10 @@ abstract class Hud(
                 addDisplayCondition(hideFromConfigUi)
             }
             if (out.persistOwnState) {
-                tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["customScale"] = ktProperty(out::customScale).apply {
+                    description = "Multiplies the whole HUD on top of its Scale, including its padding and background."
+                    addDisplayCondition(hideFromConfigUi)
+                }
             }
             tree["showBackground"] = ktProperty(out::showBackground).apply { addDisplayCondition(hideFromConfigUi) }
             tree["bgColor"] = ktProperty(out::bgColor).apply { addDisplayCondition(hideFromConfigUi) }
