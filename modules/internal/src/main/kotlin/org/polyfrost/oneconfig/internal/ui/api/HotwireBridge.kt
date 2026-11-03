@@ -6,13 +6,9 @@ import androidx.compose.runtime.setValue
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
-import java.util.function.Function
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -25,7 +21,8 @@ import org.polyfrost.oneconfig.internal.ui.components.translated
 object HotwireBridge {
     class ModState(val id: String, val name: String, val version: String, val on: Boolean, val switchable: Boolean)
 
-    class Preview(val possible: Boolean, val message: String)
+    /** [switched] is every mod the change would move, including the ones Hotwire switches along with those asked for */
+    class Preview(val possible: Boolean, val message: String, val switched: List<String> = emptyList())
 
     /** [needsReopen] means nothing failed but the change only finishes once the world is reopened, which Hotwire's API does not do itself */
     class Result(val ok: Boolean, val message: String, val needsReopen: Boolean = false)
@@ -62,13 +59,10 @@ object HotwireBridge {
 
     private fun supports(call: String) = apiClass?.methods?.any { it.name == call } == true
 
-    /** Whether this Hotwire can hand over the warning the page must show before it switches anything */
-    val supportsSwitching: Boolean by lazy { supports("findOpeningPrompt") }
+    /** Whether this Hotwire has the change plans every part of the page goes through */
+    val supportsSwitching: Boolean by lazy { supports("planChange") }
 
     val supportsOriginalScreen: Boolean by lazy { supports("openScreen") }
-
-    /** Whether this Hotwire has every store call, which arrived over several revisions */
-    val supportsStore: Boolean by lazy { (call("getRevision") as? Int ?: 0) >= STORE_REVISION }
 
     /** Every mod Hotwire knows, or null when Hotwire is missing or has not listed its mods yet */
     fun mods(): List<ModState>? = runCatching {
@@ -83,66 +77,59 @@ object HotwireBridge {
         }
     }.getOrNull()
 
-    fun installedState(): List<Any?> = mods().orEmpty().map { listOf(it.id, it.version, it.on) } +
-        runCatching { engine()!!.callMethod("getPendingChanges") as List<*> }.getOrDefault(emptyList())
+    fun installedState(): List<Any?> = mods().orEmpty().map { listOf(it.id, it.version, it.on) } + pendingTasks()
+
+    private fun pendingTasks(): List<*> = call("getPendingTasks") as? List<*> ?: emptyList<Any>()
 
     val isSwitching: Boolean get() = call("isSwitching") as? Boolean ?: false
 
     /** How far the running switch is, from 0 to 1 */
     fun progress(): Float = runCatching { (call("getProgress")!!.get("fraction") as Double).toFloat() }.getOrDefault(0f)
 
+    private fun nameOf(id: String): String = mods().orEmpty().firstOrNull { it.id == id }?.name ?: id
+
+    private fun addsBack(kept: List<String>): String? = kept.takeIf { it.isNotEmpty() }?.let { mods ->
+        translated("oneconfig.page.hotwire.switch.adds_back", "Adds back %s.", mods.joinToString(", ", transform = ::nameOf))
+    }
+
     /** What turning [ids] on or off would do, including the mods Hotwire switches along with them */
+    @Suppress("UNCHECKED_CAST")
     fun preview(ids: Collection<String>, on: Boolean): Preview = runCatching {
         val kept = if (on) keptOff(ids) else emptyList()
         val preview = (ids - kept.toSet()).takeIf { it.isNotEmpty() }?.let { call(if (on) "previewOn" else "previewOff", it)!! }
-        val addsBack = kept.takeIf { it.isNotEmpty() }?.let { mods ->
-            translated("oneconfig.page.hotwire.switch.adds_back", "Adds back %s.", mods.joinToString(", ") { engine()!!.callMethod("nameOfMod", it) as String })
-        }
-        Preview(preview?.get("possible") as Boolean? ?: true, listOfNotNull(preview?.get("message") as String?, addsBack).joinToString(" "))
+        Preview(
+            preview?.get("possible") as Boolean? ?: true,
+            listOfNotNull(preview?.get("message") as String?, addsBack(kept)).joinToString(" "),
+            preview?.get("switched") as List<String>? ?: emptyList(),
+        )
     }.getOrElse { Preview(false, "Hotwire is not available.") }
 
     @Suppress("UNCHECKED_CAST")
     fun previewTogether(off: List<String>, on: List<String>): Preview? {
         if (off.isEmpty() || on.isEmpty()) return null
-        val conflict = translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately.")
-        val plan = runCatching {
-            val engine = engine()!!
-            val leaving = call("previewOff", off)!!.get("switched") as List<String>
-            val disabled = engine.field("installed")!!.field("disabled") as Map<String, Any>
-            val planner = plannerWith(engine, keptOff(on).map(disabled::getValue))
-            planner.callMethod("planOn", on, (offMods() + leaving).toSet())!!.takeUnless { plan ->
-                (plan.get("order") as List<String>).any { it in leaving }
-            }
-        }.getOrNull() ?: return Preview(false, conflict)
-        val engine = engine()!!
-        if ((plan.get("refusals") as List<*>).isNotEmpty()) {
-            return Preview(false, runCatching { describeRefusal(engine, plan) }.getOrDefault(conflict))
+        return runCatching {
+            val kept = keptOff(on)
+            val plan = changePlan(off = off, on = on - kept.toSet())
+            Preview(
+                plan.through("ChangePlan", "canApply") == true,
+                (plan.through("ChangePlan", "getLines") as List<String> + listOfNotNull(addsBack(kept))).joinToString(" "),
+            )
+        }.getOrElse {
+            Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately."))
         }
-        refusalOnceMet(engine, keptOff(on).mapNotNull { engine.callMethod("findJarOf", it) as Path? })?.let { return Preview(false, it) }
-        val alone = preview(on, true)
-        if (alone.possible) return alone
-        val names = (plan.get("order") as List<String>).joinToString(", ") { engine.callMethod("nameOfMod", it) as String }
-        return Preview(true, translated("oneconfig.page.hotwire.switch.after_off", "Turns on %s once the others are off.", names))
     }
 
-    fun keptOnWhenOff(ids: Collection<String>): Set<String> = runCatching {
-        val plan = plannerWith(engine()!!, emptyList()).callMethod("planOff", ids, offMods().toSet())!!
-        (plan.get("enabledNested") as List<*>).mapTo(HashSet()) { it!!.get("mod") as String }
-    }.getOrDefault(emptySet())
+    // shortcut: Hotwire's API can't tell which mods were kept off since the last launch, and refuses to preview them
+    // though its turnOn brings them back, so this one question reaches into its engine until the API can answer it
+    // the engine lives in a package per game version, the same one as the API implementation
+    private fun engine(): Any? = runCatching {
+        Class.forName("${api!!.javaClass.packageName}.HotwireClient").getMethod("findEngine").invoke(null)
+    }.getOrNull()
 
-    private fun describeRefusal(engine: Any, plan: Any): String {
-        val refused = Class.forName("dev.moon.hotwire.switching.ModSwitcher\$Result\$Refused").constructors.single().newInstance(plan)
-        val nameOf = Function<String, String> { engine.callMethod("nameOfMod", it) as String }
-        return Class.forName("dev.moon.hotwire.switching.PlayerMessages").methods
-            .first { it.name == "describe" && it.parameterCount == 2 }.invoke(null, refused, nameOf) as String
-    }
+    private fun Any.callHidden(name: String, vararg args: Any): Any? =
+        javaClass.declaredMethods.first { it.name == name && it.parameterCount == args.size }.apply { isAccessible = true }.invoke(this, *args)
 
-    private fun offMods(): List<String> = mods().orEmpty().filterNot { it.on }.map { it.id }
-
-    private fun plannerWith(engine: Any, jars: List<Any>): Any =
-        engine.callStatic("ModPolicy", "makePlannerFor", engine.field("installed")!!.callMethod("makeGraphWith", jars)!!)!!
-
-    private fun keptOff(ids: Collection<String>): List<String> = runCatching {
+    fun keptOff(ids: Collection<String>): List<String> = runCatching {
         val disabled = engine()!!.callHidden("getDisabled")!!
         ids.filter { disabled.callHidden("isDisabledSinceStart", it) == true }
     }.getOrDefault(emptyList())
@@ -150,14 +137,9 @@ object HotwireBridge {
     /** Whether Hotwire is running a switch or add right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
 
-    fun isStarting(ids: Collection<String>): Boolean = isWorking() && runCatching {
-        val installed = engine()!!.field("installed")!!
-        ids.any { installed.callMethod("isAddedThisSession", it) != true }
-    }.getOrDefault(true)
+    fun isStarting(ids: Collection<String>): Boolean = isWorking() && ids.any { call("isAddedThisSession", it) != true }
 
-    fun isUpdating(): Boolean = runCatching {
-        (engine()!!.field("tasks")!!.field("workers") as ThreadPoolExecutor).activeCount > 0
-    }.getOrDefault(false)
+    fun isUpdating(): Boolean = runCatching { (call("getStatus")!!.get("state") as Enum<*>).name == "BUSY" }.getOrDefault(false)
 
     fun awaitIdle() {
         val start = System.nanoTime()
@@ -182,43 +164,15 @@ object HotwireBridge {
         return Result(false, reason.message ?: reason.toString())
     }
 
-    /**
-     * What Hotwire would do with a mod, and the choices it offers, as its own add and update panels show
-     *
-     * [upToDate] means the mod already has this version, so there is nothing to do
-     */
+    /** What Hotwire would do with a mod, and the choices it offers, as its own add and update panels show */
     class JarPlan(
         val title: String,
         val detail: String,
         val lines: List<String>,
         val actions: List<JarAction>,
         val onCancel: (() -> Unit)? = null,
-        val upToDate: Boolean = false,
         val reopens: Boolean = false,
     )
-
-    // shortcut: Hotwire's public API can't add a jar from disk or list updates, so those reach into its engine, which
-    // may break on a Hotwire update, until Hotwire's API gains them
-    // the engine lives in a package per game version, the same one as the API implementation
-    private fun engine(): Any? = runCatching {
-        Class.forName("${api!!.javaClass.packageName}.HotwireClient").getMethod("findEngine").invoke(null)
-    }.getOrNull()
-
-    private fun Any.field(name: String): Any? = javaClass.getDeclaredField(name).apply { isAccessible = true }.get(this)
-
-    private fun Any.callMethod(name: String, vararg args: Any): Any? =
-        javaClass.methods.first { it.name == name && it.parameterCount == args.size }.invoke(this, *args)
-
-    private fun Any.callHidden(name: String, vararg args: Any): Any? =
-        javaClass.declaredMethods.first { it.name == name && it.parameterCount == args.size }.apply { isAccessible = true }.invoke(this, *args)
-
-    private fun Any.callStatic(type: String, name: String, vararg args: Any): Any? =
-        Class.forName("${javaClass.packageName}.$type").methods.first { it.name == name && it.parameterCount == args.size }.invoke(null, *args)
-
-    /** The constant named [constant] of the enum a two-argument [method] of the engine takes last */
-    private fun Any.enumArg(method: String, constant: String): Any =
-        javaClass.methods.first { it.name == method && it.parameterCount == 2 }.parameterTypes[1]
-            .enumConstants.first { (it as Enum<*>).name == constant }
 
     // Hotwire implements its API interfaces with private classes, which reflection can only reach through the interface
     private fun Any.through(apiInterface: String, method: String): Any? =
@@ -242,7 +196,11 @@ object HotwireBridge {
 
     /** Hotwire's warning, which refuses this mod's requests until it has been shown; null once it's been accepted */
     fun openingPrompt(): OpeningPrompt? = runCatching {
-        val prompt = call("findOpeningPrompt") ?: return null
+        val prompt = call("findOpeningPrompt") ?: run {
+            // accepted in an earlier session, which Hotwire only counts as shown for this mod once it's asked to show it
+            call("showPrompt")
+            return null
+        }
         fun text(method: String) = prompt.through("OpeningPrompt", method) as String
         fun act(method: String): () -> Unit = {
             prompt.through("OpeningPrompt", method)
@@ -284,9 +242,7 @@ object HotwireBridge {
     class StorePage(val hits: List<StoreHit>, val total: Int)
 
     class StoreUpdate(
-        internal val offer: Any,
         val modId: String,
-        val projectId: String,
         val name: String,
         val installedVersion: String,
         val newVersion: String,
@@ -326,14 +282,6 @@ object HotwireBridge {
         (call("getStoreCategories", mod) as List<*>).map { StoreCategory(it!!.get("name") as String, it.get("parts") as List<String>) }
     }.getOrDefault(emptyList())
 
-    private var storeChecked: CompletableFuture<Unit>? = null
-
-    private var storeCheckedState: List<Any?>? = null
-
-    /** Hotwire's offers from the last update check, which it reuses when fetching what an update needs */
-    @Volatile
-    private var offers: List<*> = emptyList<Any>()
-
     /**
      * Searches Modrinth for mods matching [words] in [category], or every category when blank, skipping the first
      * [offset] results; blocks on the network, so call it off the UI thread
@@ -342,43 +290,20 @@ object HotwireBridge {
         val query = storeQuery(words)
             .let { it.javaClass.getMethod("withCategory", String::class.java).invoke(it, category) }
             .let { it.javaClass.getMethod("withOffset", Int::class.java).invoke(it, offset) }
-        fun search(): StorePage {
-            val page = (call("searchStore", query) as CompletableFuture<*>).get()!!
-            val hits = (page.get("mods") as List<*>).map {
-                StoreHit(
-                    it!!.get("id") as String,
-                    it.get("slug") as String? ?: "",
-                    it.get("name") as String,
-                    it.get("author") as String? ?: "",
-                    it.get("description") as String? ?: "",
-                    it.get("downloads") as Long,
-                    (it.get("iconUrl") as String?)?.takeIf { url -> url.isNotBlank() },
-                    it.get("installed") as Boolean,
-                )
-            }
-            return StorePage(hits, page.get("total") as Int)
+        val page = (call("searchStore", query) as CompletableFuture<*>).get()!!
+        val hits = (page.get("mods") as List<*>).map {
+            StoreHit(
+                it!!.get("id") as String,
+                it.get("slug") as String? ?: "",
+                it.get("name") as String,
+                it.get("author") as String? ?: "",
+                it.get("description") as String? ?: "",
+                it.get("downloads") as Long,
+                (it.get("iconUrl") as String?)?.takeIf { url -> url.isNotBlank() },
+                it.get("installed") as Boolean,
+            )
         }
-        installedCheck()?.get()
-        return search()
-    }
-
-    @Synchronized
-    private fun installedCheck(): CompletableFuture<Unit>? {
-        val state = installedState()
-        if (state == storeCheckedState) return storeChecked
-        val engine = engine() ?: return null
-        val made = engine.callMethod("getStore")
-        val store = made ?: runCatching { onUiThread { engine.callHidden("findStore") } }.getOrNull() ?: return null
-        if (made != null) store.callMethod("checkInstalled")
-        storeCheckedState = state
-        return storeWorkerDone(store.callMethod("getModel")!!)
-            .completeOnTimeout(Unit, STORE_WORKER_TIMEOUT_SECONDS, TimeUnit.SECONDS).also { storeChecked = it }
-    }
-
-    private fun storeWorkerDone(model: Any): CompletableFuture<Unit> {
-        val done = CompletableFuture<Unit>()
-        model.callMethod("run", Runnable { done.complete(Unit) })
-        return done
+        return StorePage(hits, page.get("total") as Int)
     }
 
     /** The newest version of a project that fits this game; blocks on the network */
@@ -389,42 +314,27 @@ object HotwireBridge {
         return version.get("id") as String
     }
 
-    private fun browseThisGame() {
-        val model = engine()?.callMethod("getStore")?.callMethod("getModel") ?: return
-        val client = model.callMethod("getClient")!!
-        if (client.callMethod("isBrowsingOwn") == true) return
-        model.callMethod("setBrowsing", client.callMethod("getLoader")!!, client.callMethod("getGameVersion")!!)
-    }
-
     /** What adding [hit] would do, including what Hotwire adds along with it; blocks on the network */
+    @Suppress("UNCHECKED_CAST")
     fun storePlan(hit: StoreHit): JarPlan {
         val version = newestVersion(hit.projectId)
-        runCatching { onUiThread(::browseThisGame) }
         val add = (call("requestAdd", hit.projectId, version) as CompletableFuture<*>).get()!!
-        val canAdd = add.through("StoreAdd", "canAdd") == true
-        @Suppress("UNCHECKED_CAST")
-        val jars = add.field("jars") as List<Path>
-        val fitting = engine()?.takeIf { !canAdd && fitTogether(it, jars) }
-        val refusal = fitting?.let { refusalOnceMet(it, jars) }
-        val inOrder = fitting.takeIf { refusal == null }
-        val nextLaunch = engine()?.takeIf { jars.isNotEmpty() && (canAdd || inOrder != null) }?.let { nextLaunchRefusal(it, jars) }
-        val reopen = add.through("StoreAdd", "needsReopen") == true || inOrder != null && jars.any { reopensOnceMet(inOrder, it) }
-        val modes =(add.field("previews") as List<*>).map { it!!.addMode() }
-        val onlyLater = modes.lastOrNull() == "NEXT_START" || inOrder != null && "NEXT_START" in modes
+        fun ask(method: String) = add.through("StoreAdd", method)
+        val canAdd = ask("canAdd") == true
         var accepted = false
-        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), onlyLater) {
+        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false) {
             accepted = true
-            add.through("StoreAdd", "cancel")
-            CompletableFuture.supplyAsync { addInOrder(engine()!!, jars, hit.title, reopen = false, later = true) }
+            ask("cancel")
+            call("queueForNextStart", hit.projectId, version).asResults()
         }
         val save = JarAction(translated("oneconfig.page.hotwire.add.save", "Save to Downloads"), false) {
             accepted = true
-            add.through("StoreAdd", "cancel")
-            val query = if (jars.isEmpty()) directDownloadQuery() else storeQuery("")
+            ask("cancel")
+            val query = if (canAdd) storeQuery("") else directDownloadQuery()
             call("saveToDownloads", query, hit.slug.ifBlank { hit.projectId }, version).asResults()
         }
         val now = JarAction(
-            if (reopen) {
+            if (ask("needsReopen") == true) {
                 translated("oneconfig.page.hotwire.add.reopen", "Save and add")
             } else {
                 translated("oneconfig.page.hotwire.add.now", "Add now")
@@ -432,729 +342,93 @@ object HotwireBridge {
             true,
         ) {
             accepted = true
-            val ordered = inOrder ?: engine()?.takeIf { "NEXT_START" in modes }
-            val added = if (ordered == null) {
-                add.through("StoreAdd", "accept").asResults().thenApplyAsync { result ->
-                    if (result.ok) lostJar(engine()!!, jars) ?: result else result
-                }
-            } else {
-                add.through("StoreAdd", "cancel")
-                CompletableFuture.supplyAsync { addInOrder(ordered, jars, hit.title, reopen) }
-            }
-            added.thenApplyAsync { result ->
-                runCatching { installedCheck()?.get() }
-                if (result.ok) engine()?.callMethod("getStore")?.callMethod("getModel")?.callMethod("markInstalled", hit.projectId)
-                result
-            }
-        }
-        @Suppress("UNCHECKED_CAST")
-        val lines = if (refusal != null || nextLaunch != null) {
-            listOf(nextLaunch ?: refusal!!)
-        } else if (inOrder == null) {
-            add.through("StoreAdd", "getLines") as List<String>
-        } else {
-            (add.field("previews") as List<*>).dropLast(1).map {
-                translated("oneconfig.page.hotwire.add.adds", "Adds %s, which this mod needs.", it!!.get("name") as String)
-            }
+            ask("accept").asResults()
         }
         return JarPlan(
-            add.through("StoreAdd", "getTitle") as String,
+            ask("getTitle") as String,
             "",
-            lines,
-            when {
-                nextLaunch != null || !canAdd && inOrder == null -> listOf(save)
-                onlyLater -> listOf(later, save)
-                else -> listOf(now, later, save)
-            },
-            onCancel = { if (!accepted) add.through("StoreAdd", "cancel") },
-        )
-    }
-
-    private fun readJar(jar: Path): Any =
-        Class.forName("dev.moon.hotwire.jar.ModJarReader").getMethod("read", Path::class.java).invoke(null, jar)!!
-
-    private fun Any.modId(): String = get("manifest")!!.get("id") as String
-
-    @Suppress("UNCHECKED_CAST")
-    private fun fitTogether(engine: Any, jars: List<Path>): Boolean = runCatching {
-        if (jars.size < 2 || jars.any { engine.callMethod("canUpdate", it) == true }) return false
-        val read = jars.map(::readJar)
-        val ids = read.map { it.modId() }
-        val planner = plannerWith(engine, read)
-        (planner.callMethod("planOn", ids, (offMods() + ids).toSet())!!.get("refusals") as List<*>).isEmpty() &&
-            ids.all { (planner.callMethod("findOldDependencies", it) as List<*>).isEmpty() }
-    }.getOrDefault(false)
-
-    private fun reopensOnceMet(engine: Any, jar: Path): Boolean = runCatching {
-        val adds = engine.callHidden("findParts")!!.field("adds")!!
-        if (adds.callMethod("isInWorld") != true) return false
-        val scan = Class.forName("dev.moon.hotwire.jar.ContentScan")
-        val classes = scan.getMethod("readClasses", Path::class.java).invoke(null, jar)
-        val superOf = Function<String, String?> { adds.callMethod("findSuperOf", it) as String? }
-        val findKinds = scan.methods.first { it.name == "findKinds" && it.parameterTypes[0].isInstance(classes) }
-        (findKinds.invoke(null, classes, superOf) as Set<*>).isNotEmpty()
-    }.getOrDefault(false)
-
-    private fun Any.askAdder(type: String, method: String, arg: Any): String? =
-        (Class.forName("${javaClass.packageName}.add.$type").declaredMethods.first { it.name == method }
-            .apply { isAccessible = true }.invoke(null, arg) as Optional<*>).orElse(null) as String?
-
-    private fun Any.parts(): List<Any> = listOf(this) + (get("nested") as List<*>).flatMap { it!!.parts() }
-
-    private fun worldRefusal(engine: Any): String? =
-        (engine.callStatic("add.WorldReopen", "findRefusal") as Optional<*>).orElse(null) as String?
-
-    private fun refusalOnceMet(engine: Any, jars: List<Path>): String? = runCatching {
-        jars.firstNotNullOfOrNull { jar ->
-            engine.askAdder("AddFirstLook", "findRefusal", jar)
-                ?: readJar(jar).parts().firstNotNullOfOrNull { engine.askAdder("AddDependencies", "findMissingRefusal", it) }
-        } ?: worldRefusal(engine)?.takeIf { jars.any { reopensOnceMet(engine, it) } }
-    }.getOrNull()
-
-    private fun addInOrder(engine: Any, jars: List<Path>, name: String, reopen: Boolean, later: Boolean = false): Result {
-        nextLaunchRefusal(engine, jars)?.let { return Result(false, it) }
-        var queueing = later
-        val steps = jars.map { jar ->
-            {
-                queueing = queueing || dryRunAdd(engine, jar).addMode() == "NEXT_START"
-                if (queueing) queueAdd(engine, jar) else addNow(engine, jar, reopen)
-            }
-        }
-        queueTogether(engine.field("updateQueue")!!, jars.map { readJar(it).modId() }, steps)?.let { return it }
-        return Result(
-            true,
-            if (queueing) {
-                translated("oneconfig.page.hotwire.add.queued", "%s is added at the next launch.", name)
-            } else {
-                translated("oneconfig.page.hotwire.add.done", "Added %s.", name)
-            },
+            ask("getLines") as List<String>,
+            if (canAdd) listOf(now, later, save) else listOf(save),
+            onCancel = { if (!accepted) ask("cancel") },
         )
     }
 
     /** Hotwire's update check against Modrinth for the installed mods; blocks on the network */
     fun findUpdates(): List<StoreUpdate> {
-        val engine = engine()!!
-        val found = engine.callMethod("getUpdateCheck")!!.callMethod("findNow") as List<*>
-        offers = found
-        val queued = (engine.callMethod("getPendingChanges") as List<*>).filter { it!!.javaClass.simpleName == "Update" }.map { it!!.get("modId") }
-        return found.filterNot { it!!.get("id") in queued }.map {
-            StoreUpdate(it!!, it.get("id") as String, it.get("projectId") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
+        val found = (call("checkUpdates") as CompletableFuture<*>).get()!!
+        (found.get("failure") as String).takeIf { it.isNotBlank() }?.let { error(it) }
+        val queued = pendingTasks().map { it!!.get("modId") }
+        return (found.get("updates") as List<*>).filterNot { it!!.get("id") in queued }.map {
+            StoreUpdate(it!!.get("id") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
         }
     }
 
-    /** Downloads the mods an offered update newly needs and then the update's own jar, last; blocks on the network */
+    private fun changePlan(
+        off: List<String> = emptyList(),
+        on: List<String> = emptyList(),
+        update: List<String> = emptyList(),
+        jars: List<Path> = emptyList(),
+    ): Any {
+        val request = Class.forName("dev.moon.hotwire.api.ChangeRequest").constructors.single().newInstance(off, on, update, emptyList<String>(), jars)
+        return (call("planChange", request) as CompletableFuture<*>).get()!!
+    }
+
+    /** The choices a change plan offers, labelled from the [kind] of change: "add", "update" or "change" */
     @Suppress("UNCHECKED_CAST")
-    private fun downloadUpdate(update: StoreUpdate): List<Path> =
-        engine()!!.callMethod("getUpdateCheck")!!.callMethod("fetchWithNeeds", update.offer, Consumer<String> {}) as List<Path>
-
-    fun planUpdate(update: StoreUpdate): JarPlan =
-        if (update.modId == "hotwire" || update.modId.startsWith("hotwire-")) planSelfUpdate(update) else planUpdate(downloadUpdate(update))
-
-    private fun planSelfUpdate(update: StoreUpdate): JarPlan {
-        val engine = engine()!!
-        val jars = downloadUpdate(update)
-        val detail = "${update.installedVersion} → ${update.newVersion}"
-        nextLaunchRefusal(engine, jars)?.let { return JarPlan(update.name, detail, listOf(it), emptyList()) }
-        val action = JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
-            CompletableFuture.supplyAsync {
-                val needs = jars.dropLast(1).map { jar -> { queueAdd(engine, jar) } }
-                nextLaunchRefusal(engine, jars)?.let { Result(false, it) }
-                    ?: queueTogether(engine.field("updateQueue")!!, jars.map { readJar(it).modId() }, needs + { queueSelfUpdate(engine, update, jars.last()) })
-                    ?: Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", update.name))
-            }
-        }
-        return JarPlan(
-            update.name,
-            detail,
-            listOf(translated("oneconfig.page.hotwire.update.self", "Hotwire can't update itself while the game runs, so it updates at the next launch.")),
-            listOf(action),
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun queueTogether(queue: Any, ids: List<String>, steps: List<() -> Result>): Result? {
-        val before = (queue.callMethod("getEntries") as List<Any>).filter { it.get("modId") in ids }
-        // a step may overwrite a staged jar in place, so keep its bytes to put back
-        val staged = before.mapNotNull { entry -> runCatching { Path.of(entry.get("stagedJar") as String).let { it to Files.readAllBytes(it) } }.getOrNull() }
-        val failed = runCatching { steps.firstNotNullOfOrNull { step -> step().takeUnless { it.ok } } }.getOrElse(::failure) ?: return null
-        staged.forEach { (jar, bytes) -> runCatching { Files.write(jar, bytes) } }
-        synchronized(queue) {
-            queue.callHidden("replace", (queue.callMethod("getEntries") as List<Any>).filterNot { it.get("modId") in ids } + before)
-        }
-        return failed
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun nextLaunchRefusal(engine: Any, jars: List<Path>): String? = runCatching {
-        val incoming = jars.map(::readJar)
-        val ids = incoming.map { it.modId() }
-        val queued = (engine.field("updateQueue")!!.callMethod("getEntries") as List<Any>).filterNot { it.get("modId") in ids }.mapNotNull { entry ->
-            runCatching { readJar(Path.of(entry.get("stagedJar") as String)) }.getOrNull()?.let { entry.get("modId") as String to it }
-        }
-        val installed = engine.field("installed")!!
-        val replaced = ids + queued.flatMap { (id, jar) -> listOf(id, jar.modId()) }
-        val leaving = replaced + (installed.field("disabled") as Map<String, Any>).keys
-        val graphJars = installed.callHidden("getGraphJars") as List<Any>
-        val staying = graphJars.filterNot { it.modId() in leaving }
-        // the jars that land go first, since the graph keeps the first copy of a mod it sees
-        val landing = incoming + queued.map { it.second } + staying
-        val graph = Class.forName("dev.moon.hotwire.plan.ModGraph").getConstructor(Collection::class.java).newInstance(landing)
-        val depends = Class.forName("dev.moon.hotwire.jar.ModManifest\$Relation").enumConstants.first { (it as Enum<*>).name == "DEPENDS" }
-        val oldDependency = Class.forName("dev.moon.hotwire.plan.SwitchPlan\$Refusal\$OldDependency").constructors.single()
-        val fits = { version: String, ranges: List<String> -> engine.callStatic("ModPolicy", "satisfies", version, ranges) == true }
-        val wants = { mod: String, dependency: String ->
-            ((graph.callMethod("find", mod) as Optional<*>).orElseThrow().callMethod("getRelation", depends) as Map<String, List<String>>)
-                .filterKeys { graph.callMethod("resolve", it) == dependency }.values.toList()
-        }
-        val builtIns = incoming.flatMap { it.parts() }.flatMap { part ->
-            oldBuiltIns(
-                part.modId(),
-                part.get("manifest")!!.callMethod("getRelation", depends) as Map<String, List<String>>,
-                { id -> (engine.callStatic("LoadedMods", "findVersion", id) as String?).takeIf { (graph.callMethod("find", id) as Optional<*>).isEmpty } },
-                fits,
-            )
-        }.map { oldDependency.newInstance(*it.toTypedArray()) }
-        val missing = Class.forName("dev.moon.hotwire.plan.SwitchPlan\$Refusal\$MissingDependency").constructors.single()
-        val lost = lostNeeds(graph, graphJars.filter { it.modId() in replaced }.flatMap(::namesIn))
-            .map { (mod, dependency) -> missing.newInstance(mod, dependency) }
-        val copies = landing.flatMap { it.parts() }.groupBy({ it.modId() }, { it.get("manifest")!!.get("version") as String })
-        val nested = (incoming.flatMap { it.parts() }.map { it.modId() } - landing.map { it.modId() }.toSet()).associateWith(copies::getValue)
-        refusedPlan(engine.callStatic("ModPolicy", "makePlannerFor", graph)!!, graph, ids, builtIns + lost, nested, fits, wants)?.let { describeRefusal(engine, it) }
-    }.getOrElse {
-        translated("oneconfig.page.hotwire.next_launch_unchecked", "Hotwire couldn't check this against your other mods, so nothing was changed.")
-    }
-
-    fun oldBuiltIns(mod: String, needs: Map<String, List<String>>, present: (String) -> String?, fits: (String, List<String>) -> Boolean): List<List<String>> =
-        needs.mapNotNull { (id, ranges) ->
-            present(id)?.takeUnless { fits(it, ranges) }?.let { listOf(mod, id, ranges.joinToString(" or "), it) }
-        }
-
-    @Suppress("UNCHECKED_CAST")
-    fun namesIn(jar: Any): List<String> =
-        jar.parts().flatMap { (it.get("manifest")!!.get("provides") as List<String>) + it.modId() }
-
-    @Suppress("UNCHECKED_CAST")
-    fun lostNeeds(graph: Any, outgoing: Collection<String>): List<Pair<String, String>> =
-        outgoing.distinct().filter { (graph.callMethod("find", it) as Optional<*>).isEmpty }.flatMap { id ->
-            (graph.callMethod("getDependents", id) as Collection<String>).filter { isNeeded(graph, it) }.map { it to id }
-        }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun isNeeded(graph: Any, id: String, seen: MutableSet<String> = HashSet()): Boolean =
-        graph.callMethod("isInstalledOnItsOwn", id) == true ||
-            seen.add(id) && (graph.callMethod("getDependents", id) as Collection<String>).any { isNeeded(graph, it, seen) }
-
-    @Suppress("UNCHECKED_CAST")
-    fun refusedPlan(
-        planner: Any,
-        graph: Any,
-        ids: List<String>,
-        extra: List<Any> = emptyList(),
-        nested: Map<String, List<String>> = emptyMap(),
-        fits: (String, List<String>) -> Boolean = { _, _ -> true },
-        wants: (String, String) -> List<List<String>> = { _, _ -> emptyList() },
-    ): Any? {
-        val plan = planner.callMethod("planOn", ids, ids.toSet())!!
-        val old = (ids + ids.flatMap { graph.callMethod("getDependents", it) as Collection<String> }).distinct()
-            .flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }
-            .filter { it.get("mod") in ids || it.get("dependency") in ids }
-        val oldNested = nested.flatMap { (id, versions) ->
-            val dependents = (graph.callMethod("getDependents", id) as Collection<String>).filter { isNeeded(graph, it) }
-            val needs = dependents.flatMap { wants(it, id) }
-            if (versions.any { version -> needs.all { fits(version, it) } }) return@flatMap emptyList()
-            dependents.flatMap { planner.callMethod("findOldDependencies", it) as List<Any> }.filter { it.get("dependency") == id }
-        }
-        val nestedRefusals = nested.filterValues { it.distinct().size == 1 }.keys.toList().takeIf { it.isNotEmpty() }
-            ?.let { only -> planner.callMethod("planOn", only, only.toSet())!!.get("refusals") as List<Any> }
-            .orEmpty().filter {
-                when (it.javaClass.simpleName) {
-                    "Breaks" -> true
-                    "MissingDependency" -> isNeeded(graph, it.get("mod") as String)
-                    else -> false
-                }
-            }
-        val refusals = (plan.get("refusals") as List<Any> + old + oldNested + nestedRefusals + extra).distinct()
-        if (refusals.isEmpty()) return null
-        return plan.javaClass.constructors.single()
-            .newInstance(plan.get("direction"), plan.get("order"), plan.get("why"), plan.get("enabledNested"), refusals)
-    }
-
-    private fun queueSelfUpdate(engine: Any, update: StoreUpdate, jar: Path): Result = runCatching {
-        engine.askAdder("AddFirstLook", "findRefusal", jar)?.let { return Result(false, it) }
-        val running = engine.callMethod("findJarOf", update.modId) as Path
-        nameClash(engine, jar, update.modId, running)?.let { return it }
-        val staging = Files.createDirectories(engine.field("updateFolders")!!.get("staging") as Path)
-        val staged = staging.resolve(jar.fileName.toString())
-        Files.copy(jar, staged, StandardCopyOption.REPLACE_EXISTING)
-        queueReplacement(
-            engine.field("updateQueue")!!,
-            Class.forName("dev.moon.hotwire.update.UpdateQueue\$Entry"),
-            readJar(jar).get("manifest")!!,
-            update.installedVersion,
-            running,
-            sha256(running),
-            staged,
-            sha256(staged),
-        )
-        Result(true, "")
-    }.getOrElse { queueFailed(jar) }
-
-    private fun nameClash(engine: Any, jar: Path, modId: String, running: Path?): Result? {
-        val name = jar.fileName.toString()
-        val queued = (engine.field("updateQueue")!!.callMethod("getEntries") as List<*>)
-            .filter { it!!.get("modId") != modId }.map { it!!.get("stagedJar") as String }
-        val target = (engine.field("updateFolders")!!.get("mods") as Path).resolve(name)
-        return if (nameTaken(jar, target, running, queued)) {
-            Result(false, translated("oneconfig.page.hotwire.update.name_taken", "A different jar named %s is already there, so nothing was changed.", name))
-        } else {
-            null
-        }
-    }
-
-    fun nameTaken(jar: Path, target: Path, running: Path?, queued: List<String>): Boolean {
-        val name = jar.fileName.toString()
-        return queued.any { Path.of(it).fileName.toString() == name } ||
-            Files.exists(target) && name != running?.fileName?.toString() && Files.mismatch(target, jar) != -1L
-    }
-
-    private fun updateClash(engine: Any, jar: Path): Result? {
-        val incoming = unwrapped(engine, jar)
-        val manifest = manifestOf(incoming) ?: return null
-        val id = manifest.get("id") as String
-        val replaced = if (engine.callMethod("findJarOf", id) != null) {
-            id
-        } else {
-            runCatching {
-                engine.callHidden("findParts")!!.field("updates")!!.field("updater")!!.field("idChanged")!!.callHidden("findReplacedBy", manifest) as String?
-            }.getOrNull()
-        }
-        return nameClash(engine, incoming, replaced ?: id, replaced?.let { engine.callMethod("findJarOf", it) as Path? })
-    }
-
-    private fun sha256(file: Path): String =
-        Class.forName("dev.moon.hotwire.jar.FileHashes").getMethod("findSha256", Path::class.java).invoke(null, file) as String
-
-    fun queueReplacement(queue: Any, entryType: Class<*>, manifest: Any, fromVersion: String, running: Path, runningSha256: String, staged: Path, stagedSha256: String) {
-        queue.callMethod(
-            "add",
-            entryType.constructors.single().newInstance(
-                manifest.get("id"),
-                manifest.get("name"),
-                fromVersion,
-                manifest.get("version"),
-                running.fileName.toString(),
-                runningSha256,
-                staged.toAbsolutePath().toString(),
-                stagedSha256,
-                "",
-                System.currentTimeMillis(),
-            ),
-        )
-    }
-
-    private fun manifestOf(jar: Path): Any? =
-        Class.forName("dev.moon.hotwire.jar.JarLookup").getMethod("findManifest", Path::class.java).invoke(null, jar)
-
-    private fun nameOfJar(jar: Path): String = manifestOf(jar)?.get("name") as String? ?: jar.fileName.toString()
-
-    private fun dryRunAdd(engine: Any, jar: Path): Any = (engine.callMethod("dryRunAdd", jar) as CompletableFuture<*>).get()!!
-
-    private fun Any.lineOfAdd(): String = (get("lines") as List<*>).firstOrNull() as String? ?: get("name") as String
-
-    private fun Any.addMode(): String = (get("mode") as Enum<*>).name
-
-    /** The mods stopping an update, or none when Hotwire can't plan it, which is how it answers any other refusal */
-    private fun unmetNeeds(engine: Any, jar: Path): List<String> {
-        val plan = engine.field("changes")!!.callMethod("planUpdate", jar) ?: return emptyList()
-        return (plan.get("blockers") as List<*>).filter { it!!.javaClass.simpleName == "DependencyUnmet" }.map { it!!.get("mod") as String }
-    }
-
-    /**
-     * Adds to [steps] what has to land before [jar] can update, each after what it needs in turn, the way Hotwire's
-     * own update queue meets needs; false when Hotwire refuses it for anything else
-     */
-    private fun collectNeeds(engine: Any, jar: Path, seen: MutableSet<String>, steps: MutableList<Path>): Boolean {
-        val preview = (engine.callMethod("dryRunUpdate", jar) as CompletableFuture<*>).get()!!
-        val kind = preview.javaClass.simpleName
-        if (kind != "Refused") return kind == "Ready"
-        val unmet = unmetNeeds(engine, jar)
-        return unmet.isNotEmpty() && unmet.all { fetchNeed(engine, it, seen, steps) }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun fetchNeed(engine: Any, id: String, seen: MutableSet<String>, steps: MutableList<Path>): Boolean {
-        if (!seen.add(id)) return true
-        val jars = engine.callMethod("getUpdateCheck")!!.callMethod("fetchById", id, offers, Consumer<String> {}) as List<Path>
-        if (jars.isEmpty()) return false
-        for (need in jars) {
-            if (need in steps) continue
-            val met = if (engine.callMethod("canUpdate", need) == true) collectNeeds(engine, need, seen, steps) else meetOldDependencies(engine, need, seen, steps)
-            if (!met) return false
-            steps.add(need)
-        }
-        return true
-    }
-
-    private fun meetOldDependencies(engine: Any, jar: Path, seen: MutableSet<String>, steps: MutableList<Path>): Boolean {
-        val read = readJar(jar)
-        val old = plannerWith(engine, listOf(read)).callMethod("findOldDependencies", read.modId()) as List<*>
-        return old.all { fetchNeed(engine, it!!.get("dependency") as String, seen, steps) }
-    }
-
-    /** What applying [jars] from [downloadUpdate] would do; blocks on Hotwire reading them and on the network */
-    @Suppress("UNCHECKED_CAST")
-    private fun planUpdate(jars: List<Path>): JarPlan {
-        val jar = jars.last()
-        val plan = planFor(jar, update = true).get()
-        val engine = engine()
-        if (engine == null || engine.callMethod("canUpdate") != true) return plan
-        val steps = mutableListOf<Path>()
-        val seen = jars.mapNotNull(::manifestOf).flatMapTo(HashSet()) { (it.get("provides") as List<String>) + (it.get("id") as String) }
-        val needs = jars.dropLast(1)
-        val collected = needs.all { need ->
-            (engine.callMethod("canUpdate", need) == true || meetOldDependencies(engine, need, seen, steps)).also { if (it) steps.add(need) }
-        } && collectNeeds(engine, jar, seen, steps)
-        // a later add can be refused now only for lacking an earlier one, so those are read again as they run
-        val firstAdds = (if (collected) steps.take(1) else needs).filter { engine.callMethod("canUpdate", it) != true }
-            .map { dryRunAdd(engine, it) }
-        firstAdds.firstOrNull { it.addMode() == "REFUSED" }
-            ?.let { return JarPlan(plan.title, plan.detail, it.get("lines") as List<String>, emptyList()) }
-        if (!collected || steps.isEmpty()) return plan
-        val adds = steps.filter { engine.callMethod("canUpdate", it) != true }
-        (refusalOnceMet(engine, adds) ?: adds.takeIf { it.isNotEmpty() }?.let { nextLaunchRefusal(engine, steps + jar) })
-            ?.let { return JarPlan(plan.title, plan.detail, listOf(it), emptyList()) }
-        val reopen = firstAdds.any { it.addMode() == "SAVE_AND_REOPEN" } || adds.any { reopensOnceMet(engine, it) }
-        val label = if (reopen) {
-            translated("oneconfig.page.hotwire.update.reopen", "Save and update")
-        } else {
-            translated("oneconfig.page.hotwire.update.with_needs", "Update with dependencies")
-        }
-        val action = JarAction(label, true) {
-            CompletableFuture.supplyAsync { runSteps(engine, steps, jar, reopen) }
-        }
-        val lines = steps.map {
-            val name = nameOfJar(it)
-            if (engine.callMethod("canUpdate", it) == true) {
-                translated("oneconfig.page.hotwire.update.updates", "Updates %s, which this update needs.", name)
-            } else {
-                translated("oneconfig.page.hotwire.update.adds", "Adds %s, which this update needs.", name)
-            }
-        }
-        return JarPlan(plan.title, plan.detail, lines + plan.lines.takeIf { plan.actions.isNotEmpty() }.orEmpty(), listOf(action), reopens = reopen)
-    }
-
-    /** Lands [steps] in order and then updates [jar], stopping at the first that fails, since each one's plan rests on those before */
-    private fun runSteps(engine: Any, steps: List<Path>, jar: Path, reopen: Boolean): Result {
-        val adds = steps.filter { engine.callMethod("canUpdate", it) != true }
-        val landing = steps.map { step -> { if (step in adds) addNow(engine, step, reopen) else updateNow(step) } }
-        lateinit var updated: Result
-        return queueTogether(engine.field("updateQueue")!!, adds.map { readJar(it).modId() }, landing + { updateNow(jar).also { updated = it } }) ?: updated
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun waitingNeeds(engine: Any, jar: Path): List<String> {
-        val manifest = manifestOf(jar) ?: return emptyList()
-        val graph = engine.callHidden("getGraph")!!
-        val depends = Class.forName("dev.moon.hotwire.jar.ModManifest\$Relation").enumConstants.first { (it as Enum<*>).name == "DEPENDS" }
-        val needs = (manifest.callMethod("getRelation", depends) as Map<String, List<String>>).mapKeys { graph.callMethod("resolve", it.key) }
-        return (engine.callMethod("getPendingChanges") as List<*>).filter { change ->
-            if (change!!.javaClass.simpleName != "Update") return@filter false
-            val id = change.get("modId") as String
-            val ranges = needs[id] ?: return@filter false
-            val running = engine.callStatic("LoadedMods", "findVersion", id)
-            running == null || engine.callStatic("ModPolicy", "satisfies", running, ranges) != true
-        }.map { it!!.get("name") as String }
-    }
-
-    private fun <T> onUiThread(block: () -> T): T {
-        val done = CompletableFuture<T>()
-        Platform.screen().runOnUiThread { runCatching(block).fold(done::complete, done::completeExceptionally) }
-        return done.get()
-    }
-
-    private fun updateNow(jar: Path): Result {
-        val plan = planFor(jar, update = true).get()
-        if (plan.upToDate) return Result(true, "")
-        val action = plan.actions.firstOrNull { it.primary } ?: return Result(false, plan.lines.firstOrNull().orEmpty())
-        return onUiThread(action::attempt)!!.get()
-    }
-
-    private fun reopenNotAgreed(name: String) =
-        Result(false, translated("oneconfig.page.hotwire.reopen_confirm", "%s has to save and reopen your world. Try again to confirm.", name), needsReopen = true)
-
-    private fun addNow(engine: Any, jar: Path, reopen: Boolean): Result {
-        val preview = dryRunAdd(engine, jar)
-        val mode = preview.get("mode") as Enum<*>
-        val name = preview.get("name") as String
-        when (mode.name) {
-            "REFUSED" -> return Result(false, preview.lineOfAdd())
-            "NEXT_START" -> return queueAdd(engine, jar)
-            "SAVE_AND_REOPEN" -> if (!reopen) return reopenNotAgreed(name)
-        }
-        onUiThread { engine.callMethod("add", jar, mode) }
-        dryRunAdd(engine, jar)
-        if (engine.callMethod("canUpdate", jar) != true) {
-            return Result(false, translated("oneconfig.page.hotwire.add.failed", "Hotwire couldn't add %s. It posts why in chat.", name))
-        }
-        return if (onUiThread { keptForNextLaunch(engine, jar) }) Result(true, "") else notKept(jar)
-    }
-
-    private fun keptForNextLaunch(engine: Any, jar: Path): Boolean {
-        val kept = (engine.field("updateFolders")!!.get("mods") as Path).resolve(jar.fileName.toString())
-        return Files.exists(kept) && Files.mismatch(kept, jar) == -1L
-    }
-
-    private fun notKept(jar: Path) =
-        Result(false, translated("oneconfig.page.hotwire.add.not_kept", "%s is added for now, but it won't stay after a restart - please check chat!", nameOfJar(jar)))
-
-    private fun lostJar(engine: Any, jars: List<Path>): Result? =
-        jars.firstOrNull { !onUiThread { keptForNextLaunch(engine, it) } }?.let(::notKept)
-
-    private fun unwrapped(engine: Any, jar: Path): Path = runCatching {
-        engine.callHidden("findParts")!!.field("updates")!!.field("updater")!!.callMethod("unwrap", jar) as Path
-    }.getOrDefault(jar)
-
-    private fun isQueued(engine: Any, jar: Path): Boolean {
-        val updates = (engine.callMethod("getPendingChanges") as List<*>).filter { it!!.javaClass.simpleName == "Update" }
-        return listOf(jar, unwrapped(engine, jar)).any { queued ->
-            val manifest = manifestOf(queued) ?: return@any false
-            updates.any { it!!.get("newJar") == queued.fileName.toString() && it.get("toVersion") == manifest.get("version") }
-        }
-    }
-
-    private fun queueFailed(jar: Path) =
-        Result(false, translated("oneconfig.page.hotwire.add.queue_failed", "Hotwire couldn't queue %s - please check chat!", nameOfJar(jar)))
-
-    private fun queueAdd(engine: Any, jar: Path): Result {
-        nameClash(engine, jar, readJar(jar).modId(), null)?.let { return it }
-        onUiThread { engine.callMethod("add", jar, engine.enumArg("add", "NEXT_START")) }
-        return if (isQueued(engine, jar)) Result(true, "") else queueFailed(jar)
-    }
-
-    /**
-     * How the update just handed to Hotwire ended, which its engine doesn't report: a dry run asked for now runs on
-     * Hotwire's single worker after that update, and then sees the new version in, queued, or neither
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun updateResult(engine: Any, jar: Path, name: String): CompletableFuture<Result> =
-        (engine.callMethod("dryRunUpdate", jar) as CompletableFuture<Any>).thenApply { after ->
-            val queued = isQueued(engine, jar)
-            val live = after.javaClass.simpleName == "SameVersion"
+    private fun planFrom(kind: String, title: String, detail: String, plan: Any): JarPlan {
+        fun ask(method: String) = plan.through("ChangePlan", method)
+        val reopens = ask("needsReopen") == true
+        val restartOnly = (ask("getReason") as Enum<*>).name == "NEEDS_RESTART"
+        val nextStart = translated("oneconfig.page.hotwire.$kind.next_start", "Apply at next launch")
+        val now = JarAction(
             when {
-                live && queued -> Result(true, translated("oneconfig.page.hotwire.update.done", "%s is updated.", name))
-                live -> Result(false, translated("oneconfig.page.hotwire.update.not_kept", "%s is updated for now, but the update won't stay after a restart - please check chat!", name))
-                queued -> Result(true, translated("oneconfig.page.hotwire.update.queued", "%s updates at the next launch.", name))
-                after.javaClass.simpleName == "Refused" -> Result(false, after.get("reason") as String)
-                else -> Result(false, translated("oneconfig.page.hotwire.update.failed", "Hotwire couldn't update %s. It posts why in chat.", name))
-            }
+                reopens -> translated("oneconfig.page.hotwire.$kind.reopen", "Save and apply")
+                restartOnly -> nextStart
+                else -> translated("oneconfig.page.hotwire.$kind.now", "Apply now")
+            },
+            true,
+        ) { ask("accept").asResults() }
+        val later = JarAction(nextStart, false) { ask("acceptAtNextStart").asResults() }
+        val actions = when {
+            ask("canApply") != true -> emptyList()
+            !restartOnly && ask("canWaitForNextStart") == true -> listOf(now, later)
+            else -> listOf(now)
         }
+        return JarPlan(title, detail, ask("getLines") as List<String>, actions, reopens = reopens)
+    }
 
-    /**
-     * Reads [jar] the way Hotwire does before adding or updating
-     *
-     * An [update] is read as one straight away; otherwise it is one when Hotwire says that mod is already installed
-     * or that this jar replaces an installed mod under a new id
-     */
-    fun planFor(jar: Path, update: Boolean = false): CompletableFuture<JarPlan> = runCatching {
-        val engine = engine()!!
-        // with no class access Hotwire's update dry run has nothing to run on, so say so instead of failing inside it
-        if (update && engine.callMethod("canUpdate") != true) {
-            return CompletableFuture.completedFuture(
-                JarPlan(
-                    jar.fileName.toString(),
-                    "",
-                    listOf(translated("oneconfig.page.hotwire.update.unavailable", "Hotwire can't update mods in this game session.")),
-                    emptyList(),
+    fun isSelf(update: StoreUpdate) = update.modId == "hotwire" || update.modId.startsWith("hotwire-")
+
+    /** What applying [updates] together would do, with what they newly need; blocks on the network */
+    fun planUpdate(updates: List<StoreUpdate>): JarPlan {
+        val only = updates.singleOrNull()
+        val detail = only?.let { "${it.installedVersion} → ${it.newVersion}" }.orEmpty()
+        if (only != null && isSelf(only)) {
+            return JarPlan(
+                only.name,
+                detail,
+                listOf(translated("oneconfig.page.hotwire.update.self", "Hotwire can't update itself while the game runs, so it updates at the next launch.")),
+                listOf(
+                    JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
+                        call("updateHotwire")
+                        null
+                    },
                 ),
             )
         }
-        @Suppress("UNCHECKED_CAST")
-        if (update || engine.callMethod("canUpdate", jar) == true) {
-            (engine.callMethod("dryRunUpdate", jar) as CompletableFuture<Any>).thenApply { updatePlan(engine, jar, it) }
-        } else {
-            (engine.callMethod("dryRunUpdate", jar) as CompletableFuture<Any>).thenCompose { preview ->
-                if (replacesInstalled(preview, jar)) {
-                    CompletableFuture.completedFuture(updatePlan(engine, jar, preview))
-                } else {
-                    (engine.callMethod("dryRunAdd", jar) as CompletableFuture<Any>).thenApply { addPlan(engine, jar, it) }
-                }
-            }
-        }
-    }.getOrElse { CompletableFuture.completedFuture(JarPlan(jar.fileName.toString(), "", listOf("Hotwire is not available."), emptyList())) }
-
-    private fun replacesInstalled(preview: Any, jar: Path): Boolean = when (preview.javaClass.simpleName) {
-        "Ready" -> true
-        "Refused" -> preview.get("name") != jar.fileName.toString()
-        else -> false
+        return planFrom("update", updates.joinToString(", ") { it.name }, detail, changePlan(update = updates.map { it.modId }))
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun addPlan(engine: Any, jar: Path, preview: Any): JarPlan {
-        fun add(mode: String): () -> CompletableFuture<Result>? = {
-            engine.callMethod("add", jar, engine.enumArg("add", mode))
-            null
-        }
-        val addLater: () -> CompletableFuture<Result>? = {
-            CompletableFuture.supplyAsync { addInOrder(engine, listOf(jar), preview.get("name") as String, reopen = false, later = true) }
-        }
-        val later = JarAction(translated("oneconfig.page.hotwire.add.next_start", "Add at next launch"), false, addLater)
-        val mode = (preview.get("mode") as Enum<*>).name
-        if (mode != "REFUSED") {
-            nextLaunchRefusal(engine, listOf(jar))?.let { return JarPlan(preview.get("name") as String, preview.get("version") as String? ?: "", listOf(it), emptyList()) }
-        }
-        val actions = when (mode) {
-            "NOW" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.now", "Add now"), true, add("NOW")), later)
-            "SAVE_AND_REOPEN" -> listOf(JarAction(translated("oneconfig.page.hotwire.add.reopen", "Save and add"), true, add("SAVE_AND_REOPEN")), later)
-            "NEXT_START" -> listOf(JarAction(later.label, true, addLater))
-            else -> emptyList()
-        }
-        return JarPlan(preview.get("name") as String, preview.get("version") as String? ?: "", preview.get("lines") as List<String>, actions)
-    }
+    /** What Hotwire would do with [jar], adding it or updating the mod it already is; blocks on Hotwire reading it */
+    fun planFor(jar: Path): JarPlan = planFrom("change", jar.fileName.toString(), "", changePlan(jars = listOf(jar)))
 
-    @Suppress("UNCHECKED_CAST")
-    private fun updatePlan(engine: Any, jar: Path, preview: Any): JarPlan {
-        fun update(method: String): () -> CompletableFuture<Result>? = {
-            updateClash(engine, jar)?.let { CompletableFuture.completedFuture(it) } ?: run {
-                engine.callMethod("update", jar, engine.enumArg("update", method))
-                updateResult(engine, jar, preview.get("name") as String)
-            }
-        }
-        return when (preview.javaClass.simpleName) {
-            "Ready" -> {
-                val method = (preview.get("method") as Enum<*>).name
-                val inPlace = method == "IN_PLACE"
-                val lines = preview.get("lines") as List<String>
-                val waiting = if (inPlace) waitingNeeds(engine, jar) else emptyList()
-                if (waiting.isNotEmpty()) {
-                    return JarPlan(
-                        preview.get("name") as String,
-                        "${preview.get("installedVersion")} → ${preview.get("newVersion")}",
-                        listOf(translated("oneconfig.page.hotwire.update.waits", "This update needs %s, which only arrives at the next launch. Update this after restarting.", waiting.joinToString(", "))),
-                        emptyList(),
-                    )
-                }
-                JarPlan(
-                    preview.get("name") as String,
-                    "${preview.get("installedVersion")} → ${preview.get("newVersion")}",
-                    if (inPlace) {
-                        lines
-                    } else {
-                        listOf(translated("oneconfig.page.hotwire.update.restart_only", "Hotwire can't swap this mod while the game runs, so it updates at the next launch.")) + lines
-                    },
-                    listOf(
-                        JarAction(
-                            if (inPlace) {
-                                translated("oneconfig.page.hotwire.update.now", "Update now")
-                            } else {
-                                translated("oneconfig.page.hotwire.update.next_start", "Update at next launch")
-                            },
-                            true,
-                            update(method),
-                        ),
-                    ),
-                )
-            }
-            "Refused" -> JarPlan(preview.get("name") as String, "", listOf(preview.get("reason") as String), emptyList())
-            "SameVersion" -> JarPlan(
-                preview.get("name") as String,
-                preview.get("version") as String,
-                listOf(translated("oneconfig.page.hotwire.update.same", "This version is already installed.")),
-                emptyList(),
-                upToDate = true,
-            )
-            else -> JarPlan(jar.fileName.toString(), "", listOf(translated("oneconfig.page.hotwire.unreadable", "Hotwire can't read this jar.")), emptyList())
-        }
-    }
-
-    fun reopensToTurnOn(ids: Collection<String>): Boolean = runCatching {
-        val engine = engine()!!
-        canReopenToAddBack(engine) && worldRefusal(engine) == null && keptOff(ids).any {
-            val jar = engine.callMethod("findJarOf", it) as Path
-            dryRunAdd(engine, jar).addMode() == "SAVE_AND_REOPEN" || reopensOnceMet(engine, jar)
-        }
-    }.getOrDefault(false)
-
-    fun switch(ids: Collection<String>, on: Boolean, reopen: Boolean = false): CompletableFuture<Result> = runCatching {
-        val kept = if (on) keptOff(ids) else emptyList()
-        if (kept.isEmpty()) {
-            call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
-        } else {
-            CompletableFuture.supplyAsync { turnOnKeptOff(engine()!!, ids, kept, reopen) }
-        }
+    fun switch(ids: Collection<String>, on: Boolean): CompletableFuture<Result> = runCatching {
+        call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
     }.getOrElse { CompletableFuture.completedFuture(Result(false, "Hotwire is not available.")) }
-
-    private fun awaitWorker(engine: Any, jar: Path) {
-        runCatching { dryRunAdd(engine, jar) }
-    }
-
-    private fun canReopenToAddBack(engine: Any): Boolean =
-        engine.javaClass.declaredMethods.any { it.name == "add" && it.parameterCount == 3 }
-
-    private fun addBackWithReopen(engine: Any, id: String, jar: Path): Result {
-        val added = CompletableFuture<Result>()
-        val mode = engine.enumArg("add", "SAVE_AND_REOPEN")
-        onUiThread {
-            engine.callHidden("add", jar, mode, Consumer<Any> { outcome ->
-                added.complete(
-                    runCatching {
-                        if (outcome.javaClass.simpleName != "Added") return@runCatching Result(false, outcome.get("reason") as String)
-                        val enabled = runCatching {
-                            Class.forName("${engine.javaClass.packageName}.DisabledJars")
-                                .getDeclaredMethod("enable", Path::class.java).apply { isAccessible = true }.invoke(null, jar)!!
-                        }
-                        engine.field("installed")!!.callMethod("onBroughtBack", id, enabled.getOrDefault(jar))
-                        enabled.fold({ Result(true, "") }) {
-                            val name = engine.callMethod("nameOfMod", id) as String
-                            Result(false, translated("oneconfig.page.hotwire.switch.rename_failed", "%s is back on, but it will be off at the next launch: %s", name, failure(it).message))
-                        }
-                    }.getOrElse(::failure),
-                )
-            })
-        }
-        return added.get(REOPEN_TIMEOUT_MINUTES, TimeUnit.MINUTES)
-    }
-
-    private fun turnOnKeptOff(engine: Any, ids: Collection<String>, kept: List<String>, reopen: Boolean): Result {
-        val waiting = kept.associateWithTo(LinkedHashMap()) { engine.callMethod("findJarOf", it) as Path }
-        refusalOnceMet(engine, waiting.values.toList())?.let { return Result(false, it) }
-        while (waiting.isNotEmpty()) {
-            val modes = waiting.entries.map { it to dryRunAdd(engine, it.value).addMode() }
-            val (entry, mode) = modes.firstOrNull { it.second == "NOW" }
-                ?: modes.firstOrNull { it.second == "SAVE_AND_REOPEN" }
-                ?: return Result(false, dryRunAdd(engine, waiting.values.first()).lineOfAdd())
-            val (id, jar) = entry
-            if (mode == "SAVE_AND_REOPEN") {
-                val name = engine.callMethod("nameOfMod", id) as String
-                if (!canReopenToAddBack(engine)) {
-                    return Result(false, translated("oneconfig.page.hotwire.switch.reopen_unsupported", "Update Hotwire to turn %s back on from here.", name))
-                }
-                if (!reopen) return reopenNotAgreed(name)
-            }
-            val result = if (mode == "NOW") call("turnOn", listOf(id)).asResults().get() else addBackWithReopen(engine, id, jar)
-            awaitWorker(engine, jar)
-            val back = onUiThread {
-                invalidate()
-                mods().orEmpty().any { it.id == id && it.on }
-            }
-            if (!result.ok) return result
-            if (!back) {
-                return Result(false, translated("oneconfig.page.hotwire.switch.add_back_failed", "Hotwire couldn't add back %s - please check chat!", engine.callMethod("nameOfMod", id) as String))
-            }
-            waiting.remove(id)
-        }
-        val rest = ids - kept.toSet()
-        return if (rest.isEmpty()) Result(true, "") else call("turnOn", rest).asResults().get()
-    }
 
     private const val MAX_ICON_BYTES = 8 * 1024 * 1024
 
     private const val ICON_TIMEOUT_MS = 10_000
-
-    private const val REOPEN_TIMEOUT_MINUTES = 15L
-
-    private const val STORE_WORKER_TIMEOUT_SECONDS = 60L
-
-    private const val STORE_REVISION = 5
 
     private const val MODRINTH_LOADER = "fabric"
 }

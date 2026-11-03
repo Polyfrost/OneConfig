@@ -25,7 +25,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -129,32 +128,32 @@ object HotwireUpdates {
     }
 
     /**
-     * Applies each update in turn with whatever Hotwire allows it, live or at the next launch, since Hotwire's own
-     * batch update waits on confirmations in its screen
+     * Applies the updates with whatever Hotwire allows them, live or at the next launch, as one plan so what one brings
+     * along isn't offered again; Hotwire updates itself apart, since it can't go in a plan
      */
     fun updateAll(updates: List<HotwireBridge.StoreUpdate>, onDone: () -> Unit) {
         scope.launch {
             val problems = ArrayList<String>()
             try {
-                for (update in updates) {
-                    updating = update.name
+                val (self, mods) = updates.partition(HotwireBridge::isSelf)
+                for (group in self.map { listOf(it) } + listOf(mods).filter { it.isNotEmpty() }) {
+                    val name = group.joinToString(", ") { it.name }
+                    updating = name
                     val plan = withContext(Dispatchers.IO) {
-                        runCatching { HotwireBridge.planUpdate(update) }
+                        runCatching { HotwireBridge.planUpdate(group) }
                     }
-                    // an earlier update can already have brought this one along as a dependency
-                    if (plan.getOrNull()?.upToDate == true) continue
                     if (plan.getOrNull()?.reopens == true) {
-                        problems += "${update.name}: ${translated("oneconfig.page.hotwire.updates.reopen", "It has to save and reopen your world, so update it on its own.")}"
+                        problems += "$name: ${translated("oneconfig.page.hotwire.updates.reopen", "It has to save and reopen your world, so update it on its own.")}"
                         continue
                     }
                     val action = plan.getOrNull()?.actions?.firstOrNull { it.primary }
                     if (action == null) {
                         val reason = plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.firstOrNull()
-                        problems += "${update.name}: ${reason.orEmpty()}"
+                        problems += "$name: ${reason.orEmpty()}"
                         continue
                     }
                     val failed = action.attempt()?.let { withContext(Dispatchers.IO) { it.get() } }?.takeUnless { it.ok }
-                    if (failed != null) problems += "${update.name}: ${failed.message}"
+                    if (failed != null) problems += "$name: ${failed.message}"
                 }
             } finally {
                 updating = null
@@ -392,18 +391,16 @@ private fun SwitchBar(
     val turnOff = remember(picked, states) {
         val members = membersWhere(true)
         val ids = members.map { it.id }
-        ids - HotwireBridge.keptOnWhenOff(members.filter { it.parentId !in ids }.map { it.id })
+        // a nested mod another jar still needs stays on, so it's left out; a refused plan keeps them all so it can say why
+        val plan = HotwireBridge.preview(members.filter { it.parentId !in ids }.map { it.id }, false)
+        if (plan.possible) ids.filter { it in plan.switched } else ids
     }
     val turnOn = remember(picked, states) { membersWhere(false).map { it.id } }
     val previews = remember(turnOff, turnOn) {
-        listOfNotNull(
+        HotwireBridge.previewTogether(turnOff, turnOn)?.let { listOf(it) } ?: listOfNotNull(
             turnOff.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, false) },
-            HotwireBridge.previewTogether(turnOff, turnOn) ?: turnOn.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, true) },
+            turnOn.takeIf { it.isNotEmpty() }?.let { HotwireBridge.preview(it, true) },
         )
-    }
-    val reopens by produceState<Boolean?>(null, turnOn) {
-        value = null
-        value = withContext(Dispatchers.IO) { HotwireBridge.reopensToTurnOn(turnOn) }
     }
     val pickedIds = picked.values.flatten().mapTo(HashSet()) { it.id }
     val updates = HotwireUpdates.found?.getOrNull().orEmpty().filter { it.modId in pickedIds }
@@ -419,7 +416,6 @@ private fun SwitchBar(
     val onCount = picked.values.count { familyOn(it, states) == false }
     val tooMany = offCount + onCount > MaxSwitchedMods
     val label = when {
-        reopens == true -> translated("oneconfig.page.hotwire.switch.reopen", "Save and switch")
         offCount > 0 && onCount > 0 -> "Switch ${offCount + onCount}"
         offCount > 0 -> "Turn off $offCount"
         else -> "Turn on $onCount"
@@ -431,14 +427,16 @@ private fun SwitchBar(
         tooMany -> translated("oneconfig.page.hotwire.switch.too_many", "Only %s mods can be switched at once.", MaxSwitchedMods)
         else -> previews.joinToString(" ") { it.message }
     }
-    val canSwitch = !running && !tooMany && reopens != null && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
+    val canSwitch = !running && !tooMany && previews.isNotEmpty() && previews.all { it.possible } && !HotwireBridge.isSwitching
 
     fun start() {
         switching = true
+        // Hotwire answers for these before it has added them back, so the grid has to look again once it's done
+        val bringsBack = HotwireBridge.keptOff(turnOn).isNotEmpty()
         val off = if (turnOff.isEmpty()) done("") else HotwireBridge.switch(turnOff, false)
         off.thenCompose { first ->
             if (!first.ok || turnOn.isEmpty()) return@thenCompose CompletableFuture.completedFuture(first)
-            HotwireBridge.switch(turnOn, true, reopens == true).thenApply { second ->
+            HotwireBridge.switch(turnOn, true).thenApply { second ->
                 HotwireBridge.Result(
                     second.ok,
                     listOf(first.message, second.message).filter { it.isNotBlank() }.joinToString(" "),
@@ -450,6 +448,7 @@ private fun SwitchBar(
                 switching = false
                 notifyHotwireResult(result ?: HotwireBridge.Result(false, error?.message ?: ""))
                 if (result?.ok == true) onClear()
+                if (bringsBack) HotwireUpdates.refreshWhenDone()
             }
         }
     }

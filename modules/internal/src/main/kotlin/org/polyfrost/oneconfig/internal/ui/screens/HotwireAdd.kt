@@ -115,32 +115,20 @@ fun HotwireAdd() {
             Chip(translated("oneconfig.page.hotwire.source.modrinth", "Modrinth"), source == AddSource.Modrinth, "search") { show(AddSource.Modrinth) }
             Chip(translated("oneconfig.page.hotwire.source.file", "From file"), source == AddSource.File, "folder") { show(AddSource.File) }
             Spacer(Modifier.weight(1f))
-            if (HotwireBridge.supportsStore) {
-                Chip(translated("oneconfig.page.hotwire.downloads_folder", "Downloads folder"), selected = false, icon = "external-link") { HotwireBridge.openDownloads() }
-            }
+            Chip(translated("oneconfig.page.hotwire.downloads_folder", "Downloads folder"), selected = false, icon = "external-link") { HotwireBridge.openDownloads() }
         }
         fun reviewUpdate(update: HotwireBridge.StoreUpdate, icon: () -> String?) =
-            review(update.name, icon) { HotwireBridge.planUpdate(update) }
+            review(update.name, icon) { HotwireBridge.planUpdate(listOf(update)) }
 
         if (reading || plan != null) {
             PlanCard(reading, plan, planIcon, onBack = ::leavePreview)
         } else {
             when (source) {
-                AddSource.File -> FileSource { jar -> review("", { null }) { jar()?.let { HotwireBridge.planFor(it).get() } } }
-                AddSource.Modrinth -> if (HotwireBridge.supportsStore) {
-                    ModrinthSource(
-                        onInstall = { hit -> review(hit.title, { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }) { HotwireBridge.storePlan(hit) } },
-                        onUpdate = { update, hit -> reviewUpdate(update) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } } },
-                    )
-                } else {
-                    Card {
-                        Text(
-                            translated("oneconfig.page.hotwire.upgrade.store", "This version of Hotwire can't browse Modrinth here. Update Hotwire to use it."),
-                            color = LocalTheme.current.textColorSecondary,
-                            fontSize = 14.sp,
-                        )
-                    }
-                }
+                AddSource.File -> FileSource { jar -> review("", { null }) { jar()?.let(HotwireBridge::planFor) } }
+                AddSource.Modrinth -> ModrinthSource(
+                    onInstall = { hit -> review(hit.title, { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }) { HotwireBridge.storePlan(hit) } },
+                    onUpdate = { update, hit -> reviewUpdate(update) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } } },
+                )
                 AddSource.Updates -> UpdatesSource { update -> reviewUpdate(update) { installedIcon(update.modId) } }
             }
         }
@@ -269,7 +257,9 @@ private fun ModrinthSource(
             val updates = HotwireUpdates.found?.getOrNull().orEmpty()
             val shown = remember(current, updates) {
                 current.getOrThrow().mapNotNull { hit ->
-                    val update = updates.firstOrNull { it.projectId == hit.projectId }
+                    // shortcut: Hotwire's updates don't name their Modrinth project, so an installed hit is paired by name
+                    // and one named differently only offers its update in the Updates tab, until the API gives the project
+                    val update = updates.firstOrNull { hit.installed && it.name == hit.title }
                     // only Hotwire's own answer hides a project, since a mod's name or id can match another project; a
                     // dev build it can't recognise stays listed and Hotwire says it's installed when asked to add it
                     if (update == null && hit.installed) null else hit to update
