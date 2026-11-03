@@ -23,7 +23,6 @@ lwjgl = "3.3.3"
 mixin-squared = "0.3.7-beta.1"
 
 # Gradle
-kotlinx-abi = "0.18.2"
 detekt = "2.0.0-alpha.6"
 errorprone = "2.51.0"
 errorprone-plugin = "5.1.1"
@@ -156,7 +155,6 @@ twelvemonkeys = ["twelvemonkeys-webp", "twelvemonkeys-bmp", "twelvemonkeys-core"
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-abi" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 errorprone = { id = "net.ltgt.errorprone", version.ref = "errorprone-plugin" }
 
