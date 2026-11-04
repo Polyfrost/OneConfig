@@ -71,6 +71,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.hud.v1.ExternalPlacement
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -804,6 +805,37 @@ private fun DrawScope.drawSelectedHudBounds(
         val badgeTopY = (sy - HUD_SIZE_BADGE_GAP - HUD_SIZE_BADGE_HEIGHT).coerceAtLeast(0f)
         drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, badgeTopY)
     }
+}
+
+internal fun placementLabel(p: ExternalPlacement): String {
+    val action = when {
+        p.moved && p.scaled -> "Moved and scaled"
+        p.scaled -> "Scaled"
+        else -> "Moved"
+    }
+    return "$action by ${p.mod ?: "another mod"}"
+}
+
+private fun DrawScope.drawHudPlacementBadge(label: String, centerX: Float, bottomY: Float) {
+    val font = PolyFont.default(10f)
+    val metrics = font.metrics
+    val textWidth = font.measureTextWidth(label)
+    val textHeight = metrics.descent - metrics.ascent
+    val horizontalPadding = 5f
+    val badgeWidth = textWidth + horizontalPadding * 2
+    val badgeHeight = HUD_SIZE_BADGE_HEIGHT
+    val badgeX = centerX - badgeWidth / 2
+    val topY = bottomY + HUD_SIZE_BADGE_GAP
+
+    drawRoundRect(
+        color = lockedHudBoxColor,
+        topLeft = Offset(badgeX, topY),
+        size = Size(badgeWidth, badgeHeight),
+        cornerRadius = CornerRadius(3f, 3f)
+    )
+    val textX = badgeX + horizontalPadding
+    val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
+    drawPoly { it.renderer.text(label, textX, textY, Color.White.toArgb(), font) }
 }
 
 private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float) {
@@ -2043,6 +2075,12 @@ fun HudDesignStudio(visible: Boolean = true) {
                         // whole shape moving
                         val isBeingDragged = isDragging && (hud === draggedHud || hud in draggedGroup)
                         val singleSelection = selectedHuds.size == 1
+
+                        if (isSelected || isHovered) {
+                            hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
+                                drawHudPlacementBadge(placementLabel(it), sx + sw / 2, sy + sh)
+                            }
+                        }
 
                         if (hud.locked) {
                             // no selection handles because a locked HUD can be neither moved nor resized
