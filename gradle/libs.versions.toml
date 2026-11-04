@@ -36,7 +36,7 @@ compose-navigation = "2.10.0-rc01"
 lifecycle = "2.11.0"
 viewmodel = "2.11.0"
 
-commonmark = "0.31.0"
+commonmark = "0.32.0"
 twelvemonkeys = "3.15.3"
 
 # Testing
