@@ -76,6 +76,8 @@ public class TestConfig_Test extends Config {
     public static String secureText = "abcd-efgh-ijkl-mnop";
     @Text(title = "Partly Secure Text", description = "Keeps the dashes and last 4 characters readable", secure = true, secureShowLast = 4, secureShowChars = "-")
     public static String partlySecureText = "abcd-efgh-ijkl-mnop";
+    @Text(title = "Secure Multiline Text", description = "Masked across several lines, line breaks stay visible", secure = true, multiline = true, secureShowChars = "\n")
+    public static String secureMultilineText = "first secret line\nsecond secret line";
     @File(title = "Image", description = "Pick an image file", types = {".png", ".jpg"}, filterName = "Images")
     public static String image = "";
     @File(title = "Directory", description = "Pick a folder", directory = true)

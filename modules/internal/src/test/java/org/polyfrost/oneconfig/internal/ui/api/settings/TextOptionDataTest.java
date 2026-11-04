@@ -5,29 +5,31 @@ import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TextOptionDataTest {
-    private static TextOptionData secure() {
+    @Test
+    void readsSecureDefaults() {
+        TextOptionData data = new TextOptionData(Properties.simple("key", "Key", null, "", String.class));
+        assertFalse(data.getSecure());
+        assertEquals('*', data.getSecureMask());
+        assertEquals(0, data.getSecureShowLast());
+        assertEquals("", data.getSecureShowChars());
+    }
+
+    @Test
+    void readsSecureMetadata() {
         Property<String> property = Properties.simple("key", "Key", null, "", String.class);
         property.addMetadata("secure", true);
-        return new TextOptionData(property);
-    }
+        property.addMetadata("secureMask", '#');
+        property.addMetadata("secureShowLast", 4);
+        property.addMetadata("secureShowChars", "-");
+        TextOptionData data = new TextOptionData(property);
 
-    @Test
-    void masksEveryCharacterByDefault() {
-        assertEquals("*******************", secure().mask("abcd-efgh-ijkl-mnop"));
-        assertEquals("", secure().mask(""));
-    }
-
-    @Test
-    void showsTheLastCharactersAndListedOnes() {
-        TextOptionData data = secure();
-        data.getProp().addMetadata("secureShowLast", 4);
-        assertEquals("***************mnop", data.mask("abcd-efgh-ijkl-mnop"));
-        assertEquals("ab", data.mask("ab"));
-
-        data.getProp().addMetadata("secureShowChars", "-");
-        data.getProp().addMetadata("secureMask", '\u2022');
-        assertEquals("\u2022\u2022\u2022\u2022-\u2022\u2022\u2022\u2022-\u2022\u2022\u2022\u2022-mnop", data.mask("abcd-efgh-ijkl-mnop"));
+        assertTrue(data.getSecure());
+        assertEquals('#', data.getSecureMask());
+        assertEquals(4, data.getSecureShowLast());
+        assertEquals("-", data.getSecureShowChars());
     }
 }

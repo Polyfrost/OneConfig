@@ -20,6 +20,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,12 +31,14 @@ class TextTest {
         Tree tree = new OneConfigCollector().collect(new SecureTextConfig());
 
         Property<?> plain = tree.getProp("plain");
+        assertNotNull(plain, "the plain text option 'plain' should be collected");
         assertEquals(false, plain.getMetadata("secure"));
         assertEquals(Character.valueOf('*'), plain.getMetadata("secureMask"));
         assertEquals(Integer.valueOf(0), plain.getMetadata("secureShowLast"));
         assertNull(plain.getMetadata("secureShowChars"));
 
         Property<?> key = tree.getProp("key");
+        assertNotNull(key, "the secure text option 'key' should be collected");
         assertEquals(true, key.getMetadata("secure"));
         assertEquals(Character.valueOf('#'), key.getMetadata("secureMask"));
         assertEquals(Integer.valueOf(4), key.getMetadata("secureShowLast"));

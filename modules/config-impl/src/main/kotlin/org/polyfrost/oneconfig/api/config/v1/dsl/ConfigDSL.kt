@@ -271,7 +271,7 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
         var secureShowChars: String
             get() = this["secureShowChars"] as? String ?: ""
-            set(value) { this["secureShowChars"] = value }
+            set(value) { if (value.isEmpty()) property.removeMetadata("secureShowChars") else this["secureShowChars"] = value }
     }
 
     open class OptionsProp<T : Any>(default: T, typeOfT: Class<T>, options: Array<out String>) : Prop<T>(default, typeOfT) {

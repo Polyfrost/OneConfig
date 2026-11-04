@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.dsl.ConfigDSL
 
@@ -59,12 +60,15 @@ class KtApiParityTest {
         assertEquals("\\d+", tree.getProp("t")!!.getMetadata<String>("regex"))
         assertEquals(true, tree.getProp("notes")!!.getMetadata<Boolean>("fullWidth"))
         assertNull(tree.getProp("t")!!.getMetadata<Boolean>("fullWidth"))
-        val key = tree.getProp("key")!!
+        val key = tree.getProp("key")
+        assertNotNull(key, "the secure text option 'key' should be collected")
         assertEquals(true, key.getMetadata<Boolean>("secure"))
         assertEquals('•', key.getMetadata<Char>("secureMask"))
         assertEquals(4, key.getMetadata<Int>("secureShowLast"))
         assertEquals("-", key.getMetadata<String>("secureShowChars"))
-        assertEquals(false, tree.getProp("t")!!.getMetadata<Boolean>("secure"))
+        val plain = tree.getProp("t")
+        assertNotNull(plain, "the plain text option 't' should be collected")
+        assertEquals(false, plain.getMetadata<Boolean>("secure"))
         assertTrue(tree.getProp("colors")!!.getMetadata<Any>("noAlpha") != null)
 
         val active = tree.getProp("active")!!
@@ -149,6 +153,9 @@ class KtApiParityTest {
         assertEquals(true, key.property.getMetadata<Boolean>("secure"))
         assertEquals(4, key.property.getMetadata<Int>("secureShowLast"))
         assertEquals("-", key.property.getMetadata<String>("secureShowChars"))
+        key.secureShowChars = ""
+        assertEquals("", key.secureShowChars)
+        assertNull(key.property.getMetadata<String>("secureShowChars"))
         assertThrows(IllegalArgumentException::class.java) { key.secureShowLast = -1 }
     }
 
