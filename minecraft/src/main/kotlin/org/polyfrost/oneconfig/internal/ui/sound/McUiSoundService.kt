@@ -192,6 +192,10 @@ class McUiSoundService : UiSoundService {
                             val current = ambience ?: return@execute
                             if (current.isStopped || current.isFadingOut || current !== ambience) return@execute
                             if (!mc.soundManager.isActive(current)) {
+                                // 1.8.9 starts sounds asynchronously, so a stream that was just started can still
+                                // report inactive. Stop it before replacing it, otherwise it keeps playing untracked
+                                // and stopAmbience can no longer fade it out
+                                mc.soundManager.stop(current)
                                 playAmbienceInstance(current.theme, current.targetVolume)
                             }
                         } catch (_: Throwable) {
