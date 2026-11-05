@@ -542,7 +542,7 @@ object HudManager {
         }
         if (PolyComposeHost.frameWithReport()) {
             contentDirty = true
-            renderRevision.intValue++
+            if (showingPreviews) renderRevision.intValue++
         }
         if (showingPreviews) {
             PolyComposeHost.previews.frame(notify = false)
@@ -556,7 +556,7 @@ object HudManager {
         val changed = rt.layoutIfChanged(screenWidth / scale / hudScale, screenHeight / scale / hudScale)
         if (changed) relaidOut = true
         val root = rt.root
-        if (changed || hudScale != hud.sizedScale || hudStateWrites.get() != hud.sizedWrites || hud.hasExternalGeometry) {
+        if (changed || hudScale != hud.sizedScale || hud.stateRevision != hud.sizedRevision || hud.hasExternalGeometry) {
             val w = root.width * hudScale
             val h = root.height * hudScale
             if (hud.renderedW != w || hud.renderedH != h) {
@@ -569,7 +569,7 @@ object HudManager {
             hud.sizedW = w
             hud.sizedH = h
             hud.sizedScale = hudScale
-            hud.sizedWrites = hudStateWrites.get()
+            hud.sizedRevision = hud.stateRevision
         }
         hud.settlePin()
         return root
@@ -697,7 +697,6 @@ object HudManager {
         prepareScale = scale
 
         frameId++
-        Snapshot.sendApplyNotifications()
 
         // opening or closing the editor swaps between preview and live content, so every HUD gets
         // one immediate update on the edge instead of waiting out its remaining interval

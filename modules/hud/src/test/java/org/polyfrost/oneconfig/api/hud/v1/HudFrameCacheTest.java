@@ -11,7 +11,9 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudFrameCacheTest {
     static class CacheHud extends TextHud {
@@ -26,6 +28,14 @@ class HudFrameCacheTest {
         @Override public String getText() { return "ext"; }
         @Override public float getX() { return externalX; }
         @Override public float getY() { return externalY; }
+    }
+
+    static class StaticSizeHud extends TextHud {
+        float side = 40f;
+        StaticSizeHud() { super("static-size-hud", "Static Size Hud", Hud.Category.getINFO(), "", ""); }
+        @Override public String getText() { return "size"; }
+        @Override public float getStaticW() { return side; }
+        @Override public float getStaticH() { return side; }
     }
 
     private float savedWidth;
@@ -121,6 +131,54 @@ class HudFrameCacheTest {
         assertEquals(10f, hud.getFrameX());
         hud.externalX = 42f;
         assertEquals(42f, hud.getFrameX(), "a class overriding x never serves a stale cached value");
+    }
+
+    private static void nextFrame() throws Exception {
+        Field frameId = HudManager.class.getDeclaredField("frameId");
+        frameId.setAccessible(true);
+        frameId.setLong(HudManager.INSTANCE, frameId.getLong(HudManager.INSTANCE) + 1);
+    }
+
+    @Test
+    void overriddenStaticSizeKeepsTheCacheAndIsPolled() throws Exception {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = false;
+        StaticSizeHud hud = new StaticSizeHud();
+        hud.setSection(Section.TopRight);
+
+        int stamp = hud.getGeometryStamp$hud();
+        assertNotEquals(-1, stamp, "a custom static size leaves the rest of the geometry cacheable");
+        assertEquals(hud.getX(), hud.getFrameX());
+
+        hud.side = 80f;
+        nextFrame();
+        assertNotEquals(stamp, hud.getGeometryStamp$hud(), "a new static size invalidates the cache without any state write");
+        assertEquals(hud.getX(), hud.getFrameX(), "the cached x follows the new width");
+    }
+
+    @Test
+    void frameFlagsFollowOwnWrites() {
+        ConfigManager.active();
+        HudManager.isGuiScreenOpen = false;
+        StaticSizeHud hud = new StaticSizeHud();
+
+        assertFalse(hud.getFrameHidden$hud());
+        assertFalse(hud.getFrameAlwaysRedraw$hud());
+        hud.setHidden(true);
+        assertTrue(hud.getFrameHidden$hud());
+        hud.setTextChroma(true);
+        assertTrue(hud.getFrameAlwaysRedraw$hud());
+        hud.setTextChroma(false);
+        assertFalse(hud.getFrameAlwaysRedraw$hud());
+        hud.setBgChroma(true);
+        assertTrue(hud.getFrameAlwaysRedraw$hud());
+        hud.setBgChroma(false);
+        hud.setShadowChroma(true);
+        assertTrue(hud.getFrameAlwaysRedraw$hud());
+        hud.setCustomScale(2f);
+        assertEquals(2f, hud.getFrameEffectiveScale$hud());
     }
 
     @Test

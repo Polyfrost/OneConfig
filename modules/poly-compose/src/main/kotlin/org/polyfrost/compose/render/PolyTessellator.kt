@@ -437,7 +437,7 @@ abstract class PolyTessellator : PolyRenderer {
             if (cap != PolyRenderer.CAP_BUTT) rect(p[0] - strokeWidth / 2f, p[1] - strokeWidth / 2f, strokeWidth, strokeWidth, color, if (cap == PolyRenderer.CAP_ROUND) strokeWidth / 2f else 0f)
             return
         }
-        val loop = (closed || hypot(points[0] - points[points.size - 2], points[1] - points[points.size - 1]) <= 1e-3f) && p.size >= 6
+        val loop = (closed || length(points[0] - points[points.size - 2], points[1] - points[points.size - 1]) <= 1e-3f) && p.size >= 6
         transformInPlace(p)
         val n = p.size / 2
         if (n < 2) return
@@ -447,7 +447,7 @@ abstract class PolyTessellator : PolyRenderer {
         if (!loop && cap == PolyRenderer.CAP_SQUARE) {
             fun extend(i: Int, from: Int) {
                 val dx = p[i * 2] - p[from * 2]; val dy = p[i * 2 + 1] - p[from * 2 + 1]
-                val l = hypot(dx, dy)
+                val l = length(dx, dy)
                 p[i * 2] += dx / l * half; p[i * 2 + 1] += dy / l * half
             }
             extend(0, 1)
@@ -466,13 +466,13 @@ abstract class PolyTessellator : PolyRenderer {
             var d0x = 0f; var d0y = 0f; var d1x = 0f; var d1y = 0f
             if (prev >= 0) {
                 val dx = p[i * 2] - p[prev * 2]; val dy = p[i * 2 + 1] - p[prev * 2 + 1]
-                val l = hypot(dx, dy)
+                val l = length(dx, dy)
                 d0x = dx / l; d0y = dy / l
                 mx -= d0y; my += d0x
             }
             if (next >= 0) {
                 val dx = p[next * 2] - p[i * 2]; val dy = p[next * 2 + 1] - p[i * 2 + 1]
-                val l = hypot(dx, dy)
+                val l = length(dx, dy)
                 d1x = dx / l; d1y = dy / l
                 mx -= d1y; my += d1x
             }
@@ -1307,7 +1307,7 @@ abstract class PolyTessellator : PolyRenderer {
             inner[a * 2], inner[a * 2 + 1], iuv[a * 2], iuv[a * 2 + 1], c, inner[b * 2], inner[b * 2 + 1], iuv[b * 2], iuv[b * 2 + 1], c,
             inner[d * 2], inner[d * 2 + 1], iuv[d * 2], iuv[d * 2 + 1], c, inner[d * 2], inner[d * 2 + 1], iuv[d * 2], iuv[d * 2 + 1], c,
         )
-        if (convex) {
+        if (convex || (quads == null && isConvexLoop(inner, n))) {
             var i = 1
             while (i + 2 < n) {
                 quadVerts(
@@ -1416,8 +1416,8 @@ abstract class PolyTessellator : PolyRenderer {
             for (s in 2 until n) { if (!same(next, i)) break; next = (i + s) % n }
             var e0x = p[i * 2] - p[prev * 2]; var e0y = p[i * 2 + 1] - p[prev * 2 + 1]
             var e1x = p[next * 2] - p[i * 2]; var e1y = p[next * 2 + 1] - p[i * 2 + 1]
-            val l0 = hypot(e0x, e0y).takeIf { it > 1e-4f } ?: 1f
-            val l1 = hypot(e1x, e1y).takeIf { it > 1e-4f } ?: 1f
+            val l0 = length(e0x, e0y).takeIf { it > 1e-4f } ?: 1f
+            val l1 = length(e1x, e1y).takeIf { it > 1e-4f } ?: 1f
             e0x /= l0; e0y /= l0; e1x /= l1; e1y /= l1
             val n0x = -e0y * dir; val n0y = e0x * dir
             val n1x = -e1y * dir; val n1y = e1x * dir
@@ -1537,10 +1537,10 @@ abstract class PolyTessellator : PolyRenderer {
         var i = 0
         while (i < p.size) {
             val x = p[i]; val y = p[i + 1]
-            if (n < 2 || hypot(out[n - 2] - x, out[n - 1] - y) > 1e-3f) { out[n++] = x; out[n++] = y }
+            if (n < 2 || length(out[n - 2] - x, out[n - 1] - y) > 1e-3f) { out[n++] = x; out[n++] = y }
             i += 2
         }
-        if (n >= 4 && hypot(out[0] - out[n - 2], out[1] - out[n - 1]) <= 1e-3f) n -= 2
+        if (n >= 4 && length(out[0] - out[n - 2], out[1] - out[n - 1]) <= 1e-3f) n -= 2
         return if (n == out.size) out else out.copyOf(n)
     }
 
@@ -1924,6 +1924,41 @@ abstract class PolyTessellator : PolyRenderer {
         private val NO_SAFE = floatArrayOf(0f, 0f, -1f, -1f, 0f, 0f, -1f, -1f)
 
         fun layerTargetSize(current: Int, needed: Int): Int = if (current >= needed) current else (needed + 63) / 64 * 64
+
+        private fun length(x: Float, y: Float): Float = sqrt(x.toDouble() * x + y.toDouble() * y).toFloat()
+
+        internal fun isConvexLoop(p: FloatArray, n: Int): Boolean {
+            var start = 0
+            while (start < n && p[start * 2] == p[(start + 1) % n * 2] && p[start * 2 + 1] == p[(start + 1) % n * 2 + 1]) start++
+            if (start == n) return false
+            var px = p[(start + 1) % n * 2] - p[start * 2]
+            var py = p[(start + 1) % n * 2 + 1] - p[start * 2 + 1]
+            var dirX = px
+            var flips = 0
+            var turn = 0f
+            for (k in 1..n) {
+                val a = (start + k) % n
+                val b = (a + 1) % n
+                val ex = p[b * 2] - p[a * 2]
+                val ey = p[b * 2 + 1] - p[a * 2 + 1]
+                if (ex == 0f && ey == 0f) continue
+                val cross = px * ey - py * ex
+                if (cross == 0f) {
+                    if (px * ex + py * ey < 0f) return false
+                } else if (turn == 0f) {
+                    turn = cross
+                } else if ((cross > 0f) != (turn > 0f)) {
+                    return false
+                }
+                if (ex != 0f) {
+                    if (dirX != 0f && (ex > 0f) != (dirX > 0f)) flips++
+                    dirX = ex
+                }
+                px = ex
+                py = ey
+            }
+            return turn != 0f && flips <= 2
+        }
         const val FALLBACK_FONT = "unifont"
 
         private val cornerTrigs = arrayOfNulls<FloatArray>(17)
