@@ -275,6 +275,64 @@ class PolyTessellatorTest {
         assertEquals(99f * 49f - (4f - Math.PI.toFloat()) * r * r, round.solidArea(), 99f * 49f * 0.005f)
     }
 
+    private fun regular(n: Int, radius: Float, cx: Float = 0f, cy: Float = 0f, step: Int = 1) = FloatArray(n * 2) {
+        val a = 2.0 * Math.PI * step * (it / 2) / n
+        if (it % 2 == 0) cx + radius * cos(a).toFloat() else cy + radius * sin(a).toFloat()
+    }
+
+    private fun reversedLoop(p: FloatArray) = FloatArray(p.size) { p[(p.size / 2 - 1 - it / 2) * 2 + it % 2] }
+
+    @Suppress("INVISIBLE_REFERENCE")
+    @Test
+    fun convexLoopsAreToldFromTheRest() {
+        fun convex(vararg p: Float) = PolyTessellator.isConvexLoop(p, p.size / 2) to PolyTessellator.isConvexLoop(reversedLoop(p), p.size / 2)
+        val yes = true to true
+        val no = false to false
+        assertEquals(yes, convex(*regular(96, 40f, 1000f, 700f)), "circle")
+        assertEquals(yes, convex(0f, 0f, 10f, 0f, 0f, 10f), "triangle")
+        assertEquals(yes, convex(0f, 0f, 5f, 0f, 10f, 0f, 10f, 10f, 0f, 10f), "straight run along an edge")
+        assertEquals(yes, convex(0f, 0f, 0f, 0f, 10f, 0f, 10f, 10f, 10f, 10f, 0f, 10f), "repeated points")
+        assertEquals(yes, convex(0f, 0f, 0f, 10f, 10f, 10f, 10f, 0f), "starting on a vertical edge")
+        assertEquals(no, convex(0f, 0f, 20f, 0f, 20f, 20f, 10f, 8f, 0f, 20f), "notch")
+        assertEquals(no, convex(0f, 0f, 10f, 10f, 10f, 0f, 0f, 10f), "bowtie")
+        assertEquals(no, convex(*regular(5, 40f, step = 2)), "pentagram")
+        assertEquals(no, convex(*regular(7, 40f, 3f, 9f, step = 3)), "heptagram")
+        assertEquals(no, convex(0f, 0f, 10f, 0f, 10f, 10f, 0f, 10f, 0f, 0f, 10f, 0f, 10f, 10f, 0f, 10f), "square drawn twice")
+        assertEquals(no, convex(0f, 0f, 10f, 0f, 5f, 0f, 5f, 10f), "spike doubling back")
+        assertEquals(no, convex(0f, 0f, 10f, 0f, 5f, 0f), "flat")
+        assertEquals(no, convex(3f, 3f, 3f, 3f, 3f, 3f), "single point")
+    }
+
+    private fun Batch.solidQuads() = (0 until colors.size / 4).count { q -> (0 until 4).all { colors[q * 4 + it] ushr 24 == 255 } }
+
+    private fun fillLoop(p: FloatArray) = Recorder().run {
+        fillPath(PolyPath().apply { loop(*p) }, -1)
+        done()
+    }
+
+    @Test
+    fun circlePathsFanEitherWinding() {
+        for (loop in listOf(regular(96, 40f, 50f, 50f), reversedLoop(regular(96, 40f, 50f, 50f)))) {
+            val b = fillLoop(loop)
+            assertEquals(47, b.single().solidQuads(), "a fan takes half the quads of single triangles")
+            b.forEach(::assertWinding)
+            for ((x, y) in listOf(50.2f to 50.3f, 20.2f to 50.3f, 50.2f to 80.3f, 75.2f to 30.3f)) assertEquals(255, b.alphaAt(x, y), "at $x,$y")
+            assertEquals(0, b.alphaAt(90.2f, 90.3f))
+        }
+    }
+
+    @Test
+    fun concavePathsKeepTheirNotch() {
+        val arrow = floatArrayOf(0f, 0f, 60f, 0f, 60f, 60f, 30f, 12f, 0f, 60f)
+        for (loop in listOf(arrow, reversedLoop(arrow))) {
+            val b = fillLoop(loop)
+            assertEquals(0, b.alphaAt(30.2f, 40.3f))
+            assertEquals(255, b.alphaAt(30.2f, 6.3f))
+            assertEquals(255, b.alphaAt(6.2f, 30.3f))
+            assertEquals(255, b.alphaAt(54.2f, 30.3f))
+        }
+    }
+
     @Test
     fun circleFillNeverOverlapsItself() {
         val b = Recorder().run { rect(0f, 0f, 38f, 38f, 0x80FFFFFF.toInt(), 19f); done().single() }
