@@ -8,9 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,6 +58,17 @@ class LateInitializationTest {
         @Override
         protected void onInitialized(Tree tree) {
             if (!built) initializedEarly.set(true);
+        }
+    }
+
+    static class FailingConfig extends ValueConfig {
+        FailingConfig(String id) {
+            super(id);
+        }
+
+        @Override
+        protected Tree makeTree() {
+            throw new IllegalStateException("this config never builds");
         }
     }
 
@@ -234,6 +247,66 @@ class LateInitializationTest {
         release.countDown();
         worker.join();
         assertNotNull(built.get().getTree());
+    }
+
+    @Test
+    void aConfigAWorkerFinishesDuringTheWindowIsInitialized() {
+        finishStartup();
+        AtomicReference<Config> built = new AtomicReference<>();
+        boolean waiting = ConfigManager.initializeLate(config -> config == built.get(), () -> {
+            Thread worker = new Thread(() -> built.set(new LateConfig("late-initialization-during-test.json")));
+            worker.start();
+            try {
+                worker.join();
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        assertFalse(waiting);
+        assertNotNull(built.get().getTree());
+    }
+
+    @Test
+    void aReplacementForAFailedConfigKeepsItsSetup() throws IOException {
+        String id = "late-initialization-failed-test.json";
+        try {
+            finishStartup();
+            ConfigManager.initializeLate(config -> false, () -> new FailingConfig(id));
+            AtomicReference<Config> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> false, () -> replacement.set(new SetupConfig(id)));
+            assertEquals(List.of("alias"), replacement.get().getProperty("value").getMetadata("aliases"));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void theFirstInstanceOfAnIdWinsTheWindow() throws IOException {
+        String id = "late-initialization-order-test.json";
+        try {
+            finishStartup();
+            List<Config> instances = new ArrayList<>();
+            for (int i = 0; i < 20; i++) instances.add(new ValueConfig(id));
+            ConfigManager.initializeLate(instances::contains, () -> {
+            });
+            assertNotNull(instances.get(0).getTree());
+            assertEquals(1, instances.stream().filter(config -> config.getTree() != null).count());
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void configsNoWindowClaimsAreReleased() throws InterruptedException {
+        finishStartup();
+        WeakReference<Config> unclaimed = new WeakReference<>(new LateConfig("late-initialization-released-test.json"));
+        for (int i = 0; i < 100 && unclaimed.get() != null; i++) {
+            System.gc();
+            Thread.sleep(10);
+        }
+        assertNull(unclaimed.get());
     }
 
     @Test

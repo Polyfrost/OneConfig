@@ -24,8 +24,11 @@ object HotwireBridge {
     /** [switched] is every mod the change would move, including the ones Hotwire switches along with those asked for */
     class Preview(val possible: Boolean, val message: String, val switched: List<String> = emptyList())
 
-    /** [needsReopen] means nothing failed but the change only finishes once the world is reopened, which Hotwire's API does not do itself */
-    class Result(val ok: Boolean, val message: String, val needsReopen: Boolean = false)
+    /**
+     * [needsReopen] means nothing failed but the change only finishes once the world is reopened, which Hotwire's API
+     * does not do itself, and [refused] that Hotwire chose not to do it, so nothing went wrong that a report would help with
+     */
+    class Result(val ok: Boolean, val message: String, val needsReopen: Boolean = false, val refused: Boolean = false)
 
     /** Bumped whenever Hotwire finishes a switch, whoever started it, or [invalidate] is called */
     var revision by mutableIntStateOf(0)
@@ -51,7 +54,13 @@ object HotwireBridge {
 
     private fun call(name: String, vararg args: Any): Any? {
         val api = api ?: return null
-        val types = args.map { if (it is Collection<*>) Collection::class.java else it.javaClass }.toTypedArray()
+        val types = args.map {
+            when (it) {
+                is Collection<*> -> Collection::class.java
+                is Int -> Int::class.java
+                else -> it.javaClass
+            }
+        }.toTypedArray()
         return runCatching { apiClass!!.getMethod(name, *types).invoke(api, *args) }.getOrNull()
     }
 
@@ -59,15 +68,24 @@ object HotwireBridge {
 
     private fun supports(call: String) = apiClass?.methods?.any { it.name == call } == true
 
+    private fun unavailable() = translated("oneconfig.page.hotwire.unavailable", "Hotwire is not available.")
+
     /**
-     * Whether this Hotwire has the change plans every part of the page goes through, and the fields [mods] and
-     * [findUpdates] read, which arrived without a new API revision
+     * Whether this Hotwire has the change plans every part of the page goes through, the download controls, and the
+     * fields [mods] and [findUpdates] read, which arrived without a new API revision
      */
     val supportsSwitching: Boolean by lazy {
-        supports("planChange") && runCatching { Class.forName("dev.moon.hotwire.api.ModState").getMethod("offSinceStart") }.isSuccess
+        supports("planChange") && supports("stopDownload") && runCatching { Class.forName("dev.moon.hotwire.api.ModState").getMethod("offSinceStart") }.isSuccess
     }
 
     val supportsOriginalScreen: Boolean by lazy { supports("openScreen") }
+
+    val supportsReports: Boolean by lazy { supports("writeReport") }
+
+    /** Has Hotwire write a bug report zip, with the game log and what it did and personal details taken out */
+    @Suppress("UNCHECKED_CAST")
+    fun writeReport(reason: String): CompletableFuture<Path> =
+        call("writeReport", reason) as CompletableFuture<Path>? ?: CompletableFuture.failedFuture(IllegalStateException(unavailable()))
 
     /** Every mod Hotwire knows, or null when Hotwire is missing or has not listed its mods yet */
     fun mods(): List<ModState>? = runCatching {
@@ -97,8 +115,9 @@ object HotwireBridge {
     fun preview(ids: Collection<String>, on: Boolean): Preview = runCatching {
         val preview = call(if (on) "previewOn" else "previewOff", ids)!!
         Preview(preview.get("possible") as Boolean, preview.get("message") as String, preview.get("switched") as List<String>)
-    }.getOrElse { Preview(false, "Hotwire is not available.") }
+    }.getOrElse { Preview(false, unavailable()) }
 
+    /** What turning [off] off and [on] on together would do; blocks on Hotwire's plan, so call it off the UI thread */
     @Suppress("UNCHECKED_CAST")
     fun previewTogether(off: List<String>, on: List<String>): Preview? {
         if (off.isEmpty() || on.isEmpty()) return null
@@ -109,6 +128,37 @@ object HotwireBridge {
             Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately."))
         }
     }
+
+    private fun runningDownloads(): List<Any> = runCatching {
+        (call("getStoreDownloads") as List<*>).filterNotNull().filter { it.get("over") == false }
+    }.getOrDefault(emptyList())
+
+    /** [fraction] goes from 0 to 1, and [paused] says every running download is paused */
+    class DownloadProgress(val fraction: Float, val paused: Boolean, private val ids: Set<Int>) {
+        /** What a bar showing [shown] for [before] moves to: a finished jar leaving must not pull it back, but a new jar starts it over */
+        fun shownAfter(before: DownloadProgress?, shown: Float): Float =
+            if (before != null && before.ids.containsAll(ids)) maxOf(fraction, shown) else fraction
+    }
+
+    /** How far Hotwire's running downloads are together, or null while none is running */
+    fun downloadProgress(): DownloadProgress? = runCatching {
+        val running = runningDownloads().ifEmpty { return null }
+        fun sum(field: String) = running.sumOf { it.get(field) as Long }
+        DownloadProgress(
+            (sum("done").toFloat() / sum("total").coerceAtLeast(1)).coerceAtMost(1f),
+            running.all { (it.get("state") as Enum<*>).name == "PAUSED" },
+            running.mapTo(HashSet()) { it.get("id") as Int },
+        )
+    }.getOrNull()
+
+    private fun controlDownloads(action: String) {
+        runCatching { runningDownloads().forEach { call(action, it.get("id") as Int) } }
+    }
+
+    fun pauseDownloads(paused: Boolean) = controlDownloads(if (paused) "pauseDownload" else "resumeDownload")
+
+    /** Ends the running downloads, and Hotwire then answers whatever was waiting on them with nothing to add */
+    fun stopDownloads() = controlDownloads("stopDownload")
 
     /** Whether Hotwire is running a switch or add right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
@@ -157,7 +207,7 @@ object HotwireBridge {
     @Suppress("UNCHECKED_CAST")
     private fun Any?.asResults(): CompletableFuture<Result> = (this as CompletableFuture<Any>).thenApply { result ->
         val kind = (result.get("kind") as Enum<*>).name
-        Result(kind == "DONE", result.get("message") as String? ?: "", needsReopen = kind == "NEEDS_REOPEN")
+        Result(kind == "DONE", result.get("message") as String? ?: "", needsReopen = kind == "NEEDS_REOPEN", refused = kind == "REFUSED")
     }
 
     class OpeningPrompt(
@@ -217,6 +267,13 @@ object HotwireBridge {
 
     class StorePage(val hits: List<StoreHit>, val total: Int)
 
+    /**
+     * Hotwire only learns of a project from a jar's hash when its store first opens, so it misses mods added since then
+     * and any jar Modrinth didn't serve; a project named after one of the [mods] present counts as installed too
+     */
+    fun isInstalled(hit: StoreHit, mods: Collection<ModInfo>): Boolean =
+        hit.installed || mods.any { it.id == hit.slug || it.name.equals(hit.title, ignoreCase = true) }
+
     class StoreUpdate(
         val modId: String,
         val projectId: String,
@@ -261,7 +318,7 @@ object HotwireBridge {
 
     /**
      * Searches Modrinth for mods matching [words] in [category], or every category when blank, skipping the first
-     * [offset] results; blocks on the network, so call it off the UI thread
+     * [offset] results; blocks on the network and on Hotwire's check of what's installed, so call it off the UI thread
      */
     fun searchStore(words: String, category: String, offset: Int): StorePage {
         val query = storeQuery(words)
@@ -325,7 +382,7 @@ object HotwireBridge {
             ask("getTitle") as String,
             "",
             ask("getLines") as List<String>,
-            if (canAdd) listOf(now, later, save) else listOf(save),
+            if (canAdd) listOf(now, later, save) else listOf(later, save),
             onCancel = { if (!accepted) ask("cancel") },
         )
     }
@@ -356,6 +413,7 @@ object HotwireBridge {
         fun ask(method: String) = plan.through("ChangePlan", method)
         val reopens = ask("needsReopen") == true
         val restartOnly = (ask("getReason") as Enum<*>).name == "NEEDS_RESTART"
+        val canWait = ask("canWaitForNextStart") == true
         val nextStart = translated("oneconfig.page.hotwire.$kind.next_start", "Apply at next launch")
         val now = JarAction(
             when {
@@ -364,17 +422,18 @@ object HotwireBridge {
                 else -> translated("oneconfig.page.hotwire.$kind.now", "Apply now")
             },
             true,
-        ) { ask("accept").asResults() }
+            // accepting a plan that only needs a restart would still apply whatever in it can go live
+        ) { ask(if (restartOnly && canWait) "acceptAtNextStart" else "accept").asResults() }
         val later = JarAction(nextStart, false) { ask("acceptAtNextStart").asResults() }
         val actions = when {
             ask("canApply") != true -> emptyList()
-            !restartOnly && ask("canWaitForNextStart") == true -> listOf(now, later)
+            !restartOnly && canWait -> listOf(now, later)
             else -> listOf(now)
         }
         return JarPlan(title, detail, ask("getLines") as List<String>, actions, reopens = reopens)
     }
 
-    fun isSelf(update: StoreUpdate) = update.modId == "hotwire" || update.modId.startsWith("hotwire-")
+    fun isSelf(update: StoreUpdate) = update.modId == "hotwire"
 
     /** What applying [updates] together would do, with what they newly need; blocks on the network */
     fun planUpdate(updates: List<StoreUpdate>): JarPlan {
@@ -401,7 +460,7 @@ object HotwireBridge {
 
     fun switch(ids: Collection<String>, on: Boolean): CompletableFuture<Result> = runCatching {
         call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
-    }.getOrElse { CompletableFuture.completedFuture(Result(false, "Hotwire is not available.")) }
+    }.getOrElse { CompletableFuture.completedFuture(Result(false, unavailable())) }
 
     private const val MAX_ICON_BYTES = 8 * 1024 * 1024
 

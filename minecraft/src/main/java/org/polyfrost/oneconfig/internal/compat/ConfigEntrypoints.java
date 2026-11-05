@@ -79,8 +79,6 @@ public final class ConfigEntrypoints {
     // mods whose original config is extracted after all, read without the lock by provides()
     private static final Set<String> failed = ConcurrentHashMap.newKeySet();
     private static final Set<String> succeeded = new HashSet<>();
-    // failed mods running their entrypoints again after an update
-    private static final Set<String> retrying = new HashSet<>();
     // keyed so a hook that fires more than once before the mod is decided is only retried once
     private static final Map<String, Map<Object, Skipped>> skippedExtractions = new HashMap<>();
     private static final AtomicBoolean registered = new AtomicBoolean();
@@ -89,7 +87,11 @@ public final class ConfigEntrypoints {
     //? if !neoforge
     private static volatile Map<String, ModContainer> seenMods = Map.of();
     private static volatile Set<String> lateIds = Set.of();
-    private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
+    // mods the loader no longer lists, which Hotwire turned off
+    private static Set<String> offMods = Set.of();
+    // the config ids of each mod as of the last change, as a class no longer resolves to its mod once that mod is off
+    private static final Map<String, Set<String>> modConfigs = new HashMap<>();
+    static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
     private static final Map<String, Runnable> customOpeners = new ConcurrentHashMap<>();
@@ -219,6 +221,14 @@ public final class ConfigEntrypoints {
             } catch (Throwable t) {
                 LOGGER.error("Failed to release the compat waiting for the OneConfig config entrypoints", t);
             }
+            //? if !neoforge {
+            // after the release above, which this must never get in the way of
+            try {
+                rememberConfigOwners();
+            } catch (Throwable t) {
+                LOGGER.error("Failed to note which mods own which configs", t);
+            }
+            //?}
         }
     }
 
@@ -372,7 +382,6 @@ public final class ConfigEntrypoints {
     }
 
     private static void decide(String modId, boolean broken) {
-        boolean retried = retrying.remove(modId);
         List<Tree> owned = ownedTrees(modId);
         // an entrypoint that threw only keeps the configs it registered itself, not ones that existed before it ran
         if (broken) owned.removeIf(tree -> earlierConfigs.contains(tree.getID()));
@@ -385,7 +394,7 @@ public final class ConfigEntrypoints {
             }
             // CompatLoader only marked the providers it saw when it initialized
             CompatLoader.INSTANCE.getNativeLoadedConfigs().add(modId);
-            if (retried) dropExtracted(modId);
+            if (startupDecided) dropExtracted(modId);
             LOGGER.info("Using the OneConfig configs registered by {}", modId);
             return;
         }
@@ -393,11 +402,13 @@ public final class ConfigEntrypoints {
         fallBackToOriginal(modId);
     }
 
-    private static void dropExtracted(String modId) {
+    // for any mod decided late, as one gaining its first entrypoint never failed but can still have a card from before
+    static void dropExtracted(String modId) {
+        // a native config under this id already took the tree over, but the snapshot would still apply on profile changes
+        CompatSnapshots.untrack(modId);
         ConfigManager manager = ConfigManager.active();
         if (treeOwners.containsKey(modId) || !manager.exists(modId) || !Boolean.TRUE.equals(manager.get(modId).getMetadata(Backend.UI_ONLY_METADATA))) return;
         manager.unregister(modId);
-        CompatSnapshots.untrack(modId);
         ConfigRegistry.INSTANCE.unregister(modId);
     }
 
@@ -593,14 +604,18 @@ public final class ConfigEntrypoints {
         Set<String> changedIds = changedIds(mods, seenMods);
         Set<String> newIds = new HashSet<>(changedIds);
         newIds.removeAll(seenMods.keySet());
-        if (HotwireBridge.INSTANCE.isStarting(newIds) || changedIds.size() > newIds.size() && HotwireBridge.INSTANCE.isUpdating()) return;
+        Set<String> removed = removedIds(mods, seenMods);
+        // an update can take a mod out of the loader for a moment, and replaces its container
+        boolean existing = changedIds.size() > newIds.size() || !removed.isEmpty();
+        if (HotwireBridge.INSTANCE.isStarting(newIds) || existing && HotwireBridge.INSTANCE.isUpdating()) return;
         Map<String, ModContainer> seen = seenMods;
         seenMods = mods;
+        offMods = offAfter(offMods, mods, seen);
+        ConfigRegistry.INSTANCE.setOff(offConfigIds(offMods, modConfigs));
         HotwireBridge.INSTANCE.invalidate();
         rediscover();
         Set<String> retried = retriedIds(providerIds(), failed, changedIds, seen.keySet());
         failed.removeAll(retried);
-        retrying.addAll(retried);
         Map<String, List<Provider>> added = new LinkedHashMap<>();
         for (Provider provider : providers()) {
             if (!isDecided(provider.modId)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
@@ -619,6 +634,28 @@ public final class ConfigEntrypoints {
         decidePending();
         //? modmenu_compat
         if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.refresh();
+        rememberConfigOwners();
+    }
+
+    // only Hotwire takes mods out of the loader, so everyone else skips looking up every config's mod
+    private static void rememberConfigOwners() {
+        if (!HotwireBridge.INSTANCE.getSupportsSwitching()) return;
+        treeOwners.forEach((id, modId) -> modConfigs.computeIfAbsent(modId, k -> new HashSet<>()).add(id));
+        for (Config config : ConfigManager.createdConfigs()) {
+            ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
+            if (owner != null) modConfigs.computeIfAbsent(owner.getId(), k -> new HashSet<>()).add(config.id);
+        }
+    }
+
+    // their extracted and Mod Menu cards go by the mod's id
+    static Set<String> offConfigIds(Set<String> off, Map<String, Set<String>> configs) {
+        Set<String> ids = new HashSet<>();
+        for (String modId : off) {
+            ids.add(modId);
+            ids.add(modId + ".json");
+            ids.addAll(configs.getOrDefault(modId, Set.of()));
+        }
+        return ids;
     }
 
     private static boolean ownedBy(Config config, Set<String> ids) {
@@ -652,6 +689,19 @@ public final class ConfigEntrypoints {
             if (seen.get(id) != mod) changed.add(id);
         });
         return changed;
+    }
+
+    static Set<String> removedIds(Map<String, ModContainer> mods, Map<String, ModContainer> seen) {
+        Set<String> removed = new HashSet<>(seen.keySet());
+        removed.removeAll(mods.keySet());
+        return removed;
+    }
+
+    static Set<String> offAfter(Set<String> off, Map<String, ModContainer> mods, Map<String, ModContainer> seen) {
+        Set<String> now = new HashSet<>(off);
+        now.addAll(removedIds(mods, seen));
+        now.removeAll(mods.keySet());
+        return now;
     }
 
     static Set<String> retriedIds(Set<String> providers, Set<String> failed, Set<String> changed, Set<String> seen) {

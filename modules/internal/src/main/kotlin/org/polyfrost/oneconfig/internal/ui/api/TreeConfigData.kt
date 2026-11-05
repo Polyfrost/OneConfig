@@ -80,9 +80,9 @@ class TreeConfigData(
             val loaded = ModInfo.loadedMods
             if (loaded !== resolvedFrom) {
                 resolvedFrom = loaded
-                resolvedModInfo = null
+                resolvedModInfo = findModInfo()
             }
-            return resolvedModInfo ?: findModInfo()?.also { resolvedModInfo = it }
+            return resolvedModInfo
         }
 
     private fun findModInfo(): ModInfo? {

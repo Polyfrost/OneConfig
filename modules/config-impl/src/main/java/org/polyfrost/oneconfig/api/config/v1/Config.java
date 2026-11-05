@@ -38,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -54,9 +55,14 @@ public abstract class Config {
     protected Tree tree;
     /** code-defined defaults captured at first initialization keyed by dot-separated property path */
     private Map<String, Object> defaultSnapshot;
+    private static final AtomicLong CREATED = new AtomicLong();
     private List<Runnable> deferredSetup;
     private boolean initializing;
     final Thread creator = Thread.currentThread();
+    // the configs waiting for a late window have no order of their own, and the first instance of an id has to win
+    final long createdOrder = CREATED.incrementAndGet();
+    // on the instance, as a replacement sharing this id after a mod update can still succeed
+    volatile boolean initializationFailed;
 
     public final String id, title, iconPath;
     public final Category category;
@@ -85,7 +91,7 @@ public abstract class Config {
     }
 
     private void whenInitialized(Runnable action) {
-        if (tree == null && ConfigManager.didInitializationFail(this)) {
+        if (tree == null && initializationFailed) {
             ConfigManager.LOGGER.warn("Skipping deferred setup for config {}: its initialization failed", id);
             return;
         }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,10 +50,11 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private enum class AddSource { File, Modrinth, Updates }
+
+private const val DOWNLOAD_POLL_MILLIS = 100L
 
 /**
  * Adds or updates a mod through Hotwire from a jar on disk, a Modrinth project, or an update Hotwire found, always
@@ -63,20 +63,28 @@ private enum class AddSource { File, Modrinth, Updates }
 @Composable
 fun HotwireAdd() {
     val scope = rememberCoroutineScope()
-    var source by remember { mutableStateOf(AddSource.Updates) }
+    var source by remember { mutableStateOf(AddSource.Modrinth) }
     var reading by remember { mutableStateOf(false) }
     var plan by remember { mutableStateOf<HotwireBridge.JarPlan?>(null) }
     var planIcon by remember { mutableStateOf<String?>(null) }
     // bumped whenever the preview is left, so a download still running then can't bring it back
     var request by remember { mutableIntStateOf(0) }
+    // whether a plan is loading, so cancelling the wait for a download that isn't this plan's leaves that download alone
+    var loading by remember { mutableStateOf(false) }
+
+    fun dropPending() {
+        if (loading) HotwireBridge.stopDownloads()
+        loading = false
+        plan?.onCancel?.invoke()
+    }
 
     // leaving the page drops a pending add the same way Back does
-    DisposableEffect(Unit) { onDispose { plan?.onCancel?.invoke() } }
+    DisposableEffect(Unit) { onDispose { dropPending() } }
 
     fun leavePreview() {
         request++
         reading = false
-        plan?.onCancel?.invoke()
+        dropPending()
         plan = null
     }
 
@@ -91,11 +99,16 @@ fun HotwireAdd() {
             if (id == request) planIcon = iconPath
         }
         scope.launch {
+            // a stopped download takes a moment to end, and a second of the same jar beside it would write over it
+            while (id == request && HotwireBridge.downloadProgress() != null) delay(DOWNLOAD_POLL_MILLIS)
+            if (id != request) return@launch
+            loading = true
             val loaded = withContext(Dispatchers.IO) { runCatching(load) }
             if (id != request) {
                 loaded.getOrNull()?.onCancel?.invoke()
                 return@launch
             }
+            loading = false
             reading = false
             plan = loaded.getOrElse {
                 val reason = it.cause ?: it
@@ -111,8 +124,8 @@ fun HotwireAdd() {
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Chip(translated("oneconfig.page.hotwire.source.updates", "Updates"), source == AddSource.Updates, "refresh") { show(AddSource.Updates) }
             Chip(translated("oneconfig.page.hotwire.source.modrinth", "Modrinth"), source == AddSource.Modrinth, "search") { show(AddSource.Modrinth) }
+            Chip(translated("oneconfig.page.hotwire.source.updates", "Updates"), source == AddSource.Updates, "refresh") { show(AddSource.Updates) }
             Chip(translated("oneconfig.page.hotwire.source.file", "From file"), source == AddSource.File, "folder") { show(AddSource.File) }
             Spacer(Modifier.weight(1f))
             Chip(translated("oneconfig.page.hotwire.downloads_folder", "Downloads folder"), selected = false, icon = "external-link") { HotwireBridge.openDownloads() }
@@ -186,7 +199,7 @@ private fun FileSource(onPicked: (() -> Path?) -> Unit) {
                         translated("oneconfig.page.hotwire.add.pick", "Choose a mod jar"),
                         null,
                         arrayOf("*.jar"),
-                        "Mod jars",
+                        translated("oneconfig.page.hotwire.add.pick_filter", "Mod jars"),
                     )
                 }
             }
@@ -255,12 +268,12 @@ private fun ModrinthSource(
         }
         else -> {
             val updates = HotwireUpdates.found?.getOrNull().orEmpty()
-            val shown = remember(current, updates) {
+            val revision = HotwireBridge.revision
+            val installed = remember(revision) { gridMods(HotwireBridge.mods()?.associateBy { it.id }) }
+            val shown = remember(current, updates, installed) {
                 current.getOrThrow().mapNotNull { hit ->
                     val update = updates.firstOrNull { it.projectId == hit.projectId }
-                    // only Hotwire's own answer hides a project, since a mod's name or id can match another project; a
-                    // dev build it can't recognise stays listed and Hotwire says it's installed when asked to add it
-                    if (update == null && hit.installed) null else hit to update
+                    if (update == null && HotwireBridge.isInstalled(hit, installed)) null else hit to update
                 }
             }
             val loaded = current.getOrThrow().size
@@ -351,6 +364,45 @@ private fun <T> ResultList(items: List<T>, footer: @Composable () -> Unit = {}, 
     }
 }
 
+/** The wait for a plan, which for a Modrinth mod is Hotwire downloading it and what it needs */
+@Composable
+private fun PlanLoading(onCancel: () -> Unit) {
+    val theme = LocalTheme.current
+    var progress by remember { mutableStateOf<HotwireBridge.DownloadProgress?>(null) }
+    var fraction by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val latest = HotwireBridge.downloadProgress()
+            fraction = latest?.shownAfter(progress, fraction) ?: 0f
+            progress = latest
+            delay(DOWNLOAD_POLL_MILLIS)
+        }
+    }
+    val current = progress
+    val percent = (fraction * 100).toInt()
+    Text(
+        when {
+            current == null -> translated("oneconfig.page.hotwire.add.reading", "Reading the jar…")
+            current.paused -> translated("oneconfig.page.hotwire.add.paused", "Paused at %s%%", percent)
+            else -> translated("oneconfig.page.hotwire.add.downloading", "Downloading… %s%%", percent)
+        },
+        color = theme.textColorSecondary,
+        fontSize = 14.sp,
+    )
+    if (current != null) HotwireProgressBar(fraction)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (current != null) {
+            val label = if (current.paused) {
+                translated("oneconfig.page.hotwire.add.resume", "Resume")
+            } else {
+                translated("oneconfig.page.hotwire.add.pause", "Pause")
+            }
+            Chip(label, selected = false) { HotwireBridge.pauseDownloads(!current.paused) }
+        }
+        Chip(translated("oneconfig.page.hotwire.add.cancel", "Cancel"), selected = false, onClick = onCancel)
+    }
+}
+
 /** What Hotwire would do with the chosen jar and the choices it offers, then its progress once one is picked */
 @Composable
 private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: String?, onBack: () -> Unit) {
@@ -370,7 +422,7 @@ private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: Strin
 
     Card {
         if (reading || plan == null) {
-            Text(translated("oneconfig.page.hotwire.add.reading", "Reading the jar…"), color = theme.textColorSecondary, fontSize = 14.sp)
+            PlanLoading(onCancel = onBack)
             return@Card
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -394,11 +446,7 @@ private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: Strin
                 color = theme.textColorSecondary,
                 fontSize = 13.sp,
             )
-            if (working) {
-                Box(Modifier.fillMaxWidth().height(3.dp).background(theme.borderColor, theme.modCardShape)) {
-                    Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).fillMaxHeight().background(Accent, theme.modCardShape))
-                }
-            }
+            if (working) HotwireProgressBar(fraction)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!started) {
@@ -410,7 +458,7 @@ private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: Strin
                         awaiting = pending != null
                         pending?.whenComplete { result, error ->
                             Platform.screen().runOnUiThread {
-                                val done = result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: "That didn't work.")
+                                val done = result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: translated("oneconfig.page.hotwire.result.failed", "That didn't work."))
                                 outcome = done
                                 awaiting = false
                                 notifyHotwireResult(done)

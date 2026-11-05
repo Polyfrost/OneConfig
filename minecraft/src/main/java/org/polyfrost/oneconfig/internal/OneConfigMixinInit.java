@@ -158,9 +158,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if skyblock {
         mixins.add("compat.skyhanni.Mixin_SkyHanniRenderData");
         mixins.add("compat.firmament.Mixin_FirmamentHudMeta");
-
-        mixins.add("compat.Mixin_RegisterAddedConfigs");
         //?}
+        // the tick listener can run too late on every version Hotwire supports, as a world can open before the next tick
+        //? if > 1.8.9
+        mixins.add("compat.Mixin_RegisterAddedConfigs");
         // Firmament has no stable release for 26.2 yet
         //? skyblock && < 26.2
         //mixins.add("compat.firmament.Mixin_FirmamentContentCapture");

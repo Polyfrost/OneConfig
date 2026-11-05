@@ -1,8 +1,10 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.CustomValue;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.kyori.adventure.text.Component;
@@ -27,6 +29,11 @@ import net.minecraft.SharedConstants;
 public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     Options options = new OptionsImpl();
     Keys keys = new KeysImpl();
+    //? fabric || ornithe {
+    // compat asks for the mods on every lookup, and building them reads all their metadata
+    private List<ModContainer> modsFrom = List.of();
+    private Set<ModInfo> mods = Set.of();
+    //? }
 
     @Override
     public void displayChatMessage(Component text) {
@@ -48,7 +55,9 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
         FabricLoader loader = FabricLoader.getInstance();
         synchronized (loader) {
-            return loader.getAllMods().stream()
+            List<ModContainer> containers = List.copyOf(loader.getAllMods());
+            if (containers.equals(modsFrom)) return mods;
+            mods = containers.stream()
                     .map(mod -> {
                         var metadata = mod.getMetadata();
                         return new ModInfo(
@@ -69,6 +78,8 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
                             mod.getContainingMod().map(parent -> parent.getMetadata().getId()).orElseGet(() -> modMenuParent(metadata))
                         );
                     }).collect(Collectors.toSet());
+            modsFrom = containers;
+            return mods;
         }
         //? }
 

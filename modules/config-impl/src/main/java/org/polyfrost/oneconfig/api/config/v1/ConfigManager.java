@@ -39,7 +39,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -83,7 +82,9 @@ public final class ConfigManager {
     private static boolean initialized = false;
     private static boolean isFirstRun = false;
     private static final Queue<Config> pendingInitialization = new ConcurrentLinkedQueue<>();
-    private static final Queue<Config> createdAfterStartup = new ConcurrentLinkedQueue<>();
+    // weak so configs no late window claims, such as a mod's temporary ones, aren't kept for the whole session
+    // shortcut: a config its mod keeps no reference to can be collected before its window, holding the ones awaitingLateWindow accepts would close that
+    private static final Set<Config> createdAfterStartup = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
@@ -233,7 +234,7 @@ public final class ConfigManager {
             try {
                 config.runInitialize(true);
             } catch (Throwable t) {
-                failedInitialization.add(config.id);
+                config.initializationFailed = true;
                 Tree half = config.tree;
                 config.tree = null;
                 if (half != null && half.getID() != null) {
@@ -251,21 +252,32 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public static boolean initializeLate(Predicate<Config> added, Runnable creator) {
+        boolean building;
         LATE_INITIALIZING.set(Boolean.TRUE);
         try {
-            for (Config config : createdAfterStartup) {
-                if (isBuilt(config) && added.test(config) && createdAfterStartup.remove(config)) pendingInitialization.add(config);
-            }
+            claimBuilt(added);
             creator.run();
         } finally {
             LATE_INITIALIZING.remove();
+            // again, as a worker the creator started can have finished a config by now
+            building = claimBuilt(added);
             holdBackDuplicates();
             if (!pendingInitialization.isEmpty()) initializePending();
         }
-        for (Config config : createdAfterStartup) {
-            if (!isBuilt(config) && added.test(config)) return true;
+        return building;
+    }
+
+    /** Queues the finished configs [added] accepts, returning whether any it accepts is still being built */
+    private static boolean claimBuilt(Predicate<Config> added) {
+        boolean building = false;
+        List<Config> waiting = new ArrayList<>(createdAfterStartup);
+        waiting.sort(Comparator.comparingLong(config -> config.createdOrder));
+        for (Config config : waiting) {
+            if (!added.test(config)) continue;
+            if (!isBuilt(config)) building = true;
+            else if (createdAfterStartup.remove(config)) pendingInitialization.add(config);
         }
-        return false;
+        return building;
     }
 
     @ApiStatus.Internal
@@ -293,12 +305,6 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static void claimForLateInitialization(Config config) {
         if (LATE_INITIALIZING.get() && createdAfterStartup.remove(config)) pendingInitialization.add(config);
-    }
-
-    private static final Set<String> failedInitialization = ConcurrentHashMap.newKeySet();
-
-    static boolean didInitializationFail(Config config) {
-        return failedInitialization.contains(config.id);
     }
 
     @ApiStatus.Internal

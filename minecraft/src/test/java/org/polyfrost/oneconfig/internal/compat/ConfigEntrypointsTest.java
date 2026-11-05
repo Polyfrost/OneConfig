@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
@@ -7,7 +8,9 @@ import java.util.Set;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -186,6 +189,54 @@ class ConfigEntrypointsTest {
                 Set.of("added", "replaced"),
                 ConfigEntrypoints.changedIds(Map.of("kept", kept, "added", mod("added"), "replaced", mod("replaced")), Map.of("kept", kept, "replaced", mod("replaced")))
         );
+    }
+
+    @Test
+    void aModStaysOffUntilTheLoaderListsItAgain() {
+        ModContainer kept = mod("kept");
+        ModContainer lib = mod("lib");
+        Map<String, ModContainer> without = Map.of("kept", kept);
+        Map<String, ModContainer> with = Map.of("kept", kept, "lib", lib);
+
+        Set<String> off = ConfigEntrypoints.offAfter(Set.of(), without, with);
+        assertEquals(Set.of("lib"), off);
+        assertEquals(Set.of("lib"), ConfigEntrypoints.offAfter(off, without, without));
+
+        Set<String> back = ConfigEntrypoints.offAfter(off, with, without);
+        assertEquals(Set.of(), back);
+        assertEquals(Set.of("lib"), ConfigEntrypoints.offAfter(back, without, with));
+    }
+
+    @Test
+    void anOffModHidesItsCardsAndConfigs() {
+        assertEquals(
+                Set.of("lib", "lib.json", "custom.json"),
+                ConfigEntrypoints.offConfigIds(Set.of("lib"), Map.of("lib", Set.of("custom.json"), "kept", Set.of("kept.json")))
+        );
+    }
+
+    @Test
+    void aNativeConfigKeepingTheIdStillUntracksTheSnapshot() throws ReflectiveOperationException {
+        String id = "drop-extracted-test";
+        Field known = CompatSnapshots.class.getDeclaredField("known");
+        known.setAccessible(true);
+        Map<?, ?> tracked = (Map<?, ?>) known.get(CompatSnapshots.INSTANCE);
+        CompatSnapshots.track(Tree.tree(id));
+        ConfigEntrypoints.treeOwners.put(id, id);
+        try {
+            assertTrue(tracked.containsKey(id));
+            ConfigEntrypoints.dropExtracted(id);
+            assertFalse(tracked.containsKey(id));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            CompatSnapshots.untrack(id);
+        }
+    }
+
+    @Test
+    void aModTheLoaderDroppedIsRemoved() {
+        ModContainer kept = mod("kept");
+        assertEquals(Set.of("off"), ConfigEntrypoints.removedIds(Map.of("kept", kept), Map.of("kept", kept, "off", mod("off"))));
     }
 
     @Test

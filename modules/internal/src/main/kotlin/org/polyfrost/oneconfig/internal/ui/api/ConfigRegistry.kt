@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.apache.logging.log4j.LogManager
@@ -74,6 +75,16 @@ object ConfigRegistry {
     var revision by mutableIntStateOf(0)
         private set
 
+    /** Configs of mods turned off live, kept for when they come back but out of reach as their callbacks are that mod's code */
+    private var offIds by mutableStateOf(emptySet<String>())
+
+    fun setOff(ids: Set<String>) {
+        if (ids == offIds) return
+        offIds = ids
+        SearchCorpus.invalidate(ConfigDocumentSource)
+        revision++
+    }
+
     init {
         ModToggleStore.install()
         // Index configs as they come in (compat layers etc...)
@@ -104,7 +115,7 @@ object ConfigRegistry {
     }
 
     fun shouldShowModCard(config: ConfigData): Boolean =
-        config.id.lowercase() !in hiddenModCardIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
+        config.id !in offIds && config.id.lowercase() !in hiddenModCardIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
 
     fun shouldShowModCardId(id: String): Boolean {
         val lower = id.lowercase()
@@ -112,7 +123,7 @@ object ConfigRegistry {
     }
 
     fun shouldShowInSearch(config: ConfigData): Boolean =
-        config.id.lowercase() !in hiddenSearchIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
+        config.id !in offIds && config.id.lowercase() !in hiddenSearchIds && config.title.asRenderText().lowercase() !in hiddenModCardTitles
 
     /**
      * Loads all trees from the given [ConfigManager] as [source] entries
