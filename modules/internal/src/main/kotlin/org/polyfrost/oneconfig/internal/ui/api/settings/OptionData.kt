@@ -206,6 +206,10 @@ class TextOptionData(prop: Property<*>) : OptionData(prop) {
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
     val regex: String? get() = prop.getMetadata("regex")
     val multiline: Boolean get() = prop.getMetadata("multiline") ?: false
+    val secure: Boolean get() = prop.getMetadata("secure") ?: false
+    val secureMask: Char get() = prop.getMetadata("secureMask") ?: '*'
+    val secureShowLast: Int get() = prop.getMetadata("secureShowLast") ?: 0
+    val secureShowChars: String get() = prop.getMetadata("secureShowChars") ?: ""
 
     @Suppress("UNCHECKED_CAST")
     val strProp: Property<String> get() = prop as Property<String>
