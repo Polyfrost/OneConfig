@@ -29,6 +29,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal object LiquidGlass {
+    private const val RELEASE_AFTER_NANOS = 5_000_000_000L
+
     val pipeline: RenderPipeline = RenderPipeline.builder(RenderPipelinesAccessor.`oneconfig$getGuiTexturedSnippet`())
         .withLocation(Identifier.fromNamespaceAndPath("oneconfig", "pipeline/liquid_glass"))
         //? if >= 26.3 {
@@ -44,12 +46,14 @@ internal object LiquidGlass {
     private val glassDraws: MutableSet<Any> = Collections.newSetFromMap(IdentityHashMap())
     private val dirty = ArrayList<ScreenRectangle?>()
     private var submitted = false
+    private var lastUsed = 0L
 
     fun interface Range {
         fun draw(from: Int, to: Int)
     }
 
     fun setup(): TextureSetup {
+        lastUsed = System.nanoTime()
         val main = Minecraft.getInstance().gameRenderer.mainRenderTarget()
         val color = main.colorTexture ?: return setup
         val current = texture
@@ -172,6 +176,15 @@ internal object LiquidGlass {
         submitted = false
         drawBounds.clear()
         glassDraws.clear()
+        if (texture != null && System.nanoTime() - lastUsed > RELEASE_AFTER_NANOS) release()
+    }
+
+    private fun release() {
+        view?.close()
+        texture?.close()
+        view = null
+        texture = null
+        setup = TextureSetup.noTexture()
     }
 
     private fun covers(region: ScreenRectangle?): Boolean {
