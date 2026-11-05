@@ -17,8 +17,14 @@ const val DEFAULT_PAGE_OPACITY = 88f
 
 const val DEFAULT_SIDEBAR_OPACITY = 80f
 
-fun Color.scaleOpacity(percent: Float, defaultPercent: Float): Color =
-    copy(alpha = (alpha * percent / defaultPercent).coerceIn(0f, 1f))
+fun Color.scaleOpacity(percent: Float, defaultPercent: Float): Color {
+    val scaled = if (percent <= defaultPercent) {
+        alpha * percent / defaultPercent
+    } else {
+        alpha + (1f - alpha) * (percent - defaultPercent) / (100f - defaultPercent)
+    }
+    return copy(alpha = scaled.coerceIn(0f, 1f))
+}
 
 fun UITheme.surfaceOpacity(color: Color, percent: Float, defaultPercent: Float): Color =
     if (liquidGlass) color.scaleOpacity(percent, defaultPercent) else color.withOpacityPercent(percent)
