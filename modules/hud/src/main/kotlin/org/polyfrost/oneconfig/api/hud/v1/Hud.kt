@@ -158,6 +158,17 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      */
     open val searchTags: List<String> = emptyList()
 
+    /**
+     * Override this when another mod moves or scales this HUD (for example a vanilla element repositioned by
+     * another mod), so the HUD editor can tell the user why it is not where or how big they set it.
+     *
+     * Return the current state each time it is read, or null (the default) if no other mod affects this HUD.
+     * OneConfig only uses it to show a badge in the editor and a note in the position settings; it never
+     * changes the HUD's position or scale.
+     */
+    @get:ApiStatus.Experimental
+    open val externalPlacement: ExternalPlacement? get() = null
+
     private var _staticWidth: MutableState<Boolean> = mutableStateOf(false)
     var staticWidth: Boolean
         get() = _staticWidth.value
