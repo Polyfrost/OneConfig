@@ -5,7 +5,7 @@
 kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 fabric-language-kotlin = "1.14.1+kotlin.2.4.20"
-google-ksp = "2.3.12"
+google-ksp = "2.3.13"
 annotations = "26.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
@@ -23,10 +23,9 @@ lwjgl = "3.3.3"
 mixin-squared = "0.3.7-beta.1"
 
 # Gradle
-kotlinx-abi = "0.18.2"
 detekt = "2.0.0-alpha.6"
 errorprone = "2.51.0"
-errorprone-plugin = "5.1.1"
+errorprone-plugin = "5.2.0"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
@@ -35,9 +34,9 @@ compose = "1.13.0-alpha02"
 androidx-compose-runtime = "1.13.0-alpha03"
 compose-navigation = "2.10.0-rc01"
 lifecycle = "2.11.0"
-viewmodel = "2.11.0-beta01"
+viewmodel = "2.11.0"
 
-commonmark = "0.30.1"
+commonmark = "0.32.0"
 twelvemonkeys = "3.15.3"
 
 # Testing
@@ -156,7 +155,6 @@ twelvemonkeys = ["twelvemonkeys-webp", "twelvemonkeys-bmp", "twelvemonkeys-core"
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-abi" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 errorprone = { id = "net.ltgt.errorprone", version.ref = "errorprone-plugin" }
 

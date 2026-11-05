@@ -1,9 +1,10 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    alias(libs.plugins.kotlinx.api.validator)
     id("org.jetbrains.gradle.plugin.idea-ext")
     id("maven-publish")
     id("signing")
@@ -104,8 +105,20 @@ subprojects {
 
     base.archivesName = name
 
-    tasks.withType<JavaCompile>().configureEach {
-        finalizedBy("apiCheck")
+    if (name !in listOf("internal", "dependencies", "compose-bundle")) {
+        configure<KotlinJvmProjectExtension> {
+            @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4
+            abiValidation {
+                filters.exclude {
+                    byNames.add("org.polyfrost.oneconfig.api.**.internal.**")
+                    annotatedWith.add("org.jetbrains.annotations.ApiStatus.Internal")
+                }
+            }
+        }
+        // otherwise the compile finalizer fails the build before updateKotlinAbi gets to run
+        tasks.named("checkKotlinAbi") { mustRunAfter("updateKotlinAbi") }
+        tasks.withType<JavaCompile>().configureEach { finalizedBy("checkKotlinAbi") }
+        tasks.withType<KotlinCompile>().configureEach { finalizedBy("checkKotlinAbi") }
     }
 
     val kotlinModuleName = project.name
@@ -114,7 +127,6 @@ subprojects {
         if (name.contains("Test")) {
             compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=warn")
         }
-        finalizedBy("apiCheck")
     }
 
     configure<JavaPluginExtension> {
@@ -190,20 +202,3 @@ subprojects {
     }
 }
 
-apiValidation {
-    for (project in subprojects) {
-        ignoredPackages.add("org.polyfrost.oneconfig.api.${project.name}.v1.internal")
-        for (language in listOf("java", "kotlin")) {
-            val sourceRoot = project.file("src/main/$language")
-            sourceRoot.resolve("org/polyfrost/oneconfig/api").walkTopDown()
-                .filter { it.isDirectory && it.name == "internal" }
-                .forEach { ignoredPackages.add(it.relativeTo(sourceRoot).invariantSeparatorsPath.replace('/', '.')) }
-        }
-    }
-    nonPublicMarkers.add("org.jetbrains.annotations.ApiStatus\$Internal")
-    ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v1.internal")
-    ignoredPackages.add("org.polyfrost.oneconfig.api.event.v1.internal")
-    ignoredProjects.add("internal")
-    ignoredProjects.add("dependencies")
-    ignoredProjects.add("compose-bundle")
-}

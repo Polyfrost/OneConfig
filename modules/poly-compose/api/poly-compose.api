@@ -1154,10 +1154,6 @@ public final class org/polyfrost/compose/render/PolyMaskGamma {
 
 public final class org/polyfrost/compose/render/PolyPath {
 	public static final field $stable I
-	public static final field ARC I
-	public static final field CLOSE I
-	public static final field LINE I
-	public static final field MOVE I
 	public fun <init> ()V
 	public final fun close ()V
 	public final fun getEvenOdd ()Z
