@@ -79,6 +79,8 @@ public final class ConfigEntrypoints {
     // mods whose original config is extracted after all, read without the lock by provides()
     private static final Set<String> failed = ConcurrentHashMap.newKeySet();
     private static final Set<String> succeeded = new HashSet<>();
+    // by mod and definition, as an update can add an entrypoint to a mod that is already decided
+    private static final Set<String> ranEntrypoints = new HashSet<>();
     // keyed so a hook that fires more than once before the mod is decided is only retried once
     private static final Map<String, Map<Object, Skipped>> skippedExtractions = new HashMap<>();
     private static final AtomicBoolean registered = new AtomicBoolean();
@@ -267,6 +269,7 @@ public final class ConfigEntrypoints {
         registeringModId.set(modId);
         try {
             for (Provider provider : entrypoints) {
+                ranEntrypoints.add(entrypointKey(modId, provider.name));
                 Context context = new Context(modId);
                 constructing.set(new IdentityHashMap<>());
                 try {
@@ -423,6 +426,18 @@ public final class ConfigEntrypoints {
 
     private static synchronized boolean isDecided(String modId) {
         return succeeded.contains(modId) || failed.contains(modId);
+    }
+
+    static String entrypointKey(String modId, String name) {
+        return modId + '=' + name;
+    }
+
+    static boolean needsRunning(String modId, String name, Set<String> succeeded, Set<String> failed, Set<String> ran) {
+        return !failed.contains(modId) && (!succeeded.contains(modId) || !ran.contains(entrypointKey(modId, name)));
+    }
+
+    private static synchronized boolean needsRunning(Provider provider) {
+        return needsRunning(provider.modId, provider.name, succeeded, failed, ranEntrypoints);
     }
 
     private static synchronized void markSucceeded(String modId) {
@@ -618,13 +633,17 @@ public final class ConfigEntrypoints {
         failed.removeAll(retried);
         Map<String, List<Provider>> added = new LinkedHashMap<>();
         for (Provider provider : providers()) {
-            if (!isDecided(provider.modId)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
+            if (needsRunning(provider)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
         }
         prepare(added.keySet());
         Set<String> late = new HashSet<>(lateIds);
         late.addAll(changedIds);
         lateIds = late;
-        finishLate(() -> added.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints))));
+        finishLate(() -> added.forEach((modId, entrypoints) -> {
+            boolean broken = register(modId, entrypoints);
+            // a mod that already has working configs keeps them whatever an entrypoint it gained does
+            if (!isDecided(modId)) undecided.put(modId, broken);
+        }));
     }
 
     private static void finishLate(Runnable creator) {

@@ -208,6 +208,19 @@ class ConfigEntrypointsTest {
     }
 
     @Test
+    void anUpdateRunsOnlyTheEntrypointsItAddedToADecidedMod() {
+        Set<String> ran = Set.of(ConfigEntrypoints.entrypointKey("mod", "old"));
+        assertTrue(ConfigEntrypoints.needsRunning("mod", "new", Set.of("mod"), Set.of(), ran));
+        assertFalse(ConfigEntrypoints.needsRunning("mod", "old", Set.of("mod"), Set.of(), ran));
+    }
+
+    @Test
+    void aModThatFellBackToItsOriginalWaitsForAChangeToRetry() {
+        assertFalse(ConfigEntrypoints.needsRunning("mod", "old", Set.of(), Set.of("mod"), Set.of()));
+        assertTrue(ConfigEntrypoints.needsRunning("mod", "old", Set.of(), Set.of(), Set.of(ConfigEntrypoints.entrypointKey("mod", "old"))));
+    }
+
+    @Test
     void anOffModHidesItsCardsAndConfigs() {
         assertEquals(
                 Set.of("lib", "lib.json", "custom.json"),

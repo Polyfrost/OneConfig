@@ -43,7 +43,7 @@ public interface ConfigEntrypoint {
     String ENTRYPOINT = "oneconfig:config";
 
     /**
-     * Called once after every mod has initialized, or after your mod has if it was added while the game runs.
+     * Called once after every mod has initialized, or after your mod has if it or this entrypoint was added while the game runs.
      * Create your {@link Config} instances here. Configs whose class is
      * in your mod (or a mod nested in its jar) belong to it automatically if they were created before this returns. Any other
      * config, such as one whose class is in a library, must be passed to {@link Context#register(Config)}.
