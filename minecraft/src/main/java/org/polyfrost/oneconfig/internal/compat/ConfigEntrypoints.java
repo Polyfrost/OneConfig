@@ -92,8 +92,8 @@ public final class ConfigEntrypoints {
     private static volatile Set<String> lateIds = Set.of();
     // mods the loader no longer lists, which Hotwire turned off
     private static Set<String> offMods = Set.of();
-    // the config ids of each mod as of the last change, as a class no longer resolves to its mod once that mod is off
-    private static final Map<String, Set<String>> modConfigs = new HashMap<>();
+    // the config ids of each mod, noted while they can be, as a class no longer resolves to its mod once that mod is off
+    private static final Map<String, Set<String>> modConfigs = new ConcurrentHashMap<>();
     static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
@@ -227,6 +227,8 @@ public final class ConfigEntrypoints {
             //? if !neoforge {
             // after the release above, which this must never get in the way of
             try {
+                // a lazily created config can be made at any time
+                if (HotwireBridge.INSTANCE.getSupportsSwitching()) ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::rememberClassOwner);
                 rememberConfigOwners();
             } catch (Throwable t) {
                 LOGGER.error("Failed to note which mods own which configs", t);
@@ -624,6 +626,8 @@ public final class ConfigEntrypoints {
         // an update can take a mod out of the loader for a moment, and replaces its container
         boolean existing = changedIds.size() > newIds.size() || !removed.isEmpty();
         if (HotwireBridge.INSTANCE.isStarting(newIds) || existing && HotwireBridge.INSTANCE.isUpdating()) return;
+        // a mod can also register a config explicitly after its entrypoint returned
+        rememberConfigOwners();
         Map<String, ModContainer> seen = seenMods;
         seenMods = mods;
         offMods = offAfter(offMods, mods, seen);
@@ -659,11 +663,17 @@ public final class ConfigEntrypoints {
     // only Hotwire takes mods out of the loader, so everyone else skips looking up every config's mod
     private static void rememberConfigOwners() {
         if (!HotwireBridge.INSTANCE.getSupportsSwitching()) return;
-        treeOwners.forEach((id, modId) -> modConfigs.computeIfAbsent(modId, k -> new HashSet<>()).add(id));
-        for (Config config : ConfigManager.createdConfigs()) {
-            ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
-            if (owner != null) modConfigs.computeIfAbsent(owner.getId(), k -> new HashSet<>()).add(config.id);
-        }
+        treeOwners.forEach((id, modId) -> rememberConfigOwner(modId, id));
+        ConfigManager.createdConfigs().forEach(ConfigEntrypoints::rememberClassOwner);
+    }
+
+    private static void rememberClassOwner(Config config) {
+        ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
+        if (owner != null) rememberConfigOwner(owner.getId(), config.id);
+    }
+
+    private static void rememberConfigOwner(String modId, String id) {
+        modConfigs.computeIfAbsent(modId, k -> ConcurrentHashMap.newKeySet()).add(id);
     }
 
     // their extracted and Mod Menu cards go by the mod's id
