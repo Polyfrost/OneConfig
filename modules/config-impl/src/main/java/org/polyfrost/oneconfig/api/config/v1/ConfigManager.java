@@ -89,6 +89,9 @@ public final class ConfigManager {
     // what the running window's creator made or was handed, the only configs that can replace an older instance
     private static final Set<Config> fromWindowCreator = Collections.newSetFromMap(new IdentityHashMap<>());
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
+    private static Set<String> offConfigIds = Set.of();
+    // the profile switches a config of a turned off mod sat out, with whether any of them restored its defaults
+    private static final Map<Config, Boolean> rebindsWhenBack = new IdentityHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
     private static final long MINIMUM_WAIT_NANOS = TimeUnit.MILLISECONDS.toNanos(500L);
@@ -1335,12 +1338,44 @@ public final class ConfigManager {
         if (initializedConfigs.isEmpty()) return;
         ArrayList<Config> configs = new ArrayList<>(initializedConfigs.values());
         for (Config config : configs) {
-            try {
-                config.rebindToActiveProfile(restoreDefaults);
-            } catch (Throwable ex) {
-                LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
-            }
+            if (offConfigIds.contains(config.id)) rebindsWhenBack.merge(config, restoreDefaults, Boolean::logicalOr);
+            else rebind(config, restoreDefaults);
         }
+    }
+
+    private static void rebind(Config config, boolean restoreDefaults) {
+        try {
+            config.rebindToActiveProfile(restoreDefaults);
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
+        }
+    }
+
+    /**
+     * Sets the configs of mods turned off while the game runs, which a profile switch leaves alone as rebuilding them
+     * would run their mod's code. Those that come back catch up with any switch they missed.
+     *
+     * @return whether any did, so their trees were built anew
+     */
+    @ApiStatus.Internal
+    public static synchronized boolean setOff(Set<String> ids) {
+        offConfigIds = ids;
+        boolean caughtUp = false;
+        boolean wasRebinding = REBINDING_PROFILES.get();
+        REBINDING_PROFILES.set(Boolean.TRUE);
+        try {
+            for (Config config : new ArrayList<>(rebindsWhenBack.keySet())) {
+                if (ids.contains(config.id)) continue;
+                boolean restoreDefaults = rebindsWhenBack.remove(config);
+                if (initializedConfigs.get(config.id) != config) continue;
+                rebind(config, restoreDefaults);
+                caughtUp = true;
+            }
+        } finally {
+            if (wasRebinding) REBINDING_PROFILES.set(Boolean.TRUE);
+            else REBINDING_PROFILES.remove();
+        }
+        return caughtUp;
     }
 
     private static String normalizeNewProfileName(String profile) {

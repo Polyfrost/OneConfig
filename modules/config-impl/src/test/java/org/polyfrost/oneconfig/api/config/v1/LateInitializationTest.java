@@ -14,8 +14,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -333,6 +335,47 @@ class LateInitializationTest {
             collect(copy, 100);
             assertNull(copy.get());
         } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aProfileSwitchWaitsForAnOffModToComeBack() throws IOException {
+        String id = "late-initialization-off-test.json";
+        String profile = "late-initialization-off-profile";
+        AtomicInteger built = new AtomicInteger();
+        class CountedConfig extends ValueConfig {
+            CountedConfig(String configId) {
+                super(configId);
+            }
+
+            @Override
+            protected void onInitialized(Tree tree) {
+                built.incrementAndGet();
+            }
+        }
+        try {
+            Config config = new CountedConfig(id);
+            finishStartup();
+            assertEquals(1, built.get());
+
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.createProfile(profile);
+            ConfigManager.openProfile(profile);
+            assertEquals(1, built.get());
+            assertFalse(ConfigManager.active().exists(id));
+
+            assertTrue(ConfigManager.setOff(Set.of()));
+            assertEquals(2, built.get());
+            assertSame(config.getTree(), ConfigManager.active().get(id));
+            assertFalse(ConfigManager.setOff(Set.of()));
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
             ConfigManager.active().unregister(id);
             Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
         }

@@ -83,12 +83,15 @@ object ConfigRegistry {
         if (ids == offIds) return
         val before = offIds
         offIds = ids
+        val caughtUp = ConfigManager.setOff(ids)
         // read from the manager, as Hotwire takes the cards of a mod it turns off out of this registry itself
         ConfigManager.active().trees().forEach { tree ->
             val id = tree.id ?: return@forEach
             if (id in ids && id !in before) MinecraftKeybindRegistrar.unregister(tree)
             else if (id !in ids && id in before) MinecraftKeybindRegistrar.scan(tree)
         }
+        // profile rebinds don't announce their trees, which the listener above leaves to this
+        if (caughtUp) loadFrom(ConfigManager.active(), ConfigSource.OC)
         SearchCorpus.invalidate(ConfigDocumentSource)
         revision++
     }
