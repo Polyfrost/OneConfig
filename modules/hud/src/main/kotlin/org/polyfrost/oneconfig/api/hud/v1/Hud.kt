@@ -125,13 +125,18 @@ internal const val POS_SCHEMA = 1
 // or an override of it would be served a stale cached value
 private val GEOMETRY_GETTERS = arrayOf(
     "getX", "getY", "getRelativeX", "getRelativeY", "getRenderedW", "getRenderedH",
-    "getCustomScale", "getScaledWidth", "getScaledHeight", "getStaticW", "getStaticH", "getHidden",
+    "getCustomScale", "getScaledWidth", "getScaledHeight", "getHidden",
 )
 
+private fun Class<*>.overrides(getter: String): Boolean =
+    runCatching { getMethod(getter).declaringClass != Hud::class.java }.getOrDefault(true)
+
 private val externalGeometry = object : ClassValue<Boolean>() {
-    override fun computeValue(type: Class<*>): Boolean = GEOMETRY_GETTERS.any {
-        runCatching { type.getMethod(it).declaringClass != Hud::class.java }.getOrDefault(true)
-    }
+    override fun computeValue(type: Class<*>): Boolean = GEOMETRY_GETTERS.any(type::overrides)
+}
+
+private val externalStaticSize = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean = type.overrides("getStaticW") || type.overrides("getStaticH")
 }
 
 internal val hudStateWrites = AtomicInteger()
@@ -157,6 +162,17 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
      * What your users might search for
      */
     open val searchTags: List<String> = emptyList()
+
+    /**
+     * Override this when another mod moves or scales this HUD (for example a vanilla element repositioned by
+     * another mod), so the HUD editor can tell the user why it is not where or how big they set it.
+     *
+     * Return the current state each time it is read, or null (the default) if no other mod affects this HUD.
+     * OneConfig only uses it to show a badge in the editor and a note in the position settings; it never
+     * changes the HUD's position or scale.
+     */
+    @get:ApiStatus.Experimental
+    open val externalPlacement: ExternalPlacement? get() = null
 
     private var _staticWidth: MutableState<Boolean> = mutableStateOf(false)
     var staticWidth: Boolean
@@ -989,7 +1005,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var bgColor: Int get() = _bgColor.value; set(v) { _bgColor.put(v) }
 
     private var _bgChroma: MutableState<Boolean> = mutableStateOf(false)
-    var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.value = v }
+    var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.put(v) }
 
     private var _bgChromaSpeed: MutableState<Float> = mutableStateOf(1f)
     var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.value = v }
@@ -1035,7 +1051,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var textColor: Int get() = _textColor.value; set(v) { _textColor.value = v }
 
     private var _textChroma: MutableState<Boolean> = mutableStateOf(false)
-    var textChroma: Boolean get() = _textChroma.value; set(v) { _textChroma.value = v }
+    var textChroma: Boolean get() = _textChroma.value; set(v) { _textChroma.put(v) }
 
     private var _textChromaSpeed: MutableState<Float> = mutableStateOf(1f)
     var textChromaSpeed: Float get() = _textChromaSpeed.value; set(v) { _textChromaSpeed.value = v }
@@ -1050,7 +1066,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     var shadowColor: Int get() = _shadowColor.value; set(v) { _shadowColor.value = v }
 
     private var _shadowChroma: MutableState<Boolean> = mutableStateOf(false)
-    var shadowChroma: Boolean get() = _shadowChroma.value; set(v) { _shadowChroma.value = v }
+    var shadowChroma: Boolean get() = _shadowChroma.value; set(v) { _shadowChroma.put(v) }
 
     private var _shadowChromaSpeed: MutableState<Float> = mutableStateOf(1f)
     var shadowChromaSpeed: Float get() = _shadowChromaSpeed.value; set(v) { _shadowChromaSpeed.value = v }
@@ -1088,7 +1104,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     internal var sizedH = 0f
 
     @Transient
-    internal var sizedWrites = -1
+    internal var sizedRevision = -1
 
     @Volatile
     @Transient
@@ -1107,6 +1123,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     internal var updateFailing = false
 
     @Transient private var revision = AtomicInteger()
+
+    internal val stateRevision: Int get() = revision.get()
 
     private fun bumpRevision() {
         revision.incrementAndGet()
@@ -1131,7 +1149,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         fun visit(parent: Hud?) {
             if (parent == null || parent === this || parents.any { it === parent }) return
             parents.add(parent)
-            if (externalGeometry.get(parent.javaClass)) (external ?: ArrayList<Hud>(1).also { external = it }).add(parent)
+            if (externalGeometry.get(parent.javaClass) || externalStaticSize.get(parent.javaClass)) {
+                (external ?: ArrayList<Hud>(1).also { external = it }).add(parent)
+            }
         }
         var node = this
         var next = 0
@@ -1157,6 +1177,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @Transient private var geomW = Float.NaN
     @Transient private var geomH = Float.NaN
     @Transient private var geomGuiScale = Float.NaN
+    @Transient private var geomStaticW = Float.NaN
+    @Transient private var geomStaticH = Float.NaN
     @Transient private var cachedScale = 1f
     @Transient private var cachedX = 0f
     @Transient private var cachedY = 0f
@@ -1188,6 +1210,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         return false
     }
 
+    private fun staticSizeChanged(): Boolean =
+        externalStaticSize.get(javaClass) && (staticW != geomStaticW || staticH != geomStaticH)
+
     private fun guiScaleInput(): Float =
         if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
 
@@ -1202,7 +1227,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
         if (hasExternalGeometry || Snapshot.isInSnapshot) return false
         val writes = hudStateWrites.get()
-        if (geomValid && geomStateOnly && writes == geomWrites &&
+        if (geomValid && writes == geomWrites && (geomStateOnly || parentCheckFrame == HudManager.frameId) &&
             HudManager.guiScreenWidth == geomW && HudManager.guiScreenHeight == geomH &&
             (!geomScaleFromOption || Platform.compatibility().options().guiScale == geomGuiScale)
         ) return true
@@ -1216,13 +1241,13 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         }
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
-        if (geomValid && sw == geomW && sh == geomH && !parentMoved && !chainChanged() && guiScaleInput() == geomGuiScale) {
+        if (geomValid && sw == geomW && sh == geomH && !parentMoved && !staticSizeChanged() && !chainChanged() && guiScaleInput() == geomGuiScale) {
             geomWrites = writes
             return true
         }
         walkChain()
         geomWrites = writes
-        geomStateOnly = chainExternal.isEmpty() && stateOnlyMinimumSize.get(javaClass) &&
+        geomStateOnly = chainExternal.isEmpty() && !externalStaticSize.get(javaClass) && stateOnlyMinimumSize.get(javaClass) &&
             chainParents.all { stateOnlyMinimumSize.get(it.javaClass) }
         for (p in chainParents) p.frameMinimumSize()
         val parents = chainParents
@@ -1232,6 +1257,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         geomParentRevs = IntArray(parents.size) { parents[it].revision.get() }
         geomW = sw
         geomH = sh
+        geomStaticW = staticW
+        geomStaticH = staticH
         geomGuiScale = guiScaleInput()
         geomScaleFromOption = !useGuiScale || chainParents.any { !it.useGuiScale }
         cachedScale = effectiveScale
@@ -1259,7 +1286,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     @get:ApiStatus.Internal
     val frameScale: Float get() = if (refreshFrameGeometry()) cachedScale else effectiveScale
 
-    @Transient private var flagWrites = -1
+    @Transient private var flagRevision = -1
     @Transient private var flagRedraw = false
     @Transient private var flagHidden = false
     @Transient private var flagUseGuiScale = true
@@ -1267,9 +1294,9 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
 
     private fun refreshFrameFlags(): Boolean {
         if (HudManager.isEditing || Snapshot.isInSnapshot) return false
-        val writes = hudStateWrites.get()
-        if (writes != flagWrites) {
-            flagWrites = writes
+        val rev = revision.get()
+        if (rev != flagRevision) {
+            flagRevision = rev
             if (!externalRedraw.get(javaClass)) flagRedraw = alwaysRedraw
             if (!hasExternalGeometry) {
                 flagHidden = hidden
