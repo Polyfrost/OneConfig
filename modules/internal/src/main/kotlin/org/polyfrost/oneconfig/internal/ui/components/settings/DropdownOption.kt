@@ -90,6 +90,7 @@ fun DropdownOption(data: DropdownOptionData) {
                 .width(LocalOptionWidth.current)
                 .height(32.dp)
                 .graphicsLayer {}
+                .liquidGlass(DropdownShape)
                 .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
                 .onClick(triggerInteraction) { expanded = !expanded }
                 .hoverable(triggerInteraction)
@@ -120,6 +121,7 @@ fun DropdownOption(data: DropdownOptionData) {
                 modifier = Modifier
                     .width(LocalOptionWidth.current)
                     .clip(DropdownShape)
+                    .liquidGlass(DropdownShape, frosted = true)
                     .background(theme.componentBackground, DropdownShape)
                     .border(1.dp, theme.borderColor, DropdownShape)
             ) {

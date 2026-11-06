@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.DropdownOption
@@ -441,6 +442,7 @@ private fun ResetHudPositionButton(hud: Hud) {
             .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
             .background(theme.borderColor.copy(alpha = theme.borderColor.alpha * disabledAlpha), theme.buttonShape)
             .background(AccentBrush, theme.buttonShape, alpha = accentAlpha)
+            .accentSheen(theme.buttonShape, accentAlpha)
             .then(
                 if (enabled) {
                     Modifier.onClick(interactionSource) { resetHudPosition(hud) }

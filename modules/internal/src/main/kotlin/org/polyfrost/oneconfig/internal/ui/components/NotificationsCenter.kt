@@ -52,6 +52,7 @@ fun NotificationsCenter() {
         modifier = Modifier
             .width(PanelWidth)
             .clip(PanelShape)
+            .liquidGlass(PanelShape, frosted = true)
             .background(panelBg, PanelShape)
             .border(1.dp, theme.borderColor, PanelShape)
             .padding(horizontal = 14.dp, vertical = 16.dp),

@@ -35,6 +35,11 @@ public interface ScreenPlatform {
         action.run();
     }
 
+    /** Whether the UI can draw frosted glass over what is behind it on the active renderer. */
+    default boolean supportsBackdropGlass() {
+        return true;
+    }
+
     int viewportWidth();
 
     int viewportHeight();

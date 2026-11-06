@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.ButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
+import org.polyfrost.oneconfig.internal.ui.components.glassHover
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -53,7 +55,9 @@ fun ButtonOption(data: ButtonOptionData) {
         modifier = Modifier
             .widthIn(max = LocalOptionWidth.current)
             .pointerHoverIcon(PointerIcon.Hand)
+            .glassHover(LocalTheme.current.buttonShape)
             .graphicsLayer {}
+            .liquidGlass(LocalTheme.current.buttonShape)
             .animatedFrame(LocalTheme.current.buttonShape, fill = { bgColor.value }, accentAlpha = { accentAlpha.value }, border = { Color.Transparent })
             .onClick(interactionSource) {
                 val clickedAt = firstClickAt

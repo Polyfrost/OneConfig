@@ -55,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -325,6 +326,7 @@ fun HudCanvasResetMenu(
                 .blockInteraction(preview)
                 .widthIn(min = 190.dp, max = 240.dp)
                 .shellTransition()
+                .liquidGlass(theme.popupShape, frosted = true)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),
@@ -496,6 +498,7 @@ fun HudCanvasPasteMenu(
             modifier = Modifier
                 .widthIn(min = 190.dp, max = 240.dp)
                 .shellTransition()
+                .liquidGlass(theme.popupShape, frosted = true)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(MenuPadding),

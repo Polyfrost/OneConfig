@@ -219,7 +219,9 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
         Box(
             modifier = Modifier
                 .pointerHoverIcon(PointerIcon.Hand)
+                .glassHover(theme.buttonShape)
                 .graphicsLayer {}
+                .liquidGlass(theme.buttonShape)
                 .animatedFrame(theme.buttonShape, accentAlpha = { accentAlpha.value }, border = { theme.borderColor })
                 .onClick(interactionSource) { runnable.run() }
                 .padding(horizontal = 16.dp, vertical = 6.dp),
@@ -286,6 +288,7 @@ private fun TitleInfoTooltip(title: HeaderTitle) {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .widthIn(max = 260.dp)
+                        .liquidGlass(LocalTheme.current.popupShape, frosted = true)
                         .background(LocalTheme.current.popupBackground, shape = LocalTheme.current.popupShape)
                         .border(1.dp, LocalTheme.current.borderColor, shape = LocalTheme.current.popupShape)
                         .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -375,6 +378,7 @@ fun GlobalSearchBar() {
         Box(
             modifier = Modifier
                 .width(256.dp).height(32.dp)
+                .liquidGlass(LocalTheme.current.sideBarNavigationEntryShape)
                 .background(
                     LocalTheme.current.chipBackground,
                     LocalTheme.current.sideBarNavigationEntryShape
