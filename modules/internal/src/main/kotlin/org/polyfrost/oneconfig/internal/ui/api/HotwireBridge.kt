@@ -10,6 +10,7 @@ import java.nio.file.StandardCopyOption
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -459,7 +460,10 @@ object HotwireBridge {
                 else -> translated("oneconfig.page.hotwire.$kind.now", "Apply now")
             },
             true,
-        ) { ask("accept").asResults() }
+        ) {
+            saveBeforeGoing()
+            ask("accept").asResults()
+        }
         val later = JarAction(translated("oneconfig.page.hotwire.$kind.next_start", "Apply at next launch"), false) { ask("acceptAtNextStart").asResults() }
         val actions = when {
             ask("canApply") != true -> emptyList()
@@ -494,7 +498,13 @@ object HotwireBridge {
     /** What Hotwire would do with [jar], adding it or updating the mod it already is; blocks on Hotwire reading it */
     fun planFor(jar: Path): JarPlan = planFrom("change", jar.fileName.toString(), "", changePlan(jars = listOf(jar)))
 
+    // a mod's own save only runs while it's on, and a mod that stays off until the game closes would lose this change
+    private fun saveBeforeGoing() {
+        runCatching { ConfigManager.active().saveAll() }
+    }
+
     fun switch(ids: Collection<String>, on: Boolean): CompletableFuture<Result> = runCatching {
+        if (!on) saveBeforeGoing()
         call(if (on) "turnOn" else "turnOff", ids.toList()).asResults()
     }.getOrElse { CompletableFuture.completedFuture(Result(false, unavailable())) }
 

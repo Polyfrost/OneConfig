@@ -155,11 +155,14 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     void setOff(Set<String> ids) {
         String profile = ConfigManager.activeProfile();
         for (Tree tree : known.values()) {
-            if (ids.contains(tree.getID())) off.putIfAbsent(tree, profile);
+            if (!ids.contains(tree.getID())) continue;
+            off.putIfAbsent(tree, profile);
+            tree.addMetadata(Backend.CUSTOM_SAVE_HELD_METADATA, Boolean.TRUE);
         }
         for (Tree tree : new ArrayList<>(off.keySet())) {
             if (ids.contains(tree.getID())) continue;
             String held = off.remove(tree);
+            tree.removeMetadata(Backend.CUSTOM_SAVE_HELD_METADATA);
             if (!profile.equals(held) && known.get(tree.getID()) == tree) dispatchApply(tree, profile);
         }
     }

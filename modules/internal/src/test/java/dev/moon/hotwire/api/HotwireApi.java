@@ -1,6 +1,7 @@
 package dev.moon.hotwire.api;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -50,6 +51,11 @@ public final class HotwireApi {
 
     public List<Object> getStoreDownloads() {
         return DOWNLOADS;
+    }
+
+    public CompletableFuture<SwitchResult> turnOff(Collection<String> ids) {
+        CONTROLS.add("off " + ids);
+        return CompletableFuture.completedFuture(new SwitchResult(SwitchResult.Kind.DONE, ""));
     }
 
     public boolean pauseDownload(int id) {

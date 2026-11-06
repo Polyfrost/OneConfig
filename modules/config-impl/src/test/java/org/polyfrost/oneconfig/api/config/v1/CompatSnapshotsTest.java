@@ -147,6 +147,33 @@ class CompatSnapshotsTest {
     }
 
     @Test
+    void aTurnedOffModsUnsavedChangeWaitsForItToComeBack() {
+        String id = TREE_ID + "_off_save";
+        Property<Boolean> property = Properties.simple("enabled", "Enabled", "", true);
+        Tree tree = Tree.tree(id).put(property);
+        int[] saves = {0};
+        tree.addMetadata("custom_save", (Runnable) () -> saves[0]++);
+        CompatSnapshots.register(tree);
+        try {
+            saves[0] = 0;
+            // the snapshot of an earlier run can already have set the other value
+            property.setAs(!property.get());
+            ConfigManager.setOff(Set.of(id));
+
+            ConfigManager.active().saveAll();
+            assertEquals(0, saves[0], "the mod's save hook is its code, which is off");
+
+            ConfigManager.setOff(Set.of());
+            ConfigManager.active().saveAll();
+            assertEquals(1, saves[0], "the change was still never written");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
     void aTreeRegisteredUnderAnOffIdIsNotOff() throws Exception {
         String id = TREE_ID + "_off_replaced";
         String profile = "compat-off-replaced-profile";

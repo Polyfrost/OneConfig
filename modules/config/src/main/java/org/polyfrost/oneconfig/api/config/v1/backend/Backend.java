@@ -55,6 +55,11 @@ public abstract class Backend {
     public static final String UI_PLACEHOLDER_METADATA = "ui_placeholder";
     public static final String CUSTOM_SAVE_TRACKED_METADATA = "custom_save_tracked";
     public static final String CUSTOM_SAVE_DIRTY_METADATA = "custom_save_dirty";
+    /**
+     * Trees marked with this metadata skip their custom save, as what it runs can't right now, and stay dirty for when it can
+     */
+    @ApiStatus.Internal
+    public static final String CUSTOM_SAVE_HELD_METADATA = "custom_save_held";
     private final Map<String, Tree> trees = new ConcurrentHashMap<>();
     private final Map<String, Long> saveGenerations = new ConcurrentHashMap<>();
 
@@ -67,6 +72,7 @@ public abstract class Backend {
     }
 
     private static void runCustomSave(@NotNull Tree tree, @NotNull Runnable customSave) {
+        if (Boolean.TRUE.equals(tree.getMetadata(CUSTOM_SAVE_HELD_METADATA))) return;
         boolean tracked = Boolean.TRUE.equals(tree.getMetadata(CUSTOM_SAVE_TRACKED_METADATA));
         if (tracked && !Boolean.TRUE.equals(tree.getMetadata(CUSTOM_SAVE_DIRTY_METADATA))) return;
         customSave.run();
