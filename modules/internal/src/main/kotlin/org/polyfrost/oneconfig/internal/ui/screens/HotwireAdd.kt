@@ -71,15 +71,11 @@ fun HotwireAdd() {
     var request by remember { mutableIntStateOf(0) }
     // whether a plan is loading, so cancelling the wait for a download that isn't this plan's leaves that download alone
     var loading by remember { mutableStateOf(false) }
-    // the downloads running before this plan began, which aren't its to show or stop, and the ones it stopped
+    // the downloads running before this plan began, which aren't its to show or stop
     var others by remember { mutableStateOf(emptySet<Int>()) }
-    var stopped by remember { mutableStateOf(emptySet<Int>()) }
 
     fun dropPending() {
-        if (loading) {
-            stopped = HotwireBridge.runningDownloadIds() - others
-            HotwireBridge.stopDownloads(others)
-        }
+        if (loading) HotwireBridge.stopDownloads(others)
         loading = false
         plan?.onCancel?.invoke()
     }
@@ -106,7 +102,7 @@ fun HotwireAdd() {
         }
         scope.launch {
             // a stopped download takes a moment to end, and a second of the same jar beside it would write over it
-            while (id == request && HotwireBridge.runningDownloadIds().any { it in stopped }) delay(DOWNLOAD_POLL_MILLIS)
+            while (id == request && HotwireBridge.isStoppingDownloads()) delay(DOWNLOAD_POLL_MILLIS)
             if (id != request) return@launch
             others = HotwireBridge.runningDownloadIds()
             loading = true

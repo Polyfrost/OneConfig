@@ -32,6 +32,7 @@ class HotwireDownloadsTest {
     void clear() {
         HotwireApi.DOWNLOADS.clear();
         HotwireApi.CONTROLS.clear();
+        HotwireBridge.INSTANCE.isStoppingDownloads();
     }
 
     @Test
@@ -95,6 +96,24 @@ class HotwireDownloadsTest {
         HotwireBridge.INSTANCE.pauseDownloads(false);
         HotwireBridge.INSTANCE.stopDownloads();
         assertEquals(List.of("pause 2", "pause 3", "resume 2", "resume 3", "stop 2", "stop 3"), HotwireApi.CONTROLS);
+    }
+
+    @Test
+    void aStoppedDownloadHoldsBackANewPlanUntilItEnds() {
+        running(1, 10, StoreDownload.State.GETTING);
+        HotwireBridge.INSTANCE.stopDownloads();
+        assertTrue(HotwireBridge.INSTANCE.isStoppingDownloads());
+
+        HotwireApi.DOWNLOADS.clear();
+        finished(1);
+        assertFalse(HotwireBridge.INSTANCE.isStoppingDownloads());
+    }
+
+    @Test
+    void aDownloadRunningBeforeTheStoppedPlanHoldsNothingBack() {
+        running(1, 10, StoreDownload.State.GETTING);
+        HotwireBridge.INSTANCE.stopDownloads(HotwireBridge.INSTANCE.runningDownloadIds());
+        assertFalse(HotwireBridge.INSTANCE.isStoppingDownloads());
     }
 
     @Test

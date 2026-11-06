@@ -153,7 +153,7 @@ object HotwireUpdates {
     private var planningJob: Job? = null
 
     /** The downloads already running when planning began, which aren't the plan's to show or stop */
-    var otherDownloads: Set<Int> = emptySet()
+    var otherDownloads by mutableStateOf(emptySet<Int>())
         private set
 
     /** Why a plan in a [review] won't be applied, or null when it will */
@@ -176,6 +176,9 @@ object HotwireUpdates {
         planningJob = scope.launch {
             planning = true
             try {
+                // a stopped download takes a moment to end, and a second of the same jar beside it would write over it
+                while (HotwireBridge.isStoppingDownloads()) delay(DOWNLOAD_POLL_MILLIS)
+                otherDownloads = HotwireBridge.runningDownloadIds()
                 suspend fun plan(group: List<HotwireBridge.StoreUpdate>) =
                     group.joinToString(", ") { it.name } to withContext(Dispatchers.IO) { runCatching { HotwireBridge.planUpdate(group) } }
                 val (self, mods) = updates.partition(HotwireBridge::isSelf)

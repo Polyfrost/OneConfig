@@ -9,6 +9,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
@@ -187,9 +188,21 @@ object HotwireBridge {
     @JvmOverloads
     fun pauseDownloads(paused: Boolean, others: Set<Int> = emptySet()) = controlDownloads(if (paused) "pauseDownload" else "resumeDownload", others)
 
+    // who stopped them doesn't matter, as a second of the same jar beside one would have its partial file deleted when it ends
+    private val stopping: MutableSet<Int> = ConcurrentHashMap.newKeySet()
+
     /** Ends the running downloads unless [others] were running too, and Hotwire then answers whatever was waiting on them with nothing to add */
     @JvmOverloads
-    fun stopDownloads(others: Set<Int> = emptySet()) = controlDownloads("stopDownload", others)
+    fun stopDownloads(others: Set<Int> = emptySet()) {
+        stopping += runningDownloadIds() - others
+        controlDownloads("stopDownload", others)
+    }
+
+    /** Whether a download let go of through [stopDownloads] is still running, which a new plan has to wait out */
+    fun isStoppingDownloads(): Boolean {
+        stopping.retainAll(runningDownloadIds())
+        return stopping.isNotEmpty()
+    }
 
     /** Whether Hotwire is running a switch or add right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
