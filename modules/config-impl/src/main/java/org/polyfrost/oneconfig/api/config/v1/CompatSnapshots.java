@@ -65,6 +65,9 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private final Map<String, Map<String, Object>> defaults = new ConcurrentHashMap<>();
     private static final String WIRED_METADATA = "oc_compat_snapshot_wired";
     private final Set<Property<?>> applying = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+    // trees of mods turned off while the game runs, whose options and callbacks are that mod's code, with the profile
+    // they hold; by instance as the mod's replacement registering the same id isn't off
+    private final Map<Tree, String> off = Collections.synchronizedMap(new IdentityHashMap<>());
     private static final ThreadLocal<Boolean> APPLYING_HERE = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private volatile Consumer<Runnable> dispatcher = Runnable::run;
     private volatile String currentProfile;
@@ -132,14 +135,40 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (currentProfile == null) currentProfile = profile;
         captureDefaults(reg);
         wire(reg);
+        dispatchApply(reg, profile);
+        return reg;
+    }
+
+    private void dispatchApply(Tree tree, String profile) {
         dispatcher.accept(() -> {
             try {
-                applyProfile(reg, profile);
+                applyProfile(tree, profile);
             } catch (Throwable t) {
-                ConfigManager.LOGGER.error("Failed to apply compat snapshot for '{}'", reg.getID(), t);
+                ConfigManager.LOGGER.error("Failed to apply compat snapshot for '{}'", tree.getID(), t);
             }
         });
-        return reg;
+    }
+
+    /**
+     * Leaves the trees of {@code ids} alone until their mod is back, when they catch up with the profile they missed
+     */
+    void setOff(Set<String> ids) {
+        String profile = ConfigManager.activeProfile();
+        for (Tree tree : known.values()) {
+            if (ids.contains(tree.getID())) off.putIfAbsent(tree, profile);
+        }
+        for (Tree tree : new ArrayList<>(off.keySet())) {
+            if (ids.contains(tree.getID())) continue;
+            String held = off.remove(tree);
+            if (!profile.equals(held) && known.get(tree.getID()) == tree) dispatchApply(tree, profile);
+        }
+    }
+
+    // shortcut: a mod's own reset hook can't run while it's off so the captured defaults stand in for it, run the hook
+    // once it's back if those ever prove wrong
+    private void storeDefaults(Tree tree, String profile) {
+        Map<String, Object> snapshot = defaults.get(tree.getID());
+        if (snapshot != null) snapshot.forEach((key, value) -> store.putValue(profile, tree.getID(), key, value));
     }
 
     private void dropStaleRegistration(String id) {
@@ -198,6 +227,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         dispatchAndWait(() -> {
             for (Tree tree : known.values()) {
                 try {
+                    if (off.containsKey(tree)) {
+                        storeDefaults(tree, profile);
+                        continue;
+                    }
                     restoreDefaults(tree);
                     captureAll(tree, profile);
                 } catch (Throwable t) {
@@ -546,6 +579,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private static final Pattern LEGACY_KEY = Pattern.compile("^(\\d+)\\|");
 
     private static boolean gateClosed(Tree tree) {
+        if (INSTANCE.off.containsKey(tree)) return true;
         Object gate = tree.getMetadata(GATE_METADATA);
         return gate instanceof BooleanSupplier
                 && !((BooleanSupplier) gate).getAsBoolean();

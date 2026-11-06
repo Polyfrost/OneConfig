@@ -1419,6 +1419,7 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static synchronized boolean setOff(Set<String> ids) {
         offConfigIds = ids;
+        CompatSnapshots.INSTANCE.setOff(ids);
         boolean caughtUp = false;
         boolean wasRebinding = REBINDING_PROFILES.get();
         REBINDING_PROFILES.set(Boolean.TRUE);

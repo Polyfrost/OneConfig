@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
@@ -109,6 +110,67 @@ class CompatSnapshotsTest {
             assertEquals(Boolean.FALSE, property.get(), "the captured default must not overwrite the mod's reset");
         } finally {
             defaults().remove(TREE_ID);
+        }
+    }
+
+    @Test
+    void aTurnedOffModsCallbacksSitOutANewProfileWhichGivesItItsDefaultsOnceBack() throws Exception {
+        String id = TREE_ID + "_off";
+        String profile = "compat-off-profile";
+        Property<Boolean> property = Properties.simple("enabled", "Enabled", "", true);
+        property.addMetadata("default", Boolean.FALSE);
+        Tree tree = Tree.tree(id).put(property);
+        int[] called = {0, 0};
+        tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> called[0]++);
+        tree.addMetadata("custom_save", (Runnable) () -> called[1]++);
+        CompatSnapshots.register(tree);
+        try {
+            called[1] = 0;
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.createProfile(profile);
+
+            assertEquals(0, called[0], "the mod's reset hook is its code, which is off");
+            assertEquals(0, called[1], "the mod's save hook is its code, which is off");
+            assertEquals(Boolean.TRUE, property.get());
+
+            ConfigManager.setOff(Set.of());
+
+            assertEquals(Boolean.FALSE, property.get(), "a new profile starts from the defaults");
+            assertEquals(1, called[1]);
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aTreeRegisteredUnderAnOffIdIsNotOff() throws Exception {
+        String id = TREE_ID + "_off_replaced";
+        String profile = "compat-off-replaced-profile";
+        boolean[] oldReset = {false};
+        boolean[] replacementReset = {false};
+        Tree old = Tree.tree(id).put(Properties.simple("enabled", "Enabled", "", true));
+        old.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> oldReset[0] = true);
+        CompatSnapshots.register(old);
+        try {
+            ConfigManager.setOff(Set.of(id));
+            Tree replacement = Tree.tree(id).put(Properties.simple("enabled", "Enabled", "", true));
+            replacement.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> replacementReset[0] = true);
+            CompatSnapshots.register(replacement);
+
+            ConfigManager.createProfile(profile);
+
+            assertFalse(oldReset[0]);
+            assertTrue(replacementReset[0], "only the instance that was registered when its mod went off is off");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
         }
     }
 
