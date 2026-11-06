@@ -60,6 +60,8 @@ public abstract class Config {
     private static final AtomicLong CREATED = new AtomicLong();
     private List<Runnable> deferredSetup;
     private boolean initializing;
+    // what ConfigManager holds this by while a subclass's hashCode may not work yet
+    final Object key = new Object();
     final Thread creator = Thread.currentThread();
     // the configs waiting for a late window have no order of their own, and the first instance of an id has to win
     final long createdOrder = CREATED.incrementAndGet();

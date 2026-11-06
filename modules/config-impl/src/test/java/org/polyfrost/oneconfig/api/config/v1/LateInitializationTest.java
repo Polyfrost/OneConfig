@@ -87,6 +87,25 @@ class LateInitializationTest {
         }
     }
 
+    static class ValueHashedConfig extends LateConfig {
+        private final String name;
+
+        ValueHashedConfig(String id, String name) {
+            super(id);
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof ValueHashedConfig && name.equals(((ValueHashedConfig) other).name);
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
+    }
+
     private static Thread buildBlocked(String id, CountDownLatch entered, CountDownLatch release) {
         Thread thread = new Thread(() -> {
             try {
@@ -122,6 +141,26 @@ class LateInitializationTest {
         });
         assertNotNull(created.get().getTree());
         assertTrue(ConfigManager.createdConfigs().contains(created.get()));
+    }
+
+    @Test
+    void aConfigHashedByItsFieldsCanBeCreatedLate() throws IOException {
+        String first = "late-initialization-hashed-first-test.json";
+        String second = "late-initialization-hashed-second-test.json";
+        try {
+            finishStartup();
+            Config one = new ValueHashedConfig(first, "same");
+            Config other = new ValueHashedConfig(second, "same");
+            ConfigManager.initializeLate(config -> config == one || config == other, () -> {
+            });
+            assertNotNull(one.getTree(), "instances that compare equal are still separate configs");
+            assertNotNull(other.getTree(), "instances that compare equal are still separate configs");
+        } finally {
+            ConfigManager.active().unregister(first);
+            ConfigManager.active().unregister(second);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(first));
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(second));
+        }
     }
 
     @Test

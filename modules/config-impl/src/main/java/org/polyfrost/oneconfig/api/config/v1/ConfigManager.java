@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
@@ -84,10 +85,11 @@ public final class ConfigManager {
     private static volatile boolean startedUp = false;
     private static boolean isFirstRun = false;
     private static final Queue<Config> pendingInitialization = new ConcurrentLinkedQueue<>();
-    // weak so configs no late window claims, such as a mod's temporary ones, aren't kept for the whole session
-    private static final Set<Config> createdAfterStartup = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    // by a key of each config's own, as one is added from its base constructor before a subclass's hashCode can work,
+    // and weak so configs no late window claims, such as a mod's temporary ones, aren't kept for the whole session
+    private static final Map<Object, WeakReference<Config>> createdAfterStartup = Collections.synchronizedMap(new WeakHashMap<>());
     // the ones a coming window will claim, as their mod may keep no reference to them, the same as at startup
-    private static final Set<Config> heldForLateWindow = Collections.synchronizedSet(new HashSet<>());
+    private static final Set<Config> heldForLateWindow = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     // what the running window's creator made or was handed, the only configs that can replace an older instance,
     // made on any thread while it runs as it can leave the work to a worker, and the id's owner still has to match
     // also what a mod Hotwire started made, for the window after that, which is also what keeps those alive until then
@@ -308,7 +310,7 @@ public final class ConfigManager {
     /** Queues the finished configs [added] accepts, returning whether any it accepts is still being built */
     private static boolean claimBuilt(Predicate<Config> added) {
         boolean building = false;
-        List<Config> waiting = new ArrayList<>(createdAfterStartup);
+        List<Config> waiting = createdAfterStartup();
         waiting.sort(Comparator.comparingLong(config -> config.createdOrder));
         for (Config config : waiting) {
             if (!added.test(config)) continue;
@@ -320,7 +322,22 @@ public final class ConfigManager {
 
     private static boolean claim(Config config) {
         heldForLateWindow.remove(config);
-        return createdAfterStartup.remove(config) && pendingInitialization.add(config);
+        return createdAfterStartup.remove(config.key) != null && pendingInitialization.add(config);
+    }
+
+    private static List<Config> createdAfterStartup() {
+        List<Config> created = new ArrayList<>();
+        synchronized (createdAfterStartup) {
+            for (WeakReference<Config> reference : createdAfterStartup.values()) {
+                Config config = reference.get();
+                if (config != null) created.add(config);
+            }
+        }
+        return created;
+    }
+
+    private static boolean removeFromPending(Config config) {
+        return pendingInitialization.removeIf(pending -> pending == config);
     }
 
     @ApiStatus.Internal
@@ -354,8 +371,8 @@ public final class ConfigManager {
                     && (!manager.exists(config.id) || manager.save(config.id));
             if ((old == null || replaces) && ids.add(config.id)) {
                 if (replaces) replaced.put(config, old);
-            } else if (pendingInitialization.remove(config)) {
-                createdAfterStartup.add(config);
+            } else if (removeFromPending(config)) {
+                createdAfterStartup.put(config.key, new WeakReference<>(config));
             }
         }
         for (Config replacement : replaced.keySet()) manager.unregister(replacement.id);
@@ -387,7 +404,7 @@ public final class ConfigManager {
         // never initialize synchronously here because this runs from the Config base constructor
         // before subclass field initializers have run so collect() would read uninitialized fields
         if (initialized && !LATE_INITIALIZING.get()) {
-            createdAfterStartup.add(config);
+            createdAfterStartup.put(config.key, new WeakReference<>(config));
             if (lateWindowOpen) fromWindowCreator.add(config);
             if (awaitingLateWindow.test(config)) heldForLateWindow.add(config);
         } else {
@@ -418,8 +435,8 @@ public final class ConfigManager {
     }
 
     static void removePendingInitialization(Config config) {
-        pendingInitialization.remove(config);
-        createdAfterStartup.remove(config);
+        removeFromPending(config);
+        createdAfterStartup.remove(config.key);
         heldForLateWindow.remove(config);
     }
 
@@ -443,13 +460,13 @@ public final class ConfigManager {
     public static synchronized List<Config> createdConfigs() {
         List<Config> created = new ArrayList<>(initializedConfigs.values());
         created.addAll(pendingInitialization);
-        created.addAll(createdAfterStartup);
+        created.addAll(createdAfterStartup());
         return created;
     }
 
     static boolean isPendingInitialization(Config config) {
-        return pendingInitialization.contains(config)
-                || createdAfterStartup.contains(config) && (fromWindowCreator.contains(config) || awaitingLateWindow.test(config));
+        return pendingInitialization.stream().anyMatch(pending -> pending == config)
+                || createdAfterStartup.containsKey(config.key) && (fromWindowCreator.contains(config) || awaitingLateWindow.test(config));
     }
 
     /**
