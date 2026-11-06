@@ -78,6 +78,7 @@ object KaleidoCompat {
 
         val tree = Tree.tree()
         tree.id = uniqueTreeId(modId, id)
+        ConfigEntrypoints.rememberConfigOwner(mod?.id, tree.id)
         tree.title = mod?.name?.takeIf { it.isNotBlank() }
             ?: translateOrNull("$modId.title")
             ?: prettify(id)

@@ -65,6 +65,7 @@ internal object AxolotlClientConfigCompat {
 
         val tree = Tree.tree()
         tree.id = uniqueId(usedTreeIds, idPart(rootName, "axolotlclient_config"))
+        ConfigEntrypoints.rememberConfigOwner(mod?.id, tree.id)
         tree.title = titleOf(mod, rootName)
         tree.noCache = true
         tree.saveFunction = Runnable {

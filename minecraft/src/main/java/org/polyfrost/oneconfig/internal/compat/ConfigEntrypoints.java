@@ -93,7 +93,7 @@ public final class ConfigEntrypoints {
     // mods the loader no longer lists, which Hotwire turned off
     private static Set<String> offMods = Set.of();
     // the config ids of each mod, noted while they can be, as a class no longer resolves to its mod once that mod is off
-    private static final Map<String, Set<String>> modConfigs = new ConcurrentHashMap<>();
+    static final Map<String, Set<String>> modConfigs = new ConcurrentHashMap<>();
     static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
@@ -505,6 +505,11 @@ public final class ConfigEntrypoints {
         pending.put(config, construction);
     }
 
+    // also for compat that extracts a tree under an id other than its mod's, which only it can trace back to that mod
+    static void rememberConfigOwner(@Nullable String modId, String id) {
+        if (modId != null) modConfigs.computeIfAbsent(modId, k -> ConcurrentHashMap.newKeySet()).add(id);
+    }
+
     private static void attachOpener(Tree tree, String modId) {
         if (failed.contains(modId)) return;
         Runnable opener = customOpeners.get(modId);
@@ -670,10 +675,6 @@ public final class ConfigEntrypoints {
     private static void rememberClassOwner(Config config) {
         ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
         if (owner != null) rememberConfigOwner(owner.getId(), config.id);
-    }
-
-    private static void rememberConfigOwner(String modId, String id) {
-        modConfigs.computeIfAbsent(modId, k -> ConcurrentHashMap.newKeySet()).add(id);
     }
 
     // their extracted and Mod Menu cards go by the mod's id

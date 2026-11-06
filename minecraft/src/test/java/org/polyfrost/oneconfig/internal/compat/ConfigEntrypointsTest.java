@@ -231,6 +231,13 @@ class ConfigEntrypointsTest {
     }
 
     @Test
+    void anOffModHidesATreeExtractedUnderAnotherId() {
+        ConfigEntrypoints.rememberConfigOwner("extracted-mod", "extracted-tree");
+        assertTrue(ConfigEntrypoints.offConfigIds(Set.of("extracted-mod"), ConfigEntrypoints.modConfigs).contains("extracted-tree"));
+        assertFalse(ConfigEntrypoints.offConfigIds(Set.of("other-mod"), ConfigEntrypoints.modConfigs).contains("extracted-tree"));
+    }
+
+    @Test
     void aNativeConfigKeepingTheIdStillUntracksTheSnapshot() throws ReflectiveOperationException {
         String id = "drop-extracted-test";
         Field known = CompatSnapshots.class.getDeclaredField("known");

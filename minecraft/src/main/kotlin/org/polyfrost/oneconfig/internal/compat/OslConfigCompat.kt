@@ -61,6 +61,7 @@ internal object OslConfigCompat {
         val namespace = config.namespace?.takeIf { it.isNotBlank() } ?: config.name
         val tree = Tree.tree()
         tree.id = uniqueId(usedTreeIds, idPart(namespace, "osl_config"))
+        ConfigEntrypoints.rememberConfigOwner(mod?.id, tree.id)
         tree.title = titleOf(config, mod, namespace)
         tree.noCache = true
         tree.saveFunction = Runnable { runCatching { ConfigManager.save(config) } }

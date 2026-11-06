@@ -72,6 +72,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         info("Creating config wrapper for ${config.id()}!")
         val tree = Tree.tree()
         tree.id = config.id()
+        ConfigEntrypoints.rememberConfigOwner(mod?.id, tree.id)
         //? >= 1.21.8 {
         tree.title = config.info().title().toComponent()
         tree.description = config.info().description().toComponent()
