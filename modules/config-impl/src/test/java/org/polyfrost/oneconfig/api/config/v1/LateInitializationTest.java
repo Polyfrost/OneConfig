@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -695,6 +696,35 @@ class LateInitializationTest {
     }
 
     @Test
+    void aReplacementHandsOutItsTreeRightAfterItsPreload() throws IOException {
+        String id = "late-initialization-preload-tree-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            AtomicReference<ValueConfig> replacement = new AtomicReference<>();
+            AtomicReference<Tree> read = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> {
+                replacement.set(new ValueConfig(id));
+                replacement.get().preload();
+                read.set(replacement.get().getTree());
+                assertNotNull(read.get());
+                assertEquals(Boolean.TRUE, read.get().getProp("value").get());
+                assertSame(old.getTree(), ConfigManager.active().get(id));
+            });
+
+            assertSame(read.get(), replacement.get().getTree(), "what a mod kept from its setup must stay live");
+            assertSame(read.get(), ConfigManager.active().get(id));
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(ConfigManager.backup().getFolder().resolve(id));
+        }
+    }
+
+    @Test
     void whatAReplacementWritesAfterItsPreloadSurvivesItsRegistration() throws IOException {
         String id = "late-initialization-preload-writes-test.json";
         try {
@@ -847,7 +877,7 @@ class LateInitializationTest {
                 copy.get().preload();
             });
 
-            assertNull(copy.get().getTree());
+            assertNotSame(copy.get().getTree(), ConfigManager.active().get(id));
             assertEquals(Boolean.TRUE, ConfigManager.active().load(id).getProp("value").get());
         } finally {
             ConfigManager.cancelInitialization(copy.get());
@@ -902,7 +932,7 @@ class LateInitializationTest {
                 copy.get().preload();
             });
 
-            assertNull(copy.get().getTree());
+            assertNotSame(copy.get().getTree(), ConfigManager.active().get(id));
             assertSame(theirs.getTree(), ConfigManager.active().get(id));
             assertEquals(Boolean.TRUE, theirs.getProperty("value").get());
             assertEquals(Boolean.TRUE, ConfigManager.active().load(id).getProp("value").get());
@@ -927,7 +957,7 @@ class LateInitializationTest {
             copy = new ValueConfig(id);
             copy.preload();
 
-            assertNull(copy.getTree());
+            assertNotSame(copy.getTree(), ConfigManager.active().get(id));
             assertEquals(Boolean.TRUE, old.getProperty("value").get());
         } finally {
             ConfigManager.cancelInitialization(copy);

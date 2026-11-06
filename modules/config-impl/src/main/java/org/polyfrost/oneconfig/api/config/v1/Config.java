@@ -531,7 +531,7 @@ public abstract class Config {
     }
 
     public Tree getTree() {
-        return tree;
+        return tree != null ? tree : preview;
     }
 
     /**
