@@ -637,6 +637,28 @@ class LateInitializationTest {
     }
 
     @Test
+    void aReplacementThatFailsLeavesAnUnreadableDefaultsBackupInPlace() throws IOException {
+        String id = "late-initialization-unreadable-defaults-test.json";
+        Path backup = ConfigManager.backup().getFolder().resolve(id);
+        try {
+            new ValueConfig(id);
+            finishStartup();
+            // reading a directory fails whatever user runs this, unlike a file without read permission
+            Files.delete(backup);
+            Files.createDirectory(backup);
+
+            ConfigManager.initializeLate(config -> true, () -> new FailingConfig(id));
+
+            assertTrue(Files.exists(backup));
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(backup);
+        }
+    }
+
+    @Test
     void aReplacementResetsToItsOwnDefaultsAfterTheOlderInstanceWasReset() throws IOException {
         String id = "late-initialization-replaced-defaults-test.json";
         try {

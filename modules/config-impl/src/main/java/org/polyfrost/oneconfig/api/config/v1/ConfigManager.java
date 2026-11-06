@@ -272,7 +272,11 @@ public final class ConfigManager {
             // a replacement writes its own over these before it can fail
             Map<String, byte[]> oldDefaults = new HashMap<>();
             for (Config old : replaced.values()) {
-                oldDefaults.put(old.id, readDefaultsBackup(old.id));
+                try {
+                    oldDefaults.put(old.id, readDefaultsBackup(old.id));
+                } catch (IOException e) {
+                    LOGGER.error("Failed to read the defaults backup of config {}", old.id, e);
+                }
                 backup().unregister(old.id);
             }
             if (!pendingInitialization.isEmpty()) initializePending();
@@ -281,7 +285,8 @@ public final class ConfigManager {
                 if (replacement.getTree() == null && old.getTree() != null) {
                     active().register(old.getTree());
                     markInitialized(old);
-                    writeDefaultsBackup(old.id, oldDefaults.get(old.id));
+                    // a backup that could not be read is not a missing one, which this would delete
+                    if (oldDefaults.containsKey(old.id)) writeDefaultsBackup(old.id, oldDefaults.get(old.id));
                 }
             });
         }
@@ -345,14 +350,9 @@ public final class ConfigManager {
         return replaced;
     }
 
-    private static byte @Nullable [] readDefaultsBackup(String id) {
+    private static byte @Nullable [] readDefaultsBackup(String id) throws IOException {
         Path file = backup().getFolder().resolve(id);
-        try {
-            return Files.exists(file) ? Files.readAllBytes(file) : null;
-        } catch (IOException e) {
-            LOGGER.error("Failed to read the defaults backup of config {}", id, e);
-            return null;
-        }
+        return Files.exists(file) ? Files.readAllBytes(file) : null;
     }
 
     private static void writeDefaultsBackup(String id, byte @Nullable [] contents) {
