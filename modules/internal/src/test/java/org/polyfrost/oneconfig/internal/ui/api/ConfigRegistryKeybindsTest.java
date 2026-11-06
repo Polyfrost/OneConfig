@@ -3,8 +3,12 @@ package org.polyfrost.oneconfig.internal.ui.api;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
@@ -25,8 +29,30 @@ class ConfigRegistryKeybindsTest {
     }
 
     @AfterEach
-    void clear() {
+    void clear() throws IOException {
+        ConfigRegistry.INSTANCE.setOff(Set.of());
         ConfigRegistry.INSTANCE.unregister(ID);
+        ConfigManager.active().unregister(ID);
+        Files.deleteIfExists(ConfigManager.active().getFolder().resolve(ID));
+    }
+
+    @Test
+    void aKeybindStopsWhileItsModIsOffAndReturnsWithIt() {
+        OneConfigKeybind bind = bind();
+        Tree tree = tree(bind);
+        ConfigManager.active().register(tree);
+        ConfigRegistry.INSTANCE.registerTree(tree, ConfigSource.OC);
+        assertTrue(KeybindManager.isRegistered(bind));
+
+        ConfigRegistry.INSTANCE.setOff(Set.of(ID));
+        assertFalse(KeybindManager.isRegistered(bind));
+        // as a registry reload after a profile switch does
+        ConfigRegistry.INSTANCE.registerTree(tree, ConfigSource.OC);
+        assertFalse(KeybindManager.isRegistered(bind));
+
+        ConfigRegistry.INSTANCE.setOff(Set.of());
+        assertTrue(KeybindManager.isRegistered(bind));
+        KeybindManager.unregister(bind);
     }
 
     @Test

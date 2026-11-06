@@ -78,9 +78,17 @@ object ConfigRegistry {
     /** Configs of mods turned off live, kept for when they come back but out of reach as their callbacks are that mod's code */
     private var offIds by mutableStateOf(emptySet<String>())
 
+    // shortcut: a bind a mod registers itself outside any config has no known owner so keeps firing, Hotwire taking those out would close that
     fun setOff(ids: Set<String>) {
         if (ids == offIds) return
+        val before = offIds
         offIds = ids
+        // read from the manager, as Hotwire takes the cards of a mod it turns off out of this registry itself
+        ConfigManager.active().trees().forEach { tree ->
+            val id = tree.id ?: return@forEach
+            if (id in ids && id !in before) MinecraftKeybindRegistrar.unregister(tree)
+            else if (id !in ids && id in before) MinecraftKeybindRegistrar.scan(tree)
+        }
         SearchCorpus.invalidate(ConfigDocumentSource)
         revision++
     }
@@ -153,7 +161,7 @@ object ConfigRegistry {
     ): Boolean {
         // a config replaced after its mod updated leaves binds behind that would fire alongside the new ones
         tree.id?.let(::findTree)?.takeIf { it !== tree }?.let { MinecraftKeybindRegistrar.unregister(it, kept = tree) }
-        MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
+        if (tree.id !in offIds) MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
         if (tree.id == null || tree.title == null) return false
         if (tree.getMetadata<Any?>("hidden") != null) return false
         return upsert(TreeConfigData(tree, source, onOpen), bumpRevision)
