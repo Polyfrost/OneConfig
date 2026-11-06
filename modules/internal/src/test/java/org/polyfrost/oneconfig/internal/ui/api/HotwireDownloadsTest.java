@@ -98,13 +98,22 @@ class HotwireDownloadsTest {
     }
 
     @Test
-    void downloadsRunningBeforeAPlanAreNotItsToShowOrStop() {
+    void downloadsRunningBeforeAPlanAreNotItsToShow() {
         running(1, 90, StoreDownload.State.GETTING);
         Set<Integer> others = HotwireBridge.INSTANCE.runningDownloadIds();
         running(2, 10, StoreDownload.State.GETTING);
         assertEquals(0.1f, HotwireBridge.INSTANCE.downloadProgress(others).getFraction());
+    }
+
+    @Test
+    void aPlanBesideOtherDownloadsCannotStopTheNextJarOfOne() {
+        running(1, 10, StoreDownload.State.GETTING);
+        Set<Integer> others = HotwireBridge.INSTANCE.runningDownloadIds();
+        // the plan's own and the next jar of what was already running, which Hotwire's list can't tell apart
+        running(2, 10, StoreDownload.State.GETTING);
+        running(3, 10, StoreDownload.State.GETTING);
         HotwireBridge.INSTANCE.stopDownloads(others);
         HotwireBridge.INSTANCE.pauseDownloads(true, others);
-        assertEquals(List.of("stop 2", "pause 2"), HotwireApi.CONTROLS);
+        assertEquals(List.of(), HotwireApi.CONTROLS);
     }
 }

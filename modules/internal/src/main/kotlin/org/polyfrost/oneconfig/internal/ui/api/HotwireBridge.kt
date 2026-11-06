@@ -169,14 +169,17 @@ object HotwireBridge {
         )
     }.getOrNull()
 
+    // shortcut: a plan begun beside [others] can't pause or stop anything, as Hotwire doesn't say who started a download
+    // and stopping the next jar of one of those would delete its partial file; narrow this if its API ever names an owner
     private fun controlDownloads(action: String, others: Set<Int>) {
-        runCatching { runningDownloads(others).forEach { call(action, it.get("id") as Int) } }
+        if (others.isNotEmpty()) return
+        runCatching { runningDownloads().forEach { call(action, it.get("id") as Int) } }
     }
 
     @JvmOverloads
     fun pauseDownloads(paused: Boolean, others: Set<Int> = emptySet()) = controlDownloads(if (paused) "pauseDownload" else "resumeDownload", others)
 
-    /** Ends the running downloads but [others], and Hotwire then answers whatever was waiting on them with nothing to add */
+    /** Ends the running downloads unless [others] were running too, and Hotwire then answers whatever was waiting on them with nothing to add */
     @JvmOverloads
     fun stopDownloads(others: Set<Int> = emptySet()) = controlDownloads("stopDownload", others)
 

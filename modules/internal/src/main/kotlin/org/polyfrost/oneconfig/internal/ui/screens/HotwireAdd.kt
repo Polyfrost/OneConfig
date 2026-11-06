@@ -393,7 +393,8 @@ private fun PlanLoading(others: Set<Int>, onCancel: () -> Unit) {
     )
     if (current != null) HotwireProgressBar(fraction)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (current != null) {
+        // see HotwireBridge.pauseDownloads, which does nothing beside other downloads
+        if (current != null && others.isEmpty()) {
             val label = if (current.paused) {
                 translated("oneconfig.page.hotwire.add.resume", "Resume")
             } else {
