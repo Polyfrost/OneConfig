@@ -97,6 +97,8 @@ public final class ConfigManager {
     private static Set<String> offConfigIds = Set.of();
     // the configs of turned off mods that sat out a profile switch
     private static final Set<Config> rebindsWhenBack = Collections.newSetFromMap(new IdentityHashMap<>());
+    // the same for trees registered directly, as restoring or loading their values would run their callbacks
+    private static final Set<Tree> treesWhenBack = Collections.newSetFromMap(new IdentityHashMap<>());
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
     private static final long MINIMUM_WAIT_NANOS = TimeUnit.MILLISECONDS.toNanos(500L);
@@ -619,6 +621,7 @@ public final class ConfigManager {
                 if (Boolean.TRUE.equals(t.getMetadata(PROFILE_LOCAL_METADATA))) continue;
                 externalTrees.add(t);
             }
+            externalTrees.addAll(treesWhenBack);
             active.close();
         }
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
@@ -636,11 +639,14 @@ public final class ConfigManager {
             rebindInitializedConfigs(restoreDefaults);
             for (Tree t : externalTrees) {
                 try {
-                    if (restoreDefaults
-                            && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))
-                            && !Boolean.TRUE.equals(t.getMetadata(Backend.UI_ONLY_METADATA))) {
-                        Config.restoreCapturedDefaults(t);
+                    boolean holdsValues = !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))
+                            && !Boolean.TRUE.equals(t.getMetadata(Backend.UI_ONLY_METADATA));
+                    if (holdsValues && offConfigIds.contains(t.getID())) {
+                        treesWhenBack.add(t);
+                        if (restoreDefaults) active.backend.save0(defaultsOf(t));
+                        continue;
                     }
+                    if (restoreDefaults && holdsValues) Config.restoreCapturedDefaults(t);
                     active.register(t);
                 } catch (Throwable ex) {
                     LOGGER.error("Failed to rebind external tree {} onto profile {}", t.getID(), profile, ex);
@@ -1409,6 +1415,20 @@ public final class ConfigManager {
         }
     }
 
+    // as a copy, since its properties can be its mod's code, for the same reason as above
+    private static Tree defaultsOf(Tree tree) {
+        Tree defaults = Tree.tree(tree.getID());
+        for (Node node : tree.map.values()) {
+            if (node instanceof Tree) {
+                defaults.put(defaultsOf((Tree) node));
+            } else {
+                Object value = node.getMetadata("default");
+                if (value != null) defaults.put(Properties.simple(node.getID(), null, null, value, null));
+            }
+        }
+        return defaults;
+    }
+
     private static void rebind(Config config, boolean restoreDefaults) {
         try {
             config.rebindToActiveProfile(restoreDefaults);
@@ -1437,6 +1457,18 @@ public final class ConfigManager {
                 if (initializedConfigs.get(config.id) != config) continue;
                 rebind(config, false);
                 caughtUp = true;
+            }
+            for (Tree tree : new ArrayList<>(treesWhenBack)) {
+                if (ids.contains(tree.getID())) continue;
+                treesWhenBack.remove(tree);
+                // its mod's replacement can have taken the id by now
+                if (activeLocked().exists(tree.getID())) continue;
+                try {
+                    active.register(tree);
+                    caughtUp = true;
+                } catch (Throwable ex) {
+                    LOGGER.error("Failed to rebind external tree {} onto the active profile", tree.getID(), ex);
+                }
             }
         } finally {
             if (wasRebinding) REBINDING_PROFILES.set(Boolean.TRUE);

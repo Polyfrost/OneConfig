@@ -446,6 +446,68 @@ class LateInitializationTest {
     }
 
     @Test
+    void aTreeOfAnOffModSitsOutANewProfileAndGetsItsDefaultsOnceBack() throws IOException {
+        String id = "late-initialization-off-tree-test.json";
+        String profile = "late-initialization-off-tree-profile";
+        Property<Boolean> value = Properties.simple("value", "Value", "", false);
+        Tree tree = Tree.tree(id).put(value);
+        AtomicInteger calls = new AtomicInteger();
+        try {
+            ConfigManager.active().register(tree);
+            value.setAs(true);
+            ConfigManager.active().save(id);
+            value.addCallback(set -> {
+                calls.incrementAndGet();
+                return false;
+            });
+
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.createProfile(profile);
+            assertEquals(0, calls.get(), "its callbacks are the mod's code, which is off");
+            assertEquals(Boolean.TRUE, value.get());
+            assertFalse(ConfigManager.active().exists(id));
+
+            assertTrue(ConfigManager.setOff(Set.of()));
+            assertSame(tree, ConfigManager.active().get(id));
+            assertEquals(Boolean.FALSE, value.get());
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aProfileCreatedWhileATreesModIsOffKeepsItsDefaultsWhenItComesBackElsewhere() throws IOException {
+        String id = "late-initialization-off-tree-elsewhere-test.json";
+        String profile = "late-initialization-off-tree-elsewhere-profile";
+        Property<Boolean> value = Properties.simple("value", "Value", "", false);
+        Tree tree = Tree.tree(id).put(value);
+        try {
+            ConfigManager.active().register(tree);
+            value.setAs(true);
+            ConfigManager.active().save(id);
+
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.createProfile(profile);
+            ConfigManager.openProfile("");
+            assertTrue(ConfigManager.setOff(Set.of()));
+            assertEquals(Boolean.TRUE, value.get());
+
+            ConfigManager.openProfile(profile);
+            assertEquals(Boolean.FALSE, value.get());
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
     void anEntrypointOfTheUpdatedModReplacesItsOlderInstance() throws IOException {
         String id = "late-initialization-replaced-test.json";
         try {
