@@ -75,6 +75,7 @@ import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
+import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -396,6 +397,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
+            .hoverGlow(shape)
             .background(theme.modCardBackground, shape)
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
@@ -513,6 +515,7 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         modifier = Modifier
             .fillMaxWidth()
             .alpha(displayAlpha(display))
+            .hoverGlow(theme.modCardShape)
             .background(theme.modCardBackground, theme.modCardShape)
             .border(1.dp, remember(theme.borderColor) {
                 Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))

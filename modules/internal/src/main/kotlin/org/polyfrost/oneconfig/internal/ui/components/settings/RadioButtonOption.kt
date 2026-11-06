@@ -26,6 +26,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -72,6 +73,7 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
     Box(
         modifier = Modifier
             .widthIn(max = LocalOptionWidth.current)
+            .liquidGlass(RadioShape)
             .border(1.dp, theme.borderColor, RadioShape)
             .clip(RadioShape)
             .background(theme.componentBackground),

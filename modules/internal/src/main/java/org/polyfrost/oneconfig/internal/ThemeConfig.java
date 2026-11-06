@@ -1,14 +1,16 @@
 package org.polyfrost.oneconfig.internal;
 
+import java.nio.file.Files;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Color;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 
 public class ThemeConfig extends Config {
     @Text(title = "Active Theme")
-    public static String activeTheme = "PolyGlass Dark";
+    public static String activeTheme = "Polyfrosted Dark";
 
     @Color(title = "Accent Color", description = "The accent color of the OneConfig Interface", icon = "paintbrush", gradient = true)
     public static PolyColor accentColor = new PolyColor(0xFF2B4BFF);
@@ -16,13 +18,18 @@ public class ThemeConfig extends Config {
     @Switch(title = "Animations", description = "Smooth, clean animations in the OneConfig Interface", icon = "refresh")
     public static boolean animations = true;
 
+    @Switch(title = "Polyfrosted Rename Applied")
+    public static boolean polyfrostedRenameApplied = false;
+
     public ThemeConfig() {
         super("themes.json", "assets/oneconfig/brand/oneconfig-icon.svg", "Themes", Category.QOL);
     }
 
     @Override
     protected void initialize(boolean byConfigManager) {
+        if (tree == null) polyfrostedRenameApplied = !Files.exists(ConfigManager.active().getFolder().resolve(id));
         super.initialize(byConfigManager);
         hideIf("activeTheme", () -> true);
+        hideIf("polyfrostedRenameApplied", () -> true);
     }
 }

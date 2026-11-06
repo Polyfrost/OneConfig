@@ -49,3 +49,11 @@ kotlin {
         optIn.add("org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi")
     }
 }
+
+tasks.named<Test>("j21Tests") {
+    workingDir = layout.buildDirectory.dir("test-run").get().asFile
+    doFirst {
+        workingDir.deleteRecursively()
+        workingDir.mkdirs()
+    }
+}

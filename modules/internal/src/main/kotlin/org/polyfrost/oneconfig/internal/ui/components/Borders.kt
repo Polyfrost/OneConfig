@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -14,6 +15,7 @@ import androidx.compose.ui.geometry.isSimple
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -22,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 import kotlin.math.min
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
+import org.polyfrost.oneconfig.internal.ui.themes.AccentSheen
 
 fun Modifier.animatedFrame(
     shape: Shape,
@@ -36,11 +39,15 @@ fun Modifier.animatedFrame(
     val stroke = Stroke(strokeWidth)
     val inset = Size(size.width - strokeWidth, size.height - strokeWidth)
     val accent = AccentBrush
+    val sheen = AccentSheen
     onDrawWithContent {
         val f = fill()
         if (f.alpha > 0f) drawOutline(outline, f)
         val a = accentAlpha()
-        if (a > 0f) drawOutline(outline, accent, a)
+        if (a > 0f) {
+            drawOutline(outline, accent, a)
+            if (sheen != null) drawOutline(outline, sheen, a)
+        }
         drawContent()
         val b = border()
         if (b.alpha <= 0f) return@onDrawWithContent
@@ -53,6 +60,9 @@ fun Modifier.animatedFrame(
         }
     }
 }
+
+fun Modifier.accentSheen(shape: Shape = RectangleShape, alpha: Float = 1f): Modifier =
+    AccentSheen?.let { background(it, shape, alpha) } ?: this
 
 fun Modifier.topBorder(
     color: Color,
