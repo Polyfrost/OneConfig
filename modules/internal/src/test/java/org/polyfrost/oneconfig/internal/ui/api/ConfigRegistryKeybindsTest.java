@@ -91,6 +91,19 @@ class ConfigRegistryKeybindsTest {
     }
 
     @Test
+    void aReplacedConfigWhoseCardHotwireTookOutTakesItsKeybindsWithIt() {
+        OneConfigKeybind old = bind();
+        OneConfigKeybind replacement = bind();
+        ConfigRegistry.INSTANCE.registerTree(tree(old), ConfigSource.OC);
+        ConfigRegistry.INSTANCE.unregister(ID);
+
+        ConfigRegistry.INSTANCE.registerTree(tree(replacement), ConfigSource.OC);
+        assertFalse(KeybindManager.isRegistered(old));
+        assertTrue(KeybindManager.isRegistered(replacement));
+        KeybindManager.unregister(replacement);
+    }
+
+    @Test
     void aRebuiltTreeKeepsTheKeybindItShares() {
         OneConfigKeybind shared = bind();
         ConfigRegistry.INSTANCE.registerTree(tree(shared), ConfigSource.OC);

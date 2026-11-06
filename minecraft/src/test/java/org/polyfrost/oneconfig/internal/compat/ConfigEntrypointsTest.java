@@ -2,6 +2,8 @@ package org.polyfrost.oneconfig.internal.compat;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -166,9 +168,10 @@ class ConfigEntrypointsTest {
     static class Derived extends Base {
     }
 
-    private static ModContainer mod(String id) {
+    private static ModContainer mod(String id, String... provides) {
         ClassLoader loader = ConfigEntrypointsTest.class.getClassLoader();
-        ModMetadata metadata = (ModMetadata) Proxy.newProxyInstance(loader, new Class<?>[]{ModMetadata.class}, (proxy, method, args) -> id);
+        ModMetadata metadata = (ModMetadata) Proxy.newProxyInstance(loader, new Class<?>[]{ModMetadata.class},
+                (proxy, method, args) -> method.getName().equals("getProvides") ? List.of(provides) : id);
         return (ModContainer) Proxy.newProxyInstance(loader, new Class<?>[]{ModContainer.class}, (proxy, method, args) -> metadata);
     }
 
@@ -235,6 +238,37 @@ class ConfigEntrypointsTest {
         ConfigEntrypoints.rememberConfigOwner("extracted-mod", "extracted-tree");
         assertTrue(ConfigEntrypoints.offConfigIds(Set.of("extracted-mod"), ConfigEntrypoints.modConfigs).contains("extracted-tree"));
         assertFalse(ConfigEntrypoints.offConfigIds(Set.of("other-mod"), ConfigEntrypoints.modConfigs).contains("extracted-tree"));
+    }
+
+    @Test
+    void aLiveCopyTakesOverOnlyTheConfigsItMakesAgain() {
+        Map<String, Set<String>> configs = new HashMap<>();
+        configs.put("example", new HashSet<>(Set.of("example.json", "dropped.json")));
+        configs.put("example_live1", new HashSet<>(Set.of("example.json")));
+        Map<String, String> owners = new HashMap<>(Map.of("example.json", "example", "dropped.json", "example", "other.json", "other"));
+
+        ConfigEntrypoints.handOver(List.of("example"), "example_live1", "example.json", configs, owners);
+        ConfigEntrypoints.handOver(List.of("example"), "example_live1", "other.json", configs, owners);
+
+        assertEquals("example_live1", owners.get("example.json"));
+        assertEquals("example", owners.get("dropped.json"));
+        assertEquals("other", owners.get("other.json"));
+        assertEquals(Set.of("example", "dropped.json"), ConfigEntrypoints.offConfigIds(Set.of("example"), configs));
+    }
+
+    @Test
+    void anOffModsConfigStaysOffWhenALibraryOwnsItsClass() {
+        Map<String, Set<String>> configs = Map.of("mod", Set.of("mod.json"), "library", Set.of("mod.json"));
+        assertEquals(Set.of("mod", "mod.json"), ConfigEntrypoints.offConfigIds(Set.of("mod"), configs));
+    }
+
+    @Test
+    void aChangesCopyReplacesOnlyTheOffModItProvides() {
+        Map<String, ModContainer> mods = Map.of(
+                "example_live1", mod("example_live1", "example", "alias"),
+                "added", mod("added", "kept")
+        );
+        assertEquals(Set.of("example"), ConfigEntrypoints.replacedBy(Set.of("example_live1", "added"), Set.of("example", "other"), mods));
     }
 
     @Test

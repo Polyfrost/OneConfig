@@ -479,7 +479,7 @@ public final class ConfigEntrypoints {
         if (current != null) {
             // a tree that another mod registered while this entrypoint called into it, such as through compat, stays its own
             ModInfo owner = CompatLoader.INSTANCE.findFirstMod();
-            if (owner == null || current.equals(providerOf(owner.getId()))) treeOwners.putIfAbsent(id, current);
+            if (owner == null || current.equals(providerOf(owner.getId()))) claimOwner(current, id);
         }
         String modId = treeOwners.get(id);
         if (modId == null || tree.getMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN) != null) return;
@@ -495,7 +495,7 @@ public final class ConfigEntrypoints {
         // its class, belongs to that mod, otherwise it would count as this mod's and stop its original being extracted
         ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
         if (owner != null && !current.equals(providerOf(owner.getId()))) return;
-        treeOwners.putIfAbsent(config.id, current);
+        claimOwner(current, config.id);
         Map<Config, Construction> pending = constructing.get();
         if (pending == null) return;
         Construction construction = construction(config.getClass(), new Throwable().getStackTrace());
@@ -507,7 +507,18 @@ public final class ConfigEntrypoints {
 
     // also for compat that extracts a tree under an id other than its mod's, which only it can trace back to that mod
     static void rememberConfigOwner(@Nullable String modId, String id) {
-        if (modId != null) modConfigs.computeIfAbsent(modId, k -> ConcurrentHashMap.newKeySet()).add(id);
+        if (modId == null) return;
+        modConfigs.computeIfAbsent(modId, k -> ConcurrentHashMap.newKeySet()).add(id);
+        //? if !neoforge
+        handOver(modId, id);
+    }
+
+    /** Returns who owns the id after {@code modId} claimed it */
+    private static String claimOwner(String modId, String id) {
+        //? if !neoforge
+        handOver(modId, id);
+        String owner = treeOwners.putIfAbsent(id, modId);
+        return owner == null ? modId : owner;
     }
 
     private static void attachOpener(Tree tree, String modId) {
@@ -543,8 +554,8 @@ public final class ConfigEntrypoints {
                 // its original was already extracted, claiming the config now would not remove that card
                 if (failed.contains(modId)) return config;
             }
-            String owner = treeOwners.putIfAbsent(config.id, modId);
-            if (owner != null && !owner.equals(modId)) {
+            String owner = claimOwner(modId, config.id);
+            if (!owner.equals(modId)) {
                 LOGGER.warn("Mod {} registered config {} which already belongs to {}", modId, config.id, owner);
                 return config;
             }
@@ -648,6 +659,7 @@ public final class ConfigEntrypoints {
         prepare(added.keySet());
         Set<String> late = new HashSet<>(lateIds);
         late.addAll(changedIds);
+        late.addAll(replacedBy(changedIds, offMods, mods));
         lateIds = late;
         finishLate(() -> added.forEach((modId, entrypoints) -> {
             boolean broken = register(modId, entrypoints);
@@ -663,6 +675,35 @@ public final class ConfigEntrypoints {
         //? modmenu_compat
         if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.refresh();
         rememberConfigOwners();
+        // what a live update's copy made in this window is no longer off with the mod it replaces
+        ConfigRegistry.INSTANCE.setOff(offConfigIds(offMods, modConfigs));
+    }
+
+    // Hotwire can run a live update from a relocated copy under a new id that provides the old one, and the configs
+    // that copy makes again are its own from then on, while any it no longer makes stay off with the old mod
+    private static void handOver(String modId, String id) {
+        synchronized (FabricLoader.getInstance()) {
+            FabricLoader.getInstance().getModContainer(modId)
+                    // the loader also finds a mod under the ids it provides
+                    .filter(mod -> mod.getMetadata().getId().equals(modId))
+                    .ifPresent(mod -> handOver(mod.getMetadata().getProvides(), modId, id, modConfigs, treeOwners));
+        }
+    }
+
+    static void handOver(Collection<String> replaced, String modId, String id, Map<String, Set<String>> configs, Map<String, String> owners) {
+        for (String old : replaced) {
+            Set<String> theirs = configs.get(old);
+            if (theirs != null) theirs.remove(id);
+            owners.replace(id, old, modId);
+        }
+    }
+
+    // the mods a change's copies replace, whose older config instances those copies may take over from
+    static Set<String> replacedBy(Set<String> changed, Set<String> off, Map<String, ModContainer> mods) {
+        Set<String> replaced = new HashSet<>();
+        for (String id : changed) replaced.addAll(mods.get(id).getMetadata().getProvides());
+        replaced.retainAll(off);
+        return replaced;
     }
 
     // only Hotwire takes mods out of the loader, so everyone else skips looking up every config's mod
@@ -677,12 +718,16 @@ public final class ConfigEntrypoints {
         if (owner != null) rememberConfigOwner(owner.getId(), config.id);
     }
 
-    // their extracted and Mod Menu cards go by the mod's id
+    // their extracted and Mod Menu cards go by the mod's id, unless a mod that's still on has a config under that id
     static Set<String> offConfigIds(Set<String> off, Map<String, Set<String>> configs) {
+        Set<String> kept = new HashSet<>();
+        configs.forEach((modId, owned) -> {
+            if (!off.contains(modId)) kept.addAll(owned);
+        });
         Set<String> ids = new HashSet<>();
         for (String modId : off) {
-            ids.add(modId);
-            ids.add(modId + ".json");
+            if (!kept.contains(modId)) ids.add(modId);
+            if (!kept.contains(modId + ".json")) ids.add(modId + ".json");
             ids.addAll(configs.getOrDefault(modId, Set.of()));
         }
         return ids;

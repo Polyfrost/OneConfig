@@ -23,6 +23,7 @@ object MinecraftKeybindRegistrar {
     private val wiredProps = WeakHashMap<Property<*>, Boolean>()
 
     private val scannedTrees = WeakHashMap<Tree, Boolean>()
+    private val lastScanned = HashMap<String, Tree>()
     private var listenerInstalled = false
 
     @JvmStatic
@@ -30,6 +31,8 @@ object MinecraftKeybindRegistrar {
     fun scan(tree: Tree, force: Boolean = true) {
         if (!force && scannedTrees.containsKey(tree)) return
         scannedTrees[tree] = true
+        // a config replaced after its mod updated leaves binds behind that would fire alongside the new ones
+        tree.id?.let { lastScanned.put(it, tree) }?.takeIf { it !== tree }?.let { unregister(it, kept = tree) }
         installRebindListener()
         val category = "${tree.localizedTitle()} (OneConfig)"
         walk(tree) { wire(it, category) }
