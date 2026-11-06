@@ -302,6 +302,13 @@ class ConfigEntrypointsTest {
     }
 
     @Test
+    void aLibraryChangingLeavesAConfigAnotherModRegisteredAlone() {
+        assertFalse(ConfigEntrypoints.isLate("mod", "library", Set.of("library")));
+        assertTrue(ConfigEntrypoints.isLate("mod", "library", Set.of("mod")));
+        assertTrue(ConfigEntrypoints.isLate(null, "library", Set.of("library")));
+    }
+
+    @Test
     void aContainerReplacedUnderTheSameIdIsAChange() {
         assertTrue(ConfigEntrypoints.modsChanged(List.of(mod("lib")), Map.of("lib", mod("lib"))));
     }

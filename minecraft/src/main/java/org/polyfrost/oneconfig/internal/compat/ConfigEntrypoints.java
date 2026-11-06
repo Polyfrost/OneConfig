@@ -677,25 +677,25 @@ public final class ConfigEntrypoints {
         return ids;
     }
 
-    private static boolean ownedBy(Config config, Set<String> ids) {
-        ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
-        return owner != null && ids.contains(owner.getId());
-    }
-
-    // an entrypoint can register a library's config class as its mod's own, so the id's owner counts as well as the class's
     // read up front, as an entrypoint running in the window claiming an id must not make another mod's config its own
     static Predicate<Config> lateConfigs(Set<String> ids) {
         Map<String, String> owners = new HashMap<>(treeOwners);
         return config -> {
-            String owner = owners.get(config.id);
-            return owner != null && ids.contains(owner) || ownedBy(config, ids);
+            ModInfo classOwner = CompatLoader.INSTANCE.findModByClass(config.getClass());
+            return isLate(owners.get(config.id), classOwner == null ? null : classOwner.getId(), ids);
         };
+    }
+
+    // an entrypoint can register a library's config class as its mod's own, so the id's owner goes before the class's
+    static boolean isLate(@Nullable String owner, @Nullable String classOwner, Set<String> ids) {
+        String decider = owner != null ? owner : classOwner;
+        return decider != null && ids.contains(decider);
     }
 
     private static boolean awaitsLateWindow(Config config) {
         Set<String> ids = new HashSet<>(lateIds);
         if (modsChanged()) ids.addAll(changedIds(loadedMods(), seenMods));
-        return !ids.isEmpty() && ownedBy(config, ids);
+        return !ids.isEmpty() && lateConfigs(ids).test(config);
     }
 
     private static boolean modsChanged() {
