@@ -685,6 +685,92 @@ class LateInitializationTest {
         }
     }
 
+    static class TwoValueConfig extends ValueConfig {
+        @Switch(title = "Other")
+        public boolean other = false;
+
+        TwoValueConfig(String id) {
+            super(id);
+        }
+    }
+
+    @Test
+    void whatAReplacementWritesAfterItsPreloadSurvivesItsRegistration() throws IOException {
+        String id = "late-initialization-preload-writes-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            AtomicReference<ValueConfig> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> {
+                replacement.set(new ValueConfig(id));
+                replacement.get().preload();
+                assertTrue(replacement.get().value);
+                replacement.get().value = false;
+            });
+
+            assertSame(replacement.get().getTree(), ConfigManager.active().get(id));
+            assertFalse(replacement.get().value);
+            assertEquals(Boolean.FALSE, replacement.get().getProperty("value").get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(ConfigManager.backup().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void whatAReplacementLeftAloneTakesTheOlderInstancesNewerValue() throws IOException {
+        String id = "late-initialization-preload-newer-test.json";
+        try {
+            TwoValueConfig old = new TwoValueConfig(id);
+            finishStartup();
+
+            AtomicReference<TwoValueConfig> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> {
+                replacement.set(new TwoValueConfig(id));
+                replacement.get().preload();
+                replacement.get().other = true;
+                old.getProperty("value").setAs(true);
+            });
+
+            assertTrue(replacement.get().value, "the older instance is saved after the replacement read its file");
+            assertTrue(replacement.get().other);
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(ConfigManager.backup().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aWriteAfterThePreloadStaysOutOfTheDefaultsBackup() throws IOException {
+        String id = "late-initialization-preload-writes-defaults-test.json";
+        try {
+            new ValueConfig(id);
+            finishStartup();
+
+            AtomicReference<ValueConfig> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> {
+                replacement.set(new ValueConfig(id));
+                replacement.get().preload();
+                replacement.get().value = true;
+            });
+            assertTrue(replacement.get().value);
+
+            replacement.get().restoreDefaults();
+            assertFalse(replacement.get().value);
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(ConfigManager.backup().getFolder().resolve(id));
+        }
+    }
+
     @Test
     void aReplacementThatReadItsSavedValuesEarlyStillResetsToItsDefaults() throws IOException {
         String id = "late-initialization-preload-defaults-test.json";

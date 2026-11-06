@@ -32,11 +32,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
@@ -55,6 +58,8 @@ public abstract class Config {
     protected Tree tree;
     // what a config waiting for a late window reads from until then, unregistered as the id isn't its own yet
     private Tree preview;
+    // the values a preview read, to tell what the mod has written to them since from what it left alone
+    private Map<Property<?>, Object> previewRead;
     /** code-defined defaults captured at first initialization keyed by dot-separated property path */
     private Map<String, Object> defaultSnapshot;
     private static final AtomicLong CREATED = new AtomicLong();
@@ -146,6 +151,7 @@ public abstract class Config {
             }
 
             tree.addMetadata("category", category);
+            Map<Property<?>, Object> written = previewRead != null ? writesSincePreview() : Collections.emptyMap();
             // it holds the saved values, which must not end up in the backup of the defaults
             if (previewed != null) restoreCapturedDefaults(tree, true);
             if (!ConfigManager.isRebindingProfiles()) {
@@ -160,6 +166,7 @@ public abstract class Config {
                 resetOptions = Tree.endFailureCollection();
             }
             ConfigManager.markInitialized(this);
+            written.forEach(Property::setAsSilently);
             if (!resetOptions.isEmpty()) {
                 ConfigManager.reportResetOptions(this, resetOptions);
             }
@@ -214,6 +221,19 @@ public abstract class Config {
         Tree saved = manager.load(id);
         // a value that doesn't fit is reported once the window has registered this for real
         if (saved != null) Tree.collectFailures(() -> preview.overwrite(saved, false));
+        previewRead = new IdentityHashMap<>();
+        CompatSnapshots.forEachProp(preview, property -> previewRead.put(property, CompatSnapshots.trySerialize(property.get())));
+    }
+
+    private Map<Property<?>, Object> writesSincePreview() {
+        Map<Property<?>, Object> written = new IdentityHashMap<>();
+        previewRead.forEach((property, read) -> {
+            Object value = property.get();
+            // copied as complex values are mutated in place, which the defaults are about to do
+            if (!Objects.deepEquals(CompatSnapshots.trySerialize(value), read)) written.put(property, copyDefault(property.type, value));
+        });
+        previewRead = null;
+        return written;
     }
 
     private void runDeferredSetup() {

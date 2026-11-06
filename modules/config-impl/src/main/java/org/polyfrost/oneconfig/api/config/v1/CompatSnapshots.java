@@ -556,7 +556,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return a.equals(b);
     }
 
-    private static Object trySerialize(Object value) {
+    static Object trySerialize(Object value) {
         try {
             Object serialized = ObjectSerializer.INSTANCE.serialize(value, true, true);
             return isStorable(serialized) ? serialized : null;
@@ -691,7 +691,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return key != null ? key.toString() : p.getID();
     }
 
-    private static void forEachProp(Tree tree, Consumer<Property<?>> action) {
+    static void forEachProp(Tree tree, Consumer<Property<?>> action) {
         for (Node node : tree.map.values()) {
             if (node instanceof Tree) forEachProp((Tree) node, action);
             else if (node instanceof Property) action.accept((Property<?>) node);
