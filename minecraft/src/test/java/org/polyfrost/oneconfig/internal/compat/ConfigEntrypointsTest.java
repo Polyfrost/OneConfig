@@ -226,6 +226,20 @@ class ConfigEntrypointsTest {
     }
 
     @Test
+    void aModIsRetriedOnlyOnceItsContainerChanged() {
+        ModContainer failing = mod("mod");
+        Map<String, ModContainer> last = Map.of("mod", failing);
+        Set<String> failed = Set.of("mod");
+        Set<String> providers = Set.of("mod");
+
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(providers, failed, Map.of(), last), "it is off");
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(providers, failed, Map.of("mod", failing), last), "turned back on as it was");
+        assertEquals(Set.of("mod"), ConfigEntrypoints.retriedIds(providers, failed, Map.of("mod", mod("mod")), last), "updated, whether on or off");
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(providers, Set.of(), Map.of("mod", mod("mod")), last), "it never failed");
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(Set.of(), failed, Map.of("mod", mod("mod")), last), "its entrypoint is gone");
+    }
+
+    @Test
     void anOffModHidesItsCardsAndConfigs() {
         assertEquals(
                 Set.of("lib", "lib.json", "custom.json"),
@@ -348,19 +362,6 @@ class ConfigEntrypointsTest {
     void aModTheLoaderDroppedIsRemoved() {
         ModContainer kept = mod("kept");
         assertEquals(Set.of("off"), ConfigEntrypoints.removedIds(Map.of("kept", kept), Map.of("kept", kept, "off", mod("off"))));
-    }
-
-    @Test
-    void onlyReplacedModsThatFailedRunAgain() {
-        assertEquals(
-                Set.of("fixed"),
-                ConfigEntrypoints.retriedIds(
-                        Set.of("fixed", "fine", "returned", "unchanged"),
-                        Set.of("fixed", "returned", "unchanged", "dropped"),
-                        Set.of("fixed", "fine", "returned", "dropped"),
-                        Set.of("fixed", "fine", "unchanged", "dropped")
-                )
-        );
     }
 
     static class LibraryConfig extends Config {

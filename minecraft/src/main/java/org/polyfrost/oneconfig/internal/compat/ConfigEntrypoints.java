@@ -89,6 +89,9 @@ public final class ConfigEntrypoints {
     private static volatile boolean startupDecided;
     //? if !neoforge
     private static volatile Map<String, ModContainer> seenMods = Map.of();
+    // also for the mods that are off, whose container is still the same one when they only come back on
+    //? if !neoforge
+    private static final Map<String, ModContainer> lastContainers = new HashMap<>();
     private static volatile Set<String> lateIds = Set.of();
     // mods the loader no longer lists, which Hotwire turned off
     private static volatile Set<String> offMods = Set.of();
@@ -662,7 +665,9 @@ public final class ConfigEntrypoints {
         ConfigRegistry.INSTANCE.setOff(offConfigIds(offMods, modConfigs));
         HotwireBridge.INSTANCE.invalidate();
         rediscover();
-        Set<String> retried = retriedIds(providerIds(), failed, changedIds, seen.keySet());
+        lastContainers.putAll(seen);
+        Set<String> retried = retriedIds(providerIds(), failed, mods, lastContainers);
+        lastContainers.putAll(mods);
         failed.removeAll(retried);
         Map<String, List<Provider>> added = new LinkedHashMap<>();
         for (Provider provider : providers()) {
@@ -822,11 +827,10 @@ public final class ConfigEntrypoints {
         return now;
     }
 
-    static Set<String> retriedIds(Set<String> providers, Set<String> failed, Set<String> changed, Set<String> seen) {
-        Set<String> retried = new HashSet<>(changed);
-        retried.retainAll(seen);
+    static Set<String> retriedIds(Set<String> providers, Set<String> failed, Map<String, ModContainer> mods, Map<String, ModContainer> last) {
+        Set<String> retried = new HashSet<>(providers);
         retried.retainAll(failed);
-        retried.retainAll(providers);
+        retried.removeIf(id -> !mods.containsKey(id) || mods.get(id) == last.get(id));
         return retried;
     }
 
