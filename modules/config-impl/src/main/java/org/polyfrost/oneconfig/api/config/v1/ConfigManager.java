@@ -83,8 +83,9 @@ public final class ConfigManager {
     private static boolean isFirstRun = false;
     private static final Queue<Config> pendingInitialization = new ConcurrentLinkedQueue<>();
     // weak so configs no late window claims, such as a mod's temporary ones, aren't kept for the whole session
-    // shortcut: a config its mod keeps no reference to can be collected before its window, holding the ones awaitingLateWindow accepts would close that
     private static final Set<Config> createdAfterStartup = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    // the ones a coming window will claim, as their mod may keep no reference to them, the same as at startup
+    private static final Set<Config> heldForLateWindow = Collections.synchronizedSet(new HashSet<>());
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
@@ -275,9 +276,14 @@ public final class ConfigManager {
         for (Config config : waiting) {
             if (!added.test(config)) continue;
             if (!isBuilt(config)) building = true;
-            else if (createdAfterStartup.remove(config)) pendingInitialization.add(config);
+            else claim(config);
         }
         return building;
+    }
+
+    private static void claim(Config config) {
+        heldForLateWindow.remove(config);
+        if (createdAfterStartup.remove(config)) pendingInitialization.add(config);
     }
 
     @ApiStatus.Internal
@@ -304,14 +310,19 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public static void claimForLateInitialization(Config config) {
-        if (LATE_INITIALIZING.get() && createdAfterStartup.remove(config)) pendingInitialization.add(config);
+        if (LATE_INITIALIZING.get()) claim(config);
     }
 
     @ApiStatus.Internal
     public static void submitForInitialization(Config config) {
         // never initialize synchronously here because this runs from the Config base constructor
         // before subclass field initializers have run so collect() would read uninitialized fields
-        (initialized && !LATE_INITIALIZING.get() ? createdAfterStartup : pendingInitialization).add(config);
+        if (initialized && !LATE_INITIALIZING.get()) {
+            createdAfterStartup.add(config);
+            if (awaitingLateWindow.test(config)) heldForLateWindow.add(config);
+        } else {
+            pendingInitialization.add(config);
+        }
         for (ConfigSubmissionListener listener : submissionListeners) {
             try {
                 listener.onConfigSubmitted(config);
@@ -338,6 +349,7 @@ public final class ConfigManager {
     static void removePendingInitialization(Config config) {
         pendingInitialization.remove(config);
         createdAfterStartup.remove(config);
+        heldForLateWindow.remove(config);
     }
 
     /**

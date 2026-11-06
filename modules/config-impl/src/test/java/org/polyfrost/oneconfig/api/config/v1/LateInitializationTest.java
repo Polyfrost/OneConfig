@@ -309,6 +309,35 @@ class LateInitializationTest {
         assertNull(unclaimed.get());
     }
 
+    private static void collect(WeakReference<Config> reference, int attempts) throws InterruptedException {
+        for (int i = 0; i < attempts && reference.get() != null; i++) {
+            System.gc();
+            Thread.sleep(10);
+        }
+    }
+
+    @Test
+    void configsAWindowIsComingForNeedNoOtherReference() throws IOException, InterruptedException {
+        String id = "late-initialization-held-test.json";
+        try {
+            finishStartup();
+            ConfigManager.setAwaitingLateWindow(config -> config.id.equals(id));
+            WeakReference<Config> first = new WeakReference<>(new LateConfig(id));
+            WeakReference<Config> copy = new WeakReference<>(new LateConfig(id));
+            collect(first, 20);
+            assertNotNull(first.get());
+
+            ConfigManager.initializeLate(config -> config.id.equals(id), () -> {
+            });
+            assertNotNull(first.get().getTree());
+            collect(copy, 100);
+            assertNull(copy.get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
     @Test
     void aSecondInstanceInTheWindowKeepsSavedValues() throws IOException {
         String id = "late-initialization-duplicate-test.json";
