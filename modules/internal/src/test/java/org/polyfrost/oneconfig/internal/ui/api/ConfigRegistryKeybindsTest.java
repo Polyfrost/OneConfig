@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
+import org.polyfrost.oneconfig.internal.ui.keybind.MinecraftKeybindRegistrar;
 
 class ConfigRegistryKeybindsTest {
     private static final String ID = "config-registry-keybinds-test.json";
@@ -53,6 +56,25 @@ class ConfigRegistryKeybindsTest {
         ConfigRegistry.INSTANCE.setOff(Set.of());
         assertTrue(KeybindManager.isRegistered(bind));
         KeybindManager.unregister(bind);
+    }
+
+    @Test
+    void aKeybindBuiltOnEveryReadStillStopsWhileItsModIsOff() {
+        List<OneConfigKeybind> built = new ArrayList<>();
+        Tree tree = Tree.tree(ID);
+        tree.setTitle("Keybinds");
+        tree.put(Properties.functional(() -> {
+            OneConfigKeybind bind = bind();
+            built.add(bind);
+            return bind;
+        }, bind -> {
+        }, "bind", "Bind", "", OneConfigKeybind.class));
+
+        MinecraftKeybindRegistrar.scan(tree);
+        assertTrue(built.stream().anyMatch(KeybindManager::isRegistered));
+
+        MinecraftKeybindRegistrar.unregister(tree);
+        assertTrue(built.stream().noneMatch(KeybindManager::isRegistered));
     }
 
     @Test

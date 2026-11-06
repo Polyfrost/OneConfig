@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.WeakHashMap
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -38,7 +40,12 @@ object MinecraftKeybindRegistrar {
     @JvmOverloads
     fun unregister(tree: Tree, kept: Tree? = null) {
         val keeping = kept?.let(::mirroredBinds).orEmpty()
-        (mirroredBinds(tree) - keeping).forEach { KeybindManager.unregister(it) }
+        val props = Collections.newSetFromMap(IdentityHashMap<Property<*>, Boolean>())
+        walk(tree, props::add)
+        // by what scan saw, as a compat adapter's property can build a new bind on every read
+        val scanned = propByBind.filterValues { it in props }.keys - keeping
+        scanned.forEach { KeybindManager.unregister(it) }
+        propByBind.keys -= scanned
     }
 
     private fun mirroredBinds(tree: Tree): Set<OneConfigKeybind> {
