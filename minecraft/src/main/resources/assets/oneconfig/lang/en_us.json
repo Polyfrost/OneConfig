@@ -40,6 +40,17 @@
   "oneconfig.preferences.hud_marquee_anim_duration.title": "Selection Box Animation Duration (ms)",
   "oneconfig.preferences.hud_marquee_anim_duration.description": "The duration of the fade animation for the drag selection rectangle in milliseconds.",
 
+  "oneconfig.preferences.category.huds": "HUDs",
+  "oneconfig.preferences.hud_toggle_all_keybind.title": "Hide All HUDs",
+  "oneconfig.preferences.hud_toggle_all_keybind.description": "Temporarily hides every HUD. Each HUD can also have its own key in its Visibility settings.",
+  "oneconfig.preferences.hud_toggle_all_mode.title": "Hide All HUDs Mode",
+  "oneconfig.preferences.hud_toggle_all_mode.description": "Held hides HUDs only while the key is held. Toggle switches them on each press. Quick Press switches on a tap and switches back when a longer hold is released.",
+  "oneconfig.preferences.hud_toggle_all_hold_threshold.title": "Hold Threshold (ms)",
+  "oneconfig.preferences.hud_toggle_all_hold_threshold.description": "How long the key must be held in Quick Press mode before releasing it switches back.",
+  "oneconfig.preferences.key_mode.held": "Held",
+  "oneconfig.preferences.key_mode.toggle": "Toggle",
+  "oneconfig.preferences.key_mode.quick_press": "Quick Press",
+
   "oneconfig.preferences.background_blur.title": "Background Blur",
   "oneconfig.preferences.background_blur.description": "Blurs the full game background when the OneConfig menu is open.",
 
