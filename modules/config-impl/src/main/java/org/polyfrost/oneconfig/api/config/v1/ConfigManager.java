@@ -90,8 +90,8 @@ public final class ConfigManager {
     private static final Set<Config> fromWindowCreator = Collections.newSetFromMap(new IdentityHashMap<>());
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static Set<String> offConfigIds = Set.of();
-    // the profile switches a config of a turned off mod sat out, with whether any of them restored its defaults
-    private static final Map<Config, Boolean> rebindsWhenBack = new IdentityHashMap<>();
+    // the configs of turned off mods that sat out a profile switch
+    private static final Set<Config> rebindsWhenBack = Collections.newSetFromMap(new IdentityHashMap<>());
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
     private static final long MINIMUM_WAIT_NANOS = TimeUnit.MILLISECONDS.toNanos(500L);
@@ -1351,8 +1351,21 @@ public final class ConfigManager {
         if (initializedConfigs.isEmpty()) return;
         ArrayList<Config> configs = new ArrayList<>(initializedConfigs.values());
         for (Config config : configs) {
-            if (offConfigIds.contains(config.id)) rebindsWhenBack.merge(config, restoreDefaults, Boolean::logicalOr);
-            else rebind(config, restoreDefaults);
+            if (offConfigIds.contains(config.id)) {
+                rebindsWhenBack.add(config);
+                if (restoreDefaults) copyDefaultsToActiveProfile(config.id);
+            } else {
+                rebind(config, restoreDefaults);
+            }
+        }
+    }
+
+    // as the file, since its mod's code can't run to restore them, and whichever profile it comes back in would otherwise pass this one its values
+    private static void copyDefaultsToActiveProfile(String id) {
+        try {
+            copyFileSafely(backup().getFolder().resolve(id), active.getFolder().resolve(id));
+        } catch (IOException e) {
+            LOGGER.error("Failed to give the active profile the defaults of config {}", id, e);
         }
     }
 
@@ -1377,11 +1390,11 @@ public final class ConfigManager {
         boolean wasRebinding = REBINDING_PROFILES.get();
         REBINDING_PROFILES.set(Boolean.TRUE);
         try {
-            for (Config config : new ArrayList<>(rebindsWhenBack.keySet())) {
+            for (Config config : new ArrayList<>(rebindsWhenBack)) {
                 if (ids.contains(config.id)) continue;
-                boolean restoreDefaults = rebindsWhenBack.remove(config);
+                rebindsWhenBack.remove(config);
                 if (initializedConfigs.get(config.id) != config) continue;
-                rebind(config, restoreDefaults);
+                rebind(config, false);
                 caughtUp = true;
             }
         } finally {
