@@ -7,6 +7,7 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.BasicAuthentication
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
 import java.lang.Boolean.TRUE
@@ -358,6 +359,10 @@ if (enableMoulRelocatorKsp) {
     tasks.matching { it.name.startsWith("ksp") }.configureEach {
         enabled = false
     }
+    // the ksp plugin still registers its output dir, so stale output from builds where ksp ran would compile
+    val kspOutput = layout.buildDirectory.dir("generated/ksp").get().asFile
+    tasks.withType<KotlinCompile>().configureEach { exclude { it.file.startsWith(kspOutput) } }
+    tasks.withType<JavaCompile>().configureEach { exclude { it.file.startsWith(kspOutput) } }
 }
 
 group = rootProject.group

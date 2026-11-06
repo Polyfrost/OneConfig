@@ -67,6 +67,7 @@ object MidnightLibCompat {
 
         val tree = Tree.tree()
         tree.id = modid
+        ConfigEntrypoints.rememberConfigOwner(CompatLoader.findModByClass(config)?.id, tree.id)
         tree.title = mod?.name?.takeIf { it.isNotBlank() }
             ?: translateOrNull("$modid.midnightconfig.title")
             ?: modid

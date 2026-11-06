@@ -28,10 +28,12 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
@@ -109,6 +111,243 @@ class CompatSnapshotsTest {
             assertEquals(Boolean.FALSE, property.get(), "the captured default must not overwrite the mod's reset");
         } finally {
             defaults().remove(TREE_ID);
+        }
+    }
+
+    @Test
+    void aTurnedOffModsCallbacksSitOutANewProfileWhichGivesItItsDefaultsOnceBack() throws Exception {
+        String id = TREE_ID + "_off";
+        String profile = "compat-off-profile";
+        Property<Boolean> property = Properties.simple("enabled", "Enabled", "", true);
+        property.addMetadata("default", Boolean.FALSE);
+        Tree tree = Tree.tree(id).put(property);
+        int[] called = {0, 0};
+        tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> {
+            called[0]++;
+            property.setAs(false);
+        });
+        tree.addMetadata("custom_save", (Runnable) () -> called[1]++);
+        CompatSnapshots.register(tree);
+        try {
+            called[1] = 0;
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.createProfile(profile);
+
+            assertEquals(0, called[0], "the mod's reset hook is its code, which is off");
+            assertEquals(0, called[1], "the mod's save hook is its code, which is off");
+            assertEquals(Boolean.TRUE, property.get());
+
+            ConfigManager.setOff(Set.of());
+
+            assertEquals(1, called[0], "the mod's reset hook runs once it's back");
+            assertEquals(Boolean.FALSE, property.get(), "a new profile starts from the defaults");
+            assertTrue(called[1] > 0, "what the profile changed reaches the mod's own save");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aTurnedOffModsUnsavedChangeWaitsForItToComeBack() {
+        String id = TREE_ID + "_off_save";
+        Property<Boolean> property = Properties.simple("enabled", "Enabled", "", true);
+        Tree tree = Tree.tree(id).put(property);
+        int[] saves = {0};
+        tree.addMetadata("custom_save", (Runnable) () -> saves[0]++);
+        CompatSnapshots.register(tree);
+        try {
+            saves[0] = 0;
+            // the snapshot of an earlier run can already have set the other value
+            property.setAs(!property.get());
+            ConfigManager.setOff(Set.of(id));
+
+            ConfigManager.active().saveAll();
+            assertEquals(0, saves[0], "the mod's save hook is its code, which is off");
+
+            ConfigManager.setOff(Set.of());
+            ConfigManager.active().saveAll();
+            assertEquals(1, saves[0], "the change was still never written");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    // a mod's own screen writes to its options without going through their callbacks
+    private static Property<Integer> offModProperty(String id) {
+        Property<Integer> property = Properties.simple("value", "Value", "", 1);
+        CompatSnapshots.register(Tree.tree(id).put(property));
+        return property;
+    }
+
+    @Test
+    void aChangeInAModsOwnScreenStaysWithTheProfileItWentOffIn() {
+        String id = TREE_ID + "_off_native";
+        String other = "compat-off-native-profile";
+        Property<Integer> property = offModProperty(id);
+        try {
+            ConfigManager.createProfile(other);
+            property.setAs(2);
+            ConfigManager.openProfile("");
+
+            property.setAsSilently(3);
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.openProfile(other);
+            ConfigManager.setOff(Set.of());
+            assertEquals(2, property.get(), "the profile it came back in keeps its own value");
+
+            ConfigManager.openProfile("");
+            assertEquals(3, property.get(), "the profile it went off in keeps the change");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(other);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aChangeInAModsOwnScreenFollowsARenameWhileItIsOff() {
+        String id = TREE_ID + "_off_renamed";
+        String profile = "compat-off-rename-profile";
+        String renamed = "compat-off-renamed-profile";
+        Property<Integer> property = offModProperty(id);
+        try {
+            ConfigManager.createProfile(profile);
+            property.setAsSilently(3);
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.renameProfile(profile, renamed);
+            ConfigManager.openProfile("");
+            ConfigManager.setOff(Set.of());
+
+            ConfigManager.openProfile(renamed);
+            assertEquals(3, property.get());
+            assertFalse(Files.exists(ConfigManager.profileDir(profile)));
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(renamed);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aProfileDeletedWhileItsModIsOffIsNotBroughtBack() {
+        String id = TREE_ID + "_off_deleted";
+        String profile = "compat-off-deleted-profile";
+        offModProperty(id);
+        try {
+            ConfigManager.createProfile(profile);
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.deleteProfile(profile);
+            ConfigManager.setOff(Set.of());
+
+            assertFalse(Files.exists(ConfigManager.profileDir(profile)));
+        } finally {
+            ConfigManager.setOff(Set.of());
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aProfileCreatedWhileAModIsOffGetsItsOwnResetOnceBackWhereverItComesBack() {
+        String id = TREE_ID + "_off_reset";
+        String created = "compat-off-reset-profile";
+        // the hook is all that knows the defaults, so what was captured is only whatever the mod held
+        Property<Integer> property = Properties.simple("value", "Value", "", 5);
+        Tree tree = Tree.tree(id).put(property);
+        tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> property.setAs(0));
+        CompatSnapshots.register(tree);
+        try {
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.createProfile(created);
+            ConfigManager.openProfile("");
+            ConfigManager.setOff(Set.of());
+            assertEquals(5, property.get(), "the profile it came back in keeps its own value");
+
+            ConfigManager.openProfile(created);
+            assertEquals(0, property.get(), "the new profile starts from what the mod's reset hook says");
+
+            ConfigManager.openProfile("");
+            assertEquals(5, property.get(), "the hook ran for the new profile alone");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(created);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aTreeUnderATemporaryIdKeepsTheSnapshotsOfTheIdItStandsInFor() {
+        String id = TREE_ID + "_copied";
+        String copy = id + "_live1";
+        String profile = "compat-copy-profile";
+        Property<Integer> property = offModProperty(id);
+        try {
+            ConfigManager.createProfile(profile);
+            property.setAs(2);
+            ConfigManager.openProfile("");
+            property.setAs(3);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+
+            CompatSnapshots.setSnapshotIds(treeId -> treeId.equals(copy) ? id : treeId);
+            Property<Integer> copied = Properties.simple("value", "Value", "", 3);
+            CompatSnapshots.register(Tree.tree(copy).put(copied));
+
+            ConfigManager.openProfile(profile);
+            assertEquals(2, copied.get(), "the copy restores what the profile saved before the update");
+
+            copied.setAs(4);
+            ConfigManager.openProfile("");
+            ConfigManager.openProfile(profile);
+            assertEquals(4, copied.get());
+        } finally {
+            CompatSnapshots.setSnapshotIds(null);
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            CompatSnapshots.untrack(id);
+            CompatSnapshots.untrack(copy);
+            ConfigManager.active().unregister(id);
+            ConfigManager.active().unregister(copy);
+        }
+    }
+
+    @Test
+    void aTreeRegisteredUnderAnOffIdIsNotOff() throws Exception {
+        String id = TREE_ID + "_off_replaced";
+        String profile = "compat-off-replaced-profile";
+        boolean[] oldReset = {false};
+        boolean[] replacementReset = {false};
+        Tree old = Tree.tree(id).put(Properties.simple("enabled", "Enabled", "", true));
+        old.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> oldReset[0] = true);
+        CompatSnapshots.register(old);
+        try {
+            ConfigManager.setOff(Set.of(id));
+            Tree replacement = Tree.tree(id).put(Properties.simple("enabled", "Enabled", "", true));
+            replacement.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> replacementReset[0] = true);
+            CompatSnapshots.register(replacement);
+
+            ConfigManager.createProfile(profile);
+
+            assertFalse(oldReset[0]);
+            assertTrue(replacementReset[0], "only the instance that was registered when its mod went off is off");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
         }
     }
 

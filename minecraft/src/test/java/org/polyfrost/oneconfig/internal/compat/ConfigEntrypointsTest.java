@@ -1,7 +1,20 @@
 package org.polyfrost.oneconfig.internal.compat;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -153,5 +166,257 @@ class ConfigEntrypointsTest {
     }
 
     static class Derived extends Base {
+    }
+
+    private static ModContainer mod(String id, String... provides) {
+        ClassLoader loader = ConfigEntrypointsTest.class.getClassLoader();
+        ModMetadata metadata = (ModMetadata) Proxy.newProxyInstance(loader, new Class<?>[]{ModMetadata.class},
+                (proxy, method, args) -> method.getName().equals("getProvides") ? List.of(provides) : id);
+        return (ModContainer) Proxy.newProxyInstance(loader, new Class<?>[]{ModContainer.class}, (proxy, method, args) -> metadata);
+    }
+
+    @Test
+    void theSameContainersAreNoChange() {
+        ModContainer lib = mod("lib");
+        assertFalse(ConfigEntrypoints.modsChanged(List.of(lib), Map.of("lib", lib)));
+    }
+
+    @Test
+    void anAddedModIsAChange() {
+        ModContainer lib = mod("lib");
+        assertTrue(ConfigEntrypoints.modsChanged(List.of(lib, mod("added")), Map.of("lib", lib)));
+    }
+
+    @Test
+    void addedAndReplacedModsAreChangedIds() {
+        ModContainer kept = mod("kept");
+        assertEquals(
+                Set.of("added", "replaced"),
+                ConfigEntrypoints.changedIds(Map.of("kept", kept, "added", mod("added"), "replaced", mod("replaced")), Map.of("kept", kept, "replaced", mod("replaced")))
+        );
+    }
+
+    @Test
+    void aModStaysOffUntilTheLoaderListsItAgain() {
+        ModContainer kept = mod("kept");
+        ModContainer lib = mod("lib");
+        Map<String, ModContainer> without = Map.of("kept", kept);
+        Map<String, ModContainer> with = Map.of("kept", kept, "lib", lib);
+
+        Set<String> off = ConfigEntrypoints.offAfter(Set.of(), without, with);
+        assertEquals(Set.of("lib"), off);
+        assertEquals(Set.of("lib"), ConfigEntrypoints.offAfter(off, without, without));
+
+        Set<String> back = ConfigEntrypoints.offAfter(off, with, without);
+        assertEquals(Set.of(), back);
+        assertEquals(Set.of("lib"), ConfigEntrypoints.offAfter(back, without, with));
+    }
+
+    @Test
+    void anUpdateRunsOnlyTheEntrypointsItAddedToADecidedMod() {
+        Set<String> ran = Set.of(ConfigEntrypoints.entrypointKey("mod", "old"));
+        assertTrue(ConfigEntrypoints.needsRunning("mod", "new", Set.of("mod"), Set.of(), ran));
+        assertFalse(ConfigEntrypoints.needsRunning("mod", "old", Set.of("mod"), Set.of(), ran));
+    }
+
+    @Test
+    void aModThatFellBackToItsOriginalWaitsForAChangeToRetry() {
+        assertFalse(ConfigEntrypoints.needsRunning("mod", "old", Set.of(), Set.of("mod"), Set.of()));
+        assertTrue(ConfigEntrypoints.needsRunning("mod", "old", Set.of(), Set.of(), Set.of(ConfigEntrypoints.entrypointKey("mod", "old"))));
+    }
+
+    @Test
+    void aModIsRetriedOnlyOnceItsContainerChanged() {
+        ModContainer failing = mod("mod");
+        Map<String, ModContainer> last = Map.of("mod", failing);
+        Set<String> failed = Set.of("mod");
+        Set<String> providers = Set.of("mod");
+
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(providers, failed, Map.of(), last), "it is off");
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(providers, failed, Map.of("mod", failing), last), "turned back on as it was");
+        assertEquals(Set.of("mod"), ConfigEntrypoints.retriedIds(providers, failed, Map.of("mod", mod("mod")), last), "updated, whether on or off");
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(providers, Set.of(), Map.of("mod", mod("mod")), last), "it never failed");
+        assertEquals(Set.of(), ConfigEntrypoints.retriedIds(Set.of(), failed, Map.of("mod", mod("mod")), last), "its entrypoint is gone");
+    }
+
+    @Test
+    void anOffModHidesItsCardsAndConfigs() {
+        assertEquals(
+                Set.of("lib", "lib.json", "custom.json"),
+                ConfigEntrypoints.offConfigIds(Set.of("lib"), Map.of("lib", Set.of("custom.json"), "kept", Set.of("kept.json")))
+        );
+    }
+
+    @Test
+    void anOffModHidesATreeExtractedUnderAnotherId() {
+        ConfigEntrypoints.rememberConfigOwner("extracted-mod", "extracted-tree");
+        assertTrue(ConfigEntrypoints.offConfigIds(Set.of("extracted-mod"), ConfigEntrypoints.modConfigs).contains("extracted-tree"));
+        assertFalse(ConfigEntrypoints.offConfigIds(Set.of("other-mod"), ConfigEntrypoints.modConfigs).contains("extracted-tree"));
+    }
+
+    @Test
+    void aLiveCopyKeepsTheSnapshotsOfTheModItReplaces() {
+        Map<String, ModContainer> mods = Map.of(
+                "example_live1", mod("example_live1", "alias", "example"),
+                "other", mod("other", "provided")
+        );
+        Set<String> off = Set.of("example");
+        assertEquals("example", ConfigEntrypoints.snapshotId("example_live1", mods, off));
+        assertEquals("example-extra", ConfigEntrypoints.snapshotId("example_live1-extra", mods, off), "extracted under an id made from the mod's");
+        assertEquals("custom.json", ConfigEntrypoints.snapshotId("custom.json", mods, off), "an id of the config's own doesn't change with the mod's");
+        assertEquals("other", ConfigEntrypoints.snapshotId("other", mods, off), "what a mod merely provides was never a mod");
+    }
+
+    @Test
+    void aLiveCopyTakesOverOnlyTheConfigsItMakesAgain() {
+        Map<String, Set<String>> configs = new HashMap<>();
+        configs.put("example", new HashSet<>(Set.of("example.json", "dropped.json")));
+        configs.put("example_live1", new HashSet<>(Set.of("example.json")));
+        Map<String, String> owners = new HashMap<>(Map.of("example.json", "example", "dropped.json", "example", "other.json", "other"));
+
+        ConfigEntrypoints.handOver(List.of("example"), "example_live1", "example.json", configs, owners);
+        ConfigEntrypoints.handOver(List.of("example"), "example_live1", "other.json", configs, owners);
+
+        assertEquals("example_live1", owners.get("example.json"));
+        assertEquals("example", owners.get("dropped.json"));
+        assertEquals("other", owners.get("other.json"));
+        assertEquals(Set.of("example", "dropped.json"), ConfigEntrypoints.offConfigIds(Set.of("example"), configs));
+    }
+
+    @Test
+    void anOffModsConfigStaysOffWhenALibraryOwnsItsClass() {
+        Map<String, Set<String>> configs = Map.of("mod", Set.of("mod.json"), "library", Set.of("mod.json"));
+        assertEquals(Set.of("mod", "mod.json"), ConfigEntrypoints.offConfigIds(Set.of("mod"), configs));
+    }
+
+    @Test
+    void aChangesCopyReplacesOnlyTheOffModItProvides() {
+        Map<String, ModContainer> mods = Map.of(
+                "example_live1", mod("example_live1", "example", "alias"),
+                "added", mod("added", "kept")
+        );
+        assertEquals(Set.of("example"), ConfigEntrypoints.replacedBy(Set.of("example_live1", "added"), Set.of("example", "other"), mods));
+    }
+
+    @Test
+    void aNativeConfigKeepingTheIdStillUntracksTheSnapshot() throws ReflectiveOperationException {
+        String id = "drop-extracted-test";
+        Field known = CompatSnapshots.class.getDeclaredField("known");
+        known.setAccessible(true);
+        Map<?, ?> tracked = (Map<?, ?>) known.get(CompatSnapshots.INSTANCE);
+        CompatSnapshots.track(Tree.tree(id));
+        ConfigEntrypoints.treeOwners.put(id, id);
+        try {
+            assertTrue(tracked.containsKey(id));
+            ConfigEntrypoints.dropExtracted(id);
+            assertFalse(tracked.containsKey(id));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            CompatSnapshots.untrack(id);
+        }
+    }
+
+    @Test
+    void aTreeExtractedUnderAnotherIdIsDroppedWithItsSnapshot() throws ReflectiveOperationException {
+        String modId = "drop-extracted-other-mod";
+        String id = "drop-extracted-other-tree";
+        Field known = CompatSnapshots.class.getDeclaredField("known");
+        known.setAccessible(true);
+        Map<?, ?> tracked = (Map<?, ?>) known.get(CompatSnapshots.INSTANCE);
+        CompatSnapshots.register(Tree.tree(id));
+        ConfigEntrypoints.rememberConfigOwner(modId, id);
+        try {
+            ConfigEntrypoints.dropExtracted(modId);
+            assertFalse(ConfigManager.active().exists(id));
+            assertFalse(tracked.containsKey(id));
+        } finally {
+            ConfigEntrypoints.modConfigs.remove(modId);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aCompatTreeAnEntrypointRegisteredItselfStays() throws ReflectiveOperationException {
+        String modId = "drop-extracted-owned-mod";
+        String id = "drop-extracted-owned-tree";
+        Field known = CompatSnapshots.class.getDeclaredField("known");
+        known.setAccessible(true);
+        Map<?, ?> tracked = (Map<?, ?>) known.get(CompatSnapshots.INSTANCE);
+        CompatSnapshots.register(Tree.tree(id));
+        ConfigEntrypoints.rememberConfigOwner(modId, id);
+        ConfigEntrypoints.treeOwners.put(id, modId);
+        try {
+            ConfigEntrypoints.dropExtracted(modId);
+            assertTrue(ConfigManager.active().exists(id));
+            assertTrue(tracked.containsKey(id));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            ConfigEntrypoints.modConfigs.remove(modId);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aModTheLoaderDroppedIsRemoved() {
+        ModContainer kept = mod("kept");
+        assertEquals(Set.of("off"), ConfigEntrypoints.removedIds(Map.of("kept", kept), Map.of("kept", kept, "off", mod("off"))));
+    }
+
+    static class LibraryConfig extends Config {
+        LibraryConfig(String id) {
+            super(id, "Library", Category.OTHER);
+        }
+    }
+
+    @Test
+    void aLibraryConfigAnEntrypointRegisteredBelongsToThatMod() {
+        String id = "late-config-claimed-test";
+        Config library = new LibraryConfig(id);
+        ConfigEntrypoints.treeOwners.put(id, "mod");
+        try {
+            assertTrue(ConfigEntrypoints.lateConfigs(Set.of("mod")).test(library));
+            assertFalse(ConfigEntrypoints.lateConfigs(Set.of("other")).test(library));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            ConfigManager.cancelInitialization(library);
+        }
+    }
+
+    @Test
+    void claimingAnIdInTheWindowDoesNotTakeAConfigFromAnotherMod() {
+        String id = "late-config-unclaimed-test";
+        Config theirs = new LibraryConfig(id);
+        Predicate<Config> late = ConfigEntrypoints.lateConfigs(Set.of("mod"));
+        ConfigEntrypoints.treeOwners.put(id, "mod");
+        try {
+            assertFalse(late.test(theirs));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            ConfigManager.cancelInitialization(theirs);
+        }
+    }
+
+    @Test
+    void aLibraryChangingLeavesAConfigAnotherModRegisteredAlone() {
+        assertFalse(ConfigEntrypoints.isLate("id", "mod", "library", Set.of("library"), Map.of()));
+        assertTrue(ConfigEntrypoints.isLate("id", "mod", "library", Set.of("mod"), Map.of()));
+        assertTrue(ConfigEntrypoints.isLate("id", null, "library", Set.of("library"), Map.of()));
+    }
+
+    @Test
+    void aConfigWhoseClassAnUpdateRemovedStaysWithItsMod() {
+        Map<String, Set<String>> configs = Map.of("mod", Set.of("id"), "library", Set.of("id"));
+        assertTrue(ConfigEntrypoints.isLate("id", null, null, Set.of("mod"), configs));
+        assertFalse(ConfigEntrypoints.isLate("id", null, null, Set.of("other"), configs));
+        // what was noted is only for when nothing better can tell
+        assertFalse(ConfigEntrypoints.isLate("id", "other", null, Set.of("mod"), configs));
+        assertFalse(ConfigEntrypoints.isLate("id", null, "other", Set.of("mod"), configs));
+    }
+
+    @Test
+    void aContainerReplacedUnderTheSameIdIsAChange() {
+        assertTrue(ConfigEntrypoints.modsChanged(List.of(mod("lib")), Map.of("lib", mod("lib"))));
     }
 }
