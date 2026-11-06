@@ -5,11 +5,13 @@ import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -263,6 +265,40 @@ class ConfigEntrypointsTest {
                         Set.of("fixed", "fine", "unchanged", "dropped")
                 )
         );
+    }
+
+    static class LibraryConfig extends Config {
+        LibraryConfig(String id) {
+            super(id, "Library", Category.OTHER);
+        }
+    }
+
+    @Test
+    void aLibraryConfigAnEntrypointRegisteredBelongsToThatMod() {
+        String id = "late-config-claimed-test";
+        Config library = new LibraryConfig(id);
+        ConfigEntrypoints.treeOwners.put(id, "mod");
+        try {
+            assertTrue(ConfigEntrypoints.lateConfigs(Set.of("mod")).test(library));
+            assertFalse(ConfigEntrypoints.lateConfigs(Set.of("other")).test(library));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            ConfigManager.cancelInitialization(library);
+        }
+    }
+
+    @Test
+    void claimingAnIdInTheWindowDoesNotTakeAConfigFromAnotherMod() {
+        String id = "late-config-unclaimed-test";
+        Config theirs = new LibraryConfig(id);
+        Predicate<Config> late = ConfigEntrypoints.lateConfigs(Set.of("mod"));
+        ConfigEntrypoints.treeOwners.put(id, "mod");
+        try {
+            assertFalse(late.test(theirs));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            ConfigManager.cancelInitialization(theirs);
+        }
     }
 
     @Test

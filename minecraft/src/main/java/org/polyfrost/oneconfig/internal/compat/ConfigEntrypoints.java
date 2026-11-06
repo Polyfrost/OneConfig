@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
@@ -647,8 +648,7 @@ public final class ConfigEntrypoints {
     }
 
     private static void finishLate(Runnable creator) {
-        Set<String> ids = lateIds;
-        if (ConfigManager.initializeLate(config -> ownedBy(config, ids), creator)) return;
+        if (ConfigManager.initializeLate(lateConfigs(lateIds), creator)) return;
         lateIds = Set.of();
         decidePending();
         //? modmenu_compat
@@ -680,6 +680,16 @@ public final class ConfigEntrypoints {
     private static boolean ownedBy(Config config, Set<String> ids) {
         ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
         return owner != null && ids.contains(owner.getId());
+    }
+
+    // an entrypoint can register a library's config class as its mod's own, so the id's owner counts as well as the class's
+    // read up front, as an entrypoint running in the window claiming an id must not make another mod's config its own
+    static Predicate<Config> lateConfigs(Set<String> ids) {
+        Map<String, String> owners = new HashMap<>(treeOwners);
+        return config -> {
+            String owner = owners.get(config.id);
+            return owner != null && ids.contains(owner) || ownedBy(config, ids);
+        };
     }
 
     private static boolean awaitsLateWindow(Config config) {
