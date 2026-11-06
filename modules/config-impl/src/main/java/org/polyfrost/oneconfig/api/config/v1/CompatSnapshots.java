@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -163,8 +164,27 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             if (ids.contains(tree.getID())) continue;
             String held = off.remove(tree);
             tree.removeMetadata(Backend.CUSTOM_SAVE_HELD_METADATA);
-            if (!profile.equals(held) && known.get(tree.getID()) == tree) dispatchApply(tree, profile);
+            if (!profile.equals(held) && known.get(tree.getID()) == tree) dispatchCatchUp(tree, held, profile);
         }
+    }
+
+    private void dispatchCatchUp(Tree tree, String held, String profile) {
+        dispatcher.accept(() -> {
+            try {
+                // what its mod's own screen changed without a callback before it went off belongs to the profile it held
+                if (profileExists(held) && !store.hasLoadFailure(held)) {
+                    captureAll(tree, held);
+                    flushForLifecycle(store, held);
+                }
+                applyProfile(tree, profile);
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("Failed to catch compat snapshot '{}' up with profile '{}'", tree.getID(), profile, t);
+            }
+        });
+    }
+
+    private static boolean profileExists(String profile) {
+        return profile.isEmpty() || Files.isDirectory(ConfigManager.profileDir(profile));
     }
 
     // shortcut: a mod's own reset hook can't run while it's off so the captured defaults stand in for it, run the hook
@@ -247,6 +267,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     @Override
     public void onProfileRenamed(String oldProfile, String newProfile) {
         if (oldProfile.equals(currentProfile)) currentProfile = newProfile;
+        off.replaceAll((tree, held) -> oldProfile.equals(held) ? newProfile : held);
         try {
             store.renameProfile(oldProfile, newProfile);
         } catch (IOException e) {

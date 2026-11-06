@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -166,6 +167,85 @@ class CompatSnapshotsTest {
             ConfigManager.setOff(Set.of());
             ConfigManager.active().saveAll();
             assertEquals(1, saves[0], "the change was still never written");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    // a mod's own screen writes to its options without going through their callbacks
+    private static Property<Integer> offModProperty(String id) {
+        Property<Integer> property = Properties.simple("value", "Value", "", 1);
+        CompatSnapshots.register(Tree.tree(id).put(property));
+        return property;
+    }
+
+    @Test
+    void aChangeInAModsOwnScreenStaysWithTheProfileItWentOffIn() {
+        String id = TREE_ID + "_off_native";
+        String other = "compat-off-native-profile";
+        Property<Integer> property = offModProperty(id);
+        try {
+            ConfigManager.createProfile(other);
+            property.setAs(2);
+            ConfigManager.openProfile("");
+
+            property.setAsSilently(3);
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.openProfile(other);
+            ConfigManager.setOff(Set.of());
+            assertEquals(2, property.get(), "the profile it came back in keeps its own value");
+
+            ConfigManager.openProfile("");
+            assertEquals(3, property.get(), "the profile it went off in keeps the change");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(other);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aChangeInAModsOwnScreenFollowsARenameWhileItIsOff() {
+        String id = TREE_ID + "_off_renamed";
+        String profile = "compat-off-rename-profile";
+        String renamed = "compat-off-renamed-profile";
+        Property<Integer> property = offModProperty(id);
+        try {
+            ConfigManager.createProfile(profile);
+            property.setAsSilently(3);
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.renameProfile(profile, renamed);
+            ConfigManager.openProfile("");
+            ConfigManager.setOff(Set.of());
+
+            ConfigManager.openProfile(renamed);
+            assertEquals(3, property.get());
+            assertFalse(Files.exists(ConfigManager.profileDir(profile)));
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(renamed);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aProfileDeletedWhileItsModIsOffIsNotBroughtBack() {
+        String id = TREE_ID + "_off_deleted";
+        String profile = "compat-off-deleted-profile";
+        offModProperty(id);
+        try {
+            ConfigManager.createProfile(profile);
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.deleteProfile(profile);
+            ConfigManager.setOff(Set.of());
+
+            assertFalse(Files.exists(ConfigManager.profileDir(profile)));
         } finally {
             ConfigManager.setOff(Set.of());
             CompatSnapshots.untrack(id);
