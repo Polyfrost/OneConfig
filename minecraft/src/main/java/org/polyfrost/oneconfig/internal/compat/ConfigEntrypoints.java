@@ -410,12 +410,21 @@ public final class ConfigEntrypoints {
 
     // for any mod decided late, as one gaining its first entrypoint never failed but can still have a card from before
     static void dropExtracted(String modId) {
-        // a native config under this id already took the tree over, but the snapshot would still apply on profile changes
-        CompatSnapshots.untrack(modId);
+        // adapters can extract under an id of the config's own, such as a ResourcefulConfig id
+        Set<String> ids = new HashSet<>(modConfigs.getOrDefault(modId, Set.of()));
+        ids.add(modId);
         ConfigManager manager = ConfigManager.active();
-        if (treeOwners.containsKey(modId) || !manager.exists(modId) || !Boolean.TRUE.equals(manager.get(modId).getMetadata(Backend.UI_ONLY_METADATA))) return;
-        manager.unregister(modId);
-        ConfigRegistry.INSTANCE.unregister(modId);
+        for (String id : ids) {
+            Tree tree = manager.exists(id) ? manager.get(id) : null;
+            boolean owned = treeOwners.containsKey(id);
+            // what an entrypoint registered through compat itself is not what this is dropping
+            if (owned && tree != null && Boolean.TRUE.equals(tree.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))) continue;
+            // a native config under this id already took the tree over, but the snapshot would still apply on profile changes
+            CompatSnapshots.untrack(id);
+            if (owned || tree == null || !Boolean.TRUE.equals(tree.getMetadata(Backend.UI_ONLY_METADATA))) continue;
+            manager.unregister(id);
+            ConfigRegistry.INSTANCE.unregister(id);
+        }
     }
 
     private static void fallBackToOriginal(String modId) {

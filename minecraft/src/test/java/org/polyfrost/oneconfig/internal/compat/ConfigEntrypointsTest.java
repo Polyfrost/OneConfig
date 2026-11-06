@@ -290,6 +290,48 @@ class ConfigEntrypointsTest {
     }
 
     @Test
+    void aTreeExtractedUnderAnotherIdIsDroppedWithItsSnapshot() throws ReflectiveOperationException {
+        String modId = "drop-extracted-other-mod";
+        String id = "drop-extracted-other-tree";
+        Field known = CompatSnapshots.class.getDeclaredField("known");
+        known.setAccessible(true);
+        Map<?, ?> tracked = (Map<?, ?>) known.get(CompatSnapshots.INSTANCE);
+        CompatSnapshots.register(Tree.tree(id));
+        ConfigEntrypoints.rememberConfigOwner(modId, id);
+        try {
+            ConfigEntrypoints.dropExtracted(modId);
+            assertFalse(ConfigManager.active().exists(id));
+            assertFalse(tracked.containsKey(id));
+        } finally {
+            ConfigEntrypoints.modConfigs.remove(modId);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aCompatTreeAnEntrypointRegisteredItselfStays() throws ReflectiveOperationException {
+        String modId = "drop-extracted-owned-mod";
+        String id = "drop-extracted-owned-tree";
+        Field known = CompatSnapshots.class.getDeclaredField("known");
+        known.setAccessible(true);
+        Map<?, ?> tracked = (Map<?, ?>) known.get(CompatSnapshots.INSTANCE);
+        CompatSnapshots.register(Tree.tree(id));
+        ConfigEntrypoints.rememberConfigOwner(modId, id);
+        ConfigEntrypoints.treeOwners.put(id, modId);
+        try {
+            ConfigEntrypoints.dropExtracted(modId);
+            assertTrue(ConfigManager.active().exists(id));
+            assertTrue(tracked.containsKey(id));
+        } finally {
+            ConfigEntrypoints.treeOwners.remove(id);
+            ConfigEntrypoints.modConfigs.remove(modId);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
     void aModTheLoaderDroppedIsRemoved() {
         ModContainer kept = mod("kept");
         assertEquals(Set.of("off"), ConfigEntrypoints.removedIds(Map.of("kept", kept), Map.of("kept", kept, "off", mod("off"))));
