@@ -249,8 +249,11 @@ object HotwireUpdates {
     }
 }
 
-/** Extracted icon path per mod id kept across scrolling so each jar is only read once */
-private val iconPaths = HashMap<String, String?>()
+/**
+ * Extracted icon path per mod kept across scrolling so each jar is only read once; by the whole [ModInfo] as a mod kept
+ * off since launch has no jar until it's turned on
+ */
+private val iconPaths = HashMap<ModInfo, String?>()
 
 /**
  * The mods the grid shows: the loader's live list, the mods seen earlier that Hotwire still knows about, and any
@@ -714,11 +717,9 @@ private fun HotwireTile(
     onSelect: () -> Unit,
 ) {
     val theme = LocalTheme.current
-    val icon by produceState(iconPaths[mod.id], mod.id) {
-        if (mod.id in iconPaths) return@produceState
-        val path = withContext(Dispatchers.IO) { runCatching { mod.extractIconFile() }.getOrNull() }
-        iconPaths[mod.id] = path
-        value = path
+    val icon by produceState(iconPaths[mod], mod) {
+        if (mod !in iconPaths) iconPaths[mod] = withContext(Dispatchers.IO) { runCatching { mod.extractIconFile() }.getOrNull() }
+        value = iconPaths[mod]
     }
     // mods Hotwire has turned off are greyed out but stay selectable so they can be turned back on
     val contentAlpha = if (on == false) 0.4f else 1f
