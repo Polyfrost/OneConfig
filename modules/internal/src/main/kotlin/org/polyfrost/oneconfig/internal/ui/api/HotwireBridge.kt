@@ -408,7 +408,8 @@ object HotwireBridge {
             ask("getTitle") as String,
             "",
             ask("getLines") as List<String>,
-            if (canAdd) listOf(now, later, save) else listOf(later, save),
+            // queueing skips what made Hotwire refuse, so an installed mod would start next to its own older jar
+            if (canAdd) listOf(now, later, save) else listOf(save),
             onCancel = { if (!accepted) ask("cancel") },
         )
     }

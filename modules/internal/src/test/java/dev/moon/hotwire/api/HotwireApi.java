@@ -2,6 +2,7 @@ package dev.moon.hotwire.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -14,9 +15,18 @@ public final class HotwireApi {
     public static ChangePlan plan;
     public static final List<PendingTask> PENDING = new ArrayList<>();
     public static final List<ModUpdate> UPDATES = new ArrayList<>();
+    public static StoreAdd storeAdd;
 
     public static HotwireApi getInstance() {
         return INSTANCE;
+    }
+
+    public CompletableFuture<Optional<StoreProject>> findStoreProject(StoreQuery query, String idOrSlug) {
+        return CompletableFuture.completedFuture(Optional.of(new StoreProject(List.of(new StoreProject.Version("version")))));
+    }
+
+    public CompletableFuture<StoreAdd> requestAdd(String idOrSlug, String versionId) {
+        return CompletableFuture.completedFuture(storeAdd);
     }
 
     public int getRevision() {
