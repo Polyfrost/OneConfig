@@ -24,7 +24,7 @@ mixin-squared = "0.3.7-beta.1"
 
 # Gradle
 detekt = "2.0.0-alpha.6"
-errorprone = "2.51.0"
+errorprone = "2.52.0"
 errorprone-plugin = "5.2.0"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)

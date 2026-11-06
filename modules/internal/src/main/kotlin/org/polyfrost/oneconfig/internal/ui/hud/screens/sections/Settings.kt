@@ -47,6 +47,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.hudHasPositionDefaults
 import org.polyfrost.oneconfig.internal.ui.hud.hudProperty
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
+import org.polyfrost.oneconfig.internal.ui.hud.screens.placementLabel
 import org.polyfrost.oneconfig.internal.ui.screens.HudConfigScreen
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -87,6 +88,15 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
         Section("Position", query, "Lock position", "Reset to default position") {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ResetHudPositionButton(hud)
+                hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(placementLabel(it), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+                        val resettingFollowsOtherMod = !it.moved && it.scaled
+                        if (resettingFollowsOtherMod) {
+                            Text("Reset position to follow it", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+                        }
+                    }
+                }
                 HudSettingTarget(hud, "locked") {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
