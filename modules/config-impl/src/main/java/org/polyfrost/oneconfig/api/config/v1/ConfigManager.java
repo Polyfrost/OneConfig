@@ -269,12 +269,19 @@ public final class ConfigManager {
             building = claimBuilt(added);
             Map<Config, Config> replaced = holdBackDuplicates(added);
             fromWindowCreator.clear();
+            // a replacement writes its own over these before it can fail
+            Map<String, byte[]> oldDefaults = new HashMap<>();
+            for (Config old : replaced.values()) {
+                oldDefaults.put(old.id, readDefaultsBackup(old.id));
+                backup().unregister(old.id);
+            }
             if (!pendingInitialization.isEmpty()) initializePending();
             replaced.forEach((replacement, old) -> {
                 // a replacement that built nothing must not cost the mod the config it already had
                 if (replacement.getTree() == null && old.getTree() != null) {
                     active().register(old.getTree());
                     markInitialized(old);
+                    writeDefaultsBackup(old.id, oldDefaults.get(old.id));
                 }
             });
         }
@@ -336,6 +343,26 @@ public final class ConfigManager {
         }
         for (Config replacement : replaced.keySet()) manager.unregister(replacement.id);
         return replaced;
+    }
+
+    private static byte @Nullable [] readDefaultsBackup(String id) {
+        Path file = backup().getFolder().resolve(id);
+        try {
+            return Files.exists(file) ? Files.readAllBytes(file) : null;
+        } catch (IOException e) {
+            LOGGER.error("Failed to read the defaults backup of config {}", id, e);
+            return null;
+        }
+    }
+
+    private static void writeDefaultsBackup(String id, byte @Nullable [] contents) {
+        Path file = backup().getFolder().resolve(id);
+        try {
+            if (contents == null) Files.deleteIfExists(file);
+            else Files.write(file, contents);
+        } catch (IOException e) {
+            LOGGER.error("Failed to restore the defaults backup of config {}", id, e);
+        }
     }
 
     @ApiStatus.Internal

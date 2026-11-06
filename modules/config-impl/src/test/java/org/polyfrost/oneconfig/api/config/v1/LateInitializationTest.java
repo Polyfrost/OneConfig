@@ -613,6 +613,56 @@ class LateInitializationTest {
     }
 
     @Test
+    void aReplacementThatFailsLeavesTheOlderDefaultsToResetTo() throws IOException {
+        String id = "late-initialization-failed-defaults-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            ConfigManager.initializeLate(config -> true, () -> new FailsOnceRegisteredConfig(id) {
+                {
+                    value = true;
+                }
+            });
+            old.restoreDefaults();
+
+            assertEquals(Boolean.FALSE, old.getProperty("value").get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(ConfigManager.backup().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aReplacementResetsToItsOwnDefaultsAfterTheOlderInstanceWasReset() throws IOException {
+        String id = "late-initialization-replaced-defaults-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.restoreDefaults();
+
+            AtomicReference<ValueConfig> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> replacement.set(new ValueConfig(id) {
+                {
+                    value = true;
+                }
+            }));
+            replacement.get().getProperty("value").setAs(false);
+            replacement.get().restoreDefaults();
+
+            assertEquals(Boolean.TRUE, replacement.get().getProperty("value").get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(ConfigManager.backup().getFolder().resolve(id));
+        }
+    }
+
+    @Test
     void aFailedSaveKeepsTheOlderInstanceAndItsUnsavedValues() throws IOException {
         String id = "late-initialization-unsaved-test.json";
         // a directory where the save writes its temporary file
