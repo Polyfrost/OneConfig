@@ -86,6 +86,8 @@ public final class ConfigManager {
     private static final Set<Config> createdAfterStartup = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     // the ones a coming window will claim, as their mod may keep no reference to them, the same as at startup
     private static final Set<Config> heldForLateWindow = Collections.synchronizedSet(new HashSet<>());
+    // what the running window's creator made or was handed, the only configs that can replace an older instance
+    private static final Set<Config> fromWindowCreator = Collections.newSetFromMap(new IdentityHashMap<>());
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
@@ -262,8 +264,13 @@ public final class ConfigManager {
             LATE_INITIALIZING.remove();
             // again, as a worker the creator started can have finished a config by now
             building = claimBuilt(added);
-            holdBackDuplicates();
+            Map<Config, Config> replaced = holdBackDuplicates(added);
+            fromWindowCreator.clear();
             if (!pendingInitialization.isEmpty()) initializePending();
+            replaced.forEach((replacement, old) -> {
+                // a replacement that built nothing must not cost the mod the config it already had
+                if (replacement.getTree() == null && old.getTree() != null) active().register(old.getTree());
+            });
         }
         return building;
     }
@@ -281,9 +288,9 @@ public final class ConfigManager {
         return building;
     }
 
-    private static void claim(Config config) {
+    private static boolean claim(Config config) {
         heldForLateWindow.remove(config);
-        if (createdAfterStartup.remove(config)) pendingInitialization.add(config);
+        return createdAfterStartup.remove(config) && pendingInitialization.add(config);
     }
 
     @ApiStatus.Internal
@@ -301,16 +308,35 @@ public final class ConfigManager {
         return true;
     }
 
-    private static synchronized void holdBackDuplicates() {
-        Set<String> ids = new HashSet<>(initializedConfigs.keySet());
+    /**
+     * Merging a second instance into a registered tree would overwrite its saved values with that instance's defaults,
+     * so duplicates wait unless an entrypoint of the mod that owns the older instance made them, as an update can move
+     * a mod's config there. Returns the older instance each such replacement takes over from.
+     */
+    private static synchronized Map<Config, Config> holdBackDuplicates(Predicate<Config> added) {
+        Map<Config, Config> replaced = new IdentityHashMap<>();
+        Set<String> ids = new HashSet<>();
         for (Config config : pendingInitialization) {
-            if (!ids.add(config.id) && pendingInitialization.remove(config)) createdAfterStartup.add(config);
+            Config old = initializedConfigs.get(config.id);
+            boolean replaces = old != null && fromWindowCreator.contains(config) && added.test(config) && added.test(old);
+            if ((old == null || replaces) && ids.add(config.id)) {
+                if (replaces) replaced.put(config, old);
+            } else if (pendingInitialization.remove(config)) {
+                createdAfterStartup.add(config);
+            }
         }
+        ConfigManager manager = active();
+        for (Config replacement : replaced.keySet()) {
+            // written first as the replacement loads its values from the file
+            if (manager.exists(replacement.id)) manager.save(replacement.id);
+            manager.unregister(replacement.id);
+        }
+        return replaced;
     }
 
     @ApiStatus.Internal
     public static void claimForLateInitialization(Config config) {
-        if (LATE_INITIALIZING.get()) claim(config);
+        if (LATE_INITIALIZING.get() && claim(config)) fromWindowCreator.add(config);
     }
 
     @ApiStatus.Internal
@@ -322,6 +348,7 @@ public final class ConfigManager {
             if (awaitingLateWindow.test(config)) heldForLateWindow.add(config);
         } else {
             pendingInitialization.add(config);
+            if (LATE_INITIALIZING.get()) fromWindowCreator.add(config);
         }
         for (ConfigSubmissionListener listener : submissionListeners) {
             try {

@@ -30,7 +30,23 @@ object MinecraftKeybindRegistrar {
         scannedTrees[tree] = true
         installRebindListener()
         val category = "${tree.localizedTitle()} (OneConfig)"
-        walk(tree, category)
+        walk(tree) { wire(it, category) }
+    }
+
+    /** Takes the keybinds [scan] registered for [tree] back out, other than any that [kept] holds too */
+    @JvmStatic
+    @JvmOverloads
+    fun unregister(tree: Tree, kept: Tree? = null) {
+        val keeping = kept?.let(::mirroredBinds).orEmpty()
+        (mirroredBinds(tree) - keeping).forEach { KeybindManager.unregister(it) }
+    }
+
+    private fun mirroredBinds(tree: Tree): Set<OneConfigKeybind> {
+        val binds = HashSet<OneConfigKeybind>()
+        walk(tree) { prop ->
+            if (prop.getMetadata<Any?>(NO_MIRROR_METADATA) == null) (prop.get() as? OneConfigKeybind)?.let(binds::add)
+        }
+        return binds
     }
 
     private fun installRebindListener() {
@@ -49,11 +65,11 @@ object MinecraftKeybindRegistrar {
         }
     }
 
-    private fun walk(tree: Tree, category: String) {
+    private fun walk(tree: Tree, action: (Property<*>) -> Unit) {
         for (node in tree.map.values) {
             when (node) {
-                is Tree -> walk(node, category)
-                is Property<*> -> wire(node, category)
+                is Tree -> walk(node, action)
+                is Property<*> -> action(node)
             }
         }
     }

@@ -339,6 +339,81 @@ class LateInitializationTest {
     }
 
     @Test
+    void anEntrypointOfTheUpdatedModReplacesItsOlderInstance() throws IOException {
+        String id = "late-initialization-replaced-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            AtomicReference<Config> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> replacement.set(new ValueConfig(id)));
+
+            assertSame(replacement.get().getTree(), ConfigManager.active().get(id));
+            assertEquals(Boolean.TRUE, replacement.get().getProperty("value").get());
+            assertTrue(ConfigManager.createdConfigs().contains(replacement.get()));
+            assertFalse(ConfigManager.createdConfigs().contains(old));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void anEntrypointCannotReplaceAConfigOfAnotherMod() throws IOException {
+        String id = "late-initialization-other-mod-test.json";
+        try {
+            ValueConfig theirs = new ValueConfig(id);
+            finishStartup();
+
+            AtomicReference<Config> mine = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> config != theirs, () -> mine.set(new ValueConfig(id)));
+
+            assertNull(mine.get().getTree());
+            assertSame(theirs.getTree(), ConfigManager.active().get(id));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aTemporaryCopyOfTheUpdatedModDoesNotReplaceIt() throws IOException {
+        String id = "late-initialization-temporary-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+
+            Config copy = new ValueConfig(id);
+            ConfigManager.initializeLate(config -> true, () -> {
+            });
+
+            assertNull(copy.getTree());
+            assertSame(old.getTree(), ConfigManager.active().get(id));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aReplacementThatFailsLeavesTheOlderInstanceRegistered() throws IOException {
+        String id = "late-initialization-failed-replacement-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+
+            ConfigManager.initializeLate(config -> true, () -> new FailingConfig(id));
+
+            assertSame(old.getTree(), ConfigManager.active().get(id));
+            assertTrue(ConfigManager.createdConfigs().contains(old));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
     void aSecondInstanceInTheWindowKeepsSavedValues() throws IOException {
         String id = "late-initialization-duplicate-test.json";
         Files.write(ConfigManager.active().getFolder().resolve(id), "{\"value\": true}".getBytes(StandardCharsets.UTF_8));

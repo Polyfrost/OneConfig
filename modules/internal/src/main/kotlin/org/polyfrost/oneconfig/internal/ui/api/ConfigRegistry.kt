@@ -151,6 +151,8 @@ object ConfigRegistry {
         onOpen: (() -> Unit)? = null,
         bumpRevision: Boolean = true
     ): Boolean {
+        // a config replaced after its mod updated leaves binds behind that would fire alongside the new ones
+        tree.id?.let(::findTree)?.takeIf { it !== tree }?.let { MinecraftKeybindRegistrar.unregister(it, kept = tree) }
         MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
         if (tree.id == null || tree.title == null) return false
         if (tree.getMetadata<Any?>("hidden") != null) return false
