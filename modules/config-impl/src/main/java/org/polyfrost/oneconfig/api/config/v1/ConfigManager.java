@@ -80,6 +80,8 @@ public final class ConfigManager {
     private static final ConfigManager backup = new ConfigManager(Paths.get("oneconfig", "backup"), NightConfigSerializer.ALL);
     private static ConfigManager active;
     private static boolean initialized = false;
+    // unlike initialized, which Hotwire clears while it starts a mod it added and sets again through initialize()
+    private static volatile boolean startedUp = false;
     private static boolean isFirstRun = false;
     private static final Queue<Config> pendingInitialization = new ConcurrentLinkedQueue<>();
     // weak so configs no late window claims, such as a mod's temporary ones, aren't kept for the whole session
@@ -87,7 +89,8 @@ public final class ConfigManager {
     // the ones a coming window will claim, as their mod may keep no reference to them, the same as at startup
     private static final Set<Config> heldForLateWindow = Collections.synchronizedSet(new HashSet<>());
     // what the running window's creator made or was handed, the only configs that can replace an older instance
-    private static final Set<Config> fromWindowCreator = Collections.newSetFromMap(new IdentityHashMap<>());
+    // also what a mod Hotwire started made, for the window after that, which is also what keeps those alive until then
+    private static final Set<Config> fromWindowCreator = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static Set<String> offConfigIds = Set.of();
     // the configs of turned off mods that sat out a profile switch
@@ -228,6 +231,8 @@ public final class ConfigManager {
             return;
         }
         initialized = true;
+        if (startedUp) holdBackDuplicates(config -> false);
+        startedUp = true;
         initializePending();
     }
 
@@ -379,7 +384,7 @@ public final class ConfigManager {
             if (awaitingLateWindow.test(config)) heldForLateWindow.add(config);
         } else {
             pendingInitialization.add(config);
-            if (LATE_INITIALIZING.get()) fromWindowCreator.add(config);
+            if (startedUp || LATE_INITIALIZING.get()) fromWindowCreator.add(config);
         }
         for (ConfigSubmissionListener listener : submissionListeners) {
             try {
@@ -435,7 +440,8 @@ public final class ConfigManager {
     }
 
     static boolean isPendingInitialization(Config config) {
-        return pendingInitialization.contains(config) || createdAfterStartup.contains(config) && awaitingLateWindow.test(config);
+        return pendingInitialization.contains(config)
+                || createdAfterStartup.contains(config) && (fromWindowCreator.contains(config) || awaitingLateWindow.test(config));
     }
 
     /**
@@ -447,7 +453,7 @@ public final class ConfigManager {
         synchronized (ConfigManager.class) {
             old = initializedConfigs.get(config.id);
         }
-        return initialized && old != null && old != config && isPendingInitialization(config);
+        return startedUp && old != null && old != config && isPendingInitialization(config);
     }
 
     static void reportResetOptions(Config config, List<String> options) {

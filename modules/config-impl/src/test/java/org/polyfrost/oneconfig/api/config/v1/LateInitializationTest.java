@@ -489,6 +489,74 @@ class LateInitializationTest {
         }
     }
 
+    // what Hotwire does around the entrypoints of a mod it adds
+    private static void startWithHotwire(Runnable entrypoints) throws ReflectiveOperationException {
+        Field initialized = ConfigManager.class.getDeclaredField("initialized");
+        initialized.setAccessible(true);
+        initialized.setBoolean(null, false);
+        entrypoints.run();
+        ConfigManager.initialize();
+    }
+
+    @Test
+    void aCopyAnAddedModMakesWaitsForItsWindowToReplaceTheOlderInstance() throws IOException, ReflectiveOperationException {
+        String id = "late-initialization-reopened-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+            ConfigManager.active().save(id);
+
+            AtomicReference<Config> copy = new AtomicReference<>();
+            startWithHotwire(() -> copy.set(new ValueConfig(id)));
+
+            assertNull(copy.get().getTree());
+            assertSame(old.getTree(), ConfigManager.active().get(id));
+            assertEquals(Boolean.TRUE, ConfigManager.active().load(id).getProp("value").get());
+
+            ConfigManager.initializeLate(config -> true, () -> {
+            });
+
+            assertSame(copy.get().getTree(), ConfigManager.active().get(id));
+            assertEquals(Boolean.TRUE, copy.get().getProperty("value").get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aCopyAnAddedModPreloadsLeavesTheSavedValues() throws IOException, ReflectiveOperationException {
+        String id = "late-initialization-reopened-preload-test.json";
+        AtomicReference<Config> copy = new AtomicReference<>();
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+            ConfigManager.active().save(id);
+
+            startWithHotwire(() -> {
+                copy.set(new ValueConfig(id));
+                copy.get().preload();
+            });
+
+            assertNull(copy.get().getTree());
+            assertEquals(Boolean.TRUE, ConfigManager.active().load(id).getProp("value").get());
+        } finally {
+            ConfigManager.cancelInitialization(copy.get());
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void anAddedModsNewConfigStillInitializesWhenItStarts() throws ReflectiveOperationException {
+        AtomicReference<Config> created = new AtomicReference<>();
+        finishStartup();
+        startWithHotwire(() -> created.set(new LateConfig("late-initialization-reopened-new-test.json")));
+        assertNotNull(created.get().getTree());
+    }
+
     @Test
     void aPreloadedCopyFromAnotherModLeavesTheSavedValues() throws IOException {
         String id = "late-initialization-preloaded-copy-test.json";
