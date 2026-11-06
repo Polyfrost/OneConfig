@@ -64,6 +64,7 @@ import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogSection
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ChangeLogEntryRoute
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
@@ -345,6 +346,7 @@ fun ChangelogEntry(data: ChangelogSection, index: Int) {
 
     Box(
         modifier = Modifier.fillMaxWidth()
+            .hoverGlow(theme.modCardShape)
             .background(theme.modCardBackground, theme.modCardShape)
             .border(
                 1.dp, Brush.verticalGradient(

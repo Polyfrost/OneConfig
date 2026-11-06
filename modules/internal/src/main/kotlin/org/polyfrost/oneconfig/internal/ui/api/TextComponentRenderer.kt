@@ -26,6 +26,7 @@ import net.kyori.adventure.text.ComponentIteratorType
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.parseLegacyFormatting
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -128,7 +129,8 @@ fun Tooltip(
     TooltipArea(
         content = content, delayMillis = 200, tooltip = @Composable {
             Box(
-                modifier = modifier.background(theme.popupBackground, shape = RoundedCornerShape(8.dp))
+                modifier = modifier.liquidGlass(RoundedCornerShape(8.dp), frosted = true)
+                    .background(theme.popupBackground, shape = RoundedCornerShape(8.dp))
                     .border(1.dp, theme.borderColor, shape = RoundedCornerShape(8.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {

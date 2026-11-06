@@ -43,6 +43,7 @@ import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -214,6 +215,7 @@ internal fun HudTourOverlay(
                 .then(cardModifier)
                 .onSizeChanged { cardSize = it }
                 .width(TOUR_CARD_WIDTH)
+                .liquidGlass(theme.popupShape, frosted = true)
                 .background(theme.popupBackground, theme.popupShape)
                 .border(1.dp, theme.borderColor, theme.popupShape)
                 .padding(16.dp),

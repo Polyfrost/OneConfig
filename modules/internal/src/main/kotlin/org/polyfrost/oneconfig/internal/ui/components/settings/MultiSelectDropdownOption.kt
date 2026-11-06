@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -123,6 +124,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                 .width(LocalOptionWidth.current)
                 .height(32.dp)
                 .graphicsLayer {}
+                .liquidGlass(DropdownShape)
                 .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
                 .onClick(triggerInteraction) { expanded = !expanded }
                 .hoverable(triggerInteraction)
@@ -153,6 +155,7 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
                 modifier = Modifier
                     .width(LocalOptionWidth.current)
                     .clip(DropdownShape)
+                    .liquidGlass(DropdownShape, frosted = true)
                     .background(theme.componentBackground, DropdownShape)
                     .border(1.dp, theme.borderColor, DropdownShape)
                     .heightIn(max = 280.dp)

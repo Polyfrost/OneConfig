@@ -33,6 +33,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.MinecraftDark
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftLight
 import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassDark
 import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassLight
+import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedDark
+import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedLight
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
@@ -48,9 +50,13 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     @Composable
     override fun ProvideTheme(content: @Composable () -> Unit) = Theme(content)
 
-    override fun polyGlassDark(): OneConfigUITheme = PolyGlassDark
+    override fun polyfrostedDark(): OneConfigUITheme = PolyfrostedDark
 
-    override fun polyGlassLight(): OneConfigUITheme = PolyGlassLight
+    override fun polyfrostedLight(): OneConfigUITheme = PolyfrostedLight
+
+    override fun glassDark(): OneConfigUITheme = PolyGlassDark
+
+    override fun glassLight(): OneConfigUITheme = PolyGlassLight
 
     override fun minecraftDark(): OneConfigUITheme = MinecraftDark
 

@@ -37,6 +37,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.GlassLight
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
 import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
@@ -296,6 +297,7 @@ abstract class ComposeScreen(
     private var awaitingFirstFrame = false
 
     private var lastPointer: Offset? = null
+    private var lightInside = false
     private var lastSceneW = -1
     private var lastSceneH = -1
     private var lastFbWidth = -1
@@ -325,6 +327,7 @@ abstract class ComposeScreen(
         if (!hadScene) sceneDirty = true
         awaitingFirstFrame = true
         lastPointer = null
+        lightInside = false
 
         syncSceneMetrics()
         lastSceneW = -1
@@ -451,6 +454,8 @@ abstract class ComposeScreen(
         ComposeSceneContextImpl.resetPointerIcon()
         releaseHeldButtons()
         consumedButtons.clear()
+        lightInside = false
+        GlassLight.reset()
         releaseScene()
         super.removed()
     }
@@ -515,10 +520,15 @@ abstract class ComposeScreen(
         wasFocused = focused
         if (focused) {
             val pointerPosition = pointerPosition()
-            if (pointerPosition != lastPointer) {
+            val moved = pointerPosition != lastPointer
+            if (moved) {
                 lastPointer = pointerPosition
                 withScene { it.sendPointerEvent(PointerEventType.Move, pointerPosition) }
             }
+            if (moved || !lightInside) trackLight(pointerPosition)
+        } else if (lightInside) {
+            lightInside = false
+            GlassLight.leave()
         }
 
         if (metricsChanged) {
@@ -542,6 +552,12 @@ abstract class ComposeScreen(
         recording.render(ctx, wasDirty) { paint(it, nanos) }
         //?} else
         //GlHost.screen(wasDirty, blurAlpha(), underlay) { paint(it, nanos) }
+    }
+
+    private fun trackLight(pointer: Offset) {
+        val inside = pointer.x >= 0f && pointer.y >= 0f && pointer.x < lastSceneW && pointer.y < lastSceneH
+        if (inside) GlassLight.moveTo(pointer) else if (lightInside) GlassLight.leave()
+        lightInside = inside
     }
 
     //? if >= 1.21.11
