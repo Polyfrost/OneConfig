@@ -241,6 +241,19 @@ class ConfigEntrypointsTest {
     }
 
     @Test
+    void aLiveCopyKeepsTheSnapshotsOfTheModItReplaces() {
+        Map<String, ModContainer> mods = Map.of(
+                "example_live1", mod("example_live1", "alias", "example"),
+                "other", mod("other", "provided")
+        );
+        Set<String> off = Set.of("example");
+        assertEquals("example", ConfigEntrypoints.snapshotId("example_live1", mods, off));
+        assertEquals("example-extra", ConfigEntrypoints.snapshotId("example_live1-extra", mods, off), "extracted under an id made from the mod's");
+        assertEquals("custom.json", ConfigEntrypoints.snapshotId("custom.json", mods, off), "an id of the config's own doesn't change with the mod's");
+        assertEquals("other", ConfigEntrypoints.snapshotId("other", mods, off), "what a mod merely provides was never a mod");
+    }
+
+    @Test
     void aLiveCopyTakesOverOnlyTheConfigsItMakesAgain() {
         Map<String, Set<String>> configs = new HashMap<>();
         configs.put("example", new HashSet<>(Set.of("example.json", "dropped.json")));

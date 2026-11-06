@@ -288,6 +288,42 @@ class CompatSnapshotsTest {
     }
 
     @Test
+    void aTreeUnderATemporaryIdKeepsTheSnapshotsOfTheIdItStandsInFor() {
+        String id = TREE_ID + "_copied";
+        String copy = id + "_live1";
+        String profile = "compat-copy-profile";
+        Property<Integer> property = offModProperty(id);
+        try {
+            ConfigManager.createProfile(profile);
+            property.setAs(2);
+            ConfigManager.openProfile("");
+            property.setAs(3);
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+
+            CompatSnapshots.setSnapshotIds(treeId -> treeId.equals(copy) ? id : treeId);
+            Property<Integer> copied = Properties.simple("value", "Value", "", 3);
+            CompatSnapshots.register(Tree.tree(copy).put(copied));
+
+            ConfigManager.openProfile(profile);
+            assertEquals(2, copied.get(), "the copy restores what the profile saved before the update");
+
+            copied.setAs(4);
+            ConfigManager.openProfile("");
+            ConfigManager.openProfile(profile);
+            assertEquals(4, copied.get());
+        } finally {
+            CompatSnapshots.setSnapshotIds(null);
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(profile);
+            CompatSnapshots.untrack(id);
+            CompatSnapshots.untrack(copy);
+            ConfigManager.active().unregister(id);
+            ConfigManager.active().unregister(copy);
+        }
+    }
+
+    @Test
     void aTreeRegisteredUnderAnOffIdIsNotOff() throws Exception {
         String id = TREE_ID + "_off_replaced";
         String profile = "compat-off-replaced-profile";

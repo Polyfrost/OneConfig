@@ -91,7 +91,7 @@ public final class ConfigEntrypoints {
     private static volatile Map<String, ModContainer> seenMods = Map.of();
     private static volatile Set<String> lateIds = Set.of();
     // mods the loader no longer lists, which Hotwire turned off
-    private static Set<String> offMods = Set.of();
+    private static volatile Set<String> offMods = Set.of();
     // the config ids of each mod, noted while they can be, as a class no longer resolves to its mod once that mod is off
     static final Map<String, Set<String>> modConfigs = new ConcurrentHashMap<>();
     static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
@@ -227,8 +227,11 @@ public final class ConfigEntrypoints {
             //? if !neoforge {
             // after the release above, which this must never get in the way of
             try {
-                // a lazily created config can be made at any time
-                if (HotwireBridge.INSTANCE.getSupportsSwitching()) ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::rememberClassOwner);
+                if (HotwireBridge.INSTANCE.getSupportsSwitching()) {
+                    // a lazily created config can be made at any time
+                    ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::rememberClassOwner);
+                    CompatSnapshots.setSnapshotIds(ConfigEntrypoints::snapshotId);
+                }
                 rememberConfigOwners();
             } catch (Throwable t) {
                 LOGGER.error("Failed to note which mods own which configs", t);
@@ -705,6 +708,24 @@ public final class ConfigEntrypoints {
             if (theirs != null) theirs.remove(id);
             owners.replace(id, old, modId);
         }
+    }
+
+    private static String snapshotId(String treeId) {
+        Map<String, ModContainer> mods = loadedMods();
+        return snapshotId(treeId, mods, offAfter(offMods, mods, seenMods));
+    }
+
+    // a live copy's id only holds until the next launch, when its options are back under the mod it replaces, whose
+    // snapshots are the ones its profiles saved
+    static String snapshotId(String treeId, Map<String, ModContainer> mods, Set<String> off) {
+        for (ModContainer mod : mods.values()) {
+            String id = mod.getMetadata().getId();
+            if (!treeId.equals(id) && !treeId.startsWith(id + "-")) continue;
+            for (String old : mod.getMetadata().getProvides()) {
+                if (off.contains(old)) return old + treeId.substring(id.length());
+            }
+        }
+        return treeId;
     }
 
     // the mods a change's copies replace, whose older config instances those copies may take over from

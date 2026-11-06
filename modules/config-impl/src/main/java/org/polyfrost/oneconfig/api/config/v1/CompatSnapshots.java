@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.ApiStatus;
@@ -81,6 +82,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private static volatile BiConsumer<String, Runnable> liveValueScope = (id, action) -> action.run();
+    private static volatile UnaryOperator<String> snapshotIds = UnaryOperator.identity();
 
     public static boolean isApplying() {
         return APPLYING_HERE.get();
@@ -108,6 +110,18 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     @ApiStatus.Internal
     public static void withLiveValues(String id, Runnable action) {
         liveValueScope.accept(id, action);
+    }
+
+    /**
+     * Sets the id each tree keeps its snapshots under, for a tree whose own id only holds until the next launch
+     */
+    @ApiStatus.Internal
+    public static void setSnapshotIds(UnaryOperator<String> ids) {
+        snapshotIds = ids == null ? UnaryOperator.identity() : ids;
+    }
+
+    private static String snapshotId(Tree tree) {
+        return snapshotIds.apply(tree.getID());
     }
 
     public static Tree register(Tree tree) {
@@ -213,7 +227,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     // shortcut: a hook still owed when the game closes is dropped, persist the profiles if that ever proves wrong
     private void storeDefaults(Tree tree, String profile) {
         Map<String, Object> snapshot = defaults.get(tree.getID());
-        if (snapshot != null) snapshot.forEach((key, value) -> store.putValue(profile, tree.getID(), key, value));
+        if (snapshot != null) snapshot.forEach((key, value) -> store.putValue(profile, snapshotId(tree), key, value));
     }
 
     private void dropStaleRegistration(String id) {
@@ -355,7 +369,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
-        String treeId = tree.getID();
+        String treeId = snapshotId(tree);
         migrateLegacyKeys(tree, store, profile, treeId, true);
         migrateLegacyKeys(tree, baselineStore, BASELINE_BUCKET, treeId, false);
         Map<String, Object> snap = store.load(profile).get(treeId);
@@ -434,7 +448,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
-        String treeId = tree.getID();
+        String treeId = snapshotId(tree);
         Map<String, Object> pending = new LinkedHashMap<>();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
@@ -499,7 +513,6 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private void wire(Tree tree) {
         ensureKeys(tree);
-        String treeId = tree.getID();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
             Integer identity = System.identityHashCode(p);
@@ -515,6 +528,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 tree.addMetadata(Backend.CUSTOM_SAVE_DIRTY_METADATA, Boolean.TRUE);
                 Object serialized = trySerialize(value);
                 if (serialized != null) {
+                    String treeId = snapshotId(tree);
                     store.putValue(ConfigManager.activeProfile(), treeId, key, serialized);
                     setBaseline(treeId, key, serialized);
                 }
