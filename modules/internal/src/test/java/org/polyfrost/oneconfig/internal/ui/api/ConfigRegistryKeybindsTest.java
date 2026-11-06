@@ -1,9 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.api;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +77,23 @@ class ConfigRegistryKeybindsTest {
 
         MinecraftKeybindRegistrar.unregister(tree);
         assertTrue(built.stream().noneMatch(KeybindManager::isRegistered));
+    }
+
+    private static Tree scanned() {
+        Tree tree = Tree.tree("config-registry-released-test");
+        tree.setTitle("Released");
+        MinecraftKeybindRegistrar.scan(tree);
+        return tree;
+    }
+
+    @Test
+    void aScannedTreeIsNotKeptOnceItsConfigIsGone() throws InterruptedException {
+        WeakReference<Tree> tree = new WeakReference<>(scanned());
+        for (int i = 0; i < 100 && tree.get() != null; i++) {
+            System.gc();
+            Thread.sleep(10);
+        }
+        assertNull(tree.get());
     }
 
     @Test

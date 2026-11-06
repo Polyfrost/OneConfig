@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
+import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.WeakHashMap
@@ -23,7 +24,10 @@ object MinecraftKeybindRegistrar {
     private val wiredProps = WeakHashMap<Property<*>, Boolean>()
 
     private val scannedTrees = WeakHashMap<Tree, Boolean>()
-    private val lastScanned = HashMap<String, Tree>()
+    // weak as a tree holds its config's whole object, such as a deleted HUD's
+    // shortcut: a hidden tree registered directly can be collected before its replacement is scanned and leave its binds
+    // registered, as only a config's own properties lead back to its tree; note the binds by id if that ever matters
+    private val lastScanned = HashMap<String, WeakReference<Tree>>()
     private var listenerInstalled = false
 
     @JvmStatic
@@ -32,7 +36,7 @@ object MinecraftKeybindRegistrar {
         if (!force && scannedTrees.containsKey(tree)) return
         scannedTrees[tree] = true
         // a config replaced after its mod updated leaves binds behind that would fire alongside the new ones
-        tree.id?.let { lastScanned.put(it, tree) }?.takeIf { it !== tree }?.let { unregister(it, kept = tree) }
+        tree.id?.let { lastScanned.put(it, WeakReference(tree)) }?.get()?.takeIf { it !== tree }?.let { unregister(it, kept = tree) }
         installRebindListener()
         val category = "${tree.localizedTitle()} (OneConfig)"
         walk(tree) { wire(it, category) }
