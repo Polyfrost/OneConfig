@@ -95,9 +95,12 @@ object HotwireBridge {
 
     private fun pendingTasks(): List<*> = call("getPendingTasks") as? List<*> ?: emptyList<Any>()
 
-    /** The name of each mod waiting for the next launch, by id */
+    // only these mean an update is taken care of, not a mod turning off at the next launch or a jar copied for one
+    private fun queuedUpdates(): List<*> = pendingTasks().filter { (it!!.get("kind") as Enum<*>).name == "UPDATE" }
+
+    /** The name of each mod whose update waits for the next launch, by id */
     fun queuedMods(): Map<String, String> = runCatching {
-        pendingTasks().associate { it!!.get("modId") as String to it.get("name") as String }
+        queuedUpdates().associate { it!!.get("modId") as String to it.get("name") as String }
     }.getOrDefault(emptyMap())
 
     class AppliedUpdates(val now: List<String>, val nextLaunch: List<String>)
@@ -418,8 +421,7 @@ object HotwireBridge {
     fun findUpdates(): List<StoreUpdate> {
         val found = (call("checkUpdates") as CompletableFuture<*>).get()!!
         (found.get("failure") as String).takeIf { it.isNotBlank() }?.let { error(it) }
-        // only a queued update means the update is taken care of, not a mod turning off at the next launch
-        val queued = pendingTasks().filter { (it!!.get("kind") as Enum<*>).name == "UPDATE" }.map { it!!.get("modId") }
+        val queued = queuedUpdates().map { it!!.get("modId") }
         return (found.get("updates") as List<*>).filterNot { it!!.get("id") in queued }.map {
             StoreUpdate(it!!.get("id") as String, it.get("projectId") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
         }

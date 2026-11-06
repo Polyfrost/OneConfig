@@ -2,8 +2,11 @@ package org.polyfrost.oneconfig.internal.ui.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import dev.moon.hotwire.api.HotwireApi;
+import dev.moon.hotwire.api.PendingTask;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 class HotwireAppliedUpdatesTest {
@@ -12,6 +15,11 @@ class HotwireAppliedUpdatesTest {
     }
 
     private static final List<HotwireBridge.ModState> BEFORE = List.of(mod("a", "1"), mod("b", "1"));
+
+    @AfterEach
+    void clear() {
+        HotwireApi.PENDING.clear();
+    }
 
     @Test
     void aLiveUpdateCountsAsLiveThoughItsJarSwapIsQueued() {
@@ -31,6 +39,25 @@ class HotwireAppliedUpdatesTest {
     void whatWasAlreadyQueuedIsNotThisBatch() {
         HotwireBridge.AppliedUpdates result = HotwireBridge.INSTANCE.whenApplied(BEFORE, BEFORE, Map.of("old", "Old"), Map.of("old", "Old"));
         assertEquals(List.of(), result.getNow());
+        assertEquals(List.of(), result.getNextLaunch());
+    }
+
+    @Test
+    void anUpdateQueuedForAModAlreadyTurningOffIsStillReported() {
+        HotwireApi.PENDING.add(new PendingTask("b", "B", PendingTask.Kind.OFF_AT_START));
+        Map<String, String> before = HotwireBridge.INSTANCE.queuedMods();
+        HotwireApi.PENDING.add(new PendingTask("b", "B", PendingTask.Kind.UPDATE));
+
+        HotwireBridge.AppliedUpdates result = HotwireBridge.INSTANCE.whenApplied(BEFORE, BEFORE, before, HotwireBridge.INSTANCE.queuedMods());
+        assertEquals(List.of("B"), result.getNextLaunch());
+    }
+
+    @Test
+    void aJarCopiedForTheNextLaunchIsNotAnUpdate() {
+        Map<String, String> before = HotwireBridge.INSTANCE.queuedMods();
+        HotwireApi.PENDING.add(new PendingTask("new", "New", PendingTask.Kind.COPIED));
+
+        HotwireBridge.AppliedUpdates result = HotwireBridge.INSTANCE.whenApplied(BEFORE, BEFORE, before, HotwireBridge.INSTANCE.queuedMods());
         assertEquals(List.of(), result.getNextLaunch());
     }
 
