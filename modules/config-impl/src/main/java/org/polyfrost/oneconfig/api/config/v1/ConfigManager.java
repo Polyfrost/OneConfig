@@ -319,21 +319,19 @@ public final class ConfigManager {
     private static synchronized Map<Config, Config> holdBackDuplicates(Predicate<Config> added) {
         Map<Config, Config> replaced = new IdentityHashMap<>();
         Set<String> ids = new HashSet<>();
+        ConfigManager manager = active();
         for (Config config : pendingInitialization) {
             Config old = initializedConfigs.get(config.id);
-            boolean replaces = old != null && fromWindowCreator.contains(config) && added.test(config) && added.test(old);
+            boolean replaces = old != null && fromWindowCreator.contains(config) && added.test(config) && added.test(old)
+                    // written first as the replacement loads its values from the file, so it waits if they can't be
+                    && (!manager.exists(config.id) || manager.save(config.id));
             if ((old == null || replaces) && ids.add(config.id)) {
                 if (replaces) replaced.put(config, old);
             } else if (pendingInitialization.remove(config)) {
                 createdAfterStartup.add(config);
             }
         }
-        ConfigManager manager = active();
-        for (Config replacement : replaced.keySet()) {
-            // written first as the replacement loads its values from the file
-            if (manager.exists(replacement.id)) manager.save(replacement.id);
-            manager.unregister(replacement.id);
-        }
+        for (Config replacement : replaced.keySet()) manager.unregister(replacement.id);
         return replaced;
     }
 

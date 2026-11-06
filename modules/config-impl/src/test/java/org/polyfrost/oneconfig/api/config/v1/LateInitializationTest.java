@@ -12,6 +12,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -451,6 +452,30 @@ class LateInitializationTest {
             assertSame(old.getTree(), ConfigManager.active().get(id));
             assertTrue(ConfigManager.createdConfigs().contains(old));
         } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aFailedSaveKeepsTheOlderInstanceAndItsUnsavedValues() throws IOException {
+        String id = "late-initialization-unsaved-test.json";
+        // a directory where the save writes its temporary file
+        Path blocker = ConfigManager.active().getFolder().resolve(id + ".tmp");
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+            Files.createDirectories(blocker);
+
+            AtomicReference<Config> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> replacement.set(new ValueConfig(id)));
+
+            assertNull(replacement.get().getTree());
+            assertSame(old.getTree(), ConfigManager.active().get(id));
+            assertEquals(Boolean.TRUE, old.getProperty("value").get());
+        } finally {
+            Files.deleteIfExists(blocker);
             ConfigManager.active().unregister(id);
             Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
         }
