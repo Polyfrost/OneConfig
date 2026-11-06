@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,9 +34,6 @@ private val MenuItemShape @Composable get() = DropdownShape.concentric(MenuPaddi
 
 @Composable
 fun DropdownOption(data: DropdownOptionData) {
-    val theme = LocalTheme.current
-    var expanded by remember { mutableStateOf(false) }
-
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
         data.prop.type.superclass?.isEnum == true -> data.prop.type.superclass
@@ -64,8 +62,43 @@ fun DropdownOption(data: DropdownOptionData) {
             }
         )
     }
-    val selectedName = options.getOrElse(selectedIdx) { "—" }
 
+    Dropdown(options, selectedIdx, onSelect = { index ->
+        selectedIdx = index
+        @Suppress("UNCHECKED_CAST")
+        if (enumClass != null) {
+            (data.prop as Property<Any>).set(values[index])
+        } else if (data.prop.type == String::class.java) {
+            (data.prop as Property<Any>).set(optionValues.getOrElse(index) { options[index] })
+        } else {
+            (data.prop as Property<Any>).set(index)
+        }
+    })
+}
+
+/** [options] can be anything [Text] can show, such as translated text */
+@Composable
+fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: Dp = LocalOptionWidth.current) {
+    var expanded by remember { mutableStateOf(false) }
+    DropdownFrame(options.getOrElse(selected) { "—" }, expanded, { expanded = it }, width) {
+        options.forEachIndexed { index, option ->
+            DropdownItem(option, selected = index == selected) {
+                onSelect(index)
+                expanded = false
+            }
+        }
+    }
+}
+
+@Composable
+internal fun DropdownFrame(
+    label: Any,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    width: Dp = LocalOptionWidth.current,
+    menu: @Composable ColumnScope.() -> Unit,
+) {
+    val theme = LocalTheme.current
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
     val borderColor = animateColorAsState(
@@ -87,11 +120,11 @@ fun DropdownOption(data: DropdownOptionData) {
     Box {
         Row(
             modifier = Modifier
-                .width(LocalOptionWidth.current)
-                .height(32.dp)
+                .width(width)
+                .height(OptionControlHeight)
                 .graphicsLayer {}
                 .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
-                .onClick(triggerInteraction) { expanded = !expanded }
+                .onClick(triggerInteraction) { onExpandedChange(!expanded) }
                 .hoverable(triggerInteraction)
                 .pointerHoverIcon(PointerIcon.Hand)
                 .padding(horizontal = 12.dp),
@@ -99,7 +132,7 @@ fun DropdownOption(data: DropdownOptionData) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                selectedName,
+                label,
                 modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                 color = Color.Unspecified,
                 fontSize = 13.sp,
@@ -112,18 +145,17 @@ fun DropdownOption(data: DropdownOptionData) {
 
         SimpleDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false },
+            onDismissRequest = { onExpandedChange(false) },
             offset = DpOffset(0.dp, 10.dp),
         ) {
             val scrollState = rememberScrollState()
             Box(
                 modifier = Modifier
-                    .width(LocalOptionWidth.current)
+                    .width(width)
                     .clip(DropdownShape)
                     .background(theme.componentBackground, DropdownShape)
                     .border(1.dp, theme.borderColor, DropdownShape)
             ) {
-                val itemShape = MenuItemShape
                 Column(
                     modifier = Modifier
                         .heightIn(max = 280.dp)
@@ -133,44 +165,50 @@ fun DropdownOption(data: DropdownOptionData) {
                         .padding(MenuPadding)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    options.forEachIndexed { index, option ->
-                        val optionSource = rememberInteractionSource()
-                        val selected = index == selectedIdx
-                        val isHovered by optionSource.collectIsHoveredAsState()
-
-                        val backgroundColor = animateColorAsState(
-                            if (selected) Accent
-                            else if (isHovered) theme.modCardBackground
-                            else theme.modCardBackground.copy(0f)
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .graphicsLayer {}
-                                .animatedFrame(itemShape, fill = { backgroundColor.value }, border = { Color.Transparent })
-                                .onClick(optionSource) {
-                                    selectedIdx = index
-                                    @Suppress("UNCHECKED_CAST")
-                                    if (enumClass != null) {
-                                        (data.prop as Property<Any>).set(values[index])
-                                    } else if (data.prop.type == String::class.java) {
-                                        (data.prop as Property<Any>).set(optionValues.getOrElse(index) { option })
-                                    } else {
-                                        (data.prop as Property<Any>).set(index)
-                                    }
-                                    expanded = false
-                                }
-                                .hoverable(optionSource)
-                                .pointerHoverIcon(PointerIcon.Hand)
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Text(option, color = theme.textColor, fontSize = 13.sp)
-                        }
-                    }
-                }
+                    content = menu,
+                )
             }
         }
+    }
+}
+
+@Composable
+internal fun DropdownItem(
+    label: Any,
+    selected: Boolean = false,
+    icon: String? = null,
+    leading: @Composable () -> Unit = {},
+    onClick: () -> Unit,
+) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val itemShape = MenuItemShape
+
+    val bgColor = animateColorAsState(
+        if (selected) Accent
+        else if (isHovered) theme.modCardBackground
+        else theme.modCardBackground.copy(0f)
+    )
+    val contentColor = animateColorAsState(
+        if (selected || isHovered) theme.textColor else theme.textColorSecondary
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(itemShape)
+            .graphicsLayer {}
+            .animatedFrame(itemShape, fill = { bgColor.value }, border = { Color.Transparent })
+            .onClick(interactionSource, onClick)
+            .hoverable(interactionSource)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(15.dp),
+    ) {
+        leading()
+        icon?.takeIf { it.isNotEmpty() }?.let { Icon(it, modifier = Modifier.size(16.dp), tint = { contentColor.value }) }
+        Text(label, color = Color.Unspecified, fontSize = 13.sp, colorProducer = { contentColor.value })
     }
 }

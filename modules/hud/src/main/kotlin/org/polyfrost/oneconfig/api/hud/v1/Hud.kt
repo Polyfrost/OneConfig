@@ -288,7 +288,7 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     fun capturePositionDefaults() {
         val t = tree ?: return
         if (!persistOwnState) return
-        val (dx, dy) = defaultPosition()
+        val (dx, dy) = defaultPosition() ?: return
         val curSection = section
         val curX = relativeX
         val curY = relativeY
@@ -1502,7 +1502,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
     open fun setup() {}
     abstract fun update(): Boolean
     open fun updateFrequency(): Long = -1L
-    open fun defaultPosition(): Pair<Float, Float> = 10f to 10f
+    /** Where this HUD is placed if reset or shown by default, or null to disable resetting its position */
+    open fun defaultPosition(): Pair<Float, Float>? = null
 
     /**
      * Return `false` to skip drawing this HUD while it has nothing to show. Unlike [hidden], this

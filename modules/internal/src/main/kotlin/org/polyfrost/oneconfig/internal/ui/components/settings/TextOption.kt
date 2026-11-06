@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,8 +32,6 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-
-val LocalOptionWidth = compositionLocalOf { 300.dp }
 
 @Composable
 fun TextOption(data: TextOptionData) {
@@ -67,10 +64,10 @@ fun TextOption(data: TextOptionData) {
         cursorBrush = SolidColor(theme.textColor),
         modifier = Modifier.trackTextInputFocus()
             .width(LocalOptionWidth.current)
-            .then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier)
+            .heightIn(min = if (data.multiline) 96.dp else OptionControlHeight)
             .graphicsLayer {}
             .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, fill = { theme.modCardBackground }, border = { borderColor.value })
-            .padding(horizontal = 12.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = if (data.multiline) 7.dp else 4.dp),
         decorationBox = { innerTextField ->
             Row(
                 verticalAlignment = if (data.multiline) Alignment.Top else Alignment.CenterVertically,

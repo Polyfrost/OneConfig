@@ -1463,7 +1463,7 @@ object HudManager {
                 if (known && !deletable) {
                     LOGGER.warn("HUD ${h.title} cannot be deleted but had no instance; restoring it")
                 }
-                val (dx, dy) = h.defaultPosition()
+                val (dx, dy) = h.defaultPosition() ?: (10f to 10f)
                 val hud = h.make()
                 candidate = hud
                 hud.setAbsolutePosition(dx, dy)
