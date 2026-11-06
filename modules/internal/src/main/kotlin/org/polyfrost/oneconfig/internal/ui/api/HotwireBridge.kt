@@ -112,8 +112,14 @@ object HotwireBridge {
      */
     fun whenApplied(modsBefore: List<ModState>, modsAfter: List<ModState>, queuedBefore: Map<String, String>, queuedAfter: Map<String, String>): AppliedUpdates {
         val versions = modsBefore.associate { it.id to it.version }
-        val live = modsAfter.filter { it.id in versions && versions[it.id] != it.version }
-        return AppliedUpdates(live.map { it.name }, (queuedAfter - queuedBefore.keys - live.map { it.id }.toSet()).values.toList())
+        val idsAfter = modsAfter.mapTo(HashSet()) { it.id }
+        // Hotwire can run an update from a copy under a new id, which takes the old row's place under the same name
+        // while the jar swap stays queued under the old id, and the mods that copy needs go along without updating
+        val replaced = modsBefore.filter { it.id !in idsAfter }.associateBy { it.name }
+        val copies = modsAfter.filter { it.id !in versions && replaced[it.name]?.let { old -> old.version != it.version } == true }
+        val live = modsAfter.filter { it.id in versions && versions[it.id] != it.version } + copies
+        val liveIds = live.map { it.id } + copies.map { replaced.getValue(it.name).id }
+        return AppliedUpdates(live.map { it.name }, (queuedAfter - queuedBefore.keys - liveIds.toSet()).values.toList())
     }
 
     val isSwitching: Boolean get() = call("isSwitching") as? Boolean ?: false

@@ -29,6 +29,29 @@ class HotwireAppliedUpdatesTest {
     }
 
     @Test
+    void anUpdateRunningFromACopyCountsAsLiveThoughTheOriginalsSwapIsQueued() {
+        HotwireBridge.AppliedUpdates result = HotwireBridge.INSTANCE.whenApplied(
+                BEFORE,
+                List.of(new HotwireBridge.ModState("a_live1", "A", "2", true, true, false), mod("b", "1")),
+                Map.of(),
+                Map.of("a", "A")
+        );
+        assertEquals(List.of("A"), result.getNow());
+        assertEquals(List.of(), result.getNextLaunch());
+    }
+
+    @Test
+    void aDependentCopiedAlongUnchangedIsNotAnUpdate() {
+        HotwireBridge.AppliedUpdates result = HotwireBridge.INSTANCE.whenApplied(
+                BEFORE,
+                List.of(new HotwireBridge.ModState("a_live1", "A", "2", true, true, false), new HotwireBridge.ModState("b_live1", "B", "1", true, true, false)),
+                Map.of(),
+                Map.of("a", "A")
+        );
+        assertEquals(List.of("A"), result.getNow());
+    }
+
+    @Test
     void aQueuedUpdateStillRunsItsOldVersion() {
         HotwireBridge.AppliedUpdates result = HotwireBridge.INSTANCE.whenApplied(BEFORE, BEFORE, Map.of(), Map.of("b", "B"));
         assertEquals(List.of(), result.getNow());
