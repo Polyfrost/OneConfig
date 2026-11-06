@@ -45,6 +45,10 @@ object KaleidoCompat {
         CompatLoader.requireTranslations(skip = true) { scan() }
     }
 
+    /** Picks up what a mod added while the game runs brought along, which already scanned configs stay out of */
+    @JvmStatic
+    fun refresh() = CompatLoader.requireTranslations(skip = true) { scan() }
+
     @JvmStatic
     fun scan() {
         val configs = loadClass(CONFIGS_IMPL) ?: return

@@ -684,6 +684,7 @@ public final class ConfigEntrypoints {
         if (ConfigManager.initializeLate(lateConfigs(lateIds), creator)) return;
         lateIds = Set.of();
         decidePending();
+        KaleidoCompat.refresh();
         //? modmenu_compat
         if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.refresh();
         rememberConfigOwners();
