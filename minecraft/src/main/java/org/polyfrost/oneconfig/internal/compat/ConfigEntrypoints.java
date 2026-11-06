@@ -682,14 +682,16 @@ public final class ConfigEntrypoints {
         Map<String, String> owners = new HashMap<>(treeOwners);
         return config -> {
             ModInfo classOwner = CompatLoader.INSTANCE.findModByClass(config.getClass());
-            return isLate(owners.get(config.id), classOwner == null ? null : classOwner.getId(), ids);
+            return isLate(config.id, owners.get(config.id), classOwner == null ? null : classOwner.getId(), ids, modConfigs);
         };
     }
 
-    // an entrypoint can register a library's config class as its mod's own, so the id's owner goes before the class's
-    static boolean isLate(@Nullable String owner, @Nullable String classOwner, Set<String> ids) {
-        String decider = owner != null ? owner : classOwner;
-        return decider != null && ids.contains(decider);
+    // an entrypoint can register a library's config class as its mod's own, so the id's owner goes before the class's,
+    // and an update can take the class away, which only leaves what was noted before that to go by
+    static boolean isLate(String id, @Nullable String owner, @Nullable String classOwner, Set<String> ids, Map<String, Set<String>> configs) {
+        if (owner != null) return ids.contains(owner);
+        if (classOwner != null) return ids.contains(classOwner);
+        return ids.stream().anyMatch(modId -> configs.getOrDefault(modId, Set.of()).contains(id));
     }
 
     private static boolean awaitsLateWindow(Config config) {

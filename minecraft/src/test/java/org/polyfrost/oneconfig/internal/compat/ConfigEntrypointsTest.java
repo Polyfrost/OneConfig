@@ -303,9 +303,19 @@ class ConfigEntrypointsTest {
 
     @Test
     void aLibraryChangingLeavesAConfigAnotherModRegisteredAlone() {
-        assertFalse(ConfigEntrypoints.isLate("mod", "library", Set.of("library")));
-        assertTrue(ConfigEntrypoints.isLate("mod", "library", Set.of("mod")));
-        assertTrue(ConfigEntrypoints.isLate(null, "library", Set.of("library")));
+        assertFalse(ConfigEntrypoints.isLate("id", "mod", "library", Set.of("library"), Map.of()));
+        assertTrue(ConfigEntrypoints.isLate("id", "mod", "library", Set.of("mod"), Map.of()));
+        assertTrue(ConfigEntrypoints.isLate("id", null, "library", Set.of("library"), Map.of()));
+    }
+
+    @Test
+    void aConfigWhoseClassAnUpdateRemovedStaysWithItsMod() {
+        Map<String, Set<String>> configs = Map.of("mod", Set.of("id"), "library", Set.of("id"));
+        assertTrue(ConfigEntrypoints.isLate("id", null, null, Set.of("mod"), configs));
+        assertFalse(ConfigEntrypoints.isLate("id", null, null, Set.of("other"), configs));
+        // what was noted is only for when nothing better can tell
+        assertFalse(ConfigEntrypoints.isLate("id", "other", null, Set.of("mod"), configs));
+        assertFalse(ConfigEntrypoints.isLate("id", null, "other", Set.of("mod"), configs));
     }
 
     @Test
