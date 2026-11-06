@@ -37,15 +37,7 @@ object ThemeRegistry {
 
         BuiltinVisualizers.register()
 
-        ConfigManager.addProfileChangeListener(object : ConfigManager.ProfileChangeListener {
-            override fun onProfileUnloading(profile: String) {
-                ThemeConfig.polyfrostedRenameApplied = false
-            }
-
-            override fun onProfileChanged(newProfile: String) {
-                Platform.screen().runOnUiThread { loadFromConfig() }
-            }
-        })
+        ConfigManager.addProfileChangeListener { Platform.screen().runOnUiThread { loadFromConfig() } }
     }
 
     fun init() {}

@@ -1,7 +1,9 @@
 package org.polyfrost.oneconfig.internal;
 
+import java.nio.file.Files;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Color;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
@@ -25,6 +27,7 @@ public class ThemeConfig extends Config {
 
     @Override
     protected void initialize(boolean byConfigManager) {
+        if (tree == null) polyfrostedRenameApplied = !Files.exists(ConfigManager.active().getFolder().resolve(id));
         super.initialize(byConfigManager);
         hideIf("activeTheme", () -> true);
         hideIf("polyfrostedRenameApplied", () -> true);
