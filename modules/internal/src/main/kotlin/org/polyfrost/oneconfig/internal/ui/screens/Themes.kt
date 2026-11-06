@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -95,6 +96,13 @@ fun Themes() {
                     ThemeCard(family, variants, Modifier.width(cardWidth))
                 }
             }
+        }
+        if (!Platform.screen().supportsBackdropGlass()) {
+            Text(
+                "PolyGlass shows without frosted glass while VulkanMod is installed on this Minecraft version.",
+                color = LocalTheme.current.textColorSecondary,
+                modifier = Modifier.padding(horizontal = PageGutter),
+            )
         }
         if (tree == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

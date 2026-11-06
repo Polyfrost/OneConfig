@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
+import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
 //? if = 1.8.9
 //import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker;
 
@@ -45,6 +46,11 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft == null || minecraft.isSameThread()) action.run();
         else minecraft.execute(action);
+    }
+
+    @Override
+    public boolean supportsBackdropGlass() {
+        return !GlHost.vanillaPipeline;
     }
 
     @Override

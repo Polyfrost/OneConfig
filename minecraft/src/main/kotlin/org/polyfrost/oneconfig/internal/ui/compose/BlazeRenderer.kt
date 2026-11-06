@@ -196,6 +196,12 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
+        if (texture === GlassBatch) {
+            val band = (colors[0] ushr 8 and 0xFF).toFloat()
+            val box = rectGui(bounds[0] - band, bounds[1] - band, bounds[2] + band, bounds[3] + band) ?: return
+            ops.add(MeshOp(Mesh(LiquidGlass.pipeline, TextureSetup.noTexture(), elementPose, verts, colors, box, false)))
+            return
+        }
         val box = rectGui(bounds[0], bounds[1], bounds[2], bounds[3]) ?: return
         val setup = when (texture) {
             is AbstractTextureRef -> texture.setup(nearest)
@@ -354,16 +360,15 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         val y0 = min(y * s.sy + s.ty, (y + h) * s.sy + s.ty)
         val y1 = max(y * s.sy + s.ty, (y + h) * s.sy + s.ty)
         val scale = (abs(s.sx) + abs(s.sy)) / 2f
-        val bandPx = (band * scale).coerceIn(1f, 255f)
-        val box = rectGui(x0 - bandPx, y0 - bandPx, x1 + bandPx, y1 + bandPx) ?: return
-        val scissor = s.clip?.let { rectGui(it[0], it[1], it[2], it[3]) ?: return }
-        touch(x0, y0, x1, y1)
+        val bandPx = (band * scale).coerceIn(1f, 255f).roundToInt()
         val r = (radius * scale).roundToInt().coerceIn(0, 255)
         val k = (refraction.coerceIn(0f, 1f) * 255f).roundToInt()
-        val color = (a shl 24) or (r shl 16) or (bandPx.roundToInt() shl 8) or k
-        val verts = floatArrayOf(x0, y0, 0f, 0f, x0, y1, 0f, 1f, x1, y1, 1f, 1f, x1, y0, 1f, 0f)
-        ops.add(MeshOp(Mesh(LiquidGlass.pipeline, TextureSetup.noTexture(), elementPose, verts, IntArray(4) { color }, box, false, scissor)))
+        begin(GlassBatch, false)
+        quadPx(x0, y0, x1, y1, 0f, 0f, 1f, 1f, (a shl 24) or (r shl 16) or (bandPx shl 8) or k)
+        flush()
     }
+
+    private object GlassBatch
 
     private var liveRenderer: BlazeRenderer? = null
 

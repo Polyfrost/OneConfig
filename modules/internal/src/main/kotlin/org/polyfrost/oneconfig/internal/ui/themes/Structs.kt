@@ -26,6 +26,9 @@ fun Color.scaleOpacity(percent: Float, defaultPercent: Float): Color {
     return copy(alpha = scaled.coerceIn(0f, 1f))
 }
 
+fun glassOpacity(percent: Float, defaultPercent: Float): Float =
+    (percent / defaultPercent).coerceIn(0f, 1f)
+
 fun UITheme.surfaceOpacity(color: Color, percent: Float, defaultPercent: Float): Color =
     if (liquidGlass) color.scaleOpacity(percent, defaultPercent) else color.withOpacityPercent(percent)
 

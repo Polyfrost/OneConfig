@@ -8,6 +8,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
+import org.polyfrost.oneconfig.internal.ui.screens.THEMES_ID
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundTheme
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -79,7 +80,7 @@ object ThemeRegistry {
                 ThemeConfig.activeTheme = theme.name
                 syncNotificationTheme(theme)
             }
-            if (!ThemeConfig.polyfrostedRenameApplied) {
+            if (!ThemeConfig.polyfrostedRenameApplied && ConfigManager.active().exists(THEMES_ID)) {
                 ThemeConfig.polyfrostedRenameApplied = true
                 saveThemeToConfig()
             }
@@ -88,7 +89,7 @@ object ThemeRegistry {
 
     private fun saveThemeToConfig() {
         try {
-            ConfigManager.active().save("themes.json")
+            ConfigManager.active().save(THEMES_ID)
         } catch (_: Exception) {}
     }
 }

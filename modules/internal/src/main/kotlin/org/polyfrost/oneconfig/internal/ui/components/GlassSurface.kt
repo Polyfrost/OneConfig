@@ -15,12 +15,14 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlin.math.PI
@@ -175,6 +177,21 @@ fun Modifier.liquidGlass(shape: Shape, frosted: Boolean = false, alpha: () -> Fl
         .onGloballyPositioned { bounds = Rect(it.positionInWindow(), it.size.toSize()) }
         .graphicsLayer {}
         .glassSurface(shape, frosted, alpha, reach, { near.value }) { cursorNear(bounds, range) }
+}
+
+@Composable
+fun Modifier.splitFrostedGlass(shape: Shape, splitX: Dp, leftAlpha: Float, rightAlpha: Float): Modifier {
+    if (!LocalTheme.current.liquidGlass) return this
+    return drawWithCache {
+        val radius = (shape.createOutline(size, layoutDirection, this) as? Outline.Rounded)?.roundRect?.topLeftCornerRadius?.x ?: 0f
+        val band = PanelBand.toPx()
+        val split = splitX.roundToPx().coerceIn(0, size.width.roundToInt()).toFloat()
+        onDrawWithContent {
+            clipRect(right = split) { drawBackdropGlass(size, radius, band, PANEL_REFRACTION, leftAlpha) }
+            clipRect(left = split) { drawBackdropGlass(size, radius, band, PANEL_REFRACTION, rightAlpha) }
+            drawContent()
+        }
+    }
 }
 
 internal fun lightNear(bounds: Rect, range: Float): Boolean {

@@ -58,6 +58,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Header
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
 import org.polyfrost.oneconfig.internal.ui.components.SidebarWidth
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
+import org.polyfrost.oneconfig.internal.ui.components.splitFrostedGlass
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.navigation
@@ -66,6 +67,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_PAGE_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_SIDEBAR_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.glassOpacity
 import org.polyfrost.oneconfig.internal.ui.themes.surfaceOpacity
 import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
 
@@ -178,7 +180,13 @@ fun Shell(
         ).let { mod ->
                 if (theme.shadowEnabled) mod.cachedDropShadow(theme.backgroundShape, backgroundShadow, hole = glowAlpha > 0f) else mod
             }.clip(theme.backgroundShape)
-            .liquidGlass(theme.backgroundShape, frosted = true)
+            .liquidGlass(theme.backgroundShape)
+            .splitFrostedGlass(
+                theme.backgroundShape,
+                SidebarWidth,
+                glassOpacity(shell.appearance.sidebarOpacity, DEFAULT_SIDEBAR_OPACITY),
+                glassOpacity(shell.appearance.pageOpacity, DEFAULT_PAGE_OPACITY),
+            )
             .border(1.dp, theme.borderColor, theme.backgroundShape)
             .drawBehind {
                 backdrop(windowOffset)
