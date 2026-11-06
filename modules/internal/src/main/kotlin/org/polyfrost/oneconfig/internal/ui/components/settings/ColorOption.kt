@@ -61,6 +61,7 @@ import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
@@ -328,6 +329,7 @@ internal fun ColorPickerPopup(
         modifier = Modifier
             .width(280.dp)
             .shellTransition()
+            .liquidGlass(PickerShape, frosted = true)
             .background(theme.popupBackground, PickerShape)
             .border(1.dp, theme.borderColor, PickerShape)
             .padding(16.dp),

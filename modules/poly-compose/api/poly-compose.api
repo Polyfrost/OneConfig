@@ -72,6 +72,10 @@ public final class androidx/compose/ui/text/platform/PlatformFont_skikoKt {
 	public static synthetic fun Font-wCLgNak$default (Ljava/lang/String;[BLandroidx/compose/ui/text/font/FontWeight;IILjava/lang/Object;)Landroidx/compose/ui/text/font/Font;
 }
 
+public final class org/polyfrost/compose/backend/BackdropGlassKt {
+	public static final fun drawBackdropGlass-bGhzSjQ (Landroidx/compose/ui/graphics/drawscope/DrawScope;JFFFF)V
+}
+
 public final class org/polyfrost/compose/backend/PolyCanvas : org/polyfrost/compose/backend/PolyDrawCanvas {
 	public static final field $stable I
 	public fun <init> (Lorg/polyfrost/compose/render/PolyRenderer;)V
@@ -1179,6 +1183,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public static final field JOIN_MITER I
 	public static final field JOIN_ROUND I
 	public fun animatedScale (FF)V
+	public fun backdropGlass (FFFFFFFF)V
 	public fun clipOutRect (FFFF)V
 	public fun clipPolygon ([F)V
 	public abstract fun clipRRect (FFFFF)V
@@ -1191,6 +1196,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
 	public abstract fun line (FFFFIF)V
+	public fun live (FFFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
 	public abstract fun live (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun mcText (Ljava/lang/String;FFIZF)V
 	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
@@ -1208,6 +1214,8 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public abstract fun scale (FF)V
 	public abstract fun shadow (FFFFFLorg/polyfrost/compose/render/PolyShadow;)V
 	public fun shadowWithHole (FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
+	public fun strokeColorRing ([F[F[IF[F)V
+	public static synthetic fun strokeColorRing$default (Lorg/polyfrost/compose/render/PolyRenderer;[F[F[IF[FILjava/lang/Object;)V
 	public fun strokePolyline ([FZIFII)V
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
 	public fun strokePolylineGradient ([FZFFFFLorg/polyfrost/compose/render/PolyGradient;FII)V
@@ -1228,6 +1236,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$Companion {
 
 public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun animatedScale (Lorg/polyfrost/compose/render/PolyRenderer;FF)V
+	public static fun backdropGlass (Lorg/polyfrost/compose/render/PolyRenderer;FFFFFFFF)V
 	public static fun clipOutRect (Lorg/polyfrost/compose/render/PolyRenderer;FFFF)V
 	public static fun clipPolygon (Lorg/polyfrost/compose/render/PolyRenderer;[F)V
 	public static fun deviceTransform (Lorg/polyfrost/compose/render/PolyRenderer;)[F
@@ -1235,10 +1244,13 @@ public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun image (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFFFFFILorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
+	public static fun live (Lorg/polyfrost/compose/render/PolyRenderer;FFFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
 	public static fun mcTextLive (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public static fun rotate (Lorg/polyfrost/compose/render/PolyRenderer;F)V
 	public static fun saveLayerFade (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyFade;)V
 	public static fun shadowWithHole (Lorg/polyfrost/compose/render/PolyRenderer;FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
+	public static fun strokeColorRing (Lorg/polyfrost/compose/render/PolyRenderer;[F[F[IF[F)V
+	public static synthetic fun strokeColorRing$default (Lorg/polyfrost/compose/render/PolyRenderer;[F[F[IF[FILjava/lang/Object;)V
 	public static fun strokePolyline (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFII)V
 	public static synthetic fun strokePolyline$default (Lorg/polyfrost/compose/render/PolyRenderer;[FZIFIIILjava/lang/Object;)V
 	public static fun strokePolylineGradient (Lorg/polyfrost/compose/render/PolyRenderer;[FZFFFFLorg/polyfrost/compose/render/PolyGradient;FII)V
@@ -1283,6 +1295,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun <init> ()V
 	public fun animatedScale (FF)V
 	protected final fun appendDrawBoxes ([F)V
+	public fun backdropGlass (FFFFFFFF)V
 	protected final fun begin (Ljava/lang/Object;ZZ)V
 	public static synthetic fun begin$default (Lorg/polyfrost/compose/render/PolyTessellator;Ljava/lang/Object;ZZILjava/lang/Object;)V
 	protected final fun beginDraw ()V
@@ -1307,6 +1320,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	protected fun layer (Ljava/lang/Object;F)V
 	protected fun layerMark ()Ljava/lang/Object;
 	public fun line (FFFFIF)V
+	public fun live (FFFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
 	public fun mcText (Ljava/lang/String;FFIZF)V
 	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public fun mcTextOutline (Ljava/lang/String;FFIIF)V
@@ -1331,6 +1345,7 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun shadow (FFFFFLorg/polyfrost/compose/render/PolyShadow;)V
 	public fun shadowWithHole (FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
 	public final fun stateKey ()Ljava/lang/Object;
+	public fun strokeColorRing ([F[F[IF[F)V
 	public fun strokePolyline ([FZIFII)V
 	public fun strokePolylineGradient ([FZFFFFLorg/polyfrost/compose/render/PolyGradient;FII)V
 	protected abstract fun submit (Ljava/lang/Object;ZZ[F[I[F)V

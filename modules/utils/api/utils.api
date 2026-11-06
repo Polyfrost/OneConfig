@@ -183,6 +183,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPl
 	public fun runOnUiThread (Ljava/lang/Runnable;)V
 	public fun screenToMcScale ()F
 	public fun showMessage (Ljava/lang/String;)V
+	public fun supportsBackdropGlass ()Z
 	public fun surfaceRatio ()F
 	public abstract fun viewportHeight ()I
 	public abstract fun viewportWidth ()I

@@ -45,7 +45,9 @@ fun Chip(
     Row(
         modifier = Modifier
             .defaultMinSize(minHeight = 33.dp)
+            .glassHover(theme.sideBarNavigationEntryShape)
             .graphicsLayer {}
+            .liquidGlass(theme.sideBarNavigationEntryShape)
             .animatedFrame(
                 theme.sideBarNavigationEntryShape,
                 fill = { backgroundColor.value },

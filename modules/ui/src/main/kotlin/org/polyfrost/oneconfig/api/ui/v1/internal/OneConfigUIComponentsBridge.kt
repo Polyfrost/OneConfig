@@ -28,9 +28,13 @@ interface OneConfigUIComponentsBridge {
     @Composable
     fun ProvideTheme(content: @Composable () -> Unit)
 
-    fun polyGlassDark(): OneConfigUITheme
+    fun polyfrostedDark(): OneConfigUITheme
 
-    fun polyGlassLight(): OneConfigUITheme
+    fun polyfrostedLight(): OneConfigUITheme
+
+    fun glassDark(): OneConfigUITheme
+
+    fun glassLight(): OneConfigUITheme
 
     fun minecraftDark(): OneConfigUITheme
 

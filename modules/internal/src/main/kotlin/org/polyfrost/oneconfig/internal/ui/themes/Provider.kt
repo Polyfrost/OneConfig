@@ -47,6 +47,10 @@ val AccentGradient: Boolean get() = _accentEnd != null
 
 val AccentBrush: Brush get() = accentHorizontalBrush()
 
+private val SheenBrush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.04f)))
+
+val AccentSheen: Brush? get() = if (ThemeRegistry.activeTheme?.liquidGlass == true) SheenBrush else null
+
 fun accentHorizontalBrush(startX: Float = 0f, endX: Float = Float.POSITIVE_INFINITY): Brush =
     _accentEnd?.let { Brush.horizontalGradient(listOf(_accent, it), startX, endX) } ?: SolidColor(_accent)
 

@@ -76,6 +76,7 @@ import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.oneconfig.internal.ui.TextureRenderer
 import org.polyfrost.oneconfig.internal.mixin.render.BufferBuilderAccessor
 import org.polyfrost.oneconfig.internal.mixin.render.RenderPipelinesAccessor
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -150,8 +151,21 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     override fun layer(mark: Any, alpha: Float) {
         val sub = ops.subList(mark as Int, ops.size)
         if (sub.isEmpty()) return
-        val op = LayerOp.of(ArrayList(sub), alpha, guiScale, screenW, screenH)
+        val all = ArrayList(sub)
         sub.clear()
+        var from = 0
+        for (i in all.indices) {
+            val op = all[i]
+            if (op !is MeshOp || !op.mesh.glass) continue
+            if (i > from) addLayer(all.subList(from, i), alpha)
+            ops.add(MeshOp(op.mesh.faded(alpha)))
+            from = i + 1
+        }
+        if (from == 0) addLayer(all, alpha) else if (from < all.size) addLayer(all.subList(from, all.size), alpha)
+    }
+
+    private fun addLayer(list: List<(GuiGraphicsExtractor) -> Unit>, alpha: Float) {
+        val op = LayerOp.of(list, alpha, guiScale, screenW, screenH)
         if (op != null) ops.add(op)
     }
 
@@ -182,6 +196,12 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
+        if (texture === GlassBatch) {
+            val band = (colors[0] ushr 8 and 0xFF).toFloat()
+            val box = rectGui(bounds[0] - band, bounds[1] - band, bounds[2] + band, bounds[3] + band) ?: return
+            ops.add(MeshOp(Mesh(LiquidGlass.pipeline, TextureSetup.noTexture(), elementPose, verts, colors, box, false)))
+            return
+        }
         val box = rectGui(bounds[0], bounds[1], bounds[2], bounds[3]) ?: return
         val setup = when (texture) {
             is AbstractTextureRef -> texture.setup(nearest)
@@ -254,7 +274,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
                     // the cached mask is white, so the tint is applied here as a premultiplied vertex color
                     val color4 = (a shl 24) or ((outlineColor ushr 16 and 0xFF) * a / 255 shl 16) or
                         ((outlineColor ushr 8 and 0xFF) * a / 255 shl 8) or ((outlineColor and 0xFF) * a / 255)
-                    ops.add { g -> outline.draw(g, elementPose, x0, y0, color4, bounds, scissor) }
+                    ops.add(OutlineOp(outline, elementPose, x0, y0, color4, bounds, scissor))
                 }
             }
         }
@@ -328,6 +348,28 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         quadPx(x0, y0, x0 + w * state.sx, y0 + h * state.sy, u0, v0, u1, v1, (a shl 24) or (a shl 16) or (a shl 8) or a)
     }
 
+    override fun backdropGlass(x: Float, y: Float, w: Float, h: Float, radius: Float, band: Float, refraction: Float, alpha: Float) {
+        flush()
+        beginDraw()
+        val s = state
+        if (s.rot != null) return
+        val a = (alpha * s.alpha * 255f).roundToInt().coerceIn(0, 255)
+        if (a == 0) return
+        val x0 = min(x * s.sx + s.tx, (x + w) * s.sx + s.tx)
+        val x1 = max(x * s.sx + s.tx, (x + w) * s.sx + s.tx)
+        val y0 = min(y * s.sy + s.ty, (y + h) * s.sy + s.ty)
+        val y1 = max(y * s.sy + s.ty, (y + h) * s.sy + s.ty)
+        val scale = (abs(s.sx) + abs(s.sy)) / 2f
+        val bandPx = (band * scale).coerceIn(1f, 255f).roundToInt()
+        val r = (radius * scale).roundToInt().coerceIn(0, 255)
+        val k = (refraction.coerceIn(0f, 1f) * 255f).roundToInt()
+        begin(GlassBatch, false)
+        quadPx(x0, y0, x1, y1, 0f, 0f, 1f, 1f, (a shl 24) or (r shl 16) or (bandPx shl 8) or k)
+        flush()
+    }
+
+    private object GlassBatch
+
     private var liveRenderer: BlazeRenderer? = null
 
     override fun live(draw: (PolyRenderer) -> Unit) {
@@ -337,19 +379,77 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         ops.add(LiveOp(state.copy(), draw))
     }
 
-    private inner class LiveOp(private val s: State, private val draw: (PolyRenderer) -> Unit) : (GuiGraphicsExtractor) -> Unit {
-        private var held: List<LayerOp> = emptyList()
+    override fun live(x: Float, y: Float, w: Float, h: Float, key: () -> Int, draw: (PolyRenderer) -> Unit) {
+        flush()
+        beginDraw()
+        val s = state
+        val ax = x * s.sx + s.tx
+        val bx = (x + w) * s.sx + s.tx
+        val ay = y * s.sy + s.ty
+        val by = (y + h) * s.sy + s.ty
+        var x0 = min(ax, bx)
+        var x1 = max(ax, bx)
+        var y0 = min(ay, by)
+        var y1 = max(ay, by)
+        val m = s.rot
+        if (m != null) {
+            val l = min(m[0] * x0, m[0] * x1) + min(m[1] * y0, m[1] * y1) + m[4]
+            val r = max(m[0] * x0, m[0] * x1) + max(m[1] * y0, m[1] * y1) + m[4]
+            val t = min(m[2] * x0, m[2] * x1) + min(m[3] * y0, m[3] * y1) + m[5]
+            val b = max(m[2] * x0, m[2] * x1) + max(m[3] * y0, m[3] * y1) + m[5]
+            x0 = l
+            x1 = r
+            y0 = t
+            y1 = b
+        }
+        touch(x0, y0, x1, y1)
+        val box = rectGui(x0, y0, x1, y1) ?: return
+        ops.add(LiveOp(s.copy(), draw, key, box))
+    }
 
-        fun faded(alpha: Float) = LiveOp(s.copy().also { it.alpha *= alpha }, draw)
+    private inner class LiveOp(
+        private val s: State, private val draw: (PolyRenderer) -> Unit, private val key: (() -> Int)? = null,
+        override val box: ScreenRectangle? = null, private val dx: Int = 0, private val dy: Int = 0,
+    ) : (GuiGraphicsExtractor) -> Unit, LiveDraw {
+        private var held: List<LayerOp> = emptyList()
+        private var drawn: List<(GuiGraphicsExtractor) -> Unit>? = null
+        private var drawnKey = 0
+        private var drawnBitmaps: Set<PolyBitmap> = emptySet()
+
+        fun faded(alpha: Float) = LiveOp(s.copy().also { it.alpha *= alpha }, draw, key, box, dx, dy)
+
+        override fun shifted(dx: Int, dy: Int): (GuiGraphicsExtractor) -> Unit = LiveOp(s, draw, key, box?.shifted(dx, dy), this.dx + dx, this.dy + dy)
+
+        override fun changed(): Boolean {
+            val k = key ?: return true
+            val d = drawn ?: return true
+            return k() != drawnKey || d.any { LayerOp.stale(it) }
+        }
 
         override fun invoke(g: GuiGraphicsExtractor) {
+            val k = key?.invoke()
+            val cached = drawn
+            if (cached != null && k == drawnKey && cached.none { it is MeshOp && it.mesh.closed }) {
+                BitmapTextures.touch(drawnBitmaps)
+                for (op in cached) op(g)
+                return
+            }
             val r = liveRenderer ?: BlazeRenderer(guiScale).also { liveRenderer = it }
             r.state = s.copy()
             draw(r)
-            val out = r.finish()
-            for (layer in held) layer.release()
-            held = out.filterIsInstance<LayerOp>()
+            val finished = r.finish()
+            val out = if (dx != 0 || dy != 0) finished.map { shiftOp(it, dx, dy) } else if (k != null) ArrayList(finished) else finished
+            if (held.isNotEmpty()) {
+                for (layer in held) layer.release()
+                held = emptyList()
+            }
+            if (out.any { it is LayerOp }) held = out.filterIsInstance<LayerOp>()
             for (op in out) op(g)
+            if (k != null) {
+                drawn = out
+                drawnKey = k
+                drawnBitmaps = if (r.bitmaps.isEmpty()) emptySet() else HashSet(r.bitmaps)
+            }
             r.reset()
             GlyphAtlas.uploadDirty()
         }
@@ -370,6 +470,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
 
     internal class MeshOp(val mesh: Mesh) : (GuiGraphicsExtractor) -> Unit {
         override fun invoke(g: GuiGraphicsExtractor) {
+            if (mesh.glass) LiquidGlass.submit()
             //~ if >= 26.1 'submitGuiElement' -> 'addGuiElement'
             g.guiRenderState.addGuiElement(mesh)
         }
@@ -434,6 +535,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         private var drawn = false
         val vertexCount get() = colors.size
         val closed: Boolean get() = textureSetup.texure0()?.isClosed == true
+        val glass: Boolean get() = pipeline === LiquidGlass.pipeline
 
 
         fun shifted(dx: Int, dy: Int) = Mesh(
@@ -502,7 +604,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         }
 
         override fun pipeline() = if (gpu != null) KeptMeshes.pipeline(pipeline) else pipeline
-        override fun textureSetup() = textureSetup
+        override fun textureSetup() = if (glass) LiquidGlass.setup() else textureSetup
         override fun scissorArea(): ScreenRectangle? = scissor
         override fun bounds() = bounds
     }
@@ -1172,18 +1274,11 @@ internal class LayerOp private constructor(
     private var composite: BlazeRenderer.Mesh? = null
     private var lastUsed = 0L
 
-    private fun moved(dx: Int, dy: Int) = LayerOp(ops, alpha, guiScale, bounds.shifted(dx, dy))
+    fun moved(dx: Int, dy: Int) = LayerOp(ops, alpha, guiScale, bounds.shifted(dx, dy))
 
     fun faded(a: Float) = LayerOp(ops, alpha * a, guiScale, bounds)
 
-    private fun stale(): Boolean = ops.any {
-        when (it) {
-            is BlazeRenderer.MeshOp, is BlazeRenderer.BakedTextOp -> false
-            is BlazeRenderer.LiveTextOp -> it.changed()
-            is LayerOp -> it.stale()
-            else -> true
-        }
-    }
+    private fun stale(): Boolean = ops.any { stale(it) }
 
     override fun invoke(g: GuiGraphicsExtractor) {
         lastUsed = System.nanoTime()
@@ -1261,6 +1356,14 @@ internal class LayerOp private constructor(
         private val active = ArrayList<LayerOp>()
         private var sweptAt = 0L
 
+        fun stale(op: (GuiGraphicsExtractor) -> Unit): Boolean = when (op) {
+            is BlazeRenderer.MeshOp, is BlazeRenderer.BakedTextOp -> false
+            is BlazeRenderer.LiveTextOp -> op.changed()
+            is LayerOp -> op.stale()
+            is LiveDraw -> op.changed()
+            else -> true
+        }
+
         fun of(ops: List<(GuiGraphicsExtractor) -> Unit>, alpha: Float, guiScale: Float, screenW: Int, screenH: Int): LayerOp? {
             var bounds: ScreenRectangle? = null
             fun add(b: ScreenRectangle) { bounds = bounds?.let { union(it, b) } ?: b }
@@ -1269,20 +1372,13 @@ internal class LayerOp private constructor(
                 is BlazeRenderer.BakedTextOp -> op.meshes?.forEach { add(it.bounds()) } ?: return LayerOp(ops, alpha, guiScale, ScreenRectangle(0, 0, screenW, screenH))
                 is BlazeRenderer.LiveTextOp -> op.meshes?.forEach { add(it.bounds()) } ?: return LayerOp(ops, alpha, guiScale, ScreenRectangle(0, 0, screenW, screenH))
                 is LayerOp -> add(op.bounds)
+                is LiveDraw -> add(op.box ?: return LayerOp(ops, alpha, guiScale, ScreenRectangle(0, 0, screenW, screenH)))
                 else -> return LayerOp(ops, alpha, guiScale, ScreenRectangle(0, 0, screenW, screenH))
             }
             val b = bounds?.intersection(ScreenRectangle(0, 0, screenW, screenH)) ?: return null
             if (b.width() <= 0 || b.height() <= 0) return null
             val dx = b.left(); val dy = b.top()
-            val shifted = ops.map { op ->
-                when (op) {
-                    is BlazeRenderer.MeshOp -> BlazeRenderer.MeshOp(op.mesh.shifted(dx, dy))
-                    is BlazeRenderer.BakedTextOp -> op.shifted(dx, dy)
-                    is BlazeRenderer.LiveTextOp -> op.shifted(dx, dy)
-                    else -> (op as LayerOp).moved(dx, dy)
-                }
-            }
-            return LayerOp(shifted, alpha, guiScale, b)
+            return LayerOp(ops.map { shiftOp(it, dx, dy) }, alpha, guiScale, b)
         }
 
         fun retire(old: List<(GuiGraphicsExtractor) -> Unit>, next: List<(GuiGraphicsExtractor) -> Unit>) {
@@ -1312,6 +1408,33 @@ internal class LayerOp private constructor(
 }
 
 private fun ScreenRectangle.shifted(dx: Int, dy: Int) = ScreenRectangle(left() - dx, top() - dy, width(), height())
+
+internal interface LiveDraw {
+    val box: ScreenRectangle?
+    fun changed(): Boolean
+    fun shifted(dx: Int, dy: Int): (GuiGraphicsExtractor) -> Unit
+}
+
+private class OutlineOp(
+    private val outline: McOutlines.Outline, private val pose: Matrix3x2f, private val x0: Float, private val y0: Float,
+    private val color: Int, private val bounds: ScreenRectangle, private val scissor: ScreenRectangle?,
+) : (GuiGraphicsExtractor) -> Unit {
+    fun shifted(dx: Int, dy: Int) = OutlineOp(
+        outline, Matrix3x2f().translation(-dx.toFloat(), -dy.toFloat()).mul(pose), x0, y0, color, bounds.shifted(dx, dy), scissor?.shifted(dx, dy),
+    )
+
+    override fun invoke(g: GuiGraphicsExtractor) = outline.draw(g, pose, x0, y0, color, bounds, scissor)
+}
+
+private fun shiftOp(op: (GuiGraphicsExtractor) -> Unit, dx: Int, dy: Int): (GuiGraphicsExtractor) -> Unit = when (op) {
+    is BlazeRenderer.MeshOp -> BlazeRenderer.MeshOp(op.mesh.shifted(dx, dy))
+    is BlazeRenderer.BakedTextOp -> op.shifted(dx, dy)
+    is BlazeRenderer.LiveTextOp -> op.shifted(dx, dy)
+    is LayerOp -> op.moved(dx, dy)
+    is LiveDraw -> op.shifted(dx, dy)
+    is OutlineOp -> op.shifted(dx, dy)
+    else -> { g -> shiftedDraw(g, dx, dy, op) }
+}
 
 private fun shiftedDraw(g: GuiGraphicsExtractor, dx: Int, dy: Int, draw: (GuiGraphicsExtractor) -> Unit) {
     g.pose().pushMatrix()
