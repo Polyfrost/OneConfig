@@ -169,8 +169,9 @@ object HotwireBridge {
         )
     }.getOrNull()
 
-    // shortcut: a plan begun beside [others] can't pause or stop anything, as Hotwire doesn't say who started a download
-    // and stopping the next jar of one of those would delete its partial file; narrow this if its API ever names an owner
+    // shortcut: Hotwire doesn't say who started a download, so a plan begun beside [others] can't pause or stop anything,
+    // as stopping the next jar of one of those would delete its partial file, and a plan begun alone also controls
+    // whatever started after it; narrow this if its API ever names an owner
     private fun controlDownloads(action: String, others: Set<Int>) {
         if (others.isNotEmpty()) return
         runCatching { runningDownloads().forEach { call(action, it.get("id") as Int) } }
