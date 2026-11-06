@@ -211,15 +211,22 @@ object HotwireBridge {
 
     fun isUpdating(): Boolean = runCatching { (call("getStatus")!!.get("state") as Enum<*>).name == "BUSY" }.getOrDefault(false)
 
+    // Hotwire reports no progress or outcome for its own update, which only joins the queue after its download
+    @Volatile
+    private var selfUpdateAsked = false
+
     fun awaitIdle() {
         val start = System.nanoTime()
         var sawWorking = false
         while (true) {
             Thread.sleep(100)
-            val working = isWorking()
+            val working = isWorking() || selfUpdateAsked && runningDownloads().isNotEmpty()
             if (working) sawWorking = true
-            if (sawWorking && !working || !sawWorking && System.nanoTime() - start > 3_000_000_000L) return
+            if (sawWorking && !working || !sawWorking && System.nanoTime() - start > 3_000_000_000L) break
         }
+        selfUpdateAsked = false
+        // it joins the queue on the frame after its download ends
+        if (sawWorking) Thread.sleep(100)
     }
 
     /** [run] hands back the outcome when Hotwire reports one, and null when Hotwire only posts it to chat */
@@ -505,6 +512,7 @@ object HotwireBridge {
                 listOf(translated("oneconfig.page.hotwire.update.self", "Hotwire can't update itself while the game runs, so it updates at the next launch.")),
                 listOf(
                     JarAction(translated("oneconfig.page.hotwire.update.next_start", "Update at next launch"), true) {
+                        selfUpdateAsked = true
                         call("updateHotwire")
                         null
                     },

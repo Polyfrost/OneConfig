@@ -20,6 +20,19 @@ class HotwireDownloadsTest {
         }
     }
 
+    /** Ends once a test says so, while the bridge is polling it from another thread */
+    public static final class Ending {
+        volatile boolean over;
+
+        public boolean over() {
+            return over;
+        }
+
+        public int id() {
+            return 1;
+        }
+    }
+
     private static void running(int id, long done, StoreDownload.State state) {
         HotwireApi.DOWNLOADS.add(new StoreDownload("mod.jar", done, 100, false, false, id, state));
     }
@@ -114,6 +127,28 @@ class HotwireDownloadsTest {
         running(1, 10, StoreDownload.State.GETTING);
         HotwireBridge.INSTANCE.stopDownloads(HotwireBridge.INSTANCE.runningDownloadIds());
         assertFalse(HotwireBridge.INSTANCE.isStoppingDownloads());
+    }
+
+    @Test
+    void theWaitForHotwiresOwnUpdateLastsUntilItsDownloadEnds() throws Exception {
+        Ending download = new Ending();
+        HotwireApi.DOWNLOADS.add(download);
+        HotwireBridge.StoreUpdate self = new HotwireBridge.StoreUpdate("hotwire", "project", "Hotwire", "1", "2");
+        HotwireBridge.INSTANCE.planUpdate(List.of(self)).getActions().get(0).attempt();
+
+        // past where a wait with nothing to see for itself gives up
+        Thread ender = new Thread(() -> {
+            try {
+                Thread.sleep(3_500);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+            download.over = true;
+        });
+        ender.start();
+        HotwireBridge.INSTANCE.awaitIdle();
+        assertTrue(download.over, "the update only gets queued once it has downloaded");
+        ender.join();
     }
 
     @Test
