@@ -122,7 +122,10 @@ class CompatSnapshotsTest {
         property.addMetadata("default", Boolean.FALSE);
         Tree tree = Tree.tree(id).put(property);
         int[] called = {0, 0};
-        tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> called[0]++);
+        tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> {
+            called[0]++;
+            property.setAs(false);
+        });
         tree.addMetadata("custom_save", (Runnable) () -> called[1]++);
         CompatSnapshots.register(tree);
         try {
@@ -136,8 +139,9 @@ class CompatSnapshotsTest {
 
             ConfigManager.setOff(Set.of());
 
+            assertEquals(1, called[0], "the mod's reset hook runs once it's back");
             assertEquals(Boolean.FALSE, property.get(), "a new profile starts from the defaults");
-            assertEquals(1, called[1]);
+            assertTrue(called[1] > 0, "what the profile changed reaches the mod's own save");
         } finally {
             ConfigManager.setOff(Set.of());
             ConfigManager.openProfile("");
@@ -248,6 +252,36 @@ class CompatSnapshotsTest {
             assertFalse(Files.exists(ConfigManager.profileDir(profile)));
         } finally {
             ConfigManager.setOff(Set.of());
+            CompatSnapshots.untrack(id);
+            ConfigManager.active().unregister(id);
+        }
+    }
+
+    @Test
+    void aProfileCreatedWhileAModIsOffGetsItsOwnResetOnceBackWhereverItComesBack() {
+        String id = TREE_ID + "_off_reset";
+        String created = "compat-off-reset-profile";
+        // the hook is all that knows the defaults, so what was captured is only whatever the mod held
+        Property<Integer> property = Properties.simple("value", "Value", "", 5);
+        Tree tree = Tree.tree(id).put(property);
+        tree.addMetadata(CompatSnapshots.CUSTOM_RESET_METADATA, (Runnable) () -> property.setAs(0));
+        CompatSnapshots.register(tree);
+        try {
+            ConfigManager.setOff(Set.of(id));
+            ConfigManager.createProfile(created);
+            ConfigManager.openProfile("");
+            ConfigManager.setOff(Set.of());
+            assertEquals(5, property.get(), "the profile it came back in keeps its own value");
+
+            ConfigManager.openProfile(created);
+            assertEquals(0, property.get(), "the new profile starts from what the mod's reset hook says");
+
+            ConfigManager.openProfile("");
+            assertEquals(5, property.get(), "the hook ran for the new profile alone");
+        } finally {
+            ConfigManager.setOff(Set.of());
+            ConfigManager.openProfile("");
+            ConfigManager.deleteProfile(created);
             CompatSnapshots.untrack(id);
             ConfigManager.active().unregister(id);
         }

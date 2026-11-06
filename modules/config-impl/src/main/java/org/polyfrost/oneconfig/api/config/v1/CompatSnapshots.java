@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
@@ -69,6 +71,8 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     // trees of mods turned off while the game runs, whose options and callbacks are that mod's code, with the profile
     // they hold; by instance as the mod's replacement registering the same id isn't off
     private final Map<Tree, String> off = Collections.synchronizedMap(new IdentityHashMap<>());
+    // the profiles created while such a tree's mod was off, which its own reset hook still owes their defaults
+    private final Map<Tree, Set<String>> resetsWhenBack = Collections.synchronizedMap(new IdentityHashMap<>());
     private static final ThreadLocal<Boolean> APPLYING_HERE = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private volatile Consumer<Runnable> dispatcher = Runnable::run;
     private volatile String currentProfile;
@@ -163,18 +167,24 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         for (Tree tree : new ArrayList<>(off.keySet())) {
             if (ids.contains(tree.getID())) continue;
             String held = off.remove(tree);
+            Set<String> resets = resetsWhenBack.remove(tree);
             tree.removeMetadata(Backend.CUSTOM_SAVE_HELD_METADATA);
-            if (!profile.equals(held) && known.get(tree.getID()) == tree) dispatchCatchUp(tree, held, profile);
+            if ((!profile.equals(held) || resets != null) && known.get(tree.getID()) == tree) dispatchCatchUp(tree, held, resets, profile);
         }
     }
 
-    private void dispatchCatchUp(Tree tree, String held, String profile) {
+    private void dispatchCatchUp(Tree tree, String held, @Nullable Set<String> resets, String profile) {
         dispatcher.accept(() -> {
             try {
                 // what its mod's own screen changed without a callback before it went off belongs to the profile it held
                 if (profileExists(held) && !store.hasLoadFailure(held)) {
                     captureAll(tree, held);
                     flushForLifecycle(store, held);
+                }
+                if (resets != null) {
+                    for (String created : resets) {
+                        if (profileExists(created) && !store.hasLoadFailure(created)) resetForProfile(tree, created);
+                    }
                 }
                 applyProfile(tree, profile);
             } catch (Throwable t) {
@@ -183,12 +193,24 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         });
     }
 
+    private void resetForProfile(Tree tree, String profile) {
+        // any callback the hook fires is for this profile rather than the active one, which the capture below sees to
+        forEachProp(tree, applying::add);
+        try {
+            restoreDefaults(tree);
+        } finally {
+            forEachProp(tree, applying::remove);
+        }
+        captureAll(tree, profile);
+        flushForLifecycle(store, profile);
+    }
+
     private static boolean profileExists(String profile) {
         return profile.isEmpty() || Files.isDirectory(ConfigManager.profileDir(profile));
     }
 
-    // shortcut: a mod's own reset hook can't run while it's off so the captured defaults stand in for it, run the hook
-    // once it's back if those ever prove wrong
+    // a mod's own reset hook can't run while it's off so the captured defaults stand in for it until then
+    // shortcut: a hook still owed when the game closes is dropped, persist the profiles if that ever proves wrong
     private void storeDefaults(Tree tree, String profile) {
         Map<String, Object> snapshot = defaults.get(tree.getID());
         if (snapshot != null) snapshot.forEach((key, value) -> store.putValue(profile, tree.getID(), key, value));
@@ -252,6 +274,9 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 try {
                     if (off.containsKey(tree)) {
                         storeDefaults(tree, profile);
+                        if (tree.getMetadata(CUSTOM_RESET_METADATA) instanceof Runnable) {
+                            resetsWhenBack.computeIfAbsent(tree, ignored -> new LinkedHashSet<>()).add(profile);
+                        }
                         continue;
                     }
                     restoreDefaults(tree);
@@ -268,6 +293,9 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     public void onProfileRenamed(String oldProfile, String newProfile) {
         if (oldProfile.equals(currentProfile)) currentProfile = newProfile;
         off.replaceAll((tree, held) -> oldProfile.equals(held) ? newProfile : held);
+        resetsWhenBack.values().forEach(created -> {
+            if (created.remove(oldProfile)) created.add(newProfile);
+        });
         try {
             store.renameProfile(oldProfile, newProfile);
         } catch (IOException e) {
