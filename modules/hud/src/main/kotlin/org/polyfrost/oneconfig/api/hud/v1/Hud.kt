@@ -728,6 +728,26 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
             ?: selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
     }
 
+    /**
+     * How far across this HUD's box the point that holds still while it resizes horizontally sits
+     *
+     * 0 is the left edge and 1 the right
+     *
+     * A merge can hold each axis against a different neighbour so this can disagree with
+     * [effectiveSelfAnchorPoint]
+     */
+    val pivotFractionX: Float get() = pinnedFracX(resolvedAnchorX?.selfPoint ?: growthAnchor)
+
+    /**
+     * How far down this HUD's box the point that holds still while it resizes vertically sits
+     *
+     * 0 is the top edge and 1 the bottom
+     *
+     * A merge can hold each axis against a different neighbour so this can disagree with
+     * [effectiveSelfAnchorPoint]
+     */
+    val pivotFractionY: Float get() = pinnedFracY(resolvedAnchorY?.selfPoint ?: growthAnchor)
+
     /** Moves this HUD's own anchor point to [point] without moving the HUD on screen */
     fun setSelfAnchorPointKeepingPosition(point: HudAnchor) {
         val absX = rawX
