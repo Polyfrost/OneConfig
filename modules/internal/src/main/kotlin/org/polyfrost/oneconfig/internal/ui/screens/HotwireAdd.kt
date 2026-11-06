@@ -54,7 +54,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private enum class AddSource { File, Modrinth, Updates }
 
-private const val DOWNLOAD_POLL_MILLIS = 100L
+internal const val DOWNLOAD_POLL_MILLIS = 100L
 
 /**
  * Adds or updates a mod through Hotwire from a jar on disk, a Modrinth project, or an update Hotwire found, always
@@ -71,9 +71,15 @@ fun HotwireAdd() {
     var request by remember { mutableIntStateOf(0) }
     // whether a plan is loading, so cancelling the wait for a download that isn't this plan's leaves that download alone
     var loading by remember { mutableStateOf(false) }
+    // the downloads running before this plan began, which aren't its to show or stop, and the ones it stopped
+    var others by remember { mutableStateOf(emptySet<Int>()) }
+    var stopped by remember { mutableStateOf(emptySet<Int>()) }
 
     fun dropPending() {
-        if (loading) HotwireBridge.stopDownloads()
+        if (loading) {
+            stopped = HotwireBridge.runningDownloadIds() - others
+            HotwireBridge.stopDownloads(others)
+        }
         loading = false
         plan?.onCancel?.invoke()
     }
@@ -100,8 +106,9 @@ fun HotwireAdd() {
         }
         scope.launch {
             // a stopped download takes a moment to end, and a second of the same jar beside it would write over it
-            while (id == request && HotwireBridge.downloadProgress() != null) delay(DOWNLOAD_POLL_MILLIS)
+            while (id == request && HotwireBridge.runningDownloadIds().any { it in stopped }) delay(DOWNLOAD_POLL_MILLIS)
             if (id != request) return@launch
+            others = HotwireBridge.runningDownloadIds()
             loading = true
             val loaded = withContext(Dispatchers.IO) { runCatching(load) }
             if (id != request) {
@@ -134,7 +141,7 @@ fun HotwireAdd() {
             review(update.name, icon) { HotwireBridge.planUpdate(listOf(update)) }
 
         if (reading || plan != null) {
-            PlanCard(reading, plan, planIcon, onBack = ::leavePreview)
+            PlanCard(reading, plan, planIcon, others, onBack = ::leavePreview)
         } else {
             when (source) {
                 AddSource.File -> FileSource { jar -> review("", { null }) { jar()?.let(HotwireBridge::planFor) } }
@@ -273,7 +280,7 @@ private fun ModrinthSource(
             val shown = remember(current, updates, installed) {
                 current.getOrThrow().mapNotNull { hit ->
                     val update = updates.firstOrNull { it.projectId == hit.projectId }
-                    if (update == null && HotwireBridge.isInstalled(hit, installed)) null else hit to update
+                    if (update == null && hit.installed) null else hit to update
                 }
             }
             val loaded = current.getOrThrow().size
@@ -300,6 +307,9 @@ private fun ModrinthSource(
                 Text(translated("oneconfig.page.hotwire.modrinth.downloads", "%s downloads", "%,d".format(hit.downloads)), color = theme.textColorSecondary, fontSize = 12.sp)
                 when {
                     update != null -> Chip(translated("oneconfig.page.hotwire.modrinth.update", "Update"), selected = true) { onUpdate(update, hit) }
+                    // still offered, since a different project can share a mod's name and Hotwire says so when asked
+                    HotwireBridge.isInstalled(hit, installed) ->
+                        Chip(translated("oneconfig.page.hotwire.modrinth.installed", "Installed"), selected = false) { onInstall(hit) }
                     else -> Chip(translated("oneconfig.page.hotwire.modrinth.install", "Install"), selected = true) { onInstall(hit) }
                 }
             }
@@ -366,19 +376,11 @@ private fun <T> ResultList(items: List<T>, footer: @Composable () -> Unit = {}, 
 
 /** The wait for a plan, which for a Modrinth mod is Hotwire downloading it and what it needs */
 @Composable
-private fun PlanLoading(onCancel: () -> Unit) {
+private fun PlanLoading(others: Set<Int>, onCancel: () -> Unit) {
     val theme = LocalTheme.current
-    var progress by remember { mutableStateOf<HotwireBridge.DownloadProgress?>(null) }
-    var fraction by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            val latest = HotwireBridge.downloadProgress()
-            fraction = latest?.shownAfter(progress, fraction) ?: 0f
-            progress = latest
-            delay(DOWNLOAD_POLL_MILLIS)
-        }
-    }
-    val current = progress
+    val download = rememberDownloadWatch(others = others)
+    val current = download.progress
+    val fraction = download.fraction
     val percent = (fraction * 100).toInt()
     Text(
         when {
@@ -397,7 +399,7 @@ private fun PlanLoading(onCancel: () -> Unit) {
             } else {
                 translated("oneconfig.page.hotwire.add.pause", "Pause")
             }
-            Chip(label, selected = false) { HotwireBridge.pauseDownloads(!current.paused) }
+            Chip(label, selected = false) { HotwireBridge.pauseDownloads(!current.paused, others) }
         }
         Chip(translated("oneconfig.page.hotwire.add.cancel", "Cancel"), selected = false, onClick = onCancel)
     }
@@ -405,7 +407,7 @@ private fun PlanLoading(onCancel: () -> Unit) {
 
 /** What Hotwire would do with the chosen jar and the choices it offers, then its progress once one is picked */
 @Composable
-private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: String?, onBack: () -> Unit) {
+private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: String?, otherDownloads: Set<Int>, onBack: () -> Unit) {
     val theme = LocalTheme.current
     var started by remember(plan) { mutableStateOf(false) }
     // the outcome of an action that reports one, and whether one is on its way
@@ -422,7 +424,7 @@ private fun PlanCard(reading: Boolean, plan: HotwireBridge.JarPlan?, icon: Strin
 
     Card {
         if (reading || plan == null) {
-            PlanLoading(onCancel = onBack)
+            PlanLoading(otherDownloads, onCancel = onBack)
             return@Card
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {

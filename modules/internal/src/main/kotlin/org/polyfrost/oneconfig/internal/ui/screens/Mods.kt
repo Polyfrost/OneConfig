@@ -78,6 +78,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge
 import org.polyfrost.oneconfig.internal.ui.api.ModCardTypeCollapseStore
 import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
@@ -401,7 +402,7 @@ private fun openModCard(mod: ConfigData, navigation: ShellNavigation) {
     val onOpen = mod.onOpen
     when {
         // Hotwire's card would open its own screen, but OneConfig has a page for it
-        mod.id == "hotwire" -> navigation.navigate(HotwireGraph)
+        mod.id == "hotwire" && HotwireBridge.supportsSwitching -> navigation.navigate(HotwireGraph)
         onOpen != null -> onOpen()
         mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
     }

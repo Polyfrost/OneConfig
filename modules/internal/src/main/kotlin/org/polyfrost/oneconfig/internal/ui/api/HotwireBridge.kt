@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
@@ -66,21 +67,10 @@ object HotwireBridge {
 
     private fun Any.get(accessor: String): Any? = javaClass.getMethod(accessor).invoke(this)
 
-    private fun supports(call: String) = apiClass?.methods?.any { it.name == call } == true
-
     private fun unavailable() = translated("oneconfig.page.hotwire.unavailable", "Hotwire is not available.")
 
-    /**
-     * Whether this Hotwire has the change plans every part of the page goes through, the download controls, and the
-     * fields [mods] and [findUpdates] read, which arrived without a new API revision
-     */
-    val supportsSwitching: Boolean by lazy {
-        supports("planChange") && supports("stopDownload") && runCatching { Class.forName("dev.moon.hotwire.api.ModState").getMethod("offSinceStart") }.isSuccess
-    }
-
-    val supportsOriginalScreen: Boolean by lazy { supports("openScreen") }
-
-    val supportsReports: Boolean by lazy { supports("writeReport") }
+    /** Whether this is Hotwire 0.7.3 or newer, the oldest whose API has everything the page reads */
+    val supportsSwitching: Boolean by lazy { (call("getRevision") as? Int ?: 0) >= MIN_REVISION }
 
     /** Has Hotwire write a bug report zip, with the game log and what it did and personal details taken out */
     @Suppress("UNCHECKED_CAST")
@@ -104,6 +94,23 @@ object HotwireBridge {
     fun installedState(): List<Any?> = mods().orEmpty().map { listOf(it.id, it.version, it.on) } + pendingTasks()
 
     private fun pendingTasks(): List<*> = call("getPendingTasks") as? List<*> ?: emptyList<Any>()
+
+    /** The name of each mod waiting for the next launch, by id */
+    fun queuedMods(): Map<String, String> = runCatching {
+        pendingTasks().associate { it!!.get("modId") as String to it.get("name") as String }
+    }.getOrDefault(emptyMap())
+
+    class AppliedUpdates(val now: List<String>, val nextLaunch: List<String>)
+
+    /**
+     * What a batch updated live and what waits for the next launch: a live update joins the queue too, to swap its jar
+     * when the game closes, so only a mod already running its new version counts as live
+     */
+    fun whenApplied(modsBefore: List<ModState>, modsAfter: List<ModState>, queuedBefore: Map<String, String>, queuedAfter: Map<String, String>): AppliedUpdates {
+        val versions = modsBefore.associate { it.id to it.version }
+        val live = modsAfter.filter { it.id in versions && versions[it.id] != it.version }
+        return AppliedUpdates(live.map { it.name }, (queuedAfter - queuedBefore.keys - live.map { it.id }.toSet()).values.toList())
+    }
 
     val isSwitching: Boolean get() = call("isSwitching") as? Boolean ?: false
 
@@ -129,36 +136,46 @@ object HotwireBridge {
         }
     }
 
-    private fun runningDownloads(): List<Any> = runCatching {
-        (call("getStoreDownloads") as List<*>).filterNotNull().filter { it.get("over") == false }
+    /**
+     * Hotwire's running downloads, leaving out [others]: Hotwire lists every download it has, its own update among
+     * them, so whatever was already running before a plan began isn't that plan's to show or stop
+     */
+    private fun runningDownloads(others: Set<Int> = emptySet()): List<Any> = runCatching {
+        (call("getStoreDownloads") as List<*>).filterNotNull().filter { it.get("over") == false && it.get("id") !in others }
     }.getOrDefault(emptyList())
 
-    /** [fraction] goes from 0 to 1, and [paused] says every running download is paused */
-    class DownloadProgress(val fraction: Float, val paused: Boolean, private val ids: Set<Int>) {
+    fun runningDownloadIds(): Set<Int> = runCatching { runningDownloads().mapTo(HashSet()) { it.get("id") as Int } }.getOrDefault(emptySet())
+
+    /** [fraction] goes from 0 to 1, [paused] says every running download is paused, and [name] is the one being fetched */
+    class DownloadProgress(val fraction: Float, val paused: Boolean, val name: String, private val ids: Set<Int>) {
         /** What a bar showing [shown] for [before] moves to: a finished jar leaving must not pull it back, but a new jar starts it over */
         fun shownAfter(before: DownloadProgress?, shown: Float): Float =
             if (before != null && before.ids.containsAll(ids)) maxOf(fraction, shown) else fraction
     }
 
-    /** How far Hotwire's running downloads are together, or null while none is running */
-    fun downloadProgress(): DownloadProgress? = runCatching {
-        val running = runningDownloads().ifEmpty { return null }
+    /** How far Hotwire's running downloads but [others] are together, or null while none is running */
+    @JvmOverloads
+    fun downloadProgress(others: Set<Int> = emptySet()): DownloadProgress? = runCatching {
+        val running = runningDownloads(others).ifEmpty { return null }
         fun sum(field: String) = running.sumOf { it.get(field) as Long }
         DownloadProgress(
             (sum("done").toFloat() / sum("total").coerceAtLeast(1)).coerceAtMost(1f),
             running.all { (it.get("state") as Enum<*>).name == "PAUSED" },
+            (running.firstOrNull { (it.get("state") as Enum<*>).name == "GETTING" } ?: running.first()).get("name") as String,
             running.mapTo(HashSet()) { it.get("id") as Int },
         )
     }.getOrNull()
 
-    private fun controlDownloads(action: String) {
-        runCatching { runningDownloads().forEach { call(action, it.get("id") as Int) } }
+    private fun controlDownloads(action: String, others: Set<Int>) {
+        runCatching { runningDownloads(others).forEach { call(action, it.get("id") as Int) } }
     }
 
-    fun pauseDownloads(paused: Boolean) = controlDownloads(if (paused) "pauseDownload" else "resumeDownload")
+    @JvmOverloads
+    fun pauseDownloads(paused: Boolean, others: Set<Int> = emptySet()) = controlDownloads(if (paused) "pauseDownload" else "resumeDownload", others)
 
-    /** Ends the running downloads, and Hotwire then answers whatever was waiting on them with nothing to add */
-    fun stopDownloads() = controlDownloads("stopDownload")
+    /** Ends the running downloads but [others], and Hotwire then answers whatever was waiting on them with nothing to add */
+    @JvmOverloads
+    fun stopDownloads(others: Set<Int> = emptySet()) = controlDownloads("stopDownload", others)
 
     /** Whether Hotwire is running a switch or add right now */
     fun isWorking(): Boolean = runCatching { call("getProgress")!!.get("running") as Boolean }.getOrDefault(false)
@@ -269,7 +286,8 @@ object HotwireBridge {
 
     /**
      * Hotwire only learns of a project from a jar's hash when its store first opens, so it misses mods added since then
-     * and any jar Modrinth didn't serve; a project named after one of the [mods] present counts as installed too
+     * and any jar Modrinth didn't serve; a project named after one of the [mods] present counts as installed too, though
+     * only Hotwire's own answer should hide a project, since a different project can share a mod's name
      */
     fun isInstalled(hit: StoreHit, mods: Collection<ModInfo>): Boolean =
         hit.installed || mods.any { it.id == hit.slug || it.name.equals(hit.title, ignoreCase = true) }
@@ -295,7 +313,15 @@ object HotwireBridge {
                 connectTimeout = ICON_TIMEOUT_MS
                 readTimeout = ICON_TIMEOUT_MS
             }
-            Files.write(file, connection.getInputStream().use { it.readNBytes(MAX_ICON_BYTES) })
+            val bytes = connection.getInputStream().use { it.readNBytes(MAX_ICON_BYTES) }
+            // moved into place whole, so an icon fetched twice at once is never read half-written
+            val temp = Files.createTempFile(dir, file.fileName.toString(), ".tmp")
+            try {
+                Files.write(temp, bytes)
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+            } finally {
+                Files.deleteIfExists(temp)
+            }
         }
         return file
     }
@@ -391,7 +417,8 @@ object HotwireBridge {
     fun findUpdates(): List<StoreUpdate> {
         val found = (call("checkUpdates") as CompletableFuture<*>).get()!!
         (found.get("failure") as String).takeIf { it.isNotBlank() }?.let { error(it) }
-        val queued = pendingTasks().map { it!!.get("modId") }
+        // only a queued update means the update is taken care of, not a mod turning off at the next launch
+        val queued = pendingTasks().filter { (it!!.get("kind") as Enum<*>).name == "UPDATE" }.map { it!!.get("modId") }
         return (found.get("updates") as List<*>).filterNot { it!!.get("id") in queued }.map {
             StoreUpdate(it!!.get("id") as String, it.get("projectId") as String, it.get("name") as String, it.get("installedVersion") as String, it.get("newVersion") as String)
         }
@@ -407,27 +434,29 @@ object HotwireBridge {
         return (call("planChange", request) as CompletableFuture<*>).get()!!
     }
 
-    /** The choices a change plan offers, labelled from the [kind] of change: "add", "update" or "change" */
+    /**
+     * The choices a change plan offers, labelled from the [kind] of change: "add", "update" or "change"
+     *
+     * The main one does what each line says, live where it can and at the next launch where it can't, so a plan that
+     * needs a restart for part of it isn't labelled as all live or all waiting
+     */
     @Suppress("UNCHECKED_CAST")
     private fun planFrom(kind: String, title: String, detail: String, plan: Any): JarPlan {
         fun ask(method: String) = plan.through("ChangePlan", method)
         val reopens = ask("needsReopen") == true
         val restartOnly = (ask("getReason") as Enum<*>).name == "NEEDS_RESTART"
-        val canWait = ask("canWaitForNextStart") == true
-        val nextStart = translated("oneconfig.page.hotwire.$kind.next_start", "Apply at next launch")
         val now = JarAction(
             when {
                 reopens -> translated("oneconfig.page.hotwire.$kind.reopen", "Save and apply")
-                restartOnly -> nextStart
+                restartOnly -> translated("oneconfig.page.hotwire.$kind.as_planned", "Apply")
                 else -> translated("oneconfig.page.hotwire.$kind.now", "Apply now")
             },
             true,
-            // accepting a plan that only needs a restart would still apply whatever in it can go live
-        ) { ask(if (restartOnly && canWait) "acceptAtNextStart" else "accept").asResults() }
-        val later = JarAction(nextStart, false) { ask("acceptAtNextStart").asResults() }
+        ) { ask("accept").asResults() }
+        val later = JarAction(translated("oneconfig.page.hotwire.$kind.next_start", "Apply at next launch"), false) { ask("acceptAtNextStart").asResults() }
         val actions = when {
             ask("canApply") != true -> emptyList()
-            !restartOnly && canWait -> listOf(now, later)
+            ask("canWaitForNextStart") == true -> listOf(now, later)
             else -> listOf(now)
         }
         return JarPlan(title, detail, ask("getLines") as List<String>, actions, reopens = reopens)
@@ -467,4 +496,6 @@ object HotwireBridge {
     private const val ICON_TIMEOUT_MS = 10_000
 
     private const val MODRINTH_LOADER = "fabric"
+
+    private const val MIN_REVISION = 8
 }

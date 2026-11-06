@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.moon.hotwire.api.HotwireApi;
 import dev.moon.hotwire.api.StoreDownload;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +47,7 @@ class HotwireDownloadsTest {
         running(3, 30, StoreDownload.State.PAUSED);
         HotwireBridge.DownloadProgress progress = HotwireBridge.INSTANCE.downloadProgress();
         assertEquals(0.2f, progress.getFraction());
+        assertEquals("mod.jar", progress.getName());
         assertFalse(progress.getPaused());
     }
 
@@ -93,5 +95,16 @@ class HotwireDownloadsTest {
         HotwireBridge.INSTANCE.pauseDownloads(false);
         HotwireBridge.INSTANCE.stopDownloads();
         assertEquals(List.of("pause 2", "pause 3", "resume 2", "resume 3", "stop 2", "stop 3"), HotwireApi.CONTROLS);
+    }
+
+    @Test
+    void downloadsRunningBeforeAPlanAreNotItsToShowOrStop() {
+        running(1, 90, StoreDownload.State.GETTING);
+        Set<Integer> others = HotwireBridge.INSTANCE.runningDownloadIds();
+        running(2, 10, StoreDownload.State.GETTING);
+        assertEquals(0.1f, HotwireBridge.INSTANCE.downloadProgress(others).getFraction());
+        HotwireBridge.INSTANCE.stopDownloads(others);
+        HotwireBridge.INSTANCE.pauseDownloads(true, others);
+        assertEquals(List.of("stop 2", "pause 2"), HotwireApi.CONTROLS);
     }
 }

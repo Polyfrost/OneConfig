@@ -152,27 +152,37 @@ object HotwireUpdates {
 
     private var planningJob: Job? = null
 
+    /** The downloads already running when planning began, which aren't the plan's to show or stop */
+    var otherDownloads: Set<Int> = emptySet()
+        private set
+
     /** Why a plan in a [review] won't be applied, or null when it will */
     fun skipReason(plan: Result<HotwireBridge.JarPlan>): String? = when {
         plan.getOrNull()?.reopens == true -> translated("oneconfig.page.hotwire.updates.reopen", "It has to save and reopen your world, so update it on its own.")
         plan.getOrNull()?.actions?.any { it.primary } == true -> null
-        else -> (plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.firstOrNull()).orEmpty()
+        // the refusal can come after lines saying what would have gone fine, so all of them are the reason
+        else -> (plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.joinToString(" ")).orEmpty()
     }
 
     /**
      * Plans the updates for a [review], since a plan can change more mods than were picked, as one plan so what one
      * brings along isn't offered again; Hotwire updates itself apart, since it can't go in a plan
+     *
+     * Hotwire refuses a whole plan for one mod it can't update, so a refused batch is planned again one mod at a time,
+     * which fetches the jars again, so the others can still go
      */
     fun reviewUpdates(updates: List<HotwireBridge.StoreUpdate>, onDone: () -> Unit) {
+        otherDownloads = HotwireBridge.runningDownloadIds()
         planningJob = scope.launch {
             planning = true
             try {
+                suspend fun plan(group: List<HotwireBridge.StoreUpdate>) =
+                    group.joinToString(", ") { it.name } to withContext(Dispatchers.IO) { runCatching { HotwireBridge.planUpdate(group) } }
                 val (self, mods) = updates.partition(HotwireBridge::isSelf)
-                val groups = self.map { listOf(it) } + listOf(mods).filter { it.isNotEmpty() }
+                val together = mods.takeIf { it.isNotEmpty() }?.let { plan(it) }
+                val refused = mods.size > 1 && together!!.second.isSuccess && skipReason(together.second) != null
                 review = Review(
-                    groups.map { group ->
-                        group.joinToString(", ") { it.name } to withContext(Dispatchers.IO) { runCatching { HotwireBridge.planUpdate(group) } }
-                    },
+                    self.map { plan(listOf(it)) } + if (refused) mods.map { plan(listOf(it)) } else listOfNotNull(together),
                     onDone,
                 )
             } finally {
@@ -183,7 +193,7 @@ object HotwireUpdates {
 
     fun dismissReview() {
         // planning is what downloads the jars, which nothing would use now
-        if (planning) HotwireBridge.stopDownloads()
+        if (planning) HotwireBridge.stopDownloads(otherDownloads)
         planningJob?.cancel()
         review = null
     }
@@ -194,6 +204,9 @@ object HotwireUpdates {
         review = null
         scope.launch {
             val problems = ArrayList<String>()
+            val modsBefore = HotwireBridge.mods().orEmpty()
+            val queuedBefore = HotwireBridge.queuedMods()
+            var sentToChat = false
             try {
                 for ((name, plan) in accepted.plans) {
                     updating = name
@@ -203,17 +216,27 @@ object HotwireUpdates {
                         continue
                     }
                     val action = plan.getOrThrow().actions.first { it.primary }
-                    val failed = action.attempt()?.let { withContext(Dispatchers.IO) { it.get() } }?.takeUnless { it.ok }
+                    val pending = action.attempt()
+                    if (pending == null) sentToChat = true
+                    val failed = pending?.let { withContext(Dispatchers.IO) { it.get() } }?.takeUnless { it.ok }
                     if (failed != null) problems += "$name: ${failed.message}"
                 }
             } finally {
                 updating = null
                 refreshWhenDone()
             }
+            val outcome = HotwireBridge.whenApplied(modsBefore, HotwireBridge.mods().orEmpty(), queuedBefore, HotwireBridge.queuedMods())
+            val summary = listOfNotNull(
+                outcome.now.takeIf { it.isNotEmpty() }?.let { translated("oneconfig.page.hotwire.updates.done.now", "Updated now: %s.", it.joinToString(", ")) },
+                outcome.nextLaunch.takeIf { it.isNotEmpty() }?.let { translated("oneconfig.page.hotwire.updates.done.next_start", "Updates at next launch: %s.", it.joinToString(", ")) },
+                // what only reports in chat hasn't finished yet, and may not
+                translated("oneconfig.page.hotwire.add.sent", "Sent to Hotwire. It posts the result in chat.").takeIf { sentToChat },
+            ).joinToString(" ")
             if (problems.isEmpty()) {
-                Notifications.success("Hotwire", translated("oneconfig.page.hotwire.updates.done", "Updates finished."))
+                Notifications.success("Hotwire", summary.ifBlank { translated("oneconfig.page.hotwire.updates.done", "Updates finished.") })
                 accepted.onDone()
             } else {
+                if (summary.isNotBlank()) Notifications.success("Hotwire", summary)
                 Notifications.error("Hotwire", problems.joinToString(" "))
             }
         }
@@ -259,7 +282,7 @@ fun hotwireTagline(): String {
 
 private val SwitchBarHeight = 56.dp
 
-val openHotwireScreen: Runnable? by lazy { Runnable { HotwireBridge.openScreen() }.takeIf { HotwireBridge.supportsOriginalScreen } }
+val openHotwireScreen = Runnable { HotwireBridge.openScreen() }
 
 /** Reports what Hotwire says came of a change */
 internal fun notifyHotwireResult(result: HotwireBridge.Result) {
@@ -273,7 +296,7 @@ internal fun notifyHotwireResult(result: HotwireBridge.Result) {
             val message = result.message.ifBlank { translated("oneconfig.page.hotwire.result.failed", "That didn't work.") }
             Notifications.builder("Hotwire", message).type(NotificationType.ERROR).apply {
                 // it stays up so there's time to press the button, which dismisses it
-                if (HotwireBridge.supportsReports && !result.refused) {
+                if (!result.refused) {
                     persistent()
                     action(NotificationAction(translated("oneconfig.page.hotwire.report.copy", "Copy bug report"), true) { copyHotwireReport(message) })
                 }
@@ -322,7 +345,7 @@ fun Hotwire() {
     if (!HotwireBridge.supportsSwitching) {
         Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
             Text(
-                translated("oneconfig.page.hotwire.upgrade.page", "This version of Hotwire is too old for this page. Update Hotwire to use it."),
+                translated("oneconfig.page.hotwire.upgrade.page", "This page needs Hotwire 0.7.3 or newer. Update Hotwire to use it."),
                 color = LocalTheme.current.textColorSecondary,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
@@ -360,60 +383,63 @@ fun Hotwire() {
     // picked families by their root id
     val selected = remember { mutableStateSetOf<String>() }
     val gridState = rememberRestorableLazyGridState("hotwire")
-    Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = PageGutter),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Chip(translated("oneconfig.page.hotwire.filter.updates", "Has update"), onlyUpdates, "refresh") { onlyUpdates = !onlyUpdates }
-            Spacer(Modifier.weight(1f))
-            IconSegments(
-                listOf(
-                    IconSegment("grid", translated("oneconfig.page.hotwire.layout.grid", "Grid")),
-                    IconSegment("list", translated("oneconfig.page.hotwire.layout.list", "List")),
-                ),
-                selected = if (listLayout) 1 else 0,
-            ) { listLayout = it == 1 }
-        }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            ScrollbarBox(gridState, PageGutter, Modifier.fillMaxSize()) {
-                LazyVerticalGrid(
-                    state = gridState,
-                    columns = if (listLayout) GridCells.Fixed(1) else GridCells.Adaptive(140.dp),
-                    verticalArrangement = Arrangement.spacedBy(if (listLayout) 8.dp else 19.dp),
-                    horizontalArrangement = Arrangement.spacedBy(19.dp),
-                    // the last row can still scroll clear of the bar drawn over the grid
-                    contentPadding = PaddingValues(start = PageGutter, end = PageGutter, bottom = SwitchBarHeight + 38.dp),
-                    modifier = Modifier.fillMaxSize(),
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(19.dp)) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = PageGutter),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Chip(translated("oneconfig.page.hotwire.filter.updates", "Has update"), onlyUpdates, "refresh") { onlyUpdates = !onlyUpdates }
+                Spacer(Modifier.weight(1f))
+                IconSegments(
+                    listOf(
+                        IconSegment("grid", translated("oneconfig.page.hotwire.layout.grid", "Grid")),
+                        IconSegment("list", translated("oneconfig.page.hotwire.layout.list", "List")),
+                    ),
+                    selected = if (listLayout) 1 else 0,
+                ) { listLayout = it == 1 }
+            }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                ScrollbarBox(gridState, PageGutter, Modifier.fillMaxSize()) {
+                    LazyVerticalGrid(
+                        state = gridState,
+                        columns = if (listLayout) GridCells.Fixed(1) else GridCells.Adaptive(140.dp),
+                        verticalArrangement = Arrangement.spacedBy(if (listLayout) 8.dp else 19.dp),
+                        horizontalArrangement = Arrangement.spacedBy(19.dp),
+                        // the last row can still scroll clear of the bar drawn over the grid
+                        contentPadding = PaddingValues(start = PageGutter, end = PageGutter, bottom = SwitchBarHeight + 38.dp),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(mods, key = { it.id }) { mod ->
+                            HotwireTile(
+                                mod,
+                                families.getValue(mod),
+                                on = familyOn(families.getValue(mod), states),
+                                hasUpdate = families.getValue(mod).any { it.id in availableUpdates },
+                                list = listLayout,
+                                selected = mod.id in selected,
+                                onSelect = { if (!selected.remove(mod.id)) selected.add(mod.id) },
+                            )
+                        }
+                    }
+                }
+                Row(
+                    // a fixed height the switch bar fills, so the button stays centred on it and doesn't move when it appears
+                    Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = PageGutter, end = PageGutter, bottom = 19.dp).height(SwitchBarHeight),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                 ) {
-                    items(mods, key = { it.id }) { mod ->
-                        HotwireTile(
-                            mod,
-                            families.getValue(mod),
-                            on = familyOn(families.getValue(mod), states),
-                            hasUpdate = families.getValue(mod).any { it.id in availableUpdates },
-                            list = listLayout,
-                            selected = mod.id in selected,
-                            onSelect = { if (!selected.remove(mod.id)) selected.add(mod.id) },
-                        )
+                    val picked = families.filterKeys { it.id in selected }
+                    if (picked.isNotEmpty()) SwitchBar(picked, states, Modifier.weight(1f), onClear = { selected.clear() })
+                    Chip(translated("oneconfig.page.hotwire.add_mods", "Add mods"), selected = true, icon = "plus") {
+                        ShellController.shared.navigation.navigate(HotwireAddRoute)
                     }
                 }
             }
-            Row(
-                // a fixed height the switch bar fills, so the button stays centred on it and doesn't move when it appears
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = PageGutter, end = PageGutter, bottom = 19.dp).height(SwitchBarHeight),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-            ) {
-                val picked = families.filterKeys { it.id in selected }
-                if (picked.isNotEmpty()) SwitchBar(picked, states, Modifier.weight(1f), onClear = { selected.clear() })
-                Chip(translated("oneconfig.page.hotwire.add_mods", "Add mods"), selected = true, icon = "plus") {
-                    ShellController.shared.navigation.navigate(HotwireAddRoute)
-                }
-            }
-            HotwireUpdates.review?.let { UpdateReviewCard(it) }
         }
+        // over the whole page rather than the grid, so it's centred on the page
+        HotwireUpdates.review?.let { UpdateReviewCard(it) }
     }
 }
 
@@ -429,8 +455,9 @@ private fun UpdateReviewCard(review: HotwireUpdates.Review) {
                 .border(1.dp, theme.borderColor, theme.modCardShape)
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(translated("oneconfig.page.hotwire.updates.review", "Review these updates"), color = theme.textColor, fontSize = 18.sp)
+            Text(translated("oneconfig.page.hotwire.updates.review", "Review these updates"), color = theme.textColor, fontSize = 18.sp, textAlign = TextAlign.Center)
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 review.plans.forEach { (name, plan) ->
                     Text(name, color = theme.textColorSecondary, fontSize = 13.sp)
@@ -514,6 +541,29 @@ private fun modFamilies(mods: Collection<ModInfo>): Map<ModInfo, List<ModInfo>> 
 private fun familyOn(family: List<ModInfo>, states: Map<String, HotwireBridge.ModState>?): Boolean? =
     family.firstNotNullOfOrNull { mod -> states?.get(mod.id)?.takeIf { it.switchable } }?.on
 
+/** How far Hotwire's running downloads are, or null [progress] while none is; [fraction] is what a bar should show */
+internal class DownloadWatch {
+    var progress by mutableStateOf<HotwireBridge.DownloadProgress?>(null)
+    var fraction by mutableFloatStateOf(0f)
+}
+
+/** Follows Hotwire's downloads but [others] for as long as [active] */
+@Composable
+internal fun rememberDownloadWatch(active: Boolean = true, others: Set<Int> = emptySet()): DownloadWatch {
+    val watch = remember { DownloadWatch() }
+    LaunchedEffect(active, others) {
+        watch.progress = null
+        watch.fraction = 0f
+        while (active) {
+            val latest = HotwireBridge.downloadProgress(others)
+            watch.fraction = latest?.shownAfter(watch.progress, watch.fraction) ?: 0f
+            watch.progress = latest
+            delay(DOWNLOAD_POLL_MILLIS)
+        }
+    }
+    return watch
+}
+
 @Composable
 internal fun HotwireProgressBar(fraction: Float) {
     val theme = LocalTheme.current
@@ -569,6 +619,8 @@ private fun SwitchBar(
     LaunchedEffect(running) {
         while (running) withFrameNanos { fraction = HotwireBridge.progress() }
     }
+    // planning is what downloads the jars, so that's what there is to show until a plan is ready
+    val download = rememberDownloadWatch(planning, HotwireUpdates.otherDownloads)
 
     val offCount = picked.values.count { familyOn(it, states) == true }
     val onCount = picked.values.count { familyOn(it, states) == false }
@@ -581,7 +633,9 @@ private fun SwitchBar(
     val message = when {
         states == null -> translated("oneconfig.page.hotwire.switch.starting", "Hotwire is still starting, so mods can't be switched yet.")
         updating != null -> translated("oneconfig.page.hotwire.updates.running", "Updating %s…", updating)
-        planning -> translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
+        // named, since Hotwire fetches one jar at a time and the bar starts over for each
+        planning -> download.progress?.let { translated("oneconfig.page.hotwire.updates.downloading", "Downloading %s… %s%%", it.name, (download.fraction * 100).toInt()) }
+            ?: translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
         running -> translated("oneconfig.page.hotwire.switch.running", "Switching… %s%%", (fraction * 100).toInt())
         tooMany -> translated("oneconfig.page.hotwire.switch.too_many", "Only %s mods can be switched at once.", MaxSwitchedMods)
         mixed && together == null -> translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
@@ -631,9 +685,13 @@ private fun SwitchBar(
             if (message.isNotBlank()) {
                 Text(message, color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if (running) HotwireProgressBar(fraction)
+            if (running) HotwireProgressBar(if (planning) download.fraction else fraction)
         }
-        Chip(translated("oneconfig.page.hotwire.switch.clear", "Clear"), selected = false, onClick = onClear)
+        Chip(translated("oneconfig.page.hotwire.switch.clear", "Clear"), selected = false) {
+            // the bar goes with the selection, so nothing would show the plan still coming
+            if (planning) HotwireUpdates.dismissReview()
+            onClear()
+        }
         if (!running && updates.isNotEmpty()) {
             Chip(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), selected = true) { HotwireUpdates.reviewUpdates(updates, onClear) }
         }
