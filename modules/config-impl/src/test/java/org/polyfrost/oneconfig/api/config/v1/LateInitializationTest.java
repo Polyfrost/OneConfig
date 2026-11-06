@@ -490,6 +490,73 @@ class LateInitializationTest {
     }
 
     @Test
+    void aReplacementAnEntrypointsWorkerBuiltTakesOver() throws IOException {
+        String id = "late-initialization-worker-replacement-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            AtomicReference<Config> replacement = new AtomicReference<>();
+            boolean waiting = ConfigManager.initializeLate(config -> true, () -> {
+                Thread worker = new Thread(() -> replacement.set(new ValueConfig(id)));
+                worker.start();
+                try {
+                    worker.join();
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+
+            assertFalse(waiting);
+            assertSame(replacement.get().getTree(), ConfigManager.active().get(id));
+            assertEquals(Boolean.TRUE, replacement.get().getProperty("value").get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aReplacementAWorkerIsStillBuildingTakesOverInTheNextWindow() throws IOException, InterruptedException {
+        String id = "late-initialization-worker-unfinished-test.json";
+        try {
+            Config old = new LateConfig(id);
+            finishStartup();
+
+            CountDownLatch entered = new CountDownLatch(1);
+            CountDownLatch release = new CountDownLatch(1);
+            AtomicReference<Config> replacement = new AtomicReference<>();
+            AtomicReference<Thread> worker = new AtomicReference<>();
+            assertTrue(ConfigManager.initializeLate(config -> true, () -> {
+                worker.set(new Thread(() -> {
+                    try {
+                        replacement.set(new BlockedConfig(id, entered, release));
+                    } catch (InterruptedException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }));
+                worker.get().start();
+                try {
+                    entered.await();
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
+            }));
+            assertSame(old.getTree(), ConfigManager.active().get(id));
+
+            release.countDown();
+            worker.get().join();
+            assertFalse(ConfigManager.initializeLate(config -> true, () -> {
+            }));
+            assertSame(replacement.get().getTree(), ConfigManager.active().get(id));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
     void aReplacementReadsTheSavedValuesRightAfterItsPreload() throws IOException {
         String id = "late-initialization-preload-reads-test.json";
         try {

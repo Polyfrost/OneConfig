@@ -88,9 +88,11 @@ public final class ConfigManager {
     private static final Set<Config> createdAfterStartup = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     // the ones a coming window will claim, as their mod may keep no reference to them, the same as at startup
     private static final Set<Config> heldForLateWindow = Collections.synchronizedSet(new HashSet<>());
-    // what the running window's creator made or was handed, the only configs that can replace an older instance
+    // what the running window's creator made or was handed, the only configs that can replace an older instance,
+    // made on any thread while it runs as it can leave the work to a worker, and the id's owner still has to match
     // also what a mod Hotwire started made, for the window after that, which is also what keeps those alive until then
     private static final Set<Config> fromWindowCreator = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+    private static volatile boolean lateWindowOpen = false;
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
     private static Set<String> offConfigIds = Set.of();
     // the configs of turned off mods that sat out a profile switch
@@ -265,15 +267,18 @@ public final class ConfigManager {
     public static boolean initializeLate(Predicate<Config> added, Runnable creator) {
         boolean building;
         LATE_INITIALIZING.set(Boolean.TRUE);
+        lateWindowOpen = true;
         try {
             claimBuilt(added);
             creator.run();
         } finally {
             LATE_INITIALIZING.remove();
+            lateWindowOpen = false;
             // again, as a worker the creator started can have finished a config by now
             building = claimBuilt(added);
             Map<Config, Config> replaced = holdBackDuplicates(added);
-            fromWindowCreator.clear();
+            // one still being built gets its turn in the window this reports it for
+            fromWindowCreator.removeIf(ConfigManager::isBuilt);
             // a replacement writes its own over these before it can fail
             Map<String, byte[]> oldDefaults = new HashMap<>();
             for (Config old : replaced.values()) {
@@ -381,6 +386,7 @@ public final class ConfigManager {
         // before subclass field initializers have run so collect() would read uninitialized fields
         if (initialized && !LATE_INITIALIZING.get()) {
             createdAfterStartup.add(config);
+            if (lateWindowOpen) fromWindowCreator.add(config);
             if (awaitingLateWindow.test(config)) heldForLateWindow.add(config);
         } else {
             pendingInitialization.add(config);
