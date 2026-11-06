@@ -411,6 +411,18 @@ public final class ConfigManager {
         return pendingInitialization.contains(config) || createdAfterStartup.contains(config) && awaitingLateWindow.test(config);
     }
 
+    /**
+     * Whether a config initializing itself has to leave that to a late window, as {@link #holdBackDuplicates} still
+     * has to decide if it may take over from the instance holding its id, and merging would overwrite the saved values
+     */
+    static boolean waitsForLateWindow(Config config) {
+        Config old;
+        synchronized (ConfigManager.class) {
+            old = initializedConfigs.get(config.id);
+        }
+        return initialized && old != null && old != config && isPendingInitialization(config);
+    }
+
     static void reportResetOptions(Config config, List<String> options) {
         Tree tree = config.getTree();
         if (tree == null || tree.getID() == null) return;

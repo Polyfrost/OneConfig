@@ -416,6 +416,78 @@ class LateInitializationTest {
     }
 
     @Test
+    void aReplacementThatPreloadsKeepsTheSavedValues() throws IOException {
+        String id = "late-initialization-preloaded-replacement-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+            ConfigManager.active().save(id);
+
+            AtomicReference<Config> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> {
+                replacement.set(new ValueConfig(id));
+                replacement.get().preload();
+            });
+
+            assertSame(replacement.get().getTree(), ConfigManager.active().get(id));
+            assertEquals(Boolean.TRUE, replacement.get().getProperty("value").get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aPreloadedCopyFromAnotherModLeavesTheSavedValues() throws IOException {
+        String id = "late-initialization-preloaded-copy-test.json";
+        AtomicReference<Config> copy = new AtomicReference<>();
+        try {
+            ValueConfig theirs = new ValueConfig(id);
+            finishStartup();
+            theirs.getProperty("value").setAs(true);
+            ConfigManager.active().save(id);
+
+            ConfigManager.initializeLate(config -> config != theirs, () -> {
+                copy.set(new ValueConfig(id));
+                copy.get().preload();
+            });
+
+            assertNull(copy.get().getTree());
+            assertSame(theirs.getTree(), ConfigManager.active().get(id));
+            assertEquals(Boolean.TRUE, theirs.getProperty("value").get());
+            assertEquals(Boolean.TRUE, ConfigManager.active().load(id).getProp("value").get());
+        } finally {
+            ConfigManager.cancelInitialization(copy.get());
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aCopyPreloadedBeforeItsWindowLeavesTheSavedValues() throws IOException {
+        String id = "late-initialization-preloaded-early-test.json";
+        Config copy = null;
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+            ConfigManager.active().save(id);
+
+            ConfigManager.setAwaitingLateWindow(config -> config.id.equals(id));
+            copy = new ValueConfig(id);
+            copy.preload();
+
+            assertNull(copy.getTree());
+            assertEquals(Boolean.TRUE, old.getProperty("value").get());
+        } finally {
+            ConfigManager.cancelInitialization(copy);
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
     void anEntrypointCannotReplaceAConfigOfAnotherMod() throws IOException {
         String id = "late-initialization-other-mod-test.json";
         try {

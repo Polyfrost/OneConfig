@@ -179,6 +179,7 @@ public abstract class Config {
     }
 
     final void runInitialize(boolean byConfigManager) {
+        if (!byConfigManager && ConfigManager.waitsForLateWindow(this)) return;
         boolean was = initializing;
         initializing = true;
         try {
