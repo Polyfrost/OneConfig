@@ -489,6 +489,59 @@ class LateInitializationTest {
         }
     }
 
+    @Test
+    void aReplacementReadsTheSavedValuesRightAfterItsPreload() throws IOException {
+        String id = "late-initialization-preload-reads-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            AtomicReference<ValueConfig> replacement = new AtomicReference<>();
+            AtomicReference<Property<?>> read = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> {
+                replacement.set(new ValueConfig(id));
+                replacement.get().preload();
+                assertTrue(replacement.get().value);
+                read.set(replacement.get().getProperty("value"));
+                assertEquals(Boolean.TRUE, read.get().get());
+                assertSame(old.getTree(), ConfigManager.active().get(id));
+            });
+
+            assertSame(replacement.get().getTree(), ConfigManager.active().get(id));
+            assertSame(read.get(), replacement.get().getProperty("value"), "what a mod kept from its setup must stay live");
+            assertEquals(Boolean.TRUE, read.get().get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aReplacementThatReadItsSavedValuesEarlyStillResetsToItsDefaults() throws IOException {
+        String id = "late-initialization-preload-defaults-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            AtomicReference<ValueConfig> replacement = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> {
+                replacement.set(new ValueConfig(id));
+                replacement.get().preload();
+            });
+            assertEquals(Boolean.TRUE, replacement.get().getProperty("value").get());
+
+            replacement.get().restoreDefaults();
+            assertEquals(Boolean.FALSE, replacement.get().getProperty("value").get());
+        } finally {
+            ConfigManager.active().unregister(id);
+            ConfigManager.backup().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+            Files.deleteIfExists(ConfigManager.backup().getFolder().resolve(id));
+        }
+    }
+
     // what Hotwire does around the entrypoints of a mod it adds
     private static void startWithHotwire(Runnable entrypoints) throws ReflectiveOperationException {
         Field initialized = ConfigManager.class.getDeclaredField("initialized");
@@ -542,6 +595,29 @@ class LateInitializationTest {
 
             assertNull(copy.get().getTree());
             assertEquals(Boolean.TRUE, ConfigManager.active().load(id).getProp("value").get());
+        } finally {
+            ConfigManager.cancelInitialization(copy.get());
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aCopyAnAddedModStartsWithReadsTheSavedValues() throws IOException, ReflectiveOperationException {
+        String id = "late-initialization-reopened-reads-test.json";
+        AtomicReference<ValueConfig> copy = new AtomicReference<>();
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+            old.getProperty("value").setAs(true);
+
+            startWithHotwire(() -> {
+                copy.set(new ValueConfig(id));
+                assertEquals(Boolean.TRUE, copy.get().getProperty("value").get());
+                assertTrue(copy.get().value);
+            });
+
+            assertSame(old.getTree(), ConfigManager.active().get(id));
         } finally {
             ConfigManager.cancelInitialization(copy.get());
             ConfigManager.active().unregister(id);

@@ -445,8 +445,9 @@ public final class ConfigManager {
     }
 
     /**
-     * Whether a config initializing itself has to leave that to a late window, as {@link #holdBackDuplicates} still
-     * has to decide if it may take over from the instance holding its id, and merging would overwrite the saved values
+     * Whether a config initializing itself has to leave registering to a late window, as {@link #holdBackDuplicates}
+     * still has to decide if it may take over from the instance holding its id, and merging would overwrite the saved
+     * values. It reads those from an unregistered tree in the meantime.
      */
     static boolean waitsForLateWindow(Config config) {
         Config old;
