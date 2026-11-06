@@ -272,7 +272,10 @@ public final class ConfigManager {
             if (!pendingInitialization.isEmpty()) initializePending();
             replaced.forEach((replacement, old) -> {
                 // a replacement that built nothing must not cost the mod the config it already had
-                if (replacement.getTree() == null && old.getTree() != null) active().register(old.getTree());
+                if (replacement.getTree() == null && old.getTree() != null) {
+                    active().register(old.getTree());
+                    markInitialized(old);
+                }
             });
         }
         return building;

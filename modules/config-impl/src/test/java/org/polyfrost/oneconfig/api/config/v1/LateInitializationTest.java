@@ -75,6 +75,18 @@ class LateInitializationTest {
         }
     }
 
+    static class FailsOnceRegisteredConfig extends ValueConfig {
+        FailsOnceRegisteredConfig(String id) {
+            super(id);
+        }
+
+        @Override
+        protected void initialize(boolean byConfigManager) {
+            super.initialize(byConfigManager);
+            throw new IllegalStateException("this config fails once registered");
+        }
+    }
+
     private static Thread buildBlocked(String id, CountDownLatch entered, CountDownLatch release) {
         Thread thread = new Thread(() -> {
             try {
@@ -451,6 +463,26 @@ class LateInitializationTest {
 
             assertSame(old.getTree(), ConfigManager.active().get(id));
             assertTrue(ConfigManager.createdConfigs().contains(old));
+        } finally {
+            ConfigManager.active().unregister(id);
+            Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
+        }
+    }
+
+    @Test
+    void aReplacementThatFailsOnceRegisteredGivesTheOlderInstanceItsPlaceBack() throws IOException {
+        String id = "late-initialization-failed-registered-test.json";
+        try {
+            ValueConfig old = new ValueConfig(id);
+            finishStartup();
+
+            AtomicReference<Config> failed = new AtomicReference<>();
+            ConfigManager.initializeLate(config -> true, () -> failed.set(new FailsOnceRegisteredConfig(id)));
+
+            assertSame(old.getTree(), ConfigManager.active().get(id));
+            // what a profile switch goes on to rebuild
+            assertTrue(ConfigManager.createdConfigs().contains(old));
+            assertFalse(ConfigManager.createdConfigs().contains(failed.get()));
         } finally {
             ConfigManager.active().unregister(id);
             Files.deleteIfExists(ConfigManager.active().getFolder().resolve(id));
