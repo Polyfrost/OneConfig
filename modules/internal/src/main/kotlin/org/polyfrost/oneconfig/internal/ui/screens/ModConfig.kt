@@ -12,14 +12,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import java.util.function.Predicate
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.search.submenuTrail
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+private val LOGGER = LogManager.getLogger("OneConfig/UI")
+
 @Composable
-fun ModConfig(id: String, initialCategory: String? = null) {
+fun ModConfig(id: String, initialCategory: String? = null, submenu: String? = null) {
     val revision = ConfigRegistry.revision
     val config = ConfigRegistry.findById(id)
     val tree = ConfigRegistry.findTree(id)
@@ -53,7 +58,21 @@ fun ModConfig(id: String, initialCategory: String? = null) {
 
             // switching a mod can swap the values of its options so the page is rebuilt afterwards
             key(revision, tree) {
-                ConfigScreen(tree, initialCategory, pageKey = id, locked = locked, lockExempt = ownSwitch)
+                val trail = remember(tree, submenu) {
+                    submenu?.let(tree::submenuTrail).also {
+                        if (submenu != null && it == null) LOGGER.warn("Config {} has no submenu {}", id, submenu)
+                    }
+                }
+                val path = submenu.takeIf { trail != null }
+                ConfigScreen(
+                    trail?.last() ?: tree,
+                    initialCategory,
+                    pageKey = ModConfigRoute(id, submenu = path).pageKey,
+                    locked = locked,
+                    lockExempt = ownSwitch,
+                    configId = id,
+                    submenu = path,
+                )
             }
         }
     }

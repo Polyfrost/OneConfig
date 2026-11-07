@@ -15,7 +15,9 @@ data object ModsGraph
 data object ModsRoute
 
 @Serializable
-data class ModConfigRoute(val id: String, val category: String? = null)
+data class ModConfigRoute(val id: String, val category: String? = null, val submenu: String? = null) {
+    val pageKey: String get() = submenu?.let { "$id/$it" } ?: id
+}
 
 fun NavGraphBuilder.modsGraph() {
     navigation<ModsGraph>(startDestination = ModsRoute) {
@@ -24,7 +26,7 @@ fun NavGraphBuilder.modsGraph() {
         }
         composable<ModConfigRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ModConfigRoute>()
-            ModConfig(route.id, route.category)
+            ModConfig(route.id, route.category, route.submenu)
         }
     }
 }

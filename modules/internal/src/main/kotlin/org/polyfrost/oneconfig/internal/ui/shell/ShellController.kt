@@ -444,7 +444,7 @@ class ShellNavigation internal constructor(
     private fun seedRouteCategory(route: Any) {
         val modConfig = route as? ModConfigRoute ?: return
         val category = modConfig.category ?: return
-        selectedCategories[modConfig.id] = category
+        selectedCategories[modConfig.pageKey] = category
     }
 
     /** Restores the tab an entry was recorded with where a null category means the page default */
