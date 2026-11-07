@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
@@ -39,7 +40,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -79,14 +81,33 @@ public final class ConfigManager {
     private static final ConfigManager backup = new ConfigManager(Paths.get("oneconfig", "backup"), NightConfigSerializer.ALL);
     private static ConfigManager active;
     private static boolean initialized = false;
+    // unlike initialized, which Hotwire clears while it starts a mod it added and sets again through initialize()
+    private static volatile boolean startedUp = false;
     private static boolean isFirstRun = false;
-    private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
+    private static final Queue<Config> pendingInitialization = new ConcurrentLinkedQueue<>();
+    // by a key of each config's own, as one is added from its base constructor before a subclass's hashCode can work,
+    // and weak so configs no late window claims, such as a mod's temporary ones, aren't kept for the whole session
+    private static final Map<Object, WeakReference<Config>> createdAfterStartup = Collections.synchronizedMap(new WeakHashMap<>());
+    // the ones a coming window will claim, as their mod may keep no reference to them, the same as at startup
+    private static final Set<Config> heldForLateWindow = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+    // what the running window's creator made or was handed, the only configs that can replace an older instance,
+    // made on any thread while it runs as it can leave the work to a worker, and the id's owner still has to match
+    // also what a mod Hotwire started made, for the window after that, which is also what keeps those alive until then
+    private static final Set<Config> fromWindowCreator = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+    private static volatile boolean lateWindowOpen = false;
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
+    private static Set<String> offConfigIds = Set.of();
+    // the configs of turned off mods that sat out a profile switch
+    private static final Set<Config> rebindsWhenBack = Collections.newSetFromMap(new IdentityHashMap<>());
+    // the same for trees registered directly, as restoring or loading their values would run their callbacks
+    private static final Set<Tree> treesWhenBack = Collections.newSetFromMap(new IdentityHashMap<>());
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
     private static final long MINIMUM_WAIT_NANOS = TimeUnit.MILLISECONDS.toNanos(500L);
     private static final ThreadLocal<Long> PROFILE_OPERATION_DEADLINE = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> REBINDING_PROFILES = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static final ThreadLocal<Boolean> LATE_INITIALIZING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static volatile Predicate<Config> awaitingLateWindow = config -> false;
     private static volatile Consumer<Runnable> profileSwitchDispatcher = Runnable::run;
     private static final CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new CopyOnWriteArrayList<>();
@@ -216,6 +237,12 @@ public final class ConfigManager {
             return;
         }
         initialized = true;
+        if (startedUp) holdBackDuplicates(config -> false);
+        startedUp = true;
+        initializePending();
+    }
+
+    private static void initializePending() {
         long t1 = System.nanoTime();
         LOGGER.info("Initializing {} configs...", pendingInitialization.size());
         while (!pendingInitialization.isEmpty()) {
@@ -224,7 +251,7 @@ public final class ConfigManager {
             try {
                 config.runInitialize(true);
             } catch (Throwable t) {
-                failedInitialization.add(config.id);
+                config.initializationFailed = true;
                 Tree half = config.tree;
                 config.tree = null;
                 if (half != null && half.getID() != null) {
@@ -240,18 +267,149 @@ public final class ConfigManager {
         LOGGER.info("Initialized configs in {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
 
-    private static final Set<String> failedInitialization = ConcurrentHashMap.newKeySet();
+    @ApiStatus.Internal
+    public static boolean initializeLate(Predicate<Config> added, Runnable creator) {
+        boolean building;
+        LATE_INITIALIZING.set(Boolean.TRUE);
+        lateWindowOpen = true;
+        try {
+            claimBuilt(added);
+            creator.run();
+        } finally {
+            LATE_INITIALIZING.remove();
+            lateWindowOpen = false;
+            // again, as a worker the creator started can have finished a config by now
+            building = claimBuilt(added);
+            Map<Config, Config> replaced = holdBackDuplicates(added);
+            // one still being built gets its turn in the window this reports it for
+            fromWindowCreator.removeIf(ConfigManager::isBuilt);
+            // a replacement writes its own over these before it can fail
+            Map<String, byte[]> oldDefaults = new HashMap<>();
+            for (Config old : replaced.values()) {
+                try {
+                    oldDefaults.put(old.id, readDefaultsBackup(old.id));
+                } catch (IOException e) {
+                    LOGGER.error("Failed to read the defaults backup of config {}", old.id, e);
+                }
+                backup().unregister(old.id);
+            }
+            if (!pendingInitialization.isEmpty()) initializePending();
+            replaced.forEach((replacement, old) -> {
+                // a replacement that built nothing must not cost the mod the config it already had
+                if (replacement.getTree() == null && old.getTree() != null) {
+                    active().register(old.getTree());
+                    markInitialized(old);
+                    // a backup that could not be read is not a missing one, which this would delete
+                    if (oldDefaults.containsKey(old.id)) writeDefaultsBackup(old.id, oldDefaults.get(old.id));
+                }
+            });
+        }
+        return building;
+    }
 
-    static boolean didInitializationFail(Config config) {
-        return failedInitialization.contains(config.id);
+    /** Queues the finished configs [added] accepts, returning whether any it accepts is still being built */
+    private static boolean claimBuilt(Predicate<Config> added) {
+        boolean building = false;
+        List<Config> waiting = createdAfterStartup();
+        waiting.sort(Comparator.comparingLong(config -> config.createdOrder));
+        for (Config config : waiting) {
+            if (!added.test(config)) continue;
+            if (!isBuilt(config)) building = true;
+            else claim(config);
+        }
+        return building;
+    }
+
+    private static boolean claim(Config config) {
+        heldForLateWindow.remove(config);
+        return createdAfterStartup.remove(config.key) != null && pendingInitialization.add(config);
+    }
+
+    private static List<Config> createdAfterStartup() {
+        List<Config> created = new ArrayList<>();
+        synchronized (createdAfterStartup) {
+            for (WeakReference<Config> reference : createdAfterStartup.values()) {
+                Config config = reference.get();
+                if (config != null) created.add(config);
+            }
+        }
+        return created;
+    }
+
+    private static boolean removeFromPending(Config config) {
+        return pendingInitialization.removeIf(pending -> pending == config);
+    }
+
+    @ApiStatus.Internal
+    public static void setAwaitingLateWindow(Predicate<Config> awaiting) {
+        awaitingLateWindow = awaiting;
+    }
+
+    private static boolean isBuilt(Config config) {
+        if (config.creator == Thread.currentThread()) return true;
+        Set<String> chain = new HashSet<>();
+        for (Class<?> type = config.getClass(); type != Object.class; type = type.getSuperclass()) chain.add(type.getName());
+        for (StackTraceElement frame : config.creator.getStackTrace()) {
+            if ("<init>".equals(frame.getMethodName()) && chain.contains(frame.getClassName())) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Merging a second instance into a registered tree would overwrite its saved values with that instance's defaults,
+     * so duplicates wait unless an entrypoint of the mod that owns the older instance made them, as an update can move
+     * a mod's config there. Returns the older instance each such replacement takes over from.
+     */
+    private static synchronized Map<Config, Config> holdBackDuplicates(Predicate<Config> added) {
+        Map<Config, Config> replaced = new IdentityHashMap<>();
+        Set<String> ids = new HashSet<>();
+        ConfigManager manager = active();
+        for (Config config : pendingInitialization) {
+            Config old = initializedConfigs.get(config.id);
+            boolean replaces = old != null && fromWindowCreator.contains(config) && added.test(config) && added.test(old)
+                    // written first as the replacement loads its values from the file, so it waits if they can't be
+                    && (!manager.exists(config.id) || manager.save(config.id));
+            if ((old == null || replaces) && ids.add(config.id)) {
+                if (replaces) replaced.put(config, old);
+            } else if (removeFromPending(config)) {
+                createdAfterStartup.put(config.key, new WeakReference<>(config));
+            }
+        }
+        for (Config replacement : replaced.keySet()) manager.unregister(replacement.id);
+        return replaced;
+    }
+
+    private static byte @Nullable [] readDefaultsBackup(String id) throws IOException {
+        Path file = backup().getFolder().resolve(id);
+        return Files.exists(file) ? Files.readAllBytes(file) : null;
+    }
+
+    private static void writeDefaultsBackup(String id, byte @Nullable [] contents) {
+        Path file = backup().getFolder().resolve(id);
+        try {
+            if (contents == null) Files.deleteIfExists(file);
+            else Files.write(file, contents);
+        } catch (IOException e) {
+            LOGGER.error("Failed to restore the defaults backup of config {}", id, e);
+        }
+    }
+
+    @ApiStatus.Internal
+    public static void claimForLateInitialization(Config config) {
+        if (LATE_INITIALIZING.get() && claim(config)) fromWindowCreator.add(config);
     }
 
     @ApiStatus.Internal
     public static void submitForInitialization(Config config) {
         // never initialize synchronously here because this runs from the Config base constructor
         // before subclass field initializers have run so collect() would read uninitialized fields
-        if (!initialized) {
+        if (initialized && !LATE_INITIALIZING.get()) {
+            createdAfterStartup.put(config.key, new WeakReference<>(config));
+            if (lateWindowOpen) fromWindowCreator.add(config);
+            if (awaitingLateWindow.test(config)) heldForLateWindow.add(config);
+        } else {
             pendingInitialization.add(config);
+            if (startedUp || LATE_INITIALIZING.get()) fromWindowCreator.add(config);
         }
         for (ConfigSubmissionListener listener : submissionListeners) {
             try {
@@ -277,7 +435,9 @@ public final class ConfigManager {
     }
 
     static void removePendingInitialization(Config config) {
-        pendingInitialization.remove(config);
+        removeFromPending(config);
+        createdAfterStartup.remove(config.key);
+        heldForLateWindow.remove(config);
     }
 
     /**
@@ -296,8 +456,30 @@ public final class ConfigManager {
         return new ArrayList<>(pendingInitialization);
     }
 
+    @ApiStatus.Internal
+    public static synchronized List<Config> createdConfigs() {
+        List<Config> created = new ArrayList<>(initializedConfigs.values());
+        created.addAll(pendingInitialization);
+        created.addAll(createdAfterStartup());
+        return created;
+    }
+
     static boolean isPendingInitialization(Config config) {
-        return pendingInitialization.contains(config);
+        return pendingInitialization.stream().anyMatch(pending -> pending == config)
+                || createdAfterStartup.containsKey(config.key) && (fromWindowCreator.contains(config) || awaitingLateWindow.test(config));
+    }
+
+    /**
+     * Whether a config initializing itself has to leave registering to a late window, as {@link #holdBackDuplicates}
+     * still has to decide if it may take over from the instance holding its id, and merging would overwrite the saved
+     * values. It reads those from an unregistered tree in the meantime.
+     */
+    static boolean waitsForLateWindow(Config config) {
+        Config old;
+        synchronized (ConfigManager.class) {
+            old = initializedConfigs.get(config.id);
+        }
+        return startedUp && old != null && old != config && isPendingInitialization(config);
     }
 
     static void reportResetOptions(Config config, List<String> options) {
@@ -456,6 +638,7 @@ public final class ConfigManager {
                 if (Boolean.TRUE.equals(t.getMetadata(PROFILE_LOCAL_METADATA))) continue;
                 externalTrees.add(t);
             }
+            externalTrees.addAll(treesWhenBack);
             active.close();
         }
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
@@ -475,11 +658,14 @@ public final class ConfigManager {
             rebindInitializedConfigs(restoreDefaults);
             for (Tree t : externalTrees) {
                 try {
-                    if (restoreDefaults
-                            && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))
-                            && !Boolean.TRUE.equals(t.getMetadata(Backend.UI_ONLY_METADATA))) {
-                        Config.restoreCapturedDefaults(t);
+                    boolean holdsValues = !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))
+                            && !Boolean.TRUE.equals(t.getMetadata(Backend.UI_ONLY_METADATA));
+                    if (holdsValues && offConfigIds.contains(t.getID())) {
+                        treesWhenBack.add(t);
+                        if (restoreDefaults) active.backend.save0(defaultsOf(t));
+                        continue;
                     }
+                    if (restoreDefaults && holdsValues) Config.restoreCapturedDefaults(t);
                     active.register(t);
                 } catch (Throwable ex) {
                     LOGGER.error("Failed to rebind external tree {} onto profile {}", t.getID(), profile, ex);
@@ -1230,12 +1416,84 @@ public final class ConfigManager {
         if (initializedConfigs.isEmpty()) return;
         ArrayList<Config> configs = new ArrayList<>(initializedConfigs.values());
         for (Config config : configs) {
-            try {
-                config.rebindToActiveProfile(restoreDefaults);
-            } catch (Throwable ex) {
-                LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
+            if (offConfigIds.contains(config.id)) {
+                rebindsWhenBack.add(config);
+                if (restoreDefaults) copyDefaultsToActiveProfile(config.id);
+            } else {
+                rebind(config, restoreDefaults);
             }
         }
+    }
+
+    // as the file, since its mod's code can't run to restore them, and whichever profile it comes back in would otherwise pass this one its values
+    private static void copyDefaultsToActiveProfile(String id) {
+        try {
+            copyFileSafely(backup().getFolder().resolve(id), active.getFolder().resolve(id));
+        } catch (IOException e) {
+            LOGGER.error("Failed to give the active profile the defaults of config {}", id, e);
+        }
+    }
+
+    // as a copy, since its properties can be its mod's code, for the same reason as above
+    private static Tree defaultsOf(Tree tree) {
+        Tree defaults = Tree.tree(tree.getID());
+        for (Node node : tree.map.values()) {
+            if (node instanceof Tree) {
+                defaults.put(defaultsOf((Tree) node));
+            } else {
+                Object value = node.getMetadata("default");
+                if (value != null) defaults.put(Properties.simple(node.getID(), null, null, value, null));
+            }
+        }
+        return defaults;
+    }
+
+    private static void rebind(Config config, boolean restoreDefaults) {
+        try {
+            config.rebindToActiveProfile(restoreDefaults);
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to rebind config {} onto active profile", config.id, ex);
+        }
+    }
+
+    /**
+     * Sets the configs of mods turned off while the game runs, which a profile switch leaves alone as rebuilding them
+     * would run their mod's code. Those that come back catch up with any switch they missed.
+     *
+     * @return whether any did, so their trees were built anew
+     */
+    @ApiStatus.Internal
+    public static synchronized boolean setOff(Set<String> ids) {
+        offConfigIds = ids;
+        CompatSnapshots.INSTANCE.setOff(ids);
+        boolean caughtUp = false;
+        boolean wasRebinding = REBINDING_PROFILES.get();
+        REBINDING_PROFILES.set(Boolean.TRUE);
+        try {
+            for (Config config : new ArrayList<>(rebindsWhenBack)) {
+                if (ids.contains(config.id)) continue;
+                rebindsWhenBack.remove(config);
+                if (initializedConfigs.get(config.id) != config) continue;
+                rebind(config, false);
+                caughtUp = true;
+            }
+            for (Tree tree : new ArrayList<>(treesWhenBack)) {
+                if (ids.contains(tree.getID())) continue;
+                treesWhenBack.remove(tree);
+                // its mod's replacement can have taken the id by now
+                if (activeLocked().exists(tree.getID())) continue;
+                try {
+                    active.register(tree);
+                    caughtUp = true;
+                } catch (Throwable ex) {
+                    LOGGER.error("Failed to rebind external tree {} onto the active profile", tree.getID(), ex);
+                }
+            }
+        } finally {
+            if (wasRebinding) REBINDING_PROFILES.set(Boolean.TRUE);
+            else REBINDING_PROFILES.remove();
+        }
+        return caughtUp;
     }
 
     private static String normalizeNewProfileName(String profile) {

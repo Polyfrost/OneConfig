@@ -45,6 +45,10 @@ object KaleidoCompat {
         CompatLoader.requireTranslations(skip = true) { scan() }
     }
 
+    /** Picks up what a mod added while the game runs brought along, which already scanned configs stay out of */
+    @JvmStatic
+    fun refresh() = CompatLoader.requireTranslations(skip = true) { scan() }
+
     @JvmStatic
     fun scan() {
         val configs = loadClass(CONFIGS_IMPL) ?: return
@@ -78,6 +82,7 @@ object KaleidoCompat {
 
         val tree = Tree.tree()
         tree.id = uniqueTreeId(modId, id)
+        ConfigEntrypoints.rememberConfigOwner(mod?.id, tree.id)
         tree.title = mod?.name?.takeIf { it.isNotBlank() }
             ?: translateOrNull("$modId.title")
             ?: prettify(id)

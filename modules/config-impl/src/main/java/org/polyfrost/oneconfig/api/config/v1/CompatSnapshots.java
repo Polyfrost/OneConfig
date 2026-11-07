@@ -28,10 +28,12 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,9 +43,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.compose.render.PolyColor;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
@@ -65,6 +69,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private final Map<String, Map<String, Object>> defaults = new ConcurrentHashMap<>();
     private static final String WIRED_METADATA = "oc_compat_snapshot_wired";
     private final Set<Property<?>> applying = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+    // trees of mods turned off while the game runs, whose options and callbacks are that mod's code, with the profile
+    // they hold; by instance as the mod's replacement registering the same id isn't off
+    private final Map<Tree, String> off = Collections.synchronizedMap(new IdentityHashMap<>());
+    // the profiles created while such a tree's mod was off, which its own reset hook still owes their defaults
+    private final Map<Tree, Set<String>> resetsWhenBack = Collections.synchronizedMap(new IdentityHashMap<>());
     private static final ThreadLocal<Boolean> APPLYING_HERE = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private volatile Consumer<Runnable> dispatcher = Runnable::run;
     private volatile String currentProfile;
@@ -73,6 +82,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     }
 
     private static volatile BiConsumer<String, Runnable> liveValueScope = (id, action) -> action.run();
+    private static volatile UnaryOperator<String> snapshotIds = UnaryOperator.identity();
 
     public static boolean isApplying() {
         return APPLYING_HERE.get();
@@ -100,6 +110,18 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     @ApiStatus.Internal
     public static void withLiveValues(String id, Runnable action) {
         liveValueScope.accept(id, action);
+    }
+
+    /**
+     * Sets the id each tree keeps its snapshots under, for a tree whose own id only holds until the next launch
+     */
+    @ApiStatus.Internal
+    public static void setSnapshotIds(UnaryOperator<String> ids) {
+        snapshotIds = ids == null ? UnaryOperator.identity() : ids;
+    }
+
+    private static String snapshotId(Tree tree) {
+        return snapshotIds.apply(tree.getID());
     }
 
     public static Tree register(Tree tree) {
@@ -132,14 +154,80 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (currentProfile == null) currentProfile = profile;
         captureDefaults(reg);
         wire(reg);
+        dispatchApply(reg, profile);
+        return reg;
+    }
+
+    private void dispatchApply(Tree tree, String profile) {
         dispatcher.accept(() -> {
             try {
-                applyProfile(reg, profile);
+                applyProfile(tree, profile);
             } catch (Throwable t) {
-                ConfigManager.LOGGER.error("Failed to apply compat snapshot for '{}'", reg.getID(), t);
+                ConfigManager.LOGGER.error("Failed to apply compat snapshot for '{}'", tree.getID(), t);
             }
         });
-        return reg;
+    }
+
+    /**
+     * Leaves the trees of {@code ids} alone until their mod is back, when they catch up with the profile they missed
+     */
+    void setOff(Set<String> ids) {
+        String profile = ConfigManager.activeProfile();
+        for (Tree tree : known.values()) {
+            if (!ids.contains(tree.getID())) continue;
+            off.putIfAbsent(tree, profile);
+            tree.addMetadata(Backend.CUSTOM_SAVE_HELD_METADATA, Boolean.TRUE);
+        }
+        for (Tree tree : new ArrayList<>(off.keySet())) {
+            if (ids.contains(tree.getID())) continue;
+            String held = off.remove(tree);
+            Set<String> resets = resetsWhenBack.remove(tree);
+            tree.removeMetadata(Backend.CUSTOM_SAVE_HELD_METADATA);
+            if ((!profile.equals(held) || resets != null) && known.get(tree.getID()) == tree) dispatchCatchUp(tree, held, resets, profile);
+        }
+    }
+
+    private void dispatchCatchUp(Tree tree, String held, @Nullable Set<String> resets, String profile) {
+        dispatcher.accept(() -> {
+            try {
+                // what its mod's own screen changed without a callback before it went off belongs to the profile it held
+                if (profileExists(held) && !store.hasLoadFailure(held)) {
+                    captureAll(tree, held);
+                    flushForLifecycle(store, held);
+                }
+                if (resets != null) {
+                    for (String created : resets) {
+                        if (profileExists(created) && !store.hasLoadFailure(created)) resetForProfile(tree, created);
+                    }
+                }
+                applyProfile(tree, profile);
+            } catch (Throwable t) {
+                ConfigManager.LOGGER.error("Failed to catch compat snapshot '{}' up with profile '{}'", tree.getID(), profile, t);
+            }
+        });
+    }
+
+    private void resetForProfile(Tree tree, String profile) {
+        // any callback the hook fires is for this profile rather than the active one, which the capture below sees to
+        forEachProp(tree, applying::add);
+        try {
+            restoreDefaults(tree);
+        } finally {
+            forEachProp(tree, applying::remove);
+        }
+        captureAll(tree, profile);
+        flushForLifecycle(store, profile);
+    }
+
+    private static boolean profileExists(String profile) {
+        return profile.isEmpty() || Files.isDirectory(ConfigManager.profileDir(profile));
+    }
+
+    // a mod's own reset hook can't run while it's off so the captured defaults stand in for it until then
+    // shortcut: a hook still owed when the game closes is dropped, persist the profiles if that ever proves wrong
+    private void storeDefaults(Tree tree, String profile) {
+        Map<String, Object> snapshot = defaults.get(tree.getID());
+        if (snapshot != null) snapshot.forEach((key, value) -> store.putValue(profile, snapshotId(tree), key, value));
     }
 
     private void dropStaleRegistration(String id) {
@@ -198,6 +286,13 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         dispatchAndWait(() -> {
             for (Tree tree : known.values()) {
                 try {
+                    if (off.containsKey(tree)) {
+                        storeDefaults(tree, profile);
+                        if (tree.getMetadata(CUSTOM_RESET_METADATA) instanceof Runnable) {
+                            resetsWhenBack.computeIfAbsent(tree, ignored -> new LinkedHashSet<>()).add(profile);
+                        }
+                        continue;
+                    }
                     restoreDefaults(tree);
                     captureAll(tree, profile);
                 } catch (Throwable t) {
@@ -211,6 +306,10 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     @Override
     public void onProfileRenamed(String oldProfile, String newProfile) {
         if (oldProfile.equals(currentProfile)) currentProfile = newProfile;
+        off.replaceAll((tree, held) -> oldProfile.equals(held) ? newProfile : held);
+        resetsWhenBack.values().forEach(created -> {
+            if (created.remove(oldProfile)) created.add(newProfile);
+        });
         try {
             store.renameProfile(oldProfile, newProfile);
         } catch (IOException e) {
@@ -270,7 +369,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
-        String treeId = tree.getID();
+        String treeId = snapshotId(tree);
         migrateLegacyKeys(tree, store, profile, treeId, true);
         migrateLegacyKeys(tree, baselineStore, BASELINE_BUCKET, treeId, false);
         Map<String, Object> snap = store.load(profile).get(treeId);
@@ -349,7 +448,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (gateClosed(tree)) return;
         captureDefaults(tree);
         ensureKeys(tree);
-        String treeId = tree.getID();
+        String treeId = snapshotId(tree);
         Map<String, Object> pending = new LinkedHashMap<>();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
@@ -414,7 +513,6 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
 
     private void wire(Tree tree) {
         ensureKeys(tree);
-        String treeId = tree.getID();
         forEachProp(tree, p -> {
             if (!isValueProp(p)) return;
             Integer identity = System.identityHashCode(p);
@@ -430,6 +528,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
                 tree.addMetadata(Backend.CUSTOM_SAVE_DIRTY_METADATA, Boolean.TRUE);
                 Object serialized = trySerialize(value);
                 if (serialized != null) {
+                    String treeId = snapshotId(tree);
                     store.putValue(ConfigManager.activeProfile(), treeId, key, serialized);
                     setBaseline(treeId, key, serialized);
                 }
@@ -499,7 +598,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return a.equals(b);
     }
 
-    private static Object trySerialize(Object value) {
+    static Object trySerialize(Object value) {
         try {
             Object serialized = ObjectSerializer.INSTANCE.serialize(value, true, true);
             return isStorable(serialized) ? serialized : null;
@@ -546,6 +645,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
     private static final Pattern LEGACY_KEY = Pattern.compile("^(\\d+)\\|");
 
     private static boolean gateClosed(Tree tree) {
+        if (INSTANCE.off.containsKey(tree)) return true;
         Object gate = tree.getMetadata(GATE_METADATA);
         return gate instanceof BooleanSupplier
                 && !((BooleanSupplier) gate).getAsBoolean();
@@ -633,7 +733,7 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         return key != null ? key.toString() : p.getID();
     }
 
-    private static void forEachProp(Tree tree, Consumer<Property<?>> action) {
+    static void forEachProp(Tree tree, Consumer<Property<?>> action) {
         for (Node node : tree.map.values()) {
             if (node instanceof Tree) forEachProp((Tree) node, action);
             else if (node instanceof Property) action.accept((Property<?>) node);

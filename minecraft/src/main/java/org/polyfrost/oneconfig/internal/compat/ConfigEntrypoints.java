@@ -40,16 +40,21 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.ConfigEntrypoint;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
+import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge;
 //? if !neoforge {
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -75,10 +80,24 @@ public final class ConfigEntrypoints {
     // mods whose original config is extracted after all, read without the lock by provides()
     private static final Set<String> failed = ConcurrentHashMap.newKeySet();
     private static final Set<String> succeeded = new HashSet<>();
+    // by mod and definition, as an update can add an entrypoint to a mod that is already decided
+    private static final Set<String> ranEntrypoints = new HashSet<>();
     // keyed so a hook that fires more than once before the mod is decided is only retried once
     private static final Map<String, Map<Object, Skipped>> skippedExtractions = new HashMap<>();
     private static final AtomicBoolean registered = new AtomicBoolean();
-    private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
+    private static final AtomicBoolean listening = new AtomicBoolean();
+    private static volatile boolean startupDecided;
+    //? if !neoforge
+    private static volatile Map<String, ModContainer> seenMods = Map.of();
+    // also for the mods that are off, whose container is still the same one when they only come back on
+    //? if !neoforge
+    private static final Map<String, ModContainer> lastContainers = new HashMap<>();
+    private static volatile Set<String> lateIds = Set.of();
+    // mods the loader no longer lists, which Hotwire turned off
+    private static volatile Set<String> offMods = Set.of();
+    // the config ids of each mod, noted while they can be, as a class no longer resolves to its mod once that mod is off
+    static final Map<String, Set<String>> modConfigs = new ConcurrentHashMap<>();
+    static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
     private static final Map<String, Runnable> customOpeners = new ConcurrentHashMap<>();
@@ -154,13 +173,28 @@ public final class ConfigEntrypoints {
     public static void registerAll() {
         if (!registered.compareAndSet(false, true)) return;
         if (providers().isEmpty()) return;
-        ConfigManager.addTreeRegistrationListener(ConfigEntrypoints::onTreeRegistered);
-        ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::onConfigSubmitted);
-        claimEarlierConfigs();
         // a mod may name more than one entrypoint, which only decide together whether its original is extracted
         Map<String, List<Provider>> byMod = new LinkedHashMap<>();
         for (Provider provider : providers()) byMod.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
+        prepare(byMod.keySet());
         byMod.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints)));
+    }
+
+    private static void prepare(Set<String> modIds) {
+        if (listening.compareAndSet(false, true)) {
+            ConfigManager.addTreeRegistrationListener(ConfigEntrypoints::onTreeRegistered);
+            ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::onConfigSubmitted);
+        }
+        claimEarlierConfigs(modIds);
+    }
+
+    public static void registerAdded() {
+        //? if !neoforge {
+        if (!startupDecided) return;
+        if (modsChanged()) registerChanged();
+        else if (!lateIds.isEmpty()) finishLate(() -> {
+        });
+        //?}
     }
 
     /**
@@ -170,21 +204,7 @@ public final class ConfigEntrypoints {
     // compat waits for this, so it always ends by releasing it even if deciding a mod threw
     public static void finishRegistration() {
         try {
-            Map<String, Boolean> pending = new LinkedHashMap<>(undecided);
-            undecided.clear();
-            pending.forEach((modId, broken) -> {
-                try {
-                    decide(modId, broken);
-                } catch (Throwable t) {
-                    // a mod already marked as succeeded keeps its configs, extracting its original too would show two cards
-                    if (isDecided(modId)) {
-                        LOGGER.error("Failed to finish deciding the OneConfig config entrypoint of {}", modId, t);
-                        return;
-                    }
-                    LOGGER.error("Failed to decide the OneConfig config entrypoint of {}, extracting its original config instead", modId, t);
-                    fallBackToOriginal(modId);
-                }
-            });
+            Map<String, Boolean> pending = decidePending();
             // providers registerAll never reached, such as when it threw partway, would otherwise stay skipped forever
             for (String modId : providerIds()) {
                 if (pending.containsKey(modId) || isDecided(modId)) continue;
@@ -196,20 +216,55 @@ public final class ConfigEntrypoints {
                 }
             }
         } finally {
+            //? if !neoforge {
+            seenMods = loadedMods();
+            ConfigManager.setAwaitingLateWindow(ConfigEntrypoints::awaitsLateWindow);
+            //?}
+            startupDecided = true;
             // caught so a broken CompatLoader never hides an exception from ConfigManager.initialize()
             try {
                 CompatLoader.INSTANCE.onEntrypointsDecided();
             } catch (Throwable t) {
                 LOGGER.error("Failed to release the compat waiting for the OneConfig config entrypoints", t);
             }
+            //? if !neoforge {
+            // after the release above, which this must never get in the way of
+            try {
+                if (HotwireBridge.INSTANCE.getSupportsSwitching()) {
+                    // a lazily created config can be made at any time
+                    ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::rememberClassOwner);
+                    CompatSnapshots.setSnapshotIds(ConfigEntrypoints::snapshotId);
+                }
+                rememberConfigOwners();
+            } catch (Throwable t) {
+                LOGGER.error("Failed to note which mods own which configs", t);
+            }
+            //?}
         }
+    }
+
+    private static Map<String, Boolean> decidePending() {
+        Map<String, Boolean> pending = new LinkedHashMap<>(undecided);
+        undecided.clear();
+        pending.forEach((modId, broken) -> {
+            try {
+                decide(modId, broken);
+            } catch (Throwable t) {
+                if (isDecided(modId)) {
+                    LOGGER.error("Failed to finish deciding the OneConfig config entrypoint of {}", modId, t);
+                    return;
+                }
+                LOGGER.error("Failed to decide the OneConfig config entrypoint of {}, extracting its original config instead", modId, t);
+                fallBackToOriginal(modId);
+            }
+        });
+        return pending;
     }
 
     // configs a mod created before its entrypoint ran, such as during its own initializer, belong to it too,
     // otherwise a mod that forgot Context.register would show them next to its extracted original
-    private static void claimEarlierConfigs() {
-        Set<String> ids = providerIds();
-        for (Config config : ConfigManager.pendingConfigs()) {
+    private static void claimEarlierConfigs(Set<String> ids) {
+        for (Config config : ConfigManager.createdConfigs()) {
             ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
             String modId = owner == null ? null : providerOf(owner.getId());
             if (modId == null || !ids.contains(modId)) continue;
@@ -223,6 +278,7 @@ public final class ConfigEntrypoints {
         registeringModId.set(modId);
         try {
             for (Provider provider : entrypoints) {
+                ranEntrypoints.add(entrypointKey(modId, provider.name));
                 Context context = new Context(modId);
                 constructing.set(new IdentityHashMap<>());
                 try {
@@ -345,13 +401,36 @@ public final class ConfigEntrypoints {
             // keep what it registered rather than also extracting the original, which would show two cards
             if (broken) LOGGER.warn("Keeping the OneConfig configs {} registered before its entrypoint failed", modId);
             markSucceeded(modId);
+            for (Tree tree : owned) {
+                if (tree.getMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN) == null) attachOpener(tree, modId);
+            }
             // CompatLoader only marked the providers it saw when it initialized
             CompatLoader.INSTANCE.getNativeLoadedConfigs().add(modId);
+            if (startupDecided) dropExtracted(modId);
             LOGGER.info("Using the OneConfig configs registered by {}", modId);
             return;
         }
         if (!broken) LOGGER.info("Mod {} registered no working OneConfig configs from its entrypoint, extracting its original config instead", modId);
         fallBackToOriginal(modId);
+    }
+
+    // for any mod decided late, as one gaining its first entrypoint never failed but can still have a card from before
+    static void dropExtracted(String modId) {
+        // adapters can extract under an id of the config's own, such as a ResourcefulConfig id
+        Set<String> ids = new HashSet<>(modConfigs.getOrDefault(modId, Set.of()));
+        ids.add(modId);
+        ConfigManager manager = ConfigManager.active();
+        for (String id : ids) {
+            Tree tree = manager.exists(id) ? manager.get(id) : null;
+            boolean owned = treeOwners.containsKey(id);
+            // what an entrypoint registered through compat itself is not what this is dropping
+            if (owned && tree != null && Boolean.TRUE.equals(tree.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))) continue;
+            // a native config under this id already took the tree over, but the snapshot would still apply on profile changes
+            CompatSnapshots.untrack(id);
+            if (owned || tree == null || !Boolean.TRUE.equals(tree.getMetadata(Backend.UI_ONLY_METADATA))) continue;
+            manager.unregister(id);
+            ConfigRegistry.INSTANCE.unregister(id);
+        }
     }
 
     private static void fallBackToOriginal(String modId) {
@@ -365,6 +444,18 @@ public final class ConfigEntrypoints {
 
     private static synchronized boolean isDecided(String modId) {
         return succeeded.contains(modId) || failed.contains(modId);
+    }
+
+    static String entrypointKey(String modId, String name) {
+        return modId + '=' + name;
+    }
+
+    static boolean needsRunning(String modId, String name, Set<String> succeeded, Set<String> failed, Set<String> ran) {
+        return !failed.contains(modId) && (!succeeded.contains(modId) || !ran.contains(entrypointKey(modId, name)));
+    }
+
+    private static synchronized boolean needsRunning(Provider provider) {
+        return needsRunning(provider.modId, provider.name, succeeded, failed, ranEntrypoints);
     }
 
     private static synchronized void markSucceeded(String modId) {
@@ -403,7 +494,7 @@ public final class ConfigEntrypoints {
         if (current != null) {
             // a tree that another mod registered while this entrypoint called into it, such as through compat, stays its own
             ModInfo owner = CompatLoader.INSTANCE.findFirstMod();
-            if (owner == null || current.equals(providerOf(owner.getId()))) treeOwners.putIfAbsent(id, current);
+            if (owner == null || current.equals(providerOf(owner.getId()))) claimOwner(current, id);
         }
         String modId = treeOwners.get(id);
         if (modId == null || tree.getMetadata(CompatLoader.OPEN_ORIGINAL_SCREEN) != null) return;
@@ -419,7 +510,7 @@ public final class ConfigEntrypoints {
         // its class, belongs to that mod, otherwise it would count as this mod's and stop its original being extracted
         ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
         if (owner != null && !current.equals(providerOf(owner.getId()))) return;
-        treeOwners.putIfAbsent(config.id, current);
+        claimOwner(current, config.id);
         Map<Config, Construction> pending = constructing.get();
         if (pending == null) return;
         Construction construction = construction(config.getClass(), new Throwable().getStackTrace());
@@ -427,6 +518,22 @@ public final class ConfigEntrypoints {
         // this config is not nested in one at the same depth or deeper, so their constructors have returned
         pending.values().removeIf(c -> c.depth() >= construction.depth());
         pending.put(config, construction);
+    }
+
+    // also for compat that extracts a tree under an id other than its mod's, which only it can trace back to that mod
+    static void rememberConfigOwner(@Nullable String modId, String id) {
+        if (modId == null) return;
+        modConfigs.computeIfAbsent(modId, k -> ConcurrentHashMap.newKeySet()).add(id);
+        //? if !neoforge
+        handOver(modId, id);
+    }
+
+    /** Returns who owns the id after {@code modId} claimed it */
+    private static String claimOwner(String modId, String id) {
+        //? if !neoforge
+        handOver(modId, id);
+        String owner = treeOwners.putIfAbsent(id, modId);
+        return owner == null ? modId : owner;
     }
 
     private static void attachOpener(Tree tree, String modId) {
@@ -462,11 +569,12 @@ public final class ConfigEntrypoints {
                 // its original was already extracted, claiming the config now would not remove that card
                 if (failed.contains(modId)) return config;
             }
-            String owner = treeOwners.putIfAbsent(config.id, modId);
-            if (owner != null && !owner.equals(modId)) {
+            String owner = claimOwner(modId, config.id);
+            if (!owner.equals(modId)) {
                 LOGGER.warn("Mod {} registered config {} which already belongs to {}", modId, config.id, owner);
                 return config;
             }
+            ConfigManager.claimForLateInitialization(config);
             // registered on purpose, so it counts even if the entrypoint throws afterwards
             earlierConfigs.remove(config.id);
             // the tree normally only exists once the config initializes, where onTreeRegistered picks it up
@@ -495,10 +603,21 @@ public final class ConfigEntrypoints {
         List<Provider> cached = providers;
         if (cached != null) return cached;
         synchronized (DISCOVERY_LOCK) {
-            if (providers != null) return providers;
-            List<Provider> found = new ArrayList<>();
-            try {
-                //? if !neoforge {
+            return providers != null ? providers : discover();
+        }
+    }
+
+    public static void rediscover() {
+        synchronized (DISCOVERY_LOCK) {
+            if (providers != null) discover();
+        }
+    }
+
+    private static List<Provider> discover() {
+        List<Provider> found = new ArrayList<>();
+        try {
+            //? if !neoforge {
+            synchronized (FabricLoader.getInstance()) {
                 for (EntrypointContainer<ConfigEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(ConfigEntrypoint.ENTRYPOINT, ConfigEntrypoint.class)) {
                     found.add(new Provider(
                             container.getProvider().getMetadata().getId(),
@@ -506,29 +625,223 @@ public final class ConfigEntrypoints {
                             container::getEntrypoint
                     ));
                 }
-                //?}
-            } catch (Throwable t) {
-                // not cached so a discovery attempted too early is retried
-                if (!discoveryFailureLogged) LOGGER.error("Failed to discover OneConfig config entrypoints", t);
-                discoveryFailureLogged = true;
-                return Collections.emptyList();
-            }
-            Set<String> ids = new LinkedHashSet<>();
-            for (Provider provider : found) ids.add(provider.modId);
-            Map<String, String> nested = new HashMap<>();
-            //? if !neoforge {
-            for (String id : ids) {
-                FabricLoader.getInstance().getModContainer(id).ifPresent(container -> collectNested(container, id, ids, nested));
             }
             //?}
-            nestedIds = Collections.unmodifiableMap(nested);
-            providerIds = Collections.unmodifiableSet(ids);
-            providers = Collections.unmodifiableList(found);
-            return providers;
+        } catch (Throwable t) {
+            // not cached so a discovery attempted too early is retried
+            if (!discoveryFailureLogged) LOGGER.error("Failed to discover OneConfig config entrypoints", t);
+            discoveryFailureLogged = true;
+            return Collections.emptyList();
         }
+        Set<String> ids = new LinkedHashSet<>();
+        for (Provider provider : found) ids.add(provider.modId);
+        Map<String, String> nested = new HashMap<>();
+        //? if !neoforge {
+        for (String id : ids) {
+            FabricLoader.getInstance().getModContainer(id).ifPresent(container -> collectNested(container, id, ids, nested));
+        }
+        //?}
+        nestedIds = Collections.unmodifiableMap(nested);
+        providerIds = Collections.unmodifiableSet(ids);
+        providers = Collections.unmodifiableList(found);
+        return providers;
     }
 
     //? if !neoforge {
+    private static void registerChanged() {
+        Map<String, ModContainer> mods = loadedMods();
+        Set<String> changedIds = changedIds(mods, seenMods);
+        Set<String> newIds = new HashSet<>(changedIds);
+        newIds.removeAll(seenMods.keySet());
+        Set<String> removed = removedIds(mods, seenMods);
+        // an update can take a mod out of the loader for a moment, and replaces its container
+        boolean existing = changedIds.size() > newIds.size() || !removed.isEmpty();
+        if (HotwireBridge.INSTANCE.isStarting(newIds) || existing && HotwireBridge.INSTANCE.isUpdating()) return;
+        // a mod can also register a config explicitly after its entrypoint returned
+        rememberConfigOwners();
+        Map<String, ModContainer> seen = seenMods;
+        seenMods = mods;
+        offMods = offAfter(offMods, mods, seen);
+        ConfigRegistry.INSTANCE.setOff(offConfigIds(offMods, modConfigs));
+        HotwireBridge.INSTANCE.invalidate();
+        rediscover();
+        lastContainers.putAll(seen);
+        Set<String> retried = retriedIds(providerIds(), failed, mods, lastContainers);
+        lastContainers.putAll(mods);
+        failed.removeAll(retried);
+        Map<String, List<Provider>> added = new LinkedHashMap<>();
+        for (Provider provider : providers()) {
+            if (needsRunning(provider)) added.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
+        }
+        prepare(added.keySet());
+        Set<String> late = new HashSet<>(lateIds);
+        late.addAll(changedIds);
+        late.addAll(replacedBy(changedIds, offMods, mods));
+        lateIds = late;
+        finishLate(() -> added.forEach((modId, entrypoints) -> {
+            boolean broken = register(modId, entrypoints);
+            // a mod that already has working configs keeps them whatever an entrypoint it gained does
+            if (!isDecided(modId)) undecided.put(modId, broken);
+        }));
+    }
+
+    private static void finishLate(Runnable creator) {
+        if (ConfigManager.initializeLate(lateConfigs(lateIds), creator)) return;
+        lateIds = Set.of();
+        decidePending();
+        KaleidoCompat.refresh();
+        //? modmenu_compat
+        if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.refresh();
+        rememberConfigOwners();
+        // what a live update's copy made in this window is no longer off with the mod it replaces
+        ConfigRegistry.INSTANCE.setOff(offConfigIds(offMods, modConfigs));
+    }
+
+    // Hotwire can run a live update from a relocated copy under a new id that provides the old one, and the configs
+    // that copy makes again are its own from then on, while any it no longer makes stay off with the old mod
+    private static void handOver(String modId, String id) {
+        synchronized (FabricLoader.getInstance()) {
+            FabricLoader.getInstance().getModContainer(modId)
+                    // the loader also finds a mod under the ids it provides
+                    .filter(mod -> mod.getMetadata().getId().equals(modId))
+                    .ifPresent(mod -> handOver(mod.getMetadata().getProvides(), modId, id, modConfigs, treeOwners));
+        }
+    }
+
+    static void handOver(Collection<String> replaced, String modId, String id, Map<String, Set<String>> configs, Map<String, String> owners) {
+        for (String old : replaced) {
+            Set<String> theirs = configs.get(old);
+            if (theirs != null) theirs.remove(id);
+            owners.replace(id, old, modId);
+        }
+    }
+
+    private static String snapshotId(String treeId) {
+        Map<String, ModContainer> mods = loadedMods();
+        return snapshotId(treeId, mods, offAfter(offMods, mods, seenMods));
+    }
+
+    // a live copy's id only holds until the next launch, when its options are back under the mod it replaces, whose
+    // snapshots are the ones its profiles saved
+    static String snapshotId(String treeId, Map<String, ModContainer> mods, Set<String> off) {
+        for (ModContainer mod : mods.values()) {
+            String id = mod.getMetadata().getId();
+            if (!treeId.equals(id) && !treeId.startsWith(id + "-")) continue;
+            for (String old : mod.getMetadata().getProvides()) {
+                if (off.contains(old)) return old + treeId.substring(id.length());
+            }
+        }
+        return treeId;
+    }
+
+    // the mods a change's copies replace, whose older config instances those copies may take over from
+    static Set<String> replacedBy(Set<String> changed, Set<String> off, Map<String, ModContainer> mods) {
+        Set<String> replaced = new HashSet<>();
+        for (String id : changed) replaced.addAll(mods.get(id).getMetadata().getProvides());
+        replaced.retainAll(off);
+        return replaced;
+    }
+
+    // only Hotwire takes mods out of the loader, so everyone else skips looking up every config's mod
+    private static void rememberConfigOwners() {
+        if (!HotwireBridge.INSTANCE.getSupportsSwitching()) return;
+        treeOwners.forEach((id, modId) -> rememberConfigOwner(modId, id));
+        ConfigManager.createdConfigs().forEach(ConfigEntrypoints::rememberClassOwner);
+    }
+
+    private static void rememberClassOwner(Config config) {
+        ModInfo owner = CompatLoader.INSTANCE.findModByClass(config.getClass());
+        if (owner != null) rememberConfigOwner(owner.getId(), config.id);
+    }
+
+    // their extracted and Mod Menu cards go by the mod's id, unless a mod that's still on has a config under that id
+    static Set<String> offConfigIds(Set<String> off, Map<String, Set<String>> configs) {
+        Set<String> kept = new HashSet<>();
+        configs.forEach((modId, owned) -> {
+            if (!off.contains(modId)) kept.addAll(owned);
+        });
+        Set<String> ids = new HashSet<>();
+        for (String modId : off) {
+            if (!kept.contains(modId)) ids.add(modId);
+            if (!kept.contains(modId + ".json")) ids.add(modId + ".json");
+            ids.addAll(configs.getOrDefault(modId, Set.of()));
+        }
+        return ids;
+    }
+
+    // read up front, as an entrypoint running in the window claiming an id must not make another mod's config its own
+    static Predicate<Config> lateConfigs(Set<String> ids) {
+        Map<String, String> owners = new HashMap<>(treeOwners);
+        return config -> {
+            ModInfo classOwner = CompatLoader.INSTANCE.findModByClass(config.getClass());
+            return isLate(config.id, owners.get(config.id), classOwner == null ? null : classOwner.getId(), ids, modConfigs);
+        };
+    }
+
+    // an entrypoint can register a library's config class as its mod's own, so the id's owner goes before the class's,
+    // and an update can take the class away, which only leaves what was noted before that to go by
+    static boolean isLate(String id, @Nullable String owner, @Nullable String classOwner, Set<String> ids, Map<String, Set<String>> configs) {
+        if (owner != null) return ids.contains(owner);
+        if (classOwner != null) return ids.contains(classOwner);
+        return ids.stream().anyMatch(modId -> configs.getOrDefault(modId, Set.of()).contains(id));
+    }
+
+    private static boolean awaitsLateWindow(Config config) {
+        Set<String> ids = new HashSet<>(lateIds);
+        if (modsChanged()) ids.addAll(changedIds(loadedMods(), seenMods));
+        return !ids.isEmpty() && lateConfigs(ids).test(config);
+    }
+
+    private static boolean modsChanged() {
+        synchronized (FabricLoader.getInstance()) {
+            return modsChanged(FabricLoader.getInstance().getAllMods(), seenMods);
+        }
+    }
+
+    static boolean modsChanged(Collection<ModContainer> mods, Map<String, ModContainer> seen) {
+        if (mods.size() != seen.size()) return true;
+        for (ModContainer mod : mods) {
+            if (seen.get(mod.getMetadata().getId()) != mod) return true;
+        }
+        return false;
+    }
+
+    static Set<String> changedIds(Map<String, ModContainer> mods, Map<String, ModContainer> seen) {
+        Set<String> changed = new HashSet<>();
+        mods.forEach((id, mod) -> {
+            if (seen.get(id) != mod) changed.add(id);
+        });
+        return changed;
+    }
+
+    static Set<String> removedIds(Map<String, ModContainer> mods, Map<String, ModContainer> seen) {
+        Set<String> removed = new HashSet<>(seen.keySet());
+        removed.removeAll(mods.keySet());
+        return removed;
+    }
+
+    static Set<String> offAfter(Set<String> off, Map<String, ModContainer> mods, Map<String, ModContainer> seen) {
+        Set<String> now = new HashSet<>(off);
+        now.addAll(removedIds(mods, seen));
+        now.removeAll(mods.keySet());
+        return now;
+    }
+
+    static Set<String> retriedIds(Set<String> providers, Set<String> failed, Map<String, ModContainer> mods, Map<String, ModContainer> last) {
+        Set<String> retried = new HashSet<>(providers);
+        retried.retainAll(failed);
+        retried.removeIf(id -> !mods.containsKey(id) || mods.get(id) == last.get(id));
+        return retried;
+    }
+
+    private static Map<String, ModContainer> loadedMods() {
+        Map<String, ModContainer> mods = new HashMap<>();
+        synchronized (FabricLoader.getInstance()) {
+            for (ModContainer mod : FabricLoader.getInstance().getAllMods()) mods.put(mod.getMetadata().getId(), mod);
+        }
+        return mods;
+    }
+
     // a nested mod that provides an entrypoint itself is left as its own provider
     private static void collectNested(ModContainer container, String providerId, Set<String> ids, Map<String, String> nested) {
         for (ModContainer child : container.getContainedMods()) {

@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
+import java.lang.ref.WeakReference
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.WeakHashMap
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -21,6 +24,10 @@ object MinecraftKeybindRegistrar {
     private val wiredProps = WeakHashMap<Property<*>, Boolean>()
 
     private val scannedTrees = WeakHashMap<Tree, Boolean>()
+    // weak as a tree holds its config's whole object, such as a deleted HUD's
+    // shortcut: a hidden tree registered directly can be collected before its replacement is scanned and leave its binds
+    // registered, as only a config's own properties lead back to its tree; note the binds by id if that ever matters
+    private val lastScanned = HashMap<String, WeakReference<Tree>>()
     private var listenerInstalled = false
 
     @JvmStatic
@@ -28,9 +35,32 @@ object MinecraftKeybindRegistrar {
     fun scan(tree: Tree, force: Boolean = true) {
         if (!force && scannedTrees.containsKey(tree)) return
         scannedTrees[tree] = true
+        // a config replaced after its mod updated leaves binds behind that would fire alongside the new ones
+        tree.id?.let { lastScanned.put(it, WeakReference(tree)) }?.get()?.takeIf { it !== tree }?.let { unregister(it, kept = tree) }
         installRebindListener()
         val category = "${tree.localizedTitle()} (OneConfig)"
-        walk(tree, category)
+        walk(tree) { wire(it, category) }
+    }
+
+    /** Takes the keybinds [scan] registered for [tree] back out, other than any that [kept] holds too */
+    @JvmStatic
+    @JvmOverloads
+    fun unregister(tree: Tree, kept: Tree? = null) {
+        val keeping = kept?.let(::mirroredBinds).orEmpty()
+        val props = Collections.newSetFromMap(IdentityHashMap<Property<*>, Boolean>())
+        walk(tree, props::add)
+        // by what scan saw, as a compat adapter's property can build a new bind on every read
+        val scanned = propByBind.filterValues { it in props }.keys - keeping
+        scanned.forEach { KeybindManager.unregister(it) }
+        propByBind.keys -= scanned
+    }
+
+    private fun mirroredBinds(tree: Tree): Set<OneConfigKeybind> {
+        val binds = HashSet<OneConfigKeybind>()
+        walk(tree) { prop ->
+            if (prop.getMetadata<Any?>(NO_MIRROR_METADATA) == null) (prop.get() as? OneConfigKeybind)?.let(binds::add)
+        }
+        return binds
     }
 
     private fun installRebindListener() {
@@ -49,11 +79,11 @@ object MinecraftKeybindRegistrar {
         }
     }
 
-    private fun walk(tree: Tree, category: String) {
+    private fun walk(tree: Tree, action: (Property<*>) -> Unit) {
         for (node in tree.map.values) {
             when (node) {
-                is Tree -> walk(node, category)
-                is Property<*> -> wire(node, category)
+                is Tree -> walk(node, action)
+                is Property<*> -> action(node)
             }
         }
     }

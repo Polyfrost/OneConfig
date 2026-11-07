@@ -351,6 +351,10 @@ if (enableMoulRelocatorKsp) {
     tasks.matching { it.name.startsWith("ksp") }.configureEach {
         enabled = false
     }
+    // the ksp plugin still registers its output dir, so stale output from builds where ksp ran would compile
+    val kspOutput = layout.buildDirectory.dir("generated/ksp").get().asFile
+    tasks.withType<KotlinCompile>().configureEach { exclude { it.file.startsWith(kspOutput) } }
+    tasks.withType<JavaCompile>().configureEach { exclude { it.file.startsWith(kspOutput) } }
 }
 
 group = rootProject.group

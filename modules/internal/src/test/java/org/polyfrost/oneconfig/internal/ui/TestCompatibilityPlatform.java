@@ -39,9 +39,16 @@ public final class TestCompatibilityPlatform implements CompatibilityPlatform {
     public void displayChatMessage(Component text) {
     }
 
+    public static Set<ModInfo> mods = Set.of();
+
+    public static volatile Runnable afterRead = () -> {
+    };
+
     @Override
     public Set<ModInfo> getMods() {
-        return Set.of();
+        Set<ModInfo> read = mods;
+        afterRead.run();
+        return read;
     }
 
     @Override

@@ -1,8 +1,12 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.CustomValue;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.platform.v1.CompatibilityPlatform;
@@ -25,6 +29,11 @@ import net.minecraft.SharedConstants;
 public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     Options options = new OptionsImpl();
     Keys keys = new KeysImpl();
+    //? fabric || ornithe {
+    // compat asks for the mods on every lookup, and building them reads all their metadata
+    private List<ModContainer> modsFrom = List.of();
+    private Set<ModInfo> mods = Set.of();
+    //? }
 
     @Override
     public void displayChatMessage(Component text) {
@@ -44,31 +53,61 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
     public Set<ModInfo> getMods() {
         //? fabric || ornithe {
 
-        return FabricLoader.getInstance().getAllMods().stream()
-                .map(mod -> {
-                    var metadata = mod.getMetadata();
-                    return new ModInfo(
-                        metadata.getId(),
-                        metadata.getName(),
-                        metadata.getVersion().getFriendlyString(),
-                        mod.getRootPaths().getFirst(),
-                        metadata.getIconPath(Integer.MAX_VALUE).orElse(null),
-                        metadata.getAuthors().stream()
-                                .map(person -> person.getName())
-                                .filter(name -> !name.isBlank())
-                                .collect(Collectors.joining(", ")),
-                        metadata.getContributors().stream()
-                                .map(person -> person.getName())
-                                .filter(name -> !name.isBlank())
-                                .collect(Collectors.joining(", ")),
-                        metadata.getDescription()
-                    );
-                }).collect(Collectors.toSet());
+        FabricLoader loader = FabricLoader.getInstance();
+        synchronized (loader) {
+            List<ModContainer> containers = List.copyOf(loader.getAllMods());
+            if (containers.equals(modsFrom)) return mods;
+            mods = containers.stream()
+                    .map(mod -> {
+                        var metadata = mod.getMetadata();
+                        return new ModInfo(
+                            metadata.getId(),
+                            metadata.getName(),
+                            metadata.getVersion().getFriendlyString(),
+                            mod.getRootPaths().getFirst(),
+                            metadata.getIconPath(Integer.MAX_VALUE).orElse(null),
+                            metadata.getAuthors().stream()
+                                    .map(person -> person.getName())
+                                    .filter(name -> !name.isBlank())
+                                    .collect(Collectors.joining(", ")),
+                            metadata.getContributors().stream()
+                                    .map(person -> person.getName())
+                                    .filter(name -> !name.isBlank())
+                                    .collect(Collectors.joining(", ")),
+                            metadata.getDescription(),
+                            mod.getContainingMod().map(parent -> parent.getMetadata().getId()).orElseGet(() -> modMenuParent(metadata))
+                        );
+                    }).collect(Collectors.toSet());
+            modsFrom = containers;
+            return mods;
+        }
         //? }
 
         //? neoforge {
         //? }
     }
+
+    //? fabric || ornithe {
+    /** The parent Mod Menu lists a separately shipped mod under: its "parent" custom value, a bare id or an object with an id, or Fabric API for its modules */
+    private static String modMenuParent(ModMetadata metadata) {
+        try {
+            CustomValue parent = metadata.containsCustomValue("modmenu")
+                ? metadata.getCustomValue("modmenu").getAsObject().get("parent")
+                : null;
+            if (parent != null && parent.getType() == CustomValue.CvType.OBJECT) parent = parent.getAsObject().get("id");
+            if (parent != null && parent.getType() == CustomValue.CvType.STRING) return parent.getAsString();
+        } catch (ClassCastException ignored) {
+            // malformed metadata from another mod should not break the mod list
+        }
+        // Mod Menu files Fabric API modules under Fabric API itself even when they ship as separate jars
+        if (metadata.containsCustomValue("fabric-api:module-lifecycle")) {
+            FabricLoader loader = FabricLoader.getInstance();
+            String parent = loader.isModLoaded("fabric-api") || !loader.isModLoaded("fabric") ? "fabric-api" : "fabric";
+            return parent.equals(metadata.getId()) ? null : parent;
+        }
+        return null;
+    }
+    //? }
 
     @Override
     public boolean isDevelopment() {
