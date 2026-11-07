@@ -54,6 +54,7 @@ import kotlin.metadata.jvm.syntheticMethodForDelegate
 import kotlin.metadata.jvm.toJvmInternalName
 import org.objectweb.asm.commons.Remapper
 
+// must round-trip the metadata of relocated jars, whichever of these features they used
 @OptIn(ExperimentalContextReceivers::class, ExperimentalContextParameters::class)
 class KotlinClassRemapper(private val remapper: Remapper) {
     fun remap(clazz: KmClass): KmClass {
@@ -66,6 +67,8 @@ class KotlinClassRemapper(private val remapper: Remapper) {
         clazz.constructors.replaceAll(this::remap)
         clazz.nestedClasses.replaceAll(this::remap)
         clazz.sealedSubclasses.replaceAll(this::remap)
+        // context parameters have no class-level equivalent, and already compiled jars can still carry these
+        @Suppress("DEPRECATION")
         clazz.contextReceiverTypes.replaceAll(this::remap)
         clazz.localDelegatedProperties.replaceAll(this::remap)
         return clazz

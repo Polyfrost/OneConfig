@@ -57,8 +57,8 @@ subprojects {
     configure<TestingExtension> {
         suites {
             val sourceSets = extensions.getByType<JavaPluginExtension>().sourceSets
-            val test by sourceSets
-            val main by sourceSets
+            val test = sourceSets.getByName("test")
+            val main = sourceSets.getByName("main")
 
             fun createTestSuite(name: String, javaVersion: Int) {
                 val suite = register<JvmTestSuite>(name) {
@@ -165,7 +165,7 @@ subprojects {
     }
 
     configure<SigningExtension> {
-        isRequired = project.properties["signing.keyId"] != null
+        isRequired = providers.gradleProperty("signing.keyId").isPresent
         if (isRequired) {
             sign(extensions.getByType<PublishingExtension>().publications["mavenJava"])
         }
@@ -181,7 +181,7 @@ subprojects {
                     groupId = project.group.toString()
 
                     signing {
-                        isRequired = project.properties["signing.keyId"] != null
+                        isRequired = providers.gradleProperty("signing.keyId").isPresent
                         sign(this@named)
                     }
                 }

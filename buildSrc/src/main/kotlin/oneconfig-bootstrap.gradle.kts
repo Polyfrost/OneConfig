@@ -46,6 +46,8 @@ group = "${rootProject.group}.bootstrap"
 version = rootProject.version
 
 val node = project.name
+// bootstrap/gradle.properties belongs to the parent of every node
+val bootstrapProject = rootProject.project(":bootstrap")
 val isOrnithe = node.endsWith("-ornithe")
 val platformPath = ":minecraft:$node"
 
@@ -153,10 +155,10 @@ tasks.withType<ProcessResources>().configureEach {
     }
 
     val props = mapOf(
-        "mod_id" to (project.findProperty("mod.id") ?: "oneconfig"),
-        "mod_name" to (project.findProperty("mod.name") ?: "OneConfig"),
+        "mod_id" to (bootstrapProject.findProperty("mod.id") ?: "oneconfig"),
+        "mod_name" to (bootstrapProject.findProperty("mod.name") ?: "OneConfig"),
         "mod_version" to project.version,
-        "mod_description" to (project.findProperty("mod.description") ?: "OneConfig bootstrap loader."),
+        "mod_description" to (bootstrapProject.findProperty("mod.description") ?: "OneConfig bootstrap loader."),
         "mc_version" to range,
         "compose_version" to composeBundleVersion,
         "loader_version" to versionedCatalog.versions["loader"].requiredVersion,
@@ -171,10 +173,10 @@ val modrinthMinecraftVersionOverride = mapOf(
     "26.1" to listOf("26.1", "26.1.1", "26.1.2")
 )
 
-val modrinthId = listOf("oneconfig.publish.modrinth", "publish.modrinth").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
-val modrinthToken = listOf("oneconfig.publish.modrinth.token", "publish.modrinth.token", "modrinth.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
-val curseforgeId = listOf("oneconfig.publish.curseforge", "publish.curseforge").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
-val curseforgeToken = listOf("oneconfig.publish.curseforge.token", "publish.curseforge.token", "curseforge.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val modrinthId = listOf("oneconfig.publish.modrinth", "publish.modrinth").firstNotNullOfOrNull { bootstrapProject.findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val modrinthToken = listOf("oneconfig.publish.modrinth.token", "publish.modrinth.token", "modrinth.token").firstNotNullOfOrNull { bootstrapProject.findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val curseforgeId = listOf("oneconfig.publish.curseforge", "publish.curseforge").firstNotNullOfOrNull { bootstrapProject.findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
+val curseforgeToken = listOf("oneconfig.publish.curseforge.token", "publish.curseforge.token", "curseforge.token").firstNotNullOfOrNull { bootstrapProject.findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 val rawMinecraftVersion = versionedCatalog.versions["minecraft"].requiredVersion
 val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: listOf(rawMinecraftVersion)
 val publishJarTaskName = if ("remapJar" in tasks.names) "remapJar" else "jar"
@@ -223,7 +225,7 @@ publishMods {
                 requires("fabric-api")
             }
             requires("fabric-language-kotlin")
-            findProperty("publish.modrinth.compose-bundle")
+            bootstrapProject.findProperty("publish.modrinth.compose-bundle")
                 ?.toString()
                 ?.takeIf { it.isNotBlank() }
                 ?.let { requires(it) }
@@ -240,7 +242,7 @@ publishMods {
 
             requires("fabric-api")
             requires("fabric-language-kotlin")
-            findProperty("publish.curseforge.compose-bundle.slug")
+            bootstrapProject.findProperty("publish.curseforge.compose-bundle.slug")
                 ?.toString()
                 ?.takeIf { it.isNotBlank() }
                 ?.let { requires(it) }

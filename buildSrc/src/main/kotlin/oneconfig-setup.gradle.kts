@@ -17,7 +17,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
     `maven-publish`
-    signing
     id("oneconfig-lint")
 }
 
@@ -178,7 +177,7 @@ val skyhanniRelocated = registerRelocationAttribute("relocate-skyhanni-moulconfi
     relocate("io.github.notenoughupdates.moulconfig", "at.hannibal2.skyhanni.deps.moulconfig")
 }
 
-val skyhanniRelocatedConfiguration: Configuration by configurations.creating {
+val skyhanniRelocatedConfiguration: Configuration = configurations.create("skyhanniRelocatedConfiguration") {
     attributes { attribute(skyhanniRelocated, true) }
 }
 
@@ -186,7 +185,7 @@ val firmamentRelocated = registerRelocationAttribute("relocate-firmament-moulcon
     relocate("io.github.notenoughupdates.moulconfig", "moe.nea.firmament.deps.moulconfig")
 }
 
-val firmamentRelocatedConfiguration: Configuration by configurations.creating {
+val firmamentRelocatedConfiguration: Configuration = configurations.create("firmamentRelocatedConfiguration") {
     attributes { attribute(firmamentRelocated, true) }
 }
 
@@ -194,7 +193,7 @@ val skysoftRelocated = registerRelocationAttribute("relocate-skysoft-moulconfig"
     relocate("io.github.notenoughupdates.moulconfig", "com.skysoft.deps.softconfig")
 }
 
-val skysoftRelocatedConfiguration: Configuration by configurations.creating {
+val skysoftRelocatedConfiguration: Configuration = configurations.create("skysoftRelocatedConfiguration") {
     attributes { attribute(skysoftRelocated, true) }
 }
 
@@ -325,7 +324,7 @@ dependencies {
     "annotationProcessor"(versionedCatalog["mixin.squared"])
 
     if (enableMoulRelocatorKsp) {
-        "ksp"(rootProject.project(":modules:relocator"))
+        "ksp"(project(":modules:relocator"))
     }
 
     for (project in rootProject.project(":modules").subprojects) {
@@ -341,13 +340,6 @@ dependencies {
     }
 
     //api("dev.deftu:enhancedeventbus:2.0.0") // TODO
-    if (properties["minecraft.vulkan"] != null) {
-        // never got the fabric-api mixin patching to work
-        val fabricApiPatchSrc = configurations.create("fabricApiPatchSrc") {
-            isCanBeConsumed = false
-            isCanBeResolved = true
-        }
-    }
 }
 
 if (enableMoulRelocatorKsp) {
@@ -388,9 +380,10 @@ afterEvaluate {
         }
     }
 
-    configure<SigningExtension> {
-        isRequired = project.properties["signing.keyId"] != null
-        if (isRequired) {
+    // Ploceus owns a configuration also named "signatures", which the signing plugin warns about
+    if (providers.gradleProperty("signing.keyId").isPresent) {
+        apply(plugin = "signing")
+        configure<SigningExtension> {
             sign(extensions.getByType<PublishingExtension>().publications["mavenJava"])
         }
     }

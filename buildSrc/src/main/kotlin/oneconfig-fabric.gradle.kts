@@ -50,10 +50,10 @@ loom.apply {
         "build/processed.classtweaker",
     )
     runConfigs["client"].apply {
-        ideConfigGenerated(true)
-        runDir = "../../run"
+        generateRunConfig = true
+        runDirectory = layout.projectDirectory.dir("../../run")
         // -Pdevauth=false launches offline for runs that do not need a real account
-        property("devauth.enabled", (project.findProperty("devauth") ?: "true").toString())
-        property("oneconfig.test", "true")
+        systemProperties.put("devauth.enabled", (project.findProperty("devauth") ?: "true").toString())
+        systemProperties.put("oneconfig.test", "true")
     }
 }

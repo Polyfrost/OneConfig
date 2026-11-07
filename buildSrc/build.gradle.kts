@@ -48,6 +48,12 @@ detekt {
     config.setFrom("../config/detekt/detekt.yml")
 }
 
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors = true
+    }
+}
+
 tasks {
     // buildSrc's classpath covers the plugins used by the rest of the build's scripts
     register<Detekt>("detektScripts") {
