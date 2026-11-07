@@ -133,7 +133,7 @@ private fun Property<*>.writeNumbers(values: List<Float>) {
         is FloatArray -> values.toFloatArray()
         is DoubleArray -> values.map { it.toDouble() }.toDoubleArray()
         is IntArray -> values.map { it.roundToInt() }.toIntArray()
-        is LongArray -> values.map { it.roundedTo(java.lang.Long.TYPE) as Long }.toLongArray()
+        is LongArray -> values.map { it.roundedTo(Long::class.java) as Long }.toLongArray()
         is Array<*> -> {
             val component = current.javaClass.componentType
             ReflectArray.newInstance(component, values.size).also { array ->
@@ -254,7 +254,7 @@ sealed class ListOptionData(prop: Property<*>) : OptionData(prop) {
     val reorderable: Boolean get() = prop.getMetadata("reorderable") ?: true
     val addText: Any get() = localizedText(prop.getMetadata("addTextKey"), prop.getMetadata<String>("addText")?.takeIf { it.isNotBlank() } ?: "Add")
 
-    val isList: Boolean get() = java.util.List::class.java.isAssignableFrom(prop.type)
+    val isList: Boolean get() = List::class.java.isAssignableFrom(prop.type)
 
     fun elements(): List<Any?> = prop.listElements()
 
@@ -285,7 +285,7 @@ class ColorListOptionData(prop: Property<*>) : ListOptionData(prop) {
     }
 
     fun setArgb(values: List<Int>) {
-        val component = if (prop.type.isArray) prop.type.componentType else Integer::class.java
+        val component = if (prop.type.isArray) prop.type.componentType else Int::class.javaObjectType
         setElements(
             if (component == Color::class.java) values.map { Color(it, true) } else values
         )
@@ -340,8 +340,8 @@ private fun Float.withinBounds(min: Float, max: Float): Float = coerceAtLeast(mi
 /** Converts to [type] rounding half up for whole number types the same as [roundToInt] does */
 private fun Float.roundedTo(type: Class<*>): Number {
     val whole = when (type) {
-        Integer.TYPE, Integer::class.java, java.lang.Long.TYPE, java.lang.Long::class.java,
-        java.lang.Short.TYPE, java.lang.Short::class.java, java.lang.Byte.TYPE, java.lang.Byte::class.java -> true
+        Int::class.java, Int::class.javaObjectType, Long::class.java, Long::class.javaObjectType,
+        Short::class.java, Short::class.javaObjectType, Byte::class.java, Byte::class.javaObjectType -> true
         else -> false
     }
     return (if (whole) floor(this + 0.5f) else this).toNumberType(type)
@@ -353,7 +353,7 @@ private fun ListOptionData.numericElementType(min: Float, max: Float, step: Floa
     elements().firstOrNull { it is Number }?.let { return it.javaClass }
     val whole = min == min.toInt().toFloat() && max == max.toInt().toFloat() &&
             step == step.toInt().toFloat()
-    return if (whole) Integer::class.java else java.lang.Double::class.java
+    return if (whole) Int::class.javaObjectType else Double::class.javaObjectType
 }
 
 class DropdownOptionData(prop: Property<*>) : OptionData(prop) {
@@ -503,12 +503,12 @@ private fun Property<*>.setIdListElements(values: List<String>) {
 }
 
 private fun Number.toComponentType(component: Class<*>): Any = when (component) {
-    Integer.TYPE, Integer::class.java -> toInt()
-    java.lang.Long.TYPE, java.lang.Long::class.java -> toLong()
-    java.lang.Double.TYPE, java.lang.Double::class.java -> toDouble()
-    java.lang.Float.TYPE, java.lang.Float::class.java -> toFloat()
-    java.lang.Short.TYPE, java.lang.Short::class.java -> toShort()
-    java.lang.Byte.TYPE, java.lang.Byte::class.java -> toByte()
+    Int::class.java, Int::class.javaObjectType -> toInt()
+    Long::class.java, Long::class.javaObjectType -> toLong()
+    Double::class.java, Double::class.javaObjectType -> toDouble()
+    Float::class.java, Float::class.javaObjectType -> toFloat()
+    Short::class.java, Short::class.javaObjectType -> toShort()
+    Byte::class.java, Byte::class.javaObjectType -> toByte()
     else -> this
 }
 

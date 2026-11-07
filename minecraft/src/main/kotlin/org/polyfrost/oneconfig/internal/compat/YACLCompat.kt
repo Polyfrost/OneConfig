@@ -240,7 +240,7 @@ object YACLCompat {
         property.addMetadata("visualizer", Visualizer.ButtonVisualizer::class.java)
         property.addMetadata("textKey", "Open")
         property.category = categoryName
-        property.metadata?.put("runnable", Runnable { openPlaceholderScreen(screenFactory, ctx) })
+        property.addMetadata("runnable", Runnable { openPlaceholderScreen(screenFactory, ctx) })
 
         root.put(property)
     }
@@ -867,9 +867,9 @@ object YACLCompat {
     private fun boundedFloat(value: Float?, type: Class<*>): Float? {
         if (value == null) return null
         val limit = when (type) {
-            Integer::class.java -> Integer.MAX_VALUE.toFloat()
-            java.lang.Long::class.java -> Long.MAX_VALUE.toFloat()
-            java.lang.Float::class.java -> Float.MAX_VALUE
+            Int::class.javaObjectType -> Int.MAX_VALUE.toFloat()
+            Long::class.javaObjectType -> Long.MAX_VALUE.toFloat()
+            Float::class.javaObjectType -> Float.MAX_VALUE
             else -> Double.MAX_VALUE.toFloat() // infinite so only a genuinely infinite bound matches
         }
         return if (value <= -limit || value >= limit) null else value
@@ -1029,10 +1029,10 @@ object YACLCompat {
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (type) {
-            Integer::class.java -> number.toInt()
-            java.lang.Long::class.java -> number.toLong()
-            java.lang.Float::class.java -> number.toFloat()
-            java.lang.Double::class.java -> number.toDouble()
+            Int::class.javaObjectType -> number.toInt()
+            Long::class.javaObjectType -> number.toLong()
+            Float::class.javaObjectType -> number.toFloat()
+            Double::class.javaObjectType -> number.toDouble()
             else -> number
         }
     }
@@ -1081,7 +1081,7 @@ object YACLCompat {
                 it.name == "accept" && (it.parameterCount == 1 || it.parameterCount == 2)
             }?.apply { isAccessible = true }
             if (acceptMethod != null) {
-                property.metadata?.put("runnable", Runnable {
+                property.addMetadata("runnable", Runnable {
                     runCatching {
                         val paramTypes = acceptMethod.parameterTypes
                         val screen = yaclScreen(ctx)?.takeIf { paramTypes[0].isInstance(it) }

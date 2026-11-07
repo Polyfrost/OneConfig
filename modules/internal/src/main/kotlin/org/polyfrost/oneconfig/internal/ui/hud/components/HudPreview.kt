@@ -45,7 +45,7 @@ private const val MEASURE_BOUNDS = 2000f
 private val LOGGER = LogManager.getLogger("OneConfig/HUD-Preview")
 
 @Suppress("DEPRECATION")
-private fun Throwable.isFatalPreviewFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
+private fun Throwable.isFatalPreviewFailure(): Boolean = this is VirtualMachineError
 
 private fun Hud.updateForPreview() {
     try {

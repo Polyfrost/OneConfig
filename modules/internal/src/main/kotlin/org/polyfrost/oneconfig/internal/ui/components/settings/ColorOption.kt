@@ -624,6 +624,8 @@ internal fun ColorPickerPopup(
                         .background(model.gradientColor)
                         .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
                 )
+                // TextFieldState needs its own migration, as it changes how every field hoists its state
+                @Suppress("DEPRECATION")
                 BasicTextField(
                     value = gradientText,
                     onValueChange = { input ->
@@ -749,6 +751,8 @@ internal fun ColorPickerPopup(
                     .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
             )
 
+            // TextFieldState needs its own migration, as it changes how every field hoists its state
+            @Suppress("DEPRECATION")
             BasicTextField(
                 value = hexText,
                 onValueChange = { input ->
@@ -801,6 +805,8 @@ private fun SliderValueField(
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // TextFieldState needs its own migration, as it changes how every field hoists its state
+        @Suppress("DEPRECATION")
         BasicTextField(
             value = text,
             onValueChange = onValueChange,

@@ -3817,6 +3817,8 @@ private fun SearchBar(
         if (isFocused) theme.textColor.copy(0.70f) else theme.textColor.copy(0.50f)
     )
 
+    // TextFieldState needs its own migration, as it changes how every field hoists its state
+    @Suppress("DEPRECATION")
     BasicTextField(
         current,
         {

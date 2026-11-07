@@ -144,7 +144,7 @@ object KaleidoCompat {
         when {
             current is Boolean || default is Boolean -> {
                 visualizer = Visualizer.SwitchVisualizer::class.java
-                property = functional(value, id, name, description, java.lang.Boolean::class.java) { it as? Boolean ?: false }
+                property = functional(value, id, name, description, Boolean::class.javaObjectType) { it as? Boolean ?: false }
             }
 
             current is Enum<*> || default is Enum<*> -> {
@@ -166,13 +166,12 @@ object KaleidoCompat {
 
             current is Number || default is Number -> {
                 visualizer = if (range != null) Visualizer.SliderVisualizer::class.java else Visualizer.NumberVisualizer::class.java
-                val whole = type == Integer::class.java || type == java.lang.Long::class.java ||
-                        type == java.lang.Short::class.java || type == java.lang.Byte::class.java
+                val whole = type == Int::class.javaObjectType || type == Long::class.javaObjectType ||
+                        type == Short::class.javaObjectType || type == Byte::class.javaObjectType
                 extraMetadata["min"] = range?.first?.toFloat() ?: -Float.MAX_VALUE
                 extraMetadata["max"] = range?.second?.toFloat() ?: Float.MAX_VALUE
                 if (whole) extraMetadata["step"] = 1f
-                @Suppress("UNCHECKED_CAST")
-                property = functional(value, id, name, description, type as Class<Any>) { coerceNumber(it, type) }
+                property = functional(value, id, name, description, type) { coerceNumber(it, type) }
             }
 
             current is String || default is String -> {
@@ -191,8 +190,8 @@ object KaleidoCompat {
                         else Visualizer.NumberListVisualizer::class.java
                         extraMetadata["min"] = range?.first?.toFloat() ?: -Float.MAX_VALUE
                         extraMetadata["max"] = range?.second?.toFloat() ?: Float.MAX_VALUE
-                        if (elementType == Integer::class.java || elementType == java.lang.Long::class.java ||
-                            elementType == java.lang.Short::class.java || elementType == java.lang.Byte::class.java
+                        if (elementType == Int::class.javaObjectType || elementType == Long::class.javaObjectType ||
+                            elementType == Short::class.javaObjectType || elementType == Byte::class.javaObjectType
                         ) extraMetadata["step"] = 1f
                     }
 
@@ -259,7 +258,7 @@ object KaleidoCompat {
                 }
             },
             id = id, name = name, description = description,
-            type = java.util.List::class.java as Class<List<Any?>>,
+            type = List::class.java,
         )
     }
 
@@ -278,11 +277,11 @@ object KaleidoCompat {
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: (value as? String)?.toDoubleOrNull() ?: 0
         return when (type) {
-            Integer::class.java, Integer.TYPE -> number.toInt()
-            java.lang.Long::class.java, java.lang.Long.TYPE -> number.toLong()
-            java.lang.Short::class.java, java.lang.Short.TYPE -> number.toShort()
-            java.lang.Byte::class.java, java.lang.Byte.TYPE -> number.toByte()
-            java.lang.Float::class.java, java.lang.Float.TYPE -> number.toFloat()
+            Int::class.javaObjectType, Int::class.java -> number.toInt()
+            Long::class.javaObjectType, Long::class.java -> number.toLong()
+            Short::class.javaObjectType, Short::class.java -> number.toShort()
+            Byte::class.javaObjectType, Byte::class.java -> number.toByte()
+            Float::class.javaObjectType, Float::class.java -> number.toFloat()
             else -> number.toDouble()
         }
     }

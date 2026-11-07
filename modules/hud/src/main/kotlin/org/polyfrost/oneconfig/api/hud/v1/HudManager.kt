@@ -54,7 +54,7 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 
-private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
+private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
 
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
@@ -1068,7 +1068,7 @@ object HudManager {
         }
         val split = volatileCtx != null && cr != null && volatileCtx.renderer is CapturingRenderer && framePositions && splitLayers()
         if (split) {
-            volatileCtx!!.save()
+            volatileCtx.save()
             volatileCtx.scale(scale, scale)
         }
         val volatileCacheNodes = volatileCtx?.cacheNodes ?: false
@@ -1091,7 +1091,7 @@ object HudManager {
         val huds = {
             for (i in frameOrder.indices) {
                 val hud = frameOrder[i]
-                val ctx = if (split && frameVolatile[i]) volatileCtx!! else ctx
+                val ctx = if (split && frameVolatile[i]) volatileCtx else ctx
                 val cr = ctx.renderer as? CapturingRenderer
                 val hudScale = if (framePositions) framePos[i * 3 + 2] else hud.effectiveScale
                 val root = try {
@@ -1145,7 +1145,7 @@ object HudManager {
         ctx.cacheNodes = cacheNodes
         ctx.restore()
         volatileCtx?.cacheNodes = volatileCacheNodes
-        if (split) volatileCtx!!.restore()
+        if (split) volatileCtx.restore()
     }
 
     private fun splitLayers(): Boolean {

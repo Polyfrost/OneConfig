@@ -105,8 +105,9 @@ private object SystemClipboardManager : ClipboardManager {
 }
 
 
-@Suppress("DEPRECATION")
 private object SystemClipboard : Clipboard {
+    // abstract on Clipboard, though nothing here reads it
+    @Suppress("OVERRIDE_DEPRECATION")
     override val nativeClipboard: Any = Unit
 
     @OptIn(ExperimentalComposeUiApi::class)

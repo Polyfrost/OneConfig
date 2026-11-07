@@ -47,11 +47,11 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 fun Float.toNumberType(type: Class<*>): Number = when (type) {
-    Int::class.java, Integer::class.java, Integer.TYPE -> toInt()
-    Long::class.java, java.lang.Long::class.java, java.lang.Long.TYPE -> toLong()
-    Double::class.java, java.lang.Double::class.java, java.lang.Double.TYPE -> toDouble()
-    Short::class.java, java.lang.Short::class.java, java.lang.Short.TYPE -> toInt().toShort()
-    Byte::class.java, java.lang.Byte::class.java, java.lang.Byte.TYPE -> toInt().toByte()
+    Int::class.java, Int::class.javaObjectType -> toInt()
+    Long::class.java, Long::class.javaObjectType -> toLong()
+    Double::class.java, Double::class.javaObjectType -> toDouble()
+    Short::class.java, Short::class.javaObjectType -> toInt().toShort()
+    Byte::class.java, Byte::class.javaObjectType -> toInt().toByte()
     else -> this
 }
 
@@ -78,6 +78,8 @@ fun spinnerStep(step: Float, min: Float, max: Float): Float = when {
 fun formatSpinnerValue(v: Float): String =
     if (v == v.toLong().toFloat()) v.toLong().toString() else String.format(Locale.ROOT, "%.2f", v)
 
+// only consumed by a value-based BasicTextField, see the note on its call site
+@Suppress("DEPRECATION")
 @Composable
 private fun rememberUnitSuffix(unit: String?): VisualTransformation {
     val color = LocalTheme.current.textColorSecondary
@@ -165,6 +167,8 @@ fun NumberSpinner(
             .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // TextFieldState needs its own migration, as it changes how every field hoists its state
+        @Suppress("DEPRECATION")
         BasicTextField(
             value = text,
             onValueChange = { input ->

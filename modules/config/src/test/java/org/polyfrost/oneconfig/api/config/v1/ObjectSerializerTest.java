@@ -101,6 +101,7 @@ public class ObjectSerializerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // the assertions above each cast establish that it is a map
     public void testColor() {
         Color color = new Color(20, 55, 3, 100);
         Object colorTest = objectSerializer.serialize(color, false);
@@ -119,6 +120,7 @@ public class ObjectSerializerTest {
 
     // custom object with no registered adapter
     @Test
+    @SuppressWarnings("unchecked") // the assertions above each cast establish that it is a map
     public void testObject() {
         Dimension dimension = new Dimension(10, 20);
         Object dimensionTest = objectSerializer.serialize(dimension, false, false);
@@ -182,6 +184,7 @@ public class ObjectSerializerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // the assertions above each cast establish that it is a map
     public void testEnum() {
         Object enumTest = objectSerializer.serialize(TestEnum.TEST1, false, false);
         assertInstanceOf(HashMap.class, enumTest);
@@ -197,6 +200,7 @@ public class ObjectSerializerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // the assertions above each cast establish that it is a map
     public void testEnumWithBody() {
         Object test = objectSerializer.serialize(BodyEnum.WITH_BODY, false, false);
         assertInstanceOf(HashMap.class, test);

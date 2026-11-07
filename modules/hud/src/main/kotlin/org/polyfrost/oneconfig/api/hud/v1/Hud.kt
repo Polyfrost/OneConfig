@@ -153,7 +153,12 @@ private val stateOnlyMinimumSize = object : ClassValue<Boolean>() {
 }
 
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
-abstract class Hud(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
+abstract class Hud(
+    id: String,
+    title: String,
+    // public API whose type differs from the Config.Category field it hides, so neither can be renamed or merged
+    @Suppress("PROPERTY_HIDES_JAVA_FIELD") val category: Category,
+) : Cloneable, Config(id, null, title, null) {
     open val description: String? = null
 
     /**
@@ -278,8 +283,8 @@ abstract class Hud(id: String, title: String, val category: Category) : Cloneabl
         if (!needW && !needH) return
         val (naturalW, naturalH) = measureNaturalContentSize() ?: return
         val (minW, minH) = minimumSize()
-        if (needW && naturalW > 0f) wProp!!.addMetadata("default", maxOf(naturalW, minW))
-        if (needH && naturalH > 0f) hProp!!.addMetadata("default", maxOf(naturalH, minH))
+        if (needW && naturalW > 0f) wProp.addMetadata("default", maxOf(naturalW, minW))
+        if (needH && naturalH > 0f) hProp.addMetadata("default", maxOf(naturalH, minH))
     }
 
     /**

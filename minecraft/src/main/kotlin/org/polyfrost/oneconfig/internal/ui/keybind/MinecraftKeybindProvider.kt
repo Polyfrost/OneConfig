@@ -22,6 +22,9 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindCodec
 import net.minecraft.server.packs.FixedPathPackResources
 //?}
 
+// still null early in startup, whatever the nullness annotations on newer versions claim
+internal fun minecraftOrNull(): Minecraft? = Minecraft.getInstance()
+
 object MinecraftKeybindProvider : KeybindGroupProvider {
     private val properties = IdentityHashMap<KeyMapping, Property<OneConfigKeybind>>()
     private val modIconCache = mutableMapOf<String, String?>()
@@ -79,7 +82,7 @@ object MinecraftKeybindProvider : KeybindGroupProvider {
     }
 
     fun managedMappings(): List<KeyMapping> {
-        val options = Minecraft.getInstance()?.options ?: return emptyList()
+        val options = minecraftOrNull()?.options ?: return emptyList()
         return options.keyMappings.filterNot { isOneConfigMirror(it) }
     }
 

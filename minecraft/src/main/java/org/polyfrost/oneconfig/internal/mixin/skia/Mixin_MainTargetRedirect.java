@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class Mixin_MainTargetRedirect {
     @Inject(method = "getMainRenderTarget", at = @At("HEAD"), cancellable = true)
     private void oneconfig$redirectMainTarget(CallbackInfoReturnable<RenderTarget> cir) {
-        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
+        RenderTarget override = GuiTargetRedirect.target;
         if (override != null) {
             cir.setReturnValue(override);
         }

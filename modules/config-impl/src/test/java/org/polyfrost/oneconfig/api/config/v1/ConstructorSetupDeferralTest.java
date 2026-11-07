@@ -15,7 +15,7 @@ public class ConstructorSetupDeferralTest {
     private static final String ID = "ctor_setup_deferral.json";
 
     @SuppressWarnings("unused")
-    public static class EagerInstanceConfig extends Config {
+    public static final class EagerInstanceConfig extends Config {
         public static final EagerInstanceConfig INSTANCE = new EagerInstanceConfig();
 
         @Switch(title = "Disable")

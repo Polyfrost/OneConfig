@@ -18,7 +18,7 @@ public class MasterToggleTest {
     private static final String PROFILE = "master-toggle-test";
 
     @SuppressWarnings("unused")
-    public static class MasterConfig extends Config {
+    public static final class MasterConfig extends Config {
         @Switch(title = "Enabled")
         public static boolean modEnabled = false;
         @Switch(title = "Top")
@@ -44,7 +44,7 @@ public class MasterToggleTest {
     }
 
     @SuppressWarnings("unused")
-    public static class SetupConfig extends Config {
+    public static final class SetupConfig extends Config {
         @Switch(title = "Hidden")
         public static boolean hidden = true;
         @Text(title = "Migrated")

@@ -91,7 +91,7 @@ object WalksyLibCompat {
 
         val firstCategory = categories.firstNotNullOfOrNull { it?.let { c -> invoke(c, "name") as? String } }
         tree.map.values.firstOrNull {
-            it is Property<*> && it.type == java.lang.Boolean::class.java && it.category == firstCategory &&
+            it is Property<*> && it.type == Boolean::class.javaObjectType && it.category == firstCategory &&
                 isMasterSwitchName(it.title as? String ?: "")
         }?.addMetadata(MASTER_TOGGLE, true)
 
@@ -128,14 +128,14 @@ object WalksyLibCompat {
             return parseTexture(option, type, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
-        if (java.util.List::class.java.isAssignableFrom(type)) {
+        if (List::class.java.isAssignableFrom(type)) {
             return parseStringList(option, name, description, uniqueId(usedIds, optionPath), categoryName, subcategoryName, tree)
         }
 
         val min = invoke(option, "getMin") as? Number
         val max = invoke(option, "getMax") as? Number
         val visualizer: Class<out Visualizer> = when {
-            type == java.lang.Boolean::class.java -> Visualizer.SwitchVisualizer::class.java
+            type == Boolean::class.javaObjectType -> Visualizer.SwitchVisualizer::class.java
             type in NUMBER_TYPES ->
                 if (min != null && max != null) Visualizer.SliderVisualizer::class.java else Visualizer.NumberVisualizer::class.java
             type == String::class.java -> Visualizer.TextVisualizer::class.java
@@ -178,8 +178,8 @@ object WalksyLibCompat {
     }
 
     private val NUMBER_TYPES = setOf<Class<*>>(
-        Integer::class.java, java.lang.Long::class.java, java.lang.Short::class.java, java.lang.Byte::class.java,
-        java.lang.Double::class.java, java.lang.Float::class.java,
+        Int::class.javaObjectType, Long::class.javaObjectType, Short::class.javaObjectType, Byte::class.javaObjectType,
+        Double::class.javaObjectType, Float::class.javaObjectType,
     )
 
     private val COLOR_CLASSES = setOf(
@@ -209,7 +209,7 @@ object WalksyLibCompat {
         val getAlpha = colorMethod(colorClass, "getAlpha") ?: return false
         val ctor = runCatching {
             colorClass.getConstructor(
-                Integer.TYPE, Integer.TYPE, Integer.TYPE, Integer.TYPE,
+                Int::class.java, Int::class.java, Int::class.java, Int::class.java,
             ).apply { isAccessible = true }
         }.getOrNull() ?: return false
         val getAdditions = colorMethod(colorClass, "getAdditions")
@@ -490,7 +490,7 @@ object WalksyLibCompat {
             id,
             name,
             description,
-            java.util.List::class.java as Class<List<String>>,
+            List::class.java as Class<List<String>>,
         )
 
         property.addMetadata("visualizer", Visualizer.TextListVisualizer::class.java)
@@ -525,12 +525,12 @@ object WalksyLibCompat {
     }
 
     private fun coerce(value: Any?, type: Class<*>): Any? = when {
-        value is Number && type == Integer::class.java -> value.toInt()
-        value is Number && type == java.lang.Long::class.java -> value.toLong()
-        value is Number && type == java.lang.Short::class.java -> value.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-        value is Number && type == java.lang.Byte::class.java -> value.toInt().coerceIn(Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()).toByte()
-        value is Number && type == java.lang.Double::class.java -> value.toDouble()
-        value is Number && type == java.lang.Float::class.java -> value.toFloat()
+        value is Number && type == Int::class.javaObjectType -> value.toInt()
+        value is Number && type == Long::class.javaObjectType -> value.toLong()
+        value is Number && type == Short::class.javaObjectType -> value.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+        value is Number && type == Byte::class.javaObjectType -> value.toInt().coerceIn(Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()).toByte()
+        value is Number && type == Double::class.javaObjectType -> value.toDouble()
+        value is Number && type == Float::class.javaObjectType -> value.toFloat()
         else -> value
     }
 

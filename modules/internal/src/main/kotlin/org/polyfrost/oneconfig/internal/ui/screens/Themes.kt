@@ -150,6 +150,8 @@ private fun ThemeCard(family: String, variants: List<UITheme>, modifier: Modifie
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // the Compose resources library needs generated accessors, whereas these paths are only known at runtime
+        @Suppress("DEPRECATION")
         Image(
             painter = painterResource("/assets/oneconfig/images/${shown.previewImage}.svg"),
             contentDescription = null,

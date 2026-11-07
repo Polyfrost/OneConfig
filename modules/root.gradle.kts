@@ -64,6 +64,11 @@ subprojects {
                 val suite = register<JvmTestSuite>(name) {
                     useJUnitJupiter()
 
+                    dependencies {
+                        // otherwise the suite compiles against the ancient version pulled in by the Kotlin stdlib
+                        compileOnly(rootProject.libs.annotations)
+                    }
+
                     sources {
                         java { srcDir("src/test/java") }
                         extensions.findByName("kotlin")?.let { (it as SourceDirectorySet).srcDir("src/test/kotlin") }
@@ -105,6 +110,13 @@ subprojects {
 
     base.archivesName = name
 
+    configure<KotlinJvmProjectExtension> {
+        // the suite is registered directly rather than as the default test compilation, which is otherwise associated
+        target.compilations.matching { it.name == "j21Tests" }.configureEach {
+            associateWith(target.compilations.getByName("main"))
+        }
+    }
+
     if (name !in listOf("internal", "dependencies", "compose-bundle")) {
         configure<KotlinJvmProjectExtension> {
             @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4
@@ -125,7 +137,8 @@ subprojects {
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName
         if (name.contains("Test")) {
-            compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=warn")
+            // JUnit 6's nullable assertion parameters get misread as non-null
+            compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=ignore")
         }
     }
 

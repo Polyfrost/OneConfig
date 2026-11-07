@@ -48,7 +48,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -185,7 +184,7 @@ public final class LogScanner {
             URI uri = url.toURI();
             if (uri.toString().startsWith("jar:")) {
                 String s = uri.toString();
-                uri = new URL(s.substring(4, s.lastIndexOf("!"))).toURI();
+                uri = new URI(s.substring(4, s.lastIndexOf("!")));
             }
 
             if (uri.toString().endsWith(".class") && Platform.compatibility().isDevelopment()) {
@@ -195,7 +194,7 @@ public final class LogScanner {
             }
 
             return getModsAt(Paths.get(uri), modMap);
-        } catch (URISyntaxException | MalformedURLException e) {
+        } catch (URISyntaxException e) {
             return Collections.emptySet(); // we cannot do it
         }
     }

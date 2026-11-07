@@ -64,7 +64,7 @@ object DandelionCompat {
             tree.addMetadata("icon_path", it)
         }
 
-        mod?.extractIconFile()?.let {
+        mod.extractIconFile()?.let {
             tree.addMetadata("icon_path", it)
         }
 
@@ -143,7 +143,7 @@ object DandelionCompat {
                 property.category = category
                 property.subcategory = subcategory
                 property.addMetadata("textKey", option.prompt())
-                property.metadata?.put(
+                property.addMetadata(
                     "runnable",
                     Runnable { Platform.screen().current<Screen>()?.let { option.action().accept(it) } })
                 root.put(property)
@@ -213,6 +213,8 @@ object DandelionCompat {
                     }
                     is EnumController<*> if defaultValue is Enum<*> -> {
                         property.visualizer = Visualizer.DropdownVisualizer::class.java
+                        // only ever handed the constants of the enum it was built for
+                        @Suppress("UNCHECKED_CAST")
                         property.addMetadata("optionLabels", defaultValue.declaringJavaClass.enumConstants.map { (controller.formatter() as Function<Any?, Component>).apply(it) })
                     }
                     is NumberController<*> -> {
@@ -243,7 +245,6 @@ object DandelionCompat {
         option.flags().forEach { it.accept(Minecraft.getInstance()) }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun itemProperty(option: Option<Item>, id: String, category: String, subcategory: String): Property<*> {
         val binding = option.binding()
         val property = Properties.functional(
@@ -252,7 +253,7 @@ object DandelionCompat {
             id = id,
             name = option.name(),
             description = option.description(),
-            type = java.util.List::class.java as Class<List<Any?>>,
+            type = List::class.java,
         )
         property.addMetadata("visualizer", Visualizer.ItemListVisualizer::class.java)
         property.addMetadata("maxEntries", 1)
@@ -333,7 +334,7 @@ object DandelionCompat {
             id = id,
             name = option.name(),
             description = option.description(),
-            type = java.util.List::class.java as Class<List<Any?>>,
+            type = List::class.java,
         )
 
         property.addMetadata("visualizer", visualizer)
@@ -354,10 +355,10 @@ object DandelionCompat {
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (type) {
-            Integer::class.java, Integer.TYPE -> number.toInt()
-            java.lang.Long::class.java, java.lang.Long.TYPE -> number.toLong()
-            java.lang.Float::class.java, java.lang.Float.TYPE -> number.toFloat()
-            java.lang.Double::class.java, java.lang.Double.TYPE -> number.toDouble()
+            Int::class.javaObjectType, Int::class.java -> number.toInt()
+            Long::class.javaObjectType, Long::class.java -> number.toLong()
+            Float::class.javaObjectType, Float::class.java -> number.toFloat()
+            Double::class.javaObjectType, Double::class.java -> number.toDouble()
             else -> number
         }
     }

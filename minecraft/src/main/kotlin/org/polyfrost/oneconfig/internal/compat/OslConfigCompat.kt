@@ -119,7 +119,7 @@ internal object OslConfigCompat {
         when (default) {
             is Boolean -> {
                 visualizer = Visualizer.SwitchVisualizer::class.java
-                property = wrap(opt, id, name, description, java.lang.Boolean::class.java, { it }, { it })
+                property = wrap(opt, id, name, description, Boolean::class.javaObjectType, { it }, { it })
             }
 
             is Number -> {
@@ -175,7 +175,7 @@ internal object OslConfigCompat {
                     Visualizer.TextListVisualizer::class.java
                 }
                 property = wrap(
-                    opt, id, name, description, java.util.List::class.java,
+                    opt, id, name, description, List::class.java,
                     { value -> readList(value, numeric) },
                     { value -> writeList(value, numeric, elementType) },
                 )
@@ -237,9 +237,9 @@ internal object OslConfigCompat {
 
     private fun addBounds(property: Property<*>, type: Class<*>) {
         val (min, max) = when (boxed(type)) {
-            java.lang.Byte::class.java -> Byte.MIN_VALUE.toFloat() to Byte.MAX_VALUE.toFloat()
-            java.lang.Short::class.java -> Short.MIN_VALUE.toFloat() to Short.MAX_VALUE.toFloat()
-            Integer::class.java -> Int.MIN_VALUE.toFloat() to Int.MAX_VALUE.toFloat()
+            Byte::class.javaObjectType -> Byte.MIN_VALUE.toFloat() to Byte.MAX_VALUE.toFloat()
+            Short::class.javaObjectType -> Short.MIN_VALUE.toFloat() to Short.MAX_VALUE.toFloat()
+            Int::class.javaObjectType -> Int.MIN_VALUE.toFloat() to Int.MAX_VALUE.toFloat()
             else -> -Float.MAX_VALUE to Float.MAX_VALUE
         }
         property.addMetadata("min", min)
@@ -249,25 +249,25 @@ internal object OslConfigCompat {
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (boxed(type)) {
-            java.lang.Byte::class.java -> number.toLong().coerceIn(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()).toByte()
-            java.lang.Short::class.java -> number.toLong().coerceIn(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()).toShort()
-            Integer::class.java -> number.toLong().coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
-            java.lang.Long::class.java -> number.toLong()
-            java.lang.Float::class.java -> number.toFloat()
-            java.lang.Double::class.java -> number.toDouble()
+            Byte::class.javaObjectType -> number.toLong().coerceIn(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()).toByte()
+            Short::class.javaObjectType -> number.toLong().coerceIn(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()).toShort()
+            Int::class.javaObjectType -> number.toLong().coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
+            Long::class.javaObjectType -> number.toLong()
+            Float::class.javaObjectType -> number.toFloat()
+            Double::class.javaObjectType -> number.toDouble()
             else -> number
         }
     }
 
     private fun boxed(type: Class<*>): Class<*> = when (type) {
-        java.lang.Byte.TYPE -> java.lang.Byte::class.java
-        java.lang.Short.TYPE -> java.lang.Short::class.java
-        Integer.TYPE -> Integer::class.java
-        java.lang.Long.TYPE -> java.lang.Long::class.java
-        java.lang.Float.TYPE -> java.lang.Float::class.java
-        java.lang.Double.TYPE -> java.lang.Double::class.java
-        java.lang.Boolean.TYPE -> java.lang.Boolean::class.java
-        Character.TYPE -> Character::class.java
+        Byte::class.java -> Byte::class.javaObjectType
+        Short::class.java -> Short::class.javaObjectType
+        Int::class.java -> Int::class.javaObjectType
+        Long::class.java -> Long::class.javaObjectType
+        Float::class.java -> Float::class.javaObjectType
+        Double::class.java -> Double::class.javaObjectType
+        Boolean::class.java -> Boolean::class.javaObjectType
+        Char::class.java -> Char::class.javaObjectType
         else -> type
     }
 

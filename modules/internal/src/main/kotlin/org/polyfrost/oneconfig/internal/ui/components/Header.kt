@@ -364,6 +364,8 @@ fun GlobalSearchBar() {
         ),
     )
 
+    // TextFieldState needs its own migration, as it changes how every field hoists its state
+    @Suppress("DEPRECATION")
     BasicTextField(
         value = searchText,
         onValueChange = { searchText = it },

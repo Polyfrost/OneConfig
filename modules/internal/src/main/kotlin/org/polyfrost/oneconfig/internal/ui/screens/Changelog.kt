@@ -291,6 +291,8 @@ fun Changelog(index: Int) {
                         .clip(theme.modCardShape),
                     contentAlignment = Alignment.Center
                 ) {
+                    // the Compose resources library needs generated accessors, whereas these paths are only known at runtime
+                    @Suppress("DEPRECATION")
                     Image(
                         painter = painterResource("/assets/oneconfig/images/$url.png"),
                         contentDescription = null,
@@ -299,6 +301,8 @@ fun Changelog(index: Int) {
                         colorFilter = ColorFilter.tint(Color.Black.copy(0.4f).compositeOver(Accent)
                             .copy(0.4f), BlendMode.Multiply)
                     )
+                    // the Compose resources library needs generated accessors, whereas these paths are only known at runtime
+                    @Suppress("DEPRECATION")
                     Image(
                         painter = painterResource("/assets/oneconfig/images/$url.png"),
                         contentDescription = null,
@@ -379,6 +383,8 @@ fun ChangelogEntry(data: ChangelogSection, index: Int) {
                     modifier = Modifier.width(376.dp).height(250.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    // the Compose resources library needs generated accessors, whereas these paths are only known at runtime
+                    @Suppress("DEPRECATION")
                     Image(
                         painter = painterResource("/assets/oneconfig/images/$url.png"),
                         contentDescription = null,
@@ -386,6 +392,8 @@ fun ChangelogEntry(data: ChangelogSection, index: Int) {
                         contentScale = ContentScale.Crop,
                         colorFilter = ColorFilter.tint(Accent.copy(0.4f), BlendMode.Multiply)
                     )
+                    // the Compose resources library needs generated accessors, whereas these paths are only known at runtime
+                    @Suppress("DEPRECATION")
                     Image(
                         painter = painterResource("/assets/oneconfig/images/$url.png"),
                         contentDescription = null,

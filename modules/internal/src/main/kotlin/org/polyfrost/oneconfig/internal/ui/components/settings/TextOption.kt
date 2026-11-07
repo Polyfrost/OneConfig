@@ -54,6 +54,8 @@ fun TextOption(data: TextOptionData) {
     val valid = regex == null || text.isEmpty() || regex.matches(text)
     val borderColor = animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
 
+    // TextFieldState needs its own migration, as it changes how every field hoists its state
+    @Suppress("DEPRECATION")
     BasicTextField(
         value = text,
         onValueChange = { text = it; if (regex == null || it.isEmpty() || regex.matches(it)) data.strProp.set(it) },

@@ -6,7 +6,7 @@ internal object CompatHudToggle {
     private val NAMES = setOf("enabled", "enable", "show", "visible")
 
     fun find(properties: List<Property<*>>): Property<Boolean>? {
-        val boolean = properties.filter { it.type == Boolean::class.javaPrimitiveType || it.type == java.lang.Boolean::class.java }
+        val boolean = properties.filter { it.type == Boolean::class.javaPrimitiveType || it.type == Boolean::class.javaObjectType }
         for (name in NAMES) {
             val match = boolean.firstOrNull { key(it) == name } ?: continue
             @Suppress("UNCHECKED_CAST")

@@ -300,7 +300,7 @@ data object MoulConfigCompat {
                         isAny(type, Short::class) -> children.set(numberValue.toShort())
                         isAny(type, Long::class) -> children.set(numberValue.toLong())
                         isAny(type, Double::class) -> children.set(numberValue.toDouble())
-                        else -> null
+                        else -> {}
                     }
                 }
 

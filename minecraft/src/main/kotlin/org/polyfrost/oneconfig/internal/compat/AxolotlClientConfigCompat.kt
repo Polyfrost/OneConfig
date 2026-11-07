@@ -164,9 +164,9 @@ internal object AxolotlClientConfigCompat {
 
         val property = when (invoke(option, "getWidgetIdentifier") as? String) {
             "boolean" -> booleanProperty(option, id, name, description)
-            "integer" -> numberProperty(option, id, name, description, Integer::class.java)
-            "float" -> numberProperty(option, id, name, description, java.lang.Float::class.java)
-            "double" -> numberProperty(option, id, name, description, java.lang.Double::class.java)
+            "integer" -> numberProperty(option, id, name, description, Int::class.javaObjectType)
+            "float" -> numberProperty(option, id, name, description, Float::class.javaObjectType)
+            "double" -> numberProperty(option, id, name, description, Double::class.javaObjectType)
             "string" -> stringProperty(option, id, name, description)
             "string[]" -> choiceProperty(option, id, name, description, stringArrayValues(option))
             "enum" -> choiceProperty(option, id, name, description, enumValues(option))
@@ -175,7 +175,7 @@ internal object AxolotlClientConfigCompat {
         } ?: return null
 
         property.addMetadata("titleKey", entry.name)
-        if (description != null) tooltipKey?.let { property.addMetadata("descriptionKey", it) }
+        if (description != null) property.addMetadata("descriptionKey", tooltipKey)
         property.category = entry.category
         entry.categoryKey?.let { property.addMetadata("categoryKey", it) }
         property.subcategory = entry.subcategory
@@ -220,7 +220,7 @@ internal object AxolotlClientConfigCompat {
             property.visualizer = Visualizer.SliderVisualizer::class.java
             property.addMetadata("min", min)
             property.addMetadata("max", max)
-            if (type == Integer::class.java) property.addMetadata("step", 1f)
+            if (type == Int::class.javaObjectType) property.addMetadata("step", 1f)
         } else {
             property.visualizer = Visualizer.NumberVisualizer::class.java
         }
@@ -329,9 +329,9 @@ internal object AxolotlClientConfigCompat {
     private fun coerceNumber(value: Number?, type: Class<*>): Any {
         val number = value ?: 0
         return when (type) {
-            Integer::class.java -> number.toInt()
-            java.lang.Float::class.java -> number.toFloat()
-            java.lang.Double::class.java -> number.toDouble()
+            Int::class.javaObjectType -> number.toInt()
+            Float::class.javaObjectType -> number.toFloat()
+            Double::class.javaObjectType -> number.toDouble()
             else -> number
         }
     }

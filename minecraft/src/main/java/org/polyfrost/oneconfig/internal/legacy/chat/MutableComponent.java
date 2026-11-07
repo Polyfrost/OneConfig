@@ -10,6 +10,8 @@ import net.minecraft.text.Text;
 import net.ornithemc.osl.text.impl.Locale;
 import org.jspecify.annotations.Nullable;
 
+// getSiblings is a List<Text> on Text, whereas every sibling here is known to be a Component
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class MutableComponent implements Component {
     private final ComponentContents contents;
     private final List<Component> siblings;
@@ -121,7 +123,7 @@ public final class MutableComponent implements Component {
         return Iterators.concat(
                 Iterators.singletonIterator((Text) this),
                 Iterators.concat(Iterators.transform(
-                        (Iterator<Text>) (Iterator<?>) this.siblings.iterator(),
+                        this.siblings.iterator(),
                         Text::iterator
                 ))
         );

@@ -7,6 +7,7 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.BasicAuthentication
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
 import java.lang.Boolean.TRUE
@@ -446,6 +447,11 @@ configure<JavaPluginExtension> {
 
 configure<KotlinJvmExtension> {
     jvmToolchain(javaVersion)
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    // FixedScrollConfig relies on Compose internals, for which there is no public alternative
+    compilerOptions.freeCompilerArgs.add("-Xdont-warn-on-error-suppression")
 }
 
 tasks.withType<Jar>().configureEach {

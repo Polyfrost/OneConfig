@@ -88,6 +88,7 @@ public class ComponentHelper {
                     .append("\n");
         }
 
+        @SuppressWarnings("unchecked") // see the note on Component
         List<Component> siblings = component.getSiblings();
         if (!siblings.isEmpty()) {
             sb.append(indentation)

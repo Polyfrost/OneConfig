@@ -32,6 +32,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
 
 class FileBackendTest {
+    @SuppressWarnings("unchecked") // every serializer in ALL is a FileSerializer<String>
     static final FileBackend backend = new FileBackend(Paths.get("./test/"), (FileSerializer<String>[]) NightConfigSerializer.ALL);
     // TODO rewrite
 }
