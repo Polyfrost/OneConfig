@@ -206,11 +206,6 @@ private fun DrawScope.drawCheckerboard() {
 
 @Composable
 fun ColorOption(data: ColorOptionData) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    var expanded by remember { mutableStateOf(false) }
-
     val initialValue = remember(data.prop) { data.prop.shown() }
     val initialColor = remember(data.prop, initialValue) {
         when (val v = initialValue) {
@@ -240,14 +235,6 @@ fun ColorOption(data: ColorOptionData) {
             if (color != null) gradientColor = Color(color.gradientArgb)
         }
     }
-    val textColor = animateColorAsState(
-        if (currentColor.luminance() > 0.6f) Color.Black else Color.White
-    )
-
-    val borderColor = animateColorAsState(
-        if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
-    )
-
     fun persistColor(color: Color) {
         currentColor = color
         @Suppress("UNCHECKED_CAST")
@@ -277,11 +264,44 @@ fun ColorOption(data: ColorOptionData) {
         if (data.prop.type == PolyColor::class.java) updateAccent()
     }
 
-    val showGradient = data.gradient && pickerModel.gradientEnabled && !pickerModel.chromaEnabled
-    val swatch = if (showGradient) Brush.horizontalGradient(listOf(currentColor, pickerModel.gradientColor)) else SolidColor(currentColor)
+    ColorPicker(
+        pickerModel,
+        currentColor,
+        onColorChanged = ::persistColor,
+        swatch = data.swatch,
+        chromaCapable = data.prop.type == PolyColor::class.java,
+        gradientCapable = data.gradient && data.prop.type == PolyColor::class.java,
+    )
+}
+
+/** [swatch] draws a small square instead of the `#hex` pill */
+@Composable
+internal fun ColorPicker(
+    model: ColorPickerModel,
+    color: Color,
+    onColorChanged: (Color) -> Unit,
+    swatch: Boolean = false,
+    chromaCapable: Boolean = true,
+    gradientCapable: Boolean = false,
+) {
+    val theme = LocalTheme.current
+    val interactionSource = rememberInteractionSource()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    var expanded by remember { mutableStateOf(false) }
+
+    val textColor = animateColorAsState(
+        if (color.luminance() > 0.6f) Color.Black else Color.White
+    )
+
+    val borderColor = animateColorAsState(
+        if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
+    )
+
+    val showGradient = gradientCapable && model.gradientEnabled && !model.chromaEnabled
+    val fill = if (showGradient) Brush.horizontalGradient(listOf(color, model.gradientColor)) else SolidColor(color)
 
     Box {
-        if (data.swatch) {
+        if (swatch) {
             Box(
                 modifier = Modifier
                     .size(SWATCH_SIZE)
@@ -290,7 +310,7 @@ fun ColorOption(data: ColorOptionData) {
                     .graphicsLayer {}
                     .clip(theme.checkBoxShape)
                     .drawBehind { drawCheckerboard() }
-                    .background(swatch, theme.checkBoxShape)
+                    .background(fill, theme.checkBoxShape)
                     .animatedFrame(theme.checkBoxShape, border = { borderColor.value }),
             )
         } else {
@@ -300,7 +320,7 @@ fun ColorOption(data: ColorOptionData) {
                     .onClick(interactionSource) { expanded = !expanded }
                     .pointerHoverIcon(PointerIcon.Hand)
                     .graphicsLayer {}
-                    .background(swatch, LocalTheme.current.sideBarNavigationEntryShape)
+                    .background(fill, LocalTheme.current.sideBarNavigationEntryShape)
                     .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, border = { borderColor.value })
                     .padding(horizontal = 12.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -308,7 +328,7 @@ fun ColorOption(data: ColorOptionData) {
             ) {
                 Icon("paintbrush", tint = { textColor.value }, modifier = Modifier.size(14.dp))
                 Text(
-                    if (showGradient) "#${colorToHex(currentColor)} → #${colorToHex(pickerModel.gradientColor)}" else "#${colorToHex(currentColor)}",
+                    if (showGradient) "#${colorToHex(color)} → #${colorToHex(model.gradientColor)}" else "#${colorToHex(color)}",
                     color = Color.Unspecified,
                     fontSize = 13.sp,
                     colorProducer = { textColor.value },
@@ -319,16 +339,16 @@ fun ColorOption(data: ColorOptionData) {
         if (expanded) {
             ShellPopup(
                 alignment = Alignment.TopEnd,
-                offset = IntOffset(0, with(LocalDensity.current) { (if (data.swatch) SWATCH_POPUP_OFFSET else 44.dp).roundToPx() }),
+                offset = IntOffset(0, with(LocalDensity.current) { (if (swatch) SWATCH_POPUP_OFFSET else 44.dp).roundToPx() }),
                 onDismissRequest = { expanded = false },
                 properties = PopupProperties(focusable = true),
             ) {
                 ColorPickerPopup(
-                    model = pickerModel,
-                    onColorChanged = ::persistColor,
+                    model = model,
+                    onColorChanged = onColorChanged,
                     onClose = { expanded = false },
-                    chromaCapable = data.prop.type == PolyColor::class.java,
-                    gradientCapable = data.gradient && data.prop.type == PolyColor::class.java,
+                    chromaCapable = chromaCapable,
+                    gradientCapable = gradientCapable,
                 )
             }
         }
