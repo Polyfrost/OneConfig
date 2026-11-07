@@ -12,10 +12,18 @@ dependencies {
 }
 
 tasks.withType<JavaCompile>().configureEach {
+    // serial: nothing relies on Java serialization, despite the Serializable on some public types
+    // classfile: malformed signatures in third-party jars, most notably the 1.8.9 game jar
+    // processing: Mixin's processors never claim the annotations that they don't care about
+    options.compilerArgs.addAll(listOf("-Xlint:all,-serial,-classfile,-processing", "-Werror"))
     options.errorprone {
         disableAllChecks = true
         error("UnnecessarilyFullyQualified")
     }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions.allWarningsAsErrors = true
 }
 
 // the enabled Detekt rules need type resolution, which only the per-compilation tasks have

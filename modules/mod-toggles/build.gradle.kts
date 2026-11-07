@@ -28,4 +28,6 @@ version = "1.0.0"
 
 tasks.compileJava {
     options.release = 8
+    // Java 8 is deprecated as a target, which is the whole point of this module
+    options.compilerArgs.add("-Xlint:-options")
 }
