@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -18,12 +20,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.isShiftPressed
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -36,6 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
@@ -73,6 +87,111 @@ fun spinnerStep(step: Float, min: Float, max: Float): Float = when {
     step > 0f -> step
     min == min.roundToInt().toFloat() && max == max.roundToInt().toFloat() -> 1f
     else -> 0.1f
+}
+
+private const val SCRUB_PX_PER_STEP = 3f
+
+private fun filterExpressionInput(input: String): String =
+    input.filter { it.isDigit() || it in ".+-*/() " }
+
+private class NumberExpression(private val src: String) {
+    private var pos = 0
+
+    fun evaluate(): Double? {
+        val v = expression() ?: return null
+        return if (peek() == null) v else null
+    }
+
+    private fun peek(): Char? {
+        while (pos < src.length && src[pos] == ' ') pos++
+        return src.getOrNull(pos)
+    }
+
+    private fun expression(): Double? {
+        var v = term() ?: return null
+        while (true) {
+            when (peek()) {
+                '+' -> { pos++; v += term() ?: return null }
+                '-' -> { pos++; v -= term() ?: return null }
+                else -> return v
+            }
+        }
+    }
+
+    private fun term(): Double? {
+        var v = factor() ?: return null
+        while (true) {
+            when (peek()) {
+                '*' -> { pos++; v *= factor() ?: return null }
+                '/' -> { pos++; v /= factor() ?: return null }
+                else -> return v
+            }
+        }
+    }
+
+    private fun factor(): Double? {
+        when (peek()) {
+            '-' -> { pos++; return factor()?.let { -it } }
+            '+' -> { pos++; return factor() }
+            '(' -> {
+                pos++
+                val v = expression() ?: return null
+                if (peek() != ')') return null
+                pos++
+                return v
+            }
+        }
+        val start = pos
+        while (pos < src.length && (src[pos].isDigit() || src[pos] == '.')) pos++
+        return src.substring(start, pos).toDoubleOrNull()
+    }
+}
+
+private fun evaluateNumberExpression(input: String): Float? =
+    NumberExpression(input).evaluate()?.takeIf { it.isFinite() }?.toFloat()
+
+private fun Modifier.scrubDrag(
+    current: () -> Float,
+    step: Float,
+    min: Float,
+    max: Float,
+    onScrub: (Float) -> Unit,
+    onEnd: () -> Unit,
+): Modifier = pointerHoverIcon(PointerIcon.Hand).pointerInput(step, min, max) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var dragging = false
+        var travelled = 0f
+        var residual = 0f
+        var value = current()
+        while (true) {
+            val event = awaitPointerEvent()
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (!change.pressed) {
+                if (dragging) {
+                    change.consume()
+                    onEnd()
+                }
+                break
+            }
+            val dx = change.position.x - change.previousPosition.x
+            if (dragging) {
+                residual += dx
+            } else {
+                travelled += dx
+                if (abs(travelled) <= viewConfiguration.touchSlop) continue
+                dragging = true
+                residual = travelled
+            }
+            change.consume()
+            val units = (residual / SCRUB_PX_PER_STEP).toInt()
+            if (units == 0) continue
+            residual -= units * SCRUB_PX_PER_STEP
+            val multiplier = if (event.keyboardModifiers.isShiftPressed) 10f else 1f
+            value = (value + units * step * multiplier).coerceIn(min, max)
+            onScrub(value)
+        }
+    }
 }
 
 fun formatSpinnerValue(v: Float): String =
@@ -145,11 +264,21 @@ fun NumberSpinner(
     unit: String? = null,
     label: String? = null,
     icon: String? = null,
+    scrub: Boolean = false,
+    math: Boolean = false,
+    enabled: Boolean = true,
 ) {
     val theme = LocalTheme.current
+    val focusManager = LocalFocusManager.current
     var focused by remember { mutableStateOf(false) }
     val formatted = if (format != null && !focused) format(value) else null
-    var text by remember(value) { mutableStateOf(formatSpinnerValue(value)) }
+    val textState = remember(if (math && focused) null else value) { mutableStateOf(formatSpinnerValue(value)) }
+    var text by textState
+    val latestTextState by rememberUpdatedState(textState)
+    var edited by remember { mutableStateOf(false) }
+    val latestValue by rememberUpdatedState(value)
+    val latestOnValueChange by rememberUpdatedState(onValueChange)
+    val latestOnEditEnd by rememberUpdatedState(onEditEnd)
 
     val arrowLo = maxOf(min, arrowMin)
     val arrowHi = maxOf(arrowLo, minOf(max, arrowMax))
@@ -160,8 +289,39 @@ fun NumberSpinner(
         onValueChange(clamped)
     }
 
+    fun commitTyped() {
+        if (!edited) return
+        edited = false
+        val result = evaluateNumberExpression(text)
+        if (result == null) {
+            text = formatSpinnerValue(value)
+            return
+        }
+        val clamped = result.coerceIn(min, max)
+        text = formatSpinnerValue(clamped)
+        onValueChange(clamped)
+    }
+
+    val scrubModifier = if (scrub && enabled) {
+        Modifier.scrubDrag(
+            current = { latestValue },
+            step = step,
+            min = arrowLo,
+            max = arrowHi,
+            onScrub = { v ->
+                latestTextState.value = formatSpinnerValue(v)
+                edited = false
+                latestOnValueChange(v)
+            },
+            onEnd = { latestOnEditEnd?.invoke() },
+        )
+    } else {
+        Modifier
+    }
+
     Row(
         modifier = Modifier
+            .alpha(if (enabled) 1f else 0.5f)
             .width(width)
             .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
             .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape),
@@ -172,10 +332,12 @@ fun NumberSpinner(
         BasicTextField(
             value = text,
             onValueChange = { input ->
-                val filtered = filterNumberInput(input)
+                val filtered = if (math) filterExpressionInput(input) else filterNumberInput(input)
+                if (filtered != text) edited = true
                 text = filtered
-                filtered.toFloatOrNull()?.coerceIn(min, max)?.let(onValueChange)
+                if (!math) filtered.toFloatOrNull()?.coerceIn(min, max)?.let(onValueChange)
             },
+            readOnly = !enabled,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             textStyle = TextStyle(
@@ -191,8 +353,8 @@ fun NumberSpinner(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (label != null) Text(label, color = theme.textColor, fontSize = 13.sp)
-                    if (icon != null) Icon(icon, color = theme.textColor, modifier = Modifier.size(12.dp))
+                    if (label != null) Text(label, modifier = scrubModifier, color = theme.textColor, fontSize = 13.sp)
+                    if (icon != null) Icon(icon, color = theme.textColor, modifier = scrubModifier.size(12.dp))
                     Box {
                         Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
                         if (formatted != null) {
@@ -205,15 +367,26 @@ fun NumberSpinner(
                 }
             },
             modifier = Modifier.trackTextInputFocus()
+                .onPreviewKeyEvent {
+                    if (!math || it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    if (it.key != Key.Enter && it.key != Key.NumPadEnter) return@onPreviewKeyEvent false
+                    commitTyped()
+                    focusManager.clearFocus()
+                    true
+                }
                 .onFocusChanged {
-                    if (focused && !it.isFocused) onEditEnd?.invoke()
+                    if (focused && !it.isFocused) {
+                        if (math) commitTyped()
+                        onEditEnd?.invoke()
+                    }
+                    if (!focused && it.isFocused) edited = false
                     focused = it.isFocused
                 }
                 .weight(1f)
                 .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
         )
 
-        SpinnerArrows(value, arrowLo, arrowHi, step) { commit(it) }
+        SpinnerArrows(value, arrowLo, arrowHi, step) { if (enabled) commit(it) }
     }
 }
 
