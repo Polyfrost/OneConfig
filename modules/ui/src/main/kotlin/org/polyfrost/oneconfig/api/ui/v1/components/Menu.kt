@@ -9,6 +9,8 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -169,7 +171,7 @@ fun MenuSurface(modifier: Modifier, content: @Composable ColumnScope.() -> Unit)
         modifier = componentsBridge().popupSurface(
             modifier.widthIn(min = MENU_MIN_WIDTH, max = MENU_MAX_WIDTH).width(IntrinsicSize.Max),
             OneConfigTheme.current.popupShape,
-        ).padding(MENU_INSET),
+        ).verticalScroll(rememberScrollState()).padding(MENU_INSET),
         verticalArrangement = Arrangement.spacedBy(2.dp),
         content = content,
     )

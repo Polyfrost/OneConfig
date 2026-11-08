@@ -52,17 +52,25 @@ private val TOOLTIP_SHAPE = RoundedCornerShape(8.dp)
 
 private class TooltipPosition(private val placement: TooltipPlacement, private val gap: Int, private val edge: Int) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
+        val rtl = layoutDirection == LayoutDirection.Rtl
+        val startX = if (rtl) anchorBounds.right - popupContentSize.width else anchorBounds.left
+        val endX = if (rtl) anchorBounds.left else anchorBounds.right - popupContentSize.width
         val x = when (placement) {
             TooltipPlacement.AboveCenter, TooltipPlacement.BelowCenter -> anchorBounds.center.x - popupContentSize.width / 2
-            TooltipPlacement.AboveStart, TooltipPlacement.BelowStart -> anchorBounds.left
-            TooltipPlacement.AboveEnd, TooltipPlacement.BelowEnd -> anchorBounds.right - popupContentSize.width
+            TooltipPlacement.AboveStart, TooltipPlacement.BelowStart -> startX
+            TooltipPlacement.AboveEnd, TooltipPlacement.BelowEnd -> endX
         }
         val above = anchorBounds.top - gap - popupContentSize.height
         val below = anchorBounds.bottom + gap
+        val fitsAbove = above >= 0
         val fitsBelow = below + popupContentSize.height <= windowSize.height
-        val y = when (placement) {
-            TooltipPlacement.AboveCenter, TooltipPlacement.AboveStart, TooltipPlacement.AboveEnd -> if (above >= 0 || !fitsBelow) above.coerceAtLeast(0) else below
-            TooltipPlacement.BelowCenter, TooltipPlacement.BelowStart, TooltipPlacement.BelowEnd -> if (fitsBelow || above < 0) below else above
+        val preferAbove = placement == TooltipPlacement.AboveCenter || placement == TooltipPlacement.AboveStart || placement == TooltipPlacement.AboveEnd
+        val y = when {
+            preferAbove && fitsAbove -> above
+            !preferAbove && fitsBelow -> below
+            fitsAbove -> above
+            fitsBelow -> below
+            else -> (if (preferAbove) above else below).coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0))
         }
         val maxX = (windowSize.width - popupContentSize.width - edge).coerceAtLeast(edge)
         return IntOffset(x.coerceIn(edge, maxX), y)

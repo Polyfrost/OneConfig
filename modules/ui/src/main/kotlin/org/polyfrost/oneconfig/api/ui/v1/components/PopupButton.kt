@@ -22,16 +22,19 @@ import androidx.compose.ui.window.PopupPositionProvider
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 private val POPUP_GAP = 6.dp
-private val POPUP_BUTTON_SIZE = 32.dp
 
 private class AnchoredPosition(private val alignment: Alignment.Horizontal, private val gap: Int) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
+        val left = anchorBounds.left
+        val right = anchorBounds.right - popupContentSize.width
+        val rtl = layoutDirection == LayoutDirection.Rtl
         val x = when (alignment) {
-            Alignment.Start -> anchorBounds.left
+            Alignment.Start -> if (rtl) right else left
             Alignment.CenterHorizontally -> anchorBounds.center.x - popupContentSize.width / 2
-            else -> anchorBounds.right - popupContentSize.width
+            else -> if (rtl) left else right
         }
         val below = anchorBounds.bottom + gap
         val above = anchorBounds.top - gap - popupContentSize.height
@@ -63,8 +66,15 @@ fun AnchoredPopupButton(
     val gapPx = with(LocalDensity.current) { gap.roundToPx() }
     val provider = remember(alignment, gapPx) { AnchoredPosition(alignment, gapPx) }
     Box(modifier) {
-        TooltipBox(if (open) null else tooltip, Modifier, TooltipPlacement.BelowCenter, 240.dp) {
-            IconButton(icon, Modifier.size(POPUP_BUTTON_SIZE)) { open = !open }
+        IconButton(
+            if (open) null else tooltip,
+            tooltip,
+            Modifier,
+            null,
+            TooltipPlacement.BelowCenter,
+            { open = !open },
+        ) {
+            Icon(icon, OneConfigTheme.current.textColor, Modifier.size(16.dp))
         }
         if (open) {
             EscapeCloses { open = false }
