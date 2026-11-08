@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.Proxy
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.util.Base64
@@ -21,8 +22,8 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.asComposeImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
-//? if > 1.8.9 {
 import net.minecraft.client.Minecraft
+//? if > 1.8.9 {
 import net.minecraft.client.resources.DefaultPlayerSkin
 //?} else {
 /*import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
@@ -40,7 +41,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         override fun removeEldestEntry(eldest: Map.Entry<UUID, Entry>) = size > MAX_ENTRIES
     }
 
-    private val defaults = HashMap<UUID, ImageBitmap?>()
+    private val defaults = HashMap<String, ImageBitmap?>()
 
     private val fetching = HashMap<UUID, Int>()
 
@@ -58,49 +59,54 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
             }
             entry
         }
-        if (fetch) loaders.execute { fetch(id) }
+        if (fetch) loaders.execute { fetch(id, entry) }
         return entry.shown
     }
 
-    override fun defaultFace(id: UUID): ImageBitmap? = synchronized(defaults) {
-        defaults.getOrPut(id) { runCatching { loadDefaultFace(id) }.getOrNull() }
+    override fun defaultFace(id: UUID): ImageBitmap? {
+        val texture = defaultTexture(id) ?: return null
+        return synchronized(defaults) {
+            defaults.getOrPut(texture.key) { runCatching { texture.load() }.getOrNull() }
+        }
     }
 
-    private fun fetch(id: UUID) {
+    private fun fetch(id: UUID, entry: Entry) {
         val outcome = runCatching { loadFace(id) }
         outcome.exceptionOrNull()?.let { LOGGER.debug("Failed to load the head for {}; will retry", id, it) }
         val face = outcome.getOrNull()
         val missing = outcome.isSuccess && face == null
         val fallback = if (face == null) defaultFace(id) else null
 
+        var next = entry
         val retryIn = synchronized(entries) {
-            val entry = entries[id] ?: run {
-                fetching.remove(id)
-                return@synchronized null
-            }
+            val current = entries[id]
+            val targets = if (current == null || current === entry) listOf(entry) else listOf(entry, current)
+            if (current != null) next = current
             if (face != null || missing) {
-                entry.shown = face ?: fallback
-                entry.settled = true
+                targets.forEach {
+                    it.shown = face ?: fallback
+                    it.settled = true
+                }
                 fetching.remove(id)
                 return@synchronized null
             }
-            if (entry.shown == null) entry.shown = fallback
+            targets.forEach { if (it.shown == null) it.shown = fallback }
             val attempts = (fetching[id] ?: 0) + 1
             fetching[id] = attempts
             if (attempts < MAX_ATTEMPTS) {
                 (RETRY_BASE_MS shl (attempts - 1).coerceIn(0, MAX_DOUBLINGS)).coerceAtMost(RETRY_MAX_MS) + (0..RETRY_JITTER_MS).random()
             } else {
-                entry.settled = true
+                targets.forEach { it.settled = true }
                 fetching.remove(id)
                 null
             }
         }
-        if (retryIn != null) loaders.schedule({ fetch(id) }, retryIn, TimeUnit.MILLISECONDS)
+        if (retryIn != null) loaders.schedule({ fetch(id, next) }, retryIn, TimeUnit.MILLISECONDS)
     }
 
     private fun loadFace(id: UUID): ImageBitmap? {
         val url = skinUrl(id) ?: return null
-        val connection = URI(url).toURL().openConnection() as HttpURLConnection
+        val connection = URI(url).toURL().openConnection(proxy()) as HttpURLConnection
         val skin = try {
             connection.connectTimeout = TIMEOUT_MS
             connection.readTimeout = TIMEOUT_MS
@@ -119,7 +125,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
     }
 
     private fun httpGet(url: String): String? {
-        val connection = URI(url).toURL().openConnection() as HttpURLConnection
+        val connection = URI(url).toURL().openConnection(proxy()) as HttpURLConnection
         return try {
             connection.connectTimeout = TIMEOUT_MS
             connection.readTimeout = TIMEOUT_MS
@@ -133,7 +139,9 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         }
     }
 
-    private fun loadDefaultFace(id: UUID): ImageBitmap? {
+    private class DefaultTexture(val key: String, val load: () -> ImageBitmap?)
+
+    private fun defaultTexture(id: UUID): DefaultTexture? {
         //? if > 1.8.9 {
         val skin = DefaultPlayerSkin.get(id)
         //? if >= 1.21.10 {
@@ -141,15 +149,27 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         //?} else {
         /*val location = skin.texture()
         *///?}
-        val image = Minecraft.getInstance().resourceManager.getResource(location).orElse(null)
-            ?.open()?.use { ImageIO.read(it) } ?: return null
+        return DefaultTexture(location.toString()) {
+            Minecraft.getInstance().resourceManager.getResource(location).orElse(null)
+                ?.open()?.use { ImageIO.read(it) }?.let(::buildFace)
+        }
         //?} else {
         /*val path = if ((id.hashCode() and 1) == 1) "textures/entity/alex.png" else "textures/entity/steve.png"
-        val image = ResourceManager.client().getResource(NamespacedIdentifiers.from("minecraft", path)).orElse(null)
-            ?.open()?.use { ImageIO.read(it) } ?: return null
+        return DefaultTexture(path) {
+            ResourceManager.client().getResource(NamespacedIdentifiers.from("minecraft", path)).orElse(null)
+                ?.open()?.use { ImageIO.read(it) }?.let(::buildFace)
+        }
         *///?}
-        return buildFace(image)
     }
+
+    private fun proxy(): Proxy = runCatching {
+        //? if > 1.8.9 {
+        Minecraft.getInstance().proxy
+        //?} else {
+        /*val minecraft = Minecraft.getInstance()
+        minecraft.javaClass.methods.first { it.parameterCount == 0 && it.returnType == Proxy::class.java }.invoke(minecraft) as Proxy
+        *///?}
+    }.getOrNull() ?: Proxy.NO_PROXY
 
     private fun buildFace(skin: BufferedImage): ImageBitmap {
         val legacy = skin.height <= 32
@@ -161,7 +181,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
                 val ox = x * 8 / FACE_SIZE
                 val base = skin.getRGB(8 + ox, 8 + oy)
                 val hat = if (showHat) runCatching { skin.getRGB(40 + ox, 8 + oy) }.getOrDefault(0) else 0
-                val argb = if ((hat ushr 24) != 0) hat else base
+                val argb = blend(base, hat)
                 val i = (y * FACE_SIZE + x) * 4
                 out[i] = (argb ushr 16).toByte()
                 out[i + 1] = (argb ushr 8).toByte()
@@ -170,6 +190,18 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
             }
         }
         return PolyBitmap(FACE_SIZE, FACE_SIZE, out).asComposeImageBitmap()
+    }
+
+    private fun blend(base: Int, top: Int): Int {
+        val alpha = top ushr 24
+        if (alpha == 0) return base
+        if (alpha == 255) return top
+        fun channel(shift: Int): Int {
+            val b = (base ushr shift) and 0xFF
+            val t = (top ushr shift) and 0xFF
+            return (t * alpha + b * (255 - alpha)) / 255
+        }
+        return (0xFF shl 24) or (channel(16) shl 16) or (channel(8) shl 8) or channel(0)
     }
 
     private fun isOpaque(skin: BufferedImage, x0: Int, y0: Int, x1: Int, y1: Int): Boolean {
