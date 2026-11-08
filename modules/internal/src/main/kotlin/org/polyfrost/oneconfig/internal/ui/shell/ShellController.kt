@@ -18,6 +18,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
@@ -331,7 +332,7 @@ class ShellNavigation internal constructor(
     private fun readyHost(): NavHostController? = if (isReady) host else null
 
     /** [clearSearch] is off when the navigation only restores a page the user was already on */
-    fun navigate(route: Any, clearSearch: Boolean = true, animate: Boolean = OneConfigConfig.showPageAnimations) {
+    fun navigate(route: Any, clearSearch: Boolean = true, animate: Boolean = ThemeConfig.showPageAnimations) {
         if (route == currentEntry.route) return
         val host = readyHost() ?: return
         val query = if (clearSearch) "" else search.query
@@ -399,10 +400,10 @@ class ShellNavigation internal constructor(
         // popUpTo here: popping the outgoing entry drops its content mid-transition, so the page snaps
         // instead of animating. The host is rebuilt every time the menu opens, which bounds the growth
         // to one session; this wrapper's stacks are the real history.
-        transitions.prepare(OneConfigConfig.showPageAnimations, back = true)
+        transitions.prepare(ThemeConfig.showPageAnimations, back = true)
         runCatching { host.navigate(previous.route) }.onFailure {
             LOGGER.error("Failed to navigate back to {}", previous.route, it)
-            transitions.prepare(OneConfigConfig.showPageAnimations, back = false)
+            transitions.prepare(ThemeConfig.showPageAnimations, back = false)
             return
         }
         forwardStack.addLast(currentEntry.withCurrentSearch())
@@ -428,7 +429,7 @@ class ShellNavigation internal constructor(
             return
         }
         lastRoute = next.route
-        transitions.prepare(OneConfigConfig.showPageAnimations, back = false)
+        transitions.prepare(ThemeConfig.showPageAnimations, back = false)
         updateArrows()
         host.navigate(next.route)
         search.bind(host.currentBackStackEntry?.id, next.searchQuery)

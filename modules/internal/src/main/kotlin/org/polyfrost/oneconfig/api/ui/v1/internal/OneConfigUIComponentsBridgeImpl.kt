@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
-import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
@@ -136,7 +136,7 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
         onClick: () -> Unit,
     ): Modifier = modifier.onClick(interactionSource, enabled, onClick)
 
-    override fun reducedMotion(): Boolean = OneConfigConfig.reducedMotion
+    override fun reducedMotion(): Boolean = ThemeConfig.reducedMotion
 
     @Composable
     override fun popupSurface(modifier: Modifier, shape: Shape): Modifier {

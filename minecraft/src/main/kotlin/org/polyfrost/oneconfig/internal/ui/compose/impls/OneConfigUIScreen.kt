@@ -44,6 +44,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.internal.ClassPreloader
 import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -96,7 +97,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null }
 
     override fun blurAlpha(): Float {
-        if (!OneConfigConfig.enableBackgroundBlur) return 0f
+        if (!ThemeConfig.enableBackgroundBlur) return 0f
         val now = System.currentTimeMillis()
         val progress = if (closeRequested) {
             if (closeAnimationMs <= 0L) 0f
