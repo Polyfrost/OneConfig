@@ -258,7 +258,8 @@ public class ThemeConfig extends Config {
             try {
                 old = ConfigManager.active().getNoRegister(legacy);
             } catch (Exception e) {
-                LOGGER.error("Failed to read {} to move appearance settings into {}", PREFERENCES_ID, id, e);
+                LOGGER.error("Failed to read {} to move appearance settings into {}, retrying on the next load", PREFERENCES_ID, id, e);
+                return;
             }
             if (old != null) {
                 for (String key : MOVED_FROM_PREFERENCES) {
