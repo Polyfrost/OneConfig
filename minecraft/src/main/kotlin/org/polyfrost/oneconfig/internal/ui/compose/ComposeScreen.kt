@@ -43,6 +43,10 @@ import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.compose.backend.PolyCanvas
@@ -353,6 +357,7 @@ abstract class ComposeScreen(
         return true
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun setContentOn(scene: ComposeScene) {
         scene.setContent {
             @Suppress("DEPRECATION")
@@ -363,7 +368,7 @@ abstract class ComposeScreen(
                 FixedScrollConfig.provided(),
                 LocalWheelRouter provides wheelRouter,
             ) {
-                compose()
+                EscapeAwareTextMenus { compose() }
             }
         }
     }
@@ -628,6 +633,7 @@ abstract class ComposeScreen(
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///?} else
     //override fun mouseClicked(x: Int, y: Int, button: Int) {
+        reportPointerInput()
         //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
         if (KeybindRecordingBus.consumeMouse(button, true) || handleMouseClicked(button)) {
             consumedButtons += button
@@ -790,6 +796,11 @@ abstract class ComposeScreen(
     protected open fun handleKeyPressed(key: Int, modifiers: Int): Boolean = false
 
     private val consumedKeys = HashSet<Int>()
+
+    private val navigationKeys = intArrayOf(
+        InputConstants.KEY_TAB, InputConstants.KEY_UP, InputConstants.KEY_DOWN, InputConstants.KEY_LEFT, InputConstants.KEY_RIGHT,
+        InputConstants.KEY_SPACE, InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER,
+    )
     private val consumedButtons = HashSet<Int>()
 
     //? >= 1.21.10 {
@@ -840,7 +851,12 @@ abstract class ComposeScreen(
         //return handled
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
+    private fun reportPointerInput() = A11y.reportInput(false)
+
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun dispatchKeyPressed(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
+        if (bindingKey in navigationKeys) A11y.reportInput(true)
         if (bindingKey == InputConstants.KEY_ESCAPE) {
             if (KeybindRecordingBus.consumeEscape()) {
                 consumedKeys += bindingKey
@@ -850,6 +866,12 @@ abstract class ComposeScreen(
                 sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)
                 return true
             }
+            if (sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)) return true
+            if (EscapeStack.closeTop() || handleKeyPressed(bindingKey, modifiers)) {
+                consumedKeys += bindingKey
+                return true
+            }
+            return false
         }
         if (handleKeyPressed(bindingKey, modifiers)) {
             consumedKeys += bindingKey

@@ -1114,6 +1114,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     var marqueeActive by remember { mutableStateOf(false) }
     var marqueeAdditive by remember { mutableStateOf(false) }
     var pressWasSecondary by remember { mutableStateOf(false) }
+    var pressOnCanvas by remember { mutableStateOf(false) }
     val lastPointerPos = remember { FloatArray(2) }
     // HUDs waiting for the user to pick an anchor point and non-empty while the picker overlay is up
     var anchorPickSources by remember { mutableStateOf<List<Hud>>(emptyList()) }
@@ -1514,9 +1515,11 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     val pointerModifier = Modifier
         .safePointerEvent(PointerEventType.Press) { event ->
+            pressOnCanvas = false
             if (event.changes.any { it.isConsumed }) return@safePointerEvent
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             if (inChrome(pos.x, pos.y)) return@safePointerEvent
+            pressOnCanvas = true
             // while picking an anchor a left click takes the point under the cursor or cancels and a
             // right click drops the anchor
             if (anchorPickSources.isNotEmpty()) {
@@ -1808,6 +1811,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         lockedPressHud = null
                     }
                 }
+                if (!pressOnCanvas && event.changes.any { it.pressed }) return@safePointerEvent
                 if (inChrome(pos.x, pos.y)) {
                     hoveredHud = null
                     return@safePointerEvent
@@ -1884,7 +1888,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             if (wasDragging) wasDraggedHud?.onEditorDragEnd()
             if (!wasDragging || wasDraggedHud == null) {
                 // skip releases of presses that were already handled
-                if (event.changes.any { it.isConsumed } || pressWasSecondary) return@safePointerEvent
+                if (event.changes.any { it.isConsumed } || pressWasSecondary || !pressOnCanvas) return@safePointerEvent
                 val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
                 if (inChrome(pos.x, pos.y)) return@safePointerEvent
                 val mcToScreen = Platform.screen().mcToScreenScale()

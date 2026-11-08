@@ -116,6 +116,22 @@ object NotificationsRenderer {
         if (ToastInput.hoveredAction !== hoveredAction) ToastInput.hoveredAction = hoveredAction
     }
 
+    internal fun hitNow(): ToastHit? {
+        val rt = runtime ?: return null
+        if (NotificationsManager.count == 0 || lastScale <= 0f) return null
+        if (Platform.screen().current<Any?>() == null) return null
+        if (ToastInput.mouseX < 0f || ToastInput.mouseY < 0f) return null
+        val pixelRatio = Platform.screen().pixelRatio()
+        val hit = topHit(rt.root, ToastInput.mouseX * pixelRatio / lastScale, ToastInput.mouseY * pixelRatio / lastScale, null)
+        return hit?.takeIf { NotificationsManager.contains(it.notification) }
+    }
+
+    @JvmStatic
+    fun consumeMouseButton(button: Int, pressed: Boolean): Boolean = ToastInput.consumeButton(button, pressed)
+
+    @JvmStatic
+    fun isPointerOverToast(): Boolean = ToastInput.hovered() != null
+
     internal fun dispatchClick(target: ToastHit?) {
         if (target == null) return
         if (!NotificationsManager.contains(target.notification) || target.notification.dismissRequested) {
