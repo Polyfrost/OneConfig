@@ -38,7 +38,6 @@ import org.polyfrost.compose.composables.PolyMcText
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.padding
-import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.layout.PolySize
@@ -71,7 +70,6 @@ public abstract class TextHud(
         padRight = 4f
         padTop = 4f
         padBottom = 4f
-        staticWidth = false
         staticW = UNMEASURED
         staticH = UNMEASURED
     }
@@ -94,14 +92,11 @@ public abstract class TextHud(
         // at render time without needing recomposition
         val fgColor = PolyColor(textColor, textChroma, textChromaSpeed)
 
-        val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
+        val aligned = hasSizeLimits
 
         // when merged HudManager draws this background as part of the fused neighbour shape
-        // which hudBackground() accounts for
-        val bgModifier = hudBackground()
-        val outerModifier =
-            if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
-            else bgModifier.padding(padInsets)
+        // which hudBackground() accounts for, along with the size limits
+        val outerModifier = hudBackground().padding(padInsets)
 
         PolyBox(modifier = outerModifier) {
             if (font == Font.Poppins) {
@@ -121,7 +116,7 @@ public abstract class TextHud(
                     update = {
                         set(provider) { text = it }
                         set(spec) { this.spec = it }
-                        set(if (isStaticValid) contentAlign else PolyAlign.TopLeft) { style.align = it }
+                        set(if (aligned) contentAlign else PolyAlign.TopLeft) { style.align = it }
                     },
                 )
             } else {
@@ -139,7 +134,7 @@ public abstract class TextHud(
                     shadow = showShadow && !fullShadow,
                     outlineColor = if (showShadow && fullShadow) PolyColor(shadowColor, shadowChroma, shadowChromaSpeed) else null,
                     scale = textScale,
-                    modifier = if (isStaticValid) PolyModifier.align(contentAlign) else PolyModifier,
+                    modifier = if (aligned) PolyModifier.align(contentAlign) else PolyModifier,
                 )
             }
         }

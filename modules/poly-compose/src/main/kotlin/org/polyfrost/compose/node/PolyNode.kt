@@ -12,6 +12,7 @@ public open class PolyNode {
     public var y: Float = 0f
     public var width: Float = 0f
     public var height: Float = 0f
+    public var contentScale: Float = 1f
 
     private var decoration: Decoration? = null
 
@@ -24,6 +25,15 @@ public open class PolyNode {
         if (s.clipToBounds) {
             ctx.save()
             if (s.radius > 0f) ctx.clipRRect(x, y, width, height, s.radius) else ctx.clipRect(x, y, width, height)
+        }
+        val scaled = contentScale != 1f
+        if (scaled) {
+            val cx = x + s.padding.left
+            val cy = y + s.padding.top
+            ctx.save()
+            ctx.translate(cx, cy)
+            ctx.scale(contentScale, contentScale)
+            ctx.translate(-cx, -cy)
         }
         children.forEach { child ->
             val fade = child.style.fade
@@ -40,6 +50,7 @@ public open class PolyNode {
                 }
             }
         }
+        if (scaled) ctx.restore()
         if (s.clipToBounds) ctx.restore()
     }
 

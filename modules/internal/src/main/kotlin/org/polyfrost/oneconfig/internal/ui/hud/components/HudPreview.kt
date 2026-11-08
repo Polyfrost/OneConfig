@@ -111,13 +111,13 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
         }
     }
     LaunchedEffect(state) {
-        val static = hud.staticWidth && hud.staticW > 0f && hud.staticH > 0f
+        val static = hud.isFixedW && hud.isFixedH
         if (!state.ready) {
             hud.updateForPreview()
             if (static) {
-                state.runtime.frame(hud.staticW, hud.staticH)
-                state.naturalWidth = hud.staticW
-                state.naturalHeight = hud.staticH
+                state.runtime.frame(hud.minW, hud.minH)
+                state.naturalWidth = hud.minW
+                state.naturalHeight = hud.minH
             } else {
                 state.runtime.frame(MEASURE_BOUNDS, MEASURE_BOUNDS)
                 state.naturalWidth = state.runtime.root.width
@@ -130,7 +130,7 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
         // whenever a value flips between digit counts.
         snapshotFlow { HudManager.previewRevision.intValue }.collect {
             // text is read outside composition, so even fixed-size previews need a layout pass to pick up new values
-            if (static) return@collect state.runtime.layout(hud.staticW, hud.staticH)
+            if (static) return@collect state.runtime.layout(hud.minW, hud.minH)
             state.runtime.layout(MEASURE_BOUNDS, MEASURE_BOUNDS)
             state.naturalWidth = maxOf(state.naturalWidth, state.runtime.root.width)
             state.naturalHeight = maxOf(state.naturalHeight, state.runtime.root.height)

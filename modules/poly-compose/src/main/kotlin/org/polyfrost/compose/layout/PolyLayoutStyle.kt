@@ -7,6 +7,11 @@ public enum class LayoutType { Box, Row, Column }
 public class PolyLayoutStyle {
     public var width: PolySize = PolySize.Wrap
     public var height: PolySize = PolySize.Wrap
+    public var minWidth: Float = Float.NaN
+    public var maxWidth: Float = Float.NaN
+    public var minHeight: Float = Float.NaN
+    public var maxHeight: Float = Float.NaN
+    public var fitContent: Boolean = false
     public var align: PolyAlign = PolyAlign.TopLeft
     public var padding: PolyInsets = PolyInsets()
     public var margin: PolyInsets = PolyInsets()

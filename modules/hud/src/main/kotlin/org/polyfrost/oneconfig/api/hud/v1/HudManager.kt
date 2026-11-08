@@ -509,17 +509,7 @@ public object HudManager {
     }
 
     private fun screenBounds(hud: Hud): FloatArray? {
-        val scale = hud.frameEffectiveScale
-        val w = if (hud.staticWidth) {
-            hud.staticW.takeIf { it > 0f }?.times(scale)
-        } else {
-            hud.renderedW.takeIf { it > 0f } ?: hud.staticW.takeIf { it > 0f }?.times(scale)
-        } ?: return null
-        val h = if (hud.staticWidth) {
-            hud.staticH.takeIf { it > 0f }?.times(scale)
-        } else {
-            hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f }?.times(scale)
-        } ?: return null
+        val (w, h) = hud.boundsSize(hud.frameEffectiveScale) ?: return null
         return floatArrayOf(hud.x, hud.y, w, h)
     }
 
@@ -1419,6 +1409,7 @@ public object HudManager {
                 ConfigManager.active().unregister(data.id)
                 val savedSchema = data.getProp("posSchema")?.getAs<Number?>()?.toInt() ?: 0
                 val hud = h.make(data)
+                hud.migrateLegacySize(data)
                 candidate = hud
                 val sec = data.getProp("section")?.getAs<Section?>()
                 if (sec != null) {
