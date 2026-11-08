@@ -68,7 +68,7 @@ object UiSounds {
     @Synchronized
     fun onSoundThemeChanged() {
         play(UiSoundEvent.OPEN)
-        if (ambienceActive) {
+        if (ambienceActive && OneConfigConfig.enableUIAmbience) {
             service?.stopAmbience(true)
             startAmbienceIfEnabled()
         }
