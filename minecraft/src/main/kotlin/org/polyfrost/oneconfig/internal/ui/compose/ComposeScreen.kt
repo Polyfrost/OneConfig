@@ -799,6 +799,7 @@ abstract class ComposeScreen(
 
     private val navigationKeys = intArrayOf(
         InputConstants.KEY_TAB, InputConstants.KEY_UP, InputConstants.KEY_DOWN, InputConstants.KEY_LEFT, InputConstants.KEY_RIGHT,
+        InputConstants.KEY_SPACE, InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER,
     )
     private val consumedButtons = HashSet<Int>()
 
