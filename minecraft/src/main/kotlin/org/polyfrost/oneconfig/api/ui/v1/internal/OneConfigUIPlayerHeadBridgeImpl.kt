@@ -64,15 +64,14 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
 
     override fun observe(id: UUID): State<ImageBitmap?> {
         val state = mutableStateOf<ImageBitmap?>(null)
-        synchronized(faces) {
-            val known = faces[id]
-            if (known != null) {
-                state.value = known.bitmap
-                return state
-            }
-            observers.getOrPut(id) { ArrayList() } += WeakReference(state)
+        val known = synchronized(faces) {
+            if (observers.size > MAX_ENTRIES) observers.values.removeAll { list -> list.removeAll { it.get() == null }; list.isEmpty() }
+            val list = observers.getOrPut(id) { ArrayList() }
+            list.removeAll { it.get() == null }
+            list += WeakReference(state)
+            faces[id]?.also { state.value = it.bitmap }
         }
-        ensureFetch(id)
+        if (known == null) ensureFetch(id)
         return state
     }
 
@@ -85,7 +84,19 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
 
     private fun clearDefaults() {
         synchronized(defaults) { defaults.clear() }
-        synchronized(faces) { faces.values.removeAll { it.isDefault } }
+        val shown = synchronized(faces) {
+            val ids = faces.filterValues { it.isDefault }.keys.toList()
+            ids.forEach { faces.remove(it) }
+            observers.keys.retainAll { id -> observers[id]?.any { it.get() != null } == true }
+            ids.filter { it in observers }
+        }
+        if (shown.isEmpty()) return
+        loaders.execute {
+            for (id in shown) {
+                synchronized(faces) { fetchedDefault += id }
+                publish(id, defaultFace(id), true)
+            }
+        }
     }
 
     private fun ensureFetch(id: UUID) {
@@ -102,10 +113,8 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
             if (settle) {
                 faces[id] = Face(bitmap, isDefault = bitmap == null || fetchedDefault.remove(id))
                 fetching.remove(id)
-                observers.remove(id)
-            } else {
-                observers[id]?.also { list -> list.removeAll { it.get() == null } }?.toList()
             }
+            observers[id]?.also { list -> list.removeAll { it.get() == null } }?.toList()
         } ?: return
         for (ref in listeners) {
             val state = ref.get() ?: continue
