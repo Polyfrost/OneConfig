@@ -65,7 +65,7 @@ internal object ToastInput {
         }
     }
 
-    fun hovered(): ToastHit? = hoverTarget?.takeIf { NotificationsManager.count > 0 }
+    fun hovered(): ToastHit? = NotificationsRenderer.hitNow()
 
     fun consumeButton(button: Int, pressed: Boolean): Boolean {
         if (!pressed) return consumedButtons.remove(button)
