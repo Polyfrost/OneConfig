@@ -853,10 +853,12 @@ abstract class ComposeScreen(
                 sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)
                 return true
             }
-            if (EscapeStack.closeTop()) {
+            if (sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)) return true
+            if (EscapeStack.closeTop() || handleKeyPressed(bindingKey, modifiers)) {
                 consumedKeys += bindingKey
                 return true
             }
+            return false
         }
         if (handleKeyPressed(bindingKey, modifiers)) {
             consumedKeys += bindingKey
