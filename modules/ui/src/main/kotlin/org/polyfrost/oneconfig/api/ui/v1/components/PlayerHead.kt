@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,7 +46,8 @@ fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier) {
 @Composable
 fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier, shape: Shape?) {
     val clip = shape ?: RoundedCornerShape(size / 4)
-    val face = PlayerHeads.face(playerId)
+    val observed = remember(playerId) { runCatching { playerHeadBridge()?.observe(playerId) }.getOrNull() }
+    val face = observed?.value
     if (face != null) {
         Image(BitmapPainter(face, filterQuality = FilterQuality.None), null, modifier.size(size).clip(clip))
         return

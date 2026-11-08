@@ -2,12 +2,13 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import java.awt.image.BufferedImage
 import java.io.IOException
+import java.lang.ref.WeakReference
 import java.net.HttpURLConnection
 import java.net.Proxy
 import java.net.URI
@@ -21,6 +22,8 @@ import javax.imageio.ImageIO
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.asComposeImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import net.minecraft.client.Minecraft
 //? if > 1.8.9 {
@@ -31,36 +34,46 @@ import net.ornithemc.osl.resource.loader.api.resource.manager.ResourceManager
 *///?}
 
 class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
-    private class Entry {
-        var shown by mutableStateOf<ImageBitmap?>(null)
+    private class Face(val bitmap: ImageBitmap?, val isDefault: Boolean)
 
-        var settled = false
+    private val faces = object : LinkedHashMap<UUID, Face>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: Map.Entry<UUID, Face>) = size > MAX_ENTRIES
     }
 
-    private val entries = object : LinkedHashMap<UUID, Entry>(16, 0.75f, true) {
-        override fun removeEldestEntry(eldest: Map.Entry<UUID, Entry>) = size > MAX_ENTRIES
-    }
+    private val observers = HashMap<UUID, MutableList<WeakReference<MutableState<ImageBitmap?>>>>()
 
     private val defaults = HashMap<String, ImageBitmap?>()
 
     private val fetching = HashMap<UUID, Int>()
 
+    private val fetchedDefault = HashSet<UUID>()
+
     private val loaders: ScheduledExecutorService = Executors.newScheduledThreadPool(2) { task ->
         Thread(task, "OneConfig-PlayerHeads").apply { isDaemon = true }
     }
 
+    init {
+        EventManager.register(ResourceFinishedLoading::class.java, Runnable(::clearDefaults))
+    }
+
     override fun face(id: UUID): ImageBitmap? {
-        var fetch = false
-        val entry = synchronized(entries) {
-            val entry = entries.getOrPut(id) { Entry() }
-            if (!entry.settled && id !in fetching) {
-                fetching[id] = 0
-                fetch = true
+        synchronized(faces) { faces[id]?.let { return it.bitmap } }
+        ensureFetch(id)
+        return null
+    }
+
+    override fun observe(id: UUID): State<ImageBitmap?> {
+        val state = mutableStateOf<ImageBitmap?>(null)
+        synchronized(faces) {
+            val known = faces[id]
+            if (known != null) {
+                state.value = known.bitmap
+                return state
             }
-            entry
+            observers.getOrPut(id) { ArrayList() } += WeakReference(state)
         }
-        if (fetch) loaders.execute { fetch(id, entry) }
-        return entry.shown
+        ensureFetch(id)
+        return state
     }
 
     override fun defaultFace(id: UUID): ImageBitmap? {
@@ -70,38 +83,67 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         }
     }
 
-    private fun fetch(id: UUID, entry: Entry) {
+    private fun clearDefaults() {
+        synchronized(defaults) { defaults.clear() }
+        synchronized(faces) { faces.values.removeAll { it.isDefault } }
+    }
+
+    private fun ensureFetch(id: UUID) {
+        val start = synchronized(faces) {
+            if (faces.containsKey(id) || id in fetching) return
+            fetching[id] = 0
+            true
+        }
+        if (start) loaders.execute { fetch(id) }
+    }
+
+    private fun publish(id: UUID, bitmap: ImageBitmap?, settle: Boolean) {
+        val listeners = synchronized(faces) {
+            if (settle) {
+                faces[id] = Face(bitmap, isDefault = bitmap == null || fetchedDefault.remove(id))
+                fetching.remove(id)
+                observers.remove(id)
+            } else {
+                observers[id]?.also { list -> list.removeAll { it.get() == null } }?.toList()
+            }
+        } ?: return
+        for (ref in listeners) {
+            val state = ref.get() ?: continue
+            if (settle || state.value == null) state.value = bitmap
+        }
+    }
+
+    private fun fetch(id: UUID) {
         val outcome = runCatching { loadFace(id) }
         outcome.exceptionOrNull()?.let { LOGGER.debug("Failed to load the head for {}; will retry", id, it) }
         val face = outcome.getOrNull()
         val missing = outcome.isSuccess && face == null
-        val fallback = if (face == null) defaultFace(id) else null
-
-        var next = entry
-        val retryIn = synchronized(entries) {
-            val current = entries[id]
-            val targets = if (current == null || current === entry) listOf(entry) else listOf(entry, current)
-            if (current != null) next = current
-            if (face != null || missing) {
-                targets.forEach {
-                    it.shown = face ?: fallback
-                    it.settled = true
-                }
-                fetching.remove(id)
-                return@synchronized null
-            }
-            targets.forEach { if (it.shown == null) it.shown = fallback }
+        if (face != null) {
+            publish(id, face, true)
+            return
+        }
+        val fallback = defaultFace(id)
+        if (missing) {
+            synchronized(faces) { fetchedDefault += id }
+            publish(id, fallback, true)
+            return
+        }
+        val retryIn = synchronized(faces) {
             val attempts = (fetching[id] ?: 0) + 1
             fetching[id] = attempts
             if (attempts < MAX_ATTEMPTS) {
                 (RETRY_BASE_MS shl (attempts - 1).coerceIn(0, MAX_DOUBLINGS)).coerceAtMost(RETRY_MAX_MS) + (0..RETRY_JITTER_MS).random()
             } else {
-                targets.forEach { it.settled = true }
-                fetching.remove(id)
                 null
             }
         }
-        if (retryIn != null) loaders.schedule({ fetch(id, next) }, retryIn, TimeUnit.MILLISECONDS)
+        if (retryIn == null) {
+            synchronized(faces) { fetchedDefault += id }
+            publish(id, fallback, true)
+            return
+        }
+        publish(id, fallback, false)
+        loaders.schedule({ fetch(id) }, retryIn, TimeUnit.MILLISECONDS)
     }
 
     private fun loadFace(id: UUID): ImageBitmap? {

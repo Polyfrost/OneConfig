@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
+import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.ImageBitmap
 import java.util.UUID
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -7,6 +8,8 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 @ExperimentalOneConfigUiApi
 interface OneConfigUIPlayerHeadBridge {
     fun face(id: UUID): ImageBitmap?
+
+    fun observe(id: UUID): State<ImageBitmap?>
 
     fun defaultFace(id: UUID): ImageBitmap?
 }
