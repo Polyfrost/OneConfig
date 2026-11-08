@@ -123,7 +123,7 @@ object NotificationsRenderer {
         if (ToastInput.mouseX < 0f || ToastInput.mouseY < 0f) return null
         val pixelRatio = Platform.screen().pixelRatio()
         val hit = topHit(rt.root, ToastInput.mouseX * pixelRatio / lastScale, ToastInput.mouseY * pixelRatio / lastScale, null)
-        return hit?.takeUnless { it.notification.dismissRequested || !NotificationsManager.contains(it.notification) }
+        return hit?.takeIf { NotificationsManager.contains(it.notification) }
     }
 
     @JvmStatic
