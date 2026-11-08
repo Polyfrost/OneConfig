@@ -45,6 +45,7 @@ import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
 import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
@@ -356,6 +357,7 @@ abstract class ComposeScreen(
         return true
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun setContentOn(scene: ComposeScene) {
         scene.setContent {
             @Suppress("DEPRECATION")
@@ -366,7 +368,7 @@ abstract class ComposeScreen(
                 FixedScrollConfig.provided(),
                 LocalWheelRouter provides wheelRouter,
             ) {
-                compose()
+                EscapeAwareTextMenus { compose() }
             }
         }
     }

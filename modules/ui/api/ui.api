@@ -350,6 +350,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/DialogKt {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/EscapeClosesKt {
+	public static final fun EscapeAwareTextMenus (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun EscapeCloses (Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 }
 

@@ -1,10 +1,16 @@
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, ExperimentalFoundationApi::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
+import androidx.compose.foundation.ContextMenuState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.text.LocalTextContextMenu
+import androidx.compose.foundation.text.TextContextMenu
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -53,5 +59,21 @@ fun EscapeCloses(onClose: () -> Unit) {
         val close = { latest() }
         EscapeStack.push(close)
         onDispose { EscapeStack.remove(close) }
+    }
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+fun EscapeAwareTextMenus(content: @Composable () -> Unit) {
+    val base = LocalTextContextMenu.current
+    val wrapped = remember(base) { EscapeAwareTextContextMenu(base) }
+    CompositionLocalProvider(LocalTextContextMenu provides wrapped, content = content)
+}
+
+private class EscapeAwareTextContextMenu(private val base: TextContextMenu) : TextContextMenu {
+    @Composable
+    override fun Area(textManager: TextContextMenu.TextManager, state: ContextMenuState, content: @Composable () -> Unit) {
+        if (state.status is ContextMenuState.Status.Open) EscapeCloses { state.status = ContextMenuState.Status.Closed }
+        base.Area(textManager, state, content)
     }
 }
