@@ -83,8 +83,25 @@ private val UITheme.isLight: Boolean get() = name.endsWith(LIGHT_SUFFIX)
 fun Themes() {
     val revision = ConfigRegistry.revision
     val tree = ConfigRegistry.findTree(THEMES_ID)
+    if (tree == null) {
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            ThemesHeader()
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No preferences available.", color = LocalTheme.current.textColorSecondary)
+            }
+        }
+        return
+    }
+    key(revision, tree) {
+        ConfigScreen(tree, pageKey = THEMES_ID, header = { ThemesHeader() })
+    }
+}
+
+@Composable
+private fun ThemesHeader() {
     Column(
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        modifier = Modifier.padding(bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         val families = ThemeRegistry.registry.groupBy { it.family }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -111,15 +128,6 @@ fun Themes() {
             )
         }
         SoundThemePicker()
-        if (tree == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No preferences available.", color = LocalTheme.current.textColorSecondary)
-            }
-            return
-        }
-        key(revision, tree) {
-            ConfigScreen(tree, pageKey = THEMES_ID)
-        }
     }
 }
 

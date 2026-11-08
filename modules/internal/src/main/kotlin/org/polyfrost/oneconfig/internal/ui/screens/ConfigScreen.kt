@@ -45,6 +45,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
@@ -120,9 +121,10 @@ fun ConfigScreen(
     pageKey: String,
     locked: Boolean = false,
     lockExempt: Property<*>? = null,
+    header: (@Composable () -> Unit)? = null,
 ) {
     key(System.identityHashCode(tree)) {
-        ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt)
+        ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt, header)
     }
 }
 
@@ -133,6 +135,7 @@ private fun ConfigScreenContent(
     pageKey: String,
     locked: Boolean,
     lockExempt: Property<*>?,
+    header: (@Composable () -> Unit)?,
 ) {
     val categories = remember(tree) { buildCategories(tree) }
     val localSearchQuery = pageSearchQuery().trim()
@@ -178,14 +181,16 @@ private fun ConfigScreenContent(
 
         val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
 
-        if (entries.isEmpty()) {
+        val emptyMessage = when {
+            entries.isNotEmpty() -> null
+            localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
+            results == null -> translated("oneconfig.search.searching", "Searching...")
+            else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
+        }
+
+        if (emptyMessage != null && header == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                val message = when {
-                    localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
-                    results == null -> translated("oneconfig.search.searching", "Searching...")
-                    else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
-                }
-                Text(message, color = LocalTheme.current.textColorSecondary)
+                Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
             }
             return@Column
         }
@@ -196,6 +201,24 @@ private fun ConfigScreenContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(horizontal = PageGutter),
             ) {
+                if (header != null) {
+                    item(key = "header") {
+                        Box(Modifier.layout { measurable, constraints ->
+                            val gutter = PageGutter.roundToPx() * 2
+                            val placeable = measurable.measure(
+                                constraints.copy(minWidth = constraints.minWidth + gutter, maxWidth = constraints.maxWidth + gutter)
+                            )
+                            layout(placeable.width - gutter, placeable.height) { placeable.place(-gutter / 2, 0) }
+                        }) { header() }
+                    }
+                }
+                if (emptyMessage != null) {
+                    item(key = "empty") {
+                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
+                            Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+                        }
+                    }
+                }
                 items(entries) { entry ->
                     val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
                     val lock = locked && (option == null || option !== lockExempt)
