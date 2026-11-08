@@ -105,9 +105,23 @@ internal class HudSnapContext(
 
     private fun buildGaps(h: Boolean): List<HudGapRef> {
         val gaps = ArrayList<HudGapRef>()
-        for (a in obstacles) {
-            val b = nearestAfter(obstacles, h, a.hi(h) + GAP_EPSILON, a.crossLo(h), a.crossHi(h)) ?: continue
-            val size = b.lo(h) - a.hi(h)
+        for (i in obstacles.indices) {
+            val a = obstacles[i]
+            val edge = a.hi(h)
+            var b: Rect? = null
+            var bStart = Float.POSITIVE_INFINITY
+            for (j in obstacles.indices) {
+                if (i == j) continue
+                val o = obstacles[j]
+                if (o.hi(h) <= edge || !crossOverlaps(o, h, a.crossLo(h), a.crossHi(h))) continue
+                val start = maxOf(o.lo(h), edge)
+                if (start < bStart) {
+                    bStart = start
+                    b = o
+                }
+            }
+            if (b == null) continue
+            val size = bStart - edge
             if (size > GAP_EPSILON) gaps.add(HudGapRef(size, a, b))
         }
         return gaps
@@ -141,15 +155,11 @@ internal class HudSnapContext(
         return best
     }
 
-    fun snap(rawX: Float, rawY: Float, width: Float, height: Float, threshold: Float, grid: Float?): Offset {
-        var x = snapAxis(rawX, width, rawY, rawY + height, true, threshold)
-        var y = snapAxis(rawY, height, rawX, rawX + width, false, threshold)
-        if (grid != null && grid > 0f) {
-            if (x == null) x = (rawX / grid).roundToInt() * grid
-            if (y == null) y = (rawY / grid).roundToInt() * grid
-        }
-        return Offset(x ?: rawX, y ?: rawY)
-    }
+    fun snapX(rawX: Float, rawY: Float, width: Float, height: Float, threshold: Float): Float? =
+        snapAxis(rawX, width, rawY, rawY + height, true, threshold)
+
+    fun snapY(rawX: Float, rawY: Float, width: Float, height: Float, threshold: Float): Float? =
+        snapAxis(rawY, height, rawX, rawX + width, false, threshold)
 
     fun feedback(rect: Rect, snapping: Boolean): HudSnapResult {
         val sideGaps = hudSideGaps(rect, obstacles, screen)
@@ -224,14 +234,21 @@ internal class HudSnapContext(
 internal class HudDragSnapper {
     private var context: HudSnapContext? = null
     private var startRect: Rect? = null
+    private var grabbedRect: Rect? = null
 
     var result by mutableStateOf(HudSnapResult.NONE)
         private set
 
-    fun begin(dragged: List<Rect>, others: List<Rect>, screenWidth: Float, screenHeight: Float) {
-        startRect = dragged.reduceOrNull { a, b ->
-            Rect(minOf(a.left, b.left), minOf(a.top, b.top), maxOf(a.right, b.right), maxOf(a.bottom, b.bottom))
-        }
+    private fun union(rects: List<Rect>) = rects.reduceOrNull { a, b ->
+        Rect(minOf(a.left, b.left), minOf(a.top, b.top), maxOf(a.right, b.right), maxOf(a.bottom, b.bottom))
+    }
+
+    fun startsWith(dragged: List<Rect>): Boolean = context != null && union(dragged) == startRect
+
+    fun begin(dragged: List<Rect>, grabbed: Rect?, others: List<Rect>, screenWidth: Float, screenHeight: Float) {
+        val group = union(dragged)
+        startRect = group
+        grabbedRect = grabbed?.takeIf { group != null && it != group }
         context = HudSnapContext(Rect(0f, 0f, screenWidth, screenHeight), others)
         result = HudSnapResult.NONE
     }
@@ -240,20 +257,57 @@ internal class HudDragSnapper {
         val ctx = context
         val start = startRect
         if (ctx == null || start == null) return Offset(rawDx, rawDy)
-        val rawX = start.left + rawDx
-        val rawY = start.top + rawDy
-        val target = if (snapping) {
-            ctx.snap(rawX, rawY, start.width, start.height, threshold, if (gridEnabled) HUD_GRID_SIZE else null)
-        } else {
-            Offset(rawX, rawY)
+        if (!snapping) {
+            result = ctx.feedback(start.translate(rawDx, rawDy), false)
+            return Offset(rawDx, rawDy)
         }
-        result = ctx.feedback(Rect(target, start.size), snapping)
-        return Offset(target.x - start.left, target.y - start.top)
+        val grabbed = grabbedRect
+        val dx = snapDelta(rawDx, true, gridEnabled, start, grabbed) { r, raw ->
+            ctx.snapX(raw, r.top + rawDy, r.width, r.height, threshold)
+        }
+        val dy = snapDelta(rawDy, false, gridEnabled, start, grabbed) { r, raw ->
+            ctx.snapY(r.left + rawDx, raw, r.width, r.height, threshold)
+        }
+        val group = start.translate(dx, dy)
+        val feedback = ctx.feedback(group, true)
+        result = if (grabbed == null) {
+            feedback
+        } else {
+            val own = ctx.feedback(grabbed.translate(dx, dy), true)
+            HudSnapResult(feedback.guides + own.guides, feedback.gaps + own.gaps, feedback.sideGaps)
+        }
+        return Offset(dx, dy)
+    }
+
+    private inline fun snapDelta(
+        rawDelta: Float,
+        h: Boolean,
+        gridEnabled: Boolean,
+        group: Rect,
+        grabbed: Rect?,
+        snapAxis: (Rect, Float) -> Float?,
+    ): Float {
+        var best: Float? = null
+        var bestDist = Float.POSITIVE_INFINITY
+        for (r in listOfNotNull(group, grabbed)) {
+            val raw = r.lo(h) + rawDelta
+            val snapped = snapAxis(r, raw) ?: continue
+            val d = abs(snapped - raw)
+            if (d < bestDist) {
+                bestDist = d
+                best = snapped - r.lo(h)
+            }
+        }
+        best?.let { return it }
+        val origin = group.lo(h)
+        if (gridEnabled) return ((origin + rawDelta) / HUD_GRID_SIZE).roundToInt() * HUD_GRID_SIZE - origin
+        return rawDelta
     }
 
     fun end() {
         context = null
         startRect = null
+        grabbedRect = null
         result = HudSnapResult.NONE
     }
 }

@@ -236,11 +236,38 @@ private class PendingPress(
 
 private fun HudBounds.toRect() = Rect(x, y, x + width, y + height)
 
-private fun beginHudSnap(snapper: HudDragSnapper, dragged: Collection<Hud>) {
+private fun followsAny(hud: Hud, dragged: Collection<Hud>): Boolean {
+    var current = hud.effectiveAnchorParent
+    var depth = 0
+    while (current != null && depth <= HudManager.activeInstances.size) {
+        if (current in dragged) return true
+        current = current.effectiveAnchorParent
+        depth++
+    }
+    return false
+}
+
+private fun beginHudSnap(
+    snapper: HudDragSnapper,
+    dragged: Collection<Hud>,
+    grabbed: Hud,
+    starts: Map<Hud, Pair<Float, Float>> = emptyMap(),
+    refresh: Boolean = false,
+) {
+    fun startRect(hud: Hud): Rect? {
+        val rect = hudBounds(hud)?.toRect() ?: return null
+        val start = starts[hud] ?: return rect
+        return rect.translate(start.first - hud.x, start.second - hud.y)
+    }
+    val draggedRects = dragged.mapNotNull(::startRect)
+    if (refresh && snapper.startsWith(draggedRects)) return
     snapper.begin(
-        dragged = dragged.mapNotNull { hudBounds(it)?.toRect() },
+        dragged = draggedRects,
+        grabbed = startRect(grabbed),
         others = HudManager.activeInstances
-            .filter { other -> other !in dragged && dragged.none { other.anchorChainContains(it) } }
+            .filter { other ->
+                other !in dragged && dragged.none { other.anchorChainContains(it) } && !followsAny(other, dragged)
+            }
             .mapNotNull { hudBounds(it)?.toRect() },
         screenWidth = HudManager.guiScreenWidth,
         screenHeight = HudManager.guiScreenHeight,
@@ -1665,7 +1692,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     }
                     HudManager.setMergeExclusions(if (detach) dragSet else emptySet())
                     press.hud.onEditorDragStart()
-                    beginHudSnap(dragSnapper, dragSet)
+                    beginHudSnap(dragSnapper, dragSet, press.hud)
                     Snapshot.withMutableSnapshot {
                         pendingPress = null
                         dragTookWholeMerge = !detach && dragSet.size > movable.size
@@ -1724,6 +1751,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                 val hit = draggedHud ?: return@safePointerEvent
                 val starts = dragStarts
                 val start = starts[hit] ?: return@safePointerEvent
+                beginHudSnap(dragSnapper, draggedGroup, hit, starts, refresh = true)
                 val (dx, dy) = dragSnapper.move(
                     rawDx = pos.x * s - dragOffsetX - start.first,
                     rawDy = pos.y * s - dragOffsetY - start.second,
@@ -2384,7 +2412,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 }
                                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                                 instance.onEditorDragStart()
-                                beginHudSnap(dragSnapper, setOf(instance))
+                                beginHudSnap(dragSnapper, setOf(instance), instance)
                                 Snapshot.withMutableSnapshot {
                                     dragOffsetX = offX
                                     dragOffsetY = offY
@@ -2803,7 +2831,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 }
                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                 hit.onEditorDragStart()
-                beginHudSnap(dragSnapper, setOf(hit))
+                beginHudSnap(dragSnapper, setOf(hit), hit)
                 Snapshot.withMutableSnapshot {
                     dragOffsetX = pos.x * s - hit.x
                     dragOffsetY = pos.y * s - hit.y
