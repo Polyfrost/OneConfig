@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -151,45 +155,43 @@ private fun evaluateNumberExpression(input: String): Float? =
     NumberExpression(input).evaluate()?.takeIf { it.isFinite() }?.toFloat()
 
 private fun Modifier.scrubDrag(
-    current: () -> Float,
     step: Float,
-    min: Float,
-    max: Float,
+    onStart: () -> Unit,
     onScrub: (Float) -> Unit,
     onEnd: () -> Unit,
-): Modifier = pointerHoverIcon(PointerIcon.Hand).pointerInput(step, min, max) {
+): Modifier = pointerHoverIcon(PointerIcon.Hand).pointerInput(step) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var dragging = false
         var travelled = 0f
         var residual = 0f
-        var value = current()
-        while (true) {
-            val event = awaitPointerEvent()
-            val change = event.changes.firstOrNull { it.id == down.id } ?: break
-            if (!change.pressed) {
-                if (dragging) {
-                    change.consume()
-                    onEnd()
+        try {
+            while (true) {
+                val event = awaitPointerEvent()
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                if (!change.pressed) {
+                    if (dragging) change.consume()
+                    break
                 }
-                break
+                val dx = change.position.x - change.previousPosition.x
+                if (dragging) {
+                    residual += dx
+                } else {
+                    travelled += dx
+                    if (abs(travelled) <= viewConfiguration.touchSlop) continue
+                    dragging = true
+                    residual = travelled
+                    onStart()
+                }
+                change.consume()
+                val units = (residual / SCRUB_PX_PER_STEP).toInt()
+                if (units == 0) continue
+                residual -= units * SCRUB_PX_PER_STEP
+                val multiplier = if (event.keyboardModifiers.isShiftPressed) 10f else 1f
+                onScrub(units * step * multiplier)
             }
-            val dx = change.position.x - change.previousPosition.x
-            if (dragging) {
-                residual += dx
-            } else {
-                travelled += dx
-                if (abs(travelled) <= viewConfiguration.touchSlop) continue
-                dragging = true
-                residual = travelled
-            }
-            change.consume()
-            val units = (residual / SCRUB_PX_PER_STEP).toInt()
-            if (units == 0) continue
-            residual -= units * SCRUB_PX_PER_STEP
-            val multiplier = if (event.keyboardModifiers.isShiftPressed) 10f else 1f
-            value = (value + units * step * multiplier).coerceIn(min, max)
-            onScrub(value)
+        } finally {
+            if (dragging) onEnd()
         }
     }
 }
@@ -267,6 +269,8 @@ fun NumberSpinner(
     scrub: Boolean = false,
     math: Boolean = false,
     enabled: Boolean = true,
+    onEditStart: (() -> Unit)? = null,
+    liveValue: (() -> Float)? = null,
 ) {
     val theme = LocalTheme.current
     val focusManager = LocalFocusManager.current
@@ -274,19 +278,21 @@ fun NumberSpinner(
     val formatted = if (format != null && !focused) format(value) else null
     val textState = remember(if (math && focused) null else value) { mutableStateOf(formatSpinnerValue(value)) }
     var text by textState
-    val latestTextState by rememberUpdatedState(textState)
     var edited by remember { mutableStateOf(false) }
-    val latestValue by rememberUpdatedState(value)
-    val latestOnValueChange by rememberUpdatedState(onValueChange)
-    val latestOnEditEnd by rememberUpdatedState(onEditEnd)
+    var scrubbing by remember { mutableStateOf(false) }
 
     val arrowLo = maxOf(min, arrowMin)
     val arrowHi = maxOf(arrowLo, minOf(max, arrowMax))
+
+    fun showLiveValue() {
+        if (liveValue != null) text = formatSpinnerValue(liveValue())
+    }
 
     fun commit(v: Float) {
         val clamped = v.coerceIn(arrowLo, arrowHi)
         text = formatSpinnerValue(clamped)
         onValueChange(clamped)
+        showLiveValue()
     }
 
     fun commitTyped() {
@@ -300,20 +306,51 @@ fun NumberSpinner(
         val clamped = result.coerceIn(min, max)
         text = formatSpinnerValue(clamped)
         onValueChange(clamped)
+        showLiveValue()
+    }
+
+    fun endScrub() {
+        if (!scrubbing) return
+        scrubbing = false
+        onEditEnd?.invoke()
+    }
+
+    val scrubStart by rememberUpdatedState<() -> Unit>({
+        if (math) commitTyped()
+        if (!scrubbing) {
+            scrubbing = true
+            onEditStart?.invoke()
+        }
+    })
+    val scrubStep by rememberUpdatedState<(Float) -> Unit>({ delta ->
+        val target = ((liveValue?.invoke() ?: value) + delta).coerceIn(arrowLo, arrowHi)
+        edited = false
+        onValueChange(target)
+        text = formatSpinnerValue(liveValue?.invoke() ?: target)
+    })
+    val flushEdit by rememberUpdatedState<() -> Unit>({
+        if (math) commitTyped()
+        endScrub()
+    })
+
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) flushEdit()
+        }
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+            flushEdit()
+        }
     }
 
     val scrubModifier = if (scrub && enabled) {
         Modifier.scrubDrag(
-            current = { latestValue },
             step = step,
-            min = arrowLo,
-            max = arrowHi,
-            onScrub = { v ->
-                latestTextState.value = formatSpinnerValue(v)
-                edited = false
-                latestOnValueChange(v)
-            },
-            onEnd = { latestOnEditEnd?.invoke() },
+            onStart = { scrubStart() },
+            onScrub = { scrubStep(it) },
+            onEnd = { flushEdit() },
         )
     } else {
         Modifier
@@ -337,7 +374,7 @@ fun NumberSpinner(
                 text = filtered
                 if (!math) filtered.toFloatOrNull()?.coerceIn(min, max)?.let(onValueChange)
             },
-            readOnly = !enabled,
+            enabled = enabled,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             textStyle = TextStyle(
