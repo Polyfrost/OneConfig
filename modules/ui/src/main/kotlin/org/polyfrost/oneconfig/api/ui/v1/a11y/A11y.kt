@@ -20,8 +20,6 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
-import androidx.compose.ui.input.InputMode
-import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -30,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -62,6 +61,18 @@ object A11y {
 
     private var lastAnnounce = ""
     private var lastAnnounceAt = 0L
+
+    private var keyboardInput by mutableStateOf(false)
+
+    @JvmStatic
+    val keyboardMode: Boolean
+        get() = keyboardInput
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun reportInput(keyboard: Boolean) {
+        if (keyboardInput != keyboard) keyboardInput = keyboard
+    }
 
     @JvmStatic
     fun narratorActive(): Boolean = runCatching { Platform.screen().narratorActive() }.getOrDefault(false)
@@ -105,7 +116,7 @@ object A11y {
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun isKeyboardMode(): Boolean = LocalInputModeManager.current.inputMode == InputMode.Keyboard
+fun isKeyboardMode(): Boolean = A11y.keyboardMode
 
 @ExperimentalOneConfigUiApi
 @Composable
@@ -129,14 +140,13 @@ fun Modifier.focusRing(): Modifier = focusRing(null)
 @ExperimentalOneConfigUiApi
 fun Modifier.focusRing(shape: Shape?): Modifier = composed {
     var focused by remember { mutableStateOf(false) }
-    val mode = LocalInputModeManager.current
     val minecraft = isMinecraftTheme()
     val ring = if (minecraft) Color.White else OneConfigTheme.accent
     val halo = (if (minecraft) Color.Black else OneConfigTheme.current.pageBackground).copy(alpha = HALO_ALPHA)
     val outline = shape ?: OneConfigTheme.current.buttonShape
     onFocusChanged { focused = it.isFocused }.drawWithContent {
         drawContent()
-        if (focused && mode.inputMode == InputMode.Keyboard) drawFocusRing(outline, ring, halo)
+        if (focused && A11y.keyboardMode) drawFocusRing(outline, ring, halo)
     }
 }
 
@@ -163,10 +173,16 @@ fun Modifier.a11y(
     shape: Shape?,
     ring: Boolean,
 ): Modifier = composed {
-    val mode = LocalInputModeManager.current
     val spoken by rememberUpdatedState(label)
     val state by rememberUpdatedState(selected to checked)
     var focused by remember { mutableStateOf(false) }
+    var spokenState by remember { mutableStateOf(selected to checked) }
+    LaunchedEffect(selected, checked) {
+        val now = selected to checked
+        if (now == spokenState) return@LaunchedEffect
+        spokenState = now
+        if (focused && A11y.keyboardMode) A11y.focused(spoken, role, selected, checked)
+    }
     semantics {
         label?.let { contentDescription = it }
         role.semanticsRole?.let { this.role = it }
@@ -175,7 +191,7 @@ fun Modifier.a11y(
     }.onFocusChanged {
         if (it.isFocused == focused) return@onFocusChanged
         focused = it.isFocused
-        if (focused && mode.inputMode == InputMode.Keyboard) A11y.focused(spoken, role, state.first, state.second)
+        if (focused && A11y.keyboardMode) A11y.focused(spoken, role, state.first, state.second)
     }.then(if (ring) Modifier.focusRing(shape) else Modifier)
 }
 

@@ -170,6 +170,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/a11y/A11y {
 	public static final fun describe (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/a11y/A11yRole;)Ljava/lang/String;
 	public static final fun describe (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/a11y/A11yRole;Ljava/lang/Boolean;Ljava/lang/Boolean;)Ljava/lang/String;
 	public static final fun focused (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/a11y/A11yRole;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
+	public static final fun getKeyboardMode ()Z
 	public static final fun narratorActive ()Z
 	public static final fun say (Ljava/lang/String;)V
 	public static final fun say (Ljava/lang/String;Z)V
