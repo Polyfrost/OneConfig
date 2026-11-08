@@ -28,14 +28,38 @@ internal fun moveHudsBy(huds: Collection<Hud>, dx: Float, dy: Float): Boolean {
     val cdx = clampGroupDelta(dx, free, HudManager.guiScreenWidth, { it.x }, { it.scaledWidth })
     val cdy = clampGroupDelta(dy, free, HudManager.guiScreenHeight, { it.y }, { it.scaledHeight })
     if (cdx == 0f && cdy == 0f) return true
-    for (hud in huds) hud.onEditorDragStart()
+    val oneOff = moveSession == null
+    if (oneOff) {
+        HudManager.setMergeExclusions(huds)
+        for (hud in huds) hud.onEditorDragStart()
+    }
     try {
         val targets = huds.map { Triple(it, it.x + cdx, it.y + cdy) }
         Snapshot.withMutableSnapshot { applyHudTargets(targets) }
     } finally {
-        for (hud in huds) hud.onEditorDragEnd()
+        if (oneOff) {
+            HudManager.setMergeExclusions(emptySet())
+            for (hud in huds) hud.onEditorDragEnd()
+        }
     }
     return true
+}
+
+private var moveSession: List<Hud>? = null
+
+internal fun beginHudMove(huds: Collection<Hud>) {
+    endHudMove()
+    val session = huds.toList()
+    moveSession = session
+    HudManager.setMergeExclusions(session)
+    for (hud in session) hud.onEditorDragStart()
+}
+
+internal fun endHudMove() {
+    val session = moveSession ?: return
+    moveSession = null
+    HudManager.setMergeExclusions(emptySet())
+    for (hud in session) hud.onEditorDragEnd()
 }
 
 private inline fun clampGroupDelta(
