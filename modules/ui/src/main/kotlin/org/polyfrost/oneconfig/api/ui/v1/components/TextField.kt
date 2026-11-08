@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.a11yField
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -101,8 +102,12 @@ fun TextField(
     @Suppress("DEPRECATION")
     BasicTextField(
         value = value,
-        onValueChange = { onValueChange(if (it.length > maxLength) it.take(maxLength) else it) },
-        modifier = fieldModifier(modifier, source, invalid, enabled, singleLine, framed, label ?: placeholder, focusRequester, onSubmit),
+        onValueChange = { next ->
+            val limited = limitEdit(value, next, maxLength).first
+            speakEdit(value, limited, masked)
+            onValueChange(limited)
+        },
+        modifier = fieldModifier(modifier, source, invalid, enabled, singleLine, framed, spokenLabel(label ?: placeholder, value, masked), focusRequester, onSubmit),
         enabled = enabled,
         singleLine = singleLine,
         textStyle = style,
@@ -155,8 +160,12 @@ fun TextField(
     @Suppress("DEPRECATION")
     BasicTextField(
         value = value,
-        onValueChange = { onValueChange(it.clamp(maxLength)) },
-        modifier = fieldModifier(modifier, source, invalid, enabled, singleLine, framed, label ?: placeholder, focusRequester, onSubmit),
+        onValueChange = { next ->
+            val limited = next.limitedFrom(value, maxLength)
+            speakEdit(value.text, limited.text, masked)
+            onValueChange(limited)
+        },
+        modifier = fieldModifier(modifier, source, invalid, enabled, singleLine, framed, spokenLabel(label ?: placeholder, value.text, masked), focusRequester, onSubmit),
         enabled = enabled,
         singleLine = singleLine,
         textStyle = style,
@@ -172,12 +181,48 @@ fun TextField(
 @Suppress("DEPRECATION")
 private fun maskFor(masked: Boolean): VisualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None
 
-private fun TextFieldValue.clamp(maxLength: Int): TextFieldValue {
+private fun limitEdit(old: String, new: String, maxLength: Int): Pair<String, Int> {
+    var prefix = 0
+    while (prefix < old.length && prefix < new.length && old[prefix] == new[prefix]) prefix++
+    var suffix = 0
+    while (suffix < old.length - prefix && suffix < new.length - prefix && old[old.length - 1 - suffix] == new[new.length - 1 - suffix]) suffix++
+    if (new.length <= maxLength) return new to (new.length - suffix)
+    val inserted = new.substring(prefix, new.length - suffix)
+    val room = (maxLength - prefix - suffix).coerceAtLeast(0)
+    val kept = inserted.take(room)
+    return (new.substring(0, prefix) + kept + new.substring(new.length - suffix)) to (prefix + kept.length)
+}
+
+private fun TextFieldValue.limitedFrom(old: TextFieldValue, maxLength: Int): TextFieldValue {
     if (text.length <= maxLength) return this
-    return TextFieldValue(
-        text.take(maxLength),
-        TextRange(selection.start.coerceAtMost(maxLength), selection.end.coerceAtMost(maxLength)),
-    )
+    val (limited, cursor) = limitEdit(old.text, text, maxLength)
+    return TextFieldValue(limited, TextRange(cursor))
+}
+
+private fun speakEdit(old: String, new: String, masked: Boolean) {
+    if (old == new || !A11y.narratorActive()) return
+    var prefix = 0
+    while (prefix < old.length && prefix < new.length && old[prefix] == new[prefix]) prefix++
+    var suffix = 0
+    while (suffix < old.length - prefix && suffix < new.length - prefix && old[old.length - 1 - suffix] == new[new.length - 1 - suffix]) suffix++
+    val removed = old.substring(prefix, old.length - suffix)
+    val inserted = new.substring(prefix, new.length - suffix)
+    val spoken = when {
+        inserted.isNotEmpty() && masked -> "hidden character"
+        inserted.isNotEmpty() -> inserted
+        masked -> "deleted hidden character"
+        else -> "deleted $removed"
+    }
+    A11y.say(spoken, true)
+}
+
+private fun spokenLabel(label: String?, value: String, masked: Boolean): String {
+    val content = when {
+        value.isEmpty() -> "blank"
+        masked -> "${value.length} hidden characters"
+        else -> value
+    }
+    return if (label.isNullOrBlank()) content else "$label, $content"
 }
 
 @Composable
