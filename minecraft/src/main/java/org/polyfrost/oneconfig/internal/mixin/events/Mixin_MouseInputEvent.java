@@ -71,7 +71,7 @@ public class Mixin_MouseInputEvent {
         }
     }
     *///?} else {
-    /*@Inject(method = "next", at = @At("RETURN"), remap = false)
+    /*@Inject(method = "next", at = @At("RETURN"), remap = false, cancellable = true)
     private static void mouseCallback(CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValue()) return;
 
