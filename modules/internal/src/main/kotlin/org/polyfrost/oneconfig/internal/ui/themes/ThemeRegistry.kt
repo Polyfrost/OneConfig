@@ -37,7 +37,12 @@ object ThemeRegistry {
 
         BuiltinVisualizers.register()
 
-        ConfigManager.addProfileChangeListener { Platform.screen().runOnUiThread { loadFromConfig() } }
+        ConfigManager.addProfileChangeListener {
+            Platform.screen().runOnUiThread {
+                loadFromConfig()
+                UiSounds.syncAmbienceTheme()
+            }
+        }
     }
 
     fun init() {}
@@ -53,7 +58,7 @@ object ThemeRegistry {
         syncNotificationTheme(theme)
         saveThemeToConfig()
         if (previous != null) {
-            if (UiSoundTheme.of(previous) != UiSoundTheme.of(theme)) {
+            if (UiSoundTheme.resolve(previous) != UiSoundTheme.resolve(theme)) {
                 UiSounds.onSoundThemeChanged()
             } else {
                 UiSounds.play(UiSoundEvent.CLICK)

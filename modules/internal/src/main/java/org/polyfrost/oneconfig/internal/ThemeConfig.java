@@ -18,6 +18,8 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellAppearance;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
+import org.polyfrost.oneconfig.internal.ui.sound.SoundThemeSelection;
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
 public class ThemeConfig extends Config {
@@ -26,6 +28,10 @@ public class ThemeConfig extends Config {
     private static final String PREFERENCES_ID = "oneconfig.json";
 
     private static final String[] MOVED_FROM_PREFERENCES = {"uiScale", "pixelGrid", "pageOpacity", "sidebarOpacity", "glowOpacity", "enableBackgroundBlur", "hudDragUiOpacity", "guiOpenAnimation", "guiClosingAnimation", "animationTime", "showPageAnimations", "pageAnimationDuration", "reducedMotion", "showOpeningPageAnimation"};
+
+    public static final int SOUND_THEME_MATCH = 0;
+    public static final int SOUND_THEME_ONECONFIG = 1;
+    public static final int SOUND_THEME_MINECRAFT = 2;
 
     @Text(title = "Active Theme")
     public static String activeTheme = "Polyfrosted Dark";
@@ -166,8 +172,23 @@ public class ThemeConfig extends Config {
     )
     public static boolean showOpeningPageAnimation = false;
 
+    @Include
+    public static int soundTheme = SOUND_THEME_MATCH;
+
+    public static ThemeConfig INSTANCE;
+
     public ThemeConfig() {
         super("themes.json", "assets/oneconfig/brand/oneconfig-icon.svg", "Themes", Category.QOL);
+        INSTANCE = this;
+    }
+
+    public static void selectSoundTheme(int value) {
+        if (INSTANCE == null || INSTANCE.tree == null) {
+            soundTheme = value;
+            return;
+        }
+        INSTANCE.getProperty("soundTheme").setAs(value);
+        INSTANCE.save();
     }
 
     @Override
@@ -207,6 +228,12 @@ public class ThemeConfig extends Config {
                 ProviderKt.setPixelGridMode(v.intValue());
                 return false;
             });
+        addCallback(
+            "soundTheme", (Number v) -> {
+                SoundThemeSelection.INSTANCE.setValue(v.intValue());
+                UiSounds.onSoundThemeChanged();
+                return false;
+            });
     }
 
     @Override
@@ -215,6 +242,7 @@ public class ThemeConfig extends Config {
         updateAppearance(pageOpacity, sidebarOpacity, glowOpacity);
         ProviderKt.setUiScalePercent(uiScale);
         ProviderKt.setPixelGridMode(pixelGrid);
+        SoundThemeSelection.INSTANCE.setValue(soundTheme);
     }
 
     private static void updateAppearance(float page, float sidebar, float glow) {

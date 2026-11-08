@@ -8,6 +8,8 @@ object UiSounds {
 
     private var ambienceActive = false
 
+    private var ambienceTheme: UiSoundTheme? = null
+
     private fun loadService(): UiSoundService? = try {
         val it = ServiceLoader.load(UiSoundService::class.java, UiSoundService::class.java.classLoader).iterator()
         if (it.hasNext()) it.next() else null
@@ -72,8 +74,19 @@ object UiSounds {
         }
     }
 
+    @JvmStatic
+    @Synchronized
+    fun syncAmbienceTheme() {
+        if (!ambienceActive || !OneConfigConfig.enableUIAmbience) return
+        if (ambienceTheme == UiSoundTheme.current()) return
+        service?.stopAmbience(true)
+        startAmbienceIfEnabled()
+    }
+
     private fun startAmbienceIfEnabled() {
         if (!OneConfigConfig.enableUIAmbience) return
-        service?.startAmbience(UiSoundTheme.current(), ambienceVolume())
+        val theme = UiSoundTheme.current()
+        ambienceTheme = theme
+        service?.startAmbience(theme, ambienceVolume())
     }
 }

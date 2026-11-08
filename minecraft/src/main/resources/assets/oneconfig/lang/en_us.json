@@ -114,6 +114,13 @@
   "oneconfig.preferences.show_page_animations.description": "Animate transitions between pages.",
 
   "oneconfig.preferences.category.sounds": "Sounds",
+  "oneconfig.themes.sound_theme.title": "Sound Theme",
+  "oneconfig.themes.sound_theme.match": "Match Theme",
+  "oneconfig.themes.sound_theme.match.caption": "Follows your theme, now %s",
+  "oneconfig.themes.sound_theme.oneconfig": "OneConfig",
+  "oneconfig.themes.sound_theme.oneconfig.caption": "Soft, modern interface sounds",
+  "oneconfig.themes.sound_theme.minecraft": "Minecraft",
+  "oneconfig.themes.sound_theme.minecraft.caption": "Classic Minecraft interface sounds",
 
   "oneconfig.preferences.ui_sounds.title": "UI Sounds",
   "oneconfig.preferences.ui_sounds.description": "Play sound effects when interacting with the OneConfig menu and HUD designer.",
