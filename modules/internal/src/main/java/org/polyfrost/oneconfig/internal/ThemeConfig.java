@@ -196,6 +196,7 @@ public class ThemeConfig extends Config {
         if (tree == null) {
             polyfrostedRenameApplied = !Files.exists(ConfigManager.active().getFolder().resolve(id));
             preferencesMigrated = false;
+            soundTheme = SOUND_THEME_MATCH;
         }
         super.initialize(byConfigManager);
         hideIf("activeTheme", () -> true);
