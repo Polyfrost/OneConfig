@@ -26,9 +26,9 @@ import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -49,66 +49,108 @@ class ReorderState internal constructor(
     internal var onMove: (Int, Int) -> Unit = { _, _ -> }
     internal var onDragEnd: (() -> Unit)? = null
 
-    private val bounds = HashMap<Any, Rect>()
-    private val indices = HashMap<Any, Int>()
+    private class Slot(var index: Int) {
+        var rect: Rect? = null
+        var scale = 1f
+    }
+
+    private val slots = HashMap<Any, Slot>()
     private val settle = Animatable(0f)
 
     var draggingKey by mutableStateOf<Any?>(null)
         private set
 
-    private var dragOffset by mutableFloatStateOf(0f)
+    private var settlingKey by mutableStateOf<Any?>(null)
+    private var pointer by mutableFloatStateOf(0f)
+    private var draggedStart by mutableFloatStateOf(0f)
+    private var grab = 0f
+    private var movedAt = 0L
 
     val isDragging: Boolean get() = draggingKey != null
 
     internal val isVertical: Boolean get() = orientation == Orientation.Vertical
 
-    internal fun track(key: Any, index: Int, rect: Rect?) {
-        indices[key] = index
-        if (rect != null) bounds[key] = rect
+    internal fun main(offset: Offset): Float = if (isVertical) offset.y else offset.x
+
+    internal fun index(key: Any, index: Int) {
+        slots.getOrPut(key) { Slot(index) }.index = index
+    }
+
+    internal fun place(key: Any, coordinates: LayoutCoordinates) {
+        val slot = slots[key] ?: return
+        val start = coordinates.localToRoot(Offset.Zero)
+        val end = coordinates.localToRoot(Offset(coordinates.size.width.toFloat(), coordinates.size.height.toFloat()))
+        val rect = Rect(start, end)
+        val local = if (isVertical) coordinates.size.height else coordinates.size.width
+        slot.scale = if (local > 0) (rect.mainEnd() - rect.mainStart()) / local else 1f
+        if (slot.rect == rect) return
+        slot.rect = rect
+        movedAt = 0L
+        if (key == draggingKey) draggedStart = rect.mainStart()
+        if (draggingKey != null) retarget()
     }
 
     internal fun forget(key: Any) {
-        indices.remove(key)
-        bounds.remove(key)
+        slots.remove(key)
     }
 
-    internal fun offsetOf(key: Any): Float = when {
-        key == draggingKey -> dragOffset
-        key == settlingKey -> settle.value
+    internal fun offsetOf(key: Any): Float = when (key) {
+        draggingKey -> (pointer - grab - draggedStart) / (slots[key]?.scale?.takeIf { it > 0f } ?: 1f)
+        settlingKey -> settle.value
         else -> 0f
     }
 
-    private var settlingKey by mutableStateOf<Any?>(null)
-
-    internal fun start(key: Any) {
+    internal fun start(key: Any, at: Float): Boolean {
+        val rect = slots[key]?.rect ?: return false
         scope.launch { settle.snapTo(0f) }
         settlingKey = null
+        draggedStart = rect.mainStart()
+        grab = at - draggedStart
+        pointer = at
+        movedAt = 0L
         draggingKey = key
-        dragOffset = 0f
+        return true
     }
 
-    internal fun drag(delta: Offset) {
+    internal fun moveTo(at: Float) {
+        pointer = at
+        retarget()
+    }
+
+    private fun retarget() {
         val key = draggingKey ?: return
-        dragOffset += if (orientation == Orientation.Vertical) delta.y else delta.x
-        val dragged = bounds[key] ?: return
-        val from = indices[key] ?: return
-        val center = dragged.mainCenter() + dragOffset
-        val target = bounds.entries.firstOrNull { (other, rect) ->
-            other != key && center in rect.mainStart()..rect.mainEnd()
-        } ?: return
-        val to = indices[target.key] ?: return
+        if (movedAt != 0L && System.nanoTime() - movedAt < LAYOUT_WAIT_NS) return
+        val dragged = slots[key] ?: return
+        val rect = dragged.rect ?: return
+        val center = pointer - grab + (rect.mainEnd() - rect.mainStart()) / 2f
+        val others = slots.entries.filter { it.key != key && it.value.rect != null }
+        if (others.isEmpty()) return
+        val placed = slots.values.filter { it.rect != null }
+        val target = others.firstOrNull { center in it.value.rect!!.mainStart()..it.value.rect!!.mainEnd() }?.value
+            ?: when {
+                center < others.minOf { it.value.rect!!.mainStart() } -> placed.minBy { it.index }
+                center > others.maxOf { it.value.rect!!.mainEnd() } -> placed.maxBy { it.index }
+                else -> null
+            }
+            ?: return
+        val from = dragged.index
+        val to = target.index
         if (to == from) return
-        val shift = if (to > from) target.value.mainEnd() - dragged.mainEnd() else target.value.mainStart() - dragged.mainStart()
-        dragOffset -= shift
-        bounds[key] = dragged.shifted(shift)
+        for (slot in slots.values) {
+            if (slot === dragged) continue
+            if (from < to && slot.index in (from + 1)..to) slot.index--
+            if (from > to && slot.index in to until from) slot.index++
+        }
+        dragged.index = to
+        movedAt = System.nanoTime()
         onMove(from, to)
     }
 
     internal fun end() {
         val key = draggingKey ?: return
-        val left = dragOffset
+        val left = offsetOf(key)
         draggingKey = null
-        dragOffset = 0f
+        movedAt = 0L
         onDragEnd?.invoke()
         if (Motion.reduced || left == 0f) return
         settlingKey = key
@@ -119,10 +161,12 @@ class ReorderState internal constructor(
         }
     }
 
-    private fun Rect.mainStart() = if (orientation == Orientation.Vertical) top else left
-    private fun Rect.mainEnd() = if (orientation == Orientation.Vertical) bottom else right
-    private fun Rect.mainCenter() = (mainStart() + mainEnd()) / 2f
-    private fun Rect.shifted(by: Float) = if (orientation == Orientation.Vertical) translate(0f, by) else translate(by, 0f)
+    private fun Rect.mainStart() = if (isVertical) top else left
+    private fun Rect.mainEnd() = if (isVertical) bottom else right
+
+    private companion object {
+        private const val LAYOUT_WAIT_NS = 100_000_000L
+    }
 }
 
 @ExperimentalOneConfigUiApi
@@ -147,15 +191,14 @@ fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int): Modifier = 
 
 @ExperimentalOneConfigUiApi
 fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabled: Boolean): Modifier = composed {
-    state.track(key, index, null)
+    state.index(key, index)
     DisposableEffect(state, key) { onDispose { state.forget(key) } }
+    val holder = remember { ReorderCoordinates() }
     val dragging = state.draggingKey == key
     this
-        .onGloballyPositioned { if (state.draggingKey != key) state.track(key, index, Rect(it.positionInRoot(), it.size.toSize())) }
-        .zIndex(if (dragging) 1f else 0f)
-        .graphicsLayer {
-            val offset = state.offsetOf(key)
-            if (state.isVertical) translationY = offset else translationX = offset
+        .onGloballyPositioned {
+            holder.coordinates = it
+            state.place(key, it)
         }
         .then(
             if (!enabled) {
@@ -166,10 +209,13 @@ fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabled: Boo
                         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
                         if (down.isConsumed) return@awaitEachGesture
                         val crossed = awaitSlop(down.id, down.position) ?: return@awaitEachGesture
-                        state.start(key)
+                        val coordinates = holder.coordinates?.takeIf { it.isAttached } ?: return@awaitEachGesture
+                        if (!state.start(key, state.main(coordinates.localToRoot(down.position)))) return@awaitEachGesture
                         try {
-                            state.drag(crossed - down.position)
-                            follow(down.id) { state.drag(it) }
+                            state.moveTo(state.main(coordinates.localToRoot(crossed)))
+                            follow(down.id) { at ->
+                                holder.coordinates?.takeIf { it.isAttached }?.let { state.moveTo(state.main(it.localToRoot(at))) }
+                            }
                         } finally {
                             state.end()
                         }
@@ -177,12 +223,22 @@ fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabled: Boo
                 }
             },
         )
+        .zIndex(if (dragging) 1f else 0f)
+        .graphicsLayer {
+            val offset = state.offsetOf(key)
+            if (state.isVertical) translationY = offset else translationX = offset
+        }
+}
+
+private class ReorderCoordinates {
+    var coordinates: LayoutCoordinates? = null
 }
 
 private suspend fun AwaitPointerEventScope.awaitSlop(pointer: PointerId, origin: Offset): Offset? {
     while (true) {
         val event = awaitPointerEvent(PointerEventPass.Main)
         val change = event.changes.firstOrNull { it.id == pointer } ?: return null
+        if (event.type == PointerEventType.Scroll) continue
         if (!change.pressed || change.isConsumed) return null
         if ((change.position - origin).getDistance() > viewConfiguration.touchSlop) {
             change.consume()
@@ -195,9 +251,9 @@ private suspend fun AwaitPointerEventScope.follow(pointer: PointerId, onMove: (O
     while (true) {
         val event = awaitPointerEvent(PointerEventPass.Main)
         val change = event.changes.firstOrNull { it.id == pointer } ?: return
+        if (event.type == PointerEventType.Scroll) continue
         if (!change.pressed) return
-        val delta = change.position - change.previousPosition
         change.consume()
-        if (delta != Offset.Zero) onMove(delta)
+        if (change.position != change.previousPosition) onMove(change.position)
     }
 }
