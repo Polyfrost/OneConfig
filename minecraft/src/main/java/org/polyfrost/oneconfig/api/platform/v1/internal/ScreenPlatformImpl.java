@@ -31,6 +31,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+//? if > 1.8.9
+import com.mojang.text2speech.Narrator;
+//? if >= 1.21.10
+import net.minecraft.sounds.SoundSource;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
@@ -133,6 +137,39 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         if (chat == null) return;
         //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
         chat.addClientSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
+    }
+
+    @Override
+    public boolean narratorActive() {
+        //? if > 1.8.9 {
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.getNarrator().isActive() && minecraft.options.narrator().get().shouldNarrateSystem();
+        //?} else
+        //return false;
+    }
+
+    //? if > 1.8.9 {
+    private static Narrator narrator;
+
+    private static synchronized Narrator narrator() {
+        if (narrator == null) narrator = Narrator.getNarrator();
+        return narrator;
+    }
+    //?}
+
+    @Override
+    public void narrate(String text, boolean interrupt) {
+        //? if > 1.8.9 {
+        if (text == null || text.isBlank() || !narratorActive()) return;
+        Narrator narrator = narrator();
+        if (interrupt) narrator.clear();
+        //? if >= 1.21.10 {
+        narrator.say(text, interrupt, Minecraft.getInstance().options.getFinalSoundSourceVolume(SoundSource.VOICE));
+        //?} elif >= 1.21.5 {
+        /*narrator.say(text, interrupt, 1f);
+        *///?} else
+        //narrator.say(text, interrupt);
+        //?}
     }
 
     @Override
