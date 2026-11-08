@@ -35,6 +35,7 @@ class OneConfigLintPlugin : Plugin<Project> {
             compilerOptions {
                 allWarningsAsErrors = true
                 extraWarnings = true
+                progressiveMode = true
             }
         }
 

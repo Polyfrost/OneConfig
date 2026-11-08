@@ -84,6 +84,7 @@ kotlin {
         apiVersion = KotlinVersion.fromVersion(embeddedKotlinVersion.substringBeforeLast('.'))
         allWarningsAsErrors = true
         extraWarnings = true
+        progressiveMode = true
     }
 }
 
