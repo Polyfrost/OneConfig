@@ -29,7 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,11 +137,13 @@ private fun ThemeCard(family: String, variants: List<UITheme>, modifier: Modifie
     val interactionSource = rememberInteractionSource()
     val theme = LocalTheme.current
     val active = variants.firstOrNull { it.name == theme.name }
-    var picked by remember(family) { mutableStateOf(active ?: variants.firstOrNull { it.isLight == theme.isLight } ?: variants.first()) }
-    LaunchedEffect(active) {
-        if (active != null) picked = active
+    var pickedName by rememberSaveable(family) {
+        mutableStateOf((active ?: variants.firstOrNull { it.isLight == theme.isLight } ?: variants.first()).name)
     }
-    val shown = active ?: picked
+    LaunchedEffect(active) {
+        if (active != null) pickedName = active.name
+    }
+    val shown = active ?: variants.firstOrNull { it.name == pickedName } ?: variants.first()
     val isSelected = active != null
 
     val borderColor by animateColorAsState(
@@ -187,7 +189,7 @@ private fun ThemeCard(family: String, variants: List<UITheme>, modifier: Modifie
             )
             if (variants.size > 1) {
                 VariantToggle(variants, shown) { variant ->
-                    picked = variant
+                    pickedName = variant.name
                     if (isSelected) ThemeRegistry.activate(variant) else UiSounds.play(UiSoundEvent.CLICK)
                 }
             }
