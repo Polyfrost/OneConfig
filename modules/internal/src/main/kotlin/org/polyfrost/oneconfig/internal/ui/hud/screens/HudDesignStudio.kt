@@ -116,7 +116,7 @@ private var lockedHudToast: Notification? = null
  *
  * Re-uses the toast while it is still on screen so repeated attempts do not stack up identical entries
  */
-private fun notifyHudLocked() {
+internal fun notifyHudLocked() {
     lockedHudToast?.let { if (NotificationsManager.contains(it)) return }
     lockedHudToast = Notifications.info(
         "HUD element locked",
@@ -374,11 +374,7 @@ internal fun alignHuds(huds: List<Hud>, align: HudAlign) {
         }
         Triple(hud, hud.x + dx, hud.y + dy)
     }
-    repeat(3) {
-        var moved = false
-        for ((hud, tx, ty) in targets) if (hud.x != tx || hud.y != ty) { hud.setAbsolutePosition(tx, ty); moved = true }
-        if (!moved) return
-    }
+    applyHudTargets(targets)
 }
 
 private fun hudBounds(hud: Hud): HudBounds? {
