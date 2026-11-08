@@ -28,14 +28,7 @@ private val POPUP_GAP = 6.dp
 
 private class AnchoredPosition(private val alignment: Alignment.Horizontal, private val gap: Int) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
-        val left = anchorBounds.left
-        val right = anchorBounds.right - popupContentSize.width
-        val rtl = layoutDirection == LayoutDirection.Rtl
-        val x = when (alignment) {
-            Alignment.Start -> if (rtl) right else left
-            Alignment.CenterHorizontally -> anchorBounds.center.x - popupContentSize.width / 2
-            else -> if (rtl) left else right
-        }
+        val x = anchorBounds.left + alignment.align(popupContentSize.width, anchorBounds.width, layoutDirection)
         val below = anchorBounds.bottom + gap
         val above = anchorBounds.top - gap - popupContentSize.height
         val y = if (below + popupContentSize.height <= windowSize.height || above < 0) below else above

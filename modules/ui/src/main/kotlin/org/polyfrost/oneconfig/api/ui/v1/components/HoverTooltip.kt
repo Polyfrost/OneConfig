@@ -72,8 +72,12 @@ private class TooltipPosition(private val placement: TooltipPlacement, private v
             fitsBelow -> below
             else -> (if (preferAbove) above else below).coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0))
         }
-        val maxX = (windowSize.width - popupContentSize.width - edge).coerceAtLeast(edge)
-        return IntOffset(x.coerceIn(edge, maxX), y)
+        val clampedX = if (popupContentSize.width + edge * 2 > windowSize.width) {
+            ((windowSize.width - popupContentSize.width) / 2).coerceAtLeast(0)
+        } else {
+            x.coerceIn(edge, windowSize.width - popupContentSize.width - edge)
+        }
+        return IntOffset(clampedX, y)
     }
 }
 
