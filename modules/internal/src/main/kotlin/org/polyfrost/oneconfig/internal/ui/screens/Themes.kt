@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -261,18 +262,16 @@ private fun SoundThemePicker() {
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(horizontal = PageGutter),
         )
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val count = SoundThemeOptions.size
-            val available = maxWidth - PageGutter * 2
-            val cardWidth = maxOf(SoundCardMinWidth, (available - ThemeCardGap * (count - 1)) / count)
-            val rowState = rememberLazyListState()
-            LazyRow(
-                state = rowState,
-                modifier = Modifier.wheelScroll(rowState, Orientation.Horizontal),
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = PageGutter)) {
+            val fit = ((maxWidth + ThemeCardGap) / (SoundCardMinWidth + ThemeCardGap)).toInt()
+            val columns = fit.coerceIn(1, SoundThemeOptions.size)
+            val cardWidth = (maxWidth - ThemeCardGap * (columns - 1)) / columns
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(ThemeCardGap),
-                contentPadding = PaddingValues(horizontal = PageGutter),
+                verticalArrangement = Arrangement.spacedBy(ThemeCardGap),
+                maxItemsInEachRow = columns,
             ) {
-                items(SoundThemeOptions, key = { it.key }) { option ->
+                SoundThemeOptions.forEach { option ->
                     SoundThemeCard(option, option.value == selected, Modifier.width(cardWidth)) {
                         if (selected == option.value) {
                             UiSounds.onSoundThemeChanged()
