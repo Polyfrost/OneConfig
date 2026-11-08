@@ -43,6 +43,8 @@ import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.compose.backend.PolyCanvas
@@ -840,6 +842,7 @@ abstract class ComposeScreen(
         //return handled
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun dispatchKeyPressed(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
         if (bindingKey == InputConstants.KEY_ESCAPE) {
             if (KeybindRecordingBus.consumeEscape()) {
@@ -848,6 +851,10 @@ abstract class ComposeScreen(
             }
             if (KeybindRecordingBus.isRecording) {
                 sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)
+                return true
+            }
+            if (EscapeStack.closeTop()) {
+                consumedKeys += bindingKey
                 return true
             }
         }

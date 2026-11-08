@@ -13,7 +13,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip as InternalTooltip
 import org.polyfrost.oneconfig.internal.ui.components.Chip as InternalChip
@@ -126,6 +135,26 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
         enabled: Boolean,
         onClick: () -> Unit,
     ): Modifier = modifier.onClick(interactionSource, enabled, onClick)
+
+    override fun reducedMotion(): Boolean = OneConfigConfig.reducedMotion
+
+    @Composable
+    override fun popupSurface(modifier: Modifier, shape: Shape): Modifier {
+        val theme = LocalTheme.current
+        return modifier
+            .shellTransition()
+            .liquidGlass(shape, frosted = true)
+            .background(theme.popupBackground, shape)
+            .border(1.dp, theme.borderColor, shape)
+    }
+
+    @Composable
+    override fun Popup(
+        positionProvider: PopupPositionProvider,
+        onDismissRequest: (() -> Unit)?,
+        focusable: Boolean,
+        content: @Composable () -> Unit,
+    ) = ShellPopup(positionProvider, onDismissRequest, PopupProperties(focusable = focusable, clippingEnabled = false), content)
 
     @Composable
     override fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier =

@@ -179,6 +179,13 @@ public class OneConfigConfig extends Config {
     )
     public static boolean enableBackgroundBlur = true;
 
+    @Switch(
+        title = "oneconfig.preferences.reduced_motion.title",
+        subcategory = "oneconfig.preferences.category.gui",
+        description = "oneconfig.preferences.reduced_motion.description"
+    )
+    public static boolean reducedMotion = false;
+
     @Slider(
         title = "oneconfig.preferences.hud_drag_ui_opacity.title",
         subcategory = "oneconfig.preferences.category.gui",
