@@ -20,6 +20,10 @@ internal object MinecraftKeyboardAdapter {
         else -> KeyEvent.KEY_LOCATION_STANDARD
     }
 
+    fun isModifier(bindingKey: Int): Boolean = keyLocation(bindingKey).let {
+        it == KeyEvent.KEY_LOCATION_LEFT || it == KeyEvent.KEY_LOCATION_RIGHT
+    }
+
     fun toAwtKeyCode(shortcutKey: Int): Int = when (shortcutKey) {
         //? if sdl {
         SDLK_BACKSPACE -> KeyEvent.VK_BACK_SPACE

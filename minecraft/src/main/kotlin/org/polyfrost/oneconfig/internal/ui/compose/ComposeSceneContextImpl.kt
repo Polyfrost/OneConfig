@@ -23,7 +23,14 @@ import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import kotlinx.coroutines.awaitCancellation
 //?}
 
+//? if = 1.8.9 {
+/*import org.lwjgl.input.Keyboard
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes
+*///?}
+
 //? if sdl {
+import org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyboardFocus
+import org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyboardState
 import org.lwjgl.sdl.SDLMouse.*
 import org.lwjgl.sdl.SDLVideo.SDL_RaiseWindow
 //?} else {
@@ -37,20 +44,46 @@ private class InputModeManagerImpl : InputModeManager {
     override fun requestInputMode(inputMode: InputMode) = inputMode == InputMode.Keyboard
 }
 
+internal fun isKeyDown(key: Int): Boolean {
+    //? if sdl {
+    return InputConstants.isKeyDown(key)
+    //?} else {
+    /*//~ if < 1.21.10 'Minecraft.getInstance().window' -> 'Platform.compatibility().windowHandle()'
+    return InputConstants.isKeyDown(Minecraft.getInstance().window, key)
+    *///?}
+}
+
+internal fun heldKeysNow(): List<Int> {
+    //? if = 1.8.9 {
+    /*return (1 until Keyboard.KEYBOARD_SIZE).filter(Keyboard::isKeyDown).map { KeyCodes.fromLegacy(it).value }.filter { it > 0 }
+    *///?} elif sdl {
+    val state = SDL_GetKeyboardState() ?: return emptyList()
+    return (0 until state.limit()).filter { state.get(it) != 0.toByte() }
+    //?} else
+    //return (GLFW_KEY_SPACE..GLFW_KEY_LAST).filter(::isKeyDown)
+}
+
+internal fun mouseButtonsDownNow(): Int {
+    //? if sdl {
+    return Integer.bitCount(SDL_GetMouseState(null, null))
+    //?} else {
+    /*val window = Platform.compatibility().windowHandle()
+    return (GLFW_MOUSE_BUTTON_1..GLFW_MOUSE_BUTTON_LAST).count { glfwGetMouseButton(window, it) == GLFW_PRESS }
+    *///?}
+}
+
+internal fun isWindowFocused(): Boolean {
+    //? if sdl {
+    return SDL_GetKeyboardFocus() != 0L
+    //?} else
+    //return Minecraft.getInstance().isWindowActive
+}
+
 @ExperimentalComposeUiApi
 private class WindowInfoImpl : WindowInfo {
     override var containerSize: IntSize by mutableStateOf(
         Platform.screen().let { IntSize(it.windowWidth(), it.windowHeight()) }
     )
-
-    private fun isKeyDown(key: Int): Boolean {
-        //? if sdl {
-        return InputConstants.isKeyDown(key)
-        //?} else {
-        /*//~ if < 1.21.10 'Minecraft.getInstance().window' -> 'Platform.compatibility().windowHandle()'
-        return InputConstants.isKeyDown(Minecraft.getInstance().window, key)
-        *///?}
-    }
 
     override val keyboardModifiers: PointerKeyboardModifiers
         get() = PointerKeyboardModifiers(

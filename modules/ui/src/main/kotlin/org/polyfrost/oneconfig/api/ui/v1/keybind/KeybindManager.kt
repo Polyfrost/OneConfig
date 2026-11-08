@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import java.util.Collections
 import java.util.ServiceLoader
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.BooleanSupplier
@@ -229,6 +230,10 @@ object KeybindManager {
     @JvmStatic
     fun isTriggeredByMouse(bind: OneConfigKeybind, button: Int): Boolean =
         bind.mouseBtns?.contains(button) == true && bind.test(downKeys, downMouse, mods)
+
+    /** Keys held down right now, including ones pressed before the current screen opened */
+    @JvmStatic
+    val heldKeys: Set<Int> = Collections.unmodifiableSet(downKeys)
 
     @JvmStatic
     fun builder() = KeybindHelper()

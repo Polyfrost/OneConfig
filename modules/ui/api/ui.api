@@ -357,6 +357,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public static final fun configKeybinds ()Ljava/util/List;
 	public static final fun findConflicts (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Ljava/util/List;
+	public static final fun getHeldKeys ()Ljava/util/Set;
 	public static final fun hasTriggeredMouseBind (I)Z
 	public static final fun isInputCaptured ()Z
 	public static final fun isRegistered (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)Z

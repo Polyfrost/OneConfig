@@ -21,9 +21,8 @@ import org.polyfrost.oneconfig.internal.ui.compose.RawScroll;
 
 //? if = 1.8.9 {
 /*import org.lwjgl.input.Mouse;
-import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+import org.polyfrost.oneconfig.internal.legacy.LegacyInputEvents;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import pl.tomgirl.pylon.window.DisplaySdl;
 *///?}
 
 //? if > 1.8.9 {
@@ -64,22 +63,7 @@ public class Mixin_MouseInputEvent {
     *///?} else {
     /*@Inject(method = "next", at = @At("RETURN"), remap = false)
     private static void mouseCallback(CallbackInfoReturnable<Boolean> cir) {
-        if (!cir.getReturnValue()) return;
-
-        int button = Mouse.getEventButton();
-        if (button >= 0) {
-            EventManager.INSTANCE.post(new MouseInputEvent(KeyCodes.mouseFromLegacy(button), Mouse.getEventButtonState() ? 1 : 0));
-            return;
-        }
-
-        if (Mouse.getEventDWheel() != 0 || Minecraft.getInstance().screen == null || Mouse.getEventDX() == 0 && Mouse.getEventDY() == 0) return;
-
-        DisplaySdl display = DisplaySdl.instance();
-        float scaleX = (float) display.getWidth() / display.getWindowWidth();
-        float scaleY = (float) display.getHeight() / display.getWindowHeight();
-        float x = Mouse.getEventX() / scaleX;
-        float y = (display.getHeight() - 1 - Mouse.getEventY()) / scaleY;
-        MouseInputEvent.Moved.post(x, y);
+        if (cir.getReturnValue() && !LegacyInputEvents.deferred) LegacyInputEvents.postMouse();
     }
     *///? }
 
