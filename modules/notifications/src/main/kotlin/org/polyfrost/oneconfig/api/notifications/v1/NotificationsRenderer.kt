@@ -116,6 +116,12 @@ object NotificationsRenderer {
         if (ToastInput.hoveredAction !== hoveredAction) ToastInput.hoveredAction = hoveredAction
     }
 
+    @JvmStatic
+    fun consumeMouseButton(button: Int, pressed: Boolean): Boolean = ToastInput.consumeButton(button, pressed)
+
+    @JvmStatic
+    fun isPointerOverToast(): Boolean = ToastInput.hovered() != null
+
     internal fun dispatchClick(target: ToastHit?) {
         if (target == null) return
         if (!NotificationsManager.contains(target.notification) || target.notification.dismissRequested) {

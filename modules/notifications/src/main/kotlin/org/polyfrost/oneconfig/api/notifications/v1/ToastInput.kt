@@ -50,6 +50,8 @@ internal object ToastInput {
 
     private val leftButton by lazy { Platform.compatibility().keys().mouseButtonLeft }
 
+    private val consumedButtons = HashSet<Int>()
+
     fun clearHover() {
         hoverTarget = null
         hoveredAction = null
@@ -61,10 +63,15 @@ internal object ToastInput {
             mouseX = e.x
             mouseY = e.y
         }
-        EventManager.register(MouseInputEvent::class.java) { e ->
-            if (e.button == leftButton && e.state == MouseInputEvent.PRESSED) {
-                NotificationsRenderer.dispatchClick(hoverTarget)
-            }
-        }
+    }
+
+    fun hovered(): ToastHit? = hoverTarget?.takeIf { NotificationsManager.count > 0 }
+
+    fun consumeButton(button: Int, pressed: Boolean): Boolean {
+        if (!pressed) return consumedButtons.remove(button)
+        val target = hovered() ?: return false
+        consumedButtons += button
+        if (button == leftButton) NotificationsRenderer.dispatchClick(target)
+        return true
     }
 }
