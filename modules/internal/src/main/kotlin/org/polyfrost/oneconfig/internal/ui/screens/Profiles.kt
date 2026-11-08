@@ -1,17 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,9 +21,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,17 +39,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -82,7 +69,10 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuItemSize
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSurface
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -92,7 +82,6 @@ import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
-import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
@@ -100,7 +89,6 @@ import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
 enum class ProfileCategory(val title: String, val icon: String?) {
     All("All profiles", null),
@@ -932,21 +920,12 @@ private fun ProfileActionsMenu(
     onDelete: () -> Unit,
 ) {
     if (!expanded) return
-    val theme = LocalTheme.current
     ShellPopup(
         alignment = Alignment.TopEnd,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
     ) {
-        Column(
-            modifier = Modifier
-                .width(IntrinsicSize.Max)
-                .shellTransition()
-                .liquidGlass(theme.popupShape, frosted = true)
-                .background(theme.popupBackground, theme.popupShape)
-                .border(1.dp, theme.borderColor, theme.popupShape)
-                .padding(4.dp),
-        ) {
+        MenuSurface(Modifier) {
             ProfileMenuItem("copy", "Clone", enabled = enabled) {
                 onDismiss()
                 onClone()
@@ -992,36 +971,7 @@ private fun ProfileMenuItem(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val baseColor = if (danger) DangerColor else theme.textColor
-    val color = if (enabled) baseColor else theme.textColorSecondary
-    val shape = theme.popupShape.concentric(4.dp)
-    val hoverBackground by animateColorAsState(
-        targetValue = baseColor.copy(alpha = if (enabled && isHovered) 0.10f else 0f),
-        animationSpec = tween(120),
-        label = "profileMenuItemHover",
-    )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(hoverBackground, shape)
-            .then(
-                if (enabled) Modifier
-                    .onClick(interactionSource, onClick)
-                    .hoverable(interactionSource)
-                    .pointerHoverIcon(PointerIcon.Hand)
-                else Modifier
-            )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(icon, color = color, modifier = Modifier.size(14.dp))
-        Text(label, color = color, fontSize = 13.sp)
-    }
+    MenuItem(label, icon, null, MenuItemSize.Compact, danger, false, enabled, null, Modifier, null, onClick)
 }
 
 @Composable
@@ -1127,65 +1077,30 @@ private fun ProfileTextField(
     onValueChange: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
     val focusRequester = remember { FocusRequester() }
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val shape = theme.sideBarNavigationEntryShape
-    val borderColor by animateColorAsState(
-        if (error != null) DangerColor
-        else if (isFocused) Accent
-        else theme.borderColor
-    )
 
     Column(
         modifier = Modifier.width(width),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // TextFieldState needs its own migration, as it changes how every field hoists its state
-        @Suppress("DEPRECATION")
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            enabled = enabled,
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { if (enabled) onSubmit() }),
-            textStyle = TextStyle(
-                color = theme.textColor,
-                fontSize = 14.sp,
-                fontFamily = theme.typography.family,
-            ),
-            interactionSource = interactionSource,
-            cursorBrush = SolidColor(theme.textColor),
-            modifier = Modifier.trackTextInputFocus()
-                .fillMaxWidth()
-                .focusRequester(focusRequester)
-                .onPreviewKeyEvent { event ->
-                    if (enabled && event.type == KeyEventType.KeyDown &&
-                        (event.key == Key.Enter || event.key == Key.NumPadEnter)
-                    ) {
-                        onSubmit()
-                        true
-                    } else {
-                        false
-                    }
-                }
-                .background(theme.modCardBackground, shape)
-                .border(1.dp, borderColor, shape)
-                .padding(horizontal = 12.dp, vertical = 7.dp),
-            decorationBox = { innerTextField ->
-                Box {
-                    if (value.isEmpty()) {
-                        Text(
-                            placeholder,
-                            color = theme.textColorSecondary,
-                            fontSize = 14.sp,
-                        )
-                    }
-                    innerTextField()
-                }
-            },
+        TextField(
+            value,
+            onValueChange,
+            Modifier.fillMaxWidth(),
+            placeholder,
+            null,
+            Int.MAX_VALUE,
+            error != null,
+            enabled,
+            true,
+            true,
+            14.sp,
+            null,
+            false,
+            focusRequester,
+            null,
+            null,
+            onSubmit,
         )
         if (error != null) ProfileError(error, width)
     }
