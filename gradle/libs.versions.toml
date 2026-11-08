@@ -155,6 +155,8 @@ twelvemonkeys = ["twelvemonkeys-webp", "twelvemonkeys-bmp", "twelvemonkeys-core"
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-sam-with-receiver = { id = "org.jetbrains.kotlin.plugin.sam.with.receiver", version.ref = "kotlin" }
+kotlin-assignment = { id = "org.jetbrains.kotlin.plugin.assignment", version.ref = "kotlin" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 errorprone = { id = "net.ltgt.errorprone", version.ref = "errorprone-plugin" }
 

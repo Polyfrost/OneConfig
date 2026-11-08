@@ -1,7 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 plugins {
     id("net.fabricmc.fabric-loom-remap")
-    `oneconfig-fabric`
+    id("oneconfig-fabric")
 }
 
 dependencies {

@@ -1,3 +1,3 @@
 plugins {
-    `oneconfig-setup`
+    id("oneconfig-setup")
 }

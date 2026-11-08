@@ -1,7 +1,7 @@
 import net.fabricmc.loom.build.nesting.NestableJarGenerationTask
 import net.fabricmc.loom.task.NestJarsAction
 
-// Modrinth separately and is excluded from the bootstrap JiJ in oneconfig-bootstrap.gradle.kts
+// Modrinth separately and is excluded from the bootstrap JiJ in OneConfigBootstrapPlugin
 
 // NOTE: bump the prefix whenever the compose version changes: the "+compose.x.y.z" part is semver
 // build metadata, which version comparisons ignore, so updaters and dependency constraints
