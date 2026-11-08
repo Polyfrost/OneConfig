@@ -26,8 +26,9 @@ import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -150,7 +151,7 @@ fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabled: Boo
     DisposableEffect(state, key) { onDispose { state.forget(key) } }
     val dragging = state.draggingKey == key
     this
-        .onGloballyPositioned { if (state.draggingKey != key) state.track(key, index, it.boundsInRoot()) }
+        .onGloballyPositioned { if (state.draggingKey != key) state.track(key, index, Rect(it.positionInRoot(), it.size.toSize())) }
         .zIndex(if (dragging) 1f else 0f)
         .graphicsLayer {
             val offset = state.offsetOf(key)
@@ -164,9 +165,10 @@ fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabled: Boo
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
                         if (down.isConsumed) return@awaitEachGesture
-                        awaitSlop(down.id, down.position) ?: return@awaitEachGesture
+                        val crossed = awaitSlop(down.id, down.position) ?: return@awaitEachGesture
                         state.start(key)
                         try {
+                            state.drag(crossed - down.position)
                             follow(down.id) { state.drag(it) }
                         } finally {
                             state.end()
