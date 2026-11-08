@@ -75,7 +75,7 @@ private object HudPreviewCache {
     private val cache = HashMap<Hud, HudPreviewState>()
     private var generation = Int.MIN_VALUE
 
-    internal fun get(hud: Hud, revision: Int, build: () -> HudPreviewState): HudPreviewState {
+    fun get(hud: Hud, revision: Int, build: () -> HudPreviewState): HudPreviewState {
         if (revision != generation) {
             releaseAll()
             generation = revision

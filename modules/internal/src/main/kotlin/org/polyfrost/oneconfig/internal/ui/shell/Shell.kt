@@ -192,7 +192,6 @@ fun Shell(
                 backdrop(windowOffset)
                 if (glowAlpha > 0f) {
                     val w = size.width.roundToInt()
-                    val h = size.height.roundToInt()
                     val sw = SidebarWidth.roundToPx().coerceIn(0, w)
                     val accent = Accent.copy(alpha = 1f)
                     val shadow = if (theme.shadowEnabled) {

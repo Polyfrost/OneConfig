@@ -327,9 +327,12 @@ object DandelionCompat {
             else -> value?.toString() ?: ""
         }
 
+        // Dandelion is Java and doesn't promise non-null lists
+        fun readAll(values: List<Any>?) = ArrayList(values.orEmpty().mapNotNull(::read))
+
         val binding = option.binding()
         val property = Properties.functional(
-            getter = { ArrayList(binding.get().orEmpty().mapNotNull(::read)) },
+            getter = { readAll(binding.get()) },
             setter = { values: List<Any?> -> commit(option, values.mapNotNullTo(ArrayList(), ::write)) },
             id = id,
             name = option.name(),
@@ -339,7 +342,7 @@ object DandelionCompat {
 
         property.addMetadata("visualizer", visualizer)
         property.addMetadata("searchTags", option.tags())
-        property.addMetadata("default", ArrayList(binding.defaultValue().orEmpty().mapNotNull(::read)))
+        property.addMetadata("default", readAll(binding.defaultValue()))
         if (colour?.hasAlpha() == false) property.addMetadata("noAlpha", Unit)
         (entryController as? NumberController<*>)?.let {
             property.addMetadata("min", it.min().toFloat())
