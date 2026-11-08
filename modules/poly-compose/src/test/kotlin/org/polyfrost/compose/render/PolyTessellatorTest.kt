@@ -282,7 +282,6 @@ class PolyTessellatorTest {
 
     private fun reversedLoop(p: FloatArray) = FloatArray(p.size) { p[(p.size / 2 - 1 - it / 2) * 2 + it % 2] }
 
-    @Suppress("INVISIBLE_REFERENCE")
     @Test
     fun convexLoopsAreToldFromTheRest() {
         fun convex(vararg p: Float) = PolyTessellator.isConvexLoop(p, p.size / 2) to PolyTessellator.isConvexLoop(reversedLoop(p), p.size / 2)

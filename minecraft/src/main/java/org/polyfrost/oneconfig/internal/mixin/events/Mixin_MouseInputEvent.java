@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,8 +32,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 //@Mixin(value = Mouse.class, remap = false)
 public class Mixin_MouseInputEvent {
     //? >= 1.21.10 {
-    @Inject(method = "onButton", at = @At("HEAD"))
+    @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void mouseCallback(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
+        if (oneconfig$toastConsumes(buttonInfo.button(), action)) {
+            ci.cancel();
+            return;
+        }
         EventManager.INSTANCE.post(new MouseInputEvent(buttonInfo.button(), oneconfig$state(action)));
     }
 
@@ -49,8 +54,12 @@ public class Mixin_MouseInputEvent {
     }
 
     //?} elif > 1.8.9 {
-    /*@Inject(method = "onPress", at = @At("HEAD"))
+    /*@Inject(method = "onPress", at = @At("HEAD"), cancellable = true)
     private void mouseCallback(long handle, int button, int action, int mods, CallbackInfo ci) {
+        if (oneconfig$toastConsumes(button, action)) {
+            ci.cancel();
+            return;
+        }
         EventManager.INSTANCE.post(new MouseInputEvent(button, oneconfig$state(action)));
     }
 
@@ -61,19 +70,29 @@ public class Mixin_MouseInputEvent {
         }
     }
     *///?} else {
-    /*@Inject(method = "next", at = @At("RETURN"), remap = false)
+    /*@Inject(method = "next", at = @At("RETURN"), remap = false, cancellable = true)
     private static void mouseCallback(CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue() && !LegacyInputEvents.deferred) LegacyInputEvents.postMouse();
+        if (cir.getReturnValue() && !LegacyInputEvents.deferred && LegacyInputEvents.postMouse()) cir.setReturnValue(Mouse.next());
     }
     *///? }
 
     //? if > 1.8.9 {
-    @Inject(method = "onScroll", at = @At("HEAD"))
+    @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
     private void oneconfig$captureRawScroll(long window, double x, double y, CallbackInfo ci) {
+        if (NotificationsRenderer.isPointerOverToast()) {
+            ci.cancel();
+            return;
+        }
         RawScroll.x = x;
         RawScroll.y = y;
     }
     //?}
+
+    @Unique
+    private static boolean oneconfig$toastConsumes(int button, int action) {
+        if (action != InputConstants.PRESS && action != InputConstants.RELEASE) return false;
+        return NotificationsRenderer.consumeMouseButton(button, action == InputConstants.PRESS);
+    }
 
     @Unique
     private static int oneconfig$state(int action) {

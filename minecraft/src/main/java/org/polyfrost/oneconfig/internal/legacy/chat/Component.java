@@ -18,6 +18,8 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.jspecify.annotations.Nullable;
 
+// getSiblings is a List<Text> on Text, whereas every sibling here is known to be a Component
+@SuppressWarnings({"rawtypes", "unchecked"})
 public interface Component extends Message, FormattedText, Text {
     Style getStyle();
 
@@ -77,7 +79,7 @@ public interface Component extends Message, FormattedText, Text {
     }
 
     default MutableComponent copy() {
-        return new MutableComponent(this.getContents(), new ArrayList(this.getSiblings()), this.getStyle());
+        return new MutableComponent(this.getContents(), new ArrayList<Component>(this.getSiblings()), this.getStyle());
     }
 
     FormattedCharSequence getVisualOrderText();
@@ -230,7 +232,7 @@ public interface Component extends Message, FormattedText, Text {
     }
 
     static Component translationArg(final Message message) {
-        return (Component)(message instanceof Component component ? component : literal(message.getString()));
+        return message instanceof Component component ? component : literal(message.getString());
     }
 
     static Component translationArg(final UUID uuid) {

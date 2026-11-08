@@ -192,7 +192,7 @@ public class InputConstants {
 
     public static InputConstants.Key getKey(final String name) {
         if (InputConstants.Key.NAME_MAP.containsKey(name)) {
-            return (InputConstants.Key) InputConstants.Key.NAME_MAP.get(name);
+            return InputConstants.Key.NAME_MAP.get(name);
         }
 
         for (InputConstants.Type type : InputConstants.Type.values()) {
@@ -237,7 +237,7 @@ public class InputConstants {
         }
 
         public Component getDisplayName() {
-            return (Component) this.type.displayTextSupplier.apply(this.value, this.name);
+            return this.type.displayTextSupplier.apply(this.value, this.name);
         }
 
         public OptionalInt getNumericKeyValue() {
@@ -300,7 +300,7 @@ public class InputConstants {
         MOUSE("key.mouse", (value, name) -> L10n.has(name) ? Component.translatable(name) : Component.translatable("key.mouse", value));
 
         private static final String KEY_KEYBOARD_UNKNOWN = "key.keyboard.unknown";
-        private final Int2ObjectMap<InputConstants.Key> map = new Int2ObjectOpenHashMap();
+        private final Int2ObjectMap<InputConstants.Key> map = new Int2ObjectOpenHashMap<>();
         private final String defaultPrefix;
         private final BiFunction<Integer, String, Component> displayTextSupplier;
 
@@ -315,7 +315,7 @@ public class InputConstants {
         }
 
         public InputConstants.Key getOrCreate(final int value) {
-            return (InputConstants.Key) this.map.computeIfAbsent(value, intValue -> {
+            return this.map.computeIfAbsent(value, intValue -> {
                 String name = this.defaultPrefix + "." + intValue;
                 return new InputConstants.Key(name, this, intValue);
             });

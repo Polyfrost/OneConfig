@@ -270,11 +270,10 @@ class MinecraftKeybindModeTransitionsTest {
         val transitions: MinecraftKeybindModeTransitions
 
         init {
-            lateinit var initializedTransitions: MinecraftKeybindModeTransitions
-            initializedTransitions = MinecraftKeybindModeTransitions(
+            transitions = MinecraftKeybindModeTransitions(
                 saveProfile = { profile ->
                     profileSaveCalls += profile
-                    ownersSeenDuringProfileSave += initializedTransitions.liveOwner()
+                    ownersSeenDuringProfileSave += transitions.liveOwner()
                     if (profile == failProfileSave) throw IllegalStateException("profile save failed")
                     profiles[profile] = live
                 },
@@ -283,7 +282,7 @@ class MinecraftKeybindModeTransitionsTest {
                     val saved = profiles[profile]
                     if (saved != null) {
                         live = saved
-                        optionsSaved(initializedTransitions)
+                        optionsSaved()
                     }
                 },
                 saveShared = {
@@ -294,14 +293,11 @@ class MinecraftKeybindModeTransitionsTest {
                     val saved = shared
                     if (saved != null) {
                         live = saved
-                        optionsSaved(initializedTransitions)
+                        optionsSaved()
                     }
                 },
             )
-            transitions = initializedTransitions
         }
-
-        fun optionsSaved() = optionsSaved(transitions)
 
         fun preSaveLiveOwner() {
             val owner = transitions.liveOwner() ?: return
@@ -309,7 +305,7 @@ class MinecraftKeybindModeTransitionsTest {
             else shared = live
         }
 
-        private fun optionsSaved(transitions: MinecraftKeybindModeTransitions) {
+        fun optionsSaved() {
             transitions.captureSavedOptions { owner ->
                 capturedOptionsOwners += owner
                 if (owner.separateControls) profiles[owner.profile] = live

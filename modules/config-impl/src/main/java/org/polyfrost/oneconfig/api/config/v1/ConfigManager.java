@@ -460,12 +460,14 @@ public final class ConfigManager {
         }
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
         internal().save("profiles.json");
+        @SuppressWarnings({"rawtypes", "unchecked"}) // arrays of a generic type can't be created any other way
+        FileSerializer<String>[] serializers = core.backend.getSerializers().toArray(new FileSerializer[0]);
         if (profile.isEmpty()) {
             LOGGER.info("opened config manager onto root (no profile)");
-            active = new ConfigManager(Paths.get("config"), core.backend.getSerializers().toArray(new FileSerializer[0])).withWatcher();
+            active = new ConfigManager(Paths.get("config"), serializers).withWatcher();
         } else {
             LOGGER.info("opening profile {}", profile);
-            active = new ConfigManager(PROFILES_DIR.resolve(profile), core.backend.getSerializers().toArray(new FileSerializer[0])).withWatcher();
+            active = new ConfigManager(PROFILES_DIR.resolve(profile), serializers).withWatcher();
         }
         boolean wasRebinding = REBINDING_PROFILES.get();
         REBINDING_PROFILES.set(Boolean.TRUE);

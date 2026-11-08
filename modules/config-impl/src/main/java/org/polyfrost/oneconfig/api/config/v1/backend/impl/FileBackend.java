@@ -49,6 +49,7 @@ public class FileBackend extends Backend {
     private final Set<String> selfEvents = ConcurrentHashMap.newKeySet();
 
     @SafeVarargs
+    @SuppressWarnings("this-escape") // addSerializer only touches the map initialized above
     public FileBackend(Path folder, FileSerializer<String>... serializers) {
         this.folder = folder;
         for (FileSerializer<String> s : serializers) {

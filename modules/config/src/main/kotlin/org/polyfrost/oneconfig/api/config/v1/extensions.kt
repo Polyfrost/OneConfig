@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.api.config.v1
 
+// Property erases its type, so as with the Java getProp, the caller vouches for T
+@Suppress("UNCHECKED_CAST")
 inline fun <reified T> Tree.getProp(id: String): Property<T>? {
     return this.getProp(id) as Property<T>?
 }

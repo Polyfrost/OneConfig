@@ -31,6 +31,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+//? if > 1.8.9
+import net.minecraft.client.GameNarrator;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
@@ -133,6 +135,30 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         if (chat == null) return;
         //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
         chat.addClientSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
+    }
+
+    @Override
+    public boolean narratorActive() {
+        //? if > 1.8.9 {
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.getNarrator().isActive() && minecraft.options.narrator().get().shouldNarrateSystem();
+        //?} else
+        //return false;
+    }
+
+    @Override
+    public void narrate(String text, boolean interrupt) {
+        //? if > 1.8.9 {
+        if (text == null || text.isBlank() || !narratorActive()) return;
+        GameNarrator narrator = Minecraft.getInstance().getNarrator();
+        //? if >= 1.21.8 {
+        if (interrupt) narrator.saySystemNow(text);
+        else narrator.saySystemQueued(Component.literal(text));
+        //?} else {
+        /*if (interrupt) narrator.sayNow(text);
+        else narrator.say(Component.literal(text));
+        *///?}
+        //?}
     }
 
     @Override

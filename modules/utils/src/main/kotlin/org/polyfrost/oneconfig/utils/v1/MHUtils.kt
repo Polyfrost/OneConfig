@@ -104,6 +104,8 @@ object MHUtils {
      */
     @ApiStatus.Internal
     @JvmField
+    // IMPL_LOOKUP is private to the JDK, and Unsafe is the only way to read it without opening java.base
+    @Suppress("DEPRECATION")
     val trustedLookup: MethodHandles.Lookup = try {
         // tee hee
         val implLookup = MethodHandles.Lookup::class.java.getDeclaredField("IMPL_LOOKUP")
@@ -314,9 +316,11 @@ object MHUtils {
      * @param interfaceFuncName the name of the interface function to wrap
      * @param type the method type of the method (**AND INTERFACE FUNCTION**) to wrap
      */
+    // the metafactory just implemented classOfT, which is what T stands for
+    @Suppress("UNCHECKED_CAST")
     fun <T> lmf(it: Any, classOfT: Class<T>, methodName: String, interfaceFuncName: String, type: MethodType) = try {
         val isStatic = it is Class<*>
-        val cls = if (isStatic) it as Class<*> else it.javaClass
+        val cls = if (isStatic) it else it.javaClass
         val mh = if (isStatic) trustedLookup.findStatic(cls, methodName, type) else trustedLookup.findVirtual(cls, methodName, type)
         val target = LambdaMetafactory.metafactory(
             // asm: due to the fact we use the trusted lookup, the only visible classes are ones on the bootstrap class loader,

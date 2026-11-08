@@ -45,7 +45,7 @@ private const val MEASURE_BOUNDS = 2000f
 private val LOGGER = LogManager.getLogger("OneConfig/HUD-Preview")
 
 @Suppress("DEPRECATION")
-private fun Throwable.isFatalPreviewFailure(): Boolean = this is VirtualMachineError || this is ThreadDeath
+private fun Throwable.isFatalPreviewFailure(): Boolean = this is VirtualMachineError
 
 private fun Hud.updateForPreview() {
     try {
@@ -75,7 +75,7 @@ private object HudPreviewCache {
     private val cache = HashMap<Hud, HudPreviewState>()
     private var generation = Int.MIN_VALUE
 
-    internal fun get(hud: Hud, revision: Int, build: () -> HudPreviewState): HudPreviewState {
+    fun get(hud: Hud, revision: Int, build: () -> HudPreviewState): HudPreviewState {
         if (revision != generation) {
             releaseAll()
             generation = revision

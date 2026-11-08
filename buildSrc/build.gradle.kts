@@ -1,9 +1,12 @@
 import dev.detekt.gradle.Detekt
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.3.20" // keep compatible with kotlin-dsl
-    `kotlin-dsl`
+    `java-gradle-plugin`
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.kotlin.sam.with.receiver)
+    alias(libs.plugins.kotlin.assignment)
     alias(libs.plugins.detekt)
 }
 
@@ -22,6 +25,8 @@ fun plugin(provider: Provider<PluginDependency>): Provider<String> = provider.ma
 fun plugin(supplier: ProviderConvertible<PluginDependency>): Provider<String> = plugin(supplier.asProvider())
 
 dependencies {
+    compileOnly(gradleKotlinDsl())
+
     // Mirroring https://github.com/EssentialGG/essential-gradle-toolkit/blob/master/build.gradle.kts
     implementation("org.ow2.asm:asm-commons:9.11.1")
     implementation("com.google.guava:guava:33.0.0-jre")
@@ -48,6 +53,41 @@ detekt {
     config.setFrom("../config/detekt/detekt.yml")
 }
 
+gradlePlugin {
+    mapOf(
+        "oneconfig-bootstrap" to "OneConfigBootstrapPlugin",
+        "oneconfig-bridge" to "OneConfigBridgePlugin",
+        "oneconfig-compose-bundle-publish" to "OneConfigComposeBundlePublishPlugin",
+        "oneconfig-fabric" to "OneConfigFabricPlugin",
+        "oneconfig-lint" to "OneConfigLintPlugin",
+        "oneconfig-neoforge" to "OneConfigNeoForgePlugin",
+        "oneconfig-setup" to "OneConfigSetupPlugin",
+    ).forEach { (pluginId, className) ->
+        plugins.register(pluginId) {
+            id = pluginId
+            implementationClass = className
+        }
+    }
+}
+
+samWithReceiver {
+    annotation("org.gradle.api.HasImplicitReceiver")
+}
+
+assignment {
+    annotation("org.gradle.api.SupportsKotlinAssignmentOverloading")
+}
+
+kotlin {
+    compilerOptions {
+        // plugins run against the Kotlin stdlib embedded in Gradle, not the one from the Kotlin Gradle plugin
+        apiVersion = KotlinVersion.fromVersion(embeddedKotlinVersion.substringBeforeLast('.'))
+        allWarningsAsErrors = true
+        extraWarnings = true
+        progressiveMode = true
+    }
+}
+
 tasks {
     // buildSrc's classpath covers the plugins used by the rest of the build's scripts
     register<Detekt>("detektScripts") {
@@ -59,13 +99,7 @@ tasks {
         classpath.from(sourceSets.main.get().compileClasspath, sourceSets.main.get().output)
     }
 
-    // skips the kotlin-dsl generated sources
-    withType<Detekt>().configureEach {
-        val buildDir = layout.buildDirectory.get().asFile
-        exclude { it.file.startsWith(buildDir) }
-    }
-
-    // mirrors oneconfig-lint.gradle.kts, which buildSrc can't apply to itself
+    // mirrors OneConfigLintPlugin, which buildSrc can't apply to itself
     named<Detekt>("detekt") {
         enabled = false
         dependsOn(withType<Detekt>().matching { it.name != "detekt" && !it.name.endsWith("SourceSet") })

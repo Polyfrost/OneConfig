@@ -1,7 +1,7 @@
 plugins {
     id("net.fabricmc.fabric-loom")
-    `oneconfig-bridge` // creates the modImplementation and friends configurations
-    `oneconfig-fabric`
+    id("oneconfig-bridge") // creates the modImplementation and friends configurations
+    id("oneconfig-fabric")
 }
 
 dependencies {

@@ -288,7 +288,7 @@ object ClothConfigCompat {
         }
         val type: Class<*>? = when {
             isKeybind -> OneConfigKeybind::class.java
-            isItem -> java.util.List::class.java
+            isItem -> List::class.java
             keys != null -> String::class.java
             indexed -> Int::class.javaObjectType
             else -> null
@@ -347,7 +347,7 @@ object ClothConfigCompat {
             ArrayList((v as? List<*> ?: emptyList<Any?>()).map { if (numeric) it as? Number ?: 0 else it?.toString() ?: "" })
         }
         val property = bindProperty(
-            entry, currentValue, id, name, conditioned, java.util.List::class.java, read,
+            entry, currentValue, id, name, conditioned, List::class.java, read,
             write = { v -> (v as? List<*>)?.mapTo(ArrayList()) { if (numeric) coerceNumber(it, element) else it?.toString() ?: "" } },
         )
 
@@ -560,10 +560,10 @@ object ClothConfigCompat {
         currentValue.firstOrNull { it != null }?.let { return it.javaClass }
         return when {
             entryClassMatches(entry, "StringListListEntry") -> String::class.java
-            entryClassMatches(entry, "IntegerListListEntry") -> Integer::class.java
-            entryClassMatches(entry, "LongListListEntry") -> java.lang.Long::class.java
-            entryClassMatches(entry, "FloatListListEntry") -> java.lang.Float::class.java
-            entryClassMatches(entry, "DoubleListListEntry") -> java.lang.Double::class.java
+            entryClassMatches(entry, "IntegerListListEntry") -> Int::class.javaObjectType
+            entryClassMatches(entry, "LongListListEntry") -> Long::class.javaObjectType
+            entryClassMatches(entry, "FloatListListEntry") -> Float::class.javaObjectType
+            entryClassMatches(entry, "DoubleListListEntry") -> Double::class.javaObjectType
             else -> null
         }
     }
@@ -571,10 +571,10 @@ object ClothConfigCompat {
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (type) {
-            Integer::class.java -> number.toInt()
-            java.lang.Long::class.java -> number.toLong()
-            java.lang.Float::class.java -> number.toFloat()
-            java.lang.Double::class.java -> number.toDouble()
+            Int::class.javaObjectType -> number.toInt()
+            Long::class.javaObjectType -> number.toLong()
+            Float::class.javaObjectType -> number.toFloat()
+            Double::class.javaObjectType -> number.toDouble()
             else -> number
         }
     }

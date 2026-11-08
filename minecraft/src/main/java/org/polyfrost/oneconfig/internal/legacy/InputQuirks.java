@@ -23,7 +23,7 @@ public class InputQuirks {
     }
 
     public static String keyboardTranslationKey(final String name) {
-        return (String)KEYBOARD_DISPLAY_OVERRIDES.getOrDefault(name, name);
+        return KEYBOARD_DISPLAY_OVERRIDES.getOrDefault(name, name);
     }
 
     static {

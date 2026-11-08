@@ -1,7 +1,7 @@
 plugins {
     id("net.fabricmc.fabric-loom-remap")
     id("ploceus")
-    `oneconfig-fabric`
+    id("oneconfig-fabric")
 }
 
 repositories {

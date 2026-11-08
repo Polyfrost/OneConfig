@@ -58,7 +58,7 @@ fun Tree.findMarkedSwitch(): Property<*>? {
 fun Tree.findMasterSwitch(): Property<Boolean>? {
     findMarkedSwitch()?.let { return it as Property<Boolean> }
     val candidates = map.values.filterIsInstance<Property<*>>().filter {
-        it.type == Boolean::class.javaPrimitiveType || it.type == java.lang.Boolean::class.java
+        it.type == Boolean::class.javaPrimitiveType || it.type == Boolean::class.javaObjectType
     }
     for (name in MASTER_SWITCH_NAMES) {
         candidates.firstOrNull { masterSwitchName(it.id ?: "") == name }?.let { return it as Property<Boolean> }

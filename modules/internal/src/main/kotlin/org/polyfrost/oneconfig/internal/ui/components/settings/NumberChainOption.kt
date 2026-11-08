@@ -302,6 +302,8 @@ private fun ChainValueEditor(
 
     fun commit() = onCommit(text.toFloatOrNull()?.coerceIn(min, max) ?: initial)
 
+    // TextFieldState needs its own migration, as it changes how every field hoists its state
+    @Suppress("DEPRECATION")
     BasicTextField(
         value = text,
         onValueChange = { text = filterNumberInput(it) },

@@ -7,6 +7,7 @@ import org.lwjgl.input.Mouse;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import pl.tomgirl.pylon.window.DisplaySdl;
 
 public final class LegacyInputEvents {
@@ -27,14 +28,19 @@ public final class LegacyInputEvents {
         }
     }
 
-    public static void postMouse() {
+    public static boolean postMouse() {
         int button = Mouse.getEventButton();
         if (button >= 0) {
-            EventManager.INSTANCE.post(new MouseInputEvent(KeyCodes.mouseFromLegacy(button), Mouse.getEventButtonState() ? 1 : 0));
-            return;
+            int key = KeyCodes.mouseFromLegacy(button);
+            boolean pressed = Mouse.getEventButtonState();
+            if (NotificationsRenderer.consumeMouseButton(key, pressed)) return true;
+            EventManager.INSTANCE.post(new MouseInputEvent(key, pressed ? 1 : 0));
+            return false;
         }
 
-        if (Mouse.getEventDWheel() != 0 || Minecraft.getInstance().screen == null || Mouse.getEventDX() == 0 && Mouse.getEventDY() == 0) return;
+        if (Mouse.getEventDWheel() != 0 && Minecraft.getInstance().screen != null && NotificationsRenderer.isPointerOverToast()) return true;
+
+        if (Mouse.getEventDWheel() != 0 || Minecraft.getInstance().screen == null || Mouse.getEventDX() == 0 && Mouse.getEventDY() == 0) return false;
 
         DisplaySdl display = DisplaySdl.instance();
         float scaleX = (float) display.getWidth() / display.getWindowWidth();
@@ -42,6 +48,7 @@ public final class LegacyInputEvents {
         float x = Mouse.getEventX() / scaleX;
         float y = (display.getHeight() - 1 - Mouse.getEventY()) / scaleY;
         MouseInputEvent.Moved.post(x, y);
+        return false;
     }
 }
 *///?}

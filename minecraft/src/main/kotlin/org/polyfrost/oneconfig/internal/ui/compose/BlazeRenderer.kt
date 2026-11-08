@@ -1113,7 +1113,7 @@ internal object KeptMeshes {
             pass.enableScissor(m[0], m[1], m[2], m[3])
         } else {
             val window = Minecraft.getInstance().window
-            val s = window.guiScale.toInt()
+            val s = window.guiScale
             val right = min(scissor.right() * s, window.width)
             val bottom = min(scissor.bottom() * s, window.height)
             pass.enableScissor(scissor.left() * s, window.height - bottom, max(0, right - scissor.left() * s), max(0, bottom - scissor.top() * s))

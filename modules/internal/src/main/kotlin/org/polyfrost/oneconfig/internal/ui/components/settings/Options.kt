@@ -1,20 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -32,29 +20,25 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import androidx.compose.ui.window.PopupProperties
 import java.util.function.Consumer
 import java.util.function.Predicate
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuItemSize
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
-
-private val ContextMenuPadding = 4.dp
 
 /**
  * Per-property reset counters
@@ -182,73 +166,20 @@ fun OptionContextMenu(
     onUnbind: (() -> Unit)? = null,
 ) {
     if (!expanded) return
-    val theme = LocalTheme.current
     val isKeybind = remember(System.identityHashCode(prop)) { prop.get() is OneConfigKeybind }
     val effectiveReset = onReset ?: if (isKeybind) ({ resetKeybindOption(prop) }) else null
     val effectiveUnbind = onUnbind ?: if (isKeybind) ({ unbindKeybindOption(prop) }) else null
-    ShellPopup(
-        alignment = Alignment.TopStart,
-        offset = offset,
-        onDismissRequest = onDismiss,
-        properties = PopupProperties(focusable = true),
-    ) {
-        Column(
-            // intrinsic width keeps the menu content-sized while rows fillMaxWidth so hover backgrounds
-            // span the whole menu instead of each row's own text width
-            //TODO: fix this always moving right
-            modifier = Modifier
-                .width(IntrinsicSize.Max)
-                .shellTransition()
-                .liquidGlass(theme.popupShape, frosted = true)
-                .background(theme.popupBackground, theme.popupShape)
-                .border(1.dp, theme.borderColor, theme.popupShape)
-                .padding(ContextMenuPadding),
-        ) {
-            ContextMenuItem("refresh", "Reset to default", enabled = resetEnabled) {
-                if (effectiveReset != null) effectiveReset() else resetOption(prop)
+    ContextMenu(expanded, offset, onDismiss) {
+        MenuItem("Reset to default", "refresh", null, MenuItemSize.Compact, false, false, resetEnabled, null, Modifier, null) {
+            if (effectiveReset != null) effectiveReset() else resetOption(prop)
+            onDismiss()
+        }
+        if (effectiveUnbind != null) {
+            MenuItem("Unbind", "close") {
+                effectiveUnbind()
                 onDismiss()
-            }
-            if (effectiveUnbind != null) {
-                ContextMenuItem("close", "Unbind", enabled = true) {
-                    effectiveUnbind()
-                    onDismiss()
-                }
             }
         }
     }
 }
 
-@Composable
-private fun ContextMenuItem(icon: String, label: String, enabled: Boolean, onClick: () -> Unit) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val color = if (enabled) theme.textColor else theme.textColorSecondary
-    val hoverBgColor by animateColorAsState(
-        targetValue = theme.textColor.copy(alpha = if (enabled && isHovered) 0.10f else 0f),
-        animationSpec = tween(120),
-        label = "contextMenuItemHover",
-    )
-    val itemShape = theme.popupShape.concentric(ContextMenuPadding)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(itemShape)
-            .background(hoverBgColor, itemShape)
-            .then(
-                if (enabled) {
-                    Modifier.onClick(interactionSource, onClick)
-                        .hoverable(interactionSource)
-                        .pointerHoverIcon(PointerIcon.Hand)
-                } else {
-                    Modifier
-                },
-            )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(icon, color = color, modifier = Modifier.size(14.dp))
-        Text(label, color = color, fontSize = 13.sp)
-    }
-}

@@ -18,6 +18,8 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.BindNotInScreen;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.KeybindCodec;
 
+// adapters are looked up by their output's Class, which can only be the raw Map.class
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class OneConfigKeybindAdapter extends Adapter<OneConfigKeybind, Map> {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Keybinds");
     private final KeybindCodec codec;

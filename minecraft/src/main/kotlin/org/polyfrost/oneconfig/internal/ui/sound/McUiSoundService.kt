@@ -108,7 +108,7 @@ class McUiSoundService : UiSoundService {
                 } catch (_: Throwable) {
                 }
             }
-            val instance = playAmbienceInstance(theme, ambienceVolumeFor(theme, volume))
+            playAmbienceInstance(theme, ambienceVolumeFor(theme, volume))
             UiSoundDucking.setActive(true)
             driveAmbienceLoop()
             driveMusicDuckFade()
@@ -142,7 +142,7 @@ class McUiSoundService : UiSoundService {
         )
     }
 
-    private fun playAmbienceInstance(theme: UiSoundTheme, targetVolume: Float): FadingLoopSoundInstance {
+    private fun playAmbienceInstance(theme: UiSoundTheme, targetVolume: Float) {
         val soundIds = ambienceSoundIds(theme)
         //? if > 1.8.9 {
         val event = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("oneconfig", nextAmbienceSoundId(theme, soundIds)))
@@ -157,7 +157,6 @@ class McUiSoundService : UiSoundService {
         val instance = FadingLoopSoundInstance(event, source, targetVolume, theme, soundIds.size == 1)
         ambience = instance
         mc.soundManager.play(instance)
-        return instance
     }
 
     @Synchronized

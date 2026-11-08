@@ -136,6 +136,7 @@ public final class NetworkUtils {
         return setupConnection(url, DEF_AGENT, 5000, false);
     }
 
+    @SuppressWarnings("deprecation") // the replacement goes through URI, which rejects URLs that callers can currently pass
     public static InputStream setupConnection(String url, String userAgent, int timeout, boolean useCaches) throws IOException {
         HttpURLConnection connection = ((HttpURLConnection) new URL(url).openConnection());
         connection.setRequestMethod("GET");

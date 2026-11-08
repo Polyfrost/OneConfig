@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
 import java.lang.annotation.*;
-import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 
@@ -40,7 +40,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property;
  * <br>
  * Any property in the array must be a {@link Boolean}
  * <br><br>
- * For complex conditions use {@link Config#addDependency(String, BooleanSupplier)} or {@link Property#addDisplayCondition(BooleanSupplier...)}
+ * For complex conditions use {@link Config#addDependency(String, String, Supplier)} or {@link Property#addDisplayCondition(Supplier...)}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})

@@ -117,6 +117,8 @@ internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
                         }.build()
                     ).addFunction(
                         FunSpec.builder("register")
+                            // KotlinPoet always spells out the redundant public
+                            .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "REDUNDANT_VISIBILITY_MODIFIER").build())
                             .addParameter(
                                 ParameterSpec.builder(
                                     "init",

@@ -216,7 +216,7 @@ object WWaypointsCompat {
     }
 
     private fun currentFovDegrees(): Float? = runCatching {
-        (Minecraft.getInstance()?.options?.fov()?.get() as? Number)?.toFloat()
+        (Minecraft.getInstance().options.fov().get() as? Number)?.toFloat()
     }.getOrNull()
 
     /**
@@ -824,9 +824,7 @@ object WWaypointsCompat {
     }
 
     private fun onClientThread(block: () -> Unit) {
-        val client = Minecraft.getInstance()
-        if (client != null) client.execute { runCatching(block).onFailure { LOGGER.warn("wWaypoints action failed", it) } }
-        else runCatching(block).onFailure { LOGGER.warn("wWaypoints action failed", it) }
+        Minecraft.getInstance().execute { runCatching(block).onFailure { LOGGER.warn("wWaypoints action failed", it) } }
     }
 
     private fun saveFileInBackground(

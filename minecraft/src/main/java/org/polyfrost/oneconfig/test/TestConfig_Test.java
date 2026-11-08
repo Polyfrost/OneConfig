@@ -41,7 +41,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
 @SuppressWarnings("unused")
-public class TestConfig_Test extends Config {
+public final class TestConfig_Test extends Config {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/TestMod");
     private static TestConfig_Test INSTANCE;
 

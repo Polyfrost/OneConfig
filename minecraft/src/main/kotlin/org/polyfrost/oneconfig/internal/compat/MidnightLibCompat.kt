@@ -149,7 +149,6 @@ object MidnightLibCompat {
                 var subcategory: String? = null
 
                 for (row in (list as AbstractSelectionList<*>).children()) {
-                    if (row == null) continue
                     val titleComponent = readField(row, "text")?.get(row) as? Component
                     val title = titleComponent?.string?.takeIf { it.isNotBlank() }
                     val widgets = (readField(row, "buttons")?.get(row) as? List<*>).orEmpty()
@@ -193,7 +192,7 @@ object MidnightLibCompat {
 
             is EditBox -> {
                 val property = Properties.functional(
-                    getter = { widget.value ?: "" },
+                    getter = { widget.value },
                     setter = { v: String -> runCatching { widget.value = v } },
                     id = id, name = title, description = null, type = String::class.java,
                 )
@@ -412,11 +411,11 @@ object MidnightLibCompat {
     }
 
     private fun boxed(type: Class<*>): Class<*> = when (type) {
-        Integer.TYPE -> Integer::class.java
-        java.lang.Long.TYPE -> java.lang.Long::class.java
-        java.lang.Float.TYPE -> java.lang.Float::class.java
-        java.lang.Double.TYPE -> java.lang.Double::class.java
-        java.lang.Boolean.TYPE -> java.lang.Boolean::class.java
+        Int::class.java -> Int::class.javaObjectType
+        Long::class.java -> Long::class.javaObjectType
+        Float::class.java -> Float::class.javaObjectType
+        Double::class.java -> Double::class.javaObjectType
+        Boolean::class.java -> Boolean::class.javaObjectType
         else -> type
     }
 
@@ -425,15 +424,14 @@ object MidnightLibCompat {
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (type) {
-            Integer::class.java -> number.toInt()
-            java.lang.Long::class.java -> number.toLong()
-            java.lang.Float::class.java -> number.toFloat()
-            java.lang.Double::class.java -> number.toDouble()
+            Int::class.javaObjectType -> number.toInt()
+            Long::class.javaObjectType -> number.toLong()
+            Float::class.javaObjectType -> number.toFloat()
+            Double::class.javaObjectType -> number.toDouble()
             else -> number
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun listProperty(
         field: Field,
         id: String,
@@ -448,10 +446,9 @@ object MidnightLibCompat {
         },
         setter = { v: List<Any?> -> runCatching { field.set(null, v.mapNotNullTo(ArrayList(), write)) } },
         id = id, name = name, description = description,
-        type = java.util.List::class.java as Class<List<Any?>>,
+        type = List::class.java,
     )
 
-    @Suppress("UNCHECKED_CAST")
     private fun singleItemProperty(
         id: String,
         name: String,
@@ -462,7 +459,7 @@ object MidnightLibCompat {
         getter = { ArrayList(listOfNotNull(runCatching(read).getOrNull()?.takeIf { it.isNotBlank() })) },
         setter = { v: List<Any?> -> runCatching { write(v.firstOrNull()?.toString() ?: "") } },
         id = id, name = name, description = description,
-        type = java.util.List::class.java as Class<List<Any?>>,
+        type = List::class.java,
     )
 
     private fun functionalField(field: Field, id: String, name: String, description: String?): Property<*> =

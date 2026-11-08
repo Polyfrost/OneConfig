@@ -363,7 +363,7 @@ object UkulibCompat {
 
     private fun openScreen(creator: Any) {
         @Suppress("UNCHECKED_CAST")
-        val opener = readField(creator, "opener") as? UnaryOperator<Screen> ?: return
+        val opener = readField(creator, "opener") as? UnaryOperator<Screen?> ?: return
         val parent: Screen = Platform.screen().current<Screen>() ?: return
         val screen = opener.apply(parent) ?: return
         Platform.screen().display(screen)

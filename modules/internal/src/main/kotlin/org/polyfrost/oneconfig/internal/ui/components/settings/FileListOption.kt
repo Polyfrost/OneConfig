@@ -90,6 +90,8 @@ private fun RowScope.PathField(
     onValueChange: (String) -> Unit,
 ) {
     val theme = LocalTheme.current
+    // TextFieldState needs its own migration, as it changes how every field hoists its state
+    @Suppress("DEPRECATION")
     BasicTextField(
         value = value,
         onValueChange = onValueChange,

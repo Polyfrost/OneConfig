@@ -1,5 +1,5 @@
 plugins {
-    `oneconfig-neoforge`
+    id("oneconfig-neoforge")
 }
 
 tasks.named("build") {
