@@ -21,11 +21,7 @@ public abstract class WorldEvent implements Event {
 
     /**
      * This is a Duck method because Minecraft versions differ
-     * <br> It returns the expected type for that minecraft version
-     * <ul>
-     *     <li>modern forge gives a ClientLevel</li>
-     *     <li>fabric and forge pre-1.17 give a ClientWorld</li>
-     * </ul>
+     * <br> It returns the client world of the running Minecraft version ({@code ClientLevel} in Mojang mappings)
      */
     @SuppressWarnings("unchecked")
     public <T> T getWorld() {

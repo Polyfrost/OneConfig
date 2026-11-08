@@ -145,13 +145,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
             }
         }
 
-        if (loader == "neoforge") {
-            configurations {
-                val localRuntime = create("localRuntime")
-                named("runtimeClasspath") { this.extendsFrom(localRuntime) }
-            }
-        }
-
         configurations.configureEach {
             exclude(group = "org.jetbrains.skiko")
             exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
@@ -280,10 +273,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
             }
 
             val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
-            when (loader) {
-                "fabric", "ornithe" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
-                "neoforge" -> "runtimeOnly"(libsCatalog.findLibrary("devauth-neoforge").get())
-            }
+            "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
 
             if (versionedCatalog.has("cinnabar") && project.hasProperty("minecraft.vulkan")) {
                 handleApiDep(versionedCatalog["cinnabar"])
@@ -315,7 +305,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
             for (project in rootProject.project(":modules").subprojects) {
                 if ("relocator" in project.path) {
                     "compileOnly"(project(project.path))
-                } else if ("dependencies" !in project.path) {
+                } else {
                     "api"(project(project.path)) {
                         attributes {
                             attribute(includeInLoader, TRUE)

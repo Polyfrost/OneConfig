@@ -38,12 +38,6 @@ val FABRIC: ModLoader = object : ModLoader {
     }
 }
 
-val NEO_FORGE: ModLoader = object : ModLoader {
-    override val name: String = "neoforge"
-    override fun versionName(version: String) = "$version-neoforge"
-    override fun buildFile(version: String) = "neoforge.gradle.kts"
-}
-
 val ORNITHE: ModLoader = object : ModLoader {
     override val name: String = "ornithe"
     override fun versionName(version: String) = "$version-ornithe"
@@ -52,21 +46,17 @@ val ORNITHE: ModLoader = object : ModLoader {
 
 val versions = buildList {
     fun fabric(version: String) = add(version to listOf(FABRIC))
-    fun neoforge(version: String) = add(version to listOf(NEO_FORGE))
     fun ornithe(version: String) = add(version to listOf(ORNITHE))
-    fun both(version: String) {
-        add(version to listOf(FABRIC))
-    }
 
-    both("26.3")
-    both("26.2")
-    both("26.1")
-    both("1.21.11")
-    both("1.21.10")
-    both("1.21.8")
-    both("1.21.5")
-    both("1.21.4")
-    both("1.21.1")
+    fabric("26.3")
+    fabric("26.2")
+    fabric("26.1")
+    fabric("1.21.11")
+    fabric("1.21.10")
+    fabric("1.21.8")
+    fabric("1.21.5")
+    fabric("1.21.4")
+    fabric("1.21.1")
     ornithe("1.8.9")
 }
 
@@ -79,10 +69,10 @@ stonecutter {
         }
     }
 
-    // mirrors every Fabric node of the minecraft tree
+    // mirrors every node of the minecraft tree
     create("bootstrap") {
         versions.forEach { (version, loaders) ->
-            loaders.filter { it == FABRIC || it == ORNITHE }.forEach { loader ->
+            loaders.forEach { loader ->
                 version(loader.versionName(version), version).buildscript = loader.buildFile(version)
             }
         }
@@ -93,9 +83,6 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("fabric") {
             from(files(rootProject.projectDir.resolve("gradle/fabric.versions.toml")))
-        }
-        create("neoforge") {
-            from(files(rootProject.projectDir.resolve("gradle/neoforge.versions.toml")))
         }
         create("ornithe") {
             from(files(rootProject.projectDir.resolve("gradle/ornithe.versions.toml")))
@@ -146,8 +133,6 @@ listOf(
     "notifications",
     "ui",
     "internal",
-    "dependencies",
-    //"dependencies:legacy",
     "utils",
     "mod-toggles",
     "relocator",

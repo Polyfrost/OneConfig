@@ -126,7 +126,6 @@ kyori-examination-string = { module = "net.kyori:examination-string", version.re
 kyori-option = { module = "net.kyori:option", version.ref = "kyori-option" }
 
 devauth-fabric = { module = "me.djtheredstoner:DevAuth-fabric", version.ref = "devauth" }
-devauth-neoforge = { module = "me.djtheredstoner:DevAuth-neoforge", version.ref = "devauth" }
 
 [bundles]
 adventure = [

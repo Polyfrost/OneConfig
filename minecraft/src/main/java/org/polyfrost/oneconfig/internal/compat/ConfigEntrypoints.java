@@ -50,11 +50,9 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigEntrypoint;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
-//? if !neoforge {
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
-//?}
 
 public final class ConfigEntrypoints {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/ConfigEntrypoints");
@@ -498,7 +496,6 @@ public final class ConfigEntrypoints {
             if (providers != null) return providers;
             List<Provider> found = new ArrayList<>();
             try {
-                //? if !neoforge {
                 for (EntrypointContainer<ConfigEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(ConfigEntrypoint.ENTRYPOINT, ConfigEntrypoint.class)) {
                     found.add(new Provider(
                             container.getProvider().getMetadata().getId(),
@@ -506,7 +503,6 @@ public final class ConfigEntrypoints {
                             container::getEntrypoint
                     ));
                 }
-                //?}
             } catch (Throwable t) {
                 // not cached so a discovery attempted too early is retried
                 if (!discoveryFailureLogged) LOGGER.error("Failed to discover OneConfig config entrypoints", t);
@@ -516,11 +512,9 @@ public final class ConfigEntrypoints {
             Set<String> ids = new LinkedHashSet<>();
             for (Provider provider : found) ids.add(provider.modId);
             Map<String, String> nested = new HashMap<>();
-            //? if !neoforge {
             for (String id : ids) {
                 FabricLoader.getInstance().getModContainer(id).ifPresent(container -> collectNested(container, id, ids, nested));
             }
-            //?}
             nestedIds = Collections.unmodifiableMap(nested);
             providerIds = Collections.unmodifiableSet(ids);
             providers = Collections.unmodifiableList(found);
@@ -528,7 +522,6 @@ public final class ConfigEntrypoints {
         }
     }
 
-    //? if !neoforge {
     // a nested mod that provides an entrypoint itself is left as its own provider
     private static void collectNested(ModContainer container, String providerId, Set<String> ids, Map<String, String> nested) {
         for (ModContainer child : container.getContainedMods()) {
@@ -537,5 +530,4 @@ public final class ConfigEntrypoints {
             collectNested(child, providerId, ids, nested);
         }
     }
-    //?}
 }

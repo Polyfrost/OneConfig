@@ -14,7 +14,6 @@ stonecutter {
             match(
                 current.project.substringAfterLast("-"),
                 "fabric",
-                "neoforge",
                 "ornithe"
             )
             val catalogue = rootProject.getForwardingVersionCatalog(current)

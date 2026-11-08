@@ -19,15 +19,3 @@ tasks.register("publishMods") {
     description = "Publishes all bootstrap nodes to Modrinth and CurseForge."
     dependsOn(stonecutter.tasks.named("publishMods"))
 }
-
-stonecutter {
-    parameters {
-        constants {
-            match(
-                current.project.substringAfterLast("-"),
-                "fabric",
-                "neoforge"
-            )
-        }
-    }
-}

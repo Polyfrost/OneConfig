@@ -172,12 +172,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");
 
-        //? neoforge {
-        //mixins.add("events.Mixin_ChatReceiveEvent_Forge");
-        //mixins.add("events.Mixin_ScreenOpenEvent_Forge");
-        //? } else {
         mixins.add("events.Mixin_ScreenOpenEvent_Fabric");
-        //? }
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
 

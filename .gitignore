@@ -33,12 +33,8 @@ git-story_media
 .DS_STORE
 
 
-# Created by https://www.toptal.com/developers/gitignore/api/forgegradle,gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
-# Edit at https://www.toptal.com/developers/gitignore?templates=forgegradle,gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
-
-### ForgeGradle ###
-# Minecraft client/server files
-run/
+# Created by https://www.toptal.com/developers/gitignore/api/gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
+# Edit at https://www.toptal.com/developers/gitignore?templates=gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
 
 ### Git ###
 # Created by git for backups. To disable backups in Git:
@@ -345,7 +341,7 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
-# End of https://www.toptal.com/developers/gitignore/api/forgegradle,gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
+# End of https://www.toptal.com/developers/gitignore/api/gradle,intellij,intellij+all,intellij+iml,visualstudiocode,java,kotlin,maven,macos,linux,git
 
 minecraft/versions/*/run
 minecraft/versions/*/.fabric/
