@@ -23,7 +23,10 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions.allWarningsAsErrors = true
+    compilerOptions {
+        allWarningsAsErrors = true
+        extraWarnings = true
+    }
 }
 
 // the enabled Detekt rules need type resolution, which only the per-compilation tasks have
