@@ -274,7 +274,7 @@ private fun SoundThemePicker() {
                 SoundThemeOptions.forEach { option ->
                     SoundThemeCard(option, option.value == selected, Modifier.width(cardWidth)) {
                         if (selected == option.value) {
-                            UiSounds.onSoundThemeChanged()
+                            UiSounds.play(UiSoundEvent.CLICK)
                         } else {
                             SoundThemeSelection.value = option.value
                             ThemeConfig.selectSoundTheme(option.value)

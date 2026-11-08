@@ -19,6 +19,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellAppearance;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.sound.SoundThemeSelection;
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
@@ -232,7 +233,7 @@ public class ThemeConfig extends Config {
         addCallback(
             "soundTheme", (Number v) -> {
                 SoundThemeSelection.INSTANCE.setValue(v.intValue());
-                UiSounds.onSoundThemeChanged();
+                UiSounds.onSoundThemeChanged(UiSoundEvent.CLICK);
                 return false;
             });
     }

@@ -65,9 +65,10 @@ object UiSounds {
     }
 
     @JvmStatic
+    @JvmOverloads
     @Synchronized
-    fun onSoundThemeChanged() {
-        play(UiSoundEvent.OPEN)
+    fun onSoundThemeChanged(preview: UiSoundEvent = UiSoundEvent.OPEN) {
+        play(preview)
         if (ambienceActive && OneConfigConfig.enableUIAmbience) {
             service?.stopAmbience(true)
             startAmbienceIfEnabled()
