@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,16 +29,23 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressMode
+import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
+import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.DropdownOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.hudHasPositionDefaults
+import org.polyfrost.oneconfig.internal.ui.hud.hudProperty
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
 import org.polyfrost.oneconfig.internal.ui.hud.screens.placementLabel
@@ -348,10 +356,67 @@ fun Settings(hud: Hud?, query: String, onDeleted: () -> Unit) {
             }
         }
 
+        if (hud.hasVisibilityKeyMode()) VisibilityKeySection(hud, query)
+
         hud.tree?.let { HudConfigScreen(it, query) }
 
         if (hud.canDelete() && hudSearchMatches(query, "Delete HUD")) {
             DeleteHudButton(hud, onDeleted)
+        }
+    }
+}
+
+@Composable
+private fun VisibilityKeySection(hud: Hud, query: String) {
+    val keyProp = hudProperty(hud, "visibilityKeybind")
+    val modeProp = hudProperty(hud, "visibilityKeyMode") ?: return
+    var holdThreshold by remember { mutableStateOf(hud.visibilityKeyHoldThreshold.toFloat()) }
+    // a HUD without its own key is driven by some other input so its mode always applies
+    val bound = keyProp == null || hud.visibilityKeybind.isBound
+
+    Section("Visibility Keybind", query, "Visibility Keybind", "Key Mode", "Hold Threshold") {
+        CompositionLocalProvider(LocalOptionWidth provides 176.dp) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (keyProp != null) {
+                    HudSettingTarget(hud, "visibilityKeybind") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            KeybindOption(KeybindOptionData(keyProp))
+                            Text("Key", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                        }
+                    }
+                }
+                if (bound) {
+                    HudSettingTarget(hud, "visibilityKeyMode") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            DropdownOption(DropdownOptionData(modeProp))
+                            Text("Key Mode", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                        }
+                    }
+                    if (hud.visibilityKeyMode == KeyPressMode.QuickPress) {
+                        HudSettingTarget(hud, "visibilityKeyHoldThreshold") {
+                            NumberSpinner(
+                                holdThreshold,
+                                {
+                                    holdThreshold = it
+                                    Snapshot.withMutableSnapshot { hud.visibilityKeyHoldThreshold = it.toInt() }
+                                },
+                                50f,
+                                1000f,
+                                50f,
+                                width = 176.dp,
+                                unit = "ms",
+                                label = "Hold Threshold",
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

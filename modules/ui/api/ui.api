@@ -518,6 +518,26 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeyModifiers {
 	public static final fun of (I)B
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode : java/lang/Enum {
+	public static final field Held Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;
+	public static final field QuickPress Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;
+	public static final field Toggle Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressState {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun getActive ()Z
+	public final fun input (ZLorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;J)Z
+	public final fun input (ZLorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;JJ)Z
+	public static synthetic fun input$default (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressState;ZLorg/polyfrost/oneconfig/api/ui/v1/keybind/KeyPressMode;JJILjava/lang/Object;)Z
+	public final fun isDown ()Z
+	public final fun reset ()Z
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {
 	public static final field $stable I
 	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper$Companion;
