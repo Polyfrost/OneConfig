@@ -23,12 +23,13 @@ import net.minecraft.client.renderer.state.gui.GuiElementRenderState
 //?} else
 //import net.minecraft.client.gui.render.state.GuiElementRenderState
 import net.minecraft.resources.Identifier
-//? if >= 26.3 {
+//? if >= 26.2 {
 import com.mojang.renderpearl.api.GpuFormat
+//?} else
+//import com.mojang.blaze3d.textures.TextureFormat
 import com.mojang.renderpearl.api.buffers.GpuBuffer
 import org.polyfrost.oneconfig.internal.ui.themes.BackdropSample
 import org.slf4j.LoggerFactory
-//?}
 import org.polyfrost.oneconfig.internal.mixin.render.RenderPipelinesAccessor
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 import kotlin.math.max
@@ -53,7 +54,6 @@ internal object LiquidGlass {
     private val dirty = ArrayList<ScreenRectangle?>()
     private var submitted = false
     private var lastUsed = 0L
-    //? if >= 26.3 {
     private const val SAMPLE_X = 8
     private const val SAMPLE_Y = 6
     private const val SAMPLE_TIMEOUT_NANOS = 2_000_000_000L
@@ -65,7 +65,6 @@ internal object LiquidGlass {
     private var releaseSample = false
     private var warnedSample = false
     private var sampledFrame = false
-    //?}
 
     fun interface Range {
         fun draw(from: Int, to: Int)
@@ -195,7 +194,6 @@ internal object LiquidGlass {
         submitted = false
         drawBounds.clear()
         glassDraws.clear()
-        //? if >= 26.3
         sampledFrame = false
         if (texture != null && System.nanoTime() - lastUsed > RELEASE_AFTER_NANOS) release()
     }
@@ -206,14 +204,12 @@ internal object LiquidGlass {
         view = null
         texture = null
         setup = TextureSetup.noTexture()
-        //? if >= 26.3 {
         if (sampling) {
             releaseSample = true
         } else {
             sampleBuffer?.close()
             sampleBuffer = null
         }
-        //?}
     }
 
     private fun covers(region: ScreenRectangle?): Boolean {
@@ -233,16 +229,13 @@ internal object LiquidGlass {
         val h = src.getHeight(0)
         if (dst.getWidth(0) != w || dst.getHeight(0) != h || dst.format != src.format) return false
         RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(src, dst, 0, 0, 0, 0, 0, w, h)
-        //? if >= 26.3 {
         if (!sampledFrame) {
             sampledFrame = true
             if (BackdropSample.due()) sample(src)
         }
-        //?}
         return true
     }
 
-    //? if >= 26.3 {
     private fun sample(src: GpuTexture) {
         if (sampling) {
             if (System.nanoTime() - samplingSince < SAMPLE_TIMEOUT_NANOS) return
@@ -252,7 +245,10 @@ internal object LiquidGlass {
             sampleBuffer?.close()
             sampleBuffer = null
         }
+        //? if >= 26.2 {
         if (src.format != GpuFormat.RGBA8_UNORM || src.usage() and GpuTexture.USAGE_COPY_SRC == 0) {
+        //?} else
+        //if (src.format != TextureFormat.RGBA8 || src.usage() and GpuTexture.USAGE_COPY_SRC == 0) {
             warnSample(null)
             return
         }
@@ -295,7 +291,10 @@ internal object LiquidGlass {
             return
         }
         if (buffer.isClosed) return
+        //? if >= 26.2 {
         val view = buffer.map(true, false)
+        //?} else
+        //val view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(buffer, true, false)
         try {
             val data = view.data()
             BackdropSample.publish(IntArray(count) {
@@ -306,7 +305,6 @@ internal object LiquidGlass {
             view.close()
         }
     }
-    //?}
 
     private fun union(a: ScreenRectangle, b: ScreenRectangle): ScreenRectangle {
         val l = min(a.left(), b.left())
