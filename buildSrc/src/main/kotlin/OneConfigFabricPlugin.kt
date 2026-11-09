@@ -16,6 +16,7 @@ import org.gradle.kotlin.dsl.withType
 class OneConfigFabricPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
         pluginManager.apply(OneConfigSetupPlugin::class.java)
+        pluginManager.apply(OneConfigDistributionPlugin::class.java)
 
         dependencies {
             "minecraft"("com.mojang:minecraft:${versionedCatalog.versions["minecraft"]}")

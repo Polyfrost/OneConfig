@@ -53,7 +53,6 @@ detekt {
 
 gradlePlugin {
     mapOf(
-        "oneconfig-bootstrap" to "OneConfigBootstrapPlugin",
         "oneconfig-bridge" to "OneConfigBridgePlugin",
         "oneconfig-compose-bundle-publish" to "OneConfigComposeBundlePublishPlugin",
         "oneconfig-fabric" to "OneConfigFabricPlugin",

@@ -3,6 +3,16 @@ plugins {
 }
 
 stonecutter active "26.3-fabric"
+stonecutter tasks {
+    order("publishModrinth")
+    order("publishCurseforge")
+}
+
+tasks.register("publishMods") {
+    group = "publishing"
+    description = "Publishes all nodes to Modrinth and CurseForge."
+    dependsOn(stonecutter.tasks.named("publishMods"))
+}
 
 stonecutter handlers {
     inherit("aw", "classtweaker")

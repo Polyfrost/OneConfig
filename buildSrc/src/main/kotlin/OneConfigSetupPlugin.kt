@@ -2,7 +2,6 @@ import com.google.devtools.ksp.gradle.KspExtension
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
-import java.lang.Boolean.TRUE
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -10,7 +9,6 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.ExternalModuleDependencyBundle
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.api.attributes.Attribute
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.Provider
 import org.gradle.api.publish.PublishingExtension
@@ -36,8 +34,6 @@ import org.gradle.language.jvm.tasks.ProcessResources
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
-private val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
 
 class OneConfigSetupPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
@@ -92,6 +88,11 @@ class OneConfigSetupPlugin : Plugin<Project> {
         }
 
         evaluationDependsOn(":modules")
+        // build metadata is ignored by version comparisons anyway
+        val composeBundleVersion = evaluationDependsOn(":modules:compose-bundle").version.toString().substringBefore('+')
+
+        // nested into the jar shipped to players by OneConfigDistributionPlugin
+        configurations.dependencyScope("bundle")
 
         val sourceSets = extensions.getByType<SourceSetContainer>()
         configure<JavaPluginExtension> {
@@ -222,16 +223,19 @@ class OneConfigSetupPlugin : Plugin<Project> {
             if (adventurePlatform != null) {
                 "modApi"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
                 "modImplementation"(adventurePlatform) { exclude("net.fabricmc.fabric-api") }
+                "bundle"(adventurePlatform)
             }
 
-            handleApiDep(versionedCatalog.bundles["kotlin"])
-            handleApiDep(versionedCatalog.bundles["kotlinx"])
+            // Fabric Language Kotlin is a standalone mod that ships these
+            handleApiDep(versionedCatalog.bundles["kotlin"], bundle = false)
+            handleApiDep(versionedCatalog.bundles["kotlinx"], bundle = false)
             handleApiDep(versionedCatalog.bundles["nightconfig"])
             handleApiDep(versionedCatalog["snakeyaml"])
             handleApiDep(versionedCatalog.bundles["twelvemonkeys"])
             handleApiDep(versionedCatalog["java-objc-bridge"])
             val hypixelModApiVersion = if (stonecutter.eval(stonecutter.current.version, ">= 26.1") || loader == "ornithe") "1.0.2" else "1.0.1"
-            handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion")
+            // the bundled Hypixel Mod API mod ships it
+            handleApiDep("net.hypixel:mod-api:$hypixelModApiVersion", bundle = false)
             handleApiDep(versionedCatalog["hypixel-data"])
 
             if (loader == "fabric") {
@@ -246,16 +250,19 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 } else {
                     "modImplementation"(hypixelFabricMod) { isTransitive = false }
                 }
+                "bundle"(hypixelFabricMod)
             } else if (loader == "ornithe") {
-                "modLocalRuntime"("org.polyfrost:mod-api-fabric:1.0.2+build.3+mc1.8.9") { isTransitive = false }
+                val hypixelOrnitheMod = "org.polyfrost:mod-api-fabric:1.0.2+build.3+mc1.8.9"
+                "modLocalRuntime"(hypixelOrnitheMod) { isTransitive = false }
+                "bundle"(hypixelOrnitheMod)
             }
 
             handleApiDep(versionedCatalog["mixin-squared"])
             handleApiDep(versionedCatalog["commonmark"])
 
             if (loader == "fabric") {
-                handleApiDep(versionedCatalog["fabric-language-kotlin"])
-                handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true)
+                handleApiDep(versionedCatalog["fabric-language-kotlin"], bundle = false)
+                handleApiDep(versionedCatalog["fabric-loader"], isMod = true, transitive = true, bundle = false)
 
                 val fullFabricApiVersion = when {
                     stonecutter.eval(stonecutter.current.version, ">= 26.3") -> "0.160.3+26.3"
@@ -302,11 +309,9 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 if ("relocator" in project.path) {
                     "compileOnly"(project(project.path))
                 } else {
-                    "api"(project(project.path)) {
-                        attributes {
-                            attribute(includeInLoader, TRUE)
-                        }
-                    }
+                    "api"(project(project.path))
+                    // compose-bundle ships as its own mod
+                    if (project.path != ":modules:compose-bundle") "bundle"(project(project.path))
                 }
             }
 
@@ -374,6 +379,8 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 put("mod_version", version)
                 put("fabric_mc_version", range)
                 put("loader_version", versionedCatalog.versions["loader"].requiredVersion)
+                put("flk_version", versionedCatalog.versions["fabric-language-kotlin"].requiredVersion)
+                put("compose_version", composeBundleVersion)
             }
 
             this.inputs.properties(fabricProperties)
@@ -431,17 +438,18 @@ class OneConfigSetupPlugin : Plugin<Project> {
     }
 }
 
-private fun Project.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false) {
+private fun Project.handleApiDep(dependency: String, isMod: Boolean = false, transitive: Boolean = false, bundle: Boolean = true) {
     val dep = dependencies.create(dependency) as ExternalModuleDependency
-    handleApiDep(dep, isMod, transitive)
+    handleApiDep(dep, isMod, transitive, bundle)
 }
 
 private fun Project.handleApiDep(
     dependency: ExternalModuleDependency,
     isMod: Boolean = false,
     transitive: Boolean = false,
+    bundle: Boolean = true,
 ) {
-    handleApiDep(provider { dependency }, isMod, transitive)
+    handleApiDep(provider { dependency }, isMod, transitive, bundle)
 }
 
 @JvmName("handleApiDepBundle")
@@ -449,25 +457,21 @@ private fun Project.handleApiDep(
     dependency: Provider<out ExternalModuleDependencyBundle>,
     isMod: Boolean = false,
     transitive: Boolean = false,
+    bundle: Boolean = true,
 ) {
-    dependency.get().forEach { handleApiDep(it, isMod, transitive) }
+    dependency.get().forEach { handleApiDep(it, isMod, transitive, bundle) }
 }
 
 private fun Project.handleApiDep(
     dependency: Provider<out ExternalModuleDependency>,
     isMod: Boolean = false,
     transitive: Boolean = false,
+    bundle: Boolean = true,
 ) {
     dependencies {
-        if (isMod) "modImplementation"(dependency) {
+        (if (isMod) "modImplementation" else "api")(dependency) {
             isTransitive = transitive
-            attributes {
-                attribute(includeInLoader, TRUE)
-            }
-        } else {
-            "api"(dependency) {
-                isTransitive = transitive
-            }
         }
+        if (bundle) "bundle"(dependency)
     }
 }

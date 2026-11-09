@@ -68,15 +68,6 @@ stonecutter {
             }
         }
     }
-
-    // mirrors every node of the minecraft tree
-    create("bootstrap") {
-        versions.forEach { (version, loaders) ->
-            loaders.forEach { loader ->
-                version(loader.versionName(version), version).buildscript = loader.buildFile(version)
-            }
-        }
-    }
 }
 
 dependencyResolutionManagement {
