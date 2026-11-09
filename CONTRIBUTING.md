@@ -19,7 +19,8 @@ You might have to reload your Gradle project, to do this click Gradle in the top
 
 Now in the Gradle tab under the `loom` you should run the `setupGradle` task and then under the `ide` tab you should run the `genIntellijRuns` task.
 This will allow you to run Minecraft with your ide and use the debugger. 
-To login in to your Minecraft account while in your development enviroment, we recommend the use of [DevAuth](https://github.com/DJtheRedstoner/DevAuth)
+To login in to your Minecraft account while in your development enviroment, you can use the `microsoftLogin` Gradle task. This will securely save your Minecraft access token at a user level.
+A stale token that cannot be refreshed will fall back to offline launch, but you can log out explicitly using the `microsoftLogout` task.
 
 # Pull Requests
 To contribute to OneConfig, please open a pull request. Here are the basic guidelines.

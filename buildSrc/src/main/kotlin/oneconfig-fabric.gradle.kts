@@ -52,8 +52,6 @@ loom.apply {
     runConfigs["client"].apply {
         ideConfigGenerated(true)
         runDir = "../../run"
-        // -Pdevauth=false launches offline for runs that do not need a real account
-        property("devauth.enabled", (project.findProperty("devauth") ?: "true").toString())
         property("oneconfig.test", "true")
     }
 }

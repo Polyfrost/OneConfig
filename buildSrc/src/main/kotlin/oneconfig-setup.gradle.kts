@@ -60,7 +60,6 @@ repositories {
     }
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
     scopedMaven("https://central.sonatype.com/repository/maven-snapshots/", "net.kyori")
-    scopedMaven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1", "me.djtheredstoner")
     scopedMaven("https://maven.azureaaron.net/snapshots", "net.azureaaron")
     google()
 }
@@ -293,12 +292,6 @@ dependencies {
             else -> "0.116.17+1.21.1"
         }
         "modApi"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
-    }
-
-    val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
-    when (loader) {
-        "fabric", "ornithe" -> "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
-        "neoforge" -> "runtimeOnly"(libsCatalog.findLibrary("devauth-neoforge").get())
     }
 
     if (versionedCatalog.has("cinnabar") && project.hasProperty("minecraft.vulkan")) {
