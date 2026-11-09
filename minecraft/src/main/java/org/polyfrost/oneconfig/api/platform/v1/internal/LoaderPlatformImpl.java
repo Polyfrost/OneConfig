@@ -35,9 +35,6 @@ public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
     @SuppressWarnings("deprecation") // the fallback deliberately targets the legacy launcher class
     public void addToClasspath(@NotNull Path path) {
-        //? neoforge {
-        //throw new UnsupportedOperationException("TODO"); // hiiii init!!!
-        //? } else {
         try {
             FabricLauncherBase.getLauncher().addToClassPath(path);
         } catch (Exception e) {
@@ -47,7 +44,6 @@ public class LoaderPlatformImpl implements LoaderPlatform {
                 throw new RuntimeException(e2);
             }
         }
-        //? }
     }
 
 }

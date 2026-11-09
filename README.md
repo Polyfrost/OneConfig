@@ -29,8 +29,10 @@ Almost everything you need to start using OneConfig is in [our documentation](ht
 To build OneConfig yourself, run the command below with JDK 25 installed. Replace `26.3-fabric` with any supported version, such as `1.8.9-ornithe`.
 
 ```sh
-./gradlew ":bootstrap:26.3-fabric:build"
+./gradlew ":minecraft:26.3-fabric:build"
 ```
+
+The mod jar ends up in `minecraft/versions/26.3-fabric/build/dist`.
 
 ## ℹ️ Example mod
 Please check out our [example mod](https://github.com/Polyfrost/OneConfigExampleMod/).

@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.jetbrains.gradle.plugin.idea-ext")
     id("maven-publish")
     id("signing")
 }
@@ -22,10 +21,6 @@ subprojects {
 
     group = rootProject.group
     version = rootProject.version
-
-    if (project.parent?.name == "dependencies") {
-        this.group = "${project.group}.dependencies"
-    }
 
     repositories {
         maven("https://repo.polyfrost.org/releases")
@@ -117,7 +112,7 @@ subprojects {
         }
     }
 
-    if (name !in listOf("internal", "dependencies", "compose-bundle")) {
+    if (name !in listOf("internal", "compose-bundle")) {
         configure<KotlinJvmProjectExtension> {
             @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4
             abiValidation {
@@ -143,10 +138,8 @@ subprojects {
     }
 
     configure<JavaPluginExtension> {
-        if("dependencies" !in project.path) {
-            withJavadocJar()
-            withSourcesJar()
-        }
+        withJavadocJar()
+        withSourcesJar()
 
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))

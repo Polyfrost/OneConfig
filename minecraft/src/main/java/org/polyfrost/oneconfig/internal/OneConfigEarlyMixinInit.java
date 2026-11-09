@@ -14,17 +14,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 public class OneConfigEarlyMixinInit implements IMixinConfigPlugin {
-    //? neoforge {
-    /*private static final ServiceLoader<MixinCanceller> CANCELLERS = ServiceLoader.load(MixinCanceller.class);
-    private static final ServiceLoader<MixinAnnotationAdjuster> ANNOTATION_ADJUSTERS = ServiceLoader.load(MixinAnnotationAdjuster.class);
-    *///? }
-
-
     public static void load() {
-        //? neoforge {
-        /*CANCELLERS.forEach(MixinCancellerRegistrar::register);
-        ANNOTATION_ADJUSTERS.forEach(MixinAnnotationAdjusterRegistrar::register);
-        *///? } else {
         FabricLoader.getInstance().getEntrypointContainers("mixinsquared", MixinCanceller.class).forEach(container -> {
             String id = container.getProvider().getMetadata().getId();
             try {
@@ -45,7 +35,6 @@ public class OneConfigEarlyMixinInit implements IMixinConfigPlugin {
                 e.printStackTrace(System.err);
             }
         });
-        //? }
     }
 
     @Override

@@ -19,15 +19,9 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 object ModMenuCompat {
     val mods: MutableList<Mod> = mutableListOf()
 
-    private val ownModIds = setOf(
-        ModMenuEntrypoint.ROOT_MOD_ID,
-        ModMenuEntrypoint.LEGACY_BOOTSTRAP_MOD_ID,
-        ModMenuEntrypoint.PLATFORM_MOD_ID,
-    )
-
     fun preLoad() = CompatLoader.requireTranslations(-1000, true) {
         ModMenu.ROOT_MODS.forEach { (_, mod) ->
-            if (mod.id in ownModIds) return@forEach
+            if (mod.id == ModMenuEntrypoint.MOD_ID) return@forEach
             // never call getConfigScreen here
             // it builds widgets that bake font glyphs and preLoad runs off-frame during
             // ResourceFinishedLoading where that corrupts the vanilla font atlas

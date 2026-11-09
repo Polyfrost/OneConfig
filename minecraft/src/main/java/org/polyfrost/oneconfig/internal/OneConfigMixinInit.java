@@ -178,12 +178,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");
 
-        //? neoforge {
-        //mixins.add("events.Mixin_ChatReceiveEvent_Forge");
-        //mixins.add("events.Mixin_ScreenOpenEvent_Forge");
-        //? } else {
         mixins.add("events.Mixin_ScreenOpenEvent_Fabric");
-        //? }
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
 
@@ -225,6 +220,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
         mixins.add("keybind.Mixin_OptionsSaveDetect");
         mixins.add("keybind.Mixin_OptionsSkipMirrors");
+        //? if = 1.8.9
+        //mixins.add("keybind.Mixin_KeyBindsListRows");
 
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);

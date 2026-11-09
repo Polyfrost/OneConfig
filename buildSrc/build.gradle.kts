@@ -43,8 +43,6 @@ dependencies {
 
     implementation(plugin(ornithe.plugins.ploceus))
 
-    implementation(plugin(neoforge.plugins.moddev))
-
     implementation("dev.kikugie.stonecutter:dev.kikugie.stonecutter.gradle.plugin:0.9.8")
     implementation("me.modmuss50.mod-publish-plugin:me.modmuss50.mod-publish-plugin.gradle.plugin:1.1.0")
 }
@@ -55,12 +53,10 @@ detekt {
 
 gradlePlugin {
     mapOf(
-        "oneconfig-bootstrap" to "OneConfigBootstrapPlugin",
         "oneconfig-bridge" to "OneConfigBridgePlugin",
         "oneconfig-compose-bundle-publish" to "OneConfigComposeBundlePublishPlugin",
         "oneconfig-fabric" to "OneConfigFabricPlugin",
         "oneconfig-lint" to "OneConfigLintPlugin",
-        "oneconfig-neoforge" to "OneConfigNeoForgePlugin",
         "oneconfig-setup" to "OneConfigSetupPlugin",
     ).forEach { (pluginId, className) ->
         plugins.register(pluginId) {

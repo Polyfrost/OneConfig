@@ -1,7 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "oneconfigv1",
-  "name": "OneConfig (Platform Module)",
+  "id": "oneconfig",
+  "provides": [
+    "oneconfigv1",
+    "oneconfigbootstrap"
+  ],
+  "name": "OneConfig",
   "version": "${mod_version}",
   "description": "Access all your mod settings in one place, with a sleek and intuitive interface.",
   "authors": [
@@ -12,6 +16,7 @@
     "sources": "https://github.com/Polyfrost/OneConfig",
     "issues": "https://inv.wtf/polyfrost"
   },
+  "icon": "oneconfig-icon.png",
   "license": "LGPL-3.0",
   "environment": "client",
   "accessWidener": "oneconfigv1.classtweaker",
@@ -36,12 +41,15 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "minecraft": "${fabric_mc_version}",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "fabric-language-kotlin": ">=${flk_version}",
+    "compose-multiplatform": ">=${compose_version}"
   },
-  "custom": {
-    "modmenu": {
-      "parent": "oneconfig",
-      "badges": [ "library" ]
-    }
+  "breaks": {
+    "chattweaks": "<1.2.3",
+    "crashpatch": "<2.2.3",
+    "evergreenhud": "<3.9.13",
+    "polydium": "<1.2.0",
+    "polyplus": "<1.4.0"
   }
 }
