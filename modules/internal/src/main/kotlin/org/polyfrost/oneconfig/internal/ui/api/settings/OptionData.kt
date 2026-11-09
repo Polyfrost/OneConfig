@@ -194,6 +194,7 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
 class NumberOptionData(prop: Property<*>) : OptionData(prop) {
     val min: Float get() = prop.getMetadata("min") ?: -10f
     val max: Float get() = prop.getMetadata("max") ?: 100f
+    val step: Float get() = prop.getMetadata("step") ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
     val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
@@ -370,6 +371,8 @@ class RadioButtonOptionData(prop: Property<*>) : OptionData(prop) {
 class ColorOptionData(prop: Property<*>) : OptionData(prop) {
     val alpha = prop.getMetadata<Any>("noAlpha") == null
     val gradient = prop.getMetadata<Any>("gradient") != null
+
+    val swatch = prop.getMetadata<Any>("swatch").let { it != null && it != false }
 }
 
 class KeybindOptionData(prop: Property<*>) : OptionData(prop)

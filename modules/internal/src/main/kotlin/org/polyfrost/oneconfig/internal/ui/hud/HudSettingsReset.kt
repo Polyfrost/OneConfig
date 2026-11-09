@@ -61,6 +61,7 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudAlign
@@ -179,14 +180,14 @@ fun repairHudStaticSize(hud: Hud) {
     bumpHudUiEpoch(hud)
 }
 
-private fun resetTreeDefaults(hud: Hud, tree: Tree) {
+private fun resetTreeDefaults(hud: Hud, tree: Tree, seen: MutableSet<Property<*>> = identitySet()) {
     for (node in tree.map.values) {
         when (node) {
             is Property<*> -> {
                 val optionId = node.id ?: node.getID()
-                if (optionId !in STATIC_SIZE_OPTIONS && optionHasDefault(node)) resetOption(node)
+                if (optionId !in STATIC_SIZE_OPTIONS && optionHasDefault(node)) resetOption(node, seen)
             }
-            is Tree -> resetTreeDefaults(hud, node)
+            is Tree -> resetTreeDefaults(hud, node, seen)
         }
     }
 }

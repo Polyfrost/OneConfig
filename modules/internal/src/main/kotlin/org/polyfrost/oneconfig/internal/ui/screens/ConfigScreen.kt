@@ -561,14 +561,23 @@ private val OPTION_ROW_GAP = 8.dp
 
 private val OPTION_CHROME_WIDTH = 108.dp
 private val OPTION_ICON_WIDTH = 44.dp
+private val OPTION_ACTION_WIDTH = 24.dp + 16.dp
 
 private val OPTION_ROW_CHROME = 32.dp + 16.dp
 
 private val SLIDER_SPINNER_WIDTH = 80.dp + 16.dp
 
+/**
+ * Space a control needs beside its label. Custom visualizers wider than a default control
+ * declare their width in dp through the `controlWidth` metadata
+ */
 private fun optionReservedWidth(prop: Property<*>, optionWidth: Dp): Dp {
-    val control = sliderTrailingWidth(prop)?.let { optionWidth + it + OPTION_ROW_CHROME } ?: OPTION_CHROME_WIDTH
-    return control + (if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp)
+    val control = sliderTrailingWidth(prop)?.let { optionWidth + it + OPTION_ROW_CHROME }
+        ?: prop.getMetadata<Number>("controlWidth")?.let { it.toFloat().dp + OPTION_ROW_CHROME }
+        ?: (if (prop.getMetadata<Any>("swatch").let { it != null && it != false }) 24.dp + OPTION_ROW_CHROME else null)
+        ?: OPTION_CHROME_WIDTH
+    return control + (if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp) +
+        (if (OneConfigConfig.showOptionActionButtons) OPTION_ACTION_WIDTH else 0.dp)
 }
 
 private sealed interface OptionRow {
@@ -618,7 +627,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
         val titleStyle = remember(theme) {
             TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
         }
-        val rows = remember(visibleProps, columnWidth, optionWidth, titleStyle) {
+        val rows = remember(visibleProps, columnWidth, optionWidth, titleStyle, OneConfigConfig.showOptionActionButtons) {
             buildOptionRows(visibleProps) { prop ->
                 val titleWidth = with(density) {
                     measurer.measure(

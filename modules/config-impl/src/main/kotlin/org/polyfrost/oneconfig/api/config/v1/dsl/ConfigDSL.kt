@@ -235,6 +235,10 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         var alpha: Boolean
             get() = this["noAlpha"] == null
             set(value) { if (value) property.removeMetadata("noAlpha") else this["noAlpha"] = Unit }
+
+        var swatch: Boolean
+            get() = this["swatch"] == true
+            set(value) { this["swatch"] = value }
     }
 
     class TextProp(default: String) : Prop<String>(default, String::class.java) {

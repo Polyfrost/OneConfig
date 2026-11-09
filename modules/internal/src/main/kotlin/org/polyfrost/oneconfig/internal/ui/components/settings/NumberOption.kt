@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.BigDecimal
 import java.util.Locale
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
@@ -55,6 +56,12 @@ fun Float.toNumberType(type: Class<*>): Number = when (type) {
     else -> this
 }
 
+fun isIntegralType(type: Class<*>): Boolean = when (type) {
+    Int::class.java, Integer::class.java, Long::class.java, java.lang.Long::class.java,
+    Short::class.java, java.lang.Short::class.java, Byte::class.java, java.lang.Byte::class.java -> true
+    else -> false
+}
+
 fun filterNumberInput(input: String): String {
     val sb = StringBuilder()
     var hasDot = false
@@ -69,14 +76,18 @@ fun filterNumberInput(input: String): String {
 }
 
 /** How far a spinner's arrows move when the option has no step of its own, whole bounds step by 1 and others by 0.1 */
-fun spinnerStep(step: Float, min: Float, max: Float): Float = when {
+fun spinnerStep(step: Float, min: Float, max: Float, integral: Boolean = false): Float = when {
+    integral && step > 0f -> maxOf(1f, step.roundToInt().toFloat())
     step > 0f -> step
     min == min.roundToInt().toFloat() && max == max.roundToInt().toFloat() -> 1f
     else -> 0.1f
 }
 
-fun formatSpinnerValue(v: Float): String =
-    if (v == v.toLong().toFloat()) v.toLong().toString() else String.format(Locale.ROOT, "%.2f", v)
+fun formatSpinnerValue(v: Float, step: Float = 0f): String {
+    if (v == v.toLong().toFloat()) return v.toLong().toString()
+    val stepDecimals = if (step > 0f) BigDecimal(step.toString()).stripTrailingZeros().scale() else 0
+    return String.format(Locale.ROOT, "%.${maxOf(2, stepDecimals)}f", v)
+}
 
 @Composable
 private fun rememberUnitSuffix(unit: String?): VisualTransformation {
@@ -147,14 +158,14 @@ fun NumberSpinner(
     val theme = LocalTheme.current
     var focused by remember { mutableStateOf(false) }
     val formatted = if (format != null && !focused) format(value) else null
-    var text by remember(value) { mutableStateOf(formatSpinnerValue(value)) }
+    var text by remember(value) { mutableStateOf(formatSpinnerValue(value, step)) }
 
     val arrowLo = maxOf(min, arrowMin)
     val arrowHi = maxOf(arrowLo, minOf(max, arrowMax))
 
     fun commit(v: Float) {
         val clamped = v.coerceIn(arrowLo, arrowHi)
-        text = formatSpinnerValue(clamped)
+        text = formatSpinnerValue(clamped, step)
         onValueChange(clamped)
     }
 
@@ -215,8 +226,8 @@ fun NumberSpinner(
 
 @Composable
 fun NumberOption(data: NumberOptionData) {
-    val step = remember(data.min, data.max) {
-        if (data.min == data.min.roundToInt().toFloat() && data.max == data.max.roundToInt().toFloat()) 1f else 0.1f
+    val step = remember(data.step, data.min, data.max) {
+        spinnerStep(data.step, data.min, data.max, isIntegralType(data.prop.type))
     }
     var value by remember(data.prop) {
         mutableStateOf(data.numProp.shown()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
