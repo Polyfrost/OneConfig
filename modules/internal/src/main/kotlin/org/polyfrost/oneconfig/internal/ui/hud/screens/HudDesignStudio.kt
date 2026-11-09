@@ -103,6 +103,7 @@ import org.polyfrost.oneconfig.internal.ui.screens.hasHudOptions
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.*
@@ -3006,7 +3007,10 @@ private fun DesignStudioPanel(
             .width(500.dp)
             .padding(16.dp)
             .then(modifier)
-            .background(theme.popupBackground, theme.backgroundShape)
+            .background(
+                theme.surfaceOpacity(theme.pageBackground, ShellController.shared.appearance.pageOpacity, DEFAULT_PAGE_OPACITY),
+                theme.backgroundShape,
+            )
             .border(1.dp, theme.borderColor, theme.backgroundShape),
     ) {
         Column(

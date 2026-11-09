@@ -445,11 +445,12 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
 private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
 
+/** A card whose header folds [body] open and closed, or which follows [expanded] alone with no arrow when [onExpandedChange] is null */
 @Composable
-private fun Accordion(
+internal fun Accordion(
     title: Any,
     expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
+    onExpandedChange: ((Boolean) -> Unit)?,
     checked: Boolean? = null,
     onCheckedChange: (Boolean) -> Unit = {},
     headEnabled: Boolean = true,
@@ -465,7 +466,7 @@ private fun Accordion(
             description,
             icon,
             Modifier
-                .onClick(rememberInteractionSource()) { onExpandedChange(!expanded) }
+                .then(if (onExpandedChange != null) Modifier.onClick(rememberInteractionSource()) { onExpandedChange(!expanded) } else Modifier)
                 .alpha(if (headEnabled) 1f else displayAlpha(Property.Display.DISABLED)),
         ) {
             Row(
@@ -475,7 +476,9 @@ private fun Accordion(
                 if (checked != null) {
                     Box(Modifier.blockInteraction(!headEnabled)) { SwitchControl(checked, onCheckedChange) }
                 }
-                Icon("up", color = theme.textColorSecondary, modifier = Modifier.size(12.dp).rotate(chevronRotation))
+                if (onExpandedChange != null) {
+                    Icon("up", color = theme.textColorSecondary, modifier = Modifier.size(12.dp).rotate(chevronRotation))
+                }
             }
         }
         AnimatedVisibility(

@@ -1,7 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.compose.layout.PolyAlign
@@ -50,7 +52,6 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.moveHudsBy
 import org.polyfrost.oneconfig.internal.ui.hud.screens.notifyHudLocked
 import org.polyfrost.oneconfig.internal.ui.hud.screens.placementLabel
 import org.polyfrost.oneconfig.internal.ui.hud.screens.selectionOrigin
-import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -72,180 +73,179 @@ fun Layout(hud: Hud?, query: String) {
         var padTop by remember { mutableStateOf(hud.padTop) }
         var padBottom by remember { mutableStateOf(hud.padBottom) }
 
-        Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
-            Section("Position", query, "Reset to default position", "Lock position") {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ResetHudPositionButton(hud)
-                    hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(placementLabel(it), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
-                            val resettingFollowsOtherMod = !it.moved && it.scaled
-                            if (resettingFollowsOtherMod) {
-                                Text("Reset position to follow it", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
-                            }
-                        }
-                    }
-                    HudSettingTarget(hud, "locked") {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            SwitchControl(locked) {
-                                Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
-                            }
-                            Text("Lock position", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                        }
+        // opens with a field per side when the sides already differ
+        var perSide by remember { mutableStateOf(padLeft != padRight || padTop != padBottom) }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CardSection("Position", query, "X", "Y", "Lock position", "Reset to default position") { col1 ->
+                HudPositionFields(hud, col1)
+                hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
+                    val secondary = LocalTheme.current.textColorSecondary
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(placementLabel(it), color = secondary, fontSize = 12.sp)
+                        if (!it.moved && it.scaled) Text("Reset position to follow it", color = secondary, fontSize = 12.sp)
                     }
                 }
+                HudSettingTarget(hud, "locked") {
+                    SwitchRow("Lock position", locked) {
+                        Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
+                    }
+                }
+                ResetHudPositionButton(hud)
             }
 
-            if (hud is LegacyHudMarker) {
-                if (hud.supportsScale) Section("Scale", query) {
-                    HudSettingTarget(hud, "customScale") {
-                        NumberSpinner(
-                            hud.customScale,
-                            { Snapshot.withMutableSnapshot { hud.customScale = it } },
-                            0.25f,
-                            4f,
-                            0.25f,
-                            width = 176.dp,
-                            unit = "x",
-                            label = "Scale",
-                        )
-                    }
-                }
-            } else {
-                Section("GUI Scale", query, "Use Minecraft GUI Scale", "Scale") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (hud !is LegacyHudMarker || hud.supportsScale) {
+                CardSection("Scale", query, "Follow GUI scale", "Use Minecraft GUI Scale", "Custom Scale") { col1 ->
+                    if (hud !is LegacyHudMarker) {
                         HudSettingTarget(hud, "useGuiScale") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                SwitchControl(hud.useGuiScale) {
-                                    Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) }
-                                }
-                                Text("Use Minecraft GUI Scale", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                            SwitchRow("Follow GUI scale", hud.useGuiScale) {
+                                Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) }
                             }
                         }
-                        HudSettingTarget(hud, "customScale") {
-                            NumberSpinner(
-                                hud.customScale,
-                                { Snapshot.withMutableSnapshot { hud.customScale = it } },
-                                0.25f,
-                                4f,
-                                0.25f,
-                                width = 176.dp,
-                                unit = "x",
-                                label = "Scale",
-                            )
-                        }
                     }
+                    GridRow(
+                        col1,
+                        first = {
+                            HudSettingTarget(hud, "customScale") {
+                                LabeledControl("Scale") {
+                                    NumberSpinner(
+                                        hud.customScale, { Snapshot.withMutableSnapshot { hud.customScale = it } },
+                                        0.25f, 4f, 0.25f, width = col1, unit = "x"
+                                    )
+                                }
+                            }
+                        },
+                    )
                 }
             }
 
             if (hud !is LegacyHudMarker) {
-                Section("Size & Alignment", query, "Position", "X", "Y", "Static Size", "Width", "Height", "Alignment", "Growth anchor") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        HudPositionFields(hud)
+                CardSection(
+                    "Size & Alignment", query, "Static size", "Width", "Height", "Anchor", "Content alignment",
+                    "Alignment", "Growth anchor",
+                ) { col1 ->
+                    HudSettingTarget(hud, "staticWidth") {
+                        SwitchRow("Static size", staticWidth) {
+                            Snapshot.withMutableSnapshot {
+                                staticWidth = it; hud.staticWidth = it
+                                if (it) {
+                                    staticW = hud.staticW
+                                    staticH = hud.staticH
+                                } else {
+                                    hud.updateAndRecalculate()
+                                }
+                            }
+                        }
+                    }
 
-                        HudSettingTarget(hud, "staticWidth") {
+                    if (staticWidth) {
+                        GridRow(
+                            col1,
+                            first = {
+                                HudSettingTarget(hud, "staticW") {
+                                    LabeledControl("Width") {
+                                        NumberSpinner(
+                                            staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
+                                            20f, 2000f, 1f, width = col1, unit = "px", scrub = true, math = true,
+                                        )
+                                    }
+                                }
+                            },
+                            second = {
+                                HudSettingTarget(hud, "staticH") {
+                                    LabeledControl("Height") {
+                                        NumberSpinner(
+                                            staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
+                                            8f, 2000f, 1f, width = GridCol2, unit = "px", scrub = true, math = true,
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
+
+                    HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
+                        LabeledControl(if (staticWidth) "Content alignment" else "Anchor") {
                             Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                SwitchControl(staticWidth) {
+                                AlignmentPicker(if (staticWidth) alignment else growthAlign) {
                                     Snapshot.withMutableSnapshot {
-                                        staticWidth = it; hud.staticWidth = it
-                                        if (it) {
-                                            staticW = hud.staticW
-                                            staticH = hud.staticH
+                                        if (staticWidth) {
+                                            alignment = it
+                                            hud.alignment = it
                                         } else {
-                                            hud.updateAndRecalculate()
+                                            growthAnchor = HudAnchor.of(it)
+                                            hud.setGrowthAnchorKeepingPosition(growthAnchor)
                                         }
                                     }
                                 }
-                                Text("Static Size", color = LocalTheme.current.textColor, fontSize = 14.sp)
+                                Text(
+                                    if (staticWidth) "Aligns the content inside the fixed box"
+                                    else "Pins this corner or edge in place;\nthe HUD only grows away from it",
+                                    color = LocalTheme.current.textColorSecondary,
+                                    fontSize = 12.sp
+                                )
                             }
-                        }
-
-                        if (staticWidth) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                HudSettingTarget(hud, "staticW") {
-                                    NumberSpinner(
-                                        staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
-                                        20f, 2000f, 1f, width = 132.dp, unit = "px", label = "Width", scrub = true, math = true
-                                    )
-                                }
-                                HudSettingTarget(hud, "staticH") {
-                                    NumberSpinner(
-                                        staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
-                                        8f, 2000f, 1f, width = 132.dp, unit = "px", label = "Height", scrub = true, math = true
-                                    )
-                                }
-                            }
-                        }
-
-                        HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            AlignmentPicker(if (staticWidth) alignment else growthAlign) {
-                                Snapshot.withMutableSnapshot {
-                                    if (staticWidth) {
-                                        alignment = it
-                                        hud.alignment = it
-                                    } else {
-                                        growthAnchor = HudAnchor.of(it)
-                                        hud.setGrowthAnchorKeepingPosition(growthAnchor)
-                                    }
-                                }
-                            }
-                            Text(
-                                if (staticWidth) "Aligns the content inside the fixed box"
-                                else "Pins this corner or edge in place;\nthe HUD only grows away from it",
-                                color = LocalTheme.current.textColorSecondary,
-                                fontSize = 12.sp
-                            )
-                        }
                         }
                     }
                 }
 
-                Section("Padding", query, "Edge padding") {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Edge padding", color = LocalTheme.current.textColor, fontSize = 14.sp)
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            HudSettingTarget(hud, "padLeft") {
-                                NumberSpinner(
-                                    padLeft, { Snapshot.withMutableSnapshot { padLeft = it; hud.padLeft = it } },
-                                    0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-left"
-                                )
-                            }
-                            HudSettingTarget(hud, "padRight") {
-                                NumberSpinner(
-                                    padRight, { Snapshot.withMutableSnapshot { padRight = it; hud.padRight = it } },
-                                    0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-right"
-                                )
-                            }
-                            HudSettingTarget(hud, "padTop") {
-                                NumberSpinner(
-                                    padTop, { Snapshot.withMutableSnapshot { padTop = it; hud.padTop = it } },
-                                    0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-top"
-                                )
-                            }
-                            HudSettingTarget(hud, "padBottom") {
-                                NumberSpinner(
-                                    padBottom, { Snapshot.withMutableSnapshot { padBottom = it; hud.padBottom = it } },
-                                    0f, 100f, 1f, width = 88.dp, unit = "px", icon = "pad-bottom"
-                                )
+                CardSection("Padding", query, "Horizontal", "Vertical", "Per side", "Left", "Right", "Top", "Bottom") { col1 ->
+                    val perSideSwitch: @Composable () -> Unit = {
+                        LabeledControl("Per side") {
+                            SwitchControl(perSide) {
+                                perSide = it
+                                // leaving per side mode evens the sides out so the two fields show what is applied
+                                if (!it) Snapshot.withMutableSnapshot {
+                                    padRight = padLeft; hud.padRight = padLeft
+                                    padBottom = padTop; hud.padBottom = padTop
+                                }
                             }
                         }
+                    }
+
+                    if (perSide) {
+                        GridRow(
+                            col1,
+                            first = { HudSettingTarget(hud, "padLeft") { PadSpinner("Left", padLeft, col1) { padLeft = it; hud.padLeft = it } } },
+                            second = { HudSettingTarget(hud, "padTop") { PadSpinner("Top", padTop, GridCol2) { padTop = it; hud.padTop = it } } },
+                            third = perSideSwitch,
+                        )
+                        GridRow(
+                            col1,
+                            first = { HudSettingTarget(hud, "padRight") { PadSpinner("Right", padRight, col1) { padRight = it; hud.padRight = it } } },
+                            second = { HudSettingTarget(hud, "padBottom") { PadSpinner("Bottom", padBottom, GridCol2) { padBottom = it; hud.padBottom = it } } },
+                        )
+                    } else {
+                        GridRow(
+                            col1,
+                            first = {
+                                PadSpinner("Horizontal", padLeft, col1) {
+                                    padLeft = it; hud.padLeft = it
+                                    padRight = it; hud.padRight = it
+                                }
+                            },
+                            second = {
+                                PadSpinner("Vertical", padTop, GridCol2) {
+                                    padTop = it; hud.padTop = it
+                                    padBottom = it; hud.padBottom = it
+                                }
+                            },
+                            third = perSideSwitch,
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float) -> Unit) {
+    LabeledControl(label) {
+        NumberSpinner(value, { Snapshot.withMutableSnapshot { onChange(it) } }, 0f, 100f, 1f, width = width, unit = "px")
     }
 }
 
@@ -255,29 +255,15 @@ private fun ResetHudPositionButton(hud: Hud) {
     val enabled = hudHasPositionDefaults(hud)
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val disabledAlpha by animateFloatAsState(if (enabled) 0f else 1f)
-    val accentAlpha by animateFloatAsState(
-        when {
-            !enabled -> 0f
-            isHovered -> 0.75f
-            else -> 1f
-        },
-    )
-    val textColor = if (enabled) theme.accentTextColor else theme.textColorSecondary
+    val textColor by animateColorAsState(if (enabled && isHovered) theme.textColor else theme.textColorSecondary)
 
     Box(
         modifier = Modifier
             .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-            .background(theme.borderColor.copy(alpha = theme.borderColor.alpha * disabledAlpha), theme.buttonShape)
-            .background(AccentBrush, theme.buttonShape, alpha = accentAlpha)
-            .then(
-                if (enabled) {
-                    Modifier.onClick(interactionSource) { resetHudPosition(hud) }
-                } else {
-                    Modifier
-                },
-            )
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .background(theme.componentBackground, theme.buttonShape)
+            .border(1.dp, theme.borderColor, theme.buttonShape)
+            .then(if (enabled) Modifier.onClick(interactionSource) { resetHudPosition(hud) } else Modifier)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text("Reset to default position", color = textColor, fontSize = 13.sp)
@@ -293,7 +279,7 @@ private fun setFollowGuiScale(hud: Hud, follow: Boolean) {
 }
 
 @Composable
-private fun HudPositionFields(hud: Hud) {
+private fun HudPositionFields(hud: Hud, col1: Dp) {
     HudEditorViewport.observe()
     val selection = designerSelection(hud)
     val origin = selectionOrigin(selection) ?: Offset(hud.x, hud.y)
@@ -313,32 +299,44 @@ private fun HudPositionFields(hud: Hud) {
             endHudMove()
         }
     }
-    Row(
-        modifier = if (locked) {
-            Modifier.pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press) notifyHudLocked()
-                    }
+    // pressing a locked field explains why it won't change
+    val lockNotice = if (locked) {
+        Modifier.pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    if (event.type == PointerEventType.Press) notifyHudLocked()
                 }
             }
-        } else {
-            Modifier
-        },
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        NumberSpinner(
-            origin.x, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, v - it.x, 0f) } },
-            -screenW, screenW * 2f, 1f, width = 132.dp, unit = "px", label = "X",
-            onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
-            onEditStart = startMove, liveValue = { selectionOrigin(selection)?.x ?: origin.x },
-        )
-        NumberSpinner(
-            origin.y, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, 0f, v - it.y) } },
-            -screenH, screenH * 2f, 1f, width = 132.dp, unit = "px", label = "Y",
-            onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
-            onEditStart = startMove, liveValue = { selectionOrigin(selection)?.y ?: origin.y },
-        )
+        }
+    } else {
+        Modifier
     }
+    GridRow(
+        col1,
+        first = {
+            Box(lockNotice) {
+                LabeledControl("X") {
+                    NumberSpinner(
+                        origin.x, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, v - it.x, 0f) } },
+                        -screenW, screenW * 2f, 1f, width = col1, unit = "px",
+                        onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
+                        onEditStart = startMove, liveValue = { selectionOrigin(selection)?.x ?: origin.x },
+                    )
+                }
+            }
+        },
+        second = {
+            Box(lockNotice) {
+                LabeledControl("Y") {
+                    NumberSpinner(
+                        origin.y, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, 0f, v - it.y) } },
+                        -screenH, screenH * 2f, 1f, width = GridCol2, unit = "px",
+                        onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
+                        onEditStart = startMove, liveValue = { selectionOrigin(selection)?.y ?: origin.y },
+                    )
+                }
+            }
+        },
+    )
 }

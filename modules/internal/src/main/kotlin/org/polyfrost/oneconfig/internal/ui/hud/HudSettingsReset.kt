@@ -193,15 +193,22 @@ private fun resetTreeDefaults(hud: Hud, tree: Tree, seen: MutableSet<Property<*>
     }
 }
 
-/** Wraps a HUD settings control so right-click offers "Reset to default" for [optionId] */
+/**
+ * Wraps a HUD settings control so right-click offers "Reset to default" for [optionId] and the [linkedIds] the
+ * control also sets
+ */
 @Composable
 fun HudSettingTarget(
     hud: Hud,
     optionId: String,
+    vararg linkedIds: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val prop = remember(hud, optionId) { hudProperty(hud, optionId) }
+    val linked = remember(hud, linkedIds.toList()) {
+        linkedIds.mapNotNull { id -> hudProperty(hud, id)?.let { id to it } }
+    }
     if (prop == null) {
         Box(modifier) { content() }
         return
@@ -244,9 +251,11 @@ fun HudSettingTarget(
             expanded = menuOpen,
             offset = menuOffset,
             onDismiss = { menuOpen = false },
-            resetEnabled = canResetHudOption(hud, prop, optionId),
+            resetEnabled = canResetHudOption(hud, prop, optionId) ||
+                linked.any { (id, p) -> canResetHudOption(hud, p, id) },
             onReset = {
                 performHudOptionReset(hud, prop, optionId)
+                for ((id, p) in linked) performHudOptionReset(hud, p, id)
                 finishHudReset(hud)
             },
         )
