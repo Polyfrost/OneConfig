@@ -20,6 +20,8 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
 import org.polyfrost.compose.render.PolyColor
@@ -49,21 +51,32 @@ import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 private val resetEpochs = mutableStateMapOf<Int, Int>()
 
 /** True if [prop] has a captured default value that can be restored */
-fun optionHasDefault(prop: Property<*>): Boolean = prop.getMetadata<Any?>("default") != null
+fun optionHasDefault(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()): Boolean =
+    seen.add(prop) && (prop.getMetadata<Any?>("default") != null ||
+        prop.getMetadata<Collection<Property<*>>>("resetWith")?.any { optionHasDefault(it, seen) } == true)
+
+internal fun identitySet(): MutableSet<Property<*>> = Collections.newSetFromMap(IdentityHashMap())
 
 fun bumpResetEpoch(prop: Property<*>) {
     resetEpochs[System.identityHashCode(prop)] = (resetEpochs[System.identityHashCode(prop)] ?: 0) + 1
 }
 
-/** Restore [prop] to the default value captured at config initialization and refresh its UI */
+/**
+ * Restore [prop] to the default value captured at config initialization and refresh its UI.
+ * Properties listed in its `resetWith` metadata are reset too, for custom visualizers that draw
+ * several hidden properties in one row
+ */
 @Suppress("UNCHECKED_CAST")
-fun resetOption(prop: Property<*>) {
-    val def = prop.getMetadata<Any?>("default") ?: return
-    (prop as Property<Any?>).setAsReferential(Config.copyDefault(prop.type, def))
-    // like ColorOption a PolyColor change must refresh the live accent or it only updates once the GUI
-    // is reopened
-    if (prop.type == PolyColor::class.java) updateAccent()
-    resetEpochs[System.identityHashCode(prop)] = (resetEpochs[System.identityHashCode(prop)] ?: 0) + 1
+fun resetOption(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()) {
+    if (!seen.add(prop)) return
+    val def = prop.getMetadata<Any?>("default")
+    if (def != null) {
+        (prop as Property<Any?>).setAsReferential(Config.copyDefault(prop.type, def))
+        if (prop.type == PolyColor::class.java) updateAccent()
+    }
+    val linked = prop.getMetadata<Collection<Property<*>>>("resetWith")
+    linked?.forEach { resetOption(it, seen) }
+    if (def != null || linked != null) bumpResetEpoch(prop)
 }
 
 @Composable

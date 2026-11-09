@@ -113,6 +113,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
+        swatch: Boolean = false,
     ) = Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer()) {
         addMetadata(
             name,
@@ -126,7 +127,23 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
             subcategoryKey
         )
         if (!alpha) this.addMetadata("noAlpha", Unit)
+        if (swatch) this.addMetadata("swatch", true)
     }
+
+    @Deprecated(message = "Binary compatibility for mods compiled before swatch was added", level = DeprecationLevel.HIDDEN)
+    protected fun color(
+        name: String,
+        def: PolyColor = PolyColor.rgba(0, 0, 0, 255),
+        alpha: Boolean = true,
+        nameKey: String? = null,
+        description: String? = null,
+        descriptionKey: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        categoryKey: String? = null,
+        subcategory: String? = "General",
+        subcategoryKey: String? = null,
+    ) = color(name, def, alpha, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, false)
 
     @JvmSynthetic
     protected fun color(

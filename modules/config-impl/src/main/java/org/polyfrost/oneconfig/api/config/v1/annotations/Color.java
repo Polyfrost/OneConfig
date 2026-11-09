@@ -83,4 +83,6 @@ public @interface Color {
     boolean alpha() default true;
 
     boolean gradient() default false;
+
+    boolean swatch() default false;
 }
