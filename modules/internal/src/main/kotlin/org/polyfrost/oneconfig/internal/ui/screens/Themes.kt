@@ -6,14 +6,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,9 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,7 +48,6 @@ import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.sound.SoundThemeSelection
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -68,7 +63,7 @@ const val THEMES_ID = "themes.json"
 
 private val ThemeCardGap = 20.dp
 
-private val ThemeCardMinWidth = 290.dp
+private val VariantToggleHeight = 30.dp
 
 private val SoundCardMinWidth = 240.dp
 
@@ -105,21 +100,11 @@ private fun ThemesHeader() {
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         val families = ThemeRegistry.registry.groupBy { it.family }
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val count = families.size.coerceAtLeast(1)
-            val available = maxWidth - PageGutter * 2
-            val cardWidth = maxOf(ThemeCardMinWidth, (available - ThemeCardGap * (count - 1)) / count)
-            val rowState = rememberLazyListState()
-            LazyRow(
-                state = rowState,
-                modifier = Modifier.wheelScroll(rowState, Orientation.Horizontal),
-                horizontalArrangement = Arrangement.spacedBy(ThemeCardGap),
-                contentPadding = PaddingValues(horizontal = PageGutter),
-            ) {
-                items(families.entries.toList(), key = { it.key }) { (family, variants) ->
-                    ThemeCard(family, variants, Modifier.width(cardWidth))
-                }
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter),
+            horizontalArrangement = Arrangement.spacedBy(ThemeCardGap),
+        ) {
+            families.forEach { (family, variants) -> ThemeCard(family, variants, Modifier.weight(1f)) }
         }
         if (!Platform.screen().supportsBackdropGlass()) {
             Text(
@@ -153,46 +138,40 @@ private fun ThemeCard(family: String, variants: List<UITheme>, modifier: Modifie
         if (isSelected) 3.dp else 1.dp
     )
 
-    Row(
-        modifier = modifier
-            .hoverGlow(theme.backgroundShape)
-            .background(theme.modCardBackground, theme.backgroundShape)
-            .border(borderWidth, borderColor, theme.backgroundShape)
-            .keepSearchFocus()
-            .clickable(interactionSource, indication = null) {
-                // Use clickable because onClick always plays CLICK. ThemeRegistry.activate chooses CLICK or OPEN
-                ThemeRegistry.activate(shown)
-            }
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    val cardModifier = modifier
+        .hoverGlow(theme.backgroundShape)
+        .background(theme.modCardBackground, theme.backgroundShape)
+        .border(borderWidth, borderColor, theme.backgroundShape)
+        .keepSearchFocus()
+        .clickable(interactionSource, indication = null) {
+            // Use clickable because onClick always plays CLICK. ThemeRegistry.activate chooses CLICK or OPEN
+            ThemeRegistry.activate(shown)
+        }
+        .pointerHoverIcon(PointerIcon.Hand)
+        .padding(12.dp)
+    val onVariant: (UITheme) -> Unit = { variant ->
+        pickedName = variant.name
+        if (isSelected) ThemeRegistry.activate(variant) else UiSounds.play(UiSoundEvent.CLICK)
+    }
+    Column(cardModifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         // the Compose resources library needs generated accessors, whereas these paths are only known at runtime
         @Suppress("DEPRECATION")
         Image(
             painter = painterResource("/assets/oneconfig/images/${shown.previewImage}.svg"),
             contentDescription = null,
-            modifier = Modifier.size(140.dp, 90.dp)
+            modifier = Modifier.fillMaxWidth().aspectRatio(140f / 90f)
         )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+        Row(Modifier.height(VariantToggleHeight), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 family,
                 color = theme.textColor,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
             )
-            if (variants.size > 1) {
-                VariantToggle(variants, shown) { variant ->
-                    pickedName = variant.name
-                    if (isSelected) ThemeRegistry.activate(variant) else UiSounds.play(UiSoundEvent.CLICK)
-                }
-            }
+            if (variants.size > 1) VariantToggle(variants, shown, onVariant)
         }
     }
 }
@@ -202,7 +181,7 @@ private fun VariantToggle(variants: List<UITheme>, shown: UITheme, onPick: (UITh
     val theme = LocalTheme.current
     Row(
         Modifier
-            .height(30.dp)
+            .height(VariantToggleHeight)
             .liquidGlass(theme.buttonShape)
             .background(theme.componentBackground, theme.buttonShape)
             .border(1.dp, theme.borderColor, theme.buttonShape)
