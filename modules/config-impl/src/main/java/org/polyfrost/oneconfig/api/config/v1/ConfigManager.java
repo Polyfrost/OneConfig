@@ -91,6 +91,7 @@ public final class ConfigManager {
     private static final CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<ConfigSubmissionListener> submissionListeners = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<ProfileArchiveContributor> archiveContributors = new CopyOnWriteArrayList<>();
 
     public static final String PROFILE_LOCAL_METADATA = "profileLocal";
 
@@ -137,6 +138,13 @@ public final class ConfigManager {
         void onConfigSubmitted(@NotNull Config config);
     }
 
+    @ApiStatus.Internal
+    public interface ProfileArchiveContributor {
+        @NotNull String entryName();
+
+        @Nullable byte[] contribute(@NotNull String profile, @NotNull Path profileDir);
+    }
+
     public static void addProfileChangeListener(ProfileChangeListener listener) {
         profileListeners.add(listener);
     }
@@ -149,6 +157,11 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static void addConfigSubmissionListener(ConfigSubmissionListener listener) {
         submissionListeners.add(listener);
+    }
+
+    @ApiStatus.Internal
+    public static void addProfileArchiveContributor(ProfileArchiveContributor contributor) {
+        archiveContributors.add(contributor);
     }
 
     public static void removeProfileChangeListener(ProfileChangeListener listener) {
@@ -894,6 +907,7 @@ public final class ConfigManager {
                 } else {
                     zipDirectory(source, source, zip);
                 }
+                writeArchiveContributions(profile, source, zip);
             }
             try {
                 Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
@@ -908,6 +922,24 @@ public final class ConfigManager {
                 e.addSuppressed(cleanupError);
             }
             throw new IllegalStateException("Failed to export profile: " + profile, e);
+        }
+    }
+
+    private static void writeArchiveContributions(String profile, Path source, ZipOutputStream zip) throws IOException {
+        for (ProfileArchiveContributor contributor : archiveContributors) {
+            String name = contributor.entryName();
+            if (Files.exists(source.resolve(name))) continue;
+            byte[] data;
+            try {
+                data = contributor.contribute(profile, source);
+            } catch (RuntimeException e) {
+                LOGGER.warn("Failed to add {} to the export of profile {}", name, profile, e);
+                continue;
+            }
+            if (data == null) continue;
+            zip.putNextEntry(new ZipEntry(name));
+            zip.write(data);
+            zip.closeEntry();
         }
     }
 

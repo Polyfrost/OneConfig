@@ -79,6 +79,7 @@ object ThemeRegistry {
 
     fun loadFromConfig() {
         updateAccent()
+        CustomThemes.adoptProfileThemes()
         try {
             val saved = if (ThemeConfig.polyfrostedRenameApplied) ThemeConfig.activeTheme else renamedThemes[ThemeConfig.activeTheme] ?: ThemeConfig.activeTheme
             val resolved = resolve(saved)

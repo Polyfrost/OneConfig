@@ -233,6 +233,7 @@ data class CustomThemeSpec(
 object CustomThemes {
     private val logger = LoggerFactory.getLogger("OneConfig/CustomThemes")
     private const val FILE_NAME = "custom-themes.json"
+    private const val ARCHIVE_ENTRY = "oneconfig-custom-themes.json"
 
     private val _specs = mutableStateListOf<CustomThemeSpec>()
     private var loaded = false
@@ -249,6 +250,11 @@ object CustomThemes {
         if (loaded) return
         loaded = true
         Runtime.getRuntime().addShutdownHook(Thread({ flush() }, "OneConfig custom themes save"))
+        ConfigManager.addProfileArchiveContributor(object : ConfigManager.ProfileArchiveContributor {
+            override fun entryName(): String = ARCHIVE_ENTRY
+
+            override fun contribute(profile: String, profileDir: Path): ByteArray? = exportFor(profileDir)
+        })
         try {
             val path = file()
             if (!Files.exists(path)) return
@@ -268,6 +274,38 @@ object CustomThemes {
         } catch (e: Exception) {
             logger.error("Failed to load {}", FILE_NAME, e)
             runCatching { backUp(file()) }
+        }
+    }
+
+    private fun exportFor(profileDir: Path): ByteArray? {
+        val themes = profileDir.resolve("themes.json")
+        if (!Files.exists(themes)) return null
+        val root = JsonUtils.parseOrNull(String(Files.readAllBytes(themes), StandardCharsets.UTF_8))?.takeIf { it.isJsonObject }?.asJsonObject ?: return null
+        val key = root.get("activeTheme")?.takeIf { it.isJsonPrimitive }?.asString ?: return null
+        if (!key.startsWith("custom:")) return null
+        val spec = _specs.toList().firstOrNull { it.id == key.removePrefix("custom:") } ?: return null
+        return JsonArray().apply { add(spec.toJson(true)) }.toString().toByteArray(StandardCharsets.UTF_8)
+    }
+
+    internal fun adoptProfileThemes() {
+        val path = runCatching { ConfigManager.active().folder.resolve(ARCHIVE_ENTRY) }.getOrNull() ?: return
+        if (!Files.exists(path)) return
+        try {
+            val array = JsonUtils.parseOrNull(String(Files.readAllBytes(path), StandardCharsets.UTF_8))?.takeIf { it.isJsonArray }?.asJsonArray
+            array?.forEach { element ->
+                val obj = element.takeIf { it.isJsonObject }?.asJsonObject ?: return@forEach
+                val id = obj.get("id")?.takeIf { it.isJsonPrimitive }?.asString?.filter { it.isLetterOrDigit() }?.take(16) ?: return@forEach
+                if (id.isEmpty() || _specs.any { it.id == id }) return@forEach
+                if (_specs.size >= CustomThemeSpec.MAX) {
+                    logger.warn("Skipped the imported custom theme {}: the limit of {} is reached", id, CustomThemeSpec.MAX)
+                    return@forEach
+                }
+                val spec = CustomThemeSpec.fromJson(obj, id) ?: return@forEach
+                update(spec.copy(name = uniqueName(spec.name)))
+            }
+            Files.deleteIfExists(path)
+        } catch (e: Exception) {
+            logger.error("Failed to import custom themes from {}", path, e)
         }
     }
 
