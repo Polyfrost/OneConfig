@@ -367,7 +367,7 @@ object CustomThemes {
     private fun scheduleSave() {
         val bytes = JsonArray().apply { _specs.forEach { add(it.toJson(true)) } }.toString().toByteArray(StandardCharsets.UTF_8)
         val seq = writeSeq.incrementAndGet()
-        pendingBytes = bytes
+        synchronized(writeLock) { pendingBytes = bytes }
         pendingSave?.cancel(false)
         pendingSave = Multithreading.submitScheduled({
             synchronized(writeLock) {
@@ -382,7 +382,6 @@ object CustomThemes {
 
     private fun writePending() {
         val bytes = pendingBytes ?: return
-        pendingBytes = null
         try {
             val path = file()
             Files.createDirectories(path.parent)
@@ -393,6 +392,7 @@ object CustomThemes {
             } catch (_: Exception) {
                 Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING)
             }
+            if (pendingBytes === bytes) pendingBytes = null
         } catch (e: Exception) {
             logger.error("Failed to save {}", FILE_NAME, e)
         }
