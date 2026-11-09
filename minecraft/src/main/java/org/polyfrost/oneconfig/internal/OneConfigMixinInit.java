@@ -219,6 +219,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
         mixins.add("keybind.Mixin_OptionsSaveDetect");
         mixins.add("keybind.Mixin_OptionsSkipMirrors");
+        //? if = 1.8.9
+        //mixins.add("keybind.Mixin_KeyBindsListRows");
 
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);
