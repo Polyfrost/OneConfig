@@ -93,6 +93,7 @@ import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
 import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
@@ -308,7 +309,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 when (entry) {
                     is ModGridEntry.Header -> ModTypeHeader(
                         entry,
-                        modifier = if (animateItems) Modifier.animateItem(placementSpec = ModCardPlacementSpec) else Modifier,
+                        modifier = if (animateItems) Modifier.animateItem(placementSpec = modCardPlacementSpec()) else Modifier,
                         onToggle = { ModCardTypeCollapseStore.toggle(entry.type.id) },
                     )
 
@@ -323,7 +324,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                                 .then(
                                     if (animateItems) {
                                         Modifier.animateItem(
-                                            placementSpec = if (dragging) null else ModCardPlacementSpec,
+                                            placementSpec = if (dragging) null else modCardPlacementSpec(),
                                         )
                                     } else {
                                         Modifier
@@ -391,6 +392,8 @@ private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modif
 private fun Rule(modifier: Modifier) {
     Box(modifier.height(1.dp).background(LocalTheme.current.borderColor))
 }
+
+private fun modCardPlacementSpec() = if (ReducedMotion.enabled) null else ModCardPlacementSpec
 
 private val ModCardPlacementSpec = spring(
     dampingRatio = Spring.DampingRatioNoBouncy,

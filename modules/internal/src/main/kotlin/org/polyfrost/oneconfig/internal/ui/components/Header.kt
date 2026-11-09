@@ -105,7 +105,8 @@ fun Header(modifier: Modifier = Modifier) {
                 AnimatedContent(
                     title,
                     transitionSpec = {
-                        fadeIn() togetherWith fadeOut()
+                        if (ReducedMotion.enabled) fadeIn() togetherWith fadeOut() using null
+                        else fadeIn() togetherWith fadeOut()
                     }
                 ) { headerTitle ->
                     headerTitle?.let { info ->

@@ -58,6 +58,7 @@ fun Modifier.glassHover(shape: Shape, pull: Dp = 1.dp): Modifier {
     val glow = if (light) 0.45f else 0.2f
     return this
         .graphicsLayer {
+            if (ReducedMotion.enabled) return@graphicsLayer
             translationX = offset.value.x.roundToInt().toFloat()
             translationY = offset.value.y.roundToInt().toFloat()
             scaleX = scale.value

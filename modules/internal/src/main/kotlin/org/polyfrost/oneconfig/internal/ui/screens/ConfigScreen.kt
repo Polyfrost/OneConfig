@@ -72,6 +72,7 @@ import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
@@ -494,8 +495,8 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
         AnimatedVisibility(
             visible = expanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
+            enter = ReducedMotion.enter(expandVertically()),
+            exit = ReducedMotion.exit(shrinkVertically()),
         ) {
             Box(
                 modifier = Modifier

@@ -16,6 +16,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellAppearance;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.sound.SoundThemeSelection;
@@ -231,6 +232,11 @@ public class ThemeConfig extends Config {
                 return false;
             });
         addCallback(
+            "reducedMotion", (Boolean v) -> {
+                ReducedMotion.setEnabled(v);
+                return false;
+            });
+        addCallback(
             "soundTheme", (Number v) -> {
                 SoundThemeSelection.INSTANCE.setValue(v.intValue());
                 UiSounds.onSoundThemeChanged(UiSoundEvent.CLICK);
@@ -245,6 +251,7 @@ public class ThemeConfig extends Config {
         ProviderKt.setUiScalePercent(uiScale);
         ProviderKt.setPixelGridMode(pixelGrid);
         SoundThemeSelection.INSTANCE.setValue(soundTheme);
+        ReducedMotion.setEnabled(reducedMotion);
     }
 
     private static void updateAppearance(float page, float sidebar, float glow) {
