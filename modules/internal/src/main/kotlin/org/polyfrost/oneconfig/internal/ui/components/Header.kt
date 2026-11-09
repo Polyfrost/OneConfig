@@ -105,7 +105,8 @@ fun Header(modifier: Modifier = Modifier) {
                 AnimatedContent(
                     title,
                     transitionSpec = {
-                        fadeIn() togetherWith fadeOut()
+                        if (ReducedMotion.enabled) fadeIn() togetherWith fadeOut() using null
+                        else fadeIn() togetherWith fadeOut()
                     }
                 ) { headerTitle ->
                     headerTitle?.let { info ->
@@ -364,6 +365,8 @@ fun GlobalSearchBar() {
         ),
     )
 
+    // TextFieldState needs its own migration, as it changes how every field hoists its state
+    @Suppress("DEPRECATION")
     BasicTextField(
         value = searchText,
         onValueChange = { searchText = it },

@@ -7,7 +7,10 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
+import org.lwjgl.opengl.DisplayMode;
 import org.polyfrost.oneconfig.internal.legacy.LegacyOptionsFormat;
+import org.polyfrost.oneconfig.internal.utils.LegacyVideoModeFormat;
+import pl.tomgirl.pylon.window.DisplaySdl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -96,6 +99,24 @@ public abstract class Mixin_RememberUnknownOptions {
                 return;
             }
         }
+    }
+
+    @Inject(method = "load", at = @At("RETURN"))
+    private void ocfg$applyFullscreenResolution(CallbackInfo ci) {
+        int[] size = null;
+        Boolean exclusive = null;
+        for (String line : ocfg$loadedLines) {
+            if (line.startsWith(LegacyVideoModeFormat.OPTION_PREFIX)) {
+                size = LegacyVideoModeFormat.toSize(line.substring(LegacyVideoModeFormat.OPTION_PREFIX.length()));
+            } else if (line.startsWith("exclusiveFullscreen:")) {
+                exclusive = "true".equals(line.substring("exclusiveFullscreen:".length()).trim());
+            }
+        }
+        DisplaySdl display = DisplaySdl.instance();
+        if (exclusive != null) display.setExclusiveFullscreen(exclusive);
+        if (size == null) return;
+        if (exclusive == null) display.setExclusiveFullscreen(true);
+        display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
     }
 
     @ModifyExpressionValue(

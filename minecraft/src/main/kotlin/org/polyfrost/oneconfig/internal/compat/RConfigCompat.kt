@@ -91,7 +91,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         //? >= 1.21.8 {
         parseAny(config.elements(), tree, config.id(), usedIds)
         //? } else {
-        /*parseAny(config.entries(), tree, config.id(), usedIds)
+        /*// superseded by elements() only as of 1.21.5, and the only option before it
+        @Suppress("DEPRECATION")
+        parseAny(config.entries(), tree, config.id(), usedIds)
+        @Suppress("DEPRECATION")
         parseButtons(config.buttons(), tree, config.id(), usedIds)
         *///? }
 
@@ -131,7 +134,10 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         //? >= 1.21.8 {
         parseAny(config.elements(), tree, nestedId, usedIds)
         //? } else {
-        /*parseAny(config.entries(), tree, nestedId, usedIds)
+        /*// superseded by elements() only as of 1.21.5, and the only option before it
+        @Suppress("DEPRECATION")
+        parseAny(config.entries(), tree, nestedId, usedIds)
+        @Suppress("DEPRECATION")
         parseButtons(config.buttons(), tree, nestedId, usedIds)
         *///? }
 
@@ -148,7 +154,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             ?: "button" //todo find a better way of doing this because rconfig allows empty names
         property.description = button.description()
         property.visualizer = Visualizer.ButtonVisualizer::class.java
-        property.metadata?.put("runnable", Runnable { button.invoke() })
+        property.addMetadata("runnable", Runnable { button.invoke() })
         tree.put(property)
     }
 
@@ -256,6 +262,8 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         objectEntry.category = tree.category
         objectEntry.subcategory = entry.options().title.toLocalizedString()
         objectEntry.index = -1
+        // superseded by elements() only as of 1.21.5, and the only option before it
+        @Suppress("DEPRECATION")
         parseAny(entry.entries(), objectEntry, path, usedIds)
         tree.put(objectEntry)
     }
@@ -268,7 +276,9 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         //? >= 1.21.8 {
         parseAny(entry.elements(), tmp, "object", usedIds)
         //? } else {
-        /*parseAny(entry.entries(), tmp, "object", usedIds)
+        /*// superseded by elements() only as of 1.21.5, and the only option before it
+        @Suppress("DEPRECATION")
+        parseAny(entry.entries(), tmp, "object", usedIds)
         *///? }
         val out = ArrayList<Property<*>>()
         collectProperties(tmp, out)
@@ -416,12 +426,12 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     private fun coerceNumber(value: Any?, type: Class<*>): Any {
         val number = value as? Number ?: 0
         return when (type) {
-            java.lang.Byte::class.java, java.lang.Byte.TYPE -> number.toByte()
-            java.lang.Short::class.java, java.lang.Short.TYPE -> number.toShort()
-            Integer::class.java, Integer.TYPE -> number.toInt()
-            java.lang.Long::class.java, java.lang.Long.TYPE -> number.toLong()
-            java.lang.Float::class.java, java.lang.Float.TYPE -> number.toFloat()
-            java.lang.Double::class.java, java.lang.Double.TYPE -> number.toDouble()
+            Byte::class.javaObjectType, Byte::class.java -> number.toByte()
+            Short::class.javaObjectType, Short::class.java -> number.toShort()
+            Int::class.javaObjectType, Int::class.java -> number.toInt()
+            Long::class.javaObjectType, Long::class.java -> number.toLong()
+            Float::class.javaObjectType, Float::class.java -> number.toFloat()
+            Double::class.javaObjectType, Double::class.java -> number.toDouble()
             else -> number
         }
     }
@@ -504,7 +514,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
                 EntryType.BOOLEAN -> option.boolean = value as Boolean
                 EntryType.STRING -> option.string = value as String
                 EntryType.ENUM -> option.enum = value as Enum<*>
-                else -> null // unknown/handled differently
+                else -> {} // unknown/handled differently
             }
         }
         var getter: () -> Any = option::get

@@ -3,7 +3,6 @@ package org.polyfrost.oneconfig.internal.ui.keybind
 import com.mojang.blaze3d.platform.InputConstants
 import java.util.concurrent.TimeUnit
 import net.minecraft.client.KeyMapping
-import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshotStore
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -125,9 +124,8 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
                 modeTransitions.captureSavedOptions { owner -> captureLiveControls(owner, false) }
             }
                 .onFailure { LOGGER.warn("Failed to capture saved Minecraft keybinds", it) }
-            Unit
         }
-        val mc = Minecraft.getInstance() ?: return
+        val mc = minecraftOrNull() ?: return
         if (mc.isSameThread) captureSaved() else mc.execute(captureSaved)
     }
 
@@ -142,7 +140,7 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
     }
 
     private fun runOnClientThreadAndWait(action: () -> Unit) {
-        val mc = Minecraft.getInstance()
+        val mc = minecraftOrNull()
         ConfigManager.dispatchAndWait(
             { task -> if (mc == null || mc.isSameThread) task.run() else mc.execute(task) },
             action,
@@ -174,7 +172,7 @@ object MinecraftKeybindProfiles : ConfigManager.ProfileChangeListener {
             changed = true
         }
         if (changed) {
-            Minecraft.getInstance()?.options?.save()
+            minecraftOrNull()?.options?.save()
             runCatching { KeyMapping.resetMapping() }
         }
     }

@@ -263,6 +263,8 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         init { this["options"] = options }
 
         var optionKeys: Array<String>?
+            // only ever set by the setter below
+            @Suppress("UNCHECKED_CAST")
             get() = this["optionsKey"] as Array<String>?
             set(value) { this["optionsKey"] = value }
     }
@@ -294,6 +296,8 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
     class FileProp(default: String) : Prop<String>(default, String::class.java) {
         var types: Array<String>?
+            // only ever set by the setter below
+            @Suppress("UNCHECKED_CAST")
             get() = this["types"] as Array<String>?
             set(value) { this["types"] = value }
 
@@ -376,6 +380,8 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
 
     class FileListProp(default: Array<String>) : ListProp<Array<String>>(default, Array<String>::class.java) {
         var types: Array<String>?
+            // only ever set by the setter below
+            @Suppress("UNCHECKED_CAST")
             get() = this["types"] as Array<String>?
             set(value) { this["types"] = value }
 
@@ -477,11 +483,7 @@ class ConfigDSL(id: String? = null, title: String? = null, description: String? 
         operator fun get(key: String): Any? = property.getMetadata(key)
     }
 
-    @DslMarker
-    private annotation class ConfigDSLMarker
-
     companion object {
-        @ConfigDSLMarker
         @JvmStatic
         inline fun config(id: String? = null, title: String? = null, description: String? = null, block: ConfigDSL.() -> Unit) {
             ConfigDSL(id, title, description).apply(block)

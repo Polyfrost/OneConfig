@@ -732,8 +732,10 @@ class MinecraftItemCatalogService : ItemCatalogService {
         guiHeight: Int,
     ) {
         val mc = Minecraft.getInstance()
+        //? if > 1.8.9 {
         val previousTarget = GuiTargetRedirect.target
         val previousScissor = GuiTargetRedirect.scissorTransform
+        //?}
         val renderSizePx = checkNotNull(page.layout).iconSizePx
 
         //? if >= 1.21.8 {

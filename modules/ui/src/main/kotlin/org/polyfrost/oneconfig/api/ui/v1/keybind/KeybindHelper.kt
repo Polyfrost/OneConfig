@@ -26,10 +26,10 @@ class KeybindHelper {
      * Defaults to "OneConfig"
      */
     fun category(category: String) = apply { this.category = category }
-    fun shift() = apply { mods = (mods or KeyModifiers.SHIFT).toByte() }
-    fun ctrl() = apply { mods = (mods or KeyModifiers.CTRL).toByte() }
-    fun alt() = apply { mods = (mods or KeyModifiers.ALT).toByte() }
-    fun meta() = apply { mods = (mods or KeyModifiers.META).toByte() }
+    fun shift() = apply { mods = mods or KeyModifiers.SHIFT }
+    fun ctrl() = apply { mods = mods or KeyModifiers.CTRL }
+    fun alt() = apply { mods = mods or KeyModifiers.ALT }
+    fun meta() = apply { mods = mods or KeyModifiers.META }
     fun inScreens() = apply { inScreens = true }
     fun firesWhileTyping() = apply { firesWhileTyping = true }
     fun duration(nanos: Long) = apply { durationNanos = nanos }

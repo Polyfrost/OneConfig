@@ -41,9 +41,11 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ClassPreloader
 import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -96,7 +98,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null }
 
     override fun blurAlpha(): Float {
-        if (!OneConfigConfig.enableBackgroundBlur) return 0f
+        if (!ThemeConfig.enableBackgroundBlur) return 0f
         val now = System.currentTimeMillis()
         val progress = if (closeRequested) {
             if (closeAnimationMs <= 0L) 0f
@@ -449,10 +451,10 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
 
-    private fun handleOneConfigKeybind(): Boolean {
+    private fun handleOneConfigKeybind(onRelease: Boolean = false): Boolean {
         if (closeRequested) return cancelClose()
         if (OneConfigConfig.keybindClosesGui) {
-            OneConfigConfig.notifyKeybindClosedGui()
+            if (!onRelease) OneConfigConfig.notifyKeybindClosedGui()
             beginClose()
             requestCloseCallback?.invoke()
         } else {
@@ -470,10 +472,16 @@ class OneConfigUIScreen @JvmOverloads constructor(
             return true
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
-        if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
+        if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording && !isModifierTapBind) {
             return handleOneConfigKeybind()
         }
         return false
+    }
+
+    override val modifierTapBind: OneConfigKeybind get() = OneConfigConfig.oneConfigKeybind
+
+    override fun handleModifierTapped() {
+        handleOneConfigKeybind(onRelease = true)
     }
 
     /** Mouse side buttons navigate the page history like a browser */

@@ -93,6 +93,8 @@ fun FileOption(data: FileOptionData) {
         }
     }
 
+    // TextFieldState needs its own migration, as it changes how every field hoists its state
+    @Suppress("DEPRECATION")
     BasicTextField(
         value = value,
         onValueChange = { value = it; data.strProp.set(it.text) },
@@ -141,6 +143,8 @@ fun FileOption(data: FileOptionData) {
     )
 }
 
+// only consumed by a value-based BasicTextField, see the note on its call site
+@Suppress("DEPRECATION")
 @Composable
 internal fun rememberPathTransformation(): VisualTransformation {
     val theme = LocalTheme.current

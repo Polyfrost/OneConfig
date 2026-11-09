@@ -347,8 +347,8 @@ object ComposeUiHarness_Test {
     }
 
     private fun press(down: Boolean, button: Int = InputConstants.MOUSE_BUTTON_LEFT) {
-        val s = screen() ?: return
         //? if >= 1.21.10 {
+        val s = screen() ?: return
         val p = s.testPointer ?: Offset.Zero
         val e = MouseButtonEvent(p.x.toDouble(), p.y.toDouble(), MouseButtonInfo(button, 0))
         if (down) s.mouseClicked(e, false) else s.mouseReleased(e)
@@ -364,8 +364,8 @@ object ComposeUiHarness_Test {
     }
 
     private fun key(code: Int) {
-        val s = screen() ?: return
         //? if >= 1.21.10 {
+        val s = screen() ?: return
         //? if sdl {
         val e = KeyEvent(code, SDL_GetKeyFromScancode(code, 0.toShort(), false), 0)
         //?} else
@@ -376,12 +376,14 @@ object ComposeUiHarness_Test {
     }
 
     private fun type(str: String) {
+        //? if >= 1.21.10 {
         val s = screen() ?: return
         for (c in str) {
             //? if >= 26.1 {
             s.charTyped(CharacterEvent(c.code))
-            //?} else if >= 1.21.10
+            //?} else
             //s.charTyped(CharacterEvent(c.code, 0))
         }
+        //?}
     }
 }

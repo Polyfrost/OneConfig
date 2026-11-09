@@ -43,12 +43,7 @@ public class ScreenOpenEvent extends Event.Cancellable {
 
     /**
      * This is a Duck method because Minecraft versions differ
-     * <br> It returns the expected type for that minecraft version
-     * <ul>
-     *     <li>legacy forge gives a GuiScreen</li>
-     *     <li>modern forge gives a Screen</li>
-     *     <li>fabric gives a Screen</li>
-     * </ul>
+     * <br> It returns the {@code Screen} of the running Minecraft version
      */
     @SuppressWarnings("unchecked")
     @Nullable

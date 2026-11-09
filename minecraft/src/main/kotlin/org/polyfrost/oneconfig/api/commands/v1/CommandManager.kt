@@ -41,7 +41,7 @@ object CommandManager {
         argumentTypes[Long::class.javaPrimitiveType!!] = LongArgumentType.longArg()
         registerFactory(AnnotationCommandFactory())
 
-        ClientCommandRegistrationCallback.EVENT.register { dispatcher, context ->
+        ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
             commands.forEach { dispatcher.root.addChild(it) }
         }
     }

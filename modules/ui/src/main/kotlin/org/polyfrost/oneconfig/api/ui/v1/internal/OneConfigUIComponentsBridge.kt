@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.window.PopupPositionProvider
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 
@@ -91,6 +92,19 @@ interface OneConfigUIComponentsBridge {
     )
 
     fun onClick(modifier: Modifier, interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit): Modifier
+
+    fun reducedMotion(): Boolean
+
+    @Composable
+    fun popupSurface(modifier: Modifier, shape: Shape): Modifier
+
+    @Composable
+    fun Popup(
+        positionProvider: PopupPositionProvider,
+        onDismissRequest: (() -> Unit)?,
+        focusable: Boolean,
+        content: @Composable () -> Unit,
+    )
 
     @Composable
     fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier

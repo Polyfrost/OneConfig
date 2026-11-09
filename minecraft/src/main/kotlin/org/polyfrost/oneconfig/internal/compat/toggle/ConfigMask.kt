@@ -371,11 +371,11 @@ internal class ConfigMask(
         val SINGLETON_FIELDS = setOf("INSTANCE", "instance", "CONFIG", "config")
 
         fun convert(value: Any?, type: Class<*>): Any? = when {
-            value is Number && (type == Boolean::class.javaPrimitiveType || type == java.lang.Boolean::class.java) -> value.toInt() != 0
-            value is Number && (type == Float::class.javaPrimitiveType || type == java.lang.Float::class.java) -> value.toFloat()
-            value is Number && (type == Double::class.javaPrimitiveType || type == java.lang.Double::class.java) -> value.toDouble()
-            value is Number && (type == Int::class.javaPrimitiveType || type == Integer::class.java) -> value.toInt()
-            value is Number && (type == Long::class.javaPrimitiveType || type == java.lang.Long::class.java) -> value.toLong()
+            value is Number && (type == Boolean::class.javaPrimitiveType || type == Boolean::class.javaObjectType) -> value.toInt() != 0
+            value is Number && (type == Float::class.javaPrimitiveType || type == Float::class.javaObjectType) -> value.toFloat()
+            value is Number && (type == Double::class.javaPrimitiveType || type == Double::class.javaObjectType) -> value.toDouble()
+            value is Number && (type == Int::class.javaPrimitiveType || type == Int::class.javaObjectType) -> value.toInt()
+            value is Number && (type == Long::class.javaPrimitiveType || type == Long::class.javaObjectType) -> value.toLong()
             value is Number && type == PolyColor::class.java -> PolyColor(value.toInt())
             value is Number && type == Color::class.java -> Color(value.toInt(), true)
             value is String && type.isEnum -> type.enumConstants.first { (it as Enum<*>).name == value }

@@ -1111,6 +1111,8 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         hideIf(option.name) { condition.get() }
     }
 
+    // a KProperty1 given here is a member of this config, so this is always a valid receiver
+    @Suppress("UNCHECKED_CAST")
     fun <T> addCallback(option: KProperty<T>, callback: (T?) -> Boolean) {
         option.property.addCallback { callback(when (option) {
             is KProperty0<T> -> option.get()

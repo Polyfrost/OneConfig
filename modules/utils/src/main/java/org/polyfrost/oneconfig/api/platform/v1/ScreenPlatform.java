@@ -87,6 +87,13 @@ public interface ScreenPlatform {
     default void showMessage(String message) {
     }
 
+    default boolean narratorActive() {
+        return false;
+    }
+
+    default void narrate(String text, boolean interrupt) {
+    }
+
     void display(@Nullable Object screen, int frames);
 
     default void display(Object screen) {

@@ -96,6 +96,8 @@ object ComposeUiCheck_Test {
                     Box(Modifier.size(80.dp, 40.dp).background(Brush.horizontalGradient(listOf(Color(0xFFFF4080), Color(0xFF40A0FF))), RoundedCornerShape(8.dp)))
                     Box(Modifier.size(80.dp, 40.dp).border(2.dp, Color(0xFF40FF90), RoundedCornerShape(8.dp)))
                 }
+                // TextFieldState needs its own migration, as it changes how every field hoists its state
+                @Suppress("DEPRECATION")
                 BasicTextField(text, { text = it }, Modifier.fillMaxWidth().background(Color(0xFF15171C), RoundedCornerShape(6.dp)).padding(8.dp),
                     textStyle = TextStyle(color = Color.White, fontSize = 14.sp, fontFamily = poppins))
                 LazyColumn(Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(8.dp)), verticalArrangement = Arrangement.spacedBy(4.dp)) {

@@ -267,6 +267,8 @@ class PolyComposePath : Path {
 
     override fun relativeLineTo(dx: Float, dy: Float) = lineTo(lastX + dx, lastY + dy)
 
+    // abstract on Path, whose replacement quadraticTo delegates to it by default
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float) {
         val x0 = lastX; val y0 = lastY
         val n = segments(abs(x1 - x0) + abs(y1 - y0) + abs(x2 - x1) + abs(y2 - y1))
@@ -276,6 +278,8 @@ class PolyComposePath : Path {
         }
     }
 
+    // abstract on Path, whose replacement relativeQuadraticTo delegates to it by default
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun relativeQuadraticBezierTo(dx1: Float, dy1: Float, dx2: Float, dy2: Float) =
         quadraticBezierTo(lastX + dx1, lastY + dy1, lastX + dx2, lastY + dy2)
 

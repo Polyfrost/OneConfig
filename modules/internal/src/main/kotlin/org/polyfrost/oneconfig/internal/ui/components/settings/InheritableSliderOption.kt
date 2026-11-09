@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.api.settings.InheritableSliderOptionData
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
@@ -63,7 +64,7 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
 
     val thumbDp = 19.dp
     val span = (data.max - data.min).takeIf { it != 0f } ?: 1f
-    val fraction = animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), animationSpec = spring())
+    val fraction = animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), animationSpec = ReducedMotion.spec(spring()))
 
     val filledColor = animateColorAsState(if (inherited) theme.textColorSecondary.copy(alpha = 0.4f) else Accent)
     val thumbColor = animateColorAsState(

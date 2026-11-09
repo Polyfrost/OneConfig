@@ -34,8 +34,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.event.v1.eventHandler
+import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.GlassLight
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
@@ -43,6 +48,10 @@ import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.compose.backend.PolyCanvas
@@ -75,6 +84,7 @@ import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
 import org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyFromScancode
 import org.polyfrost.oneconfig.internal.legacy.KeyCodes
+import org.polyfrost.oneconfig.internal.legacy.LegacyInputEvents
 import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 *///?}
@@ -105,8 +115,9 @@ private object SystemClipboardManager : ClipboardManager {
 }
 
 
-@Suppress("DEPRECATION")
 private object SystemClipboard : Clipboard {
+    // abstract on Clipboard, though nothing here reads it
+    @Suppress("OVERRIDE_DEPRECATION")
     override val nativeClipboard: Any = Unit
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -341,6 +352,13 @@ abstract class ComposeScreen(
             return
         }
 
+        if (!showing) {
+            tapClean = false
+            heldAtOpen.clear()
+            heldAtOpen.addAll(heldKeysNow())
+            heldButtons.clear()
+            mouseHeldAtOpen = mouseButtonsDownNow()
+        }
         showing = true
         sceneContextOrNull?.sync()
     }
@@ -352,6 +370,7 @@ abstract class ComposeScreen(
         return true
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun setContentOn(scene: ComposeScene) {
         scene.setContent {
             @Suppress("DEPRECATION")
@@ -362,7 +381,7 @@ abstract class ComposeScreen(
                 FixedScrollConfig.provided(),
                 LocalWheelRouter provides wheelRouter,
             ) {
-                compose()
+                EscapeAwareTextMenus { compose() }
             }
         }
     }
@@ -580,7 +599,27 @@ abstract class ComposeScreen(
     }
 
     //? if = 1.8.9 {
-    /*override fun handleMouse() {
+    /*override fun handleInputs() {
+        LegacyInputEvents.deferred = true
+        try {
+            var mouse = Mouse.isCreated() && Mouse.next()
+            var keyboard = Keyboard.isCreated() && Keyboard.next()
+            while (mouse || keyboard) {
+                if (mouse && (!keyboard || Mouse.getEventNanoseconds() <= Keyboard.getEventNanoseconds())) {
+                    if (!LegacyInputEvents.postMouse()) handleMouse()
+                    mouse = Mouse.next()
+                } else {
+                    LegacyInputEvents.postKeyboard()
+                    handleKeyboard()
+                    keyboard = Keyboard.next()
+                }
+            }
+        } finally {
+            LegacyInputEvents.deferred = false
+        }
+    }
+
+    override fun handleMouse() {
         val wheel = Mouse.getEventDWheelPrecise()
         if (wheel != 0.0) {
             mouseScrolled(wheel)
@@ -603,6 +642,7 @@ abstract class ComposeScreen(
         val legacyKey = Keyboard.getEventKey()
         val key = if (legacyKey > 0) KeyCodes.fromLegacy(legacyKey).value else -1
         val modifiers = getModifiers()
+        if (key > 0 && !Keyboard.isRepeatEvent()) onRawKey(key, Keyboard.getEventKeyState())
 
         if (Keyboard.getEventKeyState()) {
             val keyHandled = if (key >= 0) keyPressed(key, modifiers) else false
@@ -627,7 +667,10 @@ abstract class ComposeScreen(
     /*override fun mouseClicked(x: Double, y: Double, button: Int): Boolean {
     *///?} else
     //override fun mouseClicked(x: Int, y: Int, button: Int) {
+        reportPointerInput()
         //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
+        tapClean = false
+        heldButtons += button
         if (KeybindRecordingBus.consumeMouse(button, true) || handleMouseClicked(button)) {
             consumedButtons += button
             //$ if > 1.8.9 'return true' else 'return'
@@ -652,6 +695,7 @@ abstract class ComposeScreen(
     *///?} else
     //override fun mouseReleased(x: Int, y: Int, button: Int) {
         //~ if = 1.8.9 'button' -> 'KeyCodes.mouseFromLegacy(button)' {
+        if (!heldButtons.remove(button) && mouseHeldAtOpen > 0) mouseHeldAtOpen--
         val recordingConsumed = KeybindRecordingBus.consumeMouse(button, false)
         val pressConsumed = consumedButtons.remove(button)
         if (!recordingConsumed && !pressConsumed) {
@@ -669,11 +713,13 @@ abstract class ComposeScreen(
 
     //? if > 1.8.9 {
     override fun mouseScrolled(x: Double, y: Double, scrollX: Double, scrollY: Double): Boolean {
+        tapClean = false
         sendScrollEvent(scrollX, scrollY)
         return super.mouseScrolled(x, y, scrollX, scrollY)
     }
     //?} else {
     /*private fun mouseScrolled(scrollY: Double) {
+        tapClean = false
         sendScrollEvent(0.0, scrollY)
     }
     *///?}
@@ -689,6 +735,9 @@ abstract class ComposeScreen(
     private fun releaseHeldButtons() {
         // cancel first so these releases only clear the held mouse buttons instead of clicking
         withScene { it.cancelPointerInput() }
+        tapClean = false
+        heldButtons.clear()
+        mouseHeldAtOpen = 0
         sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_LEFT)
         sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_RIGHT)
         sendMouseButtonEvent(PointerEventType.Release, InputConstants.MOUSE_BUTTON_MIDDLE)
@@ -788,7 +837,49 @@ abstract class ComposeScreen(
 
     protected open fun handleKeyPressed(key: Int, modifiers: Int): Boolean = false
 
+    protected open val modifierTapBind: OneConfigKeybind? get() = null
+
+    protected open fun handleModifierTapped() {}
+
+    protected val isModifierTapBind: Boolean get() {
+        val bind = modifierTapBind ?: return false
+        val keys = bind.keyCodes ?: return false
+        return keys.isNotEmpty() && bind.mouseBtns?.isNotEmpty() != true && bind.mods == KeyModifiers.NONE &&
+            keys.all(MinecraftKeyboardAdapter::isModifier)
+    }
+
+    private var tapReady = false
+    private var tapClean = false
+
+    private val heldAtOpen = HashSet<Int>()
+    private val heldButtons = HashSet<Int>()
+    private var mouseHeldAtOpen = 0
+
+    /** Sees every key before Minecraft's global keys (screenshot, fullscreen) can swallow it */
+    private fun onRawKey(key: Int, pressed: Boolean) {
+        if (!pressed) {
+            heldAtOpen.remove(key)
+            return
+        }
+        val keys = modifierTapBind?.keyCodes ?: return
+        if (key !in keys) {
+            tapClean = false
+            return
+        }
+        val held = KeybindManager.heldKeys + heldAtOpen
+        val noButtons = heldButtons.isEmpty() && mouseHeldAtOpen == 0
+        if (keys.none { it != key && it in held }) {
+            tapClean = held.none { it != key } && noButtons
+        }
+        tapReady = isModifierTapBind && noButtons && !KeybindRecordingBus.isRecording && held + key == keys.toSet()
+    }
+
     private val consumedKeys = HashSet<Int>()
+
+    private val navigationKeys = intArrayOf(
+        InputConstants.KEY_TAB, InputConstants.KEY_UP, InputConstants.KEY_DOWN, InputConstants.KEY_LEFT, InputConstants.KEY_RIGHT,
+        InputConstants.KEY_SPACE, InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER,
+    )
     private val consumedButtons = HashSet<Int>()
 
     //? >= 1.21.10 {
@@ -830,6 +921,15 @@ abstract class ComposeScreen(
         //~ if = 1.8.9 '= key' -> '= SDL_GetKeyFromScancode(key, 0, true)'
         val shortcutKey = key
     *///?}
+        val tapKeys = modifierTapBind?.keyCodes
+        if (tapReady && tapKeys?.contains(bindingKey) == true) {
+            if (tapKeys.none { it != bindingKey && it in KeybindManager.heldKeys }) {
+                tapReady = false
+                if (tapClean && isWindowFocused()) handleModifierTapped()
+            }
+        } else {
+            tapReady = false
+        }
         val handled = !consumedKeys.remove(bindingKey) && sendKeyReleasedEvent(bindingKey, shortcutKey, modifiers)
         //? if >= 1.21.10 {
         return handled || super.keyReleased(event)
@@ -839,7 +939,12 @@ abstract class ComposeScreen(
         //return handled
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
+    private fun reportPointerInput() = A11y.reportInput(false)
+
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun dispatchKeyPressed(bindingKey: Int, shortcutKey: Int, modifiers: Int): Boolean {
+        if (bindingKey in navigationKeys) A11y.reportInput(true)
         if (bindingKey == InputConstants.KEY_ESCAPE) {
             if (KeybindRecordingBus.consumeEscape()) {
                 consumedKeys += bindingKey
@@ -849,6 +954,12 @@ abstract class ComposeScreen(
                 sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)
                 return true
             }
+            if (sendKeyPressedEvent(bindingKey, shortcutKey, modifiers)) return true
+            if (EscapeStack.closeTop() || handleKeyPressed(bindingKey, modifiers)) {
+                consumedKeys += bindingKey
+                return true
+            }
+            return false
         }
         if (handleKeyPressed(bindingKey, modifiers)) {
             consumedKeys += bindingKey
@@ -1007,6 +1118,16 @@ abstract class ComposeScreen(
     private val dummyComponent by lazy { object : Component() {} }
 
     private companion object {
+        //? if > 1.8.9 {
+        init {
+            eventHandler { (key, _, state): KeyInputEvent ->
+                if (key != 0 && state != KeyInputEvent.REPEAT) {
+                    (Platform.screen().current<Any?>() as? ComposeScreen)?.onRawKey(key, state == KeyInputEvent.PRESSED)
+                }
+            }
+        }
+        //?}
+
         const val SETTLE_FRAMES = 4
 
         const val WHEEL_NOTCH_DP = 150f

@@ -111,6 +111,12 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("Mixin_VersionedResourcePacks");
         //? if > 1.8.9
         mixins.add("fixes.Mixin_SkipMalformedOptions");
+        //? if >= 26.3
+        mixins.add("fixes.Mixin_LegacyVideoModeFormat");
+        //? if >= 26.3
+        mixins.add("fixes.Mixin_MonitorNearestRefresh");
+        //? if >= 26.3
+        mixins.add("fixes.Mixin_LegacyExclusiveFullscreen");
         //? if > 1.8.9
         mixins.add("Mixin_CommunityTranslations");
         //? if = 1.8.9
@@ -172,12 +178,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? modmenu_compat
         mixins.add("compat.Mixin_ModMenu");
 
-        //? neoforge {
-        //mixins.add("events.Mixin_ChatReceiveEvent_Forge");
-        //mixins.add("events.Mixin_ScreenOpenEvent_Forge");
-        //? } else {
         mixins.add("events.Mixin_ScreenOpenEvent_Fabric");
-        //? }
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
 
@@ -219,6 +220,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("keybind.Mixin_KeyMappingResetDetect");
         mixins.add("keybind.Mixin_OptionsSaveDetect");
         mixins.add("keybind.Mixin_OptionsSkipMirrors");
+        //? if = 1.8.9
+        //mixins.add("keybind.Mixin_KeyBindsListRows");
 
         {
             Logger logger = LogManager.getLogger(OneConfigMixinInit.class);

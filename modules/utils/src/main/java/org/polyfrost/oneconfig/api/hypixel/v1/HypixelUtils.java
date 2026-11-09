@@ -102,7 +102,7 @@ public final class HypixelUtils {
 
         protected InfoBase() {
             LOGGER.info("Registering {} packet handler", getPacketClass().getSimpleName());
-            HypixelModAPI.getInstance().registerHandler(getPacketClass(), this::onPacket);
+            HypixelModAPI.getInstance().createHandler(getPacketClass(), this::onPacket);
             update();
         }
 

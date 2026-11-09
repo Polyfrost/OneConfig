@@ -334,7 +334,7 @@ private object OdinSettingsAdapter {
             is ActionSetting -> Properties.dummy(id = id, name = setting.name, description = setting.description).apply {
                 visualizer = Visualizer.ButtonVisualizer::class.java
                 addMetadata("text", setting.name)
-                metadata?.put("runnable", Runnable { runCatching { setting.action() } })
+                addMetadata("runnable", Runnable { runCatching { setting.action() } })
             }
 
             else -> return null

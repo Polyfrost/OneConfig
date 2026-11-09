@@ -56,7 +56,7 @@ internal class JApRelocator : AbstractProcessor() {
                 }
             }
             create.entries.forEach { (target, list) ->
-                list.forEach { (writer, content, name, origin) ->
+                list.forEach { (writer, content) ->
                     var content = content
                     list.forEach { (_, _, otherName, otherOrigin) ->
                         content = content.replace(otherOrigin, otherName)

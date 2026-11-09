@@ -45,7 +45,7 @@ public class Mixin_GuiRendererLegacyTarget {
             )
     )
     private int oneconfig$modifyGuiTargetWidth(int original) {
-        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
+        RenderTarget override = GuiTargetRedirect.target;
         return override != null ? override.width : original;
     }
 
@@ -58,7 +58,7 @@ public class Mixin_GuiRendererLegacyTarget {
             )
     )
     private int oneconfig$modifyGuiTargetHeight(int original) {
-        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
+        RenderTarget override = GuiTargetRedirect.target;
         return override != null ? override.height : original;
     }
     //? } else {
@@ -67,7 +67,7 @@ public class Mixin_GuiRendererLegacyTarget {
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;getWidth()I")
     )
     private int oneconfig$modifyGuiTargetWidth(int original) {
-        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
+        RenderTarget override = GuiTargetRedirect.target;
         return override != null ? override.width : original;
     }
 
@@ -76,7 +76,7 @@ public class Mixin_GuiRendererLegacyTarget {
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;getHeight()I")
     )
     private int oneconfig$modifyGuiTargetHeight(int original) {
-        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
+        RenderTarget override = GuiTargetRedirect.target;
         return override != null ? override.height : original;
     }
     *///? }
@@ -87,7 +87,7 @@ public class Mixin_GuiRendererLegacyTarget {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;mainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;")
     )
     private RenderTarget oneconfig$redirectGuiTarget(GameRenderer instance, Operation<RenderTarget> original) {
-        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
+        RenderTarget override = GuiTargetRedirect.target;
         return override != null ? override : original.call(instance);
     }
     //? } else {
@@ -96,7 +96,7 @@ public class Mixin_GuiRendererLegacyTarget {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;")
     )
     private RenderTarget oneconfig$redirectGuiTarget(Minecraft instance, Operation<RenderTarget> original) {
-        RenderTarget override = GuiTargetRedirect.INSTANCE.target;
+        RenderTarget override = GuiTargetRedirect.target;
         return override != null ? override : original.call(instance);
     }
     *///? }

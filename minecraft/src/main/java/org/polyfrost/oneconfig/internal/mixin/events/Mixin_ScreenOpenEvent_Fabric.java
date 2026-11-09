@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-//? fabric || ornithe {
 import net.minecraft.client.gui.screens.Screen;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
@@ -30,4 +29,3 @@ public class Mixin_ScreenOpenEvent_Fabric {
         }
     }
 }
-//?}

@@ -180,7 +180,7 @@ class AnnotationCommandFactory : CommandFactory {
                     isRootCommandSetup = true
 
                     // the root command gets no help entry of its own
-                    tree.executes { ctx: CommandContext<ClientCommandSource> ->
+                    tree.executes {
                         try {
                             method.invoke(obj)
                             return@executes 1

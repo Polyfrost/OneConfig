@@ -1,7 +1,7 @@
 import net.fabricmc.loom.build.nesting.NestableJarGenerationTask
 import net.fabricmc.loom.task.NestJarsAction
 
-// Modrinth separately and is excluded from the bootstrap JiJ in oneconfig-bootstrap.gradle.kts
+// ships as its own mod on Modrinth and CurseForge, so OneConfig's bundle jar leaves it out
 
 // NOTE: bump the prefix whenever the compose version changes: the "+compose.x.y.z" part is semver
 // build metadata, which version comparisons ignore, so updaters and dependency constraints
@@ -12,7 +12,7 @@ repositories {
     maven("https://redirector.kotlinlang.org/maven/compose-dev")
 }
 
-val shade: Configuration by configurations.creating {
+val shade: Configuration = configurations.create("shade") {
     isTransitive = true
     exclude(group = "org.jetbrains.kotlin")
     exclude(group = "org.jetbrains.androidx.lifecycle")
@@ -99,7 +99,7 @@ tasks.processResources {
 }
 
 // Modrinth requires distinct hashes per upload, so the Ornithe jar only differs in its version metadata
-val ornitheJar by tasks.registering(Zip::class) {
+val ornitheJar = tasks.register<Zip>("ornitheJar") {
     val modVersion = project.version.toString()
     from(zipTree(tasks.jar.flatMap { it.archiveFile }))
     filesMatching("fabric.mod.json") {

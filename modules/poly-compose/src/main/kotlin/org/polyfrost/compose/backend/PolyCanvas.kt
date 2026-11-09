@@ -255,7 +255,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         val w = right - left
         val h = bottom - top
         if (abs(w - h) < 0.5f) shape(left, top, w, h, min(w, h) / 2f, paint as PolyPaint)
-        else drawPath(PolyComposePath().apply { addOval(Rect(left, top, right, bottom)) }, paint)
+        else drawPath(PolyComposePath().apply { addOval(Rect(left, top, right, bottom), Path.Direction.CounterClockwise) }, paint)
     }
 
     override fun drawCircle(center: Offset, radius: Float, paint: Paint) =
@@ -303,7 +303,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         }
         if (paint.style == PaintingStyle.Stroke) {
             if (paint.pathEffect is DashEffect) {
-                val outline = PolyComposePath().apply { addRoundRect(RoundRect(Rect(x, y, x + w, y + h), CornerRadius(radius))) }
+                val outline = PolyComposePath().apply { addRoundRect(RoundRect(Rect(x, y, x + w, y + h), CornerRadius(radius)), Path.Direction.CounterClockwise) }
                 return strokeContour(outline.allContours()[0], true, paint)
             }
             val sw = paint.strokeWidth.coerceAtLeast(1f)

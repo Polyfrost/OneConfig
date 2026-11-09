@@ -21,7 +21,6 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
-import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
@@ -31,307 +30,157 @@ public class OneConfigConfig extends Config {
     // the open action comes from the minecraft module via setOpenAction since it cannot be serialized
     @Keybind(
         title = "oneconfig.preferences.keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.keybind.description"
     )
     public static OneConfigKeybind oneConfigKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyRightShift()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.keybind_closes_gui.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.keybind_closes_gui.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.keybind_closes_gui.description"
     )
     public static boolean keybindClosesGui = false;
 
     @Keybind(
         title = "oneconfig.preferences.hud_settings_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_settings_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_settings_keybind.description"
     )
     public static OneConfigKeybind hudSettingsKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyE()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_visibility_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_visibility_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_visibility_keybind.description"
     )
     public static OneConfigKeybind hudVisibilityKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyH()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_lock_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_lock_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_lock_keybind.description"
     )
     public static OneConfigKeybind hudLockKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyL()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_copy_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_copy_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_copy_keybind.description"
     )
     public static OneConfigKeybind hudCopyKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyC()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_cut_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_cut_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_cut_keybind.description"
     )
     public static OneConfigKeybind hudCutKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyX()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_paste_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_paste_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_paste_keybind.description"
     )
     public static OneConfigKeybind hudPasteKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyV()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_duplicate_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_duplicate_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_duplicate_keybind.description"
     )
     public static OneConfigKeybind hudDuplicateKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyD()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_reset_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_reset_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_reset_keybind.description"
     )
     public static OneConfigKeybind hudResetKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyR()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_delete_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_delete_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_delete_keybind.description"
     )
     public static OneConfigKeybind hudDeleteKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyDelete()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_select_all_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_select_all_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_select_all_keybind.description"
     )
     public static OneConfigKeybind hudSelectAllKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyA()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_undo_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_undo_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_undo_keybind.description"
     )
     public static OneConfigKeybind hudUndoKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyZ()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_redo_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_redo_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_redo_keybind.description"
     )
     public static OneConfigKeybind hudRedoKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyZ()}, null, HUD_REDO_MODS, 0L, pressed -> true);
 
     @Keybind(
         title = "oneconfig.preferences.hud_redo_alt_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_redo_alt_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_redo_alt_keybind.description"
     )
     public static OneConfigKeybind hudRedoAltKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyY()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.hud_show_keybind_hints.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_show_keybind_hints.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_show_keybind_hints.description"
     )
     public static boolean showKeybindHints = true;
 
     @Switch(
         title = "oneconfig.preferences.hud_marquee_anim.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_marquee_anim.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_marquee_anim.description"
     )
     public static boolean marqueeSelectionAnim = true;
 
     @Slider(
         title = "oneconfig.preferences.hud_marquee_anim_duration.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.hud_editor",
-        subcategoryTranslation = true,
         min = 50f,
         max = 500f,
         step = 10f,
-        description = "oneconfig.preferences.hud_marquee_anim_duration.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_marquee_anim_duration.description"
     )
     public static float marqueeSelectionAnimDuration = 150f;
 
     @Switch(
-        title = "oneconfig.preferences.background_blur.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.background_blur.description",
-        descriptionTranslation = true
-    )
-    public static boolean enableBackgroundBlur = true;
-
-    @Slider(
-        title = "oneconfig.preferences.hud_drag_ui_opacity.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 0f,
-        max = 1f,
-        step = 0.05f,
-        description = "oneconfig.preferences.hud_drag_ui_opacity.description",
-        descriptionTranslation = true
-    )
-    public static float hudDragUiOpacity = 0.60f;
-
-    @Slider(
-        title = "oneconfig.preferences.page_opacity.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.page_opacity.description",
-        descriptionTranslation = true
-    )
-    public static float pageOpacity = 88f;
-
-    @Slider(
-        title = "oneconfig.preferences.sidebar_opacity.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.sidebar_opacity.description",
-        descriptionTranslation = true
-    )
-    public static float sidebarOpacity = 80f;
-
-    @Slider(
-        title = "oneconfig.preferences.glow_opacity.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.glow_opacity.description",
-        descriptionTranslation = true
-    )
-    public static float glowOpacity = 25f;
-
-    @Switch(
         title = "oneconfig.preferences.pause_game.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.pause_game.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.pause_game.description"
     )
     public static boolean pauseGame = false;
 
-    @Slider(
-        title = "oneconfig.preferences.ui_scale.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        min = 50f,
-        max = 200f,
-        step = 5f,
-        description = "oneconfig.preferences.ui_scale.description",
-        descriptionTranslation = true
-    )
-    public static float uiScale = 100f;
-
-    @Dropdown(
-        title = "oneconfig.preferences.pixel_grid.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        options = {
-            "oneconfig.preferences.pixel_grid.auto",
-            "oneconfig.preferences.pixel_grid.always",
-            "oneconfig.preferences.pixel_grid.never"
-        },
-        optionsTranslation = true,
-        description = "oneconfig.preferences.pixel_grid.description",
-        descriptionTranslation = true
-    )
-    public static int pixelGrid = 0;
-
     @Dropdown(
         title = "oneconfig.preferences.remember_last_page.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
         options = {
             "oneconfig.preferences.remember_last_page.never",
             "oneconfig.preferences.remember_last_page.15_seconds",
@@ -339,9 +188,7 @@ public class OneConfigConfig extends Config {
             "oneconfig.preferences.remember_last_page.5_minutes",
             "oneconfig.preferences.remember_last_page.always"
         },
-        optionsTranslation = true,
-        description = "oneconfig.preferences.remember_last_page.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.remember_last_page.description"
     )
     public static int rememberLastPage = 1;
 
@@ -356,246 +203,129 @@ public class OneConfigConfig extends Config {
 
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.restore_hud_editor.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.restore_hud_editor.description"
     )
     public static boolean restoreHudEditor = false;
 
     @Switch(
-        title = "oneconfig.preferences.show_opening_page_animation.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.show_opening_page_animation.description",
-        descriptionTranslation = true
-    )
-    public static boolean showOpeningPageAnimation = false;
-
-    @Switch(
         title = "oneconfig.preferences.show_option_action_buttons.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.show_option_action_buttons.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.show_option_action_buttons.description"
     )
     public static boolean showOptionActionButtons = true;
 
     @Switch(
         title = "oneconfig.preferences.flip_top_option_order.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.gui",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.flip_top_option_order.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.flip_top_option_order.description"
     )
     public static boolean flipTopOptionOrder = false;
 
     @Switch(
         title = "oneconfig.preferences.instant_search.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.search",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.instant_search.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.instant_search.description"
     )
     public static boolean instantSearch = true;
 
     @Keybind(
         title = "oneconfig.preferences.search_keybind.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.search",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.search_keybind.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.search_keybind.description"
     )
     public static OneConfigKeybind searchKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyF()}, null, KeybindUtils.getActionModifier(), 0L, pressed -> true);
 
     @Number(
         title = "oneconfig.preferences.search_distance.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.search",
-        subcategoryTranslation = true,
         min = 0f,
         max = 10f,
-        description = "oneconfig.preferences.search_distance.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.search_distance.description"
     )
     public static int searchDistance = 2;
 
     @Switch(
-        title = "oneconfig.preferences.opening_animation.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.animations",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.opening_animation.description",
-        descriptionTranslation = true
-    )
-    public static boolean guiOpenAnimation = true;
-
-    @Switch(
-        title = "oneconfig.preferences.closing_animation.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.animations",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.closing_animation.description",
-        descriptionTranslation = true
-    )
-    public static boolean guiClosingAnimation = true;
-
-    @Slider(
-        title = "oneconfig.preferences.opening_time.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.animations",
-        subcategoryTranslation = true,
-        min = 0.05f,
-        max = 2f,
-        step = 0.05f,
-        description = "oneconfig.preferences.opening_time.description",
-        descriptionTranslation = true
-    )
-    public static float animationTime = 0.6f;
-
-    @Switch(
-        title = "oneconfig.preferences.show_page_animations.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.animations",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.show_page_animations.description",
-        descriptionTranslation = true
-    )
-    public static boolean showPageAnimations = true;
-
-    @Switch(
         title = "oneconfig.preferences.ui_sounds.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.ui_sounds.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.ui_sounds.description"
     )
     public static boolean enableUISounds = true;
 
     @Switch(
         title = "oneconfig.preferences.menu_sounds.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.menu_sounds.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.menu_sounds.description"
     )
     public static boolean enableUIMenuSounds = true;
 
     @Switch(
         title = "oneconfig.preferences.click_sounds.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.click_sounds.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.click_sounds.description"
     )
     public static boolean enableUIClickSounds = true;
 
     @Switch(
         title = "oneconfig.preferences.slider_sounds.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.slider_sounds.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.slider_sounds.description"
     )
     public static boolean enableUISliderSounds = true;
 
     @Switch(
         title = "oneconfig.preferences.hud_editor_sounds.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.hud_editor_sounds.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.hud_editor_sounds.description"
     )
     public static boolean enableHudEditorSounds = true;
 
     @Switch(
         title = "oneconfig.preferences.ui_ambience.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.ui_ambience.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.ui_ambience.description"
     )
     public static boolean enableUIAmbience = true;
 
     @Switch(
         title = "oneconfig.preferences.duck_music.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.duck_music.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.duck_music.description"
     )
     public static boolean enableUIMusicDucking = true;
 
     @Slider(
         title = "oneconfig.preferences.ui_sound_volume.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
         min = 0f,
         max = 1f,
         step = 0.05f,
-        description = "oneconfig.preferences.ui_sound_volume.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.ui_sound_volume.description"
     )
     public static float uiSoundVolume = 1f;
 
     @Slider(
         title = "oneconfig.preferences.ui_ambience_volume.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.sounds",
-        subcategoryTranslation = true,
         min = 0f,
         max = 1f,
         step = 0.05f,
-        description = "oneconfig.preferences.ui_ambience_volume.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.ui_ambience_volume.description"
     )
     public static float uiAmbienceVolume = 1f;
 
-    @Slider(
-        title = "oneconfig.preferences.page_animation_duration.title",
-        titleTranslation = true,
-        subcategory = "oneconfig.preferences.category.animations",
-        subcategoryTranslation = true,
-        min = 0.1f,
-        max = 0.6f,
-        step = 0.05f,
-        description = "oneconfig.preferences.page_animation_duration.description",
-        descriptionTranslation = true
-    )
-    public static float pageAnimationDuration = 0.3f;
-
     @Switch(
         title = "oneconfig.preferences.show_first_launch_message.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.general",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.show_first_launch_message.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.show_first_launch_message.description"
     )
     public static boolean showFirstLaunchMessage = true;
 
     @Switch(
         title = "oneconfig.preferences.profile_switch_toast.title",
-        titleTranslation = true,
         subcategory = "oneconfig.preferences.category.general",
-        subcategoryTranslation = true,
-        description = "oneconfig.preferences.profile_switch_toast.description",
-        descriptionTranslation = true
+        description = "oneconfig.preferences.profile_switch_toast.description"
     )
     public static boolean profileSwitchToast = true;
 
@@ -683,37 +413,12 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, glowOpacity);
+        ShellController.getShared().getAppearance().update(
+            flipTopOptionOrder, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
-                ShellController.getShared().getAppearance().update(v, pageOpacity, sidebarOpacity, glowOpacity);
-                return false;
-            });
-        addCallback(
-            "pageOpacity", (java.lang.Number v) -> {
-                ShellController.getShared().getAppearance().update(flipTopOptionOrder, v.floatValue(), sidebarOpacity, glowOpacity);
-                return false;
-            });
-        addCallback(
-            "sidebarOpacity", (java.lang.Number v) -> {
-                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, v.floatValue(), glowOpacity);
-                return false;
-            });
-        addCallback(
-            "glowOpacity", (java.lang.Number v) -> {
-                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, v.floatValue());
-                return false;
-            });
-        ProviderKt.setUiScalePercent(uiScale);
-        ProviderKt.setPixelGridMode(pixelGrid);
-        addCallback(
-            "uiScale", (java.lang.Number v) -> {
-                ProviderKt.setUiScalePercent(v.floatValue());
-                return false;
-            });
-        addCallback(
-            "pixelGrid", (java.lang.Number v) -> {
-                ProviderKt.setPixelGridMode(v.intValue());
+                ShellController.getShared().getAppearance().update(
+                    v, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
                 return false;
             });
         addCallback(

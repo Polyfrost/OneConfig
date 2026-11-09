@@ -429,7 +429,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         override fun invoke(g: GuiGraphicsExtractor) {
             val k = key?.invoke()
             val cached = drawn
-            if (cached != null && k == drawnKey && cached.none { it is MeshOp && it.mesh.closed }) {
+            if (cached != null && k == drawnKey && cached.none(LayerOp::closed)) {
                 BitmapTextures.touch(drawnBitmaps)
                 for (op in cached) op(g)
                 return
@@ -1113,7 +1113,7 @@ internal object KeptMeshes {
             pass.enableScissor(m[0], m[1], m[2], m[3])
         } else {
             val window = Minecraft.getInstance().window
-            val s = window.guiScale.toInt()
+            val s = window.guiScale
             val right = min(scissor.right() * s, window.width)
             val bottom = min(scissor.bottom() * s, window.height)
             pass.enableScissor(scissor.left() * s, window.height - bottom, max(0, right - scissor.left() * s), max(0, bottom - scissor.top() * s))
@@ -1171,7 +1171,7 @@ object BlazeHud {
     @JvmStatic
     fun render(gfx: GuiGraphicsExtractor) {
         val guiScale = Minecraft.getInstance().window.guiScale.toFloat()
-        if (dirty || guiScale != scale) {
+        if (dirty || guiScale != scale || stable.stale() || volatile.stale()) {
             scale = guiScale
             val a = reuse(stableRenderer, guiScale).also { stableRenderer = it }
             val b = reuse(volatileRenderer, guiScale).also { volatileRenderer = it }
@@ -1179,7 +1179,6 @@ object BlazeHud {
             stable.take(a, copy = true)
             volatile.take(b, copy = true)
             GlyphAtlas.uploadDirty()
-            BitmapTextures.endFrame()
         } else {
             stable.idle()
             volatile.idle()
@@ -1227,13 +1226,12 @@ internal class Recording(private val coalesce: Boolean = true, private val coale
 
     fun render(gfx: GuiGraphicsExtractor, dirty: Boolean, draw: (RenderContext) -> Unit) {
         val guiScale = Minecraft.getInstance().window.guiScale.toFloat()
-        if (dirty || guiScale != scale) {
+        if (dirty || guiScale != scale || stale()) {
             scale = guiScale
             val renderer = BlazeRenderer(guiScale, keepVertices = true)
             draw(RenderContext(renderer))
             take(renderer)
             GlyphAtlas.uploadDirty()
-            BitmapTextures.endFrame()
         } else {
             idle()
         }
@@ -1254,6 +1252,8 @@ internal class Recording(private val coalesce: Boolean = true, private val coale
         bitmaps = if (copy) HashSet(renderer.bitmaps) else renderer.bitmaps
         BitmapTextures.touch(bitmaps)
     }
+
+    fun stale(): Boolean = raw.any(LayerOp::closed)
 
     fun idle() {
         BitmapTextures.touch(bitmaps)
@@ -1355,6 +1355,12 @@ internal class LayerOp private constructor(
         private val pool = ArrayList<OffscreenTarget>()
         private val active = ArrayList<LayerOp>()
         private var sweptAt = 0L
+
+        fun closed(op: (GuiGraphicsExtractor) -> Unit): Boolean = when (op) {
+            is BlazeRenderer.MeshOp -> op.mesh.closed
+            is LayerOp -> op.ops.any(::closed)
+            else -> false
+        }
 
         fun stale(op: (GuiGraphicsExtractor) -> Unit): Boolean = when (op) {
             is BlazeRenderer.MeshOp, is BlazeRenderer.BakedTextOp -> false
@@ -1554,6 +1560,7 @@ internal object BitmapTextures {
         for (b in bitmaps) cache[b]?.lastUsed = frame
     }
 
+    @JvmStatic
     fun endFrame() {
         frame++
         if (frame < scanAt) return

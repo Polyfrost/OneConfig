@@ -104,11 +104,7 @@ import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
 import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
 //?}
 
-//? neoforge
-//@net.neoforged.fml.common.Mod("oneconfigv1")
-public class OneConfig
-        //? fabric || ornithe
-        implements ClientModInitializer {
+public class OneConfig implements ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     private boolean initialized = false;
@@ -394,11 +390,6 @@ public class OneConfig
         }
     }
 
-    //? neoforge {
-    //static {
-    //    INSTANCE.init();
-    //}
-    //? }
     @Override
     public void onInitializeClient() {
         init();

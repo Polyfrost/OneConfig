@@ -202,7 +202,7 @@ class GridReorderState internal constructor(
         settling = true
         settle = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             settleOffset.snapTo(fromSlot)
-            settleOffset.animateTo(Offset.Zero, SettleSpec)
+            settleOffset.animateTo(Offset.Zero, ReducedMotion.spec(SettleSpec))
             settling = false
             if (overlayKey == key) overlayKey = null
         }
@@ -408,7 +408,7 @@ fun Modifier.reorderableItem(state: GridReorderState, key: Any): Modifier = this
 fun Modifier.reorderOverlay(state: GridReorderState): Modifier {
     val density = LocalDensity.current
     val size = with(density) { state.overlaySize.let { it.width.toDp() to it.height.toDp() } }
-    val scale by animateFloatAsState(if (state.draggingKey != null) 1.04f else 1f)
+    val scale by animateFloatAsState(if (state.draggingKey != null && !ReducedMotion.enabled) 1.04f else 1f)
     return this
         .zIndex(1f)
         .offset { state.overlayOffset.round() }

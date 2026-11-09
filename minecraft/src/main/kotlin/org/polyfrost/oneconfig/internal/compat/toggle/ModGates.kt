@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.compat.toggle
 
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
-//? if !neoforge
 import net.fabricmc.loader.api.FabricLoader
 //? if > 1.8.9
 import net.minecraft.client.Minecraft
@@ -254,7 +253,6 @@ internal object ModGates {
     /** Registers the switches mods ship themselves and returns the ids of those mods */
     private fun registerProvidedSwitches(): Set<String> {
         val provided = HashSet<String>()
-        //? if !neoforge {
         for (container in FabricLoader.getInstance().getEntrypointContainers(ModToggle.ENTRYPOINT, ModToggle::class.java)) {
             val id = container.provider.metadata.id
             try {
@@ -264,7 +262,6 @@ internal object ModGates {
                 LOGGER.error("Failed to load the switch {} ships", id, t)
             }
         }
-        //?}
         return provided
     }
 

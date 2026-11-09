@@ -351,8 +351,8 @@ public final class CompatSnapshotStore {
 
     private static Map<String, Object> fromConfig(Config cfg) {
         Map<String, Object> out = new HashMap<>();
-        for (Map.Entry<String, Object> e : cfg.valueMap().entrySet()) {
-            out.put(e.getKey(), fromStorable(e.getValue()));
+        for (Config.Entry e : cfg.entrySet()) {
+            out.put(e.getKey(), fromStorable(e.getRawValue()));
         }
         return out;
     }

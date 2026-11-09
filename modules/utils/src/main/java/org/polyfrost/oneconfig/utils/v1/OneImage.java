@@ -32,6 +32,7 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.Files;
@@ -150,7 +151,7 @@ public final class OneImage {
     public String uploadToImgur() {
         try {
             // thanks stack overflow for the help with this
-            URL url = new URL("https://api.imgur.com/3/image");
+            URL url = URI.create("https://api.imgur.com/3/image").toURL();
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setDoInput(true);
             con.setDoOutput(true);

@@ -55,7 +55,6 @@ import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
 @OverloadResolutionByLambdaReturnType
 @JvmSynthetic
 @JvmName("eventHandlerZ")
-@EventHandlerKt
 inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Boolean) = object : EventHandler<E>() {
     override fun handle(event: E) = handler(event)
 
@@ -74,7 +73,6 @@ inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Boolean)
  * ```
  */
 @OverloadResolutionByLambdaReturnType
-@EventHandlerKt
 inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Unit) = object : EventHandler<E>() {
     override fun handle(event: E): Boolean {
         handler(event)
@@ -83,9 +81,6 @@ inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Unit) = 
 
     override fun getEventClass() = E::class.java
 }.register()
-
-@DslMarker
-private annotation class EventHandlerKt
 
 // Compile-time rejection of handlers for abstract parent event types, which are never posted
 // directly and whose handlers would therefore never be called. These overloads are more specific

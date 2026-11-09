@@ -34,9 +34,6 @@ package org.polyfrost.oneconfig.api.config.v1;
  * A mod provides one by naming an implementation under the {@value #ENTRYPOINT} entrypoint of its
  * {@code fabric.mod.json}. The class is only loaded when OneConfig is installed, so this can be a
  * {@code compileOnly} dependency.
- * <br>
- * Only Fabric is supported for now. On NeoForge the entrypoint is never discovered, so OneConfig keeps
- * extracting the original screen.
  */
 @FunctionalInterface
 public interface ConfigEntrypoint {

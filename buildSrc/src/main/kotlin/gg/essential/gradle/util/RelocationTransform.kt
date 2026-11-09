@@ -38,6 +38,7 @@ import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.Input
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
 
@@ -100,7 +101,7 @@ abstract class RelocationTransform : TransformAction<RelocationTransform.Paramet
             it.replace('.', '/') + ".class"
         }
 
-        open class ClassPrefixRemapper : Remapper() {
+        open class ClassPrefixRemapper : Remapper(Opcodes.ASM9) {
             override fun map(typeName: String): String = map(jvmPackageMap, typeName)
 
             protected fun map(mappings: Map<String, String>, typeName: String): String {

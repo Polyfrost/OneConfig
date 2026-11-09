@@ -30,6 +30,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.layout.PolyAlign
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -121,7 +122,7 @@ private fun AlignmentCell(
     val animatedScale = remember { Animatable(1f) }
 
     LaunchedEffect(isSelected) {
-        if (isSelected) {
+        if (isSelected && !ReducedMotion.enabled) {
             animatedScale.animateTo(
                 1.15f,
                 spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)

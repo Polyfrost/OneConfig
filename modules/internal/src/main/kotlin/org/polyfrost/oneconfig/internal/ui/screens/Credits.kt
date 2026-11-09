@@ -29,7 +29,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val oneConfigVersion: String? by lazy {
     runCatching {
-        ModInfo.loadedMods.firstOrNull { it.id == "oneconfigv1" }?.version
+        ModInfo.loadedMods.firstOrNull { it.id == "oneconfig" }?.version
     }.getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
 }
 

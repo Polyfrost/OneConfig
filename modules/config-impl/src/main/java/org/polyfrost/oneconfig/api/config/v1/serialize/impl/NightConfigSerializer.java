@@ -93,18 +93,18 @@ public class NightConfigSerializer implements FileSerializer<String> {
         }
     }
 
-    private static Tree read(Map<String, Object> cfg, Tree b) {
-        for (Map.Entry<String, Object> e : cfg.entrySet()) {
-            if (e.getValue() instanceof Config) {
-                Config c = (Config) e.getValue();
+    private static Tree read(Config cfg, Tree b) {
+        for (Config.Entry e : cfg.entrySet()) {
+            Object v = e.getRawValue();
+            if (v instanceof Config) {
+                Config c = (Config) v;
                 if (c.get("class") != null) {
                     b.put(Properties.simple(
                             e.getKey(), null, null,
-                            ObjectSerializer.INSTANCE.deserialize(configsToMaps(c.valueMap()))
+                            ObjectSerializer.INSTANCE.deserialize(configsToMaps(c))
                     ));
-                } else b.put(read(c.valueMap(), tree(e.getKey())));
+                } else b.put(read(c, tree(e.getKey())));
             } else {
-                Object v = e.getValue();
                 b.put(Properties.simple(e.getKey(), null, null, v == NullObject.NULL_OBJECT ? null : v));
             }
         }
@@ -125,13 +125,11 @@ public class NightConfigSerializer implements FileSerializer<String> {
         return c;
     }
 
-    private static Map<String, Object> configsToMaps(Map<String, Object> map) {
-        Map<String, Object> out = new HashMap<>(map.size(), 1f);
-        for (Map.Entry<String, Object> e : map.entrySet()) {
-            if (e.getValue() instanceof Config) {
-                Config c = (Config) e.getValue();
-                out.put(e.getKey(), configsToMaps(c.valueMap()));
-            } else out.put(e.getKey(), e.getValue());
+    private static Map<String, Object> configsToMaps(Config cfg) {
+        Map<String, Object> out = new HashMap<>(cfg.size(), 1f);
+        for (Config.Entry e : cfg.entrySet()) {
+            Object v = e.getRawValue();
+            out.put(e.getKey(), v instanceof Config ? configsToMaps((Config) v) : v);
         }
         return out;
     }
@@ -152,7 +150,7 @@ public class NightConfigSerializer implements FileSerializer<String> {
     public @NotNull Tree deserialize(@NotNull String src) {
         if (src.isEmpty()) throw new IllegalArgumentException("cannot deserialize empty string");
         Config cfg = reader.parse(src);
-        return read(cfg.valueMap(), tree());
+        return read(cfg, tree());
     }
 
     private static class BackedConfig extends AbstractConfig {

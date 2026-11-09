@@ -71,7 +71,7 @@ object SkyblockerCompat {
     private val barPositionerField by lazy { field("barPositioner") }
     private val saveBarConfigMethod by lazy { method("saveBarConfig") }
     private val placeBarsMethod by lazy { method("placeBarsInPositioner") }
-    private val updatePositionsMethod by lazy { method("updatePositions", java.lang.Boolean.TYPE) }
+    private val updatePositionsMethod by lazy { method("updatePositions", Boolean::class.java) }
     private val healthFancyBarMethod by lazy { method("isHealthFancyBarEnabled") }
     private val renderBarsMethod by lazy {
         method("extractRenderState", GuiGraphicsExtractor::class.java, Minecraft::class.java)
@@ -364,10 +364,10 @@ object SkyblockerCompat {
     internal fun bar(type: StatusBarType): StatusBar? = statusBars()[type]
 
     internal fun guiScaledWidth(): Float =
-        Minecraft.getInstance().window?.guiScaledWidth?.toFloat() ?: 0f
+        Minecraft.getInstance().window.guiScaledWidth.toFloat()
 
     internal fun guiScaledHeight(): Float =
-        Minecraft.getInstance().window?.guiScaledHeight?.toFloat() ?: 0f
+        Minecraft.getInstance().window.guiScaledHeight.toFloat()
 
     internal fun detach(bar: StatusBar) {
         val anchor = bar.anchor ?: return

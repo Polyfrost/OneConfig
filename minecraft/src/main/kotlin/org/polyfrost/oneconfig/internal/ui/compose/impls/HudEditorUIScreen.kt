@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
@@ -118,10 +119,10 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
 
     override fun isPauseScreen(): Boolean = OneConfigConfig.pauseGame
 
-    private fun handleOneConfigKeybind(): Boolean {
+    private fun handleOneConfigKeybind(onRelease: Boolean = false): Boolean {
         if (closeRequested) return cancelClose()
         if (OneConfigConfig.keybindClosesGui) {
-            OneConfigConfig.notifyKeybindClosedGui()
+            if (!onRelease) OneConfigConfig.notifyKeybindClosedGui()
             beginClose()
             requestCloseCallback?.invoke()
         } else {
@@ -139,10 +140,16 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             return true
         }
         val toggleKey = OneConfigConfig.oneConfigKeybind.keyCodes?.firstOrNull()
-        if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording) {
+        if (toggleKey != null && key == toggleKey && !KeybindRecordingBus.isRecording && !isModifierTapBind) {
             return handleOneConfigKeybind()
         }
         return false
+    }
+
+    override val modifierTapBind: OneConfigKeybind get() = OneConfigConfig.oneConfigKeybind
+
+    override fun handleModifierTapped() {
+        handleOneConfigKeybind(onRelease = true)
     }
 
     override fun handleMouseClicked(button: Int): Boolean {

@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.jetbrains.gradle.plugin.idea-ext")
     id("maven-publish")
     id("signing")
 }
@@ -22,10 +21,6 @@ subprojects {
 
     group = rootProject.group
     version = rootProject.version
-
-    if (project.parent?.name == "dependencies") {
-        this.group = "${project.group}.dependencies"
-    }
 
     repositories {
         maven("https://repo.polyfrost.org/releases")
@@ -57,12 +52,17 @@ subprojects {
     configure<TestingExtension> {
         suites {
             val sourceSets = extensions.getByType<JavaPluginExtension>().sourceSets
-            val test by sourceSets
-            val main by sourceSets
+            val test = sourceSets.getByName("test")
+            val main = sourceSets.getByName("main")
 
             fun createTestSuite(name: String, javaVersion: Int) {
                 val suite = register<JvmTestSuite>(name) {
                     useJUnitJupiter()
+
+                    dependencies {
+                        // otherwise the suite compiles against the ancient version pulled in by the Kotlin stdlib
+                        compileOnly(rootProject.libs.annotations)
+                    }
 
                     sources {
                         java { srcDir("src/test/java") }
@@ -105,7 +105,14 @@ subprojects {
 
     base.archivesName = name
 
-    if (name !in listOf("internal", "dependencies", "compose-bundle")) {
+    configure<KotlinJvmProjectExtension> {
+        // the suite is registered directly rather than as the default test compilation, which is otherwise associated
+        target.compilations.matching { it.name == "j21Tests" }.configureEach {
+            associateWith(target.compilations.getByName("main"))
+        }
+    }
+
+    if (name !in listOf("internal", "compose-bundle")) {
         configure<KotlinJvmProjectExtension> {
             @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4
             abiValidation {
@@ -125,15 +132,14 @@ subprojects {
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName
         if (name.contains("Test")) {
-            compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=warn")
+            // JUnit 6's nullable assertion parameters get misread as non-null
+            compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=ignore")
         }
     }
 
     configure<JavaPluginExtension> {
-        if("dependencies" !in project.path) {
-            withJavadocJar()
-            withSourcesJar()
-        }
+        withJavadocJar()
+        withSourcesJar()
 
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))
@@ -165,7 +171,7 @@ subprojects {
     }
 
     configure<SigningExtension> {
-        isRequired = project.properties["signing.keyId"] != null
+        isRequired = providers.gradleProperty("signing.keyId").isPresent
         if (isRequired) {
             sign(extensions.getByType<PublishingExtension>().publications["mavenJava"])
         }
@@ -181,7 +187,7 @@ subprojects {
                     groupId = project.group.toString()
 
                     signing {
-                        isRequired = project.properties["signing.keyId"] != null
+                        isRequired = providers.gradleProperty("signing.keyId").isPresent
                         sign(this@named)
                     }
                 }

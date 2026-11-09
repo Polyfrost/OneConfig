@@ -1,4 +1,5 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+// Compose has no public way to override scrolling behaviour
+@file:Suppress("INVISIBLE_REFERENCE")
 
 package org.polyfrost.oneconfig.internal.ui.compose
 

@@ -22,7 +22,7 @@ import net.minecraft.client.KeyboardHandler;
 
 //? if = 1.8.9 {
 /*import org.lwjgl.input.Keyboard;
-import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
+import org.polyfrost.oneconfig.internal.legacy.LegacyInputEvents;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 *///?}
 
@@ -61,18 +61,7 @@ public class Mixin_KeyInputEvent {
     *///?} else {
     /*@Inject(method = "next", at = @At("RETURN"), remap = false)
     private static void keyCallback(CallbackInfoReturnable<Boolean> cir) {
-        if (!cir.getReturnValue()) return;
-
-        int keyCode = Keyboard.getEventKey();
-        if (keyCode > 0) {
-            int action = Keyboard.isRepeatEvent() ? InputConstants.REPEAT : Keyboard.getEventKeyState() ? InputConstants.PRESS : InputConstants.RELEASE;
-            EventManager.INSTANCE.post(new KeyInputEvent(KeyCodes.fromLegacy(keyCode).getValue(), (char) 0, oneconfig$state(action)));
-        }
-
-        char character = Keyboard.getEventCharacter();
-        if (character != 0) {
-            EventManager.INSTANCE.post(new KeyInputEvent(0, character, KeyInputEvent.PRESSED));
-        }
+        if (cir.getReturnValue() && !LegacyInputEvents.deferred) LegacyInputEvents.postKeyboard();
     }
     *///?}
 

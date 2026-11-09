@@ -63,6 +63,8 @@ public abstract class Config {
     /**
      * @param iconPath the path to your mod icon file which must be located within your mod-specific assets folder to avoid conflicts
      */
+    // only queues this for initialization, which runs after construction
+    @SuppressWarnings("this-escape")
     public Config(@NotNull String id, @Nullable String iconPath, @NotNull String title, @Nullable Category category) {
         this.title = title;
         this.id = id;

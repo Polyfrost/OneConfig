@@ -14,6 +14,8 @@ import java.io.ByteArrayInputStream
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
+// the Compose resources library needs generated accessors, whereas these paths are only known at runtime
+@Suppress("DEPRECATION")
 @Composable
 fun PlayerHead(modifier: Modifier = Modifier) {
     val shape = LocalTheme.current.sideBarNavigationEntryShape

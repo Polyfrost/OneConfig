@@ -5,7 +5,5 @@ This directory contains the version and Minecraft dependant code, including the 
 
 The project is designed to be version agnostic, and so the version specific code is kept in this directory. 
 It is designed to be as small as possible, with the majority of the code being in the `modules/` directory.
-This project was originally made for `1.8.9-forge`, and so this is the `mainProject` and the API used in the `src/main` directory.
-
-Each of the other directories is a separate project, which is automatically generated using [Deftu's Gradle Toolkit](https://github.com/Deftu/gradle-toolkit) and [ReplayMod's preprocessor](https://github.com/ReplayMod/preprocessor).
-Some very version specific code is overwritten in these directories as well, with the exact same path as the `src/main` directory.
+Every supported Minecraft version and loader is a [Stonecutter](https://stonecutter.kikugie.dev) node built from the shared `src/main` directory, with version specific code kept behind Stonecutter comments.
+`src/main` is written for the active node set in `stonecutter.gradle.kts`.
