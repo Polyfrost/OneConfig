@@ -156,7 +156,7 @@ private fun cornersLabel(corners: CustomCorners): String = when (corners) {
 }
 
 private fun fixContrast(color: Color, background: Color, target: Float): Color {
-    val toward = if (background.luminance() < 0.5f) Color.White else Color.Black
+    val toward = if (contrastRatio(Color.White, background) >= contrastRatio(Color.Black, background)) Color.White else Color.Black
     var t = 0f
     var fixed = color
     while (t < 1f && contrastRatio(fixed, background) < target) {

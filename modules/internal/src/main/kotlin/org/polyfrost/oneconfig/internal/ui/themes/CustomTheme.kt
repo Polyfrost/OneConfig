@@ -180,7 +180,7 @@ data class CustomThemeSpec(
                 background = parseHex(c.get("bg"))?.copy(alpha = 1f) ?: return null,
                 surface = parseHex(c.get("surface"))?.copy(alpha = 1f) ?: return null,
                 text = parseHex(c.get("text"))?.copy(alpha = 1f) ?: return null,
-                textSecondary = parseHex(c.get("text2"))?.copy(alpha = 1f) ?: return null,
+                textSecondary = parseHex(c.get("text2")) ?: return null,
                 border = parseHex(c.get("border")) ?: return null,
                 accent = accent,
                 corners = corners,
