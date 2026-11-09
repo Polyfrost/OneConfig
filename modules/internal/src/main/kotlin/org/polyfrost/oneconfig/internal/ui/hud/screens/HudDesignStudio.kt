@@ -116,7 +116,7 @@ private var lockedHudToast: Notification? = null
  *
  * Re-uses the toast while it is still on screen so repeated attempts do not stack up identical entries
  */
-private fun notifyHudLocked() {
+internal fun notifyHudLocked() {
     lockedHudToast?.let { if (NotificationsManager.contains(it)) return }
     lockedHudToast = Notifications.info(
         "HUD element locked",
@@ -149,6 +149,8 @@ object HudEditorViewport {
         private set
     var screenHeight by mutableStateOf(0)
         private set
+
+    var gridEnabled by mutableStateOf(false)
 
     // observable mirror of HudManager.guiScreenWidth/Height
     private var guiWidth by mutableStateOf(0f)
@@ -216,7 +218,6 @@ private val hudActionBarBorder = Color.White.copy(0.12f)
 private val hudActionBarDeleteColor = Color(0xFFE5484D)
 
 private const val SNAP_DISTANCE_PX = 6f
-private val snapGuideColor = Color(176, 47, 31)
 
 private const val CHROME_SETTINGS_PANEL = "settings-panel"
 private const val CHROME_LIBRARY = "library"
@@ -224,14 +225,6 @@ private const val CHROME_LIBRARY_ICONS = "library-icons"
 private const val CHROME_TOUR = "tour"
 private const val CHROME_TOUR_CARD = "tour-card"
 private const val SIDE_CHROME_DIM_ALPHA = 0.45f
-
-private data class SnapGuides(val vertical: Float?, val horizontal: Float?) {
-    companion object {
-        val NONE = SnapGuides(null, null)
-    }
-}
-
-private data class AxisSnap(val position: Float, val line: Float?)
 
 /** An unlocked HUD press that becomes a click or drag depending on whether it moves past [DRAG_SLOP_PX] */
 private class PendingPress(
@@ -241,57 +234,55 @@ private class PendingPress(
     val narrowsSelection: Boolean,
 )
 
-private fun snapAxis(pos: Float, size: Float, lines: List<Float>, threshold: Float): AxisSnap {
-    val center = pos + size / 2f
-    val end = pos + size
-    var bestPos: Float? = null
-    var bestLine: Float? = null
-    var bestDist = threshold
-    for (line in lines) {
-        val dLeft = abs(line - pos)
-        val dCenter = abs(line - center)
-        val dRight = abs(line - end)
-        val d = minOf(dLeft, dCenter, dRight)
-        if (d >= bestDist) continue
-        bestDist = d
-        bestLine = line
-        bestPos = when (d) {
-            dLeft -> line
-            dCenter -> line - size / 2f
-            else -> line - size
-        }
+private fun HudBounds.toRect() = Rect(x, y, x + width, y + height)
+
+private fun followsAny(hud: Hud, dragged: Collection<Hud>): Boolean {
+    var current = hud.effectiveAnchorParent
+    var depth = 0
+    while (current != null && depth <= HudManager.activeInstances.size) {
+        if (current in dragged) return true
+        current = current.effectiveAnchorParent
+        depth++
     }
-    return if (bestPos == null) AxisSnap(pos, null) else AxisSnap(bestPos, bestLine)
+    return false
 }
 
-private fun verticalSnapLines(dragged: Hud): List<Float> {
-    val lines = ArrayList<Float>()
-    lines.add(0f)
-    lines.add(HudManager.guiScreenWidth / 2f)
-    lines.add(HudManager.guiScreenWidth)
-    for (hud in HudManager.activeInstances) {
-        if (hud === dragged) continue
-        val b = hudBounds(hud) ?: continue
-        lines.add(b.x)
-        lines.add(b.x + b.width / 2f)
-        lines.add(b.x + b.width)
+private fun beginHudSnap(
+    snapper: HudDragSnapper,
+    dragged: Collection<Hud>,
+    grabbed: Hud,
+    starts: Map<Hud, Pair<Float, Float>> = emptyMap(),
+    refresh: Boolean = false,
+) {
+    fun startRect(hud: Hud): Rect? {
+        val rect = hudBounds(hud)?.toRect() ?: return null
+        val start = starts[hud] ?: return rect
+        return rect.translate(start.first - hud.x, start.second - hud.y)
     }
-    return lines
+    val draggedRects = dragged.mapNotNull(::startRect)
+    if (refresh && snapper.startsWith(draggedRects)) return
+    snapper.begin(
+        dragged = draggedRects,
+        grabbed = startRect(grabbed),
+        others = HudManager.activeInstances
+            .filter { other ->
+                other !in dragged && dragged.none { other.anchorChainContains(it) } && !followsAny(other, dragged)
+            }
+            .mapNotNull { hudBounds(it)?.toRect() },
+        screenWidth = HudManager.guiScreenWidth,
+        screenHeight = HudManager.guiScreenHeight,
+    )
 }
 
-private fun horizontalSnapLines(dragged: Hud): List<Float> {
-    val lines = ArrayList<Float>()
-    lines.add(0f)
-    lines.add(HudManager.guiScreenHeight / 2f)
-    lines.add(HudManager.guiScreenHeight)
-    for (hud in HudManager.activeInstances) {
-        if (hud === dragged) continue
-        val b = hudBounds(hud) ?: continue
-        lines.add(b.y)
-        lines.add(b.y + b.height / 2f)
-        lines.add(b.y + b.height)
+private fun selectionMeasurement(selection: Collection<Hud>, hovered: Hud?): HudMeasurement? {
+    val selected = selection.mapNotNull { hudBounds(it)?.toRect() }
+    if (selected.isEmpty()) return null
+    val a = selected.reduce { x, y ->
+        Rect(minOf(x.left, y.left), minOf(x.top, y.top), maxOf(x.right, y.right), maxOf(x.bottom, y.bottom))
     }
-    return lines
+    val b = hovered?.takeIf { it !in selection }?.let { hudBounds(it)?.toRect() }
+        ?: Rect(0f, 0f, HudManager.guiScreenWidth, HudManager.guiScreenHeight)
+    return hudMeasurement(a, b)
 }
 
 private fun overlapArea(a: Rect, b: Rect): Float {
@@ -374,11 +365,7 @@ internal fun alignHuds(huds: List<Hud>, align: HudAlign) {
         }
         Triple(hud, hud.x + dx, hud.y + dy)
     }
-    repeat(3) {
-        var moved = false
-        for ((hud, tx, ty) in targets) if (hud.x != tx || hud.y != ty) { hud.setAbsolutePosition(tx, ty); moved = true }
-        if (!moved) return
-    }
+    applyHudTargets(targets)
 }
 
 private fun hudBounds(hud: Hud): HudBounds? {
@@ -1076,7 +1063,9 @@ fun HudDesignStudio(visible: Boolean = true) {
     // set while the current drag grabbed a whole fused shape rather than the selection itself
     var dragTookWholeMerge by remember { mutableStateOf(false) }
     var pendingPress by remember { mutableStateOf<PendingPress?>(null) }
-    var snapGuides by remember { mutableStateOf(SnapGuides.NONE) }
+    val dragSnapper = remember { HudDragSnapper() }
+    var altHeld by remember { mutableStateOf(false) }
+    var gridKeyHeld by remember { mutableStateOf(false) }
     var isResizing by remember { mutableStateOf(false) }
     var resizedHud by remember { mutableStateOf<Hud?>(null) }
     var resizeCorner by remember { mutableStateOf<ResizeCorner?>(null) }
@@ -1671,6 +1660,8 @@ fun HudDesignStudio(visible: Boolean = true) {
             val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
             lastPointerPos[0] = pos.x
             lastPointerPos[1] = pos.y
+            val alt = event.keyboardModifiers.isAltPressed
+            if (alt != altHeld) altHeld = alt
             if (anchorPickSources.isNotEmpty()) {
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 val source = anchorPickSources[0]
@@ -1701,6 +1692,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     }
                     HudManager.setMergeExclusions(if (detach) dragSet else emptySet())
                     press.hud.onEditorDragStart()
+                    beginHudSnap(dragSnapper, dragSet, press.hud)
                     Snapshot.withMutableSnapshot {
                         pendingPress = null
                         dragTookWholeMerge = !detach && dragSet.size > movable.size
@@ -1750,7 +1742,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         draggedGroup = emptySet()
                         dragStarts = emptyMap()
                         dragTookWholeMerge = false
-                        snapGuides = SnapGuides.NONE
+                        dragSnapper.end()
                     }
                     dropped?.onEditorDragEnd()
                     return@safePointerEvent
@@ -1759,35 +1751,19 @@ fun HudDesignStudio(visible: Boolean = true) {
                 val hit = draggedHud ?: return@safePointerEvent
                 val starts = dragStarts
                 val start = starts[hit] ?: return@safePointerEvent
-                val rawX = pos.x * s - dragOffsetX
-                val rawY = pos.y * s - dragOffsetY
-                val bounds = hudBounds(hit)
-                val snapXLine: Float?
-                val snapYLine: Float?
-                val targetX: Float
-                val targetY: Float
-                if (bounds != null && !event.keyboardModifiers.isAltPressed) {
-                    val threshold = SNAP_DISTANCE_PX * s
-                    val snapX = snapAxis(rawX, bounds.width, verticalSnapLines(hit), threshold)
-                    val snapY = snapAxis(rawY, bounds.height, horizontalSnapLines(hit), threshold)
-                    targetX = snapX.position
-                    targetY = snapY.position
-                    snapXLine = snapX.line
-                    snapYLine = snapY.line
-                } else {
-                    targetX = rawX
-                    targetY = rawY
-                    snapXLine = null
-                    snapYLine = null
-                }
-                val dx = targetX - start.first
-                val dy = targetY - start.second
+                beginHudSnap(dragSnapper, draggedGroup, hit, starts, refresh = true)
+                val (dx, dy) = dragSnapper.move(
+                    rawDx = pos.x * s - dragOffsetX - start.first,
+                    rawDy = pos.y * s - dragOffsetY - start.second,
+                    threshold = SNAP_DISTANCE_PX * s,
+                    snapping = !event.keyboardModifiers.isAltPressed,
+                    gridEnabled = HudEditorViewport.gridEnabled,
+                )
                 Snapshot.withMutableSnapshot {
                     for (member in draggedGroup) {
                         val ms = starts[member] ?: continue
                         member.setAbsolutePosition(ms.first + dx, ms.second + dy)
                     }
-                    snapGuides = SnapGuides(snapXLine, snapYLine)
                 }
             } else if (marqueeActive) {
                 if (event.changes.none { it.pressed }) {
@@ -1883,7 +1859,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                 draggedGroup = emptySet()
                 dragStarts = emptyMap()
                 dragTookWholeMerge = false
-                snapGuides = SnapGuides.NONE
+                dragSnapper.end()
             }
             if (wasDragging) wasDraggedHud?.onEditorDragEnd()
             if (!wasDragging || wasDraggedHud == null) {
@@ -1917,6 +1893,14 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     LaunchedEffect(selectedHuds) {
         if (selectedHuds.isNotEmpty()) keyFocusRequester.requestFocus()
+    }
+
+    LaunchedEffect(visible) {
+        if (!visible || TextInputFocus.isTyping) return@LaunchedEffect
+        try {
+            keyFocusRequester.requestFocus()
+        } catch (_: IllegalStateException) {
+        }
     }
 
     val chromeAlpha by animateFloatAsState(
@@ -1997,6 +1981,10 @@ fun HudDesignStudio(visible: Boolean = true) {
                 }
             }
             .onKeyEvent { keyEvent ->
+                when (keyEvent.key) {
+                    Key.AltLeft, Key.AltRight -> altHeld = keyEvent.type == KeyEventType.KeyDown
+                    Key.G -> if (keyEvent.type == KeyEventType.KeyUp) gridKeyHeld = false
+                }
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                 if (tourBlocksEditor) {
                     when (keyEvent.key) {
@@ -2017,6 +2005,15 @@ fun HudDesignStudio(visible: Boolean = true) {
                     Snapshot.withMutableSnapshot {
                         selectedHuds = emptySet()
                         panelOpen = false
+                    }
+                    return@onKeyEvent true
+                }
+                if (keyEvent.key == Key.G && !TextInputFocus.isTyping &&
+                    !keyEvent.isCtrlPressed && !keyEvent.isMetaPressed && !keyEvent.isAltPressed
+                ) {
+                    if (!gridKeyHeld) {
+                        gridKeyHeld = true
+                        HudEditorViewport.gridEnabled = !HudEditorViewport.gridEnabled
                     }
                     return@onKeyEvent true
                 }
@@ -2055,16 +2052,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     if (!HudManager.inWorld) {
                         drawHudContents(mcToScreen)
                     }
-                    if (isDragging) {
-                        snapGuides.vertical?.let { lineX ->
-                            val sx = lineX * mcToScreen
-                            drawLine(snapGuideColor, Offset(sx, 0f), Offset(sx, size.height), strokeWidth = 1f)
-                        }
-                        snapGuides.horizontal?.let { lineY ->
-                            val sy = lineY * mcToScreen
-                            drawLine(snapGuideColor, Offset(0f, sy), Offset(size.width, sy), strokeWidth = 1f)
-                        }
-                    }
+                    if (HudEditorViewport.gridEnabled) drawHudGrid(HUD_GRID_SIZE, mcToScreen)
                     for (hud in HudManager.activeInstances) {
                         val bounds = hudBounds(hud) ?: continue
                         val resizable = hud.resizeAxes != HudResize.None
@@ -2151,6 +2139,11 @@ fun HudDesignStudio(visible: Boolean = true) {
                             )
                             drawCircle(anchorLineColor, radius = ANCHOR_DOT_RADIUS_PX, center = to * mcToScreen)
                         }
+                    }
+
+                    if (isDragging) drawHudDragFeedback(dragSnapper.result, mcToScreen)
+                    if (altHeld && !isDragging && !isResizing && !marqueeActive && anchorPickSources.isEmpty() && !tourBlocksEditor) {
+                        selectionMeasurement(selectedHuds, hoveredHud)?.let { drawHudMeasurement(it, mcToScreen) }
                     }
 
                     if (anchorPickSources.isNotEmpty()) {
@@ -2419,6 +2412,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 }
                                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                                 instance.onEditorDragStart()
+                                beginHudSnap(dragSnapper, setOf(instance), instance)
                                 Snapshot.withMutableSnapshot {
                                     dragOffsetX = offX
                                     dragOffsetY = offY
@@ -2785,7 +2779,8 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
     var isDragging by remember { mutableStateOf(false) }
     var dragOffsetX by remember { mutableStateOf(0f) }
     var dragOffsetY by remember { mutableStateOf(0f) }
-    var snapGuides by remember { mutableStateOf(SnapGuides.NONE) }
+    val dragSnapper = remember { HudDragSnapper() }
+    var dragStart by remember { mutableStateOf(Offset.Zero) }
     var lockedPressHud by remember { mutableStateOf<Hud?>(null) }
     var lockedPressOrigin by remember { mutableStateOf(Offset.Zero) }
 
@@ -2799,7 +2794,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
         Snapshot.withMutableSnapshot {
             isDragging = false
             draggedHud = null
-            snapGuides = SnapGuides.NONE
+            dragSnapper.end()
             shellLayout.markHudDragging(false)
         }
         dropped?.onEditorDragEnd()
@@ -2836,9 +2831,11 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 }
                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                 hit.onEditorDragStart()
+                beginHudSnap(dragSnapper, setOf(hit), hit)
                 Snapshot.withMutableSnapshot {
                     dragOffsetX = pos.x * s - hit.x
                     dragOffsetY = pos.y * s - hit.y
+                    dragStart = Offset(hit.x, hit.y)
                     isDragging = true
                     draggedHud = hit
                     hoveredHud = hit
@@ -2854,22 +2851,16 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     }
                     val s = Platform.screen().screenToMcScale()
                     val hit = draggedHud ?: return@safePointerEvent
-                    val rawX = pos.x * s - dragOffsetX
-                    val rawY = pos.y * s - dragOffsetY
-                    val bounds = hudBounds(hit)
-                    if (bounds != null && !event.keyboardModifiers.isAltPressed) {
-                        val threshold = SNAP_DISTANCE_PX * s
-                        val snapX = snapAxis(rawX, bounds.width, verticalSnapLines(hit), threshold)
-                        val snapY = snapAxis(rawY, bounds.height, horizontalSnapLines(hit), threshold)
-                        Snapshot.withMutableSnapshot {
-                            hit.setAbsolutePosition(snapX.position, snapY.position)
-                            snapGuides = SnapGuides(snapX.line, snapY.line)
-                        }
-                    } else {
-                        Snapshot.withMutableSnapshot {
-                            hit.setAbsolutePosition(rawX, rawY)
-                            snapGuides = SnapGuides.NONE
-                        }
+                    val start = dragStart
+                    val (dx, dy) = dragSnapper.move(
+                        rawDx = pos.x * s - dragOffsetX - start.x,
+                        rawDy = pos.y * s - dragOffsetY - start.y,
+                        threshold = SNAP_DISTANCE_PX * s,
+                        snapping = !event.keyboardModifiers.isAltPressed,
+                        gridEnabled = HudEditorViewport.gridEnabled,
+                    )
+                    Snapshot.withMutableSnapshot {
+                        hit.setAbsolutePosition(start.x + dx, start.y + dy)
                     }
                 } else {
                     if (lockedPressHud != null) {
@@ -2912,16 +2903,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                 HudEditorViewport.observe()
                 val mcToScreen = Platform.screen().mcToScreenScale()
                 drawHudContents(mcToScreen)
-                if (isDragging) {
-                    snapGuides.vertical?.let { lineX ->
-                        val sx = lineX * mcToScreen
-                        drawLine(snapGuideColor, Offset(sx, 0f), Offset(sx, size.height), strokeWidth = 1f)
-                    }
-                    snapGuides.horizontal?.let { lineY ->
-                        val sy = lineY * mcToScreen
-                        drawLine(snapGuideColor, Offset(0f, sy), Offset(size.width, sy), strokeWidth = 1f)
-                    }
-                }
+                if (HudEditorViewport.gridEnabled) drawHudGrid(HUD_GRID_SIZE, mcToScreen)
                 for (hud in HudManager.activeInstances) {
                     val bounds = hudBounds(hud) ?: continue
                     val sx = bounds.x * mcToScreen
@@ -2971,6 +2953,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                         )
                     }
                 }
+                if (isDragging) drawHudDragFeedback(dragSnapper.result, mcToScreen)
                 drawContent()
             }
     ) {

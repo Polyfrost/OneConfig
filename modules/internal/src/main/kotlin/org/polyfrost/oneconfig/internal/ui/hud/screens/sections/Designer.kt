@@ -22,10 +22,14 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -40,6 +44,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.TextHud
 import org.polyfrost.oneconfig.api.hud.v1.Weight
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
@@ -57,6 +62,13 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.Dropdown
 import org.polyfrost.oneconfig.internal.ui.hud.components.Radio
 import org.polyfrost.oneconfig.internal.ui.hud.components.RadioValue
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
+import org.polyfrost.oneconfig.internal.ui.hud.screens.beginHudMove
+import org.polyfrost.oneconfig.internal.ui.hud.screens.designerSelection
+import org.polyfrost.oneconfig.internal.ui.hud.screens.endHudMove
+import org.polyfrost.oneconfig.internal.ui.hud.screens.moveHudsBy
+import org.polyfrost.oneconfig.internal.ui.hud.screens.notifyHudLocked
+import org.polyfrost.oneconfig.internal.ui.hud.screens.selectionOrigin
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -124,8 +136,10 @@ fun Designer(hud: Hud?, query: String) {
     var showShadow by remember { mutableStateOf(hud.showShadow) }
     var fullShadow by remember { mutableStateOf(hud.fullShadow) }
 
-    Section("Size & Alignment", query, "Static Size", "Width", "Height") {
+    Section("Size & Alignment", query, "Position", "X", "Y", "Static Size", "Width", "Height") {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            HudPositionFields(hud)
+
             HudSettingTarget(hud, "staticWidth") {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -151,13 +165,13 @@ fun Designer(hud: Hud?, query: String) {
                     HudSettingTarget(hud, "staticW") {
                         NumberSpinner(
                             staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
-                            20f, 2000f, 1f, width = 132.dp, unit = "px", label = "Width"
+                            20f, 2000f, 1f, width = 132.dp, unit = "px", label = "Width", scrub = true, math = true
                         )
                     }
                     HudSettingTarget(hud, "staticH") {
                         NumberSpinner(
                             staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
-                            8f, 2000f, 1f, width = 132.dp, unit = "px", label = "Height"
+                            8f, 2000f, 1f, width = 132.dp, unit = "px", label = "Height", scrub = true, math = true
                         )
                     }
                 }
@@ -360,6 +374,57 @@ fun Designer(hud: Hud?, query: String) {
             }
         }
     }
+    }
+}
+
+@Composable
+private fun HudPositionFields(hud: Hud) {
+    HudEditorViewport.observe()
+    val selection = designerSelection(hud)
+    val origin = selectionOrigin(selection) ?: Offset(hud.x, hud.y)
+    val locked = selection.any { it.locked }
+    val screenW = HudManager.guiScreenWidth
+    val screenH = HudManager.guiScreenHeight
+    var moving by remember { mutableStateOf(false) }
+    val startMove = {
+        if (!moving) {
+            moving = true
+            beginHudMove(selection)
+        }
+    }
+    val endMove = {
+        if (moving) {
+            moving = false
+            endHudMove()
+        }
+    }
+    Row(
+        modifier = if (locked) {
+            Modifier.pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press) notifyHudLocked()
+                    }
+                }
+            }
+        } else {
+            Modifier
+        },
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        NumberSpinner(
+            origin.x, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, v - it.x, 0f) } },
+            -screenW, screenW * 2f, 1f, width = 132.dp, unit = "px", label = "X",
+            onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
+            onEditStart = startMove, liveValue = { selectionOrigin(selection)?.x ?: origin.x },
+        )
+        NumberSpinner(
+            origin.y, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, 0f, v - it.y) } },
+            -screenH, screenH * 2f, 1f, width = 132.dp, unit = "px", label = "Y",
+            onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
+            onEditStart = startMove, liveValue = { selectionOrigin(selection)?.y ?: origin.y },
+        )
     }
 }
 
