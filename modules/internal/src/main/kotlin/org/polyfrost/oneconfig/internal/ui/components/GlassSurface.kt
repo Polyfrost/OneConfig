@@ -8,14 +8,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.isUnspecified
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -41,7 +44,9 @@ import org.polyfrost.compose.backend.PolyDrawCanvas
 import org.polyfrost.compose.backend.drawBackdropGlass
 import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.compose.render.PolyRenderer
+import org.polyfrost.oneconfig.internal.ui.themes.GlassTintColor
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency
 
 private const val PANEL_REFRACTION = 0.85f
 private val PanelBand = 22.dp
@@ -187,11 +192,27 @@ fun Modifier.splitFrostedGlass(shape: Shape, splitX: Dp, leftAlpha: Float, right
         val band = PanelBand.toPx()
         val split = splitX.roundToPx().coerceIn(0, size.width.roundToInt()).toFloat()
         onDrawWithContent {
-            clipRect(right = split) { drawBackdropGlass(size, radius, band, PANEL_REFRACTION, leftAlpha) }
-            clipRect(left = split) { drawBackdropGlass(size, radius, band, PANEL_REFRACTION, rightAlpha) }
+            if (ReduceTransparency.enabled) {
+                drawContent()
+                return@onDrawWithContent
+            }
+            val tint = GlassTintColor.fill
+            clipRect(right = split) {
+                drawBackdropGlass(size, radius, band, PANEL_REFRACTION, leftAlpha)
+                drawTint(tint, radius, leftAlpha)
+            }
+            clipRect(left = split) {
+                drawBackdropGlass(size, radius, band, PANEL_REFRACTION, rightAlpha)
+                drawTint(tint, radius, rightAlpha)
+            }
             drawContent()
         }
     }
+}
+
+private fun DrawScope.drawTint(tint: Color, radius: Float, alpha: Float) {
+    if (tint.alpha <= 0f || alpha <= 0f) return
+    drawRoundRect(tint.copy(alpha = tint.alpha * alpha.coerceAtMost(1f)), cornerRadius = CornerRadius(radius))
 }
 
 internal fun lightNear(bounds: Rect, range: Float): Boolean {
@@ -209,11 +230,12 @@ internal fun cursorNear(bounds: Rect, range: Float): Offset {
     return p - bounds.topLeft
 }
 
-internal fun lightKey(cursor: Offset, alpha: Float): Int {
+internal fun lightKey(cursor: Offset, alpha: Float, rgb: Int = 0xFFFFFF): Int {
     if (cursor.isUnspecified) return 0
     var h = (cursor.x * 8f).roundToInt()
     h = 31 * h + (cursor.y * 8f).roundToInt()
     h = 31 * h + (GlassLight.presence * 255f).roundToInt()
+    h = 31 * h + rgb
     return 31 * h + alpha.toRawBits()
 }
 
@@ -223,7 +245,7 @@ private fun distance(bounds: Rect, p: Offset): Float {
     return sqrt(dx * dx + dy * dy)
 }
 
-private class Tint(val alpha: Float, val colors: IntArray)
+private class Tint(val alpha: Float, val rgb: Int, val colors: IntArray)
 
 private class Perimeter(val points: FloatArray, val normals: FloatArray, val shape: FloatArray) {
     val size: Int get() = points.size / 2
@@ -232,10 +254,10 @@ private class Perimeter(val points: FloatArray, val normals: FloatArray, val sha
     @Volatile
     private var tint: Tint? = null
 
-    fun restingColors(alpha: Float): IntArray {
-        tint?.let { if (it.alpha == alpha) return it.colors }
-        val colors = IntArray(size) { white(resting[it] * alpha) }
-        tint = Tint(alpha, colors)
+    fun restingColors(alpha: Float, rgb: Int): IntArray {
+        tint?.let { if (it.alpha == alpha && it.rgb == rgb) return it.colors }
+        val colors = IntArray(size) { tinted(resting[it] * alpha, rgb) }
+        tint = Tint(alpha, rgb, colors)
         return colors
     }
 }
@@ -269,7 +291,10 @@ private fun perimeter(w: Float, h: Float, radius: Float, inset: Float, lineStep:
         for (i in 0 until n) add(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, nx, ny)
     }
     fun corner(cx: Float, cy: Float, from: Double) {
-        if (r <= 0f) return
+        if (r <= 0f) {
+            add(cx, cy, cos(from).toFloat(), sin(from).toFloat())
+            return
+        }
         val n = max(2, ceil(r * PI / 2 / cornerStep).toInt())
         for (i in 0 until n) {
             val a = from + PI / 2 * i / n
@@ -299,13 +324,18 @@ private fun Modifier.glassSurface(shape: Shape, frosted: Boolean, alpha: () -> F
     val fringe = width / 2f + 2f
     onDrawWithContent {
         val a = alpha()
-        if (frosted) drawBackdropGlass(size, radius, band, PANEL_REFRACTION, a)
+        if (frosted && !ReduceTransparency.enabled) {
+            drawBackdropGlass(size, radius, band, PANEL_REFRACTION, a)
+            val tint = GlassTintColor.fill
+            if (tint.alpha > 0f && a > 0f) drawOutline(outline, tint.copy(alpha = tint.alpha * a.coerceAtMost(1f)))
+        }
         drawContent()
         if (rim == null || lit == null || a <= 0f) return@onDrawWithContent
-        drawRestingRim(rim, width, a)
-        if (near()) drawLight(-fringe, -fringe, size.width + fringe * 2f, size.height + fringe * 2f, { lightKey(cursor(), a) }) {
+        drawRestingRim(rim, width, a, GlassTintColor.rimRgb)
+        val lightRgb = GlassTintColor.lightRgb
+        if (near()) drawLight(-fringe, -fringe, size.width + fringe * 2f, size.height + fringe * 2f, { lightKey(cursor(), a, lightRgb) }) {
             val c = cursor()
-            if (!c.isUnspecified) it.drawRimLight(rim, lit, c, reach, width, a)
+            if (!c.isUnspecified) it.drawRimLight(rim, lit, c, reach, width, a, lightRgb)
         }
     }
 }
@@ -329,12 +359,14 @@ private fun restingLight(nx: Float, ny: Float): Float {
 
 internal fun white(alpha: Float) = ((alpha * 255f).roundToInt().coerceIn(0, 255) shl 24) or 0xFFFFFF
 
-private fun DrawScope.drawRestingRim(rim: Perimeter, width: Float, alpha: Float) {
-    val colors = rim.restingColors(alpha)
+private fun tinted(alpha: Float, rgb: Int) = ((alpha * 255f).roundToInt().coerceIn(0, 255) shl 24) or (rgb and 0xFFFFFF)
+
+private fun DrawScope.drawRestingRim(rim: Perimeter, width: Float, alpha: Float, rgb: Int) {
+    val colors = rim.restingColors(alpha, rgb)
     drawIntoCanvas { canvas -> (canvas as? PolyDrawCanvas)?.polyOp { it.renderer.strokeColorRing(rim.points, rim.normals, colors, width, rim.shape) } }
 }
 
-private fun PolyRenderer.drawRimLight(rim: Perimeter, colors: IntArray, cursor: Offset, reach: Float, width: Float, alpha: Float) {
+private fun PolyRenderer.drawRimLight(rim: Perimeter, colors: IntArray, cursor: Offset, reach: Float, width: Float, alpha: Float, rgb: Int) {
     val presence = GlassLight.presence
     if (presence <= 0f) return
     val n = rim.size
@@ -358,7 +390,7 @@ private fun PolyRenderer.drawRimLight(rim: Perimeter, colors: IntArray, cursor: 
             0
         } else {
             any = true
-            white(over)
+            tinted(over, rgb)
         }
     }
     if (any) strokeColorRing(pts, nrm, colors, width, rim.shape)
