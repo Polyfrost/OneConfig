@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
@@ -49,6 +50,7 @@ import androidx.compose.ui.zIndex
 import java.util.ArrayDeque
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
@@ -218,7 +220,7 @@ internal fun <T> ListOptionContainer(
                                 dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                                 else -> baseOffset
                             }
-                            val animatedOffset = animateFloatAsState(targetOffset)
+                            val animatedOffset = animateFloatAsState(targetOffset, ReducedMotion.spec(spring()))
 
                             EntryRow(
                                 valid = !invalid(entry.value),

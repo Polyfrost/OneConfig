@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -141,13 +142,13 @@ internal fun HudTourOverlay(
 
     val hole = focus?.inflate(with(density) { 6.dp.toPx() })
     val target = hole ?: Rect(Offset(rootSize.width / 2f, rootSize.height / 2f), Size.Zero)
-    val holeSpec = tween<Float>(220)
+    val holeSpec = tween<Float>(if (ReducedMotion.enabled) 0 else 220)
     val holeLeft by animateFloatAsState(target.left, holeSpec, label = "tourHoleLeft")
     val holeTop by animateFloatAsState(target.top, holeSpec, label = "tourHoleTop")
     val holeRight by animateFloatAsState(target.right, holeSpec, label = "tourHoleRight")
     val holeBottom by animateFloatAsState(target.bottom, holeSpec, label = "tourHoleBottom")
     val ringAlpha by animateFloatAsState(if (hole != null) 1f else 0f, holeSpec, label = "tourRingAlpha")
-    val scrimAlpha by animateFloatAsState(if (step.interactive) 0f else 1f, holeSpec, label = "tourScrimAlpha")
+    val scrimAlpha by animateFloatAsState(if (step.interactive) 0f else 1f, tween(220), label = "tourScrimAlpha")
 
     val measured = rootSize.width > 0 && cardSize.width > 0
     var cardPlaced by remember { mutableStateOf(false) }
@@ -164,7 +165,7 @@ internal fun HudTourOverlay(
     } else {
         Offset.Zero
     }
-    val cardSpec = tween<Float>(durationMillis = if (cardPlaced) 220 else 0)
+    val cardSpec = tween<Float>(durationMillis = if (cardPlaced && !ReducedMotion.enabled) 220 else 0)
     val cardX by animateFloatAsState(cardSlot.x, cardSpec, label = "tourCardX")
     val cardY by animateFloatAsState(cardSlot.y, cardSpec, label = "tourCardY")
     LaunchedEffect(measured) { if (measured) cardPlaced = true }
@@ -266,21 +267,7 @@ internal fun HudTourOverlay(
 
 @Composable
 private fun TourDragHint(from: Rect, to: Rect) {
-    val transition = rememberInfiniteTransition(label = "tourDragHint")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            keyframes {
-                durationMillis = 2200
-                0f at 0
-                0f at 400 using FastOutSlowInEasing
-                1f at 1600
-                1f at 2200
-            }
-        ),
-        label = "tourDragProgress",
-    )
+    val progress = if (ReducedMotion.enabled) 0f else tourDragProgress()
     Canvas(Modifier.fillMaxSize()) {
         val radius = CornerRadius(4.dp.toPx())
         val stroke = 1.5.dp.toPx()
@@ -299,6 +286,26 @@ private fun TourDragHint(from: Rect, to: Rect) {
         drawCircle(Color.White, radius = 7.dp.toPx(), center = ghost.center)
         drawCircle(Accent, radius = 5.dp.toPx(), center = ghost.center)
     }
+}
+
+@Composable
+private fun tourDragProgress(): Float {
+    val transition = rememberInfiniteTransition(label = "tourDragHint")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            keyframes {
+                durationMillis = 2200
+                0f at 0
+                0f at 400 using FastOutSlowInEasing
+                1f at 1600
+                1f at 2200
+            }
+        ),
+        label = "tourDragProgress",
+    )
+    return progress
 }
 
 @Composable

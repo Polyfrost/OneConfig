@@ -86,6 +86,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.*
@@ -1963,7 +1964,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     }
     val panelDockX by animateFloatAsState(
         targetValue = if (panelDockedLeft) -(rootSize.width - panelWidthPx) else 0f,
-        animationSpec = tween(220),
+        animationSpec = ReducedMotion.spec(tween(220)),
         label = "panelDockX"
     )
 
@@ -2287,7 +2288,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             obstacles.addAll(chromeRects.values)
             hintSlot = pickHintSlot(rootSize, hintSize, hintMargin, obstacles)
         }
-        val hintSpec = tween<Float>(durationMillis = if (hintPlaced) 160 else 0)
+        val hintSpec = tween<Float>(durationMillis = if (hintPlaced && !ReducedMotion.enabled) 160 else 0)
         val hintX by animateFloatAsState(hintSlot.x, hintSpec, label = "hintX")
         val hintY by animateFloatAsState(hintSlot.y, hintSpec, label = "hintY")
         AnimatedVisibility(
@@ -2323,8 +2324,8 @@ fun HudDesignStudio(visible: Boolean = true) {
         if (panelHud != null) panelContentHud.value = panelHud
         AnimatedVisibility(
             visible = panelHud != null,
-            enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-            exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+            enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { it }) + fadeIn()),
+            exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { it }) + fadeOut()),
         ) {
             DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_SETTINGS_PANEL) } }
             Box {
@@ -2350,8 +2351,8 @@ fun HudDesignStudio(visible: Boolean = true) {
         AnimatedVisibility(
             visible = libraryChromeVisible,
             modifier = Modifier.align(Alignment.CenterEnd),
-            enter = slideInHorizontally(initialOffsetX = { it }),
-            exit = slideOutHorizontally(targetOffsetX = { it }),
+            enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { it })),
+            exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { it })),
         ) {
             DisposableEffect(Unit) {
                 onDispose {
@@ -2366,8 +2367,8 @@ fun HudDesignStudio(visible: Boolean = true) {
             ) {
                 AnimatedVisibility(
                     visible = libraryVisible,
-                    enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                    exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+                    enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { it }) + fadeIn()),
+                    exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { it }) + fadeOut()),
                 ) {
                     DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
                     HudLibraryPanel(
@@ -3083,7 +3084,8 @@ private fun DesignStudioPanel(
                     targetState = activeCategory,
                     transitionSpec = {
                         val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
-                        (slideInHorizontally(tween(250)) { direction * it / 3 } + fadeIn(tween(250)))
+                        if (ReducedMotion.enabled) fadeIn(tween(150)) togetherWith fadeOut(tween(150))
+                        else (slideInHorizontally(tween(250)) { direction * it / 3 } + fadeIn(tween(250)))
                             .togetherWith(slideOutHorizontally(tween(250)) { -direction * it / 3 } + fadeOut(tween(250)))
                     },
                     modifier = Modifier.fillMaxSize()
@@ -3403,7 +3405,8 @@ private fun HudLibraryPanel(
                         val maxOffset = (metrics.contentHeight - constraints.maxHeight).coerceAtLeast(0)
                         val targetOffset = metrics.itemOffsets[index].coerceAtMost(maxOffset)
                         val distance = targetOffset - scrollbarAdapter.scrollOffset
-                        scrollState.animateScrollBy(distance.toFloat())
+                        if (ReducedMotion.enabled) scrollbarAdapter.scrollTo(targetOffset.toDouble())
+                        else scrollState.animateScrollBy(distance.toFloat())
                     } catch (cancelled: CancellationException) {
                         if (currentCoroutineContext().isActive) completeScroll(target, true)
                         throw cancelled

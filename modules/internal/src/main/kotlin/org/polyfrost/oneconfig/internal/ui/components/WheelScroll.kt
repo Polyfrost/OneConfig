@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.components
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -118,6 +119,11 @@ internal class WheelScrollNode(
     override fun onCancelPointerInput() {}
 
     fun push(delta: Offset) {
+        if (ReducedMotion.enabled) {
+            val step = amountOf(delta) * currentValueOf(LocalDensity).density
+            coroutineScope.launch { state.scrollBy(step) }
+            return
+        }
         spring.push(amountOf(delta))
         pushNanos = System.nanoTime()
         if (glide?.isActive != true) glide = coroutineScope.launch { glide() }

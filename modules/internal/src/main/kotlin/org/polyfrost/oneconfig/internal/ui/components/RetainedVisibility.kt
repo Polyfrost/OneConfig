@@ -134,6 +134,7 @@ fun RetainedVisibility(
     openKey: Any? = null,
     content: @Composable (alpha: Float) -> Unit,
 ) {
+    val hiddenScale = if (ReducedMotion.enabled) 1f else hiddenScale
     val progress = remember(openKey) { Animatable(0f) }
     LaunchedEffect(openKey, visible) {
         progress.animateTo(if (visible) 1f else 0f, if (visible) enter else exit)
