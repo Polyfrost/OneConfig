@@ -18,7 +18,6 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
-import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 
@@ -171,6 +170,16 @@ public class OneConfigConfig extends Config {
     )
     public static float marqueeSelectionAnimDuration = 150f;
 
+    @Slider(
+        title = "oneconfig.preferences.hud_drag_ui_opacity.title",
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        min = 0f,
+        max = 100f,
+        step = 5f,
+        description = "oneconfig.preferences.hud_drag_ui_opacity.description"
+    )
+    public static float hudDragUiOpacity = 60f;
+
     @Switch(
         title = "oneconfig.preferences.pause_game.title",
         subcategory = "oneconfig.preferences.category.gui",
@@ -214,13 +223,6 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.show_option_action_buttons.description"
     )
     public static boolean showOptionActionButtons = true;
-
-    @Switch(
-        title = "oneconfig.preferences.flip_top_option_order.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        description = "oneconfig.preferences.flip_top_option_order.description"
-    )
-    public static boolean flipTopOptionOrder = false;
 
     @Switch(
         title = "oneconfig.preferences.instant_search.title",
@@ -299,21 +301,21 @@ public class OneConfigConfig extends Config {
         title = "oneconfig.preferences.ui_sound_volume.title",
         subcategory = "oneconfig.preferences.category.sounds",
         min = 0f,
-        max = 1f,
-        step = 0.05f,
+        max = 100f,
+        step = 5f,
         description = "oneconfig.preferences.ui_sound_volume.description"
     )
-    public static float uiSoundVolume = 1f;
+    public static float uiSoundVolume = 100f;
 
     @Slider(
         title = "oneconfig.preferences.ui_ambience_volume.title",
         subcategory = "oneconfig.preferences.category.sounds",
         min = 0f,
-        max = 1f,
-        step = 0.05f,
+        max = 100f,
+        step = 5f,
         description = "oneconfig.preferences.ui_ambience_volume.description"
     )
-    public static float uiAmbienceVolume = 1f;
+    public static float uiAmbienceVolume = 100f;
 
     @Switch(
         title = "oneconfig.preferences.show_first_launch_message.title",
@@ -400,27 +402,12 @@ public class OneConfigConfig extends Config {
             "restoreHudEditor",
             "Remember last page",
             () -> rememberLastPage != REMEMBER_NEVER ? Property.Display.SHOWN : Property.Display.DISABLED);
-        addDependency("enableUIMenuSounds", "enableUISounds");
-        addDependency("enableUIClickSounds", "enableUISounds");
-        addDependency("enableUISliderSounds", "enableUISounds");
-        addDependency("enableHudEditorSounds", "enableUISounds");
-        addDependency("enableUIMusicDucking", "enableUIAmbience");
-        addDependency(
-            "uiSoundVolume",
-            "UI Sounds",
-            () -> enableUISounds ? Property.Display.SHOWN : Property.Display.DISABLED);
-        addDependency(
-            "uiAmbienceVolume",
-            "UI Ambience",
-            () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        ShellController.getShared().getAppearance().update(
-            flipTopOptionOrder, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
-        addCallback(
-            "flipTopOptionOrder", (Boolean v) -> {
-                ShellController.getShared().getAppearance().update(
-                    v, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
-                return false;
-            });
+        migrateToPercent();
+        for (String option : SOUND_OPTIONS) hideIf(option, "enableUISounds");
+        hideIf("enableUIMusicDucking", "enableUIAmbience");
+        hideIf("uiAmbienceVolume", "enableUIAmbience");
+        hideIf("marqueeSelectionAnimDuration", "marqueeSelectionAnim");
+        for (String option : KEYBINDS_PAGE_ONLY) getProperty(option).addMetadata("keybindsPageOnly", true);
         addCallback(
             "enableUIAmbience", (Boolean v) -> {
                 UiSounds.refreshAmbience();
@@ -527,6 +514,31 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudRedoAltKeybind();
+    }
+
+    private static final String[] SOUND_OPTIONS = {"enableUIMenuSounds", "enableUIClickSounds", "enableUISliderSounds", "enableHudEditorSounds", "uiSoundVolume"};
+
+    private static final String[] KEYBINDS_PAGE_ONLY = {
+        "searchKeybind", "hudSettingsKeybind", "hudVisibilityKeybind", "hudLockKeybind", "hudCopyKeybind", "hudCutKeybind",
+        "hudPasteKeybind", "hudDuplicateKeybind", "hudResetKeybind", "hudDeleteKeybind", "hudSelectAllKeybind",
+        "hudUndoKeybind", "hudRedoKeybind", "hudRedoAltKeybind"
+    };
+
+    private void migrateToPercent() {
+        boolean changed = false;
+        if (uiSoundVolume > 0f && uiSoundVolume <= 1f) {
+            uiSoundVolume *= 100f;
+            changed = true;
+        }
+        if (uiAmbienceVolume > 0f && uiAmbienceVolume <= 1f) {
+            uiAmbienceVolume *= 100f;
+            changed = true;
+        }
+        if (hudDragUiOpacity > 0f && hudDragUiOpacity <= 1f) {
+            hudDragUiOpacity *= 100f;
+            changed = true;
+        }
+        if (changed) save();
     }
 
     private static final int REMEMBER_NEVER = 0;

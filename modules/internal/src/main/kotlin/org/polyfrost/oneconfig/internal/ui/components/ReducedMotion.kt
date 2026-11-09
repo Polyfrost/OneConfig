@@ -11,6 +11,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.MotionDurationScale
+
+object AnimationsMotionScale : MotionDurationScale {
+    @JvmStatic
+    var animations by mutableStateOf(true)
+
+    override val scaleFactor: Float get() = if (animations) 1f else 0f
+}
 
 object ReducedMotion {
     private const val FADE_MILLIS = 150

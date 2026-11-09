@@ -99,7 +99,8 @@ internal fun nodeGroup(node: Node, key: String, default: String): String {
     return node.localizedGroup(key, "${key}Key", default)
 }
 
-internal fun Property<*>.isHidden(): Boolean = display == Property.Display.HIDDEN
+internal fun Property<*>.isHidden(): Boolean =
+    display == Property.Display.HIDDEN || getMetadata<Any?>("keybindsPageOnly") == true
 
 internal fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
     val subcategories = category.subcategories.mapNotNull { subcategory ->

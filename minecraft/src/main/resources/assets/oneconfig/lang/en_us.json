@@ -1,5 +1,8 @@
 {
   "oneconfig.preferences.category.gui": "GUI",
+  "oneconfig.preferences.category.advanced": "Advanced",
+  "oneconfig.preferences.reduce_transparency.title": "Reduce Transparency",
+  "oneconfig.preferences.reduce_transparency.description": "Makes the menu panels solid and turns off the background blur and glow.",
 
   "oneconfig.preferences.keybind.title": "OneConfig Keybind",
   "oneconfig.preferences.keybind.description": "The keybind used to open the OneConfig menu.",
@@ -45,8 +48,8 @@
   "oneconfig.preferences.reduced_motion.title": "Reduced Motion",
   "oneconfig.preferences.reduced_motion.description": "Replaces sliding, scaling and bouncing animations with quick fades, in OneConfig and in mods built on its UI components.",
 
-  "oneconfig.preferences.hud_drag_ui_opacity.title": "HUD drag opacity",
-  "oneconfig.preferences.hud_drag_ui_opacity.description": "How visible the OneConfig menu stays while you drag a HUD. 0 = fully transparent, 1 = no fade.",
+  "oneconfig.preferences.hud_drag_ui_opacity.title": "HUD Drag Opacity",
+  "oneconfig.preferences.hud_drag_ui_opacity.description": "How visible the OneConfig menu stays while you drag a HUD. 0 hides it and 100 keeps it fully visible.",
 
   "oneconfig.preferences.page_opacity.title": "Page Opacity",
   "oneconfig.preferences.page_opacity.description": "How opaque the OneConfig content panel background is. 0 = fully transparent, 100 = fully opaque.",
@@ -68,7 +71,7 @@
   "oneconfig.preferences.pixel_grid.always": "Always",
   "oneconfig.preferences.pixel_grid.never": "Never",
 
-  "oneconfig.preferences.remember_last_page.title": "Remember last page",
+  "oneconfig.preferences.remember_last_page.title": "Remember Last Page",
   "oneconfig.preferences.remember_last_page.description": "Reopens the page you were on if you come back within this time. Otherwise opens the Mods page.",
   "oneconfig.preferences.remember_last_page.never": "Never",
   "oneconfig.preferences.remember_last_page.15_seconds": "15 seconds",
@@ -76,10 +79,10 @@
   "oneconfig.preferences.remember_last_page.5_minutes": "5 minutes",
   "oneconfig.preferences.remember_last_page.always": "Always",
 
-  "oneconfig.preferences.restore_hud_editor.title": "Reopen HUD editor",
+  "oneconfig.preferences.restore_hud_editor.title": "Reopen HUD Editor",
   "oneconfig.preferences.restore_hud_editor.description": "Reopens the HUD editor instead of the OneConfig menu when the HUD editor was the last page you closed.",
 
-  "oneconfig.preferences.show_opening_page_animation.title": "Show opening page animation",
+  "oneconfig.preferences.show_opening_page_animation.title": "Show Opening Page Animation",
   "oneconfig.preferences.show_opening_page_animation.description": "Plays the page animation when the menu is first opened.",
 
   "oneconfig.preferences.instant_search.title": "Instant Search",
@@ -88,16 +91,16 @@
   "oneconfig.preferences.search_keybind.title": "Search Keybind",
   "oneconfig.preferences.search_keybind.description": "Focuses the search bar in the OneConfig menu and HUD editor.",
 
-  "oneconfig.preferences.show_option_action_buttons.title": "Show Option Action Buttons",
-  "oneconfig.preferences.show_option_action_buttons.description": "Shows a more actions button on active option rows. Right-click options still opens the same menu.",
+  "oneconfig.preferences.show_option_action_buttons.title": "Show More Actions Button",
+  "oneconfig.preferences.show_option_action_buttons.description": "Shows a more actions button on active option rows. Right-clicking an option opens the same menu.",
 
-  "oneconfig.preferences.flip_top_option_order.title": "Flip Top Option Order",
+  "oneconfig.preferences.flip_top_option_order.title": "Sidebar Buttons at Bottom",
   "oneconfig.preferences.flip_top_option_order.description": "Moves the Edit HUD and Global Search buttons to the bottom of the sidebar, above your account.",
 
   "oneconfig.preferences.category.search": "Search",
 
-  "oneconfig.preferences.search_distance.title": "Search Distance",
-  "oneconfig.preferences.search_distance.description": "The maximum Levenshtein distance used when fuzzy-matching search queries.",
+  "oneconfig.preferences.search_distance.title": "Search Typo Tolerance",
+  "oneconfig.preferences.search_distance.description": "How many typos a search can have and still find a match. 0 only finds exact matches.",
 
   "oneconfig.preferences.category.animations": "Animations",
 
@@ -108,7 +111,7 @@
   "oneconfig.preferences.closing_animation.description": "Plays an animation when closing the OneConfig menu.",
 
   "oneconfig.preferences.opening_time.title": "Opening Time",
-  "oneconfig.preferences.opening_time.description": "Duration of the opening and closing animations, in seconds.",
+  "oneconfig.preferences.opening_time.description": "How long the menu takes to open, in seconds. Closing uses the same time, up to 0.16 seconds.",
 
   "oneconfig.preferences.show_page_animations.title": "Show Page Animations",
   "oneconfig.preferences.show_page_animations.description": "Animate transitions between pages.",
@@ -140,7 +143,7 @@
   "oneconfig.preferences.ui_ambience.title": "UI Ambience",
   "oneconfig.preferences.ui_ambience.description": "Play a soft ambient loop while the OneConfig menu or HUD designer is open.",
 
-  "oneconfig.preferences.duck_music.title": "Duck Music During Ambience",
+  "oneconfig.preferences.duck_music.title": "Lower Music During Ambience",
   "oneconfig.preferences.duck_music.description": "Lower Minecraft music while OneConfig ambience is playing.",
 
   "oneconfig.preferences.ui_sound_volume.title": "UI Sound Volume",
