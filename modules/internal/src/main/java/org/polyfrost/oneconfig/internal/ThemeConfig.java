@@ -57,9 +57,6 @@ public class ThemeConfig extends Config {
     @Include
     public static boolean preferencesMigrated = false;
 
-    @Include
-    public static boolean flipOrderMigrated = false;
-
     @Slider(
         title = "oneconfig.preferences.ui_scale.title",
         subcategory = "oneconfig.preferences.category.gui",
@@ -76,13 +73,6 @@ public class ThemeConfig extends Config {
         description = "oneconfig.preferences.reduce_transparency.description"
     )
     public static boolean reduceTransparency = false;
-
-    @Switch(
-        title = "oneconfig.preferences.flip_top_option_order.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        description = "oneconfig.preferences.flip_top_option_order.description"
-    )
-    public static boolean flipTopOptionOrder = false;
 
     @Switch(
         title = "oneconfig.preferences.reduced_motion.title",
@@ -236,7 +226,6 @@ public class ThemeConfig extends Config {
         if (tree == null) {
             polyfrostedRenameApplied = !Files.exists(ConfigManager.active().getFolder().resolve(id));
             preferencesMigrated = false;
-            flipOrderMigrated = false;
             soundTheme = SOUND_THEME_MATCH;
             reduceTransparency = false;
             glassTint = GlassTint.CLEAR;
@@ -270,12 +259,6 @@ public class ThemeConfig extends Config {
             "reduceTransparency", (Boolean v) -> {
                 reduceTransparency = v;
                 ReduceTransparency.setEnabled(v);
-                updateAppearance();
-                return false;
-            });
-        addCallback(
-            "flipTopOptionOrder", (Boolean v) -> {
-                flipTopOptionOrder = v;
                 updateAppearance();
                 return false;
             });
@@ -321,7 +304,6 @@ public class ThemeConfig extends Config {
     @Override
     protected void onInitialized(Tree tree) {
         if (!preferencesMigrated) migrateFromPreferences(tree);
-        if (!flipOrderMigrated) migrateFlipOrder(tree);
         updateAppearance();
         ProviderKt.setUiScalePercent(uiScale);
         ProviderKt.setPixelGridMode(pixelGrid);
@@ -336,28 +318,10 @@ public class ThemeConfig extends Config {
     private static void updateAppearance() {
         ShellAppearance appearance = ShellController.getShared().getAppearance();
         if (reduceTransparency) {
-            appearance.update(flipTopOptionOrder, 100f, 100f, 0f);
+            appearance.update(100f, 100f, 0f);
         } else {
-            appearance.update(flipTopOptionOrder, pageOpacity, sidebarOpacity, glowOpacity);
+            appearance.update(pageOpacity, sidebarOpacity, glowOpacity);
         }
-    }
-
-    private void migrateFlipOrder(Tree tree) {
-        Path legacy = ConfigManager.active().getFolder().resolve(PREFERENCES_ID);
-        if (Files.exists(legacy)) {
-            try {
-                Tree old = ConfigManager.active().getNoRegister(legacy);
-                Node value = old == null ? null : old.get("flipTopOptionOrder");
-                if (value instanceof Property) {
-                    getProperty(tree, "flipTopOptionOrder").overwrite(value, false, false, null);
-                }
-            } catch (Exception e) {
-                LOGGER.error("Failed to move flipTopOptionOrder from {} into {}, retrying on the next load", PREFERENCES_ID, id, e);
-                return;
-            }
-        }
-        flipOrderMigrated = true;
-        save();
     }
 
     private void migrateFromPreferences(Tree tree) {
