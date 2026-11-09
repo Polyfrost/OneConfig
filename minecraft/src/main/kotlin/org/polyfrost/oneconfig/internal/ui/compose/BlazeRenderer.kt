@@ -1046,7 +1046,7 @@ internal object KeptMeshes {
     private val text = RenderPipeline.builder(textSnippet).withLocation("pipeline/oneconfig_gui_text_kept").build()
     private val textGrayscale = RenderPipeline.builder(textSnippet).withLocation("pipeline/oneconfig_gui_text_grayscale_kept").withShaderDefine("IS_GRAYSCALE").build()
     //?} elif >= 26.2 {
-    /*    private val text = RenderPipeline.builder(textSnippet).withLocation("pipeline/oneconfig_gui_text_kept")
+        /*private val text = RenderPipeline.builder(textSnippet).withLocation("pipeline/oneconfig_gui_text_kept")
         .withVertexShader("core/text").withFragmentShader("core/text").build()
     private val textGrayscale = RenderPipeline.builder(textSnippet).withLocation("pipeline/oneconfig_gui_text_grayscale_kept")
         .withVertexShader("core/text").withFragmentShader("core/text").withShaderDefine("IS_GRAYSCALE").build()

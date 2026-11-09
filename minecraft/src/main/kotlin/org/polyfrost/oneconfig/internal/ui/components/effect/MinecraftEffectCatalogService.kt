@@ -14,8 +14,8 @@ import net.minecraft.world.effect.MobEffectCategory
 /*import kotlin.math.roundToInt
 import net.minecraft.client.resource.language.I18n
 import net.minecraft.entity.living.effect.StatusEffect
+import net.minecraft.server.packs.resources.ResourceManager
 import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
-import net.ornithemc.osl.resource.loader.api.resource.manager.ResourceManager
 *///?}
 
 class MinecraftEffectCatalogService : EffectCatalogService {

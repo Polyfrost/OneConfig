@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.legacy.compat;
 
 //? if = 1.8.9 {
-/*import net.minecraft.item.ItemStack;
+/*import net.minecraft.world.item.ItemStack;
 
 public interface ItemStackCompat {
     default boolean isEmpty() {
