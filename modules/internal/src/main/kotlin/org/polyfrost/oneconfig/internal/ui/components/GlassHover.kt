@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -41,6 +40,7 @@ import kotlin.math.sqrt
 import kotlinx.coroutines.launch
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.isLight
 
 private const val PRESS_SCALE = 1.03f
 
@@ -54,7 +54,7 @@ fun Modifier.glassHover(shape: Shape, pull: Dp = 1.dp): Modifier {
     val bloom = remember { Animatable(1f) }
     var pressedAt by remember { mutableStateOf(Offset.Zero) }
     val blooming = remember { derivedStateOf { bloom.value < 1f } }
-    val light = theme.textColor.luminance() <= 0.5f
+    val light = theme.isLight
     val glow = if (light) 0.45f else 0.2f
     return this
         .graphicsLayer {
@@ -121,7 +121,7 @@ fun Modifier.hoverGlow(shape: Shape, radius: Dp = 90.dp, isolate: Boolean = true
     val density = LocalDensity.current
     val reach = with(density) { radius.toPx() }
     val slack = with(density) { GateSlack.toPx() }
-    val strength = if (theme.textColor.luminance() <= 0.5f) 0.2f else 0.055f
+    val strength = if (theme.isLight) 0.2f else 0.055f
     val near = remember(reach, slack) { derivedStateOf { lightNear(bounds, reach + slack) } }
     return this
         .then(if (isolate) Modifier.graphicsLayer {} else Modifier)

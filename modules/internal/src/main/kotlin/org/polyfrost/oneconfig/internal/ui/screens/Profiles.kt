@@ -382,7 +382,7 @@ private fun ProfileBusyOverlay() {
         properties = PopupProperties(focusable = true, dismissOnBackPress = false, dismissOnClickOutside = false),
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)),
+            modifier = Modifier.fillMaxSize().background(theme.shadowColor.copy(alpha = 0.55f)),
             contentAlignment = Alignment.Center,
         ) {
             Column(

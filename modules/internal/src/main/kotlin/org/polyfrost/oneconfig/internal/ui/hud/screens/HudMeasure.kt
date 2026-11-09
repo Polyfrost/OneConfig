@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -9,10 +10,14 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.compose.render.PolyFont
+import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
+import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
 internal val hudMeasureColor = Color(0xFFF24822)
 internal val hudSpacingColor = Color(0xFFFF3EA5)
@@ -115,7 +120,10 @@ internal fun hudMeasurement(a: Rect, b: Rect): HudMeasurement {
     return HudMeasurement(b, lines, extensions)
 }
 
-private fun DrawScope.drawHudPxBadge(label: String, center: Offset, color: Color) {
+@Composable
+internal fun hudBadgeRadius(): Dp = minOf(3.dp, ThemeRegistry.activeTheme?.buttonShape?.cornerRadiusOrNull() ?: 3.dp)
+
+private fun DrawScope.drawHudPxBadge(label: String, center: Offset, color: Color, badgeRadius: Dp) {
     val font = PolyFont.default(9f)
     val metrics = font.metrics
     val textWidth = font.measureTextWidth(label)
@@ -127,7 +135,7 @@ private fun DrawScope.drawHudPxBadge(label: String, center: Offset, color: Color
         color = color,
         topLeft = Offset(left, top),
         size = Size(width, MEASURE_BADGE_HEIGHT),
-        cornerRadius = CornerRadius(3f, 3f),
+        cornerRadius = CornerRadius(badgeRadius.toPx()),
     )
     val textX = left + MEASURE_BADGE_PADDING
     val textY = top + (MEASURE_BADGE_HEIGHT - textHeight) / 2f - metrics.ascent
@@ -141,6 +149,7 @@ private fun DrawScope.drawHudDimension(
     lineColor: Color,
     badgeColor: Color,
     mcToScreen: Float,
+    badgeRadius: Dp,
 ) {
     val start = from * mcToScreen
     val end = to * mcToScreen
@@ -149,10 +158,10 @@ private fun DrawScope.drawHudDimension(
     val tick = if (horizontal) Offset(0f, MEASURE_TICK_PX) else Offset(MEASURE_TICK_PX, 0f)
     drawLine(lineColor, start - tick, start + tick, strokeWidth = 1f)
     drawLine(lineColor, end - tick, end + tick, strokeWidth = 1f)
-    drawHudPxBadge(formatHudPx(value), (start + end) / 2f, badgeColor)
+    drawHudPxBadge(formatHudPx(value), (start + end) / 2f, badgeColor, badgeRadius)
 }
 
-internal fun DrawScope.drawHudMeasurement(measurement: HudMeasurement, mcToScreen: Float) {
+internal fun DrawScope.drawHudMeasurement(measurement: HudMeasurement, mcToScreen: Float, badgeRadius: Dp) {
     val t = measurement.target
     drawRect(
         color = hudMeasureColor,
@@ -164,11 +173,11 @@ internal fun DrawScope.drawHudMeasurement(measurement: HudMeasurement, mcToScree
         drawLine(hudMeasureColor, from * mcToScreen, to * mcToScreen, strokeWidth = 1f, pathEffect = hudMeasureDashEffect)
     }
     for (line in measurement.lines) {
-        drawHudDimension(line.from, line.to, line.value, hudMeasureColor, hudMeasureColor, mcToScreen)
+        drawHudDimension(line.from, line.to, line.value, hudMeasureColor, hudMeasureColor, mcToScreen, badgeRadius)
     }
 }
 
-internal fun DrawScope.drawHudDragFeedback(result: HudSnapResult, mcToScreen: Float) {
+internal fun DrawScope.drawHudDragFeedback(result: HudSnapResult, mcToScreen: Float, badgeRadius: Dp) {
     for (guide in result.guides) {
         val p = guide.position * mcToScreen
         val a = guide.start * mcToScreen
@@ -180,10 +189,10 @@ internal fun DrawScope.drawHudDragFeedback(result: HudSnapResult, mcToScreen: Fl
         val start = line.from * mcToScreen
         val end = line.to * mcToScreen
         drawLine(hudSideGapLineColor, start, end, strokeWidth = 1f, pathEffect = hudMeasureDashEffect)
-        drawHudPxBadge(formatHudPx(line.value), (start + end) / 2f, hudSideGapBadgeColor)
+        drawHudPxBadge(formatHudPx(line.value), (start + end) / 2f, hudSideGapBadgeColor, badgeRadius)
     }
     for (gap in result.gaps) {
-        drawHudDimension(gap.from, gap.to, gap.size, hudSpacingColor, hudSpacingColor, mcToScreen)
+        drawHudDimension(gap.from, gap.to, gap.size, hudSpacingColor, hudSpacingColor, mcToScreen, badgeRadius)
     }
 }
 

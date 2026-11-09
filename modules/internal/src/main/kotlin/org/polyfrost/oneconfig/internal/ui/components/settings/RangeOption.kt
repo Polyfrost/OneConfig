@@ -47,6 +47,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
 /**
  * A start and end pair shown either as a two-thumb slider with an input per end or as the inputs alone
@@ -260,12 +261,14 @@ internal fun RangeSliderTrack(
                 .background(AccentBrush)
                 .accentSheen()
         )
+        val thumbCornerRadius = minOf(2.dp, theme.buttonShape.cornerRadiusOrNull() ?: 0.dp)
         listOf(startFraction to false, endFraction to true).forEach { (fraction, pointsLeft) ->
             TriangleThumb(
                 pointsLeft = pointsLeft,
                 color = theme.controlThumbColor,
                 width = thumbWidth,
                 height = thumbHeight,
+                cornerRadius = thumbCornerRadius,
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .offset { IntOffset((fraction.value * usablePx()).toInt(), 0) },

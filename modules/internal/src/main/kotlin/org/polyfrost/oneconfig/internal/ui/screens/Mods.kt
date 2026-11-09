@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -119,6 +118,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.concentric
+import org.polyfrost.oneconfig.internal.ui.themes.contrastRatio
 
 enum class ModCategory(
     val title: String,
@@ -452,7 +453,7 @@ private val ModCardFooterHeight = 36.dp
 
 private val ModCardGlowHeight = 50.dp
 
-private val ModCardInsetFooterShape = RoundedCornerShape(10.dp)
+private val ModCardInsetFooterInset = 6.dp
 
 private val FavoriteStarColor = Color(0xFFFFD700)
 
@@ -485,8 +486,9 @@ fun ModCard(
     var enabled by rememberModEnabled(toggle)
     val footerAccent by animateFloatAsState(if (enabled) 1f else 0f)
     val insetFooter = theme.insetModFooter
+    val insetFooterShape = theme.modCardShape.concentric(ModCardInsetFooterInset)
     val footerTextColor by animateColorAsState(
-        if (enabled) (if (insetFooter) theme.textColor else theme.accentTextColor) else theme.textColor.copy(alpha = 0.75f)
+        if (enabled) (if (insetFooter && contrastRatio(theme.textColor, Accent) >= 3f) theme.textColor else theme.accentTextColor) else theme.textColor.copy(alpha = 0.75f)
     )
     val glowStrength by animateFloatAsState(if (enabled) 0.5f else 0f)
     val navigation = LocalShell.current.navigation
@@ -546,9 +548,9 @@ fun ModCard(
                         if (insetFooter) {
                             Modifier
                                 .padding(start = 5.dp, end = 5.dp, bottom = 5.dp)
-                                .glassHover(ModCardInsetFooterShape, pull = 0.75.dp)
-                                .liquidGlass(ModCardInsetFooterShape)
-                                .clip(ModCardInsetFooterShape)
+                                .glassHover(insetFooterShape, pull = 0.75.dp)
+                                .liquidGlass(insetFooterShape)
+                                .clip(insetFooterShape)
                         } else {
                             Modifier
                         },
