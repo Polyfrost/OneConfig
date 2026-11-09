@@ -60,8 +60,6 @@ class OneConfigFabricPlugin : Plugin<Project> {
             runConfigs["client"].apply {
                 generateRunConfig = true
                 runDirectory = layout.projectDirectory.dir("../../run")
-                // -Pdevauth=false launches offline for runs that do not need a real account
-                systemProperties.put("devauth.enabled", (project.findProperty("devauth") ?: "true").toString())
                 systemProperties.put("oneconfig.test", "true")
             }
         }

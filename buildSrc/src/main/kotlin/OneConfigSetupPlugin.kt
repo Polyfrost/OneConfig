@@ -87,7 +87,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
             }
             maven("https://redirector.kotlinlang.org/maven/compose-dev")
             scopedMaven("https://central.sonatype.com/repository/maven-snapshots/", "net.kyori")
-            scopedMaven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1", "me.djtheredstoner")
             scopedMaven("https://maven.azureaaron.net/snapshots", "net.azureaaron")
             google()
         }
@@ -271,9 +270,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 }
                 "modApi"("net.fabricmc.fabric-api:fabric-api:$fullFabricApiVersion")
             }
-
-            val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
-            "modRuntimeOnly"(libsCatalog.findLibrary("devauth-fabric").get())
 
             if (versionedCatalog.has("cinnabar") && project.hasProperty("minecraft.vulkan")) {
                 handleApiDep(versionedCatalog["cinnabar"])
