@@ -103,7 +103,7 @@ fun Modifier.glassHover(shape: Shape, pull: Dp = 1.dp): Modifier {
                 val b = bloom.value
                 if (b >= 1f) return@drawLive
                 val outline = shape.createOutline(size, layoutDirection, this)
-                val reach = max(size.width, size.height) * (0.25f + b)
+                val reach = max(size.width, size.height) * (if (ReducedMotion.enabled) 1f else 0.25f + b)
                 drawOutline(
                     outline,
                     Brush.radialGradient(listOf(Color.White.copy(alpha = glow * (1f - b)), Color.White.copy(alpha = 0f)), center = pressedAt, radius = reach),

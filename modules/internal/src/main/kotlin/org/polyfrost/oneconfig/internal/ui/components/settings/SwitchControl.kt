@@ -23,6 +23,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -35,7 +36,7 @@ fun SwitchControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val accentAlpha = animateFloatAsState(if (checked) 1f else 0f)
-    val thumbOffset = animateDpAsState(if (checked) 24.dp else 3.dp, animationSpec = spring())
+    val thumbOffset = animateDpAsState(if (checked) 24.dp else 3.dp, animationSpec = ReducedMotion.spec(spring()))
     val borderColor = animateColorAsState(
         if (isHovered) LocalTheme.current.textColor.copy(alpha = 0.15f) else Color.Transparent
     )

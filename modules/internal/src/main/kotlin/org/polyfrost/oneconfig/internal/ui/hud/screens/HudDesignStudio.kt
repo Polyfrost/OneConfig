@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -3406,7 +3405,7 @@ private fun HudLibraryPanel(
                         val maxOffset = (metrics.contentHeight - constraints.maxHeight).coerceAtLeast(0)
                         val targetOffset = metrics.itemOffsets[index].coerceAtMost(maxOffset)
                         val distance = targetOffset - scrollbarAdapter.scrollOffset
-                        if (ReducedMotion.enabled) scrollState.scrollBy(distance.toFloat())
+                        if (ReducedMotion.enabled) scrollbarAdapter.scrollTo(targetOffset.toDouble())
                         else scrollState.animateScrollBy(distance.toFloat())
                     } catch (cancelled: CancellationException) {
                         if (currentCoroutineContext().isActive) completeScroll(target, true)

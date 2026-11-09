@@ -148,7 +148,7 @@ internal fun HudTourOverlay(
     val holeRight by animateFloatAsState(target.right, holeSpec, label = "tourHoleRight")
     val holeBottom by animateFloatAsState(target.bottom, holeSpec, label = "tourHoleBottom")
     val ringAlpha by animateFloatAsState(if (hole != null) 1f else 0f, holeSpec, label = "tourRingAlpha")
-    val scrimAlpha by animateFloatAsState(if (step.interactive) 0f else 1f, holeSpec, label = "tourScrimAlpha")
+    val scrimAlpha by animateFloatAsState(if (step.interactive) 0f else 1f, tween(220), label = "tourScrimAlpha")
 
     val measured = rootSize.width > 0 && cardSize.width > 0
     var cardPlaced by remember { mutableStateOf(false) }
