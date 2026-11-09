@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -267,7 +268,9 @@ private fun SoundThemePicker() {
         BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = PageGutter)) {
             val fit = ((maxWidth + ThemeCardGap) / (SoundCardMinWidth + ThemeCardGap)).toInt()
             val columns = fit.coerceIn(1, SoundThemeOptions.size)
-            val cardWidth = (maxWidth - ThemeCardGap * (columns - 1)) / columns
+            val cardWidth = with(LocalDensity.current) {
+                ((constraints.maxWidth - ThemeCardGap.roundToPx() * (columns - 1)) / columns).toDp()
+            }
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(ThemeCardGap),
                 verticalArrangement = Arrangement.spacedBy(ThemeCardGap),
