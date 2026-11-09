@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 //?} else
 //@Mixin(value = Mouse.class, remap = false)
 public class Mixin_MouseInputEvent {
-    //? >= 1.21.10 {
+    //? if >= 1.21.10 {
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void mouseCallback(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
         if (oneconfig$toastConsumes(buttonInfo.button(), action)) {

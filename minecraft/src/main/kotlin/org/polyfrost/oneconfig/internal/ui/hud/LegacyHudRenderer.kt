@@ -90,7 +90,7 @@ object LegacyHudRenderer {
                     }
                 }
                 hud.settlePin()
-                //? >= 1.21.8 {
+                //? if >= 1.21.8 {
                 val pose = graphics.pose()
                 pose.pushMatrix()
                 try {

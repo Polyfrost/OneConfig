@@ -83,7 +83,7 @@ public class TestCommand_Test {
 
     @Handler
     private void playerTest(GameProfile profile) {
-        //? >= 1.21.9 {
+        //? if >= 1.21.9 {
         String name = profile.name();
         String id = profile.id().toString();
         //? } else {

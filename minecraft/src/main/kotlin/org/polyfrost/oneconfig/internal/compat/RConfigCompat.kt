@@ -72,7 +72,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         info("Creating config wrapper for ${config.id()}!")
         val tree = Tree.tree()
         tree.id = config.id()
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         tree.title = config.info().title().toComponent()
         tree.description = config.info().description().toComponent()
         //? } else {
@@ -88,7 +88,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
             parseCategory(it, config.id(), null, tree, usedIds)
         }
 
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         parseAny(config.elements(), tree, config.id(), usedIds)
         //? } else {
         /*// superseded by elements() only as of 1.21.5, and the only option before it
@@ -117,7 +117,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val tree = Tree.tree()
 
         val nestedId = "$id/${config.id()}"
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         val title = config.info().title().toComponent().string
         //? } else {
         /*val title = config.info().title().toLocalizedString()
@@ -131,7 +131,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         for ((_, entry) in config.categories()) {
             parseCategory(entry, nestedId, category ?: title, root, usedIds)
         }
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         parseAny(config.elements(), tree, nestedId, usedIds)
         //? } else {
         /*// superseded by elements() only as of 1.21.5, and the only option before it
@@ -164,7 +164,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         tree.put(property)
     }
 
-    //? >= 1.21.8 {
+    //? if >= 1.21.8 {
     private fun parseAny(
         list: Iterable<ResourcefulConfigElement>,
         tree: Tree,
@@ -273,7 +273,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     fun buildProperties(entry: ResourcefulConfigObjectEntry): List<Property<*>> {
         val tmp = Tree.tree()
         val usedIds = HashSet<String>()
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         parseAny(entry.elements(), tmp, "object", usedIds)
         //? } else {
         /*// superseded by elements() only as of 1.21.5, and the only option before it
@@ -478,7 +478,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
     // mirror rconfig's own enum label resolution Translatable key then StringRepresentable serialized
     // name then the raw enum name
     private fun enumDisplayName(value: Enum<*>): String {
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         return Translatable.toComponent(value).string
         //? } else {
         /*return when (value) {
@@ -494,7 +494,7 @@ internal object RConfigCompat : Logger by LogManager.getLogger("OneConfig/Rconfi
         val sourceId: String,
         val nodeId: String,
     ) {
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         val name = option.options().title.toComponent()
         val description = option.options().comment.toComponent()
         //? } else {

@@ -148,7 +148,7 @@ class McUiSoundService : UiSoundService {
         val event = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("oneconfig", nextAmbienceSoundId(theme, soundIds)))
         //?} else
         //val event = Identifier("oneconfig", nextAmbienceSoundId(theme, soundIds))
-        //? >= 1.21.6 {
+        //? if >= 1.21.6 {
         val source = SoundSource.UI
         //?} elif > 1.8.9 {
         /*val source = SoundSource.MASTER
@@ -221,7 +221,7 @@ class McUiSoundService : UiSoundService {
                 do {
                     mc.execute {
                         try {
-                            //? >= 1.21.11 {
+                            //? if >= 1.21.11 {
                             mc.soundManager.refreshCategoryVolume(SoundSource.MUSIC)
                             //? } else if >= 1.21.10 {
                             /*mc.soundManager.updateSourceVolume(SoundSource.MUSIC)

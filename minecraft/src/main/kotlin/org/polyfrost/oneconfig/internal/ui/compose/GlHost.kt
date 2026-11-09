@@ -138,7 +138,7 @@ object GlHost {
     private var hudTarget: RenderTarget? = null
     private var hudFrame: GlRenderer? = null
 
-    //? >= 1.21.5 {
+    //? if >= 1.21.5 {
     private val HUD_TEXTURE_LOC = Identifier.fromNamespaceAndPath("oneconfig", "hud_skia")
     private var hudTextureWrapper: HudGpuTexture? = null
 
@@ -147,10 +147,10 @@ object GlHost {
             this.texture = t
         }
 
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         fun setGpuTextureView(v: GpuTextureView?) {
             this.textureView = v
-            //? >= 26.1 {
+            //? if >= 26.1 {
             this.sampler = RenderSystem.getSamplerCache()
                 .getClampToEdge(FilterMode.LINEAR)
             //? }
@@ -159,14 +159,14 @@ object GlHost {
 
         override fun close() {
             this.texture = null
-            //? >= 1.21.8
+            //? if >= 1.21.8
             this.textureView = null
         }
     }
     //?} elif > 1.8.9 {
     /*private val HUD_TEXTURE_LOC = ResourceLocation.fromNamespaceAndPath("oneconfig", "hud_skia")
     private var hudTextureWrapper: HudGlTexture? = null
-    //? >= 1.21.4 {
+    //? if >= 1.21.4 {
     private class HudGlTexture : AbstractTexture() {
         fun setGlTexId(id: Int) { this.id = id }
         override fun close() { this.id = -1 }
@@ -261,7 +261,7 @@ object GlHost {
         val h = rt.height
         val guiScale = client.window.guiScale.toFloat()
 
-        //? >= 1.21.5 {
+        //? if >= 1.21.5 {
         val colorTex = rt.getColorTexture() ?: return
         var wrapper = hudTextureWrapper
         if (wrapper == null) {
@@ -270,7 +270,7 @@ object GlHost {
             client.textureManager.register(HUD_TEXTURE_LOC, wrapper)
         }
         wrapper.setGpuTexture(colorTex)
-        //? >= 1.21.8 {
+        //? if >= 1.21.8 {
         wrapper.setGpuTextureView(rt.getColorTextureView())
         guiGraphics.pose().pushMatrix()
         try {
@@ -299,7 +299,7 @@ object GlHost {
         guiGraphics.pose().pushPose()
         try {
         guiGraphics.pose().scale(1f / guiScale, 1f / guiScale, 1f)
-        //? >= 1.21.4 {
+        //? if >= 1.21.4 {
         guiGraphics.blit(::premulGuiTextured, HUD_TEXTURE_LOC, 0, 0, 0f, 0f, w, h, w, h)
         //?} else {
         /*RenderSystem.enableBlend()
@@ -664,7 +664,7 @@ object GlHost {
             //? if < 1.21.5
             //RenderTargetFbo.restoreBoundTarget(bound)
 
-            //? >= 1.21.5 {
+            //? if >= 1.21.5 {
             val fboId = RenderTargetFbo.getFboId(rt)
             if (fboId <= 0) {
                 LOG.warn("GlHost: hud TextureTarget FBO not ready (id={}), retry next frame", fboId)

@@ -40,7 +40,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 @Mixin(LivingEntityRenderer.class)
 public class Mixin_RenderLivingEntityEvent {
     @Inject(
-            //? >= 1.21.9 {
+            //? if >= 1.21.9 {
             //~ if >= 26.1 'state/Camera' -> 'state/level/Camera'
             method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
             //? } >= 1.21.2 {
@@ -63,7 +63,7 @@ public class Mixin_RenderLivingEntityEvent {
     *///?}
         if (!EventManager.INSTANCE.hasListeners(RenderLivingEvent.Pre.class)) return;
 
-        //? >= 1.21.2 {
+        //? if >= 1.21.2 {
         double x = entity.x;
         double y = entity.y;
         double z = entity.z;
@@ -81,7 +81,7 @@ public class Mixin_RenderLivingEntityEvent {
     }
 
     @Inject(
-            //? >= 1.21.9 {
+            //? if >= 1.21.9 {
             //~ if >= 26.1 'state/Camera' -> 'state/level/Camera'
             method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
             //? } >= 1.21.2 {
@@ -102,7 +102,7 @@ public class Mixin_RenderLivingEntityEvent {
     /*private void onPostEntityRenderCallback(LivingEntity entity, double x, double y, double z, float yaw, float partialTicks, CallbackInfo ci) {
     *///?}
         if (!EventManager.INSTANCE.hasListeners(RenderLivingEvent.Post.class)) return;
-        //? >= 1.21.2 {
+        //? if >= 1.21.2 {
         double x = entity.x;
         double y = entity.y;
         double z = entity.z;
