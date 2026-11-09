@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -268,21 +267,21 @@ private fun SoundThemePicker() {
         BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = PageGutter)) {
             val fit = ((maxWidth + ThemeCardGap) / (SoundCardMinWidth + ThemeCardGap)).toInt()
             val columns = fit.coerceIn(1, SoundThemeOptions.size)
-            val cardWidth = with(LocalDensity.current) {
-                ((constraints.maxWidth - ThemeCardGap.roundToPx() * (columns - 1)) / columns).toDp()
-            }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(ThemeCardGap),
-                verticalArrangement = Arrangement.spacedBy(ThemeCardGap),
-                maxItemsInEachRow = columns,
-            ) {
-                SoundThemeOptions.forEach { option ->
-                    SoundThemeCard(option, option.value == selected, Modifier.width(cardWidth)) {
-                        if (selected == option.value) {
-                            UiSounds.play(UiSoundEvent.CLICK)
-                        } else {
-                            SoundThemeSelection.value = option.value
-                            ThemeConfig.selectSoundTheme(option.value)
+            Column(verticalArrangement = Arrangement.spacedBy(ThemeCardGap)) {
+                SoundThemeOptions.chunked(columns).forEach { rowOptions ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ThemeCardGap)) {
+                        rowOptions.forEach { option ->
+                            SoundThemeCard(option, option.value == selected, Modifier.weight(1f)) {
+                                if (selected == option.value) {
+                                    UiSounds.play(UiSoundEvent.CLICK)
+                                } else {
+                                    SoundThemeSelection.value = option.value
+                                    ThemeConfig.selectSoundTheme(option.value)
+                                }
+                            }
+                        }
+                        repeat(columns - rowOptions.size) {
+                            Spacer(Modifier.weight(1f))
                         }
                     }
                 }
