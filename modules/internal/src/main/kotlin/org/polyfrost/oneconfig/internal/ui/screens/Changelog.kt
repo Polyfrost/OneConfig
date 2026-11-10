@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -44,16 +45,23 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.LinkInteractionListener
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.commonmark.node.Code
 import org.commonmark.node.Emphasis
 import org.commonmark.node.HardLineBreak
+import org.commonmark.node.HtmlInline
+import org.commonmark.node.Image
 import org.commonmark.node.Link
 import org.commonmark.node.Node
 import org.commonmark.node.SoftLineBreak
@@ -66,6 +74,8 @@ import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogEntry
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogGroup
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogRelease
+import org.polyfrost.oneconfig.internal.ui.api.ModrinthChangelogs
+import org.polyfrost.oneconfig.internal.ui.api.ModrinthVersionLink
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
@@ -80,6 +90,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -90,6 +101,18 @@ private val installedVersion: String?
     @Composable get() = LocalInstalledVersion.current
 
 private var selection by mutableStateOf<Pair<ChangelogSource?, String>?>(null)
+
+private var openedVersion by mutableStateOf<ModrinthVersionLink?>(null)
+
+internal fun openChangelogLink(url: String) {
+    val version = ModrinthChangelogs.parseLink(url)
+    if (version != null) openedVersion = version
+    else runCatching { NetworkUtils.browseLink(url) }
+}
+
+private val ChangelogLinkListener = LinkInteractionListener { link ->
+    (link as? LinkAnnotation.Clickable)?.tag?.let(::openChangelogLink)
+}
 
 private val VersionListWidth = 200.dp
 
@@ -106,6 +129,8 @@ fun Changelog() {
     val theme = LocalTheme.current
     val query = pageSearchQuery().trim()
     val source = ChangelogSources.active()
+    DisposableEffect(Unit) { onDispose { openedVersion = null } }
+    openedVersion?.let { ModrinthChangelogDialog(it) { openedVersion = null } }
     val view by produceState(ChangelogData.cached(source), source) {
         value = ChangelogData.cached(source)
         if (value == null && source != null) value = ChangelogData.load(source)
@@ -317,18 +342,8 @@ private fun KindSection(group: ChangelogGroup, developers: Boolean) {
 @Composable
 private fun EntryList(entries: List<ChangelogEntry>, depth: Int) {
     val theme = LocalTheme.current
-    val body = TextStyle(
-        fontFamily = theme.typography.family,
-        fontSize = if (depth == 0) 14.sp else 12.sp,
-        lineHeight = if (depth == 0) 20.sp else 18.sp,
-        color = if (depth == 0) theme.textColor else theme.textColorSecondary,
-    )
-    val styles = InlineStyles(
-        bold = SpanStyle(fontWeight = FontWeight.SemiBold),
-        italic = SpanStyle(fontStyle = FontStyle.Italic),
-        code = SpanStyle(background = theme.chipBackground, fontSize = 12.sp),
-        link = SpanStyle(color = Accent, fontWeight = FontWeight.Medium),
-    )
+    val body = changelogBodyStyle(depth)
+    val styles = changelogInlineStyles()
     Column(
         Modifier.padding(start = (depth * 16).dp),
         verticalArrangement = Arrangement.spacedBy(if (depth == 0) 8.dp else 4.dp),
@@ -349,9 +364,35 @@ private fun EntryList(entries: List<ChangelogEntry>, depth: Int) {
     }
 }
 
-private class InlineStyles(val bold: SpanStyle, val italic: SpanStyle, val code: SpanStyle, val link: SpanStyle)
+@Composable
+internal fun changelogBodyStyle(depth: Int): TextStyle {
+    val theme = LocalTheme.current
+    return TextStyle(
+        fontFamily = theme.typography.family,
+        fontSize = if (depth == 0) 14.sp else 12.sp,
+        lineHeight = if (depth == 0) 20.sp else 18.sp,
+        color = if (depth == 0) theme.textColor else theme.textColorSecondary,
+    )
+}
 
-private fun inline(node: Node, styles: InlineStyles): AnnotatedString = buildAnnotatedString {
+@Composable
+internal fun changelogInlineStyles(): InlineStyles {
+    val theme = LocalTheme.current
+    val accent = Accent
+    return InlineStyles(
+        bold = SpanStyle(fontWeight = FontWeight.SemiBold),
+        italic = SpanStyle(fontStyle = FontStyle.Italic),
+        code = SpanStyle(background = theme.chipBackground, fontSize = 12.sp),
+        link = TextLinkStyles(
+            style = SpanStyle(color = accent, fontWeight = FontWeight.Medium, textDecoration = TextDecoration.Underline),
+            hoveredStyle = SpanStyle(color = accent.copy(alpha = 0.75f)),
+        ),
+    )
+}
+
+internal data class InlineStyles(val bold: SpanStyle, val italic: SpanStyle, val code: SpanStyle, val link: TextLinkStyles)
+
+internal fun inline(node: Node, styles: InlineStyles): AnnotatedString = buildAnnotatedString {
     fun walk(n: Node) {
         var c = n.firstChild
         while (c != null) {
@@ -360,7 +401,8 @@ private fun inline(node: Node, styles: InlineStyles): AnnotatedString = buildAnn
                 is StrongEmphasis -> { pushStyle(styles.bold); walk(c); pop() }
                 is Emphasis -> { pushStyle(styles.italic); walk(c); pop() }
                 is Code -> { pushStyle(styles.code); append(" ${c.literal} "); pop() }
-                is Link -> { pushStyle(styles.link); walk(c); pop() }
+                is Link -> withLink(LinkAnnotation.Clickable(c.destination, styles.link, ChangelogLinkListener)) { walk(c) }
+                is Image, is HtmlInline -> Unit
                 is SoftLineBreak -> append(" ")
                 is HardLineBreak -> append("\n")
                 else -> walk(c)
