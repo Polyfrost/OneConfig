@@ -3,10 +3,12 @@ package org.polyfrost.oneconfig.internal.ui.themes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
@@ -50,6 +52,7 @@ object GlassTintColor {
     private var shownColor by mutableStateOf(Color.White)
     private var shownAmount by mutableFloatStateOf(0f)
     private var drivers by mutableIntStateOf(0)
+    private var owner: Any? by mutableStateOf(null)
 
     val fill: Color
         get() {
@@ -65,10 +68,16 @@ object GlassTintColor {
 
     @Composable
     fun Drive() {
-        DisposableEffect(Unit) {
+        val token = remember { Any() }
+        DisposableEffect(token) {
             drivers++
-            onDispose { drivers-- }
+            onDispose {
+                drivers--
+                if (owner === token) owner = null
+            }
         }
+        SideEffect { if (owner == null) owner = token }
+        if (owner !== token) return
         LaunchedEffect(Unit) {
             while (true) {
                 if (wantsBiome()) {

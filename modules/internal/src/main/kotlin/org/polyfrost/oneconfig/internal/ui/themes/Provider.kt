@@ -178,6 +178,7 @@ fun Theme(
     val animated = animateTheme(shown)
 
     LaunchedEffect(target, accent, opaque) { syncNotificationTheme(target) }
+    if (animated.liquidGlass) GlassTintColor.Drive()
 
     CompositionLocalProvider(
         LocalTheme provides animated,

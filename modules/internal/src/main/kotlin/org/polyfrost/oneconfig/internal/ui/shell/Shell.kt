@@ -68,7 +68,6 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_PAGE_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_SIDEBAR_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.GlassTintColor
 import org.polyfrost.oneconfig.internal.ui.themes.glassOpacity
 import org.polyfrost.oneconfig.internal.ui.themes.surfaceOpacity
 import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
@@ -174,7 +173,6 @@ fun Shell(
     val pageGlow = remember { GlowLayers() }
     val sidebarColor = theme.surfaceOpacity(theme.sidebarBackground, shell.appearance.sidebarOpacity, DEFAULT_SIDEBAR_OPACITY)
     val pageColor = theme.surfaceOpacity(theme.pageBackground, shell.appearance.pageOpacity, DEFAULT_PAGE_OPACITY)
-    if (theme.liquidGlass) GlassTintColor.Drive()
     Row(
         modifier = Modifier.onGloballyPositioned {
             windowOffset = it.positionInRoot()
