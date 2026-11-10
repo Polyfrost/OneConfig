@@ -16,6 +16,7 @@ import org.gradle.kotlin.dsl.withType
 class OneConfigFabricPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
         pluginManager.apply(OneConfigSetupPlugin::class.java)
+        pluginManager.apply(OneConfigDistributionPlugin::class.java)
 
         dependencies {
             "minecraft"("com.mojang:minecraft:${versionedCatalog.versions["minecraft"]}")
@@ -60,8 +61,6 @@ class OneConfigFabricPlugin : Plugin<Project> {
             runConfigs["client"].apply {
                 generateRunConfig = true
                 runDirectory = layout.projectDirectory.dir("../../run")
-                // -Pdevauth=false launches offline for runs that do not need a real account
-                systemProperties.put("devauth.enabled", (project.findProperty("devauth") ?: "true").toString())
                 systemProperties.put("oneconfig.test", "true")
             }
         }

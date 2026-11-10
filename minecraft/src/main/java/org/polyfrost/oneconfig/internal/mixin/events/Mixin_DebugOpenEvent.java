@@ -21,7 +21,7 @@ import net.minecraft.client.gui.components.debug.DebugScreenEntryList;
 /*import org.objectweb.asm.Opcodes;
 *///?}
 
-//? < 1.21.10 {
+//? if < 1.21.10 {
 /*//~ if = 1.8.9 'DebugScreenOverlay' -> 'Minecraft'
 @Mixin(DebugScreenOverlay.class)
 public abstract class Mixin_DebugOpenEvent {
@@ -38,7 +38,7 @@ public abstract class Mixin_DebugOpenEvent {
 *///? } else {
 @Mixin(DebugScreenEntryList.class)
 public abstract class Mixin_DebugOpenEvent {
-    //? < 1.21.11 {
+    //? if < 1.21.11 {
     /*@Inject(method = "toggleF3Visible", at = @At("TAIL"))
     *///? } else {
     @Inject(method = "toggleDebugOverlay", at = @At("TAIL"))

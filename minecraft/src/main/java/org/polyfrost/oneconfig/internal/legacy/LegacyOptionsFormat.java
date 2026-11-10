@@ -4,11 +4,13 @@ package org.polyfrost.oneconfig.internal.legacy;
 /*import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import org.polyfrost.oneconfig.internal.utils.LegacyVideoModeFormat;
 
 public final class LegacyOptionsFormat {
     private static final int NAMED_KEYS_VERSION = 1446; // OptionsKeyTranslationFix
     private static final int LOWERCASE_LANG_VERSION = 816; // OptionsLowerCaseLanguageFix
     private static final int BOOLEAN_AO_VERSION = 3214; // OptionsAmbientOcclusionFix
+    private static final int SDL_VIDEO_MODE_VERSION = 5023; // 26.3
 
     private static final String UNKNOWN = "key.keyboard.unknown";
     private static final String MOUSE_PREFIX = "key.mouse.";
@@ -209,6 +211,9 @@ public final class LegacyOptionsFormat {
             }
             if (line.startsWith(AO_PREFIX) && dataVersion >= BOOLEAN_AO_VERSION) {
                 return AO_PREFIX + (Integer.parseInt(line.substring(AO_PREFIX.length())) != 0);
+            }
+            if (line.startsWith(LegacyVideoModeFormat.OPTION_PREFIX) && dataVersion >= SDL_VIDEO_MODE_VERSION) {
+                return LegacyVideoModeFormat.OPTION_PREFIX + LegacyVideoModeFormat.toJson(line.substring(LegacyVideoModeFormat.OPTION_PREFIX.length()));
             }
         } catch (NumberFormatException ignored) {
         }

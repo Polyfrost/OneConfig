@@ -42,8 +42,6 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public Set<ModInfo> getMods() {
-        //? fabric || ornithe {
-
         return FabricLoader.getInstance().getAllMods().stream()
                 .map(mod -> {
                     var metadata = mod.getMetadata();
@@ -64,10 +62,6 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
                         metadata.getDescription()
                     );
                 }).collect(Collectors.toSet());
-        //? }
-
-        //? neoforge {
-        //? }
     }
 
     @Override
@@ -86,10 +80,7 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
 
     @Override
     public String loader() {
-        //? fabric || ornithe
         return "fabric";
-        //? neoforge
-        //return "neoforge";
     }
 
     @Override

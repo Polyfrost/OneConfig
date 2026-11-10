@@ -29,8 +29,8 @@ import net.minecraft.client.Minecraft
 //? if > 1.8.9 {
 import net.minecraft.client.resources.DefaultPlayerSkin
 //?} else {
-/*import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
-import net.ornithemc.osl.resource.loader.api.resource.manager.ResourceManager
+/*import net.minecraft.server.packs.resources.ResourceManager
+import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
 *///?}
 
 class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {

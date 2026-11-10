@@ -13,9 +13,11 @@ import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 //?} else
 //import net.minecraft.client.gui.render.state.GuiElementRenderState;
+import org.polyfrost.oneconfig.internal.ui.compose.BitmapTextures;
 import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
 import org.polyfrost.oneconfig.internal.ui.compose.KeptMeshes;
 import org.polyfrost.oneconfig.internal.ui.compose.LiquidGlass;
+import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -105,6 +107,7 @@ public class Mixin_GuiRendererKeptMeshes {
     @Inject(method = "render", at = @At("TAIL"))
     private void oneconfig$endFrame(CallbackInfo ci) {
         KeptMeshes.endFrame();
+        if (GuiTargetRedirect.target == null) BitmapTextures.endFrame();
         LiquidGlass.endFrame();
     }
 }

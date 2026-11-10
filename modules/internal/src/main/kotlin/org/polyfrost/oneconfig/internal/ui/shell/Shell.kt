@@ -53,8 +53,9 @@ import kotlin.math.hypot
 import kotlin.math.roundToInt
 import org.polyfrost.compose.backend.PolyImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
-import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.Header
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Sidebar
 import org.polyfrost.oneconfig.internal.ui.components.SidebarWidth
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
@@ -238,17 +239,19 @@ fun Shell(
                         // and later ones follow "Show Page Animations"
                         val transitions = shell.transitions
 
-                        fun pageMs() = (OneConfigConfig.pageAnimationDuration * 1000f).toInt().coerceAtLeast(1)
+                        fun pageMs() = (ThemeConfig.pageAnimationDuration * 1000f).toInt().coerceAtLeast(1)
 
                         // Arrow-back routes through navigate() on purpose (this NavHost version never
                         // plays its pop transitions from a resting state), so the shared enter/exit
                         // transition mirrors the old pop direction while lastNavWasBack is set.
                         fun enterSlide() =
-                            if (transitions.lastNavWasBack) slideInHorizontally(tween(pageMs())) { -it / 5 }
+                            if (ReducedMotion.enabled) EnterTransition.None
+                            else if (transitions.lastNavWasBack) slideInHorizontally(tween(pageMs())) { -it / 5 }
                             else slideInHorizontally(tween(pageMs())) { it / 5 }
 
                         fun exitSlide() =
-                            if (transitions.lastNavWasBack) slideOutHorizontally(tween(pageMs())) { it / 5 }
+                            if (ReducedMotion.enabled) ExitTransition.None
+                            else if (transitions.lastNavWasBack) slideOutHorizontally(tween(pageMs())) { it / 5 }
                             else slideOutHorizontally(tween(pageMs())) { -it / 5 }
 
                         NavHost(

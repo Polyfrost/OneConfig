@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
@@ -84,15 +85,15 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
             if (indicatorReady) {
                 val indicatorOffset = animateDpAsState(
                     targetValue = with(density) { itemWidths.take(selectedIdx).sumOf { it.intValue }.toDp() },
-                    animationSpec = spring(),
+                    animationSpec = ReducedMotion.spec(spring()),
                 )
                 val indicatorWidth = animateDpAsState(
                     targetValue = with(density) { itemWidths[selectedIdx].intValue.toDp() },
-                    animationSpec = spring(),
+                    animationSpec = ReducedMotion.spec(spring()),
                 )
                 val indicatorHeight = animateDpAsState(
                     targetValue = with(density) { rowHeight.toDp() }.coerceAtLeast(RadioItemMinHeight),
-                    animationSpec = spring(),
+                    animationSpec = ReducedMotion.spec(spring()),
                 )
                 Box(
                     modifier = Modifier

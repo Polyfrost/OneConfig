@@ -11,7 +11,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 internal object ModMenuEntrypoint : ModMenuApi {
 
     override fun getModConfigScreenFactory(): ConfigScreenFactory<*> {
-        if (CompatLoader.hasMod(ROOT_MOD_ID)) return ConfigScreenFactory<Screen> { null }
         return try {
             ConfigScreenFactory { OneConfigUIScreen.open() }
         } catch (e: LinkageError) {
@@ -22,11 +21,9 @@ internal object ModMenuEntrypoint : ModMenuApi {
 
     override fun getProvidedConfigScreenFactories(): Map<String, ConfigScreenFactory<*>> {
         return try {
-            val factories = ConfigManager.active().trees()
+            ConfigManager.active().trees()
                 .filter { it.id != null }
-                .associateTo(mutableMapOf()) { it.id to ConfigScreenFactory { _ -> OneConfigUIScreen(initialTree = it) } }
-            factories.putIfAbsent(ROOT_MOD_ID, ConfigScreenFactory { _ -> OneConfigUIScreen.open() })
-            factories
+                .associate { it.id to ConfigScreenFactory { _ -> OneConfigUIScreen(initialTree = it) } }
         } catch (e: LinkageError) {
             reportUnlinkable(e)
             emptyMap()
@@ -44,11 +41,7 @@ internal object ModMenuEntrypoint : ModMenuApi {
 
     private val LOGGER = LogManager.getLogger("OneConfig/ModMenu")
 
-    internal const val ROOT_MOD_ID = "oneconfig"
-
-    internal const val LEGACY_BOOTSTRAP_MOD_ID = "oneconfigbootstrap"
-
-    internal const val PLATFORM_MOD_ID = "oneconfigv1"
+    internal const val MOD_ID = "oneconfig"
 
 }
 //? }

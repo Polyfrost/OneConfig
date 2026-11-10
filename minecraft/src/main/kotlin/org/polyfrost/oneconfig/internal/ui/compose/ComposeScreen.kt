@@ -399,7 +399,7 @@ abstract class ComposeScreen(
     }
 
     override fun resize(
-        //? < 1.21.11
+        //? if < 1.21.11
         //minecraft: Minecraft,
         width: Int, height: Int
     ) {
@@ -658,7 +658,7 @@ abstract class ComposeScreen(
     }
     *///?}
 
-    //? >= 1.21.10 {
+    //? if >= 1.21.10 {
     override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
         val button = event.button()
     //?} elif > 1.8.9 {
@@ -685,7 +685,7 @@ abstract class ComposeScreen(
         //super.mouseClicked(x, y, button)
     }
 
-    //? >= 1.21.10 {
+    //? if >= 1.21.10 {
     override fun mouseReleased(event: MouseButtonEvent): Boolean {
         val button = event.button()
     //?} elif > 1.8.9 {
@@ -798,11 +798,11 @@ abstract class ComposeScreen(
         return lastPreciseScrollNanos != 0L && now - lastPreciseScrollNanos < PRECISE_SCROLL_HOLD_NANOS
     }
 
-    //? >= 1.21.10 {
+    //? if >= 1.21.10 {
     override fun charTyped(event: CharacterEvent): Boolean {
         val char = if (Character.isBmpCodePoint(event.codepoint)) Char(event.codepoint) else Char(0)
         val codepoint = event.codepoint
-        //? >= 26.1 {
+        //? if >= 26.1 {
         val modifiers = 0
         //? } else
         //val modifiers = event.modifiers
@@ -880,7 +880,7 @@ abstract class ComposeScreen(
     )
     private val consumedButtons = HashSet<Int>()
 
-    //? >= 1.21.10 {
+    //? if >= 1.21.10 {
     override fun keyPressed(event: McKeyEvent): Boolean {
         val bindingKey = event.key
         //~ if !sdl 'event.shortcutKey()' -> 'bindingKey'

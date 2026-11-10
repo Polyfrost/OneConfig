@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -33,8 +36,7 @@ internal sealed interface StudioCommand {
 
 object HudDesignSession {
     /** The HUDs currently selected in the design studio so global keybinds can act on them */
-    @Volatile
-    var activeSelection: List<Hud> = emptyList()
+    var activeSelection: List<Hud> by mutableStateOf(emptyList())
 
     private val commandQueue = Channel<StudioCommand>(Channel.UNLIMITED)
 

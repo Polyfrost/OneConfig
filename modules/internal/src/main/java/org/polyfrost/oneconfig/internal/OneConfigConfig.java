@@ -21,7 +21,6 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
-import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
@@ -173,87 +172,11 @@ public class OneConfigConfig extends Config {
     public static float marqueeSelectionAnimDuration = 150f;
 
     @Switch(
-        title = "oneconfig.preferences.background_blur.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        description = "oneconfig.preferences.background_blur.description"
-    )
-    public static boolean enableBackgroundBlur = true;
-
-    @Switch(
-        title = "oneconfig.preferences.reduced_motion.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        description = "oneconfig.preferences.reduced_motion.description"
-    )
-    public static boolean reducedMotion = false;
-
-    @Slider(
-        title = "oneconfig.preferences.hud_drag_ui_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 1f,
-        step = 0.05f,
-        description = "oneconfig.preferences.hud_drag_ui_opacity.description"
-    )
-    public static float hudDragUiOpacity = 0.60f;
-
-    @Slider(
-        title = "oneconfig.preferences.page_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.page_opacity.description"
-    )
-    public static float pageOpacity = 88f;
-
-    @Slider(
-        title = "oneconfig.preferences.sidebar_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.sidebar_opacity.description"
-    )
-    public static float sidebarOpacity = 80f;
-
-    @Slider(
-        title = "oneconfig.preferences.glow_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.glow_opacity.description"
-    )
-    public static float glowOpacity = 25f;
-
-    @Switch(
         title = "oneconfig.preferences.pause_game.title",
         subcategory = "oneconfig.preferences.category.gui",
         description = "oneconfig.preferences.pause_game.description"
     )
     public static boolean pauseGame = false;
-
-    @Slider(
-        title = "oneconfig.preferences.ui_scale.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 50f,
-        max = 200f,
-        step = 5f,
-        description = "oneconfig.preferences.ui_scale.description"
-    )
-    public static float uiScale = 100f;
-
-    @Dropdown(
-        title = "oneconfig.preferences.pixel_grid.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        options = {
-            "oneconfig.preferences.pixel_grid.auto",
-            "oneconfig.preferences.pixel_grid.always",
-            "oneconfig.preferences.pixel_grid.never"
-        },
-        description = "oneconfig.preferences.pixel_grid.description"
-    )
-    public static int pixelGrid = 0;
 
     @Dropdown(
         title = "oneconfig.preferences.remember_last_page.title",
@@ -284,13 +207,6 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.restore_hud_editor.description"
     )
     public static boolean restoreHudEditor = false;
-
-    @Switch(
-        title = "oneconfig.preferences.show_opening_page_animation.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        description = "oneconfig.preferences.show_opening_page_animation.description"
-    )
-    public static boolean showOpeningPageAnimation = false;
 
     @Switch(
         title = "oneconfig.preferences.show_option_action_buttons.title",
@@ -329,37 +245,6 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.search_distance.description"
     )
     public static int searchDistance = 2;
-
-    @Switch(
-        title = "oneconfig.preferences.opening_animation.title",
-        subcategory = "oneconfig.preferences.category.animations",
-        description = "oneconfig.preferences.opening_animation.description"
-    )
-    public static boolean guiOpenAnimation = true;
-
-    @Switch(
-        title = "oneconfig.preferences.closing_animation.title",
-        subcategory = "oneconfig.preferences.category.animations",
-        description = "oneconfig.preferences.closing_animation.description"
-    )
-    public static boolean guiClosingAnimation = true;
-
-    @Slider(
-        title = "oneconfig.preferences.opening_time.title",
-        subcategory = "oneconfig.preferences.category.animations",
-        min = 0.05f,
-        max = 2f,
-        step = 0.05f,
-        description = "oneconfig.preferences.opening_time.description"
-    )
-    public static float animationTime = 0.6f;
-
-    @Switch(
-        title = "oneconfig.preferences.show_page_animations.title",
-        subcategory = "oneconfig.preferences.category.animations",
-        description = "oneconfig.preferences.show_page_animations.description"
-    )
-    public static boolean showPageAnimations = true;
 
     @Switch(
         title = "oneconfig.preferences.ui_sounds.title",
@@ -429,16 +314,6 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.ui_ambience_volume.description"
     )
     public static float uiAmbienceVolume = 1f;
-
-    @Slider(
-        title = "oneconfig.preferences.page_animation_duration.title",
-        subcategory = "oneconfig.preferences.category.animations",
-        min = 0.1f,
-        max = 0.6f,
-        step = 0.05f,
-        description = "oneconfig.preferences.page_animation_duration.description"
-    )
-    public static float pageAnimationDuration = 0.3f;
 
     @Switch(
         title = "oneconfig.preferences.show_first_launch_message.title",
@@ -538,37 +413,12 @@ public class OneConfigConfig extends Config {
             "uiAmbienceVolume",
             "UI Ambience",
             () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, glowOpacity);
+        ShellController.getShared().getAppearance().update(
+            flipTopOptionOrder, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
         addCallback(
             "flipTopOptionOrder", (Boolean v) -> {
-                ShellController.getShared().getAppearance().update(v, pageOpacity, sidebarOpacity, glowOpacity);
-                return false;
-            });
-        addCallback(
-            "pageOpacity", (java.lang.Number v) -> {
-                ShellController.getShared().getAppearance().update(flipTopOptionOrder, v.floatValue(), sidebarOpacity, glowOpacity);
-                return false;
-            });
-        addCallback(
-            "sidebarOpacity", (java.lang.Number v) -> {
-                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, v.floatValue(), glowOpacity);
-                return false;
-            });
-        addCallback(
-            "glowOpacity", (java.lang.Number v) -> {
-                ShellController.getShared().getAppearance().update(flipTopOptionOrder, pageOpacity, sidebarOpacity, v.floatValue());
-                return false;
-            });
-        ProviderKt.setUiScalePercent(uiScale);
-        ProviderKt.setPixelGridMode(pixelGrid);
-        addCallback(
-            "uiScale", (java.lang.Number v) -> {
-                ProviderKt.setUiScalePercent(v.floatValue());
-                return false;
-            });
-        addCallback(
-            "pixelGrid", (java.lang.Number v) -> {
-                ProviderKt.setPixelGridMode(v.intValue());
+                ShellController.getShared().getAppearance().update(
+                    v, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
                 return false;
             });
         addCallback(

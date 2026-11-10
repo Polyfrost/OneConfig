@@ -7,25 +7,24 @@ allprojects {
     }
 }
 
-// each bootstrap node JiJ's its platform jar plus all modules and deps
-// compose-bundle ships standalone and is deliberately kept out of that JiJ
-val bootstrapNodes = subprojects.filter { it.parent?.path == ":bootstrap" }
+// compose-bundle ships standalone, so the nodes' bundle jars leave it out
+val minecraftNodes = subprojects.filter { it.parent?.path == ":minecraft" }
 val composeBundle = project(":modules:compose-bundle")
 
 // compose-bundle carries its own version so evaluate it to grab the jar task
 // rather than guessing the file name
 evaluationDependsOn(composeBundle.path)
 
-// Sync rather than Copy because node build/libs keeps jars of previously built versions
+// Sync rather than Copy because node build/dist keeps jars of previously built versions
 tasks.register<Sync>("buildAndCollect") {
     group = "build"
-    description = "Builds every OneConfig bootstrap node plus compose-bundle and collects the production jars into build/libs."
+    description = "Builds every OneConfig Minecraft node plus compose-bundle and collects the production jars into build/libs."
 
-    dependsOn(":bootstrap:assembleAllNodes")
+    // task paths rather than task providers so the nodes aren't all configured with the root project
+    dependsOn(minecraftNodes.map { "${it.path}:bundleJar" })
 
-    // loom keeps the unmapped jar in build/devlibs so build/libs holds only the shippable one
     // version filter skips stale jars from earlier project versions
-    from(bootstrapNodes.map { it.layout.buildDirectory.dir("libs") }) {
+    from(minecraftNodes.map { it.layout.buildDirectory.dir("dist") }) {
         include("*-${rootProject.version}.jar")
     }
     from(composeBundle.tasks.named<Jar>("jar").flatMap { it.archiveFile })
@@ -33,10 +32,10 @@ tasks.register<Sync>("buildAndCollect") {
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    val noBootstrapNodes = bootstrapNodes.isEmpty()
+    val noMinecraftNodes = minecraftNodes.isEmpty()
     doFirst {
-        if (noBootstrapNodes) {
-            throw GradleException("No bootstrap nodes were registered — check the stonecutter tree in settings.gradle.kts.")
+        if (noMinecraftNodes) {
+            throw GradleException("No Minecraft nodes were registered — check the stonecutter tree in settings.gradle.kts.")
         }
     }
 

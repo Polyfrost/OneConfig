@@ -33,7 +33,7 @@ import kotlin.math.pow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalSearchFieldFocused
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
@@ -48,8 +48,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
 fun guiCloseAnimationMillis(): Long =
-    if (!OneConfigConfig.guiClosingAnimation) 0L
-    else (OneConfigConfig.animationTime * 1000f).toLong().coerceIn(1L, MAX_CLOSE_ANIMATION_MS)
+    if (!ThemeConfig.guiClosingAnimation) 0L
+    else (ThemeConfig.animationTime * 1000f).toLong().coerceIn(1L, MAX_CLOSE_ANIMATION_MS)
 
 private const val MAX_CLOSE_ANIMATION_MS = 160L
 
@@ -87,7 +87,7 @@ fun OneConfigInterface(
                 shell.transitions.beginOpening()
                 // an initial navigation fires a page transition gated by "Show opening page animation" unless
                 // the page is only being put back which should look like it was never left
-                val animateOpening = !restoring && OneConfigConfig.showOpeningPageAnimation
+                val animateOpening = !restoring && ThemeConfig.showOpeningPageAnimation
                 // the NavHost only sets its graph once the Shell is composed so wait for it or navigate()
                 // crashes with "must call setGraph() before getGraph()"
                 if (animateOpening) {
@@ -175,11 +175,11 @@ fun OneConfigInterface(
                     LocalViewModelStoreOwner provides shell.session,
                 ) {
                     Theme(pixelGrid = true) {
-                        val animMs = (OneConfigConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
-                        val enterMs = if (OneConfigConfig.guiOpenAnimation) animMs else 1
+                        val animMs = (ThemeConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
+                        val enterMs = if (ThemeConfig.guiOpenAnimation) animMs else 1
                         val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
                         val dragAlpha by animateFloatAsState(
-                            targetValue = if (shell.layout.hudDragging) OneConfigConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
+                            targetValue = if (shell.layout.hudDragging) ThemeConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
                             animationSpec = tween(150),
                             label = "hudDragShellAlpha"
                         )

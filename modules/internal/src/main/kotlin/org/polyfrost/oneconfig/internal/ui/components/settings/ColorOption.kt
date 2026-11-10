@@ -29,12 +29,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
@@ -45,6 +47,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -181,6 +184,22 @@ internal fun ChromaColorAnimation(
     }
 }
 
+private val SWATCH_SIZE = 24.dp
+private val SWATCH_POPUP_OFFSET = 32.dp
+
+private fun DrawScope.drawCheckerboard() {
+    val cellSize = 6f
+    for (row in 0..(size.height / cellSize).toInt()) {
+        for (col in 0..(size.width / cellSize).toInt()) {
+            drawRect(
+                if ((row + col) % 2 == 0) Color(0xFFCCCCCC) else Color(0xFF999999),
+                topLeft = Offset(col * cellSize, row * cellSize),
+                size = Size(cellSize, cellSize),
+            )
+        }
+    }
+}
+
 // TODO: make this design accurate
 
 @Composable
@@ -260,30 +279,44 @@ fun ColorOption(data: ColorOptionData) {
     val swatch = if (showGradient) Brush.horizontalGradient(listOf(currentColor, pickerModel.gradientColor)) else SolidColor(currentColor)
 
     Box {
-        Row(
-            modifier = Modifier
-                .onClick(interactionSource) { expanded = !expanded }
-                .pointerHoverIcon(PointerIcon.Hand)
-                .graphicsLayer {}
-                .background(swatch, LocalTheme.current.sideBarNavigationEntryShape)
-                .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, border = { borderColor.value })
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon("paintbrush", tint = { textColor.value }, modifier = Modifier.size(14.dp))
-            Text(
-                if (showGradient) "#${colorToHex(currentColor)} → #${colorToHex(pickerModel.gradientColor)}" else "#${colorToHex(currentColor)}",
-                color = Color.Unspecified,
-                fontSize = 13.sp,
-                colorProducer = { textColor.value },
+        if (data.swatch) {
+            Box(
+                modifier = Modifier
+                    .size(SWATCH_SIZE)
+                    .onClick(interactionSource) { expanded = !expanded }
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .graphicsLayer {}
+                    .clip(theme.checkBoxShape)
+                    .drawBehind { drawCheckerboard() }
+                    .background(swatch, theme.checkBoxShape)
+                    .animatedFrame(theme.checkBoxShape, border = { borderColor.value }),
             )
+        } else {
+            Row(
+                modifier = Modifier
+                    .onClick(interactionSource) { expanded = !expanded }
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .graphicsLayer {}
+                    .background(swatch, LocalTheme.current.sideBarNavigationEntryShape)
+                    .animatedFrame(LocalTheme.current.sideBarNavigationEntryShape, border = { borderColor.value })
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon("paintbrush", tint = { textColor.value }, modifier = Modifier.size(14.dp))
+                Text(
+                    if (showGradient) "#${colorToHex(currentColor)} → #${colorToHex(pickerModel.gradientColor)}" else "#${colorToHex(currentColor)}",
+                    color = Color.Unspecified,
+                    fontSize = 13.sp,
+                    colorProducer = { textColor.value },
+                )
+            }
         }
 
         if (expanded) {
             ShellPopup(
                 alignment = Alignment.TopEnd,
-                offset = IntOffset(0, 44),
+                offset = IntOffset(0, with(LocalDensity.current) { (if (data.swatch) SWATCH_POPUP_OFFSET else 44.dp).roundToPx() }),
                 onDismissRequest = { expanded = false },
                 properties = PopupProperties(focusable = true),
             ) {
@@ -492,17 +525,7 @@ internal fun ColorPickerPopup(
                             listOf(opaqueColor.copy(alpha = 0f), opaqueColor)
                         )
                         onDrawBehind {
-                            val cellSize = 6f
-                            for (row in 0..(size.height / cellSize).toInt()) {
-                                for (col in 0..(size.width / cellSize).toInt()) {
-                                    val isLight = (row + col) % 2 == 0
-                                    drawRect(
-                                        if (isLight) Color(0xFFCCCCCC) else Color(0xFF999999),
-                                        topLeft = Offset(col * cellSize, row * cellSize),
-                                        size = Size(cellSize, cellSize)
-                                    )
-                                }
-                            }
+                            drawCheckerboard()
                             drawRect(alphaGradient)
                         }
                     }

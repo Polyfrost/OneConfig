@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(KeyboardHandler.class)
 public class Mixin_KeyInputEvent {
 
-    //? >= 1.21.10 {
+    //? if >= 1.21.10 {
     @ModifyVariable(method = "keyPress", at = @At(value = "STORE"), ordinal = 0)
     private boolean keyCallback(boolean original, long handle, int action, KeyEvent event) {
         EventManager.INSTANCE.post(new KeyInputEvent(event.key(), (char) 0, oneconfig$state(action)));

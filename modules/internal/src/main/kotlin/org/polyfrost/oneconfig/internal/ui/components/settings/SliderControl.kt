@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -51,7 +52,7 @@ fun SliderControl(
     var trackWidthPx by remember { mutableStateOf(0f) }
     val fraction = animateFloatAsState(
         ((value - min) / (max - min)).coerceIn(0f, 1f),
-        animationSpec = spring(),
+        animationSpec = ReducedMotion.spec(spring()),
     )
 
     Box(

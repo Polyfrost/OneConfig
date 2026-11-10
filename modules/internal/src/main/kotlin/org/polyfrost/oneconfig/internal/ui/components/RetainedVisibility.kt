@@ -88,7 +88,16 @@ private class AlignmentOffsetPositionProvider(
         val anchorAlignmentPoint = alignment.align(IntSize.Zero, anchorBounds.size, layoutDirection)
         val popupAlignmentPoint = -alignment.align(IntSize.Zero, popupContentSize, layoutDirection)
         val resolvedOffset = IntOffset(offset.x * (if (layoutDirection == LayoutDirection.Ltr) 1 else -1), offset.y)
-        return anchorBounds.topLeft + anchorAlignmentPoint + popupAlignmentPoint + resolvedOffset
+        val position = anchorBounds.topLeft + anchorAlignmentPoint + popupAlignmentPoint + resolvedOffset
+        var y = position.y
+        if (y >= anchorBounds.bottom && y + popupContentSize.height > windowSize.height) {
+            val flipped = anchorBounds.top - (y - anchorBounds.bottom) - popupContentSize.height
+            if (flipped >= 0) y = flipped
+        }
+        return IntOffset(
+            position.x.coerceAtMost(windowSize.width - popupContentSize.width).coerceAtLeast(0),
+            y.coerceAtMost(windowSize.height - popupContentSize.height).coerceAtLeast(0),
+        )
     }
 }
 
@@ -134,6 +143,7 @@ fun RetainedVisibility(
     openKey: Any? = null,
     content: @Composable (alpha: Float) -> Unit,
 ) {
+    val hiddenScale = if (ReducedMotion.enabled) 1f else hiddenScale
     val progress = remember(openKey) { Animatable(0f) }
     LaunchedEffect(openKey, visible) {
         progress.animateTo(if (visible) 1f else 0f, if (visible) enter else exit)
