@@ -61,7 +61,6 @@ import org.commonmark.node.Code
 import org.commonmark.node.Emphasis
 import org.commonmark.node.HardLineBreak
 import org.commonmark.node.HtmlInline
-import org.commonmark.node.Image
 import org.commonmark.node.Link
 import org.commonmark.node.Node
 import org.commonmark.node.SoftLineBreak
@@ -91,6 +90,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
+import java.net.URI
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -104,10 +104,17 @@ private var selection by mutableStateOf<Pair<ChangelogSource?, String>?>(null)
 
 private var openedVersion by mutableStateOf<ModrinthVersionLink?>(null)
 
+private val bareUrl = Regex("""https?://[^\s<>()]+""", RegexOption.IGNORE_CASE)
+
 internal fun openChangelogLink(url: String) {
-    val version = ModrinthChangelogs.parseLink(url)
-    if (version != null) openedVersion = version
-    else runCatching { NetworkUtils.browseLink(url) }
+    val target = url.trim()
+    val version = ModrinthChangelogs.parseLink(target)
+    if (version != null) {
+        openedVersion = version
+        return
+    }
+    val scheme = runCatching { URI(target).scheme?.lowercase() }.getOrNull()
+    if (scheme == "http" || scheme == "https") runCatching { NetworkUtils.browseLink(target) }
 }
 
 private val ChangelogLinkListener = LinkInteractionListener { link ->
@@ -393,22 +400,34 @@ internal fun changelogInlineStyles(): InlineStyles {
 internal data class InlineStyles(val bold: SpanStyle, val italic: SpanStyle, val code: SpanStyle, val link: TextLinkStyles)
 
 internal fun inline(node: Node, styles: InlineStyles): AnnotatedString = buildAnnotatedString {
-    fun walk(n: Node) {
+    fun text(literal: String, linked: Boolean) {
+        if (linked) return append(literal)
+        var last = 0
+        bareUrl.findAll(literal).forEach { match ->
+            val url = match.value.trimEnd('.', ',', ';', ':', '!', '?', '\'', '"')
+            append(literal.substring(last, match.range.first))
+            withLink(LinkAnnotation.Clickable(url, styles.link, ChangelogLinkListener)) { append(url) }
+            last = match.range.first + url.length
+        }
+        append(literal.substring(last))
+    }
+
+    fun walk(n: Node, linked: Boolean) {
         var c = n.firstChild
         while (c != null) {
             when (c) {
-                is CmText -> append(c.literal)
-                is StrongEmphasis -> { pushStyle(styles.bold); walk(c); pop() }
-                is Emphasis -> { pushStyle(styles.italic); walk(c); pop() }
+                is CmText -> text(c.literal, linked)
+                is StrongEmphasis -> { pushStyle(styles.bold); walk(c, linked); pop() }
+                is Emphasis -> { pushStyle(styles.italic); walk(c, linked); pop() }
                 is Code -> { pushStyle(styles.code); append(" ${c.literal} "); pop() }
-                is Link -> withLink(LinkAnnotation.Clickable(c.destination, styles.link, ChangelogLinkListener)) { walk(c) }
-                is Image, is HtmlInline -> Unit
+                is Link -> withLink(LinkAnnotation.Clickable(c.destination, styles.link, ChangelogLinkListener)) { walk(c, true) }
+                is HtmlInline -> Unit
                 is SoftLineBreak -> append(" ")
                 is HardLineBreak -> append("\n")
-                else -> walk(c)
+                else -> walk(c, linked)
             }
             c = c.next
         }
     }
-    walk(node)
+    walk(node, false)
 }

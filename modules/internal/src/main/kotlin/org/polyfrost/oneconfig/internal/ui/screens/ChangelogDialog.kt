@@ -48,12 +48,14 @@ import org.commonmark.node.BlockQuote
 import org.commonmark.node.BulletList
 import org.commonmark.node.FencedCodeBlock
 import org.commonmark.node.Heading
+import org.commonmark.node.HtmlBlock
 import org.commonmark.node.IndentedCodeBlock
 import org.commonmark.node.ListItem
 import org.commonmark.node.Node
 import org.commonmark.node.OrderedList
 import org.commonmark.node.Paragraph
 import org.commonmark.node.ThematicBreak
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeCloses
 import org.polyfrost.oneconfig.internal.ui.api.ModrinthChangelog
 import org.polyfrost.oneconfig.internal.ui.api.ModrinthChangelogs
 import org.polyfrost.oneconfig.internal.ui.api.ModrinthVersionLink
@@ -109,6 +111,7 @@ internal fun ModrinthChangelogDialog(link: ModrinthVersionLink, onDismiss: () ->
     val title = (current as? DialogState.Loaded)?.changelog?.title ?: link.version
     val popupShadow = remember(theme.shadowColor) { Shadow(24.dp, theme.shadowColor, 0.dp, DpOffset(0.dp, 8.dp), .3f, BlendMode.SrcOver) }
 
+    EscapeCloses(onDismiss)
     ShellPopup(
         popupPositionProvider = WindowOrigin,
         onDismissRequest = onDismiss,
@@ -266,8 +269,22 @@ private fun MarkdownBlock(node: Node, lists: Int) {
         is FencedCodeBlock -> CodeBlock(node.literal)
         is IndentedCodeBlock -> CodeBlock(node.literal)
         is ThematicBreak -> Box(Modifier.fillMaxWidth().padding(vertical = 4.dp).height(1.dp).background(theme.borderColor))
+        is HtmlBlock -> {
+            val text = htmlText(node.literal.orEmpty())
+            if (text.isNotBlank()) BasicText(text, style = changelogBodyStyle(depth))
+        }
         else -> Unit
     }
+}
+
+private val htmlBreak = Regex("""<br\s*/?>|</(?:p|div|li|h[1-6]|tr|summary|details)>""", RegexOption.IGNORE_CASE)
+private val htmlTag = Regex("""<[^>]*>""")
+private val htmlEntities = listOf("&nbsp;" to " ", "&lt;" to "<", "&gt;" to ">", "&quot;" to "\"", "&#39;" to "'", "&apos;" to "'", "&amp;" to "&")
+
+private fun htmlText(html: String): String {
+    var text = htmlTag.replace(htmlBreak.replace(html, "\n"), "")
+    htmlEntities.forEach { (entity, value) -> text = text.replace(entity, value, ignoreCase = true) }
+    return text.lines().map { it.trim() }.filter { it.isNotEmpty() }.joinToString("\n")
 }
 
 @Composable

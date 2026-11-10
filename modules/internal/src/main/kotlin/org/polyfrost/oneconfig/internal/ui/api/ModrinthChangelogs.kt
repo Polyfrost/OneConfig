@@ -35,7 +35,9 @@ object ModrinthChangelogs {
 
     fun parseLink(url: String): ModrinthVersionLink? {
         val match = versionLink.matchEntire(url.trim()) ?: return null
-        return ModrinthVersionLink(decode(match.groupValues[1]), decode(match.groupValues[2]))
+        val version = decode(match.groupValues[2])
+        if (version.equals("latest", ignoreCase = true)) return null
+        return ModrinthVersionLink(decode(match.groupValues[1]), version)
     }
 
     fun cached(link: ModrinthVersionLink): ModrinthChangelog? = cache[link]
@@ -49,7 +51,8 @@ object ModrinthChangelogs {
                 fun string(key: String): String? = root.get(key)?.takeIf { it.isJsonPrimitive }?.asString?.trim()?.takeIf { it.isNotEmpty() }
                 val version = string("version_number") ?: string("name") ?: link.version
                 val title = projectTitle(link)?.let { "$it $version" } ?: version
-                val document = Parser.builder().build().parse(string("changelog").orEmpty())
+                val changelog = root.get("changelog")?.takeIf { it.isJsonPrimitive }?.asString.orEmpty()
+                val document = Parser.builder().build().parse(changelog)
                 (document.firstChild as? Heading)?.takeIf { heading ->
                     val text = plainText(heading).trim().removePrefix("v")
                     text == version.removePrefix("v") || text == string("name")?.removePrefix("v")
