@@ -90,6 +90,7 @@ internal object GlGlass {
 
     private fun sample() {
         if (sampleFailed) return
+        val previousPbo = GL11.glGetInteger(GL21.GL_PIXEL_PACK_BUFFER_BINDING)
         try {
             if (sampleTex == 0) {
                 sampleTex = GL11.glGenTextures()
@@ -123,16 +124,28 @@ internal object GlGlass {
             GL30.glBlitFramebuffer(0, 0, targetW, targetH, 0, 0, SAMPLE, SAMPLE, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_LINEAR)
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, sampleFbo)
             val alignment = GL11.glGetInteger(GL11.GL_PACK_ALIGNMENT)
+            val rowLength = GL11.glGetInteger(GL11.GL_PACK_ROW_LENGTH)
+            val skipPixels = GL11.glGetInteger(GL11.GL_PACK_SKIP_PIXELS)
+            val skipRows = GL11.glGetInteger(GL11.GL_PACK_SKIP_ROWS)
             GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4)
-            GL11.glReadPixels(0, 0, SAMPLE, SAMPLE, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, 0L)
-            GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, alignment)
+            GL11.glPixelStorei(GL11.GL_PACK_ROW_LENGTH, 0)
+            GL11.glPixelStorei(GL11.GL_PACK_SKIP_PIXELS, 0)
+            GL11.glPixelStorei(GL11.GL_PACK_SKIP_ROWS, 0)
+            try {
+                GL11.glReadPixels(0, 0, SAMPLE, SAMPLE, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, 0L)
+            } finally {
+                GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, alignment)
+                GL11.glPixelStorei(GL11.GL_PACK_ROW_LENGTH, rowLength)
+                GL11.glPixelStorei(GL11.GL_PACK_SKIP_PIXELS, skipPixels)
+                GL11.glPixelStorei(GL11.GL_PACK_SKIP_ROWS, skipRows)
+            }
             samplePending = true
         } catch (e: Throwable) {
             LOG.warn("OneConfig glass tint sampling is unavailable", e)
             sampleFailed = true
             releaseSample()
         } finally {
-            GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, 0)
+            GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, previousPbo)
         }
     }
 
