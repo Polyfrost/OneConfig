@@ -3303,8 +3303,6 @@ private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<
 private val Hud.addableToLibrary: Boolean
     get() = multipleInstancesAllowed() || !HudManager.hasHudOfType(this::class.java)
 
-private val HudLibraryGutter = 18.dp
-
 private val StudioPanelGutter = 16.dp
 
 /** The blurred page tinted card the editor's panel, HUD library and mod list float on, like the main screen's page */
@@ -3547,11 +3545,11 @@ private fun HudLibraryPanel(
             .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = if (suggestEvergreenHud) 16.dp else 0.dp)
             .then(modifier)
             .studioSurface()
-            .padding(vertical = HudLibraryGutter),
+            .padding(vertical = StudioPanelGutter),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = HudLibraryGutter),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = StudioPanelGutter),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -3562,18 +3560,18 @@ private fun HudLibraryPanel(
             }
         }
         if (suggestEvergreenHud) {
-            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f).padding(horizontal = HudLibraryGutter))
+            EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f).padding(horizontal = StudioPanelGutter))
             return@Column
         }
         Text(
             "Click to add  ·  Drag to place it yourself",
-            modifier = Modifier.padding(horizontal = HudLibraryGutter),
+            modifier = Modifier.padding(horizontal = StudioPanelGutter),
             color = theme.textColorSecondary,
             fontSize = 11.sp,
         )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             BoxWithConstraints(Modifier.fillMaxSize()) {
-                val maxCardWidth = maxWidth - HudLibraryGutter * 2
+                val maxCardWidth = maxWidth - StudioPanelGutter * 2
                 val density = LocalDensity.current
                 val (items, sectionIndexes, previewsMeasured, previews, geometry) = rememberHudLibraryLayout(sections, maxCardWidth)
                 val completeScroll by rememberUpdatedState(onScrollComplete)
@@ -3607,11 +3605,11 @@ private fun HudLibraryPanel(
                     }
                     completeScroll(target, false)
                 }
-                ScrollbarBox(scrollState, scrollbarAdapter, HudLibraryGutter, Modifier.fillMaxSize()) {
+                ScrollbarBox(scrollState, scrollbarAdapter, StudioPanelGutter, Modifier.fillMaxSize()) {
                     LazyColumn(
                         state = scrollState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = HudLibraryGutter),
+                        contentPadding = PaddingValues(horizontal = StudioPanelGutter),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         if (sections.isEmpty()) {
