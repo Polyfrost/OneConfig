@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
@@ -458,14 +459,15 @@ internal fun UITheme.accentTextOn(accent: Color): Color =
 
 val UITheme.previewAsset: String get() = customSpec?.let { baseTheme(it.base, it.light).previewImage } ?: previewImage
 
-fun contrastRatio(a: Color, b: Color): Float {
-    val la = a.copy(alpha = 1f).luminance()
-    val lb = b.copy(alpha = 1f).luminance()
+fun contrastRatio(foreground: Color, background: Color): Float {
+    val bg = background.copy(alpha = 1f)
+    val la = foreground.compositeOver(bg).luminance()
+    val lb = bg.luminance()
     return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
 }
 
 internal fun readableOn(color: Color): Color =
-    if (contrastRatio(color, Color.White) >= contrastRatio(color, Color.Black)) Color.White else Color.Black
+    if (contrastRatio(Color.White, color) >= contrastRatio(Color.Black, color)) Color.White else Color.Black
 
 internal fun baseTheme(base: CustomBase, light: Boolean): UITheme = when (base) {
     CustomBase.POLYFROSTED -> if (light) PolyfrostedLight else PolyfrostedDark
