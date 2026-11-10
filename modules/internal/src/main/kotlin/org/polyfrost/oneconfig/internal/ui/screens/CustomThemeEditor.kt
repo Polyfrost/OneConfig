@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,11 +73,13 @@ import org.polyfrost.oneconfig.internal.ui.themes.CustomCorners
 import org.polyfrost.oneconfig.internal.ui.themes.CustomThemeSpec
 import org.polyfrost.oneconfig.internal.ui.themes.CustomThemes
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.PlayerAccent
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.contrastRatio
 import org.polyfrost.oneconfig.internal.ui.themes.customSpec
 import org.polyfrost.oneconfig.internal.ui.themes.isCustom
+import org.polyfrost.oneconfig.internal.ui.themes.palette
 import org.polyfrost.oneconfig.internal.ui.themes.previewAsset
 import org.polyfrost.oneconfig.internal.ui.themes.isLight
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
@@ -167,7 +170,7 @@ private fun fixContrast(color: Color, background: Color, target: Float): Color {
 }
 
 @Composable
-internal fun CustomThemeCard(modifier: Modifier) {
+internal fun CustomThemeCard(modifier: Modifier, onPaste: () -> Unit) {
     val theme = LocalTheme.current
     val specs = CustomThemes.specs
     val active = theme.customSpec
@@ -197,6 +200,9 @@ internal fun CustomThemeCard(modifier: Modifier) {
                 }
             }
             if (specs.size < CustomThemeSpec.MAX) StartFromButton(startOpen) { startOpen = it }
+            if (active == null) {
+                SquareControlButton("clipboard", translated("oneconfig.themes.tooltip.custom_paste", "Add a theme from a code"), onPaste)
+            }
         },
         footer = {
             ThemeCaption(translated("oneconfig.themes.caption.custom", "Make your own from any theme"))
@@ -313,7 +319,7 @@ private fun EmptyCustomPreview(modifier: Modifier) {
 
 @Composable
 internal fun CustomThemePreview(spec: CustomThemeSpec, modifier: Modifier) {
-    val accent = spec.accent ?: Accent
+    val accent = spec.accent ?: PlayerAccent
     val corner = when (spec.corners) {
         CustomCorners.ROUNDED -> 4.dp
         CustomCorners.SOFT -> 2.dp
@@ -354,22 +360,60 @@ internal fun CustomThemePreview(spec: CustomThemeSpec, modifier: Modifier) {
     }
 }
 
-private sealed interface EditorNotice {
+internal sealed interface EditorNotice {
     class Message(val text: String) : EditorNotice
     class Import(val code: String, val name: String) : EditorNotice
 }
 
+internal fun pastedThemeNotice(): EditorNotice {
+    val code = ClipboardHelper.getString()?.trim().orEmpty()
+    val decoded = CustomThemeSpec.decode(code, "preview")
+        ?: return EditorNotice.Message(translated("oneconfig.themes.custom.paste_invalid", "That isn't a theme code"))
+    return EditorNotice.Import(code, decoded.name)
+}
+
 @Composable
-internal fun CustomThemeEditor(spec: CustomThemeSpec) {
-    val theme = LocalTheme.current
-    var notice by remember { mutableStateOf<EditorNotice?>(null) }
-    var confirmDelete by remember(spec.id) { mutableStateOf(false) }
-    LaunchedEffect(notice) {
-        if (notice is EditorNotice.Message) {
+internal fun rememberThemeCodeNotice(): MutableState<EditorNotice?> {
+    val state = remember { mutableStateOf<EditorNotice?>(null) }
+    LaunchedEffect(state.value) {
+        if (state.value is EditorNotice.Message) {
             delay(2500)
-            notice = null
+            state.value = null
         }
     }
+    return state
+}
+
+@Composable
+internal fun ThemeCodeNotice(notice: EditorNotice, onNotice: (EditorNotice?) -> Unit) {
+    val theme = LocalTheme.current
+    when (notice) {
+        is EditorNotice.Message -> Text(notice.text, color = theme.textColorSecondary, fontSize = 13.sp)
+        is EditorNotice.Import -> Row(horizontalArrangement = Arrangement.spacedBy(EditorGap), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                translated("oneconfig.themes.custom.import_prompt", "Add \"%s\" to your themes?", notice.name),
+                color = theme.textColor,
+                fontSize = 13.sp,
+            )
+            EditorButton(translated("oneconfig.themes.custom.import", "Add"), selected = true) {
+                val imported = CustomThemes.import(notice.code)
+                if (imported == null) {
+                    onNotice(EditorNotice.Message(fullMessage()))
+                } else {
+                    onNotice(null)
+                    activateCustom(imported)
+                }
+            }
+            EditorButton(translated("oneconfig.themes.custom.cancel", "Cancel")) { onNotice(null) }
+        }
+    }
+}
+
+@Composable
+internal fun CustomThemeEditor(spec: CustomThemeSpec, noticeState: MutableState<EditorNotice?>) {
+    val theme = LocalTheme.current
+    var notice by noticeState
+    var confirmDelete by remember(spec.id) { mutableStateOf(false) }
     val update: (CustomThemeSpec) -> Unit = { CustomThemes.update(it) }
     Column(
         Modifier
@@ -453,7 +497,7 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec) {
         }
         EditorRow(translated("oneconfig.themes.custom.accent", "Accent")) {
             Row(horizontalArrangement = Arrangement.spacedBy(EditorGap), verticalAlignment = Alignment.CenterVertically) {
-                ColorField(null, spec.accent ?: Accent, spec.accent != null) { update(spec.copy(accent = it)) }
+                ColorField(null, spec.accent ?: PlayerAccent, spec.accent != null) { update(spec.copy(accent = it)) }
                 EditorButton(translated("oneconfig.themes.custom.accent.player", "Use my accent"), selected = spec.accent == null) {
                     if (spec.accent != null) update(spec.copy(accent = null))
                 }
@@ -500,13 +544,7 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec) {
                 }
                 ThemeHint(translated("oneconfig.themes.tooltip.custom_paste", "Add a theme from a code")) {
                     EditorButton(translated("oneconfig.themes.custom.paste", "Paste code"), icon = "clipboard") {
-                        val code = ClipboardHelper.getString()?.trim().orEmpty()
-                        val decoded = CustomThemeSpec.decode(code, "preview")
-                        notice = if (decoded == null) {
-                            EditorNotice.Message(translated("oneconfig.themes.custom.paste_invalid", "That isn't a theme code"))
-                        } else {
-                            EditorNotice.Import(code, decoded.name)
-                        }
+                        notice = pastedThemeNotice()
                     }
                 }
                 EditorButton(translated("oneconfig.themes.custom.duplicate", "Duplicate"), icon = "copy-plus") {
@@ -541,30 +579,8 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec) {
                 }
             }
         }
-        when (val current = notice) {
-            is EditorNotice.Message -> EditorRow("") {
-                Text(current.text, color = theme.textColorSecondary, fontSize = 13.sp)
-            }
-            is EditorNotice.Import -> EditorRow("") {
-                Row(horizontalArrangement = Arrangement.spacedBy(EditorGap), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        translated("oneconfig.themes.custom.import_prompt", "Add \"%s\" to your themes?", current.name),
-                        color = theme.textColor,
-                        fontSize = 13.sp,
-                    )
-                    EditorButton(translated("oneconfig.themes.custom.import", "Add"), selected = true) {
-                        val imported = CustomThemes.import(current.code)
-                        if (imported == null) {
-                            notice = EditorNotice.Message(fullMessage())
-                        } else {
-                            notice = null
-                            activateCustom(imported)
-                        }
-                    }
-                    EditorButton(translated("oneconfig.themes.custom.cancel", "Cancel")) { notice = null }
-                }
-            }
-            null -> {}
+        notice?.let { current ->
+            EditorRow("") { ThemeCodeNotice(current) { notice = it } }
         }
     }
 }

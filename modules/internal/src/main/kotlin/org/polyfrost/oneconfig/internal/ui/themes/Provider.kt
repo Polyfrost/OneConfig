@@ -43,6 +43,8 @@ private fun paletteAccent(): Color? = ThemeRegistry.activeTheme?.palette?.let(Pa
 
 val Accent: Color get() = paletteAccent() ?: _accent
 
+val PlayerAccent: Color get() = _accent
+
 val AccentEnd: Color get() = paletteAccent() ?: _accentEnd ?: _accent
 
 val AccentGradient: Boolean get() = paletteAccent() == null && _accentEnd != null

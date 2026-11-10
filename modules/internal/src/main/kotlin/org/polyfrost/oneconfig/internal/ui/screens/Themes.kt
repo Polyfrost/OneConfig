@@ -142,6 +142,7 @@ private fun ThemesHeader() {
     ) {
         val families = ThemeRegistry.registry.filterNot { it.isCustom }.groupBy { it.palette?.group ?: it.family }
         val cards: List<Pair<String, List<UITheme>>?> = families.map { (family, variants) -> family to variants } + null
+        val codeNotice = rememberThemeCodeNotice()
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter),
             verticalArrangement = Arrangement.spacedBy(ThemeCardGap),
@@ -149,13 +150,20 @@ private fun ThemesHeader() {
             cards.chunked(ThemeColumns).forEach { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ThemeCardGap)) {
                     row.forEach { card ->
-                        if (card == null) CustomThemeCard(Modifier.weight(1f)) else ThemeCard(card.first, card.second, Modifier.weight(1f))
+                        if (card == null) CustomThemeCard(Modifier.weight(1f)) { codeNotice.value = pastedThemeNotice() } else ThemeCard(card.first, card.second, Modifier.weight(1f))
                     }
                     repeat(ThemeColumns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }
-        LocalTheme.current.customSpec?.let { CustomThemeEditor(it) }
+        val customSpec = LocalTheme.current.customSpec
+        if (customSpec != null) {
+            CustomThemeEditor(customSpec, codeNotice)
+        } else {
+            codeNotice.value?.let { notice ->
+                Box(Modifier.padding(horizontal = PageGutter)) { ThemeCodeNotice(notice) { codeNotice.value = it } }
+            }
+        }
         if (!Platform.screen().supportsBackdropGlass()) {
             Text(
                 "PolyGlass shows without frosted glass while VulkanMod is installed on this Minecraft version.",
@@ -342,7 +350,7 @@ internal fun ThemeCardShell(
                 }
             }
         }
-        Box(Modifier.fillMaxWidth().height(ThemeFooterHeight), contentAlignment = Alignment.CenterStart) {
+        Box(Modifier.fillMaxWidth().heightIn(min = ThemeFooterHeight), contentAlignment = Alignment.CenterStart) {
             footer()
         }
     }
@@ -522,7 +530,7 @@ private fun PaletteAccentRow(palette: PaletteInfo) {
         ThemeRegistry.activeTheme?.let(::syncNotificationTheme)
         UiSounds.play(UiSoundEvent.CLICK)
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(AccentSwatchGap)) {
+    FlexibleLayout(horizontalSpacing = AccentSwatchGap, verticalSpacing = AccentSwatchGap) {
         palette.accents.forEachIndexed { index, accent ->
             val selected = choice == index || (choice == PaletteAccent.RECOMMENDED && index == palette.defaultAccent)
             AccentSwatch(accent.name, selected, { pick(index) }) {
