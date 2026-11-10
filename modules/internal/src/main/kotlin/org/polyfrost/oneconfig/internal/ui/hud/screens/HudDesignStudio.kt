@@ -3165,12 +3165,12 @@ private fun DesignStudioPanel(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text(title ?: "HUD", color = theme.textColor, fontSize = 18.sp)
+                    Text(title ?: "HUD", color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
                     subtitle?.let {
                         Text(it, color = theme.textColorSecondary, fontSize = 12.sp)
                     }
                 }
-                IconButton("close", modifier = Modifier.size(18.dp)) { onBack() }
+                IconButton("close", modifier = Modifier.size(32.dp), hoverBorder = true) { onBack() }
             }
             var searchOpen by remember { mutableStateOf(false) }
             var focusSearch by remember { mutableStateOf(false) }
@@ -3192,7 +3192,7 @@ private fun DesignStudioPanel(
                             alpha = if (ReducedMotion.enabled) 1f - searchProgress
                             else ((0.3f - searchProgress) / 0.25f).coerceIn(0f, 1f)
                         },
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (categories.size > 1) categories.forEach {
                         Chip(it.title, it == shownCategory, it.icon) { onCategoryChange(it) }
@@ -3539,10 +3539,10 @@ private fun HudLibraryPanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("HUDs", color = theme.textColor, fontSize = 18.sp)
+            Text("HUDs", color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
             if (!suggestEvergreenHud) {
                 SearchBar(searchText, onSearchChange, "Search HUDs...", searchFocusRequested, onSearchFocused)
-                IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
+                IconButton("close", modifier = Modifier.size(32.dp), hoverBorder = true, onClick = onClose)
             }
         }
         if (suggestEvergreenHud) {
