@@ -1,7 +1,8 @@
 package org.polyfrost.oneconfig.internal.legacy;
 
 //? if = 1.8.9 {
-/*import net.kyori.adventure.audience.Audience;
+/*import com.google.gson.JsonParseException;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.client.Minecraft;
@@ -29,7 +30,11 @@ public final class FabricClientAudiences {
     }
 
     public Text toNative(Component component) {
-        return Text.Serializer.fromJson(LEGACY_JSON.serialize(component));
+        try {
+            return Text.Serializer.fromJson(LEGACY_JSON.serialize(component));
+        } catch (JsonParseException e) {
+            return Text.Serializer.fromJson(GsonComponentSerializer.gson().serialize(component));
+        }
     }
 
     public Component asAdventure(Text component) {
