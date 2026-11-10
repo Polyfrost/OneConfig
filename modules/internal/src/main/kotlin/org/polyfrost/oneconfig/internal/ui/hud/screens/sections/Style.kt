@@ -37,8 +37,19 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.Radio
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
+import org.polyfrost.oneconfig.internal.ui.hud.hudOptionsCanReset
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
+import org.polyfrost.oneconfig.internal.ui.hud.resetHudOptions
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+
+private val TEXT_OPTIONS = listOf(
+    "font", "textScale", "textBold", "textItalic", "textUnderline", "textWeight", "caseType", "textColor", "textChroma",
+    "textChromaSpeed", "showShadow", "fullShadow", "shadowColor", "shadowChroma", "shadowChromaSpeed",
+)
+private val BACKGROUND_OPTIONS = listOf(
+    "showBackground", "bgRadius", "bgColor", "bgChroma", "bgChromaSpeed", "mergeBackground", "mergeDiagonally",
+    "keepBgWhenHidden",
+)
 
 enum class CaseType(val icon: String) {
     Aa("capitalized"),
@@ -104,6 +115,8 @@ fun Style(hud: Hud?, query: String) {
         CardSection(
             "Text", query, "Font", "Size", "Font size", "Modifiers", "Bold", "Italic", "Underline", "Weight", "Case", "Case Type",
             "Color", "Text Color", "Shadow", "Normal", "Full", "Shadow color",
+            onReset = { resetHudOptions(hud, TEXT_OPTIONS) },
+            canReset = hudOptionsCanReset(hud, TEXT_OPTIONS),
         ) { col1 ->
             GridRow(
                 col1,
@@ -272,6 +285,8 @@ fun Style(hud: Hud?, query: String) {
             "Merge with neighbours", "Diagonal", "Keep hidden", "Keep Background When Hidden",
             checked = showBackground,
             onCheckedChange = { Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it } },
+            onReset = { resetHudOptions(hud, BACKGROUND_OPTIONS) },
+            canReset = hudOptionsCanReset(hud, BACKGROUND_OPTIONS),
         ) { col1 ->
             GridRow(
                 col1,

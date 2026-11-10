@@ -1,14 +1,9 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,8 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,16 +27,14 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
-import org.polyfrost.oneconfig.internal.ui.hud.hudHasPositionDefaults
+import org.polyfrost.oneconfig.internal.ui.hud.hudOptionsCanReset
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
-import org.polyfrost.oneconfig.internal.ui.hud.resetHudPosition
+import org.polyfrost.oneconfig.internal.ui.hud.resetHudOptions
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.hud.screens.beginHudMove
 import org.polyfrost.oneconfig.internal.ui.hud.screens.designerSelection
@@ -53,6 +44,10 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.notifyHudLocked
 import org.polyfrost.oneconfig.internal.ui.hud.screens.placementLabel
 import org.polyfrost.oneconfig.internal.ui.hud.screens.selectionOrigin
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+
+private val POSITION_SCALE_OPTIONS = listOf("locked", "useGuiScale", "customScale")
+private val SIZE_OPTIONS = listOf("staticWidth", "staticW", "staticH", "alignment", "growthAnchor")
+private val PADDING_OPTIONS = listOf("padLeft", "padRight", "padTop", "padBottom")
 
 @Composable
 fun Layout(hud: Hud?, query: String) {
@@ -77,8 +72,26 @@ fun Layout(hud: Hud?, query: String) {
         var perSide by remember { mutableStateOf(padLeft != padRight || padTop != padBottom) }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CardSection("Position", query, "X", "Y", "Lock position", "Reset to default position") { col1 ->
-                HudPositionFields(hud, col1)
+            val scalable = hud !is LegacyHudMarker || hud.supportsScale
+            CardSection(
+                if (scalable) "Position & Scale" else "Position", query,
+                "X", "Y", "Lock position", "Reset to default position",
+                *if (scalable) arrayOf("Scale", "Follow GUI scale", "Use Minecraft GUI Scale") else emptyArray(),
+                onReset = { resetHudOptions(hud, POSITION_SCALE_OPTIONS, position = true) },
+                canReset = hudOptionsCanReset(hud, POSITION_SCALE_OPTIONS, position = true),
+            ) { col1 ->
+                HudPositionFields(hud, col1) {
+                    if (scalable) {
+                        HudSettingTarget(hud, "customScale") {
+                            LabeledControl("Scale") {
+                                NumberSpinner(
+                                    hud.customScale, { Snapshot.withMutableSnapshot { hud.customScale = it } },
+                                    0.25f, 4f, 0.25f, width = GridCol3, unit = "x"
+                                )
+                            }
+                        }
+                    }
+                }
                 hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
                     val secondary = LocalTheme.current.textColorSecondary
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -91,31 +104,12 @@ fun Layout(hud: Hud?, query: String) {
                         Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
                     }
                 }
-                ResetHudPositionButton(hud)
-            }
-
-            if (hud !is LegacyHudMarker || hud.supportsScale) {
-                CardSection("Scale", query, "Follow GUI scale", "Use Minecraft GUI Scale", "Custom Scale") { col1 ->
-                    if (hud !is LegacyHudMarker) {
-                        HudSettingTarget(hud, "useGuiScale") {
-                            SwitchRow("Follow GUI scale", hud.useGuiScale) {
-                                Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) }
-                            }
+                if (hud !is LegacyHudMarker) {
+                    HudSettingTarget(hud, "useGuiScale") {
+                        SwitchRow("Follow GUI scale", hud.useGuiScale) {
+                            Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) }
                         }
                     }
-                    GridRow(
-                        col1,
-                        first = {
-                            HudSettingTarget(hud, "customScale") {
-                                LabeledControl("Scale") {
-                                    NumberSpinner(
-                                        hud.customScale, { Snapshot.withMutableSnapshot { hud.customScale = it } },
-                                        0.25f, 4f, 0.25f, width = col1, unit = "x"
-                                    )
-                                }
-                            }
-                        },
-                    )
                 }
             }
 
@@ -123,6 +117,8 @@ fun Layout(hud: Hud?, query: String) {
                 CardSection(
                     "Size & Alignment", query, "Static size", "Width", "Height", "Anchor", "Content alignment",
                     "Alignment", "Growth anchor",
+                    onReset = { resetHudOptions(hud, SIZE_OPTIONS) },
+                    canReset = hudOptionsCanReset(hud, SIZE_OPTIONS),
                 ) { col1 ->
                     HudSettingTarget(hud, "staticWidth") {
                         SwitchRow("Static size", staticWidth) {
@@ -192,7 +188,11 @@ fun Layout(hud: Hud?, query: String) {
                     }
                 }
 
-                CardSection("Padding", query, "Horizontal", "Vertical", "Per side", "Left", "Right", "Top", "Bottom") { col1 ->
+                CardSection(
+                    "Padding", query, "Horizontal", "Vertical", "Per side", "Left", "Right", "Top", "Bottom",
+                    onReset = { resetHudOptions(hud, PADDING_OPTIONS) },
+                    canReset = hudOptionsCanReset(hud, PADDING_OPTIONS),
+                ) { col1 ->
                     val perSideSwitch: @Composable () -> Unit = {
                         LabeledControl("Per side") {
                             SwitchControl(perSide) {
@@ -249,37 +249,9 @@ private fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float)
     }
 }
 
+/** X and Y of the selection's top left corner, moving every selected HUD together, with [third] in the last column */
 @Composable
-private fun ResetHudPositionButton(hud: Hud) {
-    val theme = LocalTheme.current
-    val enabled = hudHasPositionDefaults(hud)
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val textColor by animateColorAsState(if (enabled && isHovered) theme.textColor else theme.textColorSecondary)
-
-    Box(
-        modifier = Modifier
-            .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-            .background(theme.componentBackground, theme.buttonShape)
-            .border(1.dp, theme.borderColor, theme.buttonShape)
-            .then(if (enabled) Modifier.onClick(interactionSource) { resetHudPosition(hud) } else Modifier)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text("Reset to default position", color = textColor, fontSize = 13.sp)
-    }
-}
-
-/** Keeps [hud] the same size on screen */
-private fun setFollowGuiScale(hud: Hud, follow: Boolean) {
-    if (hud.useGuiScale == follow) return
-    val gui = Platform.compatibility().options().guiScale.takeIf { it > 0f } ?: 1f
-    if (follow) hud.customScale *= hud.fixedGuiScale / gui else hud.fixedGuiScale = gui
-    hud.useGuiScale = follow
-}
-
-@Composable
-private fun HudPositionFields(hud: Hud, col1: Dp) {
+private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit) {
     HudEditorViewport.observe()
     val selection = designerSelection(hud)
     val origin = selectionOrigin(selection) ?: Offset(hud.x, hud.y)
@@ -338,5 +310,14 @@ private fun HudPositionFields(hud: Hud, col1: Dp) {
                 }
             }
         },
+        third = third,
     )
+}
+
+/** Keeps [hud] the same size on screen */
+private fun setFollowGuiScale(hud: Hud, follow: Boolean) {
+    if (hud.useGuiScale == follow) return
+    val gui = Platform.compatibility().options().guiScale.takeIf { it > 0f } ?: 1f
+    if (follow) hud.customScale *= hud.fixedGuiScale / gui else hud.fixedGuiScale = gui
+    hud.useGuiScale = follow
 }

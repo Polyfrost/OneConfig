@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -128,6 +129,38 @@ private fun resetHudStaticSize(hud: Hud) {
 }
 
 fun hudHasPositionDefaults(hud: Hud): Boolean = hud.defaultPosition() != null
+
+/** Counts the HUD's position too when [position] is set */
+fun hudOptionsCanReset(hud: Hud, optionIds: Collection<String>, position: Boolean = false): Boolean =
+    (position && hudCanResetPosition(hud)) || optionIds.any { id ->
+        val prop = hudProperty(hud, id) ?: return@any false
+        val default = prop.getMetadata<Any?>("default") ?: return@any false
+        prop.get() != default
+    }
+
+/** Resets the HUD's position too when [position] is set */
+fun resetHudOptions(hud: Hud, optionIds: Collection<String>, position: Boolean = false) {
+    for (id in optionIds) {
+        val prop = hudProperty(hud, id) ?: continue
+        if (optionHasDefault(prop)) performHudOptionReset(hud, prop, id)
+    }
+    if (position && hudHasPositionDefaults(hud)) {
+        for (id in POSITION_OPTIONS) hudProperty(hud, id)?.takeIf(::optionHasDefault)?.let(::resetOption)
+    }
+    finishHudReset(hud)
+}
+
+/** Whether [hud] sits on its default position, or has none to compare against */
+private fun hudIsAtDefaultPosition(hud: Hud): Boolean {
+    val section = hudProperty(hud, "section")?.getMetadata<Any?>("default") ?: return true
+    val x = (hudProperty(hud, "relativeX")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
+    val y = (hudProperty(hud, "relativeY")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
+    return section == hud.section && abs(x - hud.relativeX) < 1e-4f && abs(y - hud.relativeY) < 1e-4f
+}
+
+/** Whether [resetHudPosition] would move [hud] or drop its anchor right now */
+fun hudCanResetPosition(hud: Hud): Boolean =
+    hudHasPositionDefaults(hud) && (hud.isAnchored || !hudIsAtDefaultPosition(hud))
 
 fun resetHudPosition(hud: Hud) {
     var reset = false
@@ -403,12 +436,6 @@ fun HudCanvasResetMenu(
                     onDismiss()
                 }
             }
-            if (actionTargets.any(::hudHasPositionDefaults)) {
-                HudMenuRow(icon = "refresh", text = "Reset position") {
-                    actionTargets.forEach(::resetHudPosition)
-                    onDismiss()
-                }
-            }
             HudMenuDivider()
             HudMenuRow(icon = "copy", text = "Copy", hint = copyHint) {
                 onCopy(hud)
@@ -446,6 +473,16 @@ fun HudCanvasResetMenu(
                 onDismiss()
             }
             HudMenuDivider()
+            if (actionTargets.any(::hudHasPositionDefaults)) {
+                HudMenuRow(
+                    icon = "move",
+                    text = "Reset position",
+                    enabled = actionTargets.any { hudCanResetPosition(it) },
+                ) {
+                    actionTargets.filter { hudCanResetPosition(it) }.forEach(::resetHudPosition)
+                    onDismiss()
+                }
+            }
             HudMenuRow(
                 icon = "refresh",
                 text = "Reset HUD settings",

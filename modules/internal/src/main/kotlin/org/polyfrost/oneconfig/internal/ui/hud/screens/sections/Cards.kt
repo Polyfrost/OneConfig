@@ -5,18 +5,30 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.screens.Accordion
+import org.polyfrost.oneconfig.internal.ui.screens.displayAlpha
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -29,22 +41,14 @@ internal val GridCol3 = 96.dp
 internal fun hudSearchMatches(query: String, vararg labels: String) =
     query.isEmpty() || labels.any { searchMatches(it, query) }
 
-/** Hidden unless [query] matches [title] or one of the [labels] of the controls inside */
-@Composable
-fun Section(title: String, query: String, vararg labels: String, content: @Composable () -> Unit) {
-    if (!hudSearchMatches(query, title, *labels)) return
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title.uppercase(), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
-        content()
-    }
-}
-
 /**
- * A group of controls on a config screen accordion card, hidden unless [query] matches [title] or one of the [labels]
+ * Controls on a config screen accordion card, hidden unless [query] matches [title] or one of the [labels]
  *
- * When [checked] isn't null the header holds a switch for the whole group which folds its body away while off, a
- * search keeping it open so matches stay visible. [content] is laid out in the panel grid and given the first
- * column's width
+ * With [checked] the header gets a switch and an arrow: the switch turns the group on or off and folds it to match,
+ * and while off the body is dimmed and ignores input. A search keeps the card open so its matches stay visible
+ *
+ * [onReset] adds a reset button after the title, shown while [canReset]. [content] is laid out in the panel grid and
+ * given the first column's width
  */
 @Composable
 internal fun CardSection(
@@ -53,17 +57,46 @@ internal fun CardSection(
     vararg labels: String,
     checked: Boolean? = null,
     onCheckedChange: (Boolean) -> Unit = {},
+    onReset: (() -> Unit)? = null,
+    canReset: Boolean = true,
     content: @Composable (col1: Dp) -> Unit,
 ) {
     if (!hudSearchMatches(query, title, *labels)) return
+    var expanded by remember { mutableStateOf(checked != false) }
     Accordion(
         title = title,
-        expanded = checked != false || query.isNotEmpty(),
-        onExpandedChange = null,
+        expanded = checked == null || expanded || query.isNotEmpty(),
+        onExpandedChange = if (checked != null) ({ expanded = it }) else null,
         checked = checked,
-        onCheckedChange = onCheckedChange,
-    ) {
-        BoxWithConstraints(Modifier.padding(horizontal = 16.dp)) {
+        onCheckedChange = {
+            onCheckedChange(it)
+            expanded = it
+        },
+        titleActions = {
+            if (onReset != null && canReset) {
+                val theme = LocalTheme.current
+                Tooltip(
+                    text = { Text("Reset $title", color = theme.textColor, fontSize = 12.sp) },
+                    modifier = Modifier,
+                    anchor = Alignment.TopCenter,
+                ) {
+                    IconButton(
+                        "refresh",
+                        Modifier.size(24.dp, 20.dp).padding(horizontal = 4.dp, vertical = 2.dp),
+                        foreground = theme.textColorSecondary,
+                        hoveredForeground = theme.textColor,
+                        onClick = onReset,
+                    )
+                }
+            }
+        },
+    ) { enabled ->
+        BoxWithConstraints(
+            Modifier
+                .padding(horizontal = 16.dp)
+                .alpha(if (enabled) 1f else displayAlpha(Property.Display.DISABLED))
+                .blockInteraction(!enabled, keyboard = true),
+        ) {
             val col1 = maxWidth - GridCol2 - GridCol3 - GridGap * 2
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { content(col1) }
         }
@@ -99,11 +132,20 @@ internal fun LabeledControl(label: String, content: @Composable () -> Unit) {
     }
 }
 
-/** [label] with its switch at the far end, laid out like a config screen option row */
+/** [label] with its controls at the far end, laid out like a config screen option row */
+@Composable
+internal fun ControlRow(label: String, content: @Composable RowScope.() -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(label, modifier = Modifier.weight(1f), color = LocalTheme.current.textColor, fontSize = 14.sp)
+        content()
+    }
+}
+
 @Composable
 internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, modifier = Modifier.weight(1f), color = LocalTheme.current.textColor, fontSize = 14.sp)
-        SwitchControl(checked, onCheckedChange)
-    }
+    ControlRow(label) { SwitchControl(checked, onCheckedChange) }
 }

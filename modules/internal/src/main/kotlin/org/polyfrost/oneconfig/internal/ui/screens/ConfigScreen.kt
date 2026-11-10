@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -445,7 +446,12 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
 private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
 
-/** A card whose header folds [body] open and closed, or which follows [expanded] alone with no arrow when [onExpandedChange] is null */
+/**
+ * A card whose header folds [body] open and closed, or which follows [expanded] alone with no arrow when
+ * [onExpandedChange] is null
+ *
+ * [titleActions] sit just after the title
+ */
 @Composable
 internal fun Accordion(
     title: Any,
@@ -456,6 +462,7 @@ internal fun Accordion(
     headEnabled: Boolean = true,
     description: Any? = null,
     icon: String? = null,
+    titleActions: @Composable RowScope.() -> Unit = {},
     body: @Composable (enabled: Boolean) -> Unit,
 ) {
     val theme = LocalTheme.current
@@ -465,6 +472,7 @@ internal fun Accordion(
             title,
             description,
             icon,
+            titleActions,
             Modifier
                 .then(if (onExpandedChange != null) Modifier.onClick(rememberInteractionSource()) { onExpandedChange(!expanded) } else Modifier)
                 .alpha(if (headEnabled) 1f else displayAlpha(Property.Display.DISABLED)),
@@ -500,6 +508,7 @@ private fun CardHeader(
     title: Any,
     description: Any? = null,
     icon: String? = null,
+    titleActions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier,
     trailing: @Composable () -> Unit = {},
 ) {
@@ -516,7 +525,10 @@ private fun CardHeader(
         ) {
             icon?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, color = theme.textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(title, color = theme.textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                    titleActions()
+                }
                 description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
             }
         }
