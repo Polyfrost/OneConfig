@@ -1,10 +1,15 @@
 package org.polyfrost.oneconfig.internal;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Property;
+import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
@@ -210,6 +215,9 @@ public class OneConfigConfig extends Config {
     @Include
     public static boolean hudEditorTourSeen = false;
 
+    @Include
+    public static boolean percentMigrated = false;
+
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
         subcategory = "oneconfig.preferences.category.gui",
@@ -393,6 +401,7 @@ public class OneConfigConfig extends Config {
 
     @Override
     protected void initialize(boolean byConfigManager) {
+        if (tree == null) percentMigrated = false;
         super.initialize(byConfigManager);
         if (tree == null) {
             return;
@@ -525,20 +534,37 @@ public class OneConfigConfig extends Config {
     };
 
     private void migrateToPercent() {
-        boolean changed = false;
-        if (uiSoundVolume > 0f && uiSoundVolume <= 1f) {
-            uiSoundVolume *= 100f;
-            changed = true;
+        if (percentMigrated) return;
+        Float saved;
+        Float legacy;
+        try {
+            saved = storedNumber(id, "hudDragUiOpacity");
+            legacy = storedNumber("themes.json", "hudDragUiOpacity");
+        } catch (Exception e) {
+            return;
         }
-        if (uiAmbienceVolume > 0f && uiAmbienceVolume <= 1f) {
-            uiAmbienceVolume *= 100f;
-            changed = true;
+        if (saved == null || saved <= 1f) {
+            if (legacy != null) hudDragUiOpacity = toPercent(legacy);
+            else if (saved != null) hudDragUiOpacity = toPercent(saved);
         }
-        if (hudDragUiOpacity > 0f && hudDragUiOpacity <= 1f) {
-            hudDragUiOpacity *= 100f;
-            changed = true;
-        }
-        if (changed) save();
+        uiSoundVolume = toPercent(uiSoundVolume);
+        uiAmbienceVolume = toPercent(uiAmbienceVolume);
+        percentMigrated = true;
+        save();
+    }
+
+    private static float toPercent(float value) {
+        return value <= 1f ? value * 100f : value;
+    }
+
+    private static Float storedNumber(String file, String key) throws Exception {
+        Path path = ConfigManager.active().getFolder().resolve(file);
+        if (!Files.exists(path)) return null;
+        Tree stored = ConfigManager.active().getNoRegister(path);
+        Node value = stored == null ? null : stored.get(key);
+        if (!(value instanceof Property)) return null;
+        Object raw = ((Property<?>) value).getAs();
+        return raw instanceof java.lang.Number ? ((java.lang.Number) raw).floatValue() : null;
     }
 
     private static final int REMEMBER_NEVER = 0;
