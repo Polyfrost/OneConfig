@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
-import org.polyfrost.oneconfig.api.ui.v1.page.PageGroup
 import org.polyfrost.oneconfig.api.ui.v1.page.PageText
 
 data class NavigationRoute(
@@ -17,7 +16,7 @@ class NavigationGroup(
 
 val NavigationGroups: List<NavigationGroup>
     get() = registeredPages()
-        .filter { it.showInSidebar && it.group != PageGroup.ONECONFIG }
+        .filter { it.showInSidebar && !it.inAboutMenu }
         .groupBy { it.group }
         .map { (group, pages) ->
             NavigationGroup(

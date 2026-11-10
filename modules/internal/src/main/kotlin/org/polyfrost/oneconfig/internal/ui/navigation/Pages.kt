@@ -154,6 +154,8 @@ fun NavBackStackEntry?.currentPage(): OneConfigPage? {
     return registeredPages().firstOrNull { it is BuiltinPage && entry.isOn(it.route) }
 }
 
+val OneConfigPage.inAboutMenu: Boolean get() = this is BuiltinPage && group == PageGroup.ONECONFIG
+
 class SidebarEntry(val icon: String, val label: String, val route: Any)
 
 class SidebarSection(val id: String, val title: String, val entries: List<SidebarEntry>)

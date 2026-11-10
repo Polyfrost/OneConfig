@@ -54,8 +54,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.launch
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
-import org.polyfrost.oneconfig.api.ui.v1.page.PageGroup
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.internal.ui.navigation.inAboutMenu
 import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.pageRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.registeredPages
@@ -157,14 +157,15 @@ private class NavOverflow {
 private val LocalNavOverflow = staticCompositionLocalOf<NavOverflow?> { null }
 
 @Composable
-private fun TrackOverflow(key: Any, content: @Composable () -> Unit) {
+private fun TrackOverflow(key: Any, enabled: Boolean = true, content: @Composable () -> Unit) {
     val overflow = LocalNavOverflow.current
     if (overflow == null) {
         content()
         return
     }
-    DisposableEffect(key) { onDispose { overflow.centers.remove(key) } }
-    Box(Modifier.onGloballyPositioned { overflow.centers[key] = it.positionInRoot().y + it.size.height / 2f }) { content() }
+    DisposableEffect(key, enabled) { onDispose { overflow.centers.remove(key) } }
+    val track = if (enabled) Modifier.onGloballyPositioned { overflow.centers[key] = it.positionInRoot().y + it.size.height / 2f } else Modifier
+    Box(track) { content() }
 }
 
 @Composable
@@ -204,7 +205,7 @@ private fun NavigationEntries() {
             val entry by controller.currentBackStackEntryAsState()
             val id = it.id
 
-            NavigationSection(it.title, collapsed = SidebarCollapse.isCollapsed(id), onToggle = { SidebarCollapse.toggle(id) }) {
+            NavigationSection(it.title, collapsed = SidebarCollapse.isCollapsed(id), onToggle = { SidebarCollapse.toggle(id) }, trackKey = "section:$id") {
                 it.entries.forEach { def ->
                     val selected = entry.isOn(def.route)
 
@@ -226,9 +227,9 @@ private fun NavigationEntries() {
 }
 
 @Composable
-private fun NavigationSection(title: String? = null, collapsed: Boolean? = null, onToggle: () -> Unit = {}, content: @Composable () -> Unit) {
+private fun NavigationSection(title: String? = null, collapsed: Boolean? = null, onToggle: () -> Unit = {}, trackKey: Any? = null, content: @Composable () -> Unit) {
     if (collapsed != null && title != null) {
-        CollapsibleSection(title, collapsed, onToggle, content)
+        CollapsibleSection(title, collapsed, onToggle, trackKey ?: title, content)
         return
     }
     Column(
@@ -248,25 +249,30 @@ private fun NavigationSection(title: String? = null, collapsed: Boolean? = null,
 }
 
 @Composable
-private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -> Unit, content: @Composable () -> Unit) {
+private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -> Unit, trackKey: Any, content: @Composable () -> Unit) {
     val source = rememberInteractionSource()
     val hovered by source.collectIsHoveredAsState()
     val chevronRotation by animateFloatAsState(if (collapsed) 90f else 180f)
     val theme = LocalTheme.current
     Column(horizontalAlignment = Alignment.Start) {
-        Row(
-            Modifier.width(225.dp).padding(start = 6.dp, end = 6.dp, bottom = 2.dp)
-                .onClick(source) { onToggle() }
-                .pointerHoverIcon(PointerIcon.Hand),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                title.uppercase(),
-                color = if (hovered) theme.textColor else theme.textColor.copy(0.8f),
-                fontWeight = FontWeight.Medium, fontSize = 11.sp
-            )
-            Icon("up", color = theme.textColorSecondary, modifier = Modifier.size(12.dp).rotate(chevronRotation))
+        TrackOverflow(trackKey, enabled = collapsed) {
+            Row(
+                Modifier.width(225.dp).padding(start = 6.dp, end = 6.dp, bottom = 2.dp)
+                    .onClick(source) { onToggle() }
+                    .pointerHoverIcon(PointerIcon.Hand),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    title.uppercase(),
+                    modifier = Modifier.weight(1f, fill = false),
+                    color = if (hovered) theme.textColor else theme.textColor.copy(0.8f),
+                    fontWeight = FontWeight.Medium, fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Icon("up", color = theme.textColorSecondary, modifier = Modifier.padding(start = 8.dp).size(12.dp).rotate(chevronRotation))
+            }
         }
         AnimatedVisibility(
             visible = !collapsed,
@@ -419,6 +425,8 @@ private fun AboutButton() {
     val controller = LocalShellNavController.current
     val shell = LocalShell.current
     val entry by controller.currentBackStackEntryAsState()
+    val pages = registeredPages().filter { it.inAboutMenu && it.showInSidebar }
+    val active = pages.any { entry.isOn(pageRoute(it)) }
 
     Tooltip(
         text = { Text(translated("oneconfig.sidebar.about", "Changelog and credits"), color = theme.textColor, fontSize = 12.sp) },
@@ -431,7 +439,7 @@ private fun AboutButton() {
                 .onClick(interactionSource) { expanded = !expanded }
                 .pointerHoverIcon(PointerIcon.Hand)
         ) {
-            Icon("info", modifier = Modifier.size(18.dp), color = if (hovered || expanded) theme.textColor else theme.textColor.copy(0.8f))
+            Icon("info", modifier = Modifier.size(18.dp), color = if (hovered || expanded || active) theme.textColor else theme.textColor.copy(0.8f))
 
             if (expanded) {
                 ShellPopup(
@@ -441,7 +449,7 @@ private fun AboutButton() {
                     properties = PopupProperties(focusable = true),
                 ) {
                     SidebarMenu {
-                        registeredPages().filter { it.group == PageGroup.ONECONFIG && it.showInSidebar }.forEach { page ->
+                        pages.forEach { page ->
                             val route = pageRoute(page)
                             NavigationEntry(page.icon, page.title.resolve(), route, entry.isOn(route)) {
                                 expanded = false
