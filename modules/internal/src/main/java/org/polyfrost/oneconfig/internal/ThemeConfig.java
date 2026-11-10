@@ -211,6 +211,7 @@ public class ThemeConfig extends Config {
             preferencesMigrated = false;
             flipOrderMigrated = false;
             soundTheme = SOUND_THEME_MATCH;
+            reduceTransparency = false;
         }
         super.initialize(byConfigManager);
         if (tree == null) {

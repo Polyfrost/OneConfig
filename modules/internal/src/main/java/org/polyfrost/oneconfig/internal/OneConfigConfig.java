@@ -401,7 +401,14 @@ public class OneConfigConfig extends Config {
 
     @Override
     protected void initialize(boolean byConfigManager) {
-        if (tree == null) percentMigrated = false;
+        boolean hadPreferences = false;
+        if (tree == null) {
+            percentMigrated = false;
+            uiSoundVolume = 100f;
+            uiAmbienceVolume = 100f;
+            hudDragUiOpacity = 60f;
+            hadPreferences = Files.exists(ConfigManager.active().getFolder().resolve(id));
+        }
         super.initialize(byConfigManager);
         if (tree == null) {
             return;
@@ -411,7 +418,7 @@ public class OneConfigConfig extends Config {
             "restoreHudEditor",
             "Remember last page",
             () -> rememberLastPage != REMEMBER_NEVER ? Property.Display.SHOWN : Property.Display.DISABLED);
-        migrateToPercent();
+        migrateToPercent(hadPreferences);
         for (String option : SOUND_OPTIONS) hideIf(option, "enableUISounds");
         hideIf("enableUIMusicDucking", "enableUIAmbience");
         hideIf("uiAmbienceVolume", "enableUIAmbience");
@@ -533,12 +540,12 @@ public class OneConfigConfig extends Config {
         "hudUndoKeybind", "hudRedoKeybind", "hudRedoAltKeybind"
     };
 
-    private void migrateToPercent() {
+    private void migrateToPercent(boolean hadPreferences) {
         if (percentMigrated) return;
         Float saved;
         Float legacy;
         try {
-            saved = storedNumber(id, "hudDragUiOpacity");
+            saved = hadPreferences ? storedNumber(id, "hudDragUiOpacity") : null;
             legacy = storedNumber("themes.json", "hudDragUiOpacity");
         } catch (Exception e) {
             return;
