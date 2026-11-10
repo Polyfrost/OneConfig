@@ -21,6 +21,9 @@ import org.polyfrost.compose.mc.McGlyph
 import org.polyfrost.compose.mc.McGlyphs
 
 public abstract class PolyTessellator : PolyRenderer {
+    // explicit API mode demands visibility on members of these protected classes, yet the
+    // redundancy check still flags it
+    @Suppress("REDUNDANT_VISIBILITY_MODIFIER")
     protected class State(
         @JvmField public var sx: Float, @JvmField public var sy: Float, @JvmField public var tx: Float, @JvmField public var ty: Float,
         @JvmField public var alpha: Float, @JvmField public var clip: FloatArray?, @JvmField public var rclip: RClip?, @JvmField public var mask: Mask? = null,
@@ -29,8 +32,10 @@ public abstract class PolyTessellator : PolyRenderer {
         public fun copy(): State = State(sx, sy, tx, ty, alpha, clip, rclip, mask, glyphScale, rot, hole)
     }
 
+    @Suppress("REDUNDANT_VISIBILITY_MODIFIER")
     protected class Mask(public val fade: PolyFade, public val parent: Mask?)
 
+    @Suppress("REDUNDANT_VISIBILITY_MODIFIER")
     protected class RClip(
         public val edge: FloatArray, public val inner: FloatArray, public val outer: FloatArray, public val parent: RClip?, public val safe: FloatArray, public val box: FloatArray,
         public val rrect: Boolean = true,
