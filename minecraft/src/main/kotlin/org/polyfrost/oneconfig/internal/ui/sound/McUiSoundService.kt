@@ -211,12 +211,14 @@ class McUiSoundService : UiSoundService {
 
     // 1.8.9 starts streams on Paulscode's threads, so a fresh stream reports inactive until its preload ends.
     // Stopping it then is lost: preload finishes afterwards and starts the channel untracked.
+    // A zero-volume play is skipped by the engine, so it never starts and gets no grace.
     private fun isAlive(instance: FadingLoopSoundInstance): Boolean {
         if (mc.soundManager.isActive(instance)) {
             instance.seenActive = true
             return true
         }
-        return !instance.seenActive && System.currentTimeMillis() - instance.startedAt < START_GRACE_MS
+        return !instance.startedSilent && !instance.seenActive &&
+            System.currentTimeMillis() - instance.startedAt < START_GRACE_MS
     }
 
     private val musicRefreshUntil = AtomicLong(0)
@@ -269,6 +271,8 @@ class McUiSoundService : UiSoundService {
         private var fadingOut = false
 
         val startedAt = System.currentTimeMillis()
+
+        val startedSilent = targetVolume <= 0f
 
         @Volatile
         var seenActive = false
