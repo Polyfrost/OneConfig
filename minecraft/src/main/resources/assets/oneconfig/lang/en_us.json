@@ -303,6 +303,7 @@
   "oneconfig.changelog.installed": "Installed",
   "oneconfig.changelog.developers": "For mod developers",
   "oneconfig.changelog.empty": "No changelog was bundled with this build",
+  "oneconfig.changelog.loading": "Loading the changelog",
   "oneconfig.changelog.nomatch": "No releases match \"%s\"",
   "oneconfig.changelog.kind.added": "Added",
   "oneconfig.changelog.kind.changed": "Changed",

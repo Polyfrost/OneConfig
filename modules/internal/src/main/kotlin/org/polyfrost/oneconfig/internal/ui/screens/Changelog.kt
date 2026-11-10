@@ -25,9 +25,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,7 +59,7 @@ import org.commonmark.node.Node
 import org.commonmark.node.SoftLineBreak
 import org.commonmark.node.StrongEmphasis
 import org.commonmark.node.Text as CmText
-import org.polyfrost.oneconfig.api.platform.v1.ModInfo
+import org.polyfrost.oneconfig.api.ui.v1.ChangelogSources
 import org.polyfrost.oneconfig.internal.ui.api.ChangeKind
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogEntry
@@ -80,10 +83,10 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-private val installedVersion: String? by lazy {
-    runCatching { ModInfo.loadedMods.firstOrNull { it.id == "oneconfig" }?.version }
-        .getOrNull()?.substringBefore('+')?.trim()?.takeIf { it.isNotEmpty() }
-}
+private val LocalInstalledVersion = compositionLocalOf<String?> { null }
+
+private val installedVersion: String?
+    @Composable get() = LocalInstalledVersion.current
 
 private var selectedVersion by mutableStateOf<String?>(null)
 
@@ -101,8 +104,19 @@ private fun seriesOf(version: String): String = version.split('.', '-').take(2).
 fun Changelog() {
     val theme = LocalTheme.current
     val query = pageSearchQuery().trim()
-    val releases = ChangelogData.releases
-    val visible = remember(query) {
+    val source = ChangelogSources.active()
+    val view by produceState(ChangelogData.cached(source), source) {
+        value = ChangelogData.cached(source) ?: source?.let { ChangelogData.load(it) }
+    }
+    val current = view
+    if (current == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(translated("oneconfig.changelog.loading", "Loading the changelog"), color = theme.textColorSecondary, fontSize = 12.sp)
+        }
+        return
+    }
+    val releases = current.releases
+    val visible = remember(query, releases) {
         if (query.isBlank()) releases else releases.filter { searchMatches(it.searchText, query.lowercase()) }
     }
 
@@ -116,13 +130,15 @@ fun Changelog() {
     }
 
     val selected = visible.firstOrNull { it.version == selectedVersion }
-        ?: visible.firstOrNull { it.version == installedVersion }
+        ?: visible.firstOrNull { it.version == current.installedVersion }
         ?: visible.first()
 
-    Row(Modifier.fillMaxSize().padding(start = PageGutter)) {
-        VersionList(visible, selected) { selectedVersion = it.version }
-        Box(Modifier.weight(1f).fillMaxHeight()) {
-            ReleaseDetail(selected)
+    CompositionLocalProvider(LocalInstalledVersion provides current.installedVersion) {
+        Row(Modifier.fillMaxSize().padding(start = PageGutter)) {
+            VersionList(visible, selected) { selectedVersion = it.version }
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                ReleaseDetail(selected)
+            }
         }
     }
 }
