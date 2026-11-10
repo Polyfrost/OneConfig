@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -3230,12 +3231,10 @@ private fun DesignStudioPanel(
             Box(modifier = Modifier.weight(1f, fill = false).padding(bottom = StudioPanelGutter)) {
                 AnimatedContent(
                     targetState = shownCategory,
+                    // keeps the sliding tabs inside the panel instead of drawing over its edges
+                    modifier = Modifier.clipToBounds(),
                     transitionSpec = {
-                        val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
-                        val slide = if (ReducedMotion.enabled) fadeIn(tween(150)) togetherWith fadeOut(tween(150))
-                        else (slideInHorizontally(tween(250)) { direction * it / 3 } + fadeIn(tween(250)))
-                            .togetherWith(slideOutHorizontally(tween(250)) { -direction * it / 3 } + fadeOut(tween(250)))
-                        slide using SizeTransform { from, to ->
+                        ContentSlide.tabSwitch(forward = targetState.ordinal > initialState.ordinal) using SizeTransform { from, to ->
                             onTabResize(from, to)
                             spring(stiffness = PANEL_RESIZE_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)
                         }

@@ -1,12 +1,19 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -41,9 +48,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
@@ -75,6 +84,8 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
+import org.polyfrost.oneconfig.internal.ui.components.ContentSlide
+import org.polyfrost.oneconfig.internal.ui.components.ContentSlide.tabSlide
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
@@ -176,59 +187,96 @@ private fun ConfigScreenContent(
         val index = remember(categories) { buildSearchIndex(categories) }
         val search = rememberSearchResults(index, localSearchQuery, pageKey)
         val results = search.results
-        val entries = remember(index, selectedCategory, localSearchQuery, revision, results) {
-            when {
-                localSearchQuery.isBlank() ->
-                    selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
-                results == null -> emptyList()
-                else -> flattenSearchEntries(searchCategories(results))
+
+        // a search lists every category at once so only switching categories slides
+        val shown = updateTransition(selectedCategory.takeIf { localSearchQuery.isBlank() }, label = "category")
+        shown.AnimatedContent(
+            // keeps the sliding options inside the page instead of drawing over its edges
+            modifier = Modifier.clipToBounds(),
+            transitionSpec = { EnterTransition.None togetherWith ExitTransition.KeepUntilTransitionsFinished using null },
+            contentKey = { it?.name },
+        ) { category ->
+            val from = shown.currentState
+            val to = shown.targetState
+            val direction = when {
+                from == null || to == null || from == to -> 0
+                categories.indexOf(to) > categories.indexOf(from) -> 1
+                else -> -1
             }
-        }
-
-        val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
-
-        val emptyMessage = when {
-            entries.isNotEmpty() -> null
-            localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
-            results == null -> translated("oneconfig.search.searching", "Searching...")
-            else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
-        }
-
-        if (emptyMessage != null && header == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+            val leaving = transition.targetState != EnterExitState.Visible
+            val progress = transition.animateFloat({ ContentSlide.tabProgressSpec(direction != 0) }, label = "slide") {
+                if (it == EnterExitState.Visible) 1f else 0f
             }
-            return@Column
-        }
+            // the page header stays put while the options under it slide
+            val slide = Modifier.tabSlide({ progress.value }, leaving, direction, fade = !leaving)
 
-        ScrollbarBox(lazyListState, PageGutter, Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = lazyListState,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = PageGutter),
-            ) {
-                if (header != null) {
-                    item(key = "header") {
-                        Box(Modifier.layout { measurable, constraints ->
-                            val gutter = PageGutter.roundToPx() * 2
-                            val placeable = measurable.measure(
-                                constraints.copy(minWidth = constraints.minWidth + gutter, maxWidth = constraints.maxWidth + gutter)
-                            )
-                            layout(placeable.width - gutter, placeable.height) { placeable.place(-gutter / 2, 0) }
-                        }) { header() }
-                    }
+            val entries = remember(index, category, localSearchQuery, revision, results) {
+                when {
+                    localSearchQuery.isBlank() ->
+                        category?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
+                    results == null -> emptyList()
+                    else -> flattenSearchEntries(searchCategories(results))
                 }
-                if (emptyMessage != null) {
-                    item(key = "empty") {
-                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                            Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+            }
+
+            // each category keeps its own place in the list
+            val lazyListState = rememberRestorableLazyListState(
+                category?.let { "$pageKey/${it.name}" } ?: pageKey,
+                localSearchQuery,
+                search.query,
+            )
+
+            val emptyMessage = when {
+                entries.isNotEmpty() -> null
+                localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
+                results == null -> translated("oneconfig.search.searching", "Searching...")
+                else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
+            }
+
+            if (emptyMessage != null && header == null) {
+                Box(Modifier.fillMaxSize().then(slide), contentAlignment = Alignment.Center) {
+                    Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+                }
+                return@AnimatedContent
+            }
+
+            ScrollbarBox(
+                lazyListState,
+                PageGutter,
+                Modifier.fillMaxSize().then(if (leaving) Modifier.graphicsLayer { alpha = progress.value } else Modifier),
+            ) {
+                LazyColumn(
+                    state = lazyListState,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = PageGutter),
+                ) {
+                    if (header != null) {
+                        item(key = "header") {
+                            Box(
+                                Modifier
+                                    .then(if (leaving) Modifier.alpha(0f) else Modifier)
+                                    .layout { measurable, constraints ->
+                                        val gutter = PageGutter.roundToPx() * 2
+                                        val placeable = measurable.measure(
+                                            constraints.copy(minWidth = constraints.minWidth + gutter, maxWidth = constraints.maxWidth + gutter)
+                                        )
+                                        layout(placeable.width - gutter, placeable.height) { placeable.place(-gutter / 2, 0) }
+                                    }
+                            ) { header() }
                         }
                     }
-                }
-                items(entries) { entry ->
-                    val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
-                    val lock = locked && (option == null || option !== lockExempt)
-                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
+                    if (emptyMessage != null) {
+                        item(key = "empty") {
+                            Box(Modifier.fillMaxWidth().padding(vertical = 24.dp).then(slide), contentAlignment = Alignment.Center) {
+                                Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+                            }
+                        }
+                    }
+                    items(entries) { entry ->
+                        val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
+                        val lock = locked && (option == null || option !== lockExempt)
+                        Box(slide.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
+                    }
                 }
             }
         }
