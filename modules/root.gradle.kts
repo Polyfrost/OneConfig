@@ -25,7 +25,6 @@ subprojects {
     repositories {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
-        maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
         google()
     }
 

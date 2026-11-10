@@ -53,7 +53,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
             maven("https://repo.polyfrost.org/snapshots")
             maven("https://repo.hypixel.net/repository/Hypixel/")
             maven("https://maven.deftu.dev/releases")
-            maven("https://nexus.prsm.wtf/repository/maven-public/maven-repo/releases/")
             maven("https://maven.notenoughupdates.org/releases/") {
                 content { includeGroup("org.notenoughupdates.moulconfig") }
             }
