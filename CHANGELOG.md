@@ -7,11 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- PolyGlass Dark and PolyGlass Light themes, with real frosted glass behind the menus
+- Custom themes. Start from any theme, change it, share it with a code and use it on every profile
+- Theme tints and palette themes
+- A Sound Theme picker on the Themes page, with Match Theme, OneConfig and Minecraft
+- Precision editing in the HUD editor: X and Y fields you can drag or type math into, distances shown while holding Alt, live gap labels, snapping to equal spacing and padding, and a grid you toggle with G
+- A Reduced Motion setting that drops sliding, scaling and bouncing from OneConfig's menus and keeps fades
+- A new Changelog page that lists every release, and a new Credits page
+- API: A public UI component kit with text fields, menus, tooltips, dialogs, buttons, tabs, player heads, drag-to-reorder lists, an Esc stack and accessibility helpers
+- API: A `swatch` option for `@Color` and the Kotlin config DSL
+
 ### Changed
+- The old PolyGlass theme is now called Polyfrosted
+- The GUI and animation settings moved from Preferences to the Themes page. Your saved values carry over
+- The sidebar sections can now be folded, the mod list scrolls when it doesn't fit, and Changelog and Credits moved to the info menu next to the notifications bell
+- UI sound volume, ambience volume and HUD drag opacity are now set as percentages
+- Modifier-only OneConfig keybinds, such as a lone Shift or Ctrl, now open and close the menu when you let go of the key
+- Updated open and close sounds for the OneConfig menu
 - Mod Menu now lists OneConfig as a single mod instead of a separate "OneConfig (Platform Module)" entry
 
 ### Removed
 - API: Removed DevAuth dependency
+
+### Fixed
+- Fixed fullscreen settings breaking when switching between Minecraft versions that use GLFW and SDL
+- Fixed a rare crash with OneConfig keybinds in the controls screen
+- Fixed parts of the OneConfig menus not redrawing after their cached textures expired
+- Clicking a toast or dragging a HUD editor panel no longer clicks what is underneath
 
 ## [1.6.2] - 2026-11-06
 
