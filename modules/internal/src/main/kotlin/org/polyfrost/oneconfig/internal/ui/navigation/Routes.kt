@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
 import org.polyfrost.oneconfig.api.ui.v1.page.PageGroup
+import org.polyfrost.oneconfig.api.ui.v1.page.PageText
 
 data class NavigationRoute(
     val id: String,
@@ -10,6 +11,7 @@ data class NavigationRoute(
 
 class NavigationGroup(
     val id: String,
+    val title: PageText,
     vararg val routes: NavigationRoute
 )
 
@@ -19,7 +21,8 @@ val NavigationGroups: List<NavigationGroup>
         .groupBy { it.group }
         .map { (group, pages) ->
             NavigationGroup(
-                group.title.fallback,
+                group.id,
+                group.title,
                 *pages.map { NavigationRoute(it.id.substringAfter(':'), it.icon, pageRoute(it)) }.toTypedArray(),
             )
         }

@@ -45,6 +45,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,10 +71,10 @@ internal val SidebarWidth = 264.dp
 private object SidebarCollapse {
     private val collapsed = mutableStateMapOf<String, Boolean>()
 
-    fun isCollapsed(title: String): Boolean = collapsed[title] == true
+    fun isCollapsed(id: String): Boolean = collapsed[id] == true
 
-    fun toggle(title: String) {
-        collapsed[title] = !isCollapsed(title)
+    fun toggle(id: String) {
+        collapsed[id] = !isCollapsed(id)
     }
 }
 
@@ -129,7 +130,11 @@ private fun Navigation(modifier: Modifier) {
                     Text(
                         translated("oneconfig.sidebar.more", "+%s more", hidden),
                         modifier = Modifier.padding(start = 26.dp, top = 6.dp)
-                            .onClick(source) { scope.launch { scroll.animateScrollTo(scroll.maxValue) } }
+                            .onClick(source) {
+                                scope.launch {
+                                    if (ReducedMotion.enabled) scroll.scrollTo(scroll.maxValue) else scroll.animateScrollTo(scroll.maxValue)
+                                }
+                            }
                             .pointerHoverIcon(PointerIcon.Hand),
                         color = LocalTheme.current.textColorSecondary.copy(alpha = if (hovered) 1f else 0.7f),
                         fontSize = 11.sp,
@@ -197,9 +202,9 @@ private fun NavigationEntries() {
     ) {
         sidebarSections().forEach {
             val entry by controller.currentBackStackEntryAsState()
-            val title = it.title
+            val id = it.id
 
-            NavigationSection(title, collapsed = SidebarCollapse.isCollapsed(title), onToggle = { SidebarCollapse.toggle(title) }) {
+            NavigationSection(it.title, collapsed = SidebarCollapse.isCollapsed(id), onToggle = { SidebarCollapse.toggle(id) }) {
                 it.entries.forEach { def ->
                     val selected = entry.isOn(def.route)
 
@@ -373,6 +378,7 @@ private fun Account() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
+                modifier = Modifier.weight(1f, fill = false),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -381,15 +387,21 @@ private fun Account() {
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     val session = LocalShell.current.session
-                    Text(session.playerName, color = LocalTheme.current.textColor)
+                    Text(session.playerName, color = LocalTheme.current.textColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
                         session.versionLabel.ifBlank { "OneConfig" },
                         color = LocalTheme.current.textColorSecondary,
-                        fontSize = 11.sp
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.padding(start = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 AboutButton()
                 NotificationBell()
             }
@@ -433,7 +445,8 @@ private fun AboutButton() {
                             val route = pageRoute(page)
                             NavigationEntry(page.icon, page.title.resolve(), route, entry.isOn(route)) {
                                 expanded = false
-                                shell.navigation.navigate(route)
+                                val nav = shell.navigation
+                                if (nav.currentRoute == route) shell.search.clear() else nav.navigate(route)
                             }
                         }
                     }
