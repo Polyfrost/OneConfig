@@ -287,14 +287,8 @@ object CustomThemes {
         }
         val selected = selectedCustomId(profileDir)
         val spec = selected?.let { id -> _specs.toList().firstOrNull { it.id == id } }
-        if (spec != null) {
-            val clash = out.firstOrNull { it.isJsonObject && it.asJsonObject.get("id")?.takeIf { id -> id.isJsonPrimitive }?.asString == spec.id }?.asJsonObject
-            val same = clash != null && CustomThemeSpec.fromJson(clash, spec.id)?.toJson(false) == spec.toJson(false)
-            if (clash != null && !same) {
-                clash.addProperty("id", newId())
-                clash.remove(SELECTED_KEY)
-            }
-            if (!same) out.add(spec.toJson(true))
+        if (spec != null && out.none { it.isJsonObject && it.asJsonObject.get("id")?.takeIf { id -> id.isJsonPrimitive }?.asString == spec.id }) {
+            out.add(spec.toJson(true))
         }
         return if (out.size() == 0) null else out.toString().toByteArray(StandardCharsets.UTF_8)
     }
@@ -332,9 +326,11 @@ object CustomThemes {
                 }
                 if (_specs.size >= CustomThemeSpec.MAX) {
                     logger.warn("Kept the imported custom theme {} for later: the limit of {} is reached", id, CustomThemeSpec.MAX)
+                    val waitingId = if (existing == null) id else newId().also { renamed[id] = it }
+                    obj.addProperty("id", waitingId)
                     if (id == selectedId) obj.addProperty(SELECTED_KEY, true)
                     waiting.add(obj)
-                    pending += id
+                    pending += waitingId
                     return@forEach
                 }
                 val target = if (existing == null) spec else spec.copy(id = newId())
@@ -343,7 +339,7 @@ object CustomThemes {
                 if (target.id != id) renamed[id] = target.id
                 if (id == selectedId && obj.get(SELECTED_KEY)?.takeIf { it.isJsonPrimitive }?.asBoolean == true) activate = target.id
             }
-            if (needsSave && !flush()) return ProfileImports(renamed, pending + renamed.keys, null)
+            if (needsSave && !flush()) return ProfileImports(emptyMap(), pending + renamed.keys, null)
             if (waiting.size() == 0) {
                 Files.deleteIfExists(path)
             } else {
