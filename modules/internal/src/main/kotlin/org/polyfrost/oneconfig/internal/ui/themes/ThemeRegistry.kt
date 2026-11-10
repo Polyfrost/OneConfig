@@ -79,13 +79,13 @@ object ThemeRegistry {
 
     fun loadFromConfig() {
         updateAccent()
-        val renamed = CustomThemes.adoptProfileThemes()
+        val selected = selectedCustomId()
+        val imports = CustomThemes.adoptProfileThemes(selected)
         try {
-            val selected = ThemeConfig.activeTheme
-            val moved = selected.takeIf { it.startsWith(CUSTOM_KEY_PREFIX) }?.let { renamed[it.removePrefix(CUSTOM_KEY_PREFIX)] }
+            val moved = imports.activate ?: selected?.let { imports.renamed[it] }
             if (moved != null) ThemeConfig.activeTheme = CUSTOM_KEY_PREFIX + moved
             val saved = if (ThemeConfig.polyfrostedRenameApplied) ThemeConfig.activeTheme else renamedThemes[ThemeConfig.activeTheme] ?: ThemeConfig.activeTheme
-            val resolved = resolve(saved)
+            val resolved = if (moved == null && selected != null && selected in imports.pending) null else resolve(saved)
             val theme = resolved ?: registry.find { !it.isCustom && it.name == DEFAULT_THEME_NAME }
             if (theme != null) {
                 activeTheme = theme
@@ -99,6 +99,16 @@ object ThemeRegistry {
             }
         } catch (_: Exception) {}
     }
+
+    internal fun adoptPendingImports() {
+        val selected = selectedCustomId()
+        val imports = CustomThemes.adoptProfileThemes(selected)
+        val target = imports.activate ?: selected?.let { imports.renamed[it] } ?: return
+        resolve(CUSTOM_KEY_PREFIX + target)?.let(::activate)
+    }
+
+    private fun selectedCustomId(): String? =
+        ThemeConfig.activeTheme.takeIf { it.startsWith(CUSTOM_KEY_PREFIX) }?.removePrefix(CUSTOM_KEY_PREFIX)
 
     internal fun upsertCustom(theme: UITheme) {
         val index = registry.indexOfFirst { it.previewImage == theme.previewImage }

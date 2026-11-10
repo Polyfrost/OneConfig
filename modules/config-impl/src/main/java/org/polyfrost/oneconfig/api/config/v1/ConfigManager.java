@@ -928,14 +928,15 @@ public final class ConfigManager {
     private static void writeArchiveContributions(String profile, Path source, ZipOutputStream zip) throws IOException {
         for (ProfileArchiveContributor contributor : archiveContributors) {
             String name = contributor.entryName();
-            if (Files.exists(source.resolve(name))) continue;
+            Path existing = source.resolve(name);
             byte[] data;
             try {
                 data = contributor.contribute(profile, source);
             } catch (RuntimeException e) {
                 LOGGER.warn("Failed to add {} to the export of profile {}", name, profile, e);
-                continue;
+                data = null;
             }
+            if (data == null && Files.isRegularFile(existing, LinkOption.NOFOLLOW_LINKS)) data = Files.readAllBytes(existing);
             if (data == null) continue;
             zip.putNextEntry(new ZipEntry(name));
             zip.write(data);
@@ -956,6 +957,9 @@ public final class ConfigManager {
 
     private static void zipFile(Path file, Path root, ZipOutputStream zip) throws IOException {
         String name = root.relativize(file).toString().replace('\\', '/');
+        for (ProfileArchiveContributor contributor : archiveContributors) {
+            if (name.equals(contributor.entryName())) return;
+        }
         ZipEntry entry = new ZipEntry(name);
         zip.putNextEntry(entry);
         Files.copy(file, zip);

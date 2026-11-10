@@ -235,6 +235,7 @@ object CustomThemes {
     private val logger = LoggerFactory.getLogger("OneConfig/CustomThemes")
     private const val FILE_NAME = "custom-themes.json"
     private const val ARCHIVE_ENTRY = "oneconfig-custom-themes.json"
+    private const val SELECTED_KEY = "selected"
 
     private val _specs = mutableStateListOf<CustomThemeSpec>()
     private var loaded = false
@@ -279,19 +280,37 @@ object CustomThemes {
     }
 
     private fun exportFor(profileDir: Path): ByteArray? {
+        val out = JsonArray()
+        val pending = profileDir.resolve(ARCHIVE_ENTRY)
+        if (Files.exists(pending)) {
+            JsonUtils.parseOrNull(String(Files.readAllBytes(pending), StandardCharsets.UTF_8))?.takeIf { it.isJsonArray }?.asJsonArray?.forEach(out::add)
+        }
+        val selected = selectedCustomId(profileDir)
+        val spec = selected?.let { id -> _specs.toList().firstOrNull { it.id == id } }
+        if (spec != null && out.none { it.isJsonObject && it.asJsonObject.get("id")?.takeIf { id -> id.isJsonPrimitive }?.asString == spec.id }) {
+            out.add(spec.toJson(true))
+        }
+        return if (out.size() == 0) null else out.toString().toByteArray(StandardCharsets.UTF_8)
+    }
+
+    private fun selectedCustomId(profileDir: Path): String? {
         val themes = profileDir.resolve("themes.json")
         if (!Files.exists(themes)) return null
         val root = JsonUtils.parseOrNull(String(Files.readAllBytes(themes), StandardCharsets.UTF_8))?.takeIf { it.isJsonObject }?.asJsonObject ?: return null
         val key = root.get("activeTheme")?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        if (!key.startsWith("custom:")) return null
-        val spec = _specs.toList().firstOrNull { it.id == key.removePrefix("custom:") } ?: return null
-        return JsonArray().apply { add(spec.toJson(true)) }.toString().toByteArray(StandardCharsets.UTF_8)
+        return key.takeIf { it.startsWith("custom:") }?.removePrefix("custom:")
     }
 
-    internal fun adoptProfileThemes(): Map<String, String> {
-        val path = runCatching { ConfigManager.active().folder.resolve(ARCHIVE_ENTRY) }.getOrNull() ?: return emptyMap()
-        if (!Files.exists(path)) return emptyMap()
+    internal class ProfileImports(val renamed: Map<String, String>, val pending: Set<String>, val activate: String?)
+
+    internal fun adoptProfileThemes(selectedId: String?): ProfileImports {
+        val none = ProfileImports(emptyMap(), emptySet(), null)
+        val path = runCatching { ConfigManager.active().folder.resolve(ARCHIVE_ENTRY) }.getOrNull() ?: return none
+        if (!Files.exists(path)) return none
         val renamed = mutableMapOf<String, String>()
+        val pending = mutableSetOf<String>()
+        var activate: String? = null
+        var adopted = false
         try {
             val array = JsonUtils.parseOrNull(String(Files.readAllBytes(path), StandardCharsets.UTF_8))?.takeIf { it.isJsonArray }?.asJsonArray
             val waiting = JsonArray()
@@ -304,13 +323,18 @@ object CustomThemes {
                 if (existing != null && existing.copy(name = spec.name).toJson(false) == spec.toJson(false)) return@forEach
                 if (_specs.size >= CustomThemeSpec.MAX) {
                     logger.warn("Kept the imported custom theme {} for later: the limit of {} is reached", id, CustomThemeSpec.MAX)
+                    if (id == selectedId) obj.addProperty(SELECTED_KEY, true)
                     waiting.add(obj)
+                    pending += id
                     return@forEach
                 }
-                val adopted = if (existing == null) spec else spec.copy(id = newId())
-                update(adopted.copy(name = uniqueName(adopted.name)))
-                if (adopted.id != id) renamed[id] = adopted.id
+                val target = if (existing == null) spec else spec.copy(id = newId())
+                update(target.copy(name = uniqueName(target.name)))
+                adopted = true
+                if (target.id != id) renamed[id] = target.id
+                if (obj.get(SELECTED_KEY)?.takeIf { it.isJsonPrimitive }?.asBoolean == true) activate = target.id
             }
+            if (adopted && !flush()) return ProfileImports(renamed, pending + renamed.keys, null)
             if (waiting.size() == 0) {
                 Files.deleteIfExists(path)
             } else {
@@ -319,7 +343,7 @@ object CustomThemes {
         } catch (e: Exception) {
             logger.error("Failed to import custom themes from {}", path, e)
         }
-        return renamed
+        return ProfileImports(renamed, pending, activate)
     }
 
     private fun backUp(path: Path) {
@@ -378,6 +402,7 @@ object CustomThemes {
         _specs.remove(spec)
         ThemeRegistry.removeCustom(spec.themeId)
         scheduleSave()
+        ThemeRegistry.adoptPendingImports()
     }
 
     fun import(code: String): CustomThemeSpec? {
@@ -427,12 +452,10 @@ object CustomThemes {
         }, 500, TimeUnit.MILLISECONDS)
     }
 
-    private fun flush() {
-        synchronized(writeLock) { writePending() }
-    }
+    private fun flush(): Boolean = synchronized(writeLock) { writePending() }
 
-    private fun writePending() {
-        val bytes = pendingBytes ?: return
+    private fun writePending(): Boolean {
+        val bytes = pendingBytes ?: return true
         try {
             val path = file()
             Files.createDirectories(path.parent)
@@ -444,8 +467,10 @@ object CustomThemes {
                 Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING)
             }
             if (pendingBytes === bytes) pendingBytes = null
+            return true
         } catch (e: Exception) {
             logger.error("Failed to save {}", FILE_NAME, e)
+            return false
         }
     }
 }
