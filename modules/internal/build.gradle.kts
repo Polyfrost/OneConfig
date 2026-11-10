@@ -50,6 +50,12 @@ kotlin {
     }
 }
 
+tasks.processResources {
+    from(rootProject.file("CHANGELOG.md")) {
+        into("assets/oneconfig")
+    }
+}
+
 tasks.named<Test>("j21Tests") {
     workingDir = layout.buildDirectory.dir("test-run").get().asFile
     doFirst {
