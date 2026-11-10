@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -3242,12 +3243,11 @@ private fun DesignStudioPanel(
                 ) { category ->
                     val panelScrollState = rememberScrollState()
                     ScrollbarBox(panelScrollState, StudioPanelGutter) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth()
+                        SectionStack(
+                            Modifier.fillMaxWidth()
                                 .wheelScroll(panelScrollState)
                                 .verticalScroll(panelScrollState)
                                 .padding(horizontal = StudioPanelGutter),
-                            verticalArrangement = Arrangement.spacedBy(22.dp)
                         ) {
                             // like the main config screen, a search spans every category rather than only the open one
                             categories.forEach {
@@ -3318,6 +3318,23 @@ private fun Modifier.studioSurface(): Modifier {
             theme.backgroundShape,
         )
         .border(1.dp, theme.borderColor, theme.backgroundShape)
+}
+
+/** Stacks sections 8dp apart, leaving out the empty ones a search lays out so they add no gap */
+@Composable
+private fun SectionStack(modifier: Modifier, content: @Composable () -> Unit) {
+    Layout(content, modifier) { measurables, constraints ->
+        val gap = 8.dp.roundToPx()
+        val shown = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }.filter { it.height > 0 }
+        val height = shown.sumOf { it.height } + gap * (shown.size - 1).coerceAtLeast(0)
+        layout(constraints.maxWidth, height.coerceIn(constraints.minHeight, constraints.maxHeight)) {
+            var y = 0
+            for (placeable in shown) {
+                placeable.place(0, y)
+                y += placeable.height + gap
+            }
+        }
+    }
 }
 
 private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
