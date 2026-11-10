@@ -120,45 +120,49 @@ fun Layout(hud: Hud?, query: String) {
                     onReset = { resetHudOptions(hud, SIZE_OPTIONS) },
                     canReset = hudOptionsCanReset(hud, SIZE_OPTIONS),
                 ) { col1 ->
-                    HudSettingTarget(hud, "staticWidth") {
-                        SwitchRow("Static size", staticWidth) {
-                            Snapshot.withMutableSnapshot {
-                                staticWidth = it; hud.staticWidth = it
-                                if (it) {
-                                    staticW = hud.staticW
-                                    staticH = hud.staticH
-                                } else {
-                                    hud.updateAndRecalculate()
+                    RowWithFold(
+                        staticWidth,
+                        row = {
+                            HudSettingTarget(hud, "staticWidth") {
+                                SwitchRow("Static size", staticWidth) {
+                                    Snapshot.withMutableSnapshot {
+                                        staticWidth = it; hud.staticWidth = it
+                                        if (it) {
+                                            staticW = hud.staticW
+                                            staticH = hud.staticH
+                                        } else {
+                                            hud.updateAndRecalculate()
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
-
-                    if (staticWidth) {
-                        GridRow(
-                            col1,
-                            first = {
-                                HudSettingTarget(hud, "staticW") {
-                                    LabeledControl("Width") {
-                                        NumberSpinner(
-                                            staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
-                                            20f, 2000f, 1f, width = col1, unit = "px", scrub = true, math = true,
-                                        )
+                        },
+                        folded = {
+                            GridRow(
+                                col1,
+                                first = {
+                                    HudSettingTarget(hud, "staticW") {
+                                        LabeledControl("Width") {
+                                            NumberSpinner(
+                                                staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
+                                                20f, 2000f, 1f, width = col1, unit = "px", scrub = true, math = true,
+                                            )
+                                        }
                                     }
-                                }
-                            },
-                            second = {
-                                HudSettingTarget(hud, "staticH") {
-                                    LabeledControl("Height") {
-                                        NumberSpinner(
-                                            staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
-                                            8f, 2000f, 1f, width = GridCol2, unit = "px", scrub = true, math = true,
-                                        )
+                                },
+                                second = {
+                                    HudSettingTarget(hud, "staticH") {
+                                        LabeledControl("Height") {
+                                            NumberSpinner(
+                                                staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
+                                                8f, 2000f, 1f, width = GridCol2, unit = "px", scrub = true, math = true,
+                                            )
+                                        }
                                     }
-                                }
-                            },
-                        )
-                    }
+                                },
+                            )
+                        },
+                    )
 
                     HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
                         LabeledControl(if (staticWidth) "Content alignment" else "Anchor") {
@@ -206,36 +210,42 @@ fun Layout(hud: Hud?, query: String) {
                         }
                     }
 
-                    if (perSide) {
-                        GridRow(
-                            col1,
-                            first = { HudSettingTarget(hud, "padLeft") { PadSpinner("Left", padLeft, col1) { padLeft = it; hud.padLeft = it } } },
-                            second = { HudSettingTarget(hud, "padTop") { PadSpinner("Top", padTop, GridCol2) { padTop = it; hud.padTop = it } } },
-                            third = perSideSwitch,
-                        )
-                        GridRow(
-                            col1,
-                            first = { HudSettingTarget(hud, "padRight") { PadSpinner("Right", padRight, col1) { padRight = it; hud.padRight = it } } },
-                            second = { HudSettingTarget(hud, "padBottom") { PadSpinner("Bottom", padBottom, GridCol2) { padBottom = it; hud.padBottom = it } } },
-                        )
-                    } else {
-                        GridRow(
-                            col1,
-                            first = {
-                                PadSpinner("Horizontal", padLeft, col1) {
-                                    padLeft = it; hud.padLeft = it
-                                    padRight = it; hud.padRight = it
-                                }
-                            },
-                            second = {
-                                PadSpinner("Vertical", padTop, GridCol2) {
-                                    padTop = it; hud.padTop = it
-                                    padBottom = it; hud.padBottom = it
-                                }
-                            },
-                            third = perSideSwitch,
-                        )
-                    }
+                    RowWithFold(
+                        perSide,
+                        row = {
+                            GridRow(
+                                col1,
+                                first = {
+                                    if (perSide) {
+                                        HudSettingTarget(hud, "padLeft") { PadSpinner("Left", padLeft, col1) { padLeft = it; hud.padLeft = it } }
+                                    } else {
+                                        PadSpinner("Horizontal", padLeft, col1) {
+                                            padLeft = it; hud.padLeft = it
+                                            padRight = it; hud.padRight = it
+                                        }
+                                    }
+                                },
+                                second = {
+                                    if (perSide) {
+                                        HudSettingTarget(hud, "padTop") { PadSpinner("Top", padTop, GridCol2) { padTop = it; hud.padTop = it } }
+                                    } else {
+                                        PadSpinner("Vertical", padTop, GridCol2) {
+                                            padTop = it; hud.padTop = it
+                                            padBottom = it; hud.padBottom = it
+                                        }
+                                    }
+                                },
+                                third = perSideSwitch,
+                            )
+                        },
+                        folded = {
+                            GridRow(
+                                col1,
+                                first = { HudSettingTarget(hud, "padRight") { PadSpinner("Right", padRight, col1) { padRight = it; hud.padRight = it } } },
+                                second = { HudSettingTarget(hud, "padBottom") { PadSpinner("Bottom", padBottom, GridCol2) { padBottom = it; hud.padBottom = it } } },
+                            )
+                        },
+                    )
                 }
             }
         }

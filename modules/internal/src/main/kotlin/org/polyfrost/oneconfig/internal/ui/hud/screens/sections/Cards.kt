@@ -1,5 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
+import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
@@ -36,6 +44,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 internal val GridGap = 12.dp
 internal val GridCol2 = 112.dp
 internal val GridCol3 = 96.dp
+
+private val CardRowGap = 12.dp
 
 /** Whether a HUD panel block described by [labels] is kept by the panel's search [query] */
 internal fun hudSearchMatches(query: String, vararg labels: String) =
@@ -98,7 +108,7 @@ internal fun CardSection(
                 .blockInteraction(!enabled, keyboard = true),
         ) {
             val col1 = maxWidth - GridCol2 - GridCol3 - GridGap * 2
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { content(col1) }
+            Column(verticalArrangement = Arrangement.spacedBy(CardRowGap)) { content(col1) }
         }
     }
 }
@@ -148,4 +158,29 @@ internal fun ControlRow(label: String, content: @Composable RowScope.() -> Unit)
 @Composable
 internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     ControlRow(label) { SwitchControl(checked, onCheckedChange) }
+}
+
+/**
+ * A card [row] with [folded] rows under it that unfold while [unfolded] like an accordion's body
+ *
+ * The gap above the folded rows moves with them so nothing jumps once they finish folding away
+ */
+@Composable
+internal fun RowWithFold(unfolded: Boolean, row: @Composable () -> Unit, folded: @Composable () -> Unit) {
+    Column {
+        row()
+        AnimatedVisibility(
+            visible = unfolded,
+            enter = ReducedMotion.enter(expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn()),
+            exit = ReducedMotion.exit(shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut()),
+        ) {
+            Column(Modifier.padding(top = CardRowGap), verticalArrangement = Arrangement.spacedBy(CardRowGap)) { folded() }
+        }
+    }
+}
+
+/** A grid cell whose [content] fades in and out with [visible] while the cell keeps its place */
+@Composable
+internal fun FadingCell(visible: Boolean, content: @Composable () -> Unit) {
+    AnimatedVisibility(visible, enter = ReducedMotion.enter(fadeIn()), exit = ReducedMotion.exit(fadeOut())) { content() }
 }

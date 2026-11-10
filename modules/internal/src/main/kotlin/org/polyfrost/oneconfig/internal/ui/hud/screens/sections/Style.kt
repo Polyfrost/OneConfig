@@ -257,7 +257,7 @@ fun Style(hud: Hud?, query: String) {
                     }
                 },
                 third = {
-                    if (showShadow) {
+                    FadingCell(showShadow) {
                         HudSettingTarget(hud, "shadowColor") {
                             LabeledControl("Shadow color") {
                                 ColorSwatch(
@@ -346,7 +346,7 @@ fun Style(hud: Hud?, query: String) {
                         }
                     },
                     third = {
-                        if (mergeBackground) {
+                        FadingCell(mergeBackground) {
                             HudSettingTarget(hud, "keepBgWhenHidden") {
                                 LabeledControl("Keep hidden") {
                                     SwitchControl(keepBgWhenHidden) {
