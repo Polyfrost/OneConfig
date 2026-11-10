@@ -206,11 +206,14 @@ public class PolyColor @JvmOverloads constructor(
 
         public fun lerp(from: PolyColor, to: PolyColor, t: Float): PolyColor = from.lerp(to, t)
 
+        /** How far chroma at [speed] has turned every hue right now, from 0 to 1 of the colour wheel */
+        public fun chromaTurn(speed: Float): Float =
+            (System.nanoTime() / 1_000_000_000.0 * speed.coerceAtLeast(0f) / CHROMA_CYCLE_SECONDS % 1.0).toFloat()
+
         private fun chromaArgb(argb: Int, speed: Float): Int {
             val alpha = (argb ushr 24) and 0xFF
             val hsb = rgbToHsb((argb ushr 16) and 0xFF, (argb ushr 8) and 0xFF, argb and 0xFF)
-            val elapsedSeconds = System.nanoTime() / 1_000_000_000.0
-            val hue = ((hsb[0] + elapsedSeconds * speed.coerceAtLeast(0f) / CHROMA_CYCLE_SECONDS) % 1.0).toFloat()
+            val hue = (hsb[0] + chromaTurn(speed)) % 1f
             return hsv(hue * 360f, hsb[1], hsb[2], alpha / 255f).rawArgb
         }
 

@@ -55,6 +55,7 @@ import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val ListContainerShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
@@ -163,7 +164,8 @@ fun DraggableListOption(data: DraggableListOptionData) {
                     }
                     val animatedOffset = animateFloatAsState(targetOffset, ReducedMotion.spec(spring()))
 
-                    val bgColor = animateColorAsState(
+                    val bgColor = animateAccentColorAsState(
+                        isDragging,
                         if (isDragging) Accent else theme.componentBackground
                     )
                     val contentColor = animateColorAsState(

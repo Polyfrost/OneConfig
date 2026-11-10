@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -48,6 +47,7 @@ import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
@@ -318,7 +318,8 @@ private fun TourButton(text: String, primary: Boolean, enabled: Boolean = true, 
     val source = rememberInteractionSource()
     val isHovered by source.collectIsHoveredAsState()
     val base = if (primary) Accent else Color.Transparent
-    val background by animateColorAsState(
+    val background by animateAccentColorAsState(
+        listOf(isHovered, enabled, primary),
         if (isHovered && enabled) (if (primary) Color.White else theme.textColor).copy(0.12f).compositeOver(base) else base
     )
     val alpha by animateFloatAsState(if (enabled) 1f else 0.4f, label = "tourButtonAlpha")

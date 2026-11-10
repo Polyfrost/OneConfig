@@ -88,6 +88,7 @@ import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 enum class ProfileCategory(val title: String, val icon: String?) {
@@ -587,13 +588,16 @@ private fun CreateProfileCard(
         if (createTick > 0) onCreatingChange(false)
     }
 
-    val borderColor by animateColorAsState(
+    val borderColor by animateAccentColorAsState(
+        creating || isHovered,
         if (creating || isHovered) Accent else theme.borderColor
     )
-    val iconBackground by animateColorAsState(
+    val iconBackground by animateAccentColorAsState(
+        creating || isHovered,
         if (creating || isHovered) Accent.copy(alpha = 0.18f) else theme.textColor.copy(alpha = 0.06f)
     )
-    val iconColor by animateColorAsState(
+    val iconColor by animateAccentColorAsState(
+        creating || isHovered,
         if (creating || isHovered) Accent else theme.textColorSecondary
     )
 
@@ -738,7 +742,8 @@ private fun ProfileCard(
         }
     }
 
-    val selectionBorderColor by animateColorAsState(
+    val selectionBorderColor by animateAccentColorAsState(
+        profile.active,
         if (profile.active) Accent else Color.Transparent
     )
 
@@ -1009,12 +1014,14 @@ private fun ProfileIconChoice(
     val interactionSource = rememberInteractionSource()
     val theme = LocalTheme.current
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val backgroundColor by animateColorAsState(
+    val backgroundColor by animateAccentColorAsState(
+        listOf(selected, enabled, isHovered),
         if (selected) Accent.copy(alpha = if (enabled) 0.22f else 0.10f)
         else if (enabled && isHovered) theme.textColor.copy(alpha = 0.08f)
         else Color.Transparent
     )
-    val borderColor by animateColorAsState(
+    val borderColor by animateAccentColorAsState(
+        selected && enabled,
         if (selected && enabled) Accent else theme.borderColor.copy(alpha = 0f)
     )
     val iconColor by animateColorAsState(

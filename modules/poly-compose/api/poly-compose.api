@@ -860,6 +860,7 @@ public final class org/polyfrost/compose/render/PolyColor {
 
 public final class org/polyfrost/compose/render/PolyColor$Companion {
 	public final fun argb (IIII)Lorg/polyfrost/compose/render/PolyColor;
+	public final fun chromaTurn (F)F
 	public final fun getBLACK ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getBLUE ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getCYAN ()Lorg/polyfrost/compose/render/PolyColor;

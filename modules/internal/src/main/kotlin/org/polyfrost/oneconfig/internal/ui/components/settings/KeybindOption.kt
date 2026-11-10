@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +46,7 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
@@ -149,14 +149,16 @@ fun KeybindOption(data: KeybindOptionData) {
         recording = false
     }
 
-    val bgColor = animateColorAsState(
+    val bgColor = animateAccentColorAsState(
+        recording to isHovered,
         when {
             recording -> Accent.copy(alpha = 0.2f)
             isHovered -> theme.componentBackground.copy(alpha = 0.8f)
             else -> theme.componentBackground
         }
     )
-    val borderColor = animateColorAsState(
+    val borderColor = animateAccentColorAsState(
+        listOf(recording, hasConflict, isHovered),
         when {
             recording -> Accent
             hasConflict -> CONFLICT_COLOR
@@ -164,7 +166,8 @@ fun KeybindOption(data: KeybindOptionData) {
             else -> theme.borderColor
         }
     )
-    val textColor = animateColorAsState(
+    val textColor = animateAccentColorAsState(
+        recording to hasConflict,
         when {
             recording -> Accent
             hasConflict -> CONFLICT_COLOR

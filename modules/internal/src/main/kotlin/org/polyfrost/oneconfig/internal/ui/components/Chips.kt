@@ -20,6 +20,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -33,7 +34,8 @@ fun Chip(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
     val hoverBackground = Accent.copy(alpha = 0.5f).compositeOver(theme.chipBackground)
-    val backgroundColor = animateColorAsState(
+    val backgroundColor = animateAccentColorAsState(
+        isHovered,
         if (isHovered) hoverBackground else theme.chipBackground
     )
     val selectedAlpha = animateFloatAsState(if (selected) 1f else 0f)
