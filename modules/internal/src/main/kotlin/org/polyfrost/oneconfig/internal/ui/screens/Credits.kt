@@ -59,25 +59,25 @@ private class Thanks(val icon: String, val title: String, val detail: String)
 private val people = listOf(
     Person("Wyvest", "CEO", "a53314040e77440e8bef24c071dac1ae"),
     Person("Lynith", "CTO", "f247be7c5b8241c69148793ded77e71f"),
-    Person("nextdaydelivery", "OneConfig founding engineer", "19d91bd9a3c848eaab9db226d3cddc5f"),
+    Person("nextdaydelivery", "OneConfig founding engineer", "0dee60d49ff840a9a79fbb415bbaa909"),
     Person("Deftu", "OneConfig major engineer", "63677969c51746fbb60fa130b3d9beb9"),
-    Person("Lunasa", "PolyCompose founding engineer", "37184fafe63e4a2bb47fc4df1459dc0b"),
-    Person("Mona", "CompatEngine founding engineer", "a33e494beebe44718619a654e20a379f"),
+    Person("Lunasa", "PolyCompose founding engineer", "4614dcc468244d1c9a352e2844c6c9b2"),
+    Person("Mona", "CompatEngine founding engineer", "e90ea9ec080a401b8d106a53c407ac53"),
     Person("DeDiamondPro", "Config backend, GUI frontend, HUD", "0b4d470ff2fb487493341eaef8ba4804"),
-    Person("rachel", "Lead cosmetics designer, OneClient", "7602c0f2930a472abd0ae70d53cba33a"),
-    Person("Qewer", "Designer", "4a06b0431c7e488093719559e14cece7"),
+    Person("rachel", "Lead cosmetics designer, OneClient", "22e98637ba974b6ba84ffb57a461ce43"),
+    Person("Qewer", "Designer", "9d139c40d3494916ba4b3d348a284e32"),
     Person("Caledonian", "Designer", "e5de6a33a9e04a4e8a493201d74875a6"),
     Person("Mo2men", "Designer", "bdad0d588e35422d938ae1a4c0d5d026"),
     Person("Zetvue", "Sound design", "9a23f6435e334101a5f2d63f248b49c2"),
-    Person("Pauline", "OneConfig utilities", "7bfb3d3f098a412db57653bf3ed8f8df"),
-    Person("xtrm", "OneConfig utilities", "16f96760bd544605915abbeaea748c33"),
+    Person("Pauline", "OneConfig utilities", "56e2a469477c41f7b0bdcb94dad100f6"),
+    Person("xtrm", "OneConfig utilities", "7740d6e39f204381a56a060991a1c41c"),
     Person("MoonTidez", "Designer, v0", "acbfaeb2bcfe49bcb605ac1ebe16c2d1"),
     Person("ThinkSeal", "Major tester", "94418374e58a497cbcba29d34727eca4"),
 )
 
 private val thankedPeople = listOf(
     Person("Scherso", "For saving us", "466d70e6fe944960ac17597948f437b3"),
-    Person("FireStorm", "For saving us", "5298863fbba54350819bdbe83e7d6714"),
+    Person("FireStorm", "For saving us", "37f1d5edb9a14b99accb0c6b23493a62"),
     Person("ImToggle", "Contributions to OneConfig and Polyfrost mods", "c8bf4768af4448cba25901e42fb7bc79"),
     Person("Sk1er", "Lasting impact on Minecraft modding", "1a5c41c8a9524ddfa19c66f6bb3707a1"),
 )
