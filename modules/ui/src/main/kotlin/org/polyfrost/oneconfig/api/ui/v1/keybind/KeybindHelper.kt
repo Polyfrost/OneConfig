@@ -3,7 +3,7 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind
 import java.util.function.Consumer
 import kotlin.experimental.or
 
-class KeybindHelper {
+public class KeybindHelper {
     private val keyCodes = mutableListOf<Int>()
     private val mouseBtns = mutableListOf<Int>()
     private var mods: Byte = KeyModifiers.NONE
@@ -14,29 +14,29 @@ class KeybindHelper {
     private var name: String? = null
     private var category: String? = null
 
-    fun key(vararg codes: Int) = apply { keyCodes.addAll(codes.asList()) }
-    fun mouse(vararg btns: Int) = apply { mouseBtns.addAll(btns.asList()) }
+    public fun key(vararg codes: Int): KeybindHelper = apply { keyCodes.addAll(codes.asList()) }
+    public fun mouse(vararg btns: Int): KeybindHelper = apply { mouseBtns.addAll(btns.asList()) }
     /**
      * Name shown for this keybind in Minecraft's Controls menu
      */
-    fun name(name: String) = apply { this.name = name }
+    public fun name(name: String): KeybindHelper = apply { this.name = name }
     /**
      * Category heading for this keybind in Minecraft's Controls menu
      *
      * Defaults to "OneConfig"
      */
-    fun category(category: String) = apply { this.category = category }
-    fun shift() = apply { mods = mods or KeyModifiers.SHIFT }
-    fun ctrl() = apply { mods = mods or KeyModifiers.CTRL }
-    fun alt() = apply { mods = mods or KeyModifiers.ALT }
-    fun meta() = apply { mods = mods or KeyModifiers.META }
-    fun inScreens() = apply { inScreens = true }
-    fun firesWhileTyping() = apply { firesWhileTyping = true }
-    fun duration(nanos: Long) = apply { durationNanos = nanos }
-    fun action(fn: (Boolean) -> Boolean) = apply { action = fn }
-    fun action(fn: () -> Unit) = apply { action = { b -> if (b) fn(); true } }
-    fun action(fn: Runnable) = apply { action = { b -> if (b) fn.run(); true } }
-    fun action(fn: Consumer<Boolean>) = apply { action = { b -> fn.accept(b); true } }
+    public fun category(category: String): KeybindHelper = apply { this.category = category }
+    public fun shift(): KeybindHelper = apply { mods = mods or KeyModifiers.SHIFT }
+    public fun ctrl(): KeybindHelper = apply { mods = mods or KeyModifiers.CTRL }
+    public fun alt(): KeybindHelper = apply { mods = mods or KeyModifiers.ALT }
+    public fun meta(): KeybindHelper = apply { mods = mods or KeyModifiers.META }
+    public fun inScreens(): KeybindHelper = apply { inScreens = true }
+    public fun firesWhileTyping(): KeybindHelper = apply { firesWhileTyping = true }
+    public fun duration(nanos: Long): KeybindHelper = apply { durationNanos = nanos }
+    public fun action(fn: (Boolean) -> Boolean): KeybindHelper = apply { action = fn }
+    public fun action(fn: () -> Unit): KeybindHelper = apply { action = { b -> if (b) fn(); true } }
+    public fun action(fn: Runnable): KeybindHelper = apply { action = { b -> if (b) fn.run(); true } }
+    public fun action(fn: Consumer<Boolean>): KeybindHelper = apply { action = { b -> fn.accept(b); true } }
 
     /**
      * Builds the keybind
@@ -46,7 +46,7 @@ class KeybindHelper {
      * Config-backed (`@Keybind`) binds exist only to be bound by the user and are polled by the owning code
      * so they build with a no-op action
      */
-    fun build(): OneConfigKeybind {
+    public fun build(): OneConfigKeybind {
         val fn = action ?: NO_OP
         val keys = keyCodes.toIntArray().takeIf { it.isNotEmpty() }
         val mouse = mouseBtns.toIntArray().takeIf { it.isNotEmpty() }
@@ -58,12 +58,12 @@ class KeybindHelper {
         return bind
     }
 
-    fun register(): OneConfigKeybind = KeybindManager.register(build())
+    public fun register(): OneConfigKeybind = KeybindManager.register(build())
 
-    companion object {
+    public companion object {
         private val NO_OP: (Boolean) -> Boolean = { true }
 
         @JvmStatic
-        fun builder() = KeybindHelper()
+        public fun builder(): KeybindHelper = KeybindHelper()
     }
 }

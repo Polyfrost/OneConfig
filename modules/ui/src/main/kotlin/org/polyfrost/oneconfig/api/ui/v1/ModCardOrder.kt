@@ -3,12 +3,12 @@ package org.polyfrost.oneconfig.api.ui.v1
 import org.polyfrost.oneconfig.api.ui.v1.internal.extensionsBridge
 
 @ExperimentalOneConfigUiApi
-object ModCardOrder {
+public object ModCardOrder {
     @JvmStatic
-    fun current(): List<String> = extensionsBridge()?.modOrder() ?: emptyList()
+    public fun current(): List<String> = extensionsBridge()?.modOrder() ?: emptyList()
 
     @JvmStatic
-    fun replace(ids: List<String>) {
+    public fun replace(ids: List<String>) {
         extensionsBridge()?.replaceModOrder(ids)
     }
 }

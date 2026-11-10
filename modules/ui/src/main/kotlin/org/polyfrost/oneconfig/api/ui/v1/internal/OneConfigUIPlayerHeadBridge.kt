@@ -6,12 +6,12 @@ import java.util.UUID
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
-interface OneConfigUIPlayerHeadBridge {
-    fun face(id: UUID): ImageBitmap?
+public interface OneConfigUIPlayerHeadBridge {
+    public fun face(id: UUID): ImageBitmap?
 
-    fun observe(id: UUID): State<ImageBitmap?>
+    public fun observe(id: UUID): State<ImageBitmap?>
 
-    fun defaultFace(id: UUID): ImageBitmap?
+    public fun defaultFace(id: UUID): ImageBitmap?
 }
 
 @ExperimentalOneConfigUiApi

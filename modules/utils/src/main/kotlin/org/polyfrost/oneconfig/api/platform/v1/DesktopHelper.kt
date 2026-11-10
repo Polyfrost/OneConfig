@@ -11,30 +11,30 @@ import java.util.concurrent.TimeUnit
  *
  * [LICENSE](https://github.com/SparkUniverse/UniversalCraft/blob/master/LICENSE)
  */
-object DesktopHelper {
+public object DesktopHelper {
 
     @JvmStatic
-    var isLinux: Boolean = false
+    public var isLinux: Boolean = false
         private set
 
     @JvmStatic
-    var isXdg: Boolean = false
+    public var isXdg: Boolean = false
         private set
 
     @JvmStatic
-    var isKde: Boolean = false
+    public var isKde: Boolean = false
         private set
 
     @JvmStatic
-    var isGnome: Boolean = false
+    public var isGnome: Boolean = false
         private set
 
     @JvmStatic
-    var isMac: Boolean = false
+    public var isMac: Boolean = false
         private set
 
     @JvmStatic
-    var isWindows: Boolean = false
+    public var isWindows: Boolean = false
         private set
 
     init {
@@ -62,18 +62,18 @@ object DesktopHelper {
     }
 
     @JvmStatic
-    fun browse(uri: URI): Boolean = browseDesktop(uri) || openSystemSpecific(uri.toString())
+    public fun browse(uri: URI): Boolean = browseDesktop(uri) || openSystemSpecific(uri.toString())
 
     @JvmStatic
-    fun open(file: File): Boolean = openDesktop(file) || openSystemSpecific(file.path)
+    public fun open(file: File): Boolean = openDesktop(file) || openSystemSpecific(file.path)
 
     @JvmStatic
-    fun edit(file: File): Boolean = editDesktop(file) || openSystemSpecific(file.path)
+    public fun edit(file: File): Boolean = editDesktop(file) || openSystemSpecific(file.path)
 
     @Suppress("unused")
     @Deprecated("Use browse(URI), open(File), edit(File) instead", ReplaceWith("browse(uri) || open(file) || edit(file)"),
         DeprecationLevel.HIDDEN)
-    fun executeIfDesktop(action: Desktop.Action, runnable: (Desktop) -> Unit) = false
+    public fun executeIfDesktop(action: Desktop.Action, runnable: (Desktop) -> Unit): Boolean = false
 
     private fun openSystemSpecific(file: String): Boolean {
         return when {

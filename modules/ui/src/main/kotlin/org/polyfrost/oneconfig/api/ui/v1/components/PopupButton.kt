@@ -41,13 +41,13 @@ private class AnchoredPosition(private val alignment: Alignment.Horizontal, priv
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun AnchoredPopupButton(icon: String, tooltip: String, content: @Composable (close: () -> Unit) -> Unit) {
+public fun AnchoredPopupButton(icon: String, tooltip: String, content: @Composable (close: () -> Unit) -> Unit) {
     AnchoredPopupButton(icon, tooltip, Modifier, Alignment.End, POPUP_GAP, content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun AnchoredPopupButton(
+public fun AnchoredPopupButton(
     icon: String,
     tooltip: String,
     modifier: Modifier,

@@ -51,15 +51,15 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFade
 import org.polyfrost.compose.render.PolyGradient
 
-object PolyGraphics : PlatformGraphics {
+public object PolyGraphics : PlatformGraphics {
     override fun createCanvas(image: ImageBitmap): Canvas {
         val target = image as PolyImageBitmap
         // Canvases on one image share its renderer, so pending draws from each reach the pixels in order
         return PolyCanvas(target.renderer ?: BitmapRenderer(target).also { target.renderer = it })
     }
     override fun createPaint(): Paint = PolyPaint()
-    override fun isBlendModeSupported(blendMode: BlendMode) = blendMode == BlendMode.SrcOver
-    override fun isTileModeSupported(tileMode: TileMode) = tileMode == TileMode.Clamp
+    override fun isBlendModeSupported(blendMode: BlendMode): Boolean = blendMode == BlendMode.SrcOver
+    override fun isTileModeSupported(tileMode: TileMode): Boolean = tileMode == TileMode.Clamp
     override fun createPath(): Path = PolyComposePath()
     override fun createPathIterator(path: Path, conicEvaluation: PathIterator.ConicEvaluation, tolerance: Float): PathIterator =
         PolyPathIterator(path, conicEvaluation, tolerance)
@@ -143,24 +143,24 @@ internal object NoPathEffect : PathEffect
 internal object NoEffect : PlatformRenderEffect
 internal class PolyBlurEffect(val sigma: Float) : PlatformRenderEffect
 
-class PolyImageBitmap internal constructor(private var current: PolyBitmap, override val config: ImageBitmapConfig) : ImageBitmap {
-    constructor(bitmap: PolyBitmap) : this(bitmap, ImageBitmapConfig.Argb8888)
+public class PolyImageBitmap internal constructor(private var current: PolyBitmap, override val config: ImageBitmapConfig) : ImageBitmap {
+    public constructor(bitmap: PolyBitmap) : this(bitmap, ImageBitmapConfig.Argb8888)
 
     internal var renderer: BitmapRenderer? = null
     private var handedOut = false
 
     /** The pixels drawn so far, including any drawing through a `Canvas` created for this image. */
-    val bitmap: PolyBitmap
+    public val bitmap: PolyBitmap
         get() {
             renderer?.sync()
             handedOut = true
             return current
         }
 
-    override val width get() = current.width
-    override val height get() = current.height
+    override val width: Int get() = current.width
+    override val height: Int get() = current.height
     override val colorSpace: ColorSpace get() = ColorSpaces.Srgb
-    override val hasAlpha get() = true
+    override val hasAlpha: Boolean get() = true
 
     // Renderers cache textures by PolyBitmap identity, so a bitmap that may have been uploaded must not change in place
     internal fun pixelsForDrawing(): ByteArray {
@@ -184,40 +184,40 @@ class PolyImageBitmap internal constructor(private var current: PolyBitmap, over
     override fun prepareToDraw() {}
 }
 
-fun PolyBitmap.asComposeImageBitmap(): ImageBitmap = PolyImageBitmap(this)
+public fun PolyBitmap.asComposeImageBitmap(): ImageBitmap = PolyImageBitmap(this)
 
-class PolyPaint : Paint {
-    override var isAntiAlias = true
-    override var color = Color.Black
+public class PolyPaint : Paint {
+    override var isAntiAlias: Boolean = true
+    override var color: Color = Color.Black
     override var alpha: Float
         get() = color.alpha
         set(value) { color = color.copy(alpha = value) }
-    override var blendMode = BlendMode.SrcOver
-    override var style = PaintingStyle.Fill
-    override var strokeWidth = 0f
-    override var strokeCap = StrokeCap.Butt
-    override var strokeJoin = StrokeJoin.Miter
-    override var strokeMiterLimit = 4f
-    override var filterQuality = FilterQuality.Low
+    override var blendMode: BlendMode = BlendMode.SrcOver
+    override var style: PaintingStyle = PaintingStyle.Fill
+    override var strokeWidth: Float = 0f
+    override var strokeCap: StrokeCap = StrokeCap.Butt
+    override var strokeJoin: StrokeJoin = StrokeJoin.Miter
+    override var strokeMiterLimit: Float = 4f
+    override var filterQuality: FilterQuality = FilterQuality.Low
     override var shader: Shader? = null
     override var colorFilter: ColorFilter? = null
     override var pathEffect: PathEffect? = null
-    var blur = 0f
+    public var blur: Float = 0f
 
-    fun copy(): PolyPaint = PolyPaint().also {
+    public fun copy(): PolyPaint = PolyPaint().also {
         it.isAntiAlias = isAntiAlias; it.color = color; it.blendMode = blendMode; it.style = style
         it.strokeWidth = strokeWidth; it.strokeCap = strokeCap; it.strokeJoin = strokeJoin; it.strokeMiterLimit = strokeMiterLimit
         it.filterQuality = filterQuality; it.shader = shader; it.colorFilter = colorFilter; it.pathEffect = pathEffect; it.blur = blur
     }
 
-    fun argb(): Int {
+    public fun argb(): Int {
         val tint = colorFilter?.let { tintOf(it) } ?: return color.toArgb()
         return tint.copy(alpha = tint.alpha * color.alpha).toArgb()
     }
 
     private fun tintOf(filter: ColorFilter): Color? = (filterPlatform(filter) as? TintFilter)?.color
 
-    companion object {
+    public companion object {
         private val platformField = runCatching {
             ColorFilter::class.java.declaredFields.first { PlatformColorFilter::class.java.isAssignableFrom(it.type) }.apply { isAccessible = true }
         }.getOrNull()
@@ -226,7 +226,7 @@ class PolyPaint : Paint {
     }
 }
 
-class PolyComposePath : Path {
+public class PolyComposePath : Path {
     internal val contours = ArrayList<FloatArray>()
     private var cur = FloatArrayList()
     private var startX = 0f
@@ -238,7 +238,7 @@ class PolyComposePath : Path {
     internal var roundRect: RoundRect? = null
     internal var plainRect: Rect? = null
 
-    override var fillType = PathFillType.NonZero
+    override var fillType: PathFillType = PathFillType.NonZero
     override val isConvex: Boolean get() = roundRect != null || plainRect != null
     override val isEmpty: Boolean get() = contours.isEmpty() && cur.size == 0
 
@@ -256,7 +256,7 @@ class PolyComposePath : Path {
         startX = x; startY = y; lastX = x; lastY = y
     }
 
-    override fun relativeMoveTo(dx: Float, dy: Float) = moveTo(lastX + dx, lastY + dy)
+    override fun relativeMoveTo(dx: Float, dy: Float): Unit = moveTo(lastX + dx, lastY + dy)
 
     override fun lineTo(x: Float, y: Float) {
         shapeChanged()
@@ -265,7 +265,7 @@ class PolyComposePath : Path {
         lastX = x; lastY = y
     }
 
-    override fun relativeLineTo(dx: Float, dy: Float) = lineTo(lastX + dx, lastY + dy)
+    override fun relativeLineTo(dx: Float, dy: Float): Unit = lineTo(lastX + dx, lastY + dy)
 
     // abstract on Path, whose replacement quadraticTo delegates to it by default
     @Suppress("OVERRIDE_DEPRECATION")
@@ -280,7 +280,7 @@ class PolyComposePath : Path {
 
     // abstract on Path, whose replacement relativeQuadraticTo delegates to it by default
     @Suppress("OVERRIDE_DEPRECATION")
-    override fun relativeQuadraticBezierTo(dx1: Float, dy1: Float, dx2: Float, dy2: Float) =
+    override fun relativeQuadraticBezierTo(dx1: Float, dy1: Float, dx2: Float, dy2: Float): Unit =
         quadraticBezierTo(lastX + dx1, lastY + dy1, lastX + dx2, lastY + dy2)
 
     override fun cubicTo(x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float) {
@@ -293,7 +293,7 @@ class PolyComposePath : Path {
         }
     }
 
-    override fun relativeCubicTo(dx1: Float, dy1: Float, dx2: Float, dy2: Float, dx3: Float, dy3: Float) =
+    override fun relativeCubicTo(dx1: Float, dy1: Float, dx2: Float, dy2: Float, dx3: Float, dy3: Float): Unit =
         cubicTo(lastX + dx1, lastY + dy1, lastX + dx2, lastY + dy2, lastX + dx3, lastY + dy3)
 
     override fun arcTo(rect: Rect, startAngleDegrees: Float, sweepAngleDegrees: Float, forceMoveTo: Boolean) {
@@ -358,10 +358,10 @@ class PolyComposePath : Path {
         if (empty) this.roundRect = r
     }
 
-    override fun addArcRad(oval: Rect, startAngleRadians: Float, sweepAngleRadians: Float) =
+    override fun addArcRad(oval: Rect, startAngleRadians: Float, sweepAngleRadians: Float): Unit =
         addArc(oval, Math.toDegrees(startAngleRadians.toDouble()).toFloat(), Math.toDegrees(sweepAngleRadians.toDouble()).toFloat())
 
-    override fun addArc(oval: Rect, startAngleDegrees: Float, sweepAngleDegrees: Float) = arcTo(oval, startAngleDegrees, sweepAngleDegrees, true)
+    override fun addArc(oval: Rect, startAngleDegrees: Float, sweepAngleDegrees: Float): Unit = arcTo(oval, startAngleDegrees, sweepAngleDegrees, true)
 
     override fun addPath(path: Path, offset: Offset) {
         val other = path as PolyComposePath
@@ -385,7 +385,7 @@ class PolyComposePath : Path {
         shapeChanged()
     }
 
-    override fun rewind() = reset()
+    override fun rewind(): Unit = reset()
 
     override fun translate(offset: Offset) {
         for (c in contours) for (k in c.indices) c[k] += if (k % 2 == 0) offset.x else offset.y
@@ -404,9 +404,9 @@ class PolyComposePath : Path {
         return true
     }
 
-    @Deprecated("") override fun addRect(rect: Rect) = addRect(rect, Path.Direction.CounterClockwise)
-    @Deprecated("") override fun addOval(oval: Rect) = addOval(oval, Path.Direction.CounterClockwise)
-    @Deprecated("") override fun addRoundRect(roundRect: RoundRect) = addRoundRect(roundRect, Path.Direction.CounterClockwise)
+    @Deprecated("") override fun addRect(rect: Rect): Unit = addRect(rect, Path.Direction.CounterClockwise)
+    @Deprecated("") override fun addOval(oval: Rect): Unit = addOval(oval, Path.Direction.CounterClockwise)
+    @Deprecated("") override fun addRoundRect(roundRect: RoundRect): Unit = addRoundRect(roundRect, Path.Direction.CounterClockwise)
 
     internal fun allContours(): List<FloatArray> = if (cur.size >= 4) contours + cur.toArray() else contours
     internal fun closedAt(i: Int): Boolean = if (i < closed.size) closed[i] else false

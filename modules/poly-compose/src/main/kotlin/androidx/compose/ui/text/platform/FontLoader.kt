@@ -9,7 +9,7 @@ import androidx.compose.ui.text.font.FontResourceLoaderWithResolver
 import org.polyfrost.compose.backend.PolyText
 
 @Suppress("DEPRECATION")
-class FontLoader : Font.ResourceLoader, FontResourceLoaderWithResolver {
+public class FontLoader : Font.ResourceLoader, FontResourceLoaderWithResolver {
     override val fontFamilyResolver: FontFamily.Resolver = PolyText.createFontFamilyResolver()
 
     @Deprecated("Replaced by FontFamily.Resolver")

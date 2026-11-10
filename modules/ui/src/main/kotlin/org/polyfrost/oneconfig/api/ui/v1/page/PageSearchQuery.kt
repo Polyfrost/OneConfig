@@ -5,5 +5,5 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
-val currentPageSearchQuery: String
+public val currentPageSearchQuery: String
     @Composable get() = componentsBridge().pageSearchQuery()

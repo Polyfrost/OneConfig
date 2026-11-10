@@ -58,30 +58,30 @@ import sun.misc.Unsafe
  */
 @Suppress("unused")
 @ApiStatus.Internal
-object MHUtils {
+public object MHUtils {
     private val LOGGER: Logger = LogManager.getLogger("OneConfig/MHUtils")
 
     @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
-    class Result<T>(@PublishedApi @JvmSynthetic internal val value: Any?) {
-        inline val isSuccess get() = value !is Failure
-        inline val isFailure get() = value is Failure
+    public class Result<T>(@PublishedApi @JvmSynthetic internal val value: Any?) {
+        public inline val isSuccess: Boolean get() = value !is Failure
+        public inline val isFailure: Boolean get() = value is Failure
 
-        inline fun getOrThrow() = if (isSuccess) value as T else throw (value as Failure).t
-        inline fun getOrNull() = if (isSuccess) value as T else null
-        inline fun getOrElse(default: T) = if (isSuccess) value as T else default
+        public inline fun getOrThrow(): T = if (isSuccess) value as T else throw (value as Failure).t
+        public inline fun getOrNull(): T? = if (isSuccess) value as T else null
+        public inline fun getOrElse(default: T): T = if (isSuccess) value as T else default
 
-        fun logIfErr(): Result<T> {
+        public fun logIfErr(): Result<T> {
             if (isFailure) LOGGER.warn((value as Failure).t)
             return this
         }
 
 
-        companion object {
+        public companion object {
             @JvmStatic
-            fun <T> success(value: T) = Result<T>(value)
+            public fun <T> success(value: T): Result<T> = Result<T>(value)
 
             @JvmStatic
-            fun <T> failure(e: Throwable) = Result<T>(Failure(e))
+            public fun <T> failure(e: Throwable): Result<T> = Result<T>(Failure(e))
         }
 
         @PublishedApi
@@ -106,7 +106,7 @@ object MHUtils {
     @JvmField
     // IMPL_LOOKUP is private to the JDK, and Unsafe is the only way to read it without opening java.base
     @Suppress("DEPRECATION")
-    val trustedLookup: MethodHandles.Lookup = try {
+    public val trustedLookup: MethodHandles.Lookup = try {
         // tee hee
         val implLookup = MethodHandles.Lookup::class.java.getDeclaredField("IMPL_LOOKUP")
         theUnsafe.getObject(theUnsafe.staticFieldBase(implLookup), theUnsafe.staticFieldOffset(implLookup)) as MethodHandles.Lookup
@@ -123,7 +123,7 @@ object MHUtils {
      * @return a field handle or null if it failed
      */
     @JvmStatic
-    fun getFieldGetter(fieldName: String, owner: Any) = try {
+    public fun getFieldGetter(fieldName: String, owner: Any): Result<MethodHandle> = try {
         val f = getFieldGetter(owner.javaClass.getDeclaredField(fieldName), owner)
         Result.success(f.getOrThrow())
     } catch (e: Exception) {
@@ -138,7 +138,7 @@ object MHUtils {
      * @return a field handle or null if it failed
      */
     @JvmStatic
-    fun getFieldGetter(f: Field, owner: Any?) = try {
+    public fun getFieldGetter(f: Field, owner: Any?): Result<MethodHandle> = try {
         Result.success(
             if (Modifier.isStatic(f.modifiers)) trustedLookup.unreflectGetter(f)
             else trustedLookup.unreflectGetter(f).bindTo(owner)
@@ -153,7 +153,7 @@ object MHUtils {
      * @return a field handle or null if it failed
      */
     @JvmStatic
-    fun getFieldGetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
+    public fun getFieldGetter(owner: Class<*>, fieldName: String, type: Class<*>): Result<MethodHandle> = try {
         Result.success(trustedLookup.findGetter(owner, fieldName, type))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get field getter for $fieldName from $owner", e))
@@ -166,7 +166,7 @@ object MHUtils {
      * @return a field handle or null if it failed
      */
     @JvmStatic
-    fun getStaticFieldGetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
+    public fun getStaticFieldGetter(owner: Class<*>, fieldName: String, type: Class<*>): Result<MethodHandle> = try {
         Result.success(trustedLookup.findStaticGetter(owner, fieldName, type))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get static field getter for $fieldName from $owner", e))
@@ -180,7 +180,7 @@ object MHUtils {
      * @return a field setter or null if it failed
      */
     @JvmStatic
-    fun getFieldSetter(fieldName: String, owner: Any) = try {
+    public fun getFieldSetter(fieldName: String, owner: Any): Result<MethodHandle> = try {
         val f = getFieldSetter(owner.javaClass.getDeclaredField(fieldName), owner)
         Result.success(f.getOrThrow())
     } catch (e: Exception) {
@@ -195,7 +195,7 @@ object MHUtils {
      * @return a field setter or null if it failed
      */
     @JvmStatic
-    fun getFieldSetter(f: Field, owner: Any) = try {
+    public fun getFieldSetter(f: Field, owner: Any): Result<MethodHandle> = try {
         Result.success(
             if (Modifier.isStatic(f.modifiers)) trustedLookup.unreflectSetter(f)
             else trustedLookup.unreflectSetter(f).bindTo(owner)
@@ -210,7 +210,7 @@ object MHUtils {
      * @return a field setter or null if it failed
      */
     @JvmStatic
-    fun getFieldSetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
+    public fun getFieldSetter(owner: Class<*>, fieldName: String, type: Class<*>): Result<MethodHandle> = try {
         Result.success(trustedLookup.findSetter(owner, fieldName, type))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get field setter for $fieldName from $owner", e))
@@ -222,7 +222,7 @@ object MHUtils {
      * @return a field setter or null if it failed
      */
     @JvmStatic
-    fun getStaticFieldSetter(owner: Class<*>, fieldName: String, type: Class<*>) = try {
+    public fun getStaticFieldSetter(owner: Class<*>, fieldName: String, type: Class<*>): Result<MethodHandle> = try {
         Result.success(trustedLookup.findStaticSetter(owner, fieldName, type))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get static field setter for $fieldName from $owner", e))
@@ -236,7 +236,7 @@ object MHUtils {
      * @return a method handle or null if it failed
      */
     @JvmStatic
-    fun getMethodHandle(owner: Any, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
+    public fun getMethodHandle(owner: Any, methodName: String, returnType: Class<*>, vararg params: Class<*>?): Result<MethodHandle> = try {
         Result.success(trustedLookup.findVirtual(owner.javaClass, methodName, methodType(returnType, params)).bindTo(owner))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get method handle for $methodName from $owner", e))
@@ -249,7 +249,7 @@ object MHUtils {
      * @return a method handle or null if it failed
      */
     @JvmStatic
-    fun getMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
+    public fun getMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?): Result<MethodHandle> = try {
         Result.success(trustedLookup.findVirtual(owner, methodName, methodType(returnType, params)))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get method handle for $methodName from $owner", e))
@@ -261,7 +261,7 @@ object MHUtils {
      * @return a method handle or null if it failed
      */
     @JvmStatic
-    fun getStaticMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
+    public fun getStaticMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?): Result<MethodHandle> = try {
         Result.success(trustedLookup.findStatic(owner, methodName, methodType(returnType, params)))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get static method handle for $methodName from $owner", e))
@@ -274,7 +274,7 @@ object MHUtils {
      * @return a method handle or null if it failed
      */
     @JvmStatic
-    fun getMethodHandle(m: Method, owner: Any) = try {
+    public fun getMethodHandle(m: Method, owner: Any): Result<MethodHandle> = try {
         Result.success(
             if (Modifier.isStatic(m.modifiers)) trustedLookup.unreflect(m)
             else trustedLookup.unreflect(m).bindTo(owner)
@@ -290,7 +290,7 @@ object MHUtils {
      * @return a constructor handle or null if it failed
      */
     @JvmStatic
-    fun getConstructorHandle(owner: Class<*>, vararg params: Class<*>?) = try {
+    public fun getConstructorHandle(owner: Class<*>, vararg params: Class<*>?): Result<MethodHandle> = try {
         Result.success(trustedLookup.findConstructor(owner, methodType(Void.TYPE, params)))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get constructor handle for $owner", e))
@@ -302,7 +302,7 @@ object MHUtils {
      * @return a constructor handle or null if it failed
      */
     @JvmStatic
-    fun getConstructorHandle(ctor: Constructor<*>) = try {
+    public fun getConstructorHandle(ctor: Constructor<*>): Result<MethodHandle> = try {
         Result.success(trustedLookup.unreflectConstructor(ctor))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get constructor handle for $ctor", e))
@@ -318,7 +318,7 @@ object MHUtils {
      */
     // the metafactory just implemented classOfT, which is what T stands for
     @Suppress("UNCHECKED_CAST")
-    fun <T> lmf(it: Any, classOfT: Class<T>, methodName: String, interfaceFuncName: String, type: MethodType) = try {
+    public fun <T> lmf(it: Any, classOfT: Class<T>, methodName: String, interfaceFuncName: String, type: MethodType): Result<T> = try {
         val isStatic = it is Class<*>
         val cls = if (isStatic) it else it.javaClass
         val mh = if (isStatic) trustedLookup.findStatic(cls, methodName, type) else trustedLookup.findVirtual(cls, methodName, type)
@@ -340,7 +340,7 @@ object MHUtils {
         Result.failure(ReflectiveOperationException("Failed to get wrapped method handle for $methodName from $it", e))
     }
 
-    inline fun <reified T> lmf(it: Any, methodName: String, interfaceFuncName: String, type: MethodType)= lmf(it, T::class.java, methodName, interfaceFuncName, type)
+    public inline fun <reified T> lmf(it: Any, methodName: String, interfaceFuncName: String, type: MethodType): Result<T> = lmf(it, T::class.java, methodName, interfaceFuncName, type)
 
 
     /**
@@ -352,7 +352,7 @@ object MHUtils {
      * @return a fast wrapped method handle or null if it failed
      */
     @JvmStatic
-    fun <T> getConsumerHandle(it: Any, methodName: String, paramType: Class<T>) = lmf<Consumer<T>>(it, methodName, "accept", methodType(Void.TYPE, paramType))
+    public fun <T> getConsumerHandle(it: Any, methodName: String, paramType: Class<T>): Result<Consumer<T>> = lmf<Consumer<T>>(it, methodName, "accept", methodType(Void.TYPE, paramType))
 
 
     /**
@@ -363,10 +363,10 @@ object MHUtils {
      * @return a fast wrapped method handle or null if it failed
      */
     @JvmStatic
-    fun <T, R> getFunctionHandle(it: Any, methodName: String, returnType: Class<R>, paramType: Class<T>) = lmf<Function<T, R>>(it, methodName, "apply", methodType(returnType, paramType))
+    public fun <T, R> getFunctionHandle(it: Any, methodName: String, returnType: Class<R>, paramType: Class<T>): Result<Function<T, R>> = lmf<Function<T, R>>(it, methodName, "apply", methodType(returnType, paramType))
 
     @JvmStatic
-    fun <T> getPredicateHandle(it: Any, methodName: String, typeOfT: Class<T>) = lmf<Predicate<T>>(it, methodName, "test", methodType(Boolean::class.java, typeOfT))
+    public fun <T> getPredicateHandle(it: Any, methodName: String, typeOfT: Class<T>): Result<Predicate<T>> = lmf<Predicate<T>>(it, methodName, "test", methodType(Boolean::class.java, typeOfT))
 
     /**
      * Return a field value using reflection and the trusted lookup
@@ -376,7 +376,7 @@ object MHUtils {
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> getField(owner: Any, fieldName: String) = try {
+    public fun <T> getField(owner: Any, fieldName: String): Result<T> = try {
         Result.success(owner.javaClass.getDeclaredField(fieldName).setAccessible().get(owner) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to get field value for $fieldName from $owner", e))
@@ -384,7 +384,7 @@ object MHUtils {
 
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> getFieldInHierarchy(clz: Class<*>, owner: Any, fieldName: String) = try {
+    public fun <T> getFieldInHierarchy(clz: Class<*>, owner: Any, fieldName: String): Result<T> = try {
         Result.success(clz.getDeclaredField(fieldName).setAccessible().get(owner) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to get field value for $fieldName from $owner", e))
@@ -397,7 +397,7 @@ object MHUtils {
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> getStatic(cls: Class<*>, fieldName: String) = try {
+    public fun <T> getStatic(cls: Class<*>, fieldName: String): Result<T> = try {
         Result.success(cls.getDeclaredField(fieldName).setAccessible().get(null) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to get static field value for $fieldName from $cls", e))
@@ -410,7 +410,7 @@ object MHUtils {
      * @return true if it succeeded
      */
     @JvmStatic
-    fun setField(owner: Any, fieldName: String, value: Any?) = try {
+    public fun setField(owner: Any, fieldName: String, value: Any?): Boolean = try {
         owner.javaClass.getDeclaredField(fieldName).setAccessible().set(owner, value)
         true
     } catch (e: Throwable) {
@@ -423,7 +423,7 @@ object MHUtils {
      * @return true if it succeeded
      */
     @JvmStatic
-    fun setStatic(cls: Class<*>, fieldName: String, value: Any) = try {
+    public fun setStatic(cls: Class<*>, fieldName: String, value: Any): Boolean = try {
         cls.getDeclaredField(fieldName).setAccessible().set(null, value)
         true
     } catch (e: Throwable) {
@@ -438,7 +438,7 @@ object MHUtils {
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> invoke(owner: Any, methodName: String, vararg params: Any) = try {
+    public fun <T> invoke(owner: Any, methodName: String, vararg params: Any): Result<T> = try {
         val classes = Array<Class<*>>(params.size) { params[it].javaClass }
         Result.success(owner.javaClass.getDeclaredMethod(methodName, *classes).setAccessible().invoke(owner, *params) as T)
     } catch (e: Throwable) {
@@ -452,7 +452,7 @@ object MHUtils {
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> invokeStatic(owner: Class<*>, methodName: String, vararg params: Any) = try {
+    public fun <T> invokeStatic(owner: Class<*>, methodName: String, vararg params: Any): Result<T> = try {
         val classes = Array<Class<*>>(params.size) { params[it].javaClass }
         Result.success(owner.getDeclaredMethod(methodName, *classes).setAccessible().invoke(null, *params) as T)
     } catch (e: Throwable) {
@@ -463,7 +463,7 @@ object MHUtils {
      * Instantiate a class using the ctor matching the given params
      */
     @JvmStatic
-    fun <T> instantiate(cls: Class<T>, vararg params: Any) = try {
+    public fun <T> instantiate(cls: Class<T>, vararg params: Any): Result<T> = try {
         val classes = Array<Class<*>>(params.size) { params[it].javaClass }
         Result.success(cls.getDeclaredConstructor(*classes).setAccessible().newInstance(*params) as T)
     } catch (e: Throwable) {
@@ -476,7 +476,7 @@ object MHUtils {
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> instantiate(cls: Class<T>, allocateAnyway: Boolean) = try {
+    public fun <T> instantiate(cls: Class<T>, allocateAnyway: Boolean): Result<T> = try {
         Result.success(cls.getDeclaredConstructor().setAccessible().newInstance() as T)
     } catch (e: Throwable) {
         if (!allocateAnyway) {
@@ -491,7 +491,7 @@ object MHUtils {
 
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
-    fun <T> invokeCatching(mh: MethodHandle, vararg args: Any?) = try {
+    public fun <T> invokeCatching(mh: MethodHandle, vararg args: Any?): Result<T> = try {
         Result.success(mh.invoke(args) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to invoke method handle $mh", e))
@@ -499,7 +499,7 @@ object MHUtils {
 
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
-    fun <T> invokeExactCatching(mh: MethodHandle, vararg args: Any?) = try {
+    public fun <T> invokeExactCatching(mh: MethodHandle, vararg args: Any?): Result<T> = try {
         Result.success(mh.invokeExact(args) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to invoke exact method handle $mh", e))
@@ -513,7 +513,7 @@ object MHUtils {
      */
     @Suppress("DEPRECATION")
     @JvmStatic
-    fun <T : AccessibleObject> T.setAccessible() = try {
+    public fun <T : AccessibleObject> T.setAccessible(): T = try {
         accessibleSetter.invoke(this, true)
         require(isAccessible) { "Failed to set accessible for $this" }
         this
@@ -531,7 +531,7 @@ object MHUtils {
      */
     @JvmStatic
     @ApiStatus.Experimental
-    fun removeReflectionFilters(): Boolean {
+    public fun removeReflectionFilters(): Boolean {
         return try {
             val cls = Class.forName("jdk.internal.reflect.Reflection")
             trustedLookup.findStaticSetter(cls, "fieldFilterMap", Map::class.java).invoke(null)
@@ -555,7 +555,7 @@ object MHUtils {
      */
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
-    fun getAnnotationValues(a: Annotation?) = try {
+    public fun getAnnotationValues(a: Annotation?): Result<Map<String, Any>> = try {
         Result.success(gav.invoke(Proxy.getInvocationHandler(a)) as Map<String, Any>)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to get annotation values for $a", e))

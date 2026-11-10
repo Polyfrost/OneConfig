@@ -34,7 +34,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 @ExperimentalOneConfigUiApi
-enum class A11yRole(val spoken: String) {
+public enum class A11yRole(public val spoken: String) {
     Button("button"),
     Tab("tab"),
     Checkbox("checkbox"),
@@ -56,7 +56,7 @@ enum class A11yRole(val spoken: String) {
 }
 
 @ExperimentalOneConfigUiApi
-object A11y {
+public object A11y {
     private const val REPEAT_MS = 1500L
 
     private var lastAnnounce = ""
@@ -65,29 +65,29 @@ object A11y {
     private var keyboardInput by mutableStateOf(false)
 
     @JvmStatic
-    val keyboardMode: Boolean
+    public val keyboardMode: Boolean
         get() = keyboardInput
 
     @ApiStatus.Internal
     @JvmStatic
-    fun reportInput(keyboard: Boolean) {
+    public fun reportInput(keyboard: Boolean) {
         if (keyboardInput != keyboard) keyboardInput = keyboard
     }
 
     @JvmStatic
-    fun narratorActive(): Boolean = runCatching { Platform.screen().narratorActive() }.getOrDefault(false)
+    public fun narratorActive(): Boolean = runCatching { Platform.screen().narratorActive() }.getOrDefault(false)
 
     @JvmStatic
-    fun say(text: String) = say(text, false)
+    public fun say(text: String): Unit = say(text, false)
 
     @JvmStatic
-    fun say(text: String, interrupt: Boolean) {
+    public fun say(text: String, interrupt: Boolean) {
         if (text.isBlank() || !narratorActive()) return
         runCatching { Platform.screen().narrate(text, interrupt) }
     }
 
     @JvmStatic
-    fun announce(text: String) {
+    public fun announce(text: String) {
         if (text.isBlank() || !narratorActive()) return
         val now = System.currentTimeMillis()
         if (text == lastAnnounce && now - lastAnnounceAt < REPEAT_MS) return
@@ -97,10 +97,10 @@ object A11y {
     }
 
     @JvmStatic
-    fun describe(label: String, role: A11yRole): String = describe(label, role, null, null)
+    public fun describe(label: String, role: A11yRole): String = describe(label, role, null, null)
 
     @JvmStatic
-    fun describe(label: String, role: A11yRole, selected: Boolean?, checked: Boolean?): String = buildString {
+    public fun describe(label: String, role: A11yRole, selected: Boolean?, checked: Boolean?): String = buildString {
         append(label)
         if (role.spoken.isNotEmpty()) append(", ").append(role.spoken)
         if (selected == true) append(", selected")
@@ -108,7 +108,7 @@ object A11y {
     }
 
     @JvmStatic
-    fun focused(label: String?, role: A11yRole, selected: Boolean?, checked: Boolean?) {
+    public fun focused(label: String?, role: A11yRole, selected: Boolean?, checked: Boolean?) {
         if (label.isNullOrBlank()) return
         say(describe(label, role, selected, checked), true)
     }
@@ -116,11 +116,11 @@ object A11y {
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun isKeyboardMode(): Boolean = A11y.keyboardMode
+public fun isKeyboardMode(): Boolean = A11y.keyboardMode
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Announce(text: String?) {
+public fun Announce(text: String?) {
     LaunchedEffect(text) { text?.let(A11y::announce) }
 }
 
@@ -135,10 +135,10 @@ private fun isMinecraftTheme(): Boolean {
 }
 
 @ExperimentalOneConfigUiApi
-fun Modifier.focusRing(): Modifier = focusRing(null)
+public fun Modifier.focusRing(): Modifier = focusRing(null)
 
 @ExperimentalOneConfigUiApi
-fun Modifier.focusRing(shape: Shape?): Modifier = composed {
+public fun Modifier.focusRing(shape: Shape?): Modifier = composed {
     var focused by remember { mutableStateOf(false) }
     val minecraft = isMinecraftTheme()
     val ring = if (minecraft) Color.White else OneConfigTheme.accent
@@ -162,10 +162,10 @@ private fun ContentDrawScope.drawFocusRing(shape: Shape, ring: Color, halo: Colo
 }
 
 @ExperimentalOneConfigUiApi
-fun Modifier.a11y(label: String?, role: A11yRole): Modifier = a11y(label, role, null, null, null, true)
+public fun Modifier.a11y(label: String?, role: A11yRole): Modifier = a11y(label, role, null, null, null, true)
 
 @ExperimentalOneConfigUiApi
-fun Modifier.a11y(
+public fun Modifier.a11y(
     label: String?,
     role: A11yRole,
     selected: Boolean?,
@@ -196,7 +196,7 @@ fun Modifier.a11y(
 }
 
 @ExperimentalOneConfigUiApi
-fun Modifier.a11yField(label: String?): Modifier = a11y(label, A11yRole.TextField, null, null, null, false)
+public fun Modifier.a11yField(label: String?): Modifier = a11y(label, A11yRole.TextField, null, null, null, false)
 
 @ExperimentalOneConfigUiApi
-fun Modifier.notFocusable(): Modifier = focusProperties { canFocus = false }
+public fun Modifier.notFocusable(): Modifier = focusProperties { canFocus = false }

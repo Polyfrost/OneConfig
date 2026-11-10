@@ -51,20 +51,20 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
-abstract class TextHud(
+public abstract class TextHud(
     id: String,
     title: String,
     category: Category,
-    @TextAnnotation(title = "Text Prefix") var prefix: String,
-    @TextAnnotation(title = "Text Suffix") var suffix: String = "",
+    @TextAnnotation(title = "Text Prefix") public var prefix: String,
+    @TextAnnotation(title = "Text Suffix") public var suffix: String = "",
 ) : Hud(id, title, category) {
 
-    companion object {
+    public companion object {
         private const val UNMEASURED = -1f
     }
 
     @Switch(title = "Brackets")
-    var brackets: Boolean = false
+    public var brackets: Boolean = false
 
     init {
         padLeft = 4f
@@ -145,9 +145,9 @@ abstract class TextHud(
         }
     }
 
-    open val concatString: String get() = ""
+    public open val concatString: String get() = ""
 
-    open fun concat(prefix: String, value: String?, suffix: String): String {
+    public open fun concat(prefix: String, value: String?, suffix: String): String {
         return arrayListOf(
             prefix.takeIf { it.isNotEmpty() },
             value?.takeIf { it.isNotEmpty() },
@@ -208,12 +208,12 @@ abstract class TextHud(
     }
 
     @ApiStatus.Internal
-    class Simple(
+    public class Simple(
         prefix: String,
-        @TextAnnotation(title = "Text") var it: String,
+        @TextAnnotation(title = "Text") public var it: String,
         suffix: String,
     ) : TextHud("text_hud.yml", "Text Hud", Category.INFO, prefix, suffix) {
-        override fun getText() = it
+        override fun getText(): String = it
         override fun setup() {
             super.setup()
             if (isReal) updateWhenChanged("it")
@@ -221,9 +221,9 @@ abstract class TextHud(
     }
 
     @ApiStatus.Internal
-    open class DateTime @JvmOverloads constructor(
+    public open class DateTime @JvmOverloads constructor(
         header: String,
-        @TextAnnotation(title = "Time template") var template: String,
+        @TextAnnotation(title = "Time template") public var template: String,
         suffix: String = "",
         title: String = "Date/Time Hud",
     ) : TextHud("date_time_hud.yml", title, Category.INFO, header, suffix) {

@@ -34,4 +34,4 @@ import org.polyfrost.oneconfig.utils.v1.IOUtils
  *
  * @see IOUtils.getFileChecksum
  */
-fun Path.checksum() = IOUtils.getFileChecksum(this)
+public fun Path.checksum(): String = IOUtils.getFileChecksum(this)

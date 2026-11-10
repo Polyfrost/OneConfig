@@ -6,13 +6,13 @@ import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.RenderContext
 
-class McTextNode : PolyNode() {
-    var text: String = ""
-    var color: PolyColor = PolyColor.WHITE
-    var shadow: Boolean = true
-    var scale: Float = 1f
-    var outlineColor: PolyColor? = null
-    var textProvider: (() -> String)? = null
+public class McTextNode : PolyNode() {
+    public var text: String = ""
+    public var color: PolyColor = PolyColor.WHITE
+    public var shadow: Boolean = true
+    public var scale: Float = 1f
+    public var outlineColor: PolyColor? = null
+    public var textProvider: (() -> String)? = null
     private var measuredFonts = -1
 
     override fun measureContent() {
@@ -22,7 +22,7 @@ class McTextNode : PolyNode() {
         remeasure()
     }
 
-    fun remeasure() {
+    public fun remeasure() {
         measuredFonts = FontManager.revision
         val lines = text.lines()
         style.width = PolySize.Px(lines.maxOf {  McFontQueue.measureTextWidth(it, scale) })

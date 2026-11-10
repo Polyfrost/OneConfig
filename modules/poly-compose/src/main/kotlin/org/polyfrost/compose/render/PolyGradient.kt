@@ -6,19 +6,19 @@ import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
-sealed class PolyGradient {
-    abstract val colors: List<PolyColor>
-    abstract val stops: List<Float>?
+public sealed class PolyGradient {
+    public abstract val colors: List<PolyColor>
+    public abstract val stops: List<Float>?
 
-    abstract fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float
+    public abstract fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float
 
-    open val affine: Boolean get() = false
+    public open val affine: Boolean get() = false
 
-    open val linear: Boolean get() = false
+    public open val linear: Boolean get() = false
 
-    fun colorAt(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Int = sample(position(px, py, x, y, w, h))
+    public fun colorAt(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Int = sample(position(px, py, x, y, w, h))
 
-    fun sample(t: Float): Int {
+    public fun sample(t: Float): Int {
         val n = colors.size
         if (n == 0) return 0
         if (n == 1) return colors[0].argb
@@ -34,13 +34,13 @@ sealed class PolyGradient {
 
     private fun stop(s: List<Float>?, i: Int, n: Int) = s?.getOrNull(i) ?: (i.toFloat() / (n - 1))
 
-    data class Linear(
+    public data class Linear(
         override val colors: List<PolyColor>,
         override val stops: List<Float>? = null,
         val angle: Float = 0f,
     ) : PolyGradient() {
-        override val affine get() = colors.size <= 2 && stops == null
-        override val linear get() = true
+        override val affine: Boolean get() = colors.size <= 2 && stops == null
+        override val linear: Boolean get() = true
 
         private val cosA = cos(Math.toRadians(angle.toDouble()))
         private val sinA = sin(Math.toRadians(angle.toDouble()))
@@ -56,7 +56,7 @@ sealed class PolyGradient {
         }
     }
 
-    data class Radial(
+    public data class Radial(
         override val colors: List<PolyColor>,
         override val stops: List<Float>? = null,
         val centerX: Float = 0.5f,
@@ -70,7 +70,7 @@ sealed class PolyGradient {
         }
     }
 
-    data class Sweep(
+    public data class Sweep(
         override val colors: List<PolyColor>,
         override val stops: List<Float>? = null,
         val centerX: Float = 0.5f,
@@ -82,13 +82,13 @@ sealed class PolyGradient {
         }
     }
 
-    data class Points(
+    public data class Points(
         override val colors: List<PolyColor>,
         override val stops: List<Float>?,
         val x0: Float, val y0: Float, val x1: Float, val y1: Float,
     ) : PolyGradient() {
-        override val affine get() = colors.size <= 2 && stops == null
-        override val linear get() = true
+        override val affine: Boolean get() = colors.size <= 2 && stops == null
+        override val linear: Boolean get() = true
 
         override fun position(px: Float, py: Float, x: Float, y: Float, w: Float, h: Float): Float {
             val dx = x1 - x0
@@ -99,17 +99,17 @@ sealed class PolyGradient {
         }
     }
 
-    companion object {
-        fun horizontal(vararg colors: PolyColor) = Linear(colors.toList(), angle = 0f)
-        fun vertical(vararg colors: PolyColor) = Linear(colors.toList(), angle = 90f)
-        fun diagonal(vararg colors: PolyColor) = Linear(colors.toList(), angle = 45f)
-        fun radial(vararg colors: PolyColor) = Radial(colors.toList())
+    public companion object {
+        public fun horizontal(vararg colors: PolyColor): Linear = Linear(colors.toList(), angle = 0f)
+        public fun vertical(vararg colors: PolyColor): Linear = Linear(colors.toList(), angle = 90f)
+        public fun diagonal(vararg colors: PolyColor): Linear = Linear(colors.toList(), angle = 45f)
+        public fun radial(vararg colors: PolyColor): Radial = Radial(colors.toList())
 
-        fun horizontal(vararg colors: Int) = horizontal(*colors.map { PolyColor(it) }.toTypedArray())
-        fun vertical(vararg colors: Int) = vertical(*colors.map { PolyColor(it) }.toTypedArray())
+        public fun horizontal(vararg colors: Int): Linear = horizontal(*colors.map { PolyColor(it) }.toTypedArray())
+        public fun vertical(vararg colors: Int): Linear = vertical(*colors.map { PolyColor(it) }.toTypedArray())
 
         @JvmStatic
-        fun lerpArgb(a: Int, b: Int, t: Float): Int {
+        public fun lerpArgb(a: Int, b: Int, t: Float): Int {
             if (a == b) return a
             var out = 0
             var shift = 0

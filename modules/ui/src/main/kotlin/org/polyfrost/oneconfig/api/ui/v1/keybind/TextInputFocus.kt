@@ -11,13 +11,13 @@ import java.util.WeakHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
-object TextInputFocus {
+public object TextInputFocus {
     private val NO_SCREEN = Any()
 
     private val holders = Collections.synchronizedMap(WeakHashMap<Any, WeakReference<Any>>())
 
     @JvmStatic
-    val isTyping: Boolean
+    public val isTyping: Boolean
         get() {
             if (holders.isEmpty()) return false
             val current = currentScreen()
@@ -27,25 +27,25 @@ object TextInputFocus {
         }
 
     @JvmStatic
-    fun acquire(token: Any) {
+    public fun acquire(token: Any) {
         holders[token] = WeakReference(currentScreen())
     }
 
     @JvmStatic
-    fun release(token: Any) {
+    public fun release(token: Any) {
         holders.remove(token)
     }
 
     @JvmStatic
     @ApiStatus.Internal
-    fun clear() {
+    public fun clear() {
         holders.clear()
     }
 
     private fun currentScreen(): Any = Platform.screen().current<Any?>() ?: NO_SCREEN
 }
 
-fun Modifier.trackTextInputFocus(): Modifier = this then TrackTextInputFocusElement
+public fun Modifier.trackTextInputFocus(): Modifier = this then TrackTextInputFocusElement
 
 private object TrackTextInputFocusElement : ModifierNodeElement<TrackTextInputFocusNode>() {
     override fun create() = TrackTextInputFocusNode()

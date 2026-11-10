@@ -7,23 +7,23 @@ import org.polyfrost.oneconfig.api.ui.v1.search.SearchProvider
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchScope
 
 @ExperimentalOneConfigUiApi
-interface OneConfigUISearchBridge {
-    fun register(provider: SearchProvider)
+public interface OneConfigUISearchBridge {
+    public fun register(provider: SearchProvider)
 
-    fun unregister(provider: SearchProvider): Boolean
+    public fun unregister(provider: SearchProvider): Boolean
 
-    fun documentIds(): Set<String>
+    public fun documentIds(): Set<String>
 
-    fun document(id: String): SearchDocument?
+    public fun document(id: String): SearchDocument?
 }
 
 @ExperimentalOneConfigUiApi
-object SearchInterop {
+public object SearchInterop {
     @JvmStatic
-    fun scope(key: String): SearchScope = SearchScope(key)
+    public fun scope(key: String): SearchScope = SearchScope(key)
 
     @JvmStatic
-    fun metadata(
+    public fun metadata(
         title: String?,
         id: String?,
         description: String?,
@@ -37,7 +37,7 @@ object SearchInterop {
     ): SearchMetadata = SearchMetadata(title, id, description, section, category, subcategory, tags, modTitle, modDescription, path)
 
     @JvmStatic
-    fun document(id: String, scopes: Set<SearchScope>, metadata: SearchMetadata): SearchDocument = SearchDocument(id, scopes, metadata)
+    public fun document(id: String, scopes: Set<SearchScope>, metadata: SearchMetadata): SearchDocument = SearchDocument(id, scopes, metadata)
 }
 
 @ExperimentalOneConfigUiApi

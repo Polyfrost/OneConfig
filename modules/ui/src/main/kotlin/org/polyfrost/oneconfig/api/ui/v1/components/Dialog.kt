@@ -45,19 +45,19 @@ private val SCRIM = Color.Black.copy(alpha = 0.45f)
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ModalDialog(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+public fun ModalDialog(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     ModalDialog(onDismiss, DIALOG_WIDTH, Dp.Unspecified, DIALOG_PADDING, DIALOG_SPACING, true, content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ModalDialog(onDismiss: () -> Unit, width: Dp, dismissOnScrim: Boolean, content: @Composable ColumnScope.() -> Unit) {
+public fun ModalDialog(onDismiss: () -> Unit, width: Dp, dismissOnScrim: Boolean, content: @Composable ColumnScope.() -> Unit) {
     ModalDialog(onDismiss, width, Dp.Unspecified, DIALOG_PADDING, DIALOG_SPACING, dismissOnScrim, content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ModalDialog(
+public fun ModalDialog(
     onDismiss: () -> Unit,
     width: Dp,
     height: Dp,
@@ -92,13 +92,13 @@ fun ModalDialog(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ModalPanel(width: Dp, modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
+public fun ModalPanel(width: Dp, modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
     ModalPanel(width, Dp.Unspecified, DIALOG_PADDING, DIALOG_SPACING, modifier, content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ModalPanel(
+public fun ModalPanel(
     width: Dp,
     height: Dp,
     padding: PaddingValues,
@@ -120,26 +120,26 @@ fun ModalPanel(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun DialogTitle(text: String) {
+public fun DialogTitle(text: String) {
     Announce(text)
     Text(text, Modifier, OneConfigTheme.current.textColor, 18.sp, null, BaselineShift.None, FontWeight.SemiBold, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun DialogButtons(content: @Composable RowScope.() -> Unit) {
+public fun DialogButtons(content: @Composable RowScope.() -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), content = content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ConfirmDialog(title: String, text: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+public fun ConfirmDialog(title: String, text: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     ConfirmDialog(title, text, confirmLabel, cancelLabel(), null, true, true, onConfirm, onDismiss)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ConfirmDialog(
+public fun ConfirmDialog(
     title: String,
     text: String,
     confirmLabel: String?,

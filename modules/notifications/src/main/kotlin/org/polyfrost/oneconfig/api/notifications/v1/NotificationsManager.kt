@@ -33,14 +33,14 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Holds the set of currently-live notifications
  */
-object NotificationsManager {
+public object NotificationsManager {
     private const val MAX_HISTORY = 50
 
     private val _active = mutableStateListOf<Notification>()
     private val _history = mutableStateListOf<Notification>()
 
     @JvmStatic
-    fun ensureInitialized() {
+    public fun ensureInitialized() {
         if (_active.size < 0 || _history.size < 0) error("unreachable")
     }
 
@@ -52,14 +52,14 @@ object NotificationsManager {
     /**
      * The notifications currently on screen with the oldest first
      */
-    val active: List<Notification> get() = _active
+    public val active: List<Notification> get() = _active
 
     /**
      * Every notification that has been pushed up to [MAX_HISTORY] with the newest first
      */
-    val history: List<Notification> get() = _history
+    public val history: List<Notification> get() = _history
 
-    val unreadCount: Int get() = _history.count { !it.read }
+    public val unreadCount: Int get() = _history.count { !it.read }
 
     /**
      * Adds [notification] to the live set so it begins rendering on the next frame
@@ -67,7 +67,7 @@ object NotificationsManager {
      * Also records it in the [history] so it remains visible in the notifications center
      * after the toast dismisses
      */
-    fun push(notification: Notification) {
+    public fun push(notification: Notification) {
         mutate {
             _active.add(notification)
             _history.add(0, notification)
@@ -75,13 +75,13 @@ object NotificationsManager {
         }
     }
 
-    fun markAllRead() {
+    public fun markAllRead() {
         mutate {
             for (notification in _history) notification.read = true
         }
     }
 
-    fun removeFromHistory(notification: Notification) {
+    public fun removeFromHistory(notification: Notification) {
         mutate {
             _history.remove(notification)
         }
@@ -90,14 +90,14 @@ object NotificationsManager {
     /**
      * Fully retires [notification] by dropping it from history and dismissing it
      */
-    fun remove(notification: Notification) {
+    public fun remove(notification: Notification) {
         mutate {
             notification.dismissRequested = true
             _history.remove(notification)
         }
     }
 
-    fun clearHistory() {
+    public fun clearHistory() {
         mutate {
             _history.clear()
         }
@@ -106,26 +106,26 @@ object NotificationsManager {
     /**
      * Removes [notification] immediately and skips any exit animation
      */
-    fun dismiss(notification: Notification) {
+    public fun dismiss(notification: Notification) {
         mutate {
             _active.remove(notification)
         }
     }
 
-    fun dismiss(id: Long) {
+    public fun dismiss(id: Long) {
         mutate {
             _active.removeAll { it.id == id }
         }
     }
 
-    fun clearAll() {
+    public fun clearAll() {
         mutate {
             _active.clear()
         }
     }
 
-    val count: Int get() = _active.size
+    public val count: Int get() = _active.size
 
     @ApiStatus.Internal
-    fun contains(notification: Notification): Boolean = _active.contains(notification)
+    public fun contains(notification: Notification): Boolean = _active.contains(notification)
 }

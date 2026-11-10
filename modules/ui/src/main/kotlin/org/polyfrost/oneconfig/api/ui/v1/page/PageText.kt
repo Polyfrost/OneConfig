@@ -3,7 +3,7 @@ package org.polyfrost.oneconfig.api.ui.v1.page
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
-class PageText internal constructor(val key: String?, val fallback: String) {
+public class PageText internal constructor(public val key: String?, public val fallback: String) {
     override fun equals(other: Any?): Boolean =
         this === other || (other is PageText && other.key == key && other.fallback == fallback)
 
@@ -11,14 +11,14 @@ class PageText internal constructor(val key: String?, val fallback: String) {
 
     override fun toString(): String = "PageText(key=$key, fallback=$fallback)"
 
-    companion object {
+    public companion object {
         @JvmStatic
-        fun translatable(key: String, fallback: String): PageText {
+        public fun translatable(key: String, fallback: String): PageText {
             require(key.isNotBlank()) { "Translation key must not be blank" }
             return PageText(key, fallback)
         }
 
         @JvmStatic
-        fun literal(text: String): PageText = PageText(null, text)
+        public fun literal(text: String): PageText = PageText(null, text)
     }
 }

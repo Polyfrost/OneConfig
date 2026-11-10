@@ -27,27 +27,27 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyShadow
 
 @Suppress("UNUSED_PARAMETER")
-class SkiaGraphicsContext(measureDrawBounds: Boolean = false, snapshotCache: Boolean = true) : PlatformGraphicsContext() {
+public class SkiaGraphicsContext(measureDrawBounds: Boolean = false, snapshotCache: Boolean = true) : PlatformGraphicsContext() {
     override fun createPlatformGraphicsLayer(): PlatformGraphicsLayer = PolyGraphicsLayer()
 }
 
-class PolyGraphicsLayer : PlatformGraphicsLayer {
-    override var compositingStrategy = CompositingStrategy.Auto
-    override var pivotOffset = Offset.Unspecified
-    override var alpha = 1f
-    override var scaleX = 1f
-    override var scaleY = 1f
-    override var translationX = 0f
-    override var translationY = 0f
-    override var shadowElevation = 0f
-    override var ambientShadowColor = Color.Black
-    override var spotShadowColor = Color.Black
-    override var blendMode = BlendMode.SrcOver
+public class PolyGraphicsLayer : PlatformGraphicsLayer {
+    override var compositingStrategy: CompositingStrategy = CompositingStrategy.Auto
+    override var pivotOffset: Offset = Offset.Unspecified
+    override var alpha: Float = 1f
+    override var scaleX: Float = 1f
+    override var scaleY: Float = 1f
+    override var translationX: Float = 0f
+    override var translationY: Float = 0f
+    override var shadowElevation: Float = 0f
+    override var ambientShadowColor: Color = Color.Black
+    override var spotShadowColor: Color = Color.Black
+    override var blendMode: BlendMode = BlendMode.SrcOver
     override var colorFilter: ColorFilter? = null
-    override var rotationX = 0f
-    override var rotationY = 0f
-    override var rotationZ = 0f
-    override var cameraDistance = 8f
+    override var rotationX: Float = 0f
+    override var rotationY: Float = 0f
+    override var rotationZ: Float = 0f
+    override var cameraDistance: Float = 8f
     override var renderEffect: RenderEffect? = null
 
     private var left = 0f

@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.api.config.v1.internal
 
-open class ConfigVisualizer {
-    companion object {
-        const val DEFAULT_CATEGORY = "General"
-        const val DEFAULT_SUBCATEGORY = "General"
+public open class ConfigVisualizer {
+    public companion object {
+        public const val DEFAULT_CATEGORY: String = "General"
+        public const val DEFAULT_SUBCATEGORY: String = "General"
     }
 }

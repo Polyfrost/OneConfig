@@ -1,16 +1,16 @@
 package org.polyfrost.compose.render
 
-data class PolyFont(val name: String, val size: Float) {
-    class Metrics @JvmOverloads constructor(
-        val ascent: Float, val descent: Float, val leading: Float, val underlinePosition: Float, val underlineThickness: Float,
-        val strikeoutPosition: Float = ascent / 3f, val strikeoutThickness: Float = underlineThickness,
+public data class PolyFont(val name: String, val size: Float) {
+    public class Metrics @JvmOverloads constructor(
+        public val ascent: Float, public val descent: Float, public val leading: Float, public val underlinePosition: Float, public val underlineThickness: Float,
+        public val strikeoutPosition: Float = ascent / 3f, public val strikeoutThickness: Float = underlineThickness,
     ) {
-        val spacing: Float get() = descent - ascent + leading
+        public val spacing: Float get() = descent - ascent + leading
     }
 
-    interface Engine {
-        fun measureTextWidth(font: PolyFont, text: String): Float
-        fun metrics(font: PolyFont): Metrics
+    public interface Engine {
+        public fun measureTextWidth(font: PolyFont, text: String): Float
+        public fun metrics(font: PolyFont): Metrics
     }
 
     private var cachedMetrics: Metrics? = null
@@ -23,14 +23,14 @@ data class PolyFont(val name: String, val size: Float) {
             return engine.metrics(this).also { cachedMetrics = it; metricsRevision = revision }
         }
 
-    fun measureTextWidth(text: String): Float = engine.measureTextWidth(this, text)
+    public fun measureTextWidth(text: String): Float = engine.measureTextWidth(this, text)
 
-    companion object {
+    public companion object {
         @JvmStatic
-        fun default(size: Float) = PolyFont(FontManager.DEFAULT_KEY, size)
+        public fun default(size: Float): PolyFont = PolyFont(FontManager.DEFAULT_KEY, size)
 
         @JvmStatic
-        var engine: Engine = object : Engine {
+        public var engine: Engine = object : Engine {
             override fun measureTextWidth(font: PolyFont, text: String) = error("PolyFont.engine is not installed")
             override fun metrics(font: PolyFont) = error("PolyFont.engine is not installed")
         }

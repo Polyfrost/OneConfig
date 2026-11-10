@@ -8,20 +8,20 @@ import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 
 @ExperimentalOneConfigUiApi
-abstract class ModsPageDecorator {
+public abstract class ModsPageDecorator {
     @Composable
-    abstract fun Decorate(content: @Composable () -> Unit)
+    public abstract fun Decorate(content: @Composable () -> Unit)
 }
 
 @ExperimentalOneConfigUiApi
-object ModsPageDecorators {
+public object ModsPageDecorators {
     private val LOGGER = LogManager.getLogger("OneConfig/ModsPageDecorators")
     private val lock = Any()
 
     private var entries by mutableStateOf(emptyList<ModsPageDecorator>())
 
     @JvmStatic
-    fun register(entry: ModsPageDecorator) {
+    public fun register(entry: ModsPageDecorator) {
         synchronized(lock) {
             if (entry in entries) {
                 LOGGER.debug("Ignoring ModsPageDecorator {} that is already registered", entry.javaClass.name)
@@ -32,12 +32,12 @@ object ModsPageDecorators {
     }
 
     @JvmStatic
-    fun unregister(entry: ModsPageDecorator): Boolean = synchronized(lock) {
+    public fun unregister(entry: ModsPageDecorator): Boolean = synchronized(lock) {
         if (entry !in entries) return false
         Snapshot.withMutableSnapshot { entries = entries - entry }
         true
     }
 
     @JvmStatic
-    fun all(): List<ModsPageDecorator> = entries
+    public fun all(): List<ModsPageDecorator> = entries
 }

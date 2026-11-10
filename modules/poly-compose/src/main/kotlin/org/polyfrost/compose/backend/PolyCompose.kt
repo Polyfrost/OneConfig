@@ -6,12 +6,12 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.graphics.platform.PlatformGraphicsRegistry
 import androidx.compose.ui.text.platform.PlatformTextRegistry
 
-object PolyCompose {
+public object PolyCompose {
     private var installed = false
 
     @JvmStatic
     @Synchronized
-    fun install() {
+    public fun install() {
         if (installed) return
         installed = true
         PlatformGraphicsRegistry.register(PolyGraphics)

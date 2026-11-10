@@ -14,25 +14,25 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Text(text: Any, modifier: Modifier, color: Color) {
+public fun Text(text: Any, modifier: Modifier, color: Color) {
     Text(text, modifier, color, 14.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Text(text: Any, modifier: Modifier, color: Color, fontSize: TextUnit) {
+public fun Text(text: Any, modifier: Modifier, color: Color, fontSize: TextUnit) {
     Text(text, modifier, color, fontSize, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Text(text: Any, modifier: Modifier, color: Color, fontSize: TextUnit, fontWeight: FontWeight) {
+public fun Text(text: Any, modifier: Modifier, color: Color, fontSize: TextUnit, fontWeight: FontWeight) {
     Text(text, modifier, color, fontSize, null, BaselineShift.None, fontWeight, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Text(
+public fun Text(
     text: Any,
     modifier: Modifier,
     color: Color,

@@ -8,12 +8,12 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Icon(iconName: String, color: Color, modifier: Modifier) {
+public fun Icon(iconName: String, color: Color, modifier: Modifier) {
     componentsBridge().Icon(iconName, color, modifier, false)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean) {
+public fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean) {
     componentsBridge().Icon(iconName, color, modifier, fitAspectRatio)
 }

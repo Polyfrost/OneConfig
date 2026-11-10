@@ -125,6 +125,10 @@ subprojects {
         tasks.named("checkKotlinAbi") { mustRunAfter("updateKotlinAbi") }
         tasks.withType<JavaCompile>().configureEach { finalizedBy("checkKotlinAbi") }
         tasks.withType<KotlinCompile>().configureEach { finalizedBy("checkKotlinAbi") }
+        // the explicit modifiers are only flagged as redundant until explicit API mode is enabled
+        tasks.named<KotlinCompile>("compileKotlin") {
+            compilerOptions.freeCompilerArgs.add("-Xwarning-level=REDUNDANT_VISIBILITY_MODIFIER:disabled")
+        }
     }
 
     val kotlinModuleName = project.name

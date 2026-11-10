@@ -4,7 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-data class ModInfo @JvmOverloads constructor(
+public data class ModInfo @JvmOverloads constructor(
     val id: String,
     val name: String,
     val version: String,
@@ -29,7 +29,7 @@ data class ModInfo @JvmOverloads constructor(
      *
      * @return absolute path to the extracted icon file or null if unavailable
      */
-    fun extractIconFile(): String? {
+    public fun extractIconFile(): String? {
         val iconPath = modIconPath ?: return null
         val root = file ?: return null
         return runCatching {
@@ -43,16 +43,16 @@ data class ModInfo @JvmOverloads constructor(
         }.getOrNull()
     }
 
-    companion object {
+    public companion object {
         @Volatile
         private var cached: Set<ModInfo>? = null
 
         @get:JvmStatic
-        val loadedMods: Set<ModInfo>
+        public val loadedMods: Set<ModInfo>
             get() = cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
     }
 }
 
-interface ModInfoProvider {
-    fun listMods(): Set<ModInfo>
+public interface ModInfoProvider {
+    public fun listMods(): Set<ModInfo>
 }

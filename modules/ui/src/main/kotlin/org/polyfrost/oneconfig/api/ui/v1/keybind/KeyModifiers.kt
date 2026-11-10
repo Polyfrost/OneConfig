@@ -3,12 +3,12 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind
 import kotlin.experimental.and
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
-object KeyModifiers {
-    const val NONE: Byte = 0
-    const val SHIFT: Byte = 1
-    const val CTRL: Byte = 2
-    const val ALT: Byte = 4
-    const val META: Byte = 8
+public object KeyModifiers {
+    public const val NONE: Byte = 0
+    public const val SHIFT: Byte = 1
+    public const val CTRL: Byte = 2
+    public const val ALT: Byte = 4
+    public const val META: Byte = 8
 
     /**
      * The modifier flag a key code stands for, or [NONE] when it is not a modifier
@@ -17,9 +17,9 @@ object KeyModifiers {
      * resolved through the platform rather than hardcoded
      */
     @JvmStatic
-    fun of(key: Int): Byte = BY_KEY[key] ?: NONE
+    public fun of(key: Int): Byte = BY_KEY[key] ?: NONE
 
-    fun has(mask: Byte, flag: Byte) = (mask and flag) == flag
+    public fun has(mask: Byte, flag: Byte): Boolean = (mask and flag) == flag
 
     private val BY_KEY: Map<Int, Byte> by lazy {
         val keys = Platform.compatibility().keys()

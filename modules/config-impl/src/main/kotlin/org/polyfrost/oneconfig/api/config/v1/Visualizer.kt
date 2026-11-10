@@ -42,48 +42,48 @@ import androidx.compose.runtime.Composable
  * There is no distinction between built-in and third-party visualizers because both use the same API
  */
 @Suppress("UNCHECKED_CAST")
-fun interface Visualizer {
+public fun interface Visualizer {
 
     @Composable
-    fun visualize(prop: Property<*>)
+    public fun visualize(prop: Property<*>)
 
-    class ButtonVisualizer : Visualizer {
+    public class ButtonVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[ButtonVisualizer::class.java]?.visualize(prop) }
     }
 
-    class ColorVisualizer : Visualizer {
+    public class ColorVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[ColorVisualizer::class.java]?.visualize(prop) }
     }
 
-    class DropdownVisualizer : Visualizer {
+    public class DropdownVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[DropdownVisualizer::class.java]?.visualize(prop) }
     }
 
-    class KeybindVisualizer : Visualizer {
+    public class KeybindVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[KeybindVisualizer::class.java]?.visualize(prop) }
     }
 
-    class InfoVisualizer : Visualizer {
+    public class InfoVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[InfoVisualizer::class.java]?.visualize(prop) }
     }
 
-    class DraggableListVisualizer : Visualizer {
+    public class DraggableListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[DraggableListVisualizer::class.java]?.visualize(prop) }
     }
 
-    class MultiSelectDropdownVisualizer : Visualizer {
+    public class MultiSelectDropdownVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[MultiSelectDropdownVisualizer::class.java]?.visualize(prop) }
     }
 
-    class NumberVisualizer : Visualizer {
+    public class NumberVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[NumberVisualizer::class.java]?.visualize(prop) }
     }
 
-    class RadioVisualizer : Visualizer {
+    public class RadioVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[RadioVisualizer::class.java]?.visualize(prop) }
     }
 
-    class SliderVisualizer : Visualizer {
+    public class SliderVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SliderVisualizer::class.java]?.visualize(prop) }
     }
 
@@ -93,14 +93,14 @@ fun interface Visualizer {
      *
      * Writes both ends at once keeping start below end
      */
-    class RangeSliderVisualizer : Visualizer {
+    public class RangeSliderVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeSliderVisualizer::class.java]?.visualize(prop) }
     }
 
     /**
      * A start and end pair edited with two number inputs and no track, stored the same way as [RangeSliderVisualizer]
      */
-    class RangeNumberVisualizer : Visualizer {
+    public class RangeNumberVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeNumberVisualizer::class.java]?.visualize(prop) }
     }
 
@@ -109,14 +109,14 @@ fun interface Visualizer {
      *
      * Each range takes two consecutive values so `[0, 10, 20, 30]` holds the ranges 0-10 and 20-30
      */
-    class RangeSliderListVisualizer : Visualizer {
+    public class RangeSliderListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeSliderListVisualizer::class.java]?.visualize(prop) }
     }
 
     /**
      * A user-editable list of [RangeNumberVisualizer] rows stored the same way as [RangeSliderListVisualizer]
      */
-    class RangeNumberListVisualizer : Visualizer {
+    public class RangeNumberListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[RangeNumberListVisualizer::class.java]?.visualize(prop) }
     }
 
@@ -135,7 +135,7 @@ fun interface Visualizer {
      * On a foreign-backed config a null-sentinel property must opt out of snapshots with
      * [CompatSnapshots.NO_SNAPSHOT_META] or an older value will resurrect itself and undo "inherit"
      */
-    class InheritableSliderVisualizer : Visualizer {
+    public class InheritableSliderVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[InheritableSliderVisualizer::class.java]?.visualize(prop) }
     }
 
@@ -148,23 +148,23 @@ fun interface Visualizer {
      *
      * `entryLabel`/`nextValue` are both `java.util.function.Function`s that control how an entry reads and what "add" appends
      */
-    class NumberChainVisualizer : Visualizer {
+    public class NumberChainVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[NumberChainVisualizer::class.java]?.visualize(prop) }
     }
 
-    class SwitchVisualizer : Visualizer {
+    public class SwitchVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SwitchVisualizer::class.java]?.visualize(prop) }
     }
 
-    class CheckboxVisualizer : Visualizer {
+    public class CheckboxVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[CheckboxVisualizer::class.java]?.visualize(prop) }
     }
 
-    class TextVisualizer : Visualizer {
+    public class TextVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[TextVisualizer::class.java]?.visualize(prop) }
     }
 
-    class TextListVisualizer : Visualizer {
+    public class TextListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[TextListVisualizer::class.java]?.visualize(prop) }
     }
 
@@ -174,7 +174,7 @@ fun interface Visualizer {
      *
      * A `maxEntries` metadata value of one makes it a single selector
      */
-    class ItemListVisualizer : Visualizer {
+    public class ItemListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[ItemListVisualizer::class.java]?.visualize(prop) }
     }
 
@@ -184,31 +184,31 @@ fun interface Visualizer {
      *
      * A `maxEntries` metadata value of one makes it a single selector
      */
-    class EffectListVisualizer : Visualizer {
+    public class EffectListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[EffectListVisualizer::class.java]?.visualize(prop) }
     }
 
-    class FileVisualizer : Visualizer {
+    public class FileVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[FileVisualizer::class.java]?.visualize(prop) }
     }
 
-    class FileListVisualizer : Visualizer {
+    public class FileListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[FileListVisualizer::class.java]?.visualize(prop) }
     }
 
-    class ColorListVisualizer : Visualizer {
+    public class ColorListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[ColorListVisualizer::class.java]?.visualize(prop) }
     }
 
-    class NumberListVisualizer : Visualizer {
+    public class NumberListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[NumberListVisualizer::class.java]?.visualize(prop) }
     }
 
-    class SliderListVisualizer : Visualizer {
+    public class SliderListVisualizer : Visualizer {
         @Composable override fun visualize(prop: Property<*>) { Visualizer[SliderListVisualizer::class.java]?.visualize(prop) }
     }
 
-    companion object {
+    public companion object {
         private val registry = HashMap<Class<out Visualizer>, Visualizer>()
 
         /**
@@ -218,10 +218,10 @@ fun interface Visualizer {
          *
          * This will overwrite the existing visualizer if there is one already registered
          */
-        fun register(cls: Class<out Visualizer>, impl: Visualizer) {
+        public fun register(cls: Class<out Visualizer>, impl: Visualizer) {
             registry[cls] = impl
         }
 
-        operator fun get(cls: Class<out Visualizer>): Visualizer? = registry[cls]
+        public operator fun get(cls: Class<out Visualizer>): Visualizer? = registry[cls]
     }
 }

@@ -18,7 +18,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.keybindBridge
 
 @Suppress("UnstableApiUsage")
-object KeybindManager {
+public object KeybindManager {
     private val LOGGER = LogManager.getLogger("OneConfig/Keybinds")
 
     private val binds = CopyOnWriteArrayList<OneConfigKeybind>()
@@ -88,21 +88,21 @@ object KeybindManager {
     }
 
     @JvmStatic
-    fun register(bind: OneConfigKeybind): OneConfigKeybind {
+    public fun register(bind: OneConfigKeybind): OneConfigKeybind {
         if (bind !in binds) binds.add(bind)
         bridge?.register(bind)
         return bind
     }
 
     @JvmStatic
-    fun unregister(bind: OneConfigKeybind) {
+    public fun unregister(bind: OneConfigKeybind) {
         binds.remove(bind)
         activeBinds.remove(bind)
         bridge?.unregister(bind)
     }
 
     @JvmStatic
-    fun isRegistered(bind: OneConfigKeybind): Boolean = bind in binds
+    public fun isRegistered(bind: OneConfigKeybind): Boolean = bind in binds
 
     /**
      * Re-push an already-registered keybind to the Minecraft Controls menu
@@ -111,7 +111,7 @@ object KeybindManager {
      * mapping picks up the new metadata
      */
     @JvmStatic
-    fun refreshMinecraftBinding(bind: OneConfigKeybind) {
+    public fun refreshMinecraftBinding(bind: OneConfigKeybind) {
         if (bind in binds) bridge?.register(bind)
     }
 
@@ -124,7 +124,7 @@ object KeybindManager {
      * Nothing happens if [old] was never registered
      */
     @JvmStatic
-    fun replace(old: OneConfigKeybind?, new: OneConfigKeybind): OneConfigKeybind {
+    public fun replace(old: OneConfigKeybind?, new: OneConfigKeybind): OneConfigKeybind {
         if (old != null && new !== old) {
             if (new.name == null) new.name = old.name
             if (new.category == null) new.category = old.category
@@ -141,12 +141,12 @@ object KeybindManager {
     }
 
     @JvmStatic
-    fun addRebindListener(listener: (OneConfigKeybind, OneConfigKeybind) -> Unit) {
+    public fun addRebindListener(listener: (OneConfigKeybind, OneConfigKeybind) -> Unit) {
         rebindListeners.add(listener)
     }
 
     @JvmStatic
-    fun addMenuEditListener(listener: (OneConfigKeybind) -> Unit) {
+    public fun addMenuEditListener(listener: (OneConfigKeybind) -> Unit) {
         menuEditListeners.add(listener)
     }
 
@@ -156,7 +156,7 @@ object KeybindManager {
      * Re-syncs the vanilla mapping and notifies [menuEditListeners]
      */
     @JvmStatic
-    fun notifyMenuEdit(bind: OneConfigKeybind) {
+    public fun notifyMenuEdit(bind: OneConfigKeybind) {
         for (listener in menuEditListeners) {
             try {
                 listener(bind)
@@ -168,7 +168,7 @@ object KeybindManager {
 
     @JvmStatic
     @JvmOverloads
-    fun rebindFromMinecraft(
+    public fun rebindFromMinecraft(
         old: OneConfigKeybind,
         keyCodes: IntArray?,
         mouseBtns: IntArray? = null,
@@ -192,28 +192,28 @@ object KeybindManager {
     }
 
     @JvmStatic
-    fun findConflicts(bind: OneConfigKeybind): List<OneConfigKeybind> {
+    public fun findConflicts(bind: OneConfigKeybind): List<OneConfigKeybind> {
         if (!bind.isBound) return emptyList()
         return binds.filter { it.conflictsWith(bind) }
     }
 
     @ExperimentalOneConfigUiApi
     @JvmStatic
-    fun configKeybinds(): List<ConfigKeybind> = keybindBridge()?.configKeybinds() ?: emptyList()
+    public fun configKeybinds(): List<ConfigKeybind> = keybindBridge()?.configKeybinds() ?: emptyList()
 
     @ExperimentalOneConfigUiApi
     @JvmStatic
-    fun addInputCapture(capture: BooleanSupplier) {
+    public fun addInputCapture(capture: BooleanSupplier) {
         if (!inputCaptures.addIfAbsent(capture)) LOGGER.debug("Ignoring input capture {} that is already registered", capture.javaClass.name)
     }
 
     @ExperimentalOneConfigUiApi
     @JvmStatic
-    fun removeInputCapture(capture: BooleanSupplier): Boolean = inputCaptures.remove(capture)
+    public fun removeInputCapture(capture: BooleanSupplier): Boolean = inputCaptures.remove(capture)
 
     @ExperimentalOneConfigUiApi
     @JvmStatic
-    fun isInputCaptured(): Boolean = inputCaptures.any { capture ->
+    public fun isInputCaptured(): Boolean = inputCaptures.any { capture ->
         try {
             capture.asBoolean
         } catch (t: Throwable) {
@@ -224,19 +224,19 @@ object KeybindManager {
 
     /** True when a registered keybind containing [button] matches the current input state */
     @JvmStatic
-    fun hasTriggeredMouseBind(button: Int): Boolean = binds.any { isTriggeredByMouse(it, button) }
+    public fun hasTriggeredMouseBind(button: Int): Boolean = binds.any { isTriggeredByMouse(it, button) }
 
     /** True when [bind] contains [button] and matches the current input state */
     @JvmStatic
-    fun isTriggeredByMouse(bind: OneConfigKeybind, button: Int): Boolean =
+    public fun isTriggeredByMouse(bind: OneConfigKeybind, button: Int): Boolean =
         bind.mouseBtns?.contains(button) == true && bind.test(downKeys, downMouse, mods)
 
     /** Keys held down right now, including ones pressed before the current screen opened */
     @JvmStatic
-    val heldKeys: Set<Int> = Collections.unmodifiableSet(downKeys)
+    public val heldKeys: Set<Int> = Collections.unmodifiableSet(downKeys)
 
     @JvmStatic
-    fun builder() = KeybindHelper()
+    public fun builder(): KeybindHelper = KeybindHelper()
 
     private fun checkBinds() {
         val typing = TextInputFocus.isTyping

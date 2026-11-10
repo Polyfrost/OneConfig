@@ -3,8 +3,8 @@ package org.polyfrost.compose.runtime
 import androidx.compose.runtime.AbstractApplier
 import org.polyfrost.compose.node.PolyNode
 
-class PolyApplier(root: PolyNode) : AbstractApplier<PolyNode>(root) {
-    var changes = 0L
+public class PolyApplier(root: PolyNode) : AbstractApplier<PolyNode>(root) {
+    public var changes: Long = 0L
         private set
 
     override fun onEndChanges() {

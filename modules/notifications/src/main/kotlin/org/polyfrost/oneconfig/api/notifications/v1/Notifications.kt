@@ -51,7 +51,7 @@ import org.jetbrains.skia.Image
  *     .send();
  * ```
  */
-object Notifications {
+public object Notifications {
     private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
 
     /**
@@ -63,7 +63,7 @@ object Notifications {
      */
     @JvmStatic
     @JvmOverloads
-    fun send(
+    public fun send(
         title: String,
         message: String,
         type: NotificationType = NotificationType.INFO,
@@ -79,7 +79,7 @@ object Notifications {
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @JvmStatic
     @JvmName("send")
-    fun sendSkia(
+    public fun sendSkia(
         title: String,
         message: String,
         type: NotificationType = NotificationType.INFO,
@@ -93,25 +93,25 @@ object Notifications {
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @JvmStatic
     @JvmName("send")
-    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?): Notification =
+    public fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?): Notification =
         send(title, message, type, null)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @JvmStatic
     @JvmName("send")
-    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float): Notification =
+    public fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float): Notification =
         send(title, message, type, null, duration)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @JvmStatic
     @JvmName("send")
-    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?): Notification =
+    public fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?): Notification =
         send(title, message, type, null, duration, progress)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @JvmStatic
     @JvmName("send")
-    fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, onClick: Runnable?): Notification =
+    public fun sendSkia(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, onClick: Runnable?): Notification =
         send(title, message, type, null, duration, progress, onClick)
 
     private fun push(notification: Notification): Notification {
@@ -122,17 +122,17 @@ object Notifications {
 
     @JvmStatic
     @JvmOverloads
-    fun info(title: String, message: String, duration: Float = Notification.DEFAULT_DURATION): Notification =
+    public fun info(title: String, message: String, duration: Float = Notification.DEFAULT_DURATION): Notification =
         send(title, message, NotificationType.INFO, duration = duration)
 
     @JvmStatic
     @JvmOverloads
-    fun success(title: String, message: String, duration: Float = Notification.DEFAULT_DURATION): Notification =
+    public fun success(title: String, message: String, duration: Float = Notification.DEFAULT_DURATION): Notification =
         send(title, message, NotificationType.SUCCESS, duration = duration)
 
     @JvmStatic
     @JvmOverloads
-    fun error(title: String, message: String, duration: Float = Notification.DEFAULT_DURATION): Notification =
+    public fun error(title: String, message: String, duration: Float = Notification.DEFAULT_DURATION): Notification =
         send(title, message, NotificationType.ERROR, duration = duration)
 
     /**
@@ -142,29 +142,29 @@ object Notifications {
      * The toast stays up until the supplier reports `>= 1`
      */
     @JvmStatic
-    fun progress(title: String, message: String, progress: Callable<Float>): Notification =
+    public fun progress(title: String, message: String, progress: Callable<Float>): Notification =
         send(title, message, NotificationType.PROGRESS, duration = -1f, progress = progress)
 
     @JvmStatic
-    fun dismiss(notification: Notification) = NotificationsManager.dismiss(notification)
+    public fun dismiss(notification: Notification): Unit = NotificationsManager.dismiss(notification)
 
     @JvmStatic
-    fun clearAll() = NotificationsManager.clearAll()
+    public fun clearAll(): Unit = NotificationsManager.clearAll()
 
     @JvmStatic
     @JvmOverloads
-    fun icon(resourcePath: String, size: Int = 64): PolyBitmap? = SvgMask.get(resourcePath, size)
+    public fun icon(resourcePath: String, size: Int = 64): PolyBitmap? = SvgMask.get(resourcePath, size)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @JvmStatic
     @JvmOverloads
     @JvmName("icon")
-    fun skiaIcon(resourcePath: String, size: Int = 64): Image? = null
+    public fun skiaIcon(resourcePath: String, size: Int = 64): Image? = null
 
     @JvmStatic
-    fun builder(title: String, message: String): Builder = Builder(title, message)
+    public fun builder(title: String, message: String): Builder = Builder(title, message)
 
-    class Builder internal constructor(private val title: String, private val message: String) {
+    public class Builder internal constructor(private val title: String, private val message: String) {
         private var type: NotificationType = NotificationType.INFO
         private var icon: PolyBitmap? = null
         private var duration: Float = Notification.DEFAULT_DURATION
@@ -172,32 +172,32 @@ object Notifications {
         private var onClick: Runnable? = null
         private val actions = ArrayList<NotificationAction>()
 
-        fun type(type: NotificationType) = apply { this.type = type }
-        fun icon(icon: PolyBitmap?) = apply { this.icon = icon }
+        public fun type(type: NotificationType): Builder = apply { this.type = type }
+        public fun icon(icon: PolyBitmap?): Builder = apply { this.icon = icon }
 
         @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
         @JvmName("icon")
-        fun skiaIcon(icon: Image?) = apply { this.icon = null }
-        fun duration(duration: Float) = apply { this.duration = duration }
+        public fun skiaIcon(icon: Image?): Builder = apply { this.icon = null }
+        public fun duration(duration: Float): Builder = apply { this.duration = duration }
 
         /**
          * Makes the notification persistent so it stays until dismissed or progress completes
          */
-        fun persistent() = apply { this.duration = -1f }
+        public fun persistent(): Builder = apply { this.duration = -1f }
 
-        fun progress(progress: Callable<Float>?) = apply {
+        public fun progress(progress: Callable<Float>?): Builder = apply {
             this.progress = progress
             if (progress != null) this.type = NotificationType.PROGRESS
         }
 
-        fun onClick(onClick: Runnable?) = apply { this.onClick = onClick }
-        fun action(action: NotificationAction) = apply { this.actions.add(action) }
-        fun action(label: String, onClick: Runnable) = apply { this.actions.add(NotificationAction(label, onClick = onClick)) }
+        public fun onClick(onClick: Runnable?): Builder = apply { this.onClick = onClick }
+        public fun action(action: NotificationAction): Builder = apply { this.actions.add(action) }
+        public fun action(label: String, onClick: Runnable): Builder = apply { this.actions.add(NotificationAction(label, onClick = onClick)) }
 
         /**
          * Builds and pushes the notification
          */
-        fun send(): Notification =
+        public fun send(): Notification =
             push(Notification(title, message, type, icon, duration, progress, actions.toList(), onClick))
     }
 }

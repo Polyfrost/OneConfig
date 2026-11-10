@@ -9,11 +9,11 @@ import org.polyfrost.compose.render.PolyGlyphPage
  * A glyph of the game's active font, drawn from the [u0]..[v1] region of [bitmap] (null for blank glyphs) and tinted by the text color.
  * Metrics are in unscaled text units: [top] is measured from the line top, and [offset] is both the bold and the shadow offset.
  */
-class McGlyph(
-    val bitmap: PolyBitmap?,
-    val u0: Float, val v0: Float, val u1: Float, val v1: Float,
-    val top: Float, val width: Float, val height: Float,
-    val advance: Float, val offset: Float,
+public class McGlyph(
+    public val bitmap: PolyBitmap?,
+    public val u0: Float, public val v0: Float, public val u1: Float, public val v1: Float,
+    public val top: Float, public val width: Float, public val height: Float,
+    public val advance: Float, public val offset: Float,
 ) {
     private val pixelX = bitmap?.let { (u0 * it.width).roundToInt() } ?: 0
     private val pixelY = bitmap?.let { (v0 * it.height).roundToInt() } ?: 0
@@ -39,18 +39,18 @@ class McGlyph(
     }
 }
 
-object McGlyphs {
+public object McGlyphs {
     /**
      * Glyphs of the game's active font for Minecraft text drawn by the tessellator; codepoints it returns null for fall back to the
      * bundled faces. Call [FontManager.invalidateMetrics] once the glyphs it returns change.
      */
     @JvmStatic
     @Volatile
-    var source: ((codepoint: Int) -> McGlyph?)? = null
+    public var source: ((codepoint: Int) -> McGlyph?)? = null
 
     /** Width of [text], honoring § formatting codes, as the tessellator draws it. */
     @JvmStatic
-    fun width(text: String, scale: Float): Float {
+    public fun width(text: String, scale: Float): Float {
         val source = source
         var w = 0f
         var bold = false

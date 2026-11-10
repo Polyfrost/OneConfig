@@ -1,20 +1,20 @@
 package org.polyfrost.oneconfig.api.ui.v1
 
-class ModCardType @JvmOverloads constructor(
-    val id: String,
-    val title: String,
-    val icon: String? = null,
-    val priority: Int = 0,
-    val collapsedByDefault: Boolean = false,
+public class ModCardType @JvmOverloads constructor(
+    public val id: String,
+    public val title: String,
+    public val icon: String? = null,
+    public val priority: Int = 0,
+    public val collapsedByDefault: Boolean = false,
 ) {
-    override fun equals(other: Any?) = this === other || (other is ModCardType && other.id == id)
+    override fun equals(other: Any?): Boolean = this === other || (other is ModCardType && other.id == id)
 
-    override fun hashCode() = id.hashCode()
+    override fun hashCode(): Int = id.hashCode()
 
-    override fun toString() =
+    override fun toString(): String =
         "ModCardType(id=$id, title=$title, priority=$priority, collapsedByDefault=$collapsedByDefault)"
 }
 
-fun interface ModCardTypeResolver {
-    fun typeIdFor(modId: String): String?
+public fun interface ModCardTypeResolver {
+    public fun typeIdFor(modId: String): String?
 }

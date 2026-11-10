@@ -9,20 +9,20 @@ import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun IconButton(iconName: String, modifier: Modifier, onClick: () -> Unit) {
+public fun IconButton(iconName: String, modifier: Modifier, onClick: () -> Unit) {
     IconButton(iconName, modifier, true, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun IconButton(iconName: String, modifier: Modifier, enabled: Boolean, onClick: () -> Unit) {
+public fun IconButton(iconName: String, modifier: Modifier, enabled: Boolean, onClick: () -> Unit) {
     val textColor = OneConfigTheme.current.textColor
     componentsBridge().IconButton(iconName, modifier, textColor.copy(alpha = 0.7f), textColor, enabled, false, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun IconButton(
+public fun IconButton(
     iconName: String,
     modifier: Modifier,
     foreground: Color,

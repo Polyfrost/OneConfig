@@ -36,13 +36,13 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 
 @ExperimentalOneConfigUiApi
-fun <T> List<T>.withItemMoved(from: Int, to: Int): List<T>? {
+public fun <T> List<T>.withItemMoved(from: Int, to: Int): List<T>? {
     if (from !in indices || to !in indices) return null
     return toMutableList().also { it.add(to, it.removeAt(from)) }
 }
 
 @ExperimentalOneConfigUiApi
-class ReorderState internal constructor(
+public class ReorderState internal constructor(
     private val orientation: Orientation,
     private val scope: CoroutineScope,
 ) {
@@ -57,7 +57,7 @@ class ReorderState internal constructor(
     private val slots = HashMap<Any, Slot>()
     private val settle = Animatable(0f)
 
-    var draggingKey by mutableStateOf<Any?>(null)
+    public var draggingKey: Any? by mutableStateOf<Any?>(null)
         private set
 
     private var settlingKey by mutableStateOf<Any?>(null)
@@ -66,7 +66,7 @@ class ReorderState internal constructor(
     private var grab = 0f
     private var movedAt = 0L
 
-    val isDragging: Boolean get() = draggingKey != null
+    public val isDragging: Boolean get() = draggingKey != null
 
     internal val isVertical: Boolean get() = orientation == Orientation.Vertical
 
@@ -171,12 +171,12 @@ class ReorderState internal constructor(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun rememberReorderState(onMove: (from: Int, to: Int) -> Unit): ReorderState =
+public fun rememberReorderState(onMove: (from: Int, to: Int) -> Unit): ReorderState =
     rememberReorderState(Orientation.Vertical, onMove, null)
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun rememberReorderState(orientation: Orientation, onMove: (from: Int, to: Int) -> Unit, onDragEnd: (() -> Unit)?): ReorderState {
+public fun rememberReorderState(orientation: Orientation, onMove: (from: Int, to: Int) -> Unit, onDragEnd: (() -> Unit)?): ReorderState {
     val scope = rememberCoroutineScope()
     val state = remember(orientation) { ReorderState(orientation, scope) }
     val move by rememberUpdatedState(onMove)
@@ -187,10 +187,10 @@ fun rememberReorderState(orientation: Orientation, onMove: (from: Int, to: Int) 
 }
 
 @ExperimentalOneConfigUiApi
-fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int): Modifier = reorderItem(state, key, index, true)
+public fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int): Modifier = reorderItem(state, key, index, true)
 
 @ExperimentalOneConfigUiApi
-fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabled: Boolean): Modifier = composed {
+public fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabled: Boolean): Modifier = composed {
     state.index(key, index)
     DisposableEffect(state, key) { onDispose { state.forget(key) } }
     val holder = remember { ReorderCoordinates() }

@@ -11,7 +11,7 @@ import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyApplier
 
 @Composable
-fun PolyBox(
+public fun PolyBox(
     modifier: PolyModifier = PolyModifier,
     content: @Composable () -> Unit = {},
 ) {
@@ -23,7 +23,7 @@ fun PolyBox(
 }
 
 @Composable
-fun PolyImage(
+public fun PolyImage(
     modifier: PolyModifier = PolyModifier,
     image: PolyBitmap,
 ) {
@@ -34,7 +34,7 @@ fun PolyImage(
 }
 
 @Composable
-fun PolyRow(
+public fun PolyRow(
     gap: Float = 0f,
     modifier: PolyModifier = PolyModifier,
     content: @Composable () -> Unit = {},
@@ -50,7 +50,7 @@ fun PolyRow(
 }
 
 @Composable
-fun PolyColumn(
+public fun PolyColumn(
     gap: Float = 0f,
     modifier: PolyModifier = PolyModifier,
     content: @Composable () -> Unit = {},
@@ -66,7 +66,7 @@ fun PolyColumn(
 }
 
 @Composable
-fun PolyText(
+public fun PolyText(
     text: String,
     color: PolyColor = PolyColor.WHITE,
     fontSize: Float = 12f,
@@ -92,7 +92,7 @@ fun PolyText(
 }
 
 @Composable
-fun PolyMcText(
+public fun PolyMcText(
     text: String,
     color: PolyColor = PolyColor.WHITE,
     shadow: Boolean = true,
@@ -103,7 +103,7 @@ fun PolyMcText(
 }
 
 @Composable
-fun PolyMcText(
+public fun PolyMcText(
     text: String,
     outlineColor: PolyColor?,
     color: PolyColor = PolyColor.WHITE,
@@ -125,7 +125,7 @@ fun PolyMcText(
 }
 
 @Composable
-fun PolyMcText(
+public fun PolyMcText(
     text: () -> String,
     outlineColor: PolyColor?,
     color: PolyColor = PolyColor.WHITE,
@@ -147,7 +147,7 @@ fun PolyMcText(
 }
 
 @Composable
-fun PolySpacer(width: Float = 0f, height: Float = 0f) {
+public fun PolySpacer(width: Float = 0f, height: Float = 0f) {
     ComposeNode<SpacerNode, PolyApplier>(
         factory = { SpacerNode() },
         update = {
@@ -159,11 +159,11 @@ fun PolySpacer(width: Float = 0f, height: Float = 0f) {
 
 @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
 @Composable
-fun PolyCanvas(modifier: PolyModifier, onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit) =
+public fun PolyCanvas(modifier: PolyModifier, onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit): Unit =
     PolyCanvas(modifier, false, onDraw)
 
 @Composable
-fun PolyCanvas(
+public fun PolyCanvas(
     modifier: PolyModifier,
     live: Boolean = false,
     onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit,
@@ -179,7 +179,7 @@ fun PolyCanvas(
 }
 
 @Composable
-fun PolyRect(
+public fun PolyRect(
     color: PolyColor,
     modifier: PolyModifier = PolyModifier,
 ) {

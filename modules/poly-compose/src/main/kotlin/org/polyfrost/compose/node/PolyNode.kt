@@ -4,20 +4,20 @@ import org.polyfrost.compose.layout.PolyLayoutStyle
 import org.polyfrost.compose.render.CapturingRenderer
 import org.polyfrost.compose.render.RenderContext
 
-open class PolyNode {
-    val children = mutableListOf<PolyNode>()
-    val style = PolyLayoutStyle()
-    var parent: PolyNode? = null
-    var x = 0f
-    var y = 0f
-    var width = 0f
-    var height = 0f
+public open class PolyNode {
+    public val children: MutableList<PolyNode> = mutableListOf<PolyNode>()
+    public val style: PolyLayoutStyle = PolyLayoutStyle()
+    public var parent: PolyNode? = null
+    public var x: Float = 0f
+    public var y: Float = 0f
+    public var width: Float = 0f
+    public var height: Float = 0f
 
     private var decoration: Decoration? = null
 
-    open fun measureContent() {}
+    public open fun measureContent() {}
 
-    open fun render(ctx: RenderContext) {
+    public open fun render(ctx: RenderContext) {
         val s = style
         decorate(ctx)
 

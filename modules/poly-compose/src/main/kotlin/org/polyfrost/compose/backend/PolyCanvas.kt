@@ -43,8 +43,8 @@ import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyShadow
 import org.polyfrost.compose.render.RenderContext
 
-interface PolyDrawCanvas : Canvas {
-    fun polyOp(op: (PolyCanvas) -> Unit)
+public interface PolyDrawCanvas : Canvas {
+    public fun polyOp(op: (PolyCanvas) -> Unit)
 }
 
 private val recolorCache = WeakHashMap<PolyBitmap, MutableMap<List<Float>, PolyBitmap>>()
@@ -143,7 +143,7 @@ internal class DynamicOp(val block: (RenderContext) -> Unit) : (PolyCanvas) -> U
     override fun invoke(c: PolyCanvas) = block(c.context)
 }
 
-fun DrawScope.drawPoly(block: (RenderContext) -> Unit) = drawIntoCanvas { c ->
+public fun DrawScope.drawPoly(block: (RenderContext) -> Unit): Unit = drawIntoCanvas { c ->
     (c as? PolyDrawCanvas)?.polyOp(DynamicOp(block))
 }
 
@@ -159,25 +159,25 @@ internal fun PolyRenderer.clipTo(path: Path) {
     }
 }
 
-class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
+public class PolyCanvas(public val renderer: PolyRenderer) : PolyDrawCanvas {
     private val r get() = renderer
-    val context by lazy(LazyThreadSafetyMode.NONE) { RenderContext(renderer) }
+    public val context: RenderContext by lazy(LazyThreadSafetyMode.NONE) { RenderContext(renderer) }
 
     init {
         PolyCompose.install()
     }
 
-    override fun polyOp(op: (PolyCanvas) -> Unit) = op(this)
+    override fun polyOp(op: (PolyCanvas) -> Unit): Unit = op(this)
 
-    override fun save() = r.save()
-    override fun restore() = r.restore()
+    override fun save(): Unit = r.save()
+    override fun restore(): Unit = r.restore()
 
-    override fun saveLayer(bounds: Rect, paint: Paint) = r.saveLayerAlpha(paint.alpha)
+    override fun saveLayer(bounds: Rect, paint: Paint): Unit = r.saveLayerAlpha(paint.alpha)
 
-    override fun translate(dx: Float, dy: Float) = r.translate(dx, dy)
-    override fun scale(sx: Float, sy: Float) = r.scale(sx, sy)
+    override fun translate(dx: Float, dy: Float): Unit = r.translate(dx, dy)
+    override fun scale(sx: Float, sy: Float): Unit = r.scale(sx, sy)
 
-    override fun rotate(degrees: Float) = r.rotate(degrees)
+    override fun rotate(degrees: Float): Unit = r.rotate(degrees)
     override fun skew(sx: Float, sy: Float) {}
 
     override fun concat(matrix: Matrix) {
@@ -191,7 +191,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         r.scale(sx, (a * v[Matrix.ScaleY] - b * v[Matrix.SkewX]) / sx)
     }
 
-    override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) =
+    override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp): Unit =
         if (clipOp == ClipOp.Intersect) r.clipRect(left, top, right - left, bottom - top) else r.clipOutRect(left, top, right - left, bottom - top)
 
     override fun clipPath(path: Path, clipOp: ClipOp) {
@@ -200,7 +200,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         if (clipOp == ClipOp.Intersect) r.clipTo(path)
     }
 
-    override fun drawLine(p1: Offset, p2: Offset, paint: Paint) = segment(p1.x, p1.y, p2.x, p2.y, paint as PolyPaint)
+    override fun drawLine(p1: Offset, p2: Offset, paint: Paint): Unit = segment(p1.x, p1.y, p2.x, p2.y, paint as PolyPaint)
 
     private fun segment(x1: Float, y1: Float, x2: Float, y2: Float, paint: PolyPaint) {
         if (paint.strokeCap == StrokeCap.Butt && paint.pathEffect !is DashEffect && paint.shader == null) {
@@ -237,7 +237,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         r.restore()
     }
 
-    override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) =
+    override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint): Unit =
         clearing(paint) { shape(left, top, right - left, bottom - top, 0f, paint as PolyPaint) }
 
     private inline fun clearing(paint: Paint, draw: () -> Unit) {
@@ -248,7 +248,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         try { draw() } finally { bitmap.erasing = false }
     }
 
-    override fun drawRoundRect(left: Float, top: Float, right: Float, bottom: Float, radiusX: Float, radiusY: Float, paint: Paint) =
+    override fun drawRoundRect(left: Float, top: Float, right: Float, bottom: Float, radiusX: Float, radiusY: Float, paint: Paint): Unit =
         shape(left, top, right - left, bottom - top, radiusX, paint as PolyPaint)
 
     override fun drawOval(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
@@ -258,7 +258,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         else drawPath(PolyComposePath().apply { addOval(Rect(left, top, right, bottom), Path.Direction.CounterClockwise) }, paint)
     }
 
-    override fun drawCircle(center: Offset, radius: Float, paint: Paint) =
+    override fun drawCircle(center: Offset, radius: Float, paint: Paint): Unit =
         shape(center.x - radius, center.y - radius, radius * 2f, radius * 2f, radius, paint as PolyPaint)
 
     override fun drawArc(left: Float, top: Float, right: Float, bottom: Float, startAngle: Float, sweepAngle: Float, useCenter: Boolean, paint: Paint) {
@@ -269,7 +269,7 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         drawPath(p, paint)
     }
 
-    override fun drawPath(path: Path, paint: Paint) = clearing(paint) { fillOrStroke(path as PolyComposePath, paint as PolyPaint) }
+    override fun drawPath(path: Path, paint: Paint): Unit = clearing(paint) { fillOrStroke(path as PolyComposePath, paint as PolyPaint) }
 
     private fun fillOrStroke(p: PolyComposePath, pp: PolyPaint) {
         p.roundRect?.takeIf { it.isSimple }?.let { return shape(it.left, it.top, it.width, it.height, it.topLeftCornerRadius.x, pp) }
@@ -316,10 +316,10 @@ class PolyCanvas(val renderer: PolyRenderer) : PolyDrawCanvas {
         shaded(paint) { g -> if (g == null) r.rect(x, y, w, h, paint.argb(), radius) else r.rectGradient(x, y, w, h, g.brushFor(x, y, w, h), radius) }
     }
 
-    override fun drawImage(image: ImageBitmap, topLeftOffset: Offset, paint: Paint) =
+    override fun drawImage(image: ImageBitmap, topLeftOffset: Offset, paint: Paint): Unit =
         image(image, 0f, 0f, image.width.toFloat(), image.height.toFloat(), topLeftOffset.x, topLeftOffset.y, image.width.toFloat(), image.height.toFloat(), paint as PolyPaint)
 
-    override fun drawImageRect(image: ImageBitmap, srcOffset: IntOffset, srcSize: IntSize, dstOffset: IntOffset, dstSize: IntSize, paint: Paint) =
+    override fun drawImageRect(image: ImageBitmap, srcOffset: IntOffset, srcSize: IntSize, dstOffset: IntOffset, dstSize: IntSize, paint: Paint): Unit =
         image(image, srcOffset.x.toFloat(), srcOffset.y.toFloat(), srcSize.width.toFloat(), srcSize.height.toFloat(),
             dstOffset.x.toFloat(), dstOffset.y.toFloat(), dstSize.width.toFloat(), dstSize.height.toFloat(), paint as PolyPaint)
 
@@ -407,12 +407,12 @@ private fun dashes(c: FloatArray, closed: Boolean, e: DashEffect): List<FloatArr
     return out
 }
 
-class RecordingCanvas : PolyDrawCanvas {
-    val ops = ArrayList<(PolyCanvas) -> Unit>()
+public class RecordingCanvas : PolyDrawCanvas {
+    public val ops: ArrayList<(PolyCanvas) -> Unit> = ArrayList<(PolyCanvas) -> Unit>()
 
     override fun polyOp(op: (PolyCanvas) -> Unit) { ops += op }
 
-    fun replay(canvas: PolyCanvas) = replay(canvas, null)
+    public fun replay(canvas: PolyCanvas): Unit = replay(canvas, null)
 
     internal fun replay(canvas: PolyCanvas, dynamic: ((DynamicOp) -> Unit)?) {
         for (i in ops.indices.reversed()) (ops[i] as? MaskOp)?.let { canvas.renderer.saveLayerFade(it.fade) }
@@ -421,15 +421,15 @@ class RecordingCanvas : PolyDrawCanvas {
 
     private fun Paint.snap() = (this as PolyPaint).copy()
 
-    override fun save() = polyOp { it.save() }
-    override fun restore() = polyOp { it.restore() }
+    override fun save(): Unit = polyOp { it.save() }
+    override fun restore(): Unit = polyOp { it.restore() }
     override fun saveLayer(bounds: Rect, paint: Paint) { val p = paint.snap(); polyOp { it.saveLayer(bounds, p) } }
-    override fun translate(dx: Float, dy: Float) = polyOp { it.translate(dx, dy) }
-    override fun scale(sx: Float, sy: Float) = polyOp { it.scale(sx, sy) }
-    override fun rotate(degrees: Float) = polyOp { it.rotate(degrees) }
+    override fun translate(dx: Float, dy: Float): Unit = polyOp { it.translate(dx, dy) }
+    override fun scale(sx: Float, sy: Float): Unit = polyOp { it.scale(sx, sy) }
+    override fun rotate(degrees: Float): Unit = polyOp { it.rotate(degrees) }
     override fun skew(sx: Float, sy: Float) {}
     override fun concat(matrix: Matrix) { val m = Matrix(matrix.values.copyOf()); polyOp { it.concat(m) } }
-    override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) = polyOp { it.clipRect(left, top, right, bottom, clipOp) }
+    override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp): Unit = polyOp { it.clipRect(left, top, right, bottom, clipOp) }
     override fun clipPath(path: Path, clipOp: ClipOp) { val p = path.copyPath(); polyOp { it.clipPath(p, clipOp) } }
     override fun drawLine(p1: Offset, p2: Offset, paint: Paint) { val p = paint.snap(); polyOp { it.drawLine(p1, p2, p) } }
     override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {

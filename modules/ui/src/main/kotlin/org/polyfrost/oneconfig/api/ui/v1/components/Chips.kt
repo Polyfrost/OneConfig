@@ -6,12 +6,12 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
+public fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
     componentsBridge().Chip(label, selected, null, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Chip(label: String, selected: Boolean, icon: String?, onClick: () -> Unit) {
+public fun Chip(label: String, selected: Boolean, icon: String?, onClick: () -> Unit) {
     componentsBridge().Chip(label, selected, icon, onClick)
 }

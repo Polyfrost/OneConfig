@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 
-object ModCardTypes {
+public object ModCardTypes {
     private val LOGGER = LogManager.getLogger("OneConfig/ModCardTypes")
     private val lock = Any()
 
@@ -23,11 +23,11 @@ object ModCardTypes {
     private var resolvers: List<ModCardTypeResolver> = emptyList()
 
     @JvmStatic
-    var revision by mutableIntStateOf(0)
+    public var revision: Int by mutableIntStateOf(0)
         private set
 
     @JvmStatic
-    fun register(type: ModCardType) {
+    public fun register(type: ModCardType) {
         if (type.id.isBlank() || type.title.isBlank()) {
             LOGGER.warn("Ignoring mod card type with a blank id or title: {}", type)
             return
@@ -41,7 +41,7 @@ object ModCardTypes {
     }
 
     @JvmStatic
-    fun assign(modId: String, typeId: String) {
+    public fun assign(modId: String, typeId: String) {
         val key = normalise(modId)
         if (key.isEmpty() || typeId.isBlank()) {
             LOGGER.warn("Ignoring mod card type assignment with a blank mod id or type id")
@@ -52,7 +52,7 @@ object ModCardTypes {
     }
 
     @JvmStatic
-    fun assignAll(typeId: String, vararg modIds: String) {
+    public fun assignAll(typeId: String, vararg modIds: String) {
         if (typeId.isBlank()) {
             LOGGER.warn("Ignoring mod card type assignment with a blank type id")
             return
@@ -64,7 +64,7 @@ object ModCardTypes {
     }
 
     @JvmStatic
-    fun registerResolver(resolver: ModCardTypeResolver) {
+    public fun registerResolver(resolver: ModCardTypeResolver) {
         synchronized(lock) {
             if (resolver in resolvers) return
             resolvers = resolvers + resolver
@@ -73,13 +73,13 @@ object ModCardTypes {
     }
 
     @JvmStatic
-    fun types(): List<ModCardType> = sortedTypes
+    public fun types(): List<ModCardType> = sortedTypes
 
     @JvmStatic
-    fun byId(typeId: String): ModCardType? = typesById[typeId]
+    public fun byId(typeId: String): ModCardType? = typesById[typeId]
 
     @JvmStatic
-    fun typeFor(modId: String): ModCardType? {
+    public fun typeFor(modId: String): ModCardType? {
         val explicit = keysFor(modId).firstNotNullOfOrNull(assignments::get)
         val id = explicit ?: resolvers.firstNotNullOfOrNull { safeResolve(it, modId) }
         return id?.let(typesById::get)

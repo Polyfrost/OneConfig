@@ -37,4 +37,4 @@ import org.jetbrains.annotations.ApiStatus
  * @property scaled whether the other mod is currently scaling this HUD from the size shown to the user
  */
 @ApiStatus.Experimental
-data class ExternalPlacement(val mod: String?, val moved: Boolean, val scaled: Boolean)
+public data class ExternalPlacement(val mod: String?, val moved: Boolean, val scaled: Boolean)

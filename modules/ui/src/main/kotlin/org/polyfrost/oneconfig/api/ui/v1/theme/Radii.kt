@@ -9,8 +9,8 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Shape.concentric(inset: Dp): Shape = componentsBridge().concentric(this, inset, 0.dp)
+public fun Shape.concentric(inset: Dp): Shape = componentsBridge().concentric(this, inset, 0.dp)
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Shape.concentric(inset: Dp, minRadius: Dp): Shape = componentsBridge().concentric(this, inset, minRadius)
+public fun Shape.concentric(inset: Dp, minRadius: Dp): Shape = componentsBridge().concentric(this, inset, minRadius)

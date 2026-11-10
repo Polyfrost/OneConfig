@@ -32,14 +32,14 @@ import java.util.function.Supplier
 import kotlin.reflect.KMutableProperty0
 import org.jetbrains.annotations.Contract
 
-object Properties {
+public object Properties {
     /**
      * create a new property which is internally backed by a field
      */
     @JvmStatic
     @JvmOverloads
     @Contract("_, _, _, null, null -> fail")
-    fun <T> simple(
+    public fun <T> simple(
         id: String? = null,
         name: String? = null,
         description: String? = null,
@@ -50,7 +50,7 @@ object Properties {
      * create a property which is internally backed by a field
      */
     @JvmStatic
-    fun <T> simple(value: T): Property<T> = Property.Simple(null, null, null, value, null)
+    public fun <T> simple(value: T): Property<T> = Property.Simple(null, null, null, value, null)
 
     /**
      * create a property backed by the given [field]
@@ -61,7 +61,7 @@ object Properties {
      */
     @JvmStatic
     @JvmOverloads
-    fun <T> field(
+    public fun <T> field(
         name: String? = null,
         description: String? = null,
         field: Field,
@@ -75,7 +75,7 @@ object Properties {
      */
     @JvmStatic
     @JvmOverloads
-    fun dummy(
+    public fun dummy(
         id: String? = null,
         name: String? = null,
         description: String? = null,
@@ -88,7 +88,7 @@ object Properties {
      */
     @Suppress("DEPRECATION")
     @JvmSynthetic
-    inline fun <reified T> ktProperty(
+    public inline fun <reified T> ktProperty(
         ref: KMutableProperty0<T>,
         name: String? = null,
         description: String? = null,
@@ -99,7 +99,7 @@ object Properties {
      */
     @JvmStatic
     @JvmOverloads
-    fun <T> functional(
+    public fun <T> functional(
         getter: Supplier<T>,
         setter: Consumer<T>,
         id: String? = null,

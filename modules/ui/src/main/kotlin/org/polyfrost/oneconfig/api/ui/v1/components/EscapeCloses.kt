@@ -16,30 +16,30 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
-object EscapeStack {
+public object EscapeStack {
     private class Closer(val owner: Any?, val close: () -> Unit)
 
     private val closers = ArrayList<Closer>()
 
     @JvmStatic
-    val hasOpen: Boolean
+    public val hasOpen: Boolean
         get() = top() != null
 
     @JvmStatic
-    fun closeTop(): Boolean {
+    public fun closeTop(): Boolean {
         val close = top() ?: return false
         close()
         return true
     }
 
     @JvmStatic
-    fun push(close: () -> Unit) {
+    public fun push(close: () -> Unit) {
         val owner = currentScreen()
         synchronized(closers) { closers += Closer(owner, close) }
     }
 
     @JvmStatic
-    fun remove(close: () -> Unit) {
+    public fun remove(close: () -> Unit) {
         synchronized(closers) { closers.removeAll { it.close === close } }
     }
 
@@ -53,7 +53,7 @@ object EscapeStack {
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun EscapeCloses(onClose: () -> Unit) {
+public fun EscapeCloses(onClose: () -> Unit) {
     val latest by rememberUpdatedState(onClose)
     DisposableEffect(Unit) {
         val close = { latest() }
@@ -64,7 +64,7 @@ fun EscapeCloses(onClose: () -> Unit) {
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun EscapeAwareTextMenus(content: @Composable () -> Unit) {
+public fun EscapeAwareTextMenus(content: @Composable () -> Unit) {
     val base = LocalTextContextMenu.current
     val wrapped = remember(base) { EscapeAwareTextContextMenu(base) }
     CompositionLocalProvider(LocalTextContextMenu provides wrapped, content = content)

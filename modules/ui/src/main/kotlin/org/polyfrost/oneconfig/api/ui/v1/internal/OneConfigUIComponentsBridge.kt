@@ -19,42 +19,42 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 
 @ExperimentalOneConfigUiApi
-interface OneConfigUIComponentsBridge {
+public interface OneConfigUIComponentsBridge {
     @Composable
-    fun currentTheme(): OneConfigUITheme
-
-    @Composable
-    fun accent(): Color
+    public fun currentTheme(): OneConfigUITheme
 
     @Composable
-    fun ProvideTheme(content: @Composable () -> Unit)
-
-    fun polyfrostedDark(): OneConfigUITheme
-
-    fun polyfrostedLight(): OneConfigUITheme
-
-    fun glassDark(): OneConfigUITheme
-
-    fun glassLight(): OneConfigUITheme
-
-    fun minecraftDark(): OneConfigUITheme
-
-    fun minecraftLight(): OneConfigUITheme
-
-    fun activeTheme(): OneConfigUITheme?
-
-    fun activateTheme(theme: OneConfigUITheme)
-
-    fun ensureThemeLoaded()
+    public fun accent(): Color
 
     @Composable
-    fun concentric(shape: Shape, inset: Dp, minRadius: Dp): Shape
+    public fun ProvideTheme(content: @Composable () -> Unit)
+
+    public fun polyfrostedDark(): OneConfigUITheme
+
+    public fun polyfrostedLight(): OneConfigUITheme
+
+    public fun glassDark(): OneConfigUITheme
+
+    public fun glassLight(): OneConfigUITheme
+
+    public fun minecraftDark(): OneConfigUITheme
+
+    public fun minecraftLight(): OneConfigUITheme
+
+    public fun activeTheme(): OneConfigUITheme?
+
+    public fun activateTheme(theme: OneConfigUITheme)
+
+    public fun ensureThemeLoaded()
 
     @Composable
-    fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean)
+    public fun concentric(shape: Shape, inset: Dp, minRadius: Dp): Shape
 
     @Composable
-    fun Text(
+    public fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean)
+
+    @Composable
+    public fun Text(
         text: Any,
         modifier: Modifier,
         color: Color,
@@ -68,10 +68,10 @@ interface OneConfigUIComponentsBridge {
     )
 
     @Composable
-    fun Chip(label: String, selected: Boolean, icon: String?, onClick: () -> Unit)
+    public fun Chip(label: String, selected: Boolean, icon: String?, onClick: () -> Unit)
 
     @Composable
-    fun IconButton(
+    public fun IconButton(
         iconName: String,
         modifier: Modifier,
         foreground: Color,
@@ -82,7 +82,7 @@ interface OneConfigUIComponentsBridge {
     )
 
     @Composable
-    fun Tooltip(
+    public fun Tooltip(
         text: @Composable () -> Unit,
         modifier: Modifier,
         anchor: Alignment,
@@ -91,15 +91,15 @@ interface OneConfigUIComponentsBridge {
         content: @Composable () -> Unit,
     )
 
-    fun onClick(modifier: Modifier, interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit): Modifier
+    public fun onClick(modifier: Modifier, interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit): Modifier
 
-    fun reducedMotion(): Boolean
-
-    @Composable
-    fun popupSurface(modifier: Modifier, shape: Shape): Modifier
+    public fun reducedMotion(): Boolean
 
     @Composable
-    fun Popup(
+    public fun popupSurface(modifier: Modifier, shape: Shape): Modifier
+
+    @Composable
+    public fun Popup(
         positionProvider: PopupPositionProvider,
         onDismissRequest: (() -> Unit)?,
         focusable: Boolean,
@@ -107,20 +107,20 @@ interface OneConfigUIComponentsBridge {
     )
 
     @Composable
-    fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier
+    public fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier
 
-    fun createColorPicker(initialColor: Color, hasAlpha: Boolean): Any
-
-    @Composable
-    fun ColorPickerPopup(model: Any, onColorChanged: (Color) -> Unit, onClose: () -> Unit, chromaCapable: Boolean)
-
-    fun colorToHex(color: Color): String
+    public fun createColorPicker(initialColor: Color, hasAlpha: Boolean): Any
 
     @Composable
-    fun optionWidth(): Dp
+    public fun ColorPickerPopup(model: Any, onColorChanged: (Color) -> Unit, onClose: () -> Unit, chromaCapable: Boolean)
+
+    public fun colorToHex(color: Color): String
 
     @Composable
-    fun pageSearchQuery(): String
+    public fun optionWidth(): Dp
+
+    @Composable
+    public fun pageSearchQuery(): String
 }
 
 @ExperimentalOneConfigUiApi

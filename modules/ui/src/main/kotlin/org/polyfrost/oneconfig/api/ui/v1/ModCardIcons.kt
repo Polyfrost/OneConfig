@@ -8,12 +8,12 @@ import java.util.concurrent.ConcurrentHashMap
 import org.apache.logging.log4j.LogManager
 
 @ExperimentalOneConfigUiApi
-fun interface ModCardIconProvider {
-    fun iconFor(modId: String, defaultIcon: String?): String?
+public fun interface ModCardIconProvider {
+    public fun iconFor(modId: String, defaultIcon: String?): String?
 }
 
 @ExperimentalOneConfigUiApi
-object ModCardIcons {
+public object ModCardIcons {
     private val LOGGER = LogManager.getLogger("OneConfig/ModCardIcons")
     private val lock = Any()
     private val failed = ConcurrentHashMap.newKeySet<ModCardIconProvider>()
@@ -21,7 +21,7 @@ object ModCardIcons {
     private var entries by mutableStateOf(emptyList<ModCardIconProvider>())
 
     @JvmStatic
-    fun register(entry: ModCardIconProvider) {
+    public fun register(entry: ModCardIconProvider) {
         synchronized(lock) {
             if (entry in entries) {
                 LOGGER.debug("Ignoring ModCardIconProvider {} that is already registered", entry.javaClass.name)
@@ -32,7 +32,7 @@ object ModCardIcons {
     }
 
     @JvmStatic
-    fun unregister(entry: ModCardIconProvider): Boolean = synchronized(lock) {
+    public fun unregister(entry: ModCardIconProvider): Boolean = synchronized(lock) {
         if (entry !in entries) return false
         Snapshot.withMutableSnapshot { entries = entries - entry }
         failed.remove(entry)
@@ -40,7 +40,7 @@ object ModCardIcons {
     }
 
     @JvmStatic
-    fun resolve(modId: String, defaultIcon: String?): String? = entries.fold(defaultIcon) { icon, provider ->
+    public fun resolve(modId: String, defaultIcon: String?): String? = entries.fold(defaultIcon) { icon, provider ->
         try {
             provider.iconFor(modId, icon)
         } catch (t: Throwable) {

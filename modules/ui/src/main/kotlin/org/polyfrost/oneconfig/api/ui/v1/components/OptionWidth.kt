@@ -6,5 +6,5 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
-val currentOptionWidth: Dp
+public val currentOptionWidth: Dp
     @Composable get() = componentsBridge().optionWidth()

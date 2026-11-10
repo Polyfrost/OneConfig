@@ -28,23 +28,23 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.playerHeadBridge
 
 @ExperimentalOneConfigUiApi
-object PlayerHeads {
+public object PlayerHeads {
     @JvmStatic
-    fun face(id: UUID): ImageBitmap? = runCatching { playerHeadBridge()?.face(id) }.getOrNull()
+    public fun face(id: UUID): ImageBitmap? = runCatching { playerHeadBridge()?.face(id) }.getOrNull()
 
     @JvmStatic
-    fun defaultFace(id: UUID): ImageBitmap? = runCatching { playerHeadBridge()?.defaultFace(id) }.getOrNull()
+    public fun defaultFace(id: UUID): ImageBitmap? = runCatching { playerHeadBridge()?.defaultFace(id) }.getOrNull()
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier) {
+public fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier) {
     PlayerHead(playerId, size, modifier, null)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier, shape: Shape?) {
+public fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier, shape: Shape?) {
     val clip = shape ?: RoundedCornerShape(size / 4)
     val observed = remember(playerId) { runCatching { playerHeadBridge()?.observe(playerId) }.getOrNull() }
     val face = observed?.value

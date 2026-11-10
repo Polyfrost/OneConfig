@@ -5,14 +5,14 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.ConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 
 @ExperimentalOneConfigUiApi
-interface OneConfigUIKeybindBridge {
-    fun configKeybinds(): List<ConfigKeybind>
+public interface OneConfigUIKeybindBridge {
+    public fun configKeybinds(): List<ConfigKeybind>
 }
 
 @ExperimentalOneConfigUiApi
-object KeybindInterop {
+public object KeybindInterop {
     @JvmStatic
-    fun configKeybind(keybind: OneConfigKeybind, title: String, path: String, modId: String, modTitle: String): ConfigKeybind =
+    public fun configKeybind(keybind: OneConfigKeybind, title: String, path: String, modId: String, modTitle: String): ConfigKeybind =
         ConfigKeybind(keybind, title, path, modId, modTitle)
 }
 

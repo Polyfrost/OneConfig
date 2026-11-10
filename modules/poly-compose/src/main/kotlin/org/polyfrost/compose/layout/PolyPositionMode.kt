@@ -1,6 +1,6 @@
 package org.polyfrost.compose.layout
 
-enum class PolyPositionMode {
+public enum class PolyPositionMode {
     Relative,
     Absolute
 }

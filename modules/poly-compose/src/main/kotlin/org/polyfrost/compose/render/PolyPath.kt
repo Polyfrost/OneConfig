@@ -1,27 +1,27 @@
 package org.polyfrost.compose.render
 
-class PolyPath {
-    var evenOdd = false
+public class PolyPath {
+    public var evenOdd: Boolean = false
 
     private var ops = IntArray(16)
     private var args = FloatArray(64)
     private var opCount = 0
     private var argCount = 0
 
-    fun moveTo(x: Float, y: Float) = op(MOVE, x, y)
-    fun lineTo(x: Float, y: Float) = op(LINE, x, y)
+    public fun moveTo(x: Float, y: Float): Unit = op(MOVE, x, y)
+    public fun lineTo(x: Float, y: Float): Unit = op(LINE, x, y)
 
-    fun tangentArcTo(x1: Float, y1: Float, x2: Float, y2: Float, radius: Float) = op(ARC, x1, y1, x2, y2, radius)
-    fun close() = op(CLOSE)
+    public fun tangentArcTo(x1: Float, y1: Float, x2: Float, y2: Float, radius: Float): Unit = op(ARC, x1, y1, x2, y2, radius)
+    public fun close(): Unit = op(CLOSE)
 
-    interface Visitor {
-        fun moveTo(x: Float, y: Float)
-        fun lineTo(x: Float, y: Float)
-        fun tangentArcTo(x1: Float, y1: Float, x2: Float, y2: Float, radius: Float)
-        fun close()
+    public interface Visitor {
+        public fun moveTo(x: Float, y: Float)
+        public fun lineTo(x: Float, y: Float)
+        public fun tangentArcTo(x1: Float, y1: Float, x2: Float, y2: Float, radius: Float)
+        public fun close()
     }
 
-    fun visit(v: Visitor) {
+    public fun visit(v: Visitor) {
         var a = 0
         for (i in 0 until opCount) {
             when (ops[i]) {

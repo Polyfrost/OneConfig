@@ -1,3 +1,3 @@
 package org.polyfrost.compose.node
 
-class RootNode : PolyNode()
+public class RootNode : PolyNode()

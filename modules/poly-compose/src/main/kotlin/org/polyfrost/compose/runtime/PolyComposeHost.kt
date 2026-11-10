@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class PolyComposeClock {
+public class PolyComposeClock {
     private val clock = BroadcastFrameClock()
     private val scope = CoroutineScope(Dispatchers.Unconfined + clock)
 
@@ -24,7 +24,7 @@ class PolyComposeClock {
 
     private val inFrame = AtomicBoolean(false)
 
-    fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
+    public fun frame(nanos: Long = System.nanoTime(), notify: Boolean = true): Boolean {
         if (!inFrame.compareAndSet(false, true)) return false
         try {
             if (notify) Snapshot.sendApplyNotifications()
@@ -37,27 +37,27 @@ class PolyComposeClock {
         }
     }
 
-    var appliedChange = false
+    public var appliedChange: Boolean = false
         private set
 
-    val changeCount: Long get() = recomposerImpl.changeCount
+    public val changeCount: Long get() = recomposerImpl.changeCount
 }
 
-object PolyComposeHost {
-    val huds = PolyComposeClock()
+public object PolyComposeHost {
+    public val huds: PolyComposeClock = PolyComposeClock()
 
-    val previews = PolyComposeClock()
+    public val previews: PolyComposeClock = PolyComposeClock()
 
-    val notifications = PolyComposeClock()
+    public val notifications: PolyComposeClock = PolyComposeClock()
 
     internal val recomposer: CompositionContext get() = huds.recomposer
 
-    fun frame(nanos: Long = System.nanoTime()) {
+    public fun frame(nanos: Long = System.nanoTime()) {
         frameWithReport(nanos)
     }
 
     /**
      * Runs a frame like [frame] and reports whether composition content may have changed
      */
-    fun frameWithReport(nanos: Long = System.nanoTime()): Boolean = huds.frame(nanos)
+    public fun frameWithReport(nanos: Long = System.nanoTime()): Boolean = huds.frame(nanos)
 }

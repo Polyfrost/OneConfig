@@ -1,5 +1,5 @@
 package org.polyfrost.oneconfig.api.platform.v1
 
-interface Options {
-    val guiScale: Float
+public interface Options {
+    public val guiScale: Float
 }

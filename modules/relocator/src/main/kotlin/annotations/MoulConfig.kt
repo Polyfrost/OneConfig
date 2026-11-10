@@ -5,4 +5,4 @@ package org.polyfrost.oneconfig.relocator.annotations
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
-annotation class MoulConfig()
+public annotation class MoulConfig()

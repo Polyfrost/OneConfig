@@ -3,30 +3,30 @@ package org.polyfrost.compose.render
 import kotlin.math.max
 import kotlin.math.min
 
-interface PolyRenderer {
-    fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float)
+public interface PolyRenderer {
+    public fun rect(x: Float, y: Float, w: Float, h: Float, color: Int, radius: Float)
 
-    fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: Int)
-    fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float)
+    public fun rectWithHole(x: Float, y: Float, w: Float, h: Float, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float, color: Int)
+    public fun rectGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, radius: Float)
 
-    fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow)
+    public fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow)
 
-    fun shadowWithHole(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float) =
+    public fun shadowWithHole(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float): Unit =
         shadow(x, y, w, h, radius, shadow)
-    fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float)
+    public fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float)
 
-    fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float)
-    fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float)
-    fun fillPath(path: PolyPath, color: Int)
+    public fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float)
+    public fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Int, strokeWidth: Float)
+    public fun fillPath(path: PolyPath, color: Int)
 
     /**
      * Fills [path] with [gradient] laid out over the box at [x], [y] sized [w] by [h], as [rectGradient] lays it out over its rectangle.
      * Renderers without gradient support fill it with the gradient's color at the box's center.
      */
-    fun fillPathGradient(path: PolyPath, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient) =
+    public fun fillPathGradient(path: PolyPath, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient): Unit =
         fillPath(path, gradient.colorAt(x + w / 2f, y + h / 2f, x, y, w, h))
 
-    fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int, join: Int = JOIN_MITER) {
+    public fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int, join: Int = JOIN_MITER) {
         val n = points.size / 2
         for (i in 0 until (if (closed) n else n - 1)) {
             val j = (i + 1) % n
@@ -38,11 +38,11 @@ interface PolyRenderer {
      * Strokes like [strokePolyline] with [gradient] laid out over the box at [x], [y] sized [w] by [h], as in [fillPathGradient].
      * Renderers without gradient support stroke it with the gradient's color at the box's center.
      */
-    fun strokePolylineGradient(
+    public fun strokePolylineGradient(
         points: FloatArray, closed: Boolean, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, cap: Int, join: Int,
-    ) = strokePolyline(points, closed, gradient.colorAt(x + w / 2f, y + h / 2f, x, y, w, h), strokeWidth, cap, join)
+    ): Unit = strokePolyline(points, closed, gradient.colorAt(x + w / 2f, y + h / 2f, x, y, w, h), strokeWidth, cap, join)
 
-    fun strokeColorRing(points: FloatArray, normals: FloatArray, colors: IntArray, strokeWidth: Float, shape: FloatArray? = null) {
+    public fun strokeColorRing(points: FloatArray, normals: FloatArray, colors: IntArray, strokeWidth: Float, shape: FloatArray? = null) {
         val n = colors.size
         for (i in 0 until n) {
             val j = (i + 1) % n
@@ -51,9 +51,9 @@ interface PolyRenderer {
         }
     }
 
-    fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont)
+    public fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont)
 
-    fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float) {
+    public fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float) {
         if (letterSpacing == 0f) return text(text, x, y, color, font)
         var cx = x
         var i = 0
@@ -66,49 +66,49 @@ interface PolyRenderer {
     }
 
     /** Draws [text] sheared so a point `d` above the baseline shifts right by `d * skewX`. */
-    fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float, skewX: Float) =
+    public fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float, skewX: Float): Unit =
         text(text, x, y, color, font, letterSpacing)
 
-    fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float)
+    public fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float)
 
-    fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float)
+    public fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float)
 
-    fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float)
+    public fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float)
 
-    fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float) =
+    public fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float): Unit =
         live { it.mcText(text, x, y, color(), shadow, scale) }
 
-    fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low) =
+    public fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low): Unit =
         image(bitmap, x, y, w, h, 0f, 0f, 1f, 1f, -1, filterQuality)
 
-    fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality = FilterQuality.Low)
+    public fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, tint: Int, filterQuality: FilterQuality = FilterQuality.Low)
 
-    fun live(draw: (PolyRenderer) -> Unit)
+    public fun live(draw: (PolyRenderer) -> Unit)
 
-    fun live(x: Float, y: Float, w: Float, h: Float, key: () -> Int, draw: (PolyRenderer) -> Unit) = live(draw)
+    public fun live(x: Float, y: Float, w: Float, h: Float, key: () -> Int, draw: (PolyRenderer) -> Unit): Unit = live(draw)
 
-    fun backdropGlass(x: Float, y: Float, w: Float, h: Float, radius: Float, band: Float, refraction: Float, alpha: Float) {}
+    public fun backdropGlass(x: Float, y: Float, w: Float, h: Float, radius: Float, band: Float, refraction: Float, alpha: Float) {}
 
-    fun save()
-    fun restore()
+    public fun save()
+    public fun restore()
 
-    fun saveLayerAlpha(alpha: Float)
-    fun saveLayerFade(fade: PolyFade) = save()
+    public fun saveLayerAlpha(alpha: Float)
+    public fun saveLayerFade(fade: PolyFade): Unit = save()
 
-    fun deviceTransform(): FloatArray? = null
+    public fun deviceTransform(): FloatArray? = null
 
-    fun translate(dx: Float, dy: Float)
-    fun scale(sx: Float, sy: Float)
-    fun rotate(degrees: Float) {}
-    fun animatedScale(sx: Float, sy: Float) = scale(sx, sy)
-    fun clipRect(x: Float, y: Float, w: Float, h: Float)
-    fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float)
+    public fun translate(dx: Float, dy: Float)
+    public fun scale(sx: Float, sy: Float)
+    public fun rotate(degrees: Float) {}
+    public fun animatedScale(sx: Float, sy: Float): Unit = scale(sx, sy)
+    public fun clipRect(x: Float, y: Float, w: Float, h: Float)
+    public fun clipRRect(x: Float, y: Float, w: Float, h: Float, radius: Float)
 
     /**
      * Clips to the closed polygon through [points], given as x, y pairs.
      * Renderers that can't clip to its exact shape clip to its bounds instead.
      */
-    fun clipPolygon(points: FloatArray) {
+    public fun clipPolygon(points: FloatArray) {
         var l = Float.MAX_VALUE; var t = Float.MAX_VALUE; var r = -Float.MAX_VALUE; var b = -Float.MAX_VALUE
         for (i in points.indices step 2) {
             l = min(l, points[i]); r = max(r, points[i])
@@ -118,21 +118,21 @@ interface PolyRenderer {
     }
 
     /** Removes the rectangle from the clip. Renderers that can't remove areas from it keep drawing over the rectangle. */
-    fun clipOutRect(x: Float, y: Float, w: Float, h: Float) {}
+    public fun clipOutRect(x: Float, y: Float, w: Float, h: Float) {}
 
-    companion object {
-        const val CAP_BUTT = 0
-        const val CAP_ROUND = 1
-        const val CAP_SQUARE = 2
-        const val JOIN_MITER = 0
-        const val JOIN_ROUND = 1
+    public companion object {
+        public const val CAP_BUTT: Int = 0
+        public const val CAP_ROUND: Int = 1
+        public const val CAP_SQUARE: Int = 2
+        public const val JOIN_MITER: Int = 0
+        public const val JOIN_ROUND: Int = 1
     }
 }
 
-class PolyFade(val vertical: Boolean, val stops: FloatArray, val alphas: FloatArray, val colors: IntArray? = null) {
+public class PolyFade(public val vertical: Boolean, public val stops: FloatArray, public val alphas: FloatArray, public val colors: IntArray? = null) {
     init { require(stops.size == alphas.size && stops.isNotEmpty() && (colors == null || colors.size == stops.size)) }
 
-    fun alphaAt(pos: Float): Float {
+    public fun alphaAt(pos: Float): Float {
         if (pos <= stops[0]) return alphas[0]
         for (i in 1 until stops.size) if (pos < stops[i]) {
             val t = (pos - stops[i - 1]) / (stops[i] - stops[i - 1])
@@ -141,32 +141,32 @@ class PolyFade(val vertical: Boolean, val stops: FloatArray, val alphas: FloatAr
         return alphas.last()
     }
 
-    fun colorAt(pos: Float): Int {
+    public fun colorAt(pos: Float): Int {
         val c = colors ?: return 0xFFFFFF
         if (pos <= stops[0]) return c[0]
         for (i in 1 until stops.size) if (pos < stops[i]) return PolyGradient.lerpArgb(c[i - 1], c[i], (pos - stops[i - 1]) / (stops[i] - stops[i - 1]))
         return c.last()
     }
 
-    fun span(pos: Float): Int {
+    public fun span(pos: Float): Int {
         for (i in stops.indices) if (pos < stops[i]) return i
         return stops.size
     }
 
-    fun opaque(i: Int) = colors == null && when (i) {
+    public fun opaque(i: Int): Boolean = colors == null && when (i) {
         0 -> alphas[0] >= 1f
         stops.size -> alphas.last() >= 1f
         else -> alphas[i - 1] >= 1f && alphas[i] >= 1f
     }
 }
 
-interface CapturingRenderer {
-    fun mark(): Any
-    fun since(mark: Any): Any
-    fun valid(captured: Any): Boolean
-    fun append(captured: Any)
-    fun stateKey(): Any
-    fun sameState(key: Any): Boolean
-    fun saveState(): Any
-    fun restoreState(saved: Any)
+public interface CapturingRenderer {
+    public fun mark(): Any
+    public fun since(mark: Any): Any
+    public fun valid(captured: Any): Boolean
+    public fun append(captured: Any)
+    public fun stateKey(): Any
+    public fun sameState(key: Any): Boolean
+    public fun saveState(): Any
+    public fun restoreState(saved: Any)
 }

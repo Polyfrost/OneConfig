@@ -4,14 +4,14 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
-interface OneConfigUIExtensionsBridge {
-    fun modOrder(): List<String>
+public interface OneConfigUIExtensionsBridge {
+    public fun modOrder(): List<String>
 
-    fun replaceModOrder(ids: List<String>)
+    public fun replaceModOrder(ids: List<String>)
 
-    fun modSortModeId(): String
+    public fun modSortModeId(): String
 
-    fun refreshOption(property: Property<*>)
+    public fun refreshOption(property: Property<*>)
 }
 
 @ExperimentalOneConfigUiApi

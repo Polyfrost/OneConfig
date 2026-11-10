@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind
 
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
-class BindNotInScreen(
+public class BindNotInScreen(
     keyCodes: IntArray?,
     mouseBtns: IntArray?,
     mods: Byte,

@@ -6,21 +6,21 @@ import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.node.RootNode
 import org.polyfrost.compose.render.FontManager
 
-class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.huds) {
-    val root = RootNode()
+public class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.huds) {
+    public val root: RootNode = RootNode()
 
     private val applier = PolyApplier(root)
     private val composition = Composition(applier, host.recomposer)
 
-    var revision = 0L
+    public var revision: Long = 0L
         private set
 
-    fun setContent(content: @Composable () -> Unit) {
+    public fun setContent(content: @Composable () -> Unit) {
         laidOutChanges = -1L
         composition.setContent(content)
     }
 
-    fun frame(parentWidth: Float, parentHeight: Float, nanos: Long = System.nanoTime()) {
+    public fun frame(parentWidth: Float, parentHeight: Float, nanos: Long = System.nanoTime()) {
         host.frame(nanos)
         layout(parentWidth, parentHeight)
     }
@@ -34,7 +34,7 @@ class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.hu
 
     private val changes: Long get() = applier.changes
 
-    fun layout(parentWidth: Float, parentHeight: Float) {
+    public fun layout(parentWidth: Float, parentHeight: Float) {
         revision++
         contentStale = false
         laidOutChanges = changes
@@ -44,7 +44,7 @@ class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.hu
         PolyLayoutEngine.layout(root, parentWidth, parentHeight)
     }
 
-    fun layoutIfChanged(parentWidth: Float, parentHeight: Float): Boolean {
+    public fun layoutIfChanged(parentWidth: Float, parentHeight: Float): Boolean {
         if (laidOutChanges == changes && laidOutW == parentWidth && laidOutH == parentHeight &&
             laidOutFonts == FontManager.revision
         ) {
@@ -57,7 +57,7 @@ class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.hu
         return true
     }
 
-    fun contentChanged() {
+    public fun contentChanged() {
         contentStale = true
     }
 
@@ -70,11 +70,11 @@ class PolyComposeRuntime(private val host: PolyComposeClock = PolyComposeHost.hu
         return changed
     }
 
-    fun invalidateLayout() {
+    public fun invalidateLayout() {
         laidOutChanges = -1L
     }
 
-    fun dispose() {
+    public fun dispose() {
         composition.dispose()
     }
 }

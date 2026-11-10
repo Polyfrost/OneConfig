@@ -52,13 +52,13 @@ private val CHECK_SIZE = 20.dp
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun IconButton(iconName: String, tooltip: String?, modifier: Modifier, onClick: () -> Unit) {
+public fun IconButton(iconName: String, tooltip: String?, modifier: Modifier, onClick: () -> Unit) {
     IconButton(iconName, tooltip, null, modifier, null, OneConfigTheme.current.textColor, TooltipPlacement.BelowStart, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun IconButton(
+public fun IconButton(
     iconName: String,
     tooltip: String?,
     label: String?,
@@ -75,7 +75,7 @@ fun IconButton(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun IconButton(
+public fun IconButton(
     tooltip: String?,
     label: String?,
     modifier: Modifier,
@@ -112,7 +112,7 @@ fun IconButton(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ToggleRow(label: String, checked: Boolean, modifier: Modifier, onToggle: () -> Unit) {
+public fun ToggleRow(label: String, checked: Boolean, modifier: Modifier, onToggle: () -> Unit) {
     val theme = OneConfigTheme.current
     val accent = OneConfigTheme.accent
     val source = remember { MutableInteractionSource() }
@@ -168,11 +168,11 @@ fun ToggleRow(label: String, checked: Boolean, modifier: Modifier, onToggle: () 
 }
 
 @ExperimentalOneConfigUiApi
-class TabItem<T>(val value: T, val label: String)
+public class TabItem<T>(public val value: T, public val label: String)
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun <T> TabRow(tabs: List<TabItem<T>>, selected: T, modifier: Modifier, onSelect: (T) -> Unit) {
+public fun <T> TabRow(tabs: List<TabItem<T>>, selected: T, modifier: Modifier, onSelect: (T) -> Unit) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         tabs.forEach { tab ->
             val isSelected = tab.value == selected

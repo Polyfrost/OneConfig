@@ -101,20 +101,20 @@ private fun reversedClusters(text: String): String {
     return out.toString()
 }
 
-class PolyFontSource(val key: String, private val bytes: () -> ByteArray, override val weight: FontWeight, override val style: FontStyle) : Font {
+public class PolyFontSource(public val key: String, private val bytes: () -> ByteArray, override val weight: FontWeight, override val style: FontStyle) : Font {
     internal fun register(): String {
         if (style == FontStyle.Italic) italicFonts += key
         if (FontManager.fontData(key) == null) FontManager.register(key, bytes())
         return key
     }
 
-    override fun equals(other: Any?) = other is PolyFontSource && other.key == key && other.weight == weight && other.style == style
-    override fun hashCode() = (key.hashCode() * 31 + weight.hashCode()) * 31 + style.hashCode()
-    override fun toString() = "PolyFontSource($key, $weight, $style)"
+    override fun equals(other: Any?): Boolean = other is PolyFontSource && other.key == key && other.weight == weight && other.style == style
+    override fun hashCode(): Int = (key.hashCode() * 31 + weight.hashCode()) * 31 + style.hashCode()
+    override fun toString(): String = "PolyFontSource($key, $weight, $style)"
 }
 
-object PolyText : PlatformText {
-    val typefaces = object : PlatformTypefacesLoader {
+public object PolyText : PlatformText {
+    public val typefaces: PlatformTypefacesLoader = object : PlatformTypefacesLoader {
         override fun loadBlocking(font: Font): Any? = (font as? PolyFontSource)?.register()
         override suspend fun awaitLoad(font: Font): Any? = loadBlocking(font)
         override val cacheKey: Any? = null
@@ -145,7 +145,7 @@ object PolyText : PlatformText {
     override fun findFollowingBreak(text: String, index: Int): Int =
         BreakIterator.getCharacterInstance().also { it.setText(text) }.following(index).let { if (it == BreakIterator.DONE) text.length else it }
 
-    override val defaultFontRasterizationSettings = FontRasterizationSettings(FontSmoothing.AntiAlias, FontHinting.Slight, subpixelPositioning = true, autoHintingForced = false)
+    override val defaultFontRasterizationSettings: FontRasterizationSettings = FontRasterizationSettings(FontSmoothing.AntiAlias, FontHinting.Slight, subpixelPositioning = true, autoHintingForced = false)
 }
 
 internal class TextRun(

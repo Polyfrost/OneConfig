@@ -32,50 +32,50 @@ import androidx.compose.runtime.setValue
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyColor
 
-object NotificationTheme {
-    var background by mutableStateOf(PolyColor.hex("#192126").withAlpha(0.85f))
+public object NotificationTheme {
+    public var background: PolyColor by mutableStateOf(PolyColor.hex("#192126").withAlpha(0.85f))
         private set
-    var border by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.05f))
+    public var border: PolyColor by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.05f))
         private set
-    var textPrimary by mutableStateOf(PolyColor.hex("#DFEAFF"))
+    public var textPrimary: PolyColor by mutableStateOf(PolyColor.hex("#DFEAFF"))
         private set
-    var textSecondary by mutableStateOf(PolyColor.hex("#78828F"))
+    public var textSecondary: PolyColor by mutableStateOf(PolyColor.hex("#78828F"))
         private set
-    var accent by mutableStateOf(PolyColor.hex("#2B4BFF"))
+    public var accent: PolyColor by mutableStateOf(PolyColor.hex("#2B4BFF"))
         private set
-    var success by mutableStateOf(PolyColor.hex("#3CAF77"))
+    public var success: PolyColor by mutableStateOf(PolyColor.hex("#3CAF77"))
         private set
-    var error by mutableStateOf(PolyColor.hex("#F2545A"))
-        private set
-
-    var subtleButton by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.08f))
+    public var error: PolyColor by mutableStateOf(PolyColor.hex("#F2545A"))
         private set
 
-    var actionPrimaryText by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.9f))
+    public var subtleButton: PolyColor by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.08f))
         private set
 
-    var actionSubtleText by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.9f))
+    public var actionPrimaryText: PolyColor by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.9f))
         private set
 
-    var fontTitle by mutableStateOf<String?>("poppins-medium")
+    public var actionSubtleText: PolyColor by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.9f))
         private set
 
-    var fontBody by mutableStateOf<String?>(null)
+    public var fontTitle: String? by mutableStateOf<String?>("poppins-medium")
         private set
 
-    var radiusCard by mutableStateOf(12f)
+    public var fontBody: String? by mutableStateOf<String?>(null)
         private set
 
-    var radiusButton by mutableStateOf(4f)
+    public var radiusCard: Float by mutableStateOf(12f)
         private set
 
-    var radiusProgress by mutableStateOf(3f)
+    public var radiusButton: Float by mutableStateOf(4f)
         private set
 
-    var iconFolder by mutableStateOf<String?>(null)
+    public var radiusProgress: Float by mutableStateOf(3f)
         private set
 
-    fun accentFor(type: NotificationType): PolyColor = when (type) {
+    public var iconFolder: String? by mutableStateOf<String?>(null)
+        private set
+
+    public fun accentFor(type: NotificationType): PolyColor = when (type) {
         NotificationType.INFO -> textPrimary
         NotificationType.SUCCESS -> success
         NotificationType.ERROR -> error
@@ -83,7 +83,7 @@ object NotificationTheme {
     }
 
     @ApiStatus.Internal
-    fun set(
+    public fun set(
         background: PolyColor = this.background,
         border: PolyColor = this.border,
         textPrimary: PolyColor = this.textPrimary,
@@ -114,7 +114,7 @@ object NotificationTheme {
     }
 
     @ApiStatus.Internal
-    fun useIconFolder(iconFolder: String?) {
+    public fun useIconFolder(iconFolder: String?) {
         this.iconFolder = iconFolder
     }
 }

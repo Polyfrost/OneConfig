@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -56,14 +57,14 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils
 
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
 
-object HudManager {
+public object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
 
-    var revision by mutableIntStateOf(0)
+    public var revision: Int by mutableIntStateOf(0)
         private set
 
     private var init = false
@@ -94,29 +95,29 @@ object HudManager {
      * HUDs should render example content when this is set
      */
     @get:JvmName("isEditing")
-    val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
+    public val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
 
     /** `true` only while the HUD editor screen itself is open */
-    @Volatile var isEditorOpen = false
+    @Volatile public var isEditorOpen: Boolean = false
         private set
 
     /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
-    @Volatile @JvmField var isConfigUiOpen = false
+    @Volatile @JvmField public var isConfigUiOpen: Boolean = false
 
-    @Volatile @JvmField var guiScreenWidth: Float = 960f
-    @Volatile @JvmField var guiScreenHeight: Float = 540f
+    @Volatile @JvmField public var guiScreenWidth: Float = 960f
+    @Volatile @JvmField public var guiScreenHeight: Float = 540f
 
-    @Volatile @JvmField var layoutRefWidth: Float = 0f
+    @Volatile @JvmField public var layoutRefWidth: Float = 0f
 
-    @Volatile @JvmField var layoutRefHeight: Float = 0f
-
-    @get:ApiStatus.Experimental
-    @JvmStatic
-    val layoutReferenceWidth: Float get() = layoutRefWidth
+    @Volatile @JvmField public var layoutRefHeight: Float = 0f
 
     @get:ApiStatus.Experimental
     @JvmStatic
-    val layoutReferenceHeight: Float get() = layoutRefHeight
+    public val layoutReferenceWidth: Float get() = layoutRefWidth
+
+    @get:ApiStatus.Experimental
+    @JvmStatic
+    public val layoutReferenceHeight: Float get() = layoutRefHeight
 
     @Volatile private var loadingLayout = false
 
@@ -130,51 +131,51 @@ object HudManager {
         if (h > 0f) layoutRefHeight = h
     }
 
-    @Volatile @JvmField var isDebugScreenVisible: Boolean = false
-    @Volatile @JvmField var isTabListVisible: Boolean = false
-    @Volatile @JvmField var isGuiScreenOpen: Boolean = false
-    @Volatile @JvmField var isChatScreenOpen: Boolean = false
+    @Volatile @JvmField public var isDebugScreenVisible: Boolean = false
+    @Volatile @JvmField public var isTabListVisible: Boolean = false
+    @Volatile @JvmField public var isGuiScreenOpen: Boolean = false
+    @Volatile @JvmField public var isChatScreenOpen: Boolean = false
 
     /**
      * Mirrors MC's `options.hideGui` (F1)
      *
      * Hides every HUD unless the editor is open
      */
-    @Volatile @JvmField var isGuiHidden: Boolean = false
+    @Volatile @JvmField public var isGuiHidden: Boolean = false
 
-    @Volatile @JvmField var overrideShowInScreens: Boolean = false
-
-    @ApiStatus.Internal
-    @Volatile @JvmField var targetPixelWidth: Int = 0
+    @Volatile @JvmField public var overrideShowInScreens: Boolean = false
 
     @ApiStatus.Internal
-    @Volatile @JvmField var targetPixelHeight: Int = 0
+    @Volatile @JvmField public var targetPixelWidth: Int = 0
 
     @ApiStatus.Internal
-    @Volatile @JvmField var inWorld: Boolean = true
+    @Volatile @JvmField public var targetPixelHeight: Int = 0
 
     @ApiStatus.Internal
-    @Volatile @JvmField var pendingSelection: Hud? = null
+    @Volatile @JvmField public var inWorld: Boolean = true
 
     @ApiStatus.Internal
-    @Volatile @JvmField var pendingAdd: Hud? = null
+    @Volatile @JvmField public var pendingSelection: Hud? = null
+
+    @ApiStatus.Internal
+    @Volatile @JvmField public var pendingAdd: Hud? = null
 
     private var wasEditing = false
 
     private val showingPreviews get() = isConfigUiOpen || isEditorOpen
 
     @ApiStatus.Internal
-    val previewRevision = mutableIntStateOf(0)
+    public val previewRevision: MutableIntState = mutableIntStateOf(0)
 
     @ApiStatus.Internal
-    val renderRevision = mutableIntStateOf(0)
+    public val renderRevision: MutableIntState = mutableIntStateOf(0)
 
     /** Compose cannot see changes to [activeInstances] so bump this whenever a HUD is added or removed */
     @ApiStatus.Internal
-    val instancesRevision = mutableIntStateOf(0)
+    public val instancesRevision: MutableIntState = mutableIntStateOf(0)
 
     @ApiStatus.Internal
-    val editorOpenRevision = mutableIntStateOf(0)
+    public val editorOpenRevision: MutableIntState = mutableIntStateOf(0)
 
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
 
@@ -182,7 +183,7 @@ object HudManager {
     private var relaidOut = false
 
     @JvmStatic
-    fun invalidate() {
+    public fun invalidate() {
         drawEpoch++
         contentDirty = true
     }
@@ -287,7 +288,7 @@ object HudManager {
     }
 
     @JvmStatic
-    fun markProviderKnown(hud: Hud) {
+    public fun markProviderKnown(hud: Hud) {
         if (knownProviders.add(hud::class.java.name)) saveRegistry()
     }
 
@@ -296,11 +297,11 @@ object HudManager {
      *
      * THERE ARE CERTAIN THINGS THAT MUST BE DONE TO PROPERLY REGISTER AN ACTIVE HUD
      */
-    val activeInstances = ArrayList<Hud>()
+    public val activeInstances: ArrayList<Hud> = ArrayList<Hud>()
 
     @ApiStatus.Experimental
     @JvmStatic
-    fun instances(): List<Hud> = activeInstances.toList()
+    public fun instances(): List<Hud> = activeInstances.toList()
 
     private class DateTestHud : TextHud.DateTime("Date:", "yyyy-MM-dd", title = "Date")
 
@@ -322,14 +323,14 @@ object HudManager {
      * Adds a listener that is run when a new Hud is registered
      */
     @ApiStatus.Internal
-    fun addRegistrationListener(listener: Runnable) {
+    public fun addRegistrationListener(listener: Runnable) {
         registrationListeners.add(listener)
     }
 
     private fun notifyRegistrationChanged() = registrationListeners.forEach(Runnable::run)
 
     @JvmStatic
-    fun register(hud: Hud) {
+    public fun register(hud: Hud) {
         hudProviders[hud::class.java] = hud
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
@@ -349,12 +350,12 @@ object HudManager {
     }
 
     @JvmStatic
-    fun register(vararg huds: Hud) {
+    public fun register(vararg huds: Hud) {
         for (hud in huds) register(hud)
     }
 
     @JvmStatic
-    fun register(hud: Hud, configId: String) {
+    public fun register(hud: Hud, configId: String) {
         hud.configId = configId
         register(hud)
     }
@@ -371,17 +372,17 @@ object HudManager {
      * [org.polyfrost.oneconfig.api.config.v1.Config]
      */
     @JvmStatic
-    fun register(hud: Hud, configId: String, icon: String) {
+    public fun register(hud: Hud, configId: String, icon: String) {
         hudIcons[configId] = icon
         register(hud, configId)
     }
 
     /** The menu icon associated with [configId] via [register] or `null` if none was set */
-    fun iconFor(configId: String): String? = hudIcons[configId]
+    public fun iconFor(configId: String): String? = hudIcons[configId]
 
-    fun providers(): Collection<Hud> = hudProviders.values
+    public fun providers(): Collection<Hud> = hudProviders.values
 
-    fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
+    public fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
         if (hudProviders.remove(hud::class.java) != null) {
             revision++
             notifyRegistrationChanged()
@@ -402,7 +403,7 @@ object HudManager {
         return out
     }
 
-    fun <T : Hud> getHudsOfType(hudClass: Class<T>): ArrayList<T> {
+    public fun <T : Hud> getHudsOfType(hudClass: Class<T>): ArrayList<T> {
         val out = ArrayList<T>(10.coerceAtMost(activeInstances.size))
         for (it in activeInstances) {
             if (it::class.java == hudClass) {
@@ -413,26 +414,26 @@ object HudManager {
         return out
     }
 
-    fun hasHudOfType(hudClass: Class<out Hud>): Boolean = activeInstances.any { it::class.java == hudClass }
+    public fun hasHudOfType(hudClass: Class<out Hud>): Boolean = activeInstances.any { it::class.java == hudClass }
 
-    fun getProvider(hudClass: Class<out Hud>): Hud? = hudProviders[hudClass]
+    public fun getProvider(hudClass: Class<out Hud>): Hud? = hudProviders[hudClass]
 
     /** The live HUD whose config tree has this [id] used to resolve [Hud.anchorTargetId] */
-    fun instanceById(id: String): Hud? {
+    public fun instanceById(id: String): Hud? {
         for (it in activeInstances) {
             if (it.tree?.id == id) return it
         }
         return null
     }
 
-    fun toggleAllHuds(hud: Hud, hidden: Boolean) {
+    public fun toggleAllHuds(hud: Hud, hidden: Boolean) {
         hudProviders[hud::class.java]?.hidden = hidden
         for (it in activeInstances) {
             if (it::class.java == hud::class.java) it.hidden = hidden
         }
     }
 
-    fun removeHud(hud: Hud, delete: Boolean = false) {
+    public fun removeHud(hud: Hud, delete: Boolean = false) {
         if (!hud.isReal) LOGGER.warn("Removing HUD ${hud.title}, which has no config tree")
         if (activeInstances.remove(hud)) instancesRevision.intValue++
         disposeHudLogging(hud, delete)
@@ -514,7 +515,7 @@ object HudManager {
             inner[1] + inner[3] <= outer[1] + outer[3]
 
     @ApiStatus.Internal
-    fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
+    public fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
 
     private fun zOrdered(list: List<Hud>, bounds: (Hud) -> FloatArray?): List<Hud> {
         val n = list.size
@@ -576,7 +577,7 @@ object HudManager {
     }
 
     @ApiStatus.Internal
-    fun updateIfDue(hud: Hud) {
+    public fun updateIfDue(hud: Hud) {
         val frequency = hud.updateFrequency()
         if (frequency >= 0L) {
             val now = System.nanoTime()
@@ -724,7 +725,7 @@ object HudManager {
 
     @ApiStatus.Internal
     @JvmOverloads
-    fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null, alwaysRender: Boolean = false, liveChroma: Boolean = false): Boolean {
+    public fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null, alwaysRender: Boolean = false, liveChroma: Boolean = false): Boolean {
         var volatileContent = false
         this.liveChroma = liveChroma
         val scale = prepareFrame(screenWidth, screenHeight, {
@@ -848,7 +849,7 @@ object HudManager {
      */
     @ApiStatus.Internal
     @JvmStatic
-    fun setMergeExclusions(huds: Collection<Hud>) {
+    public fun setMergeExclusions(huds: Collection<Hud>) {
         val next = huds.toList()
         if (next.size == mergeExclusions.size && next.indices.all { next[it] === mergeExclusions[it] }) return
         mergeExclusions = next
@@ -872,16 +873,16 @@ object HudManager {
     /** Every HUD fused into the same background shape as [hud] including [hud] itself */
     @ApiStatus.Internal
     @JvmStatic
-    fun mergeGroupOf(hud: Hud): List<Hud> =
+    public fun mergeGroupOf(hud: Hud): List<Hud> =
         frameGroups.firstOrNull { group -> group.huds.any { it === hud } }?.huds ?: listOf(hud)
 
     @ApiStatus.Internal
     @JvmStatic
-    fun isMergeCandidate(hud: Hud): Boolean = HudBackgroundMerge.canMerge(hud)
+    public fun isMergeCandidate(hud: Hud): Boolean = HudBackgroundMerge.canMerge(hud)
 
     @ApiStatus.Internal
     @JvmStatic
-    fun backgroundStylesMatch(a: Hud, b: Hud): Boolean = HudBackgroundMerge.sameStyle(a, b)
+    public fun backgroundStylesMatch(a: Hud, b: Hud): Boolean = HudBackgroundMerge.sameStyle(a, b)
 
     /**
      * Holds every HUD in a fused shape against the neighbour it touches at the point where the two meet
@@ -917,7 +918,7 @@ object HudManager {
      * so without this they would show up bare
      */
     @ApiStatus.Internal
-    fun drawMergedBackgrounds(ctx: RenderContext) {
+    public fun drawMergedBackgrounds(ctx: RenderContext) {
         for (group in frameGroups) {
             try {
                 group.draw(ctx)
@@ -1015,7 +1016,7 @@ object HudManager {
         this == other || (this.isNaN() && other.isNaN())
 
     @ApiStatus.Internal
-    fun prepare(screenWidth: Float, screenHeight: Float) {
+    public fun prepare(screenWidth: Float, screenHeight: Float) {
         prepareFrame(screenWidth, screenHeight, {
             prepareOrder.clear()
             for (hud in activeInstances) {
@@ -1030,7 +1031,7 @@ object HudManager {
 
     @ApiStatus.Internal
     @JvmOverloads
-    fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float, volatileCtx: RenderContext? = null) {
+    public fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float, volatileCtx: RenderContext? = null) {
         val prepared = preparedFrameValid
         preparedFrameValid = false
         val scale = if (prepared) {
@@ -1187,12 +1188,12 @@ object HudManager {
     }
 
     @ApiStatus.Internal
-    fun toggleEditor() {
+    public fun toggleEditor() {
         if (isEditorOpen) closeEditor() else openEditor()
     }
 
     @ApiStatus.Internal
-    fun openEditor() {
+    public fun openEditor() {
         // always re-assert editing and post OPEN even when isEditorOpen is already true because
         // the flag can get stuck and an early return would make the Edit HUD button do nothing
         isEditorOpen = true
@@ -1200,7 +1201,7 @@ object HudManager {
     }
 
     @ApiStatus.Internal
-    fun closeEditor() {
+    public fun closeEditor() {
         if (!isEditorOpen) return
         isEditorOpen = false
         EventManager.INSTANCE.post(HudEditorToggleEvent.CLOSE)
@@ -1211,12 +1212,12 @@ object HudManager {
      * replaces it with itself, clearing the flag while the editor stays open
      */
     @ApiStatus.Internal
-    fun onEditorScreenAdded() {
+    public fun onEditorScreenAdded() {
         if (!isEditorOpen) openEditor()
     }
 
     @ApiStatus.Internal
-    fun onEditorScreenRemoved() {
+    public fun onEditorScreenRemoved() {
         val wasOpen = isEditorOpen
         isEditorOpen = false
         // a drag interrupted by the editor closing must not leave a HUD unable to merge
@@ -1231,7 +1232,7 @@ object HudManager {
     }
 
     @ApiStatus.Internal
-    fun initialize() {
+    public fun initialize() {
         if (init) throw IllegalStateException("HudManager.initialize() called twice!")
         ConfigManager.active()
         init = true
@@ -1241,7 +1242,7 @@ object HudManager {
     }
 
     @ApiStatus.Internal
-    fun setProfileReloadDispatcher(dispatcher: Consumer<Runnable>) {
+    public fun setProfileReloadDispatcher(dispatcher: Consumer<Runnable>) {
         profileReloadDispatcher = dispatcher
     }
 

@@ -1,31 +1,31 @@
 package org.polyfrost.oneconfig.api.platform.v1
 
-interface Keys {
-    fun keyName(key: Int): String
-    fun mouseName(button: Int): String
+public interface Keys {
+    public fun keyName(key: Int): String
+    public fun mouseName(button: Int): String
 
-    val keyA: Int
-    val keyC: Int
-    val keyD: Int
-    val keyE: Int
-    val keyF: Int
-    val keyH: Int
-    val keyL: Int
-    val keyR: Int
-    val keyV: Int
-    val keyX: Int
-    val keyY: Int
-    val keyZ: Int
-    val keyDelete: Int
-    val keyLeftShift: Int
-    val keyRightShift: Int
-    val keyLeftControl: Int
-    val keyRightControl: Int
-    val keyLeftAlt: Int
-    val keyRightAlt: Int
-    val keyLeftSuper: Int
-    val keyRightSuper: Int
+    public val keyA: Int
+    public val keyC: Int
+    public val keyD: Int
+    public val keyE: Int
+    public val keyF: Int
+    public val keyH: Int
+    public val keyL: Int
+    public val keyR: Int
+    public val keyV: Int
+    public val keyX: Int
+    public val keyY: Int
+    public val keyZ: Int
+    public val keyDelete: Int
+    public val keyLeftShift: Int
+    public val keyRightShift: Int
+    public val keyLeftControl: Int
+    public val keyRightControl: Int
+    public val keyLeftAlt: Int
+    public val keyRightAlt: Int
+    public val keyLeftSuper: Int
+    public val keyRightSuper: Int
 
-    val mouseButtonLeft: Int
+    public val mouseButtonLeft: Int
 
 }

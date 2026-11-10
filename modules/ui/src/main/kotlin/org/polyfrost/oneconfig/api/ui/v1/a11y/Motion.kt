@@ -18,26 +18,26 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
-object Motion {
+public object Motion {
     private const val REDUCED_FADE_MILLIS = 150
 
     @JvmStatic
-    val reduced: Boolean
+    public val reduced: Boolean
         get() = runCatching { componentsBridge().reducedMotion() }.getOrDefault(false)
 
     @JvmStatic
-    fun <T> spec(spec: AnimationSpec<T>): AnimationSpec<T> = if (reduced) snap() else spec
+    public fun <T> spec(spec: AnimationSpec<T>): AnimationSpec<T> = if (reduced) snap() else spec
 
     @JvmStatic
-    fun <T> finiteSpec(spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> = if (reduced) snap() else spec
+    public fun <T> finiteSpec(spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> = if (reduced) snap() else spec
 
     @JvmStatic
-    fun enter(enter: EnterTransition): EnterTransition = if (reduced) fadeIn(tween(REDUCED_FADE_MILLIS)) else enter
+    public fun enter(enter: EnterTransition): EnterTransition = if (reduced) fadeIn(tween(REDUCED_FADE_MILLIS)) else enter
 
     @JvmStatic
-    fun exit(exit: ExitTransition): ExitTransition = if (reduced) fadeOut(tween(REDUCED_FADE_MILLIS)) else exit
+    public fun exit(exit: ExitTransition): ExitTransition = if (reduced) fadeOut(tween(REDUCED_FADE_MILLIS)) else exit
 
     @JvmStatic
-    fun itemPlacementSpec(): FiniteAnimationSpec<IntOffset>? =
+    public fun itemPlacementSpec(): FiniteAnimationSpec<IntOffset>? =
         if (reduced) null else spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntOffset.VisibilityThreshold)
 }

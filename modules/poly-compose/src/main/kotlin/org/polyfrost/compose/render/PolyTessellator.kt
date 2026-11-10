@@ -20,28 +20,28 @@ import kotlin.math.sqrt
 import org.polyfrost.compose.mc.McGlyph
 import org.polyfrost.compose.mc.McGlyphs
 
-abstract class PolyTessellator : PolyRenderer {
+public abstract class PolyTessellator : PolyRenderer {
     protected class State(
-        @JvmField var sx: Float, @JvmField var sy: Float, @JvmField var tx: Float, @JvmField var ty: Float,
-        @JvmField var alpha: Float, @JvmField var clip: FloatArray?, @JvmField var rclip: RClip?, @JvmField var mask: Mask? = null,
-        @JvmField var glyphScale: Float = 1f, @JvmField var rot: FloatArray? = null, @JvmField var hole: RClip? = null,
+        @JvmField public var sx: Float, @JvmField public var sy: Float, @JvmField public var tx: Float, @JvmField public var ty: Float,
+        @JvmField public var alpha: Float, @JvmField public var clip: FloatArray?, @JvmField public var rclip: RClip?, @JvmField public var mask: Mask? = null,
+        @JvmField public var glyphScale: Float = 1f, @JvmField public var rot: FloatArray? = null, @JvmField public var hole: RClip? = null,
     ) {
-        fun copy() = State(sx, sy, tx, ty, alpha, clip, rclip, mask, glyphScale, rot, hole)
+        public fun copy(): State = State(sx, sy, tx, ty, alpha, clip, rclip, mask, glyphScale, rot, hole)
     }
 
-    protected class Mask(val fade: PolyFade, val parent: Mask?)
+    protected class Mask(public val fade: PolyFade, public val parent: Mask?)
 
     protected class RClip(
-        val edge: FloatArray, val inner: FloatArray, val outer: FloatArray, val parent: RClip?, val safe: FloatArray, val box: FloatArray,
-        val rrect: Boolean = true,
+        public val edge: FloatArray, public val inner: FloatArray, public val outer: FloatArray, public val parent: RClip?, public val safe: FloatArray, public val box: FloatArray,
+        public val rrect: Boolean = true,
     ) {
-        val invLen = FloatArray(edge.size / 2) { e ->
+        public val invLen: FloatArray = FloatArray(edge.size / 2) { e ->
             val n = edge.size / 2
             1f / max(hypot(edge[(e + 1) % n * 2] - edge[e * 2], edge[(e + 1) % n * 2 + 1] - edge[e * 2 + 1]), 1e-4f)
         }
     }
 
-    protected var state = State(1f, 1f, 0f, 0f, 1f, null, null)
+    protected var state: State = State(1f, 1f, 0f, 0f, 1f, null, null)
     private val stack = ArrayDeque<State>()
 
     private class Layer(val depth: Int, val alpha: Float, var start: Int, val box: Int) {
@@ -92,7 +92,7 @@ abstract class PolyTessellator : PolyRenderer {
         if (y1 > boxes[o + 3]) boxes[o + 3] = y1
     }
 
-    protected fun touchAll() = touch(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+    protected fun touchAll(): Unit = touch(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
 
     protected val drawBoxMark: Int get() = boxCount
 
@@ -217,7 +217,7 @@ abstract class PolyTessellator : PolyRenderer {
         return true
     }
 
-    override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float) =
+    override fun rectStroke(x: Float, y: Float, w: Float, h: Float, color: Int, strokeWidth: Float, radius: Float): Unit =
         stroke(x, y, w, h, color, strokeWidth, radius, shade = null)
 
     override fun rectStrokeGradient(x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, radius: Float) {
@@ -317,7 +317,7 @@ abstract class PolyTessellator : PolyRenderer {
         fillPolygonPx(pts, 4, mulAlpha(color, alphaMul), convex = true)
     }
 
-    override fun fillPathGradient(path: PolyPath, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient) =
+    override fun fillPathGradient(path: PolyPath, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient): Unit =
         shaded(gradient, x, y, w, h) { fillPath(path, -1) }
 
     override fun fillPath(path: PolyPath, color: Int) {
@@ -479,7 +479,7 @@ abstract class PolyTessellator : PolyRenderer {
 
     override fun strokePolylineGradient(
         points: FloatArray, closed: Boolean, x: Float, y: Float, w: Float, h: Float, gradient: PolyGradient, strokeWidth: Float, cap: Int, join: Int,
-    ) = shaded(gradient, x, y, w, h) { strokePolyline(points, closed, -1, strokeWidth, cap, join) }
+    ): Unit = shaded(gradient, x, y, w, h) { strokePolyline(points, closed, -1, strokeWidth, cap, join) }
 
     override fun strokePolyline(points: FloatArray, closed: Boolean, color: Int, strokeWidth: Float, cap: Int, join: Int) {
         beginDraw()
@@ -587,9 +587,9 @@ abstract class PolyTessellator : PolyRenderer {
         fillPolygonPx(out, total, c, convex = false, quads = quads)
     }
 
-    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont) = glyphs(text, x, y, color, font, 0f, false, true)
+    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont): Unit = glyphs(text, x, y, color, font, 0f, false, true)
 
-    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float) = glyphs(text, x, y, color, font, 0f, false, true, letterSpacing)
+    override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float): Unit = glyphs(text, x, y, color, font, 0f, false, true, letterSpacing)
 
     override fun text(text: String, x: Float, y: Float, color: Int, font: PolyFont, letterSpacing: Float, skewX: Float) {
         if (skewX == 0f || state.sy == 0f) return text(text, x, y, color, font, letterSpacing)
@@ -599,7 +599,7 @@ abstract class PolyTessellator : PolyRenderer {
         shearX = 0f
     }
 
-    override fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float) =
+    override fun textOutline(text: String, x: Float, y: Float, color: Int, font: PolyFont, width: Float): Unit =
         glyphs(text, x, y, color, font, width * scaleAvg(), true, true)
 
     private fun glyphs(text: String, x: Float, y: Float, color: Int, font: PolyFont, outlinePx: Float, round: Boolean, subpixel: Boolean, letterSpacing: Float = 0f) {
@@ -837,7 +837,7 @@ abstract class PolyTessellator : PolyRenderer {
         quadPx(x0, y0, x1, y1, ua, va, ub, vb, c)
     }
 
-    override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow) =
+    override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow): Unit =
         shadowWithHole(x, y, w, h, radius, shadow, 0f, 0f, 0f, 0f, 0f)
 
     override fun shadowWithHole(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow, holeX: Float, holeY: Float, holeW: Float, holeH: Float, holeRadius: Float) {
@@ -935,13 +935,13 @@ abstract class PolyTessellator : PolyRenderer {
         }
     }
 
-    fun stateKey(): Any {
+    public fun stateKey(): Any {
         keySize = 0
         writeStateKey()
         return StateKey(keyScratch.copyOf(keySize))
     }
 
-    fun sameState(key: Any): Boolean {
+    public fun sameState(key: Any): Boolean {
         if (key !is StateKey) return false
         keySize = 0
         writeStateKey()
@@ -953,9 +953,9 @@ abstract class PolyTessellator : PolyRenderer {
         override fun hashCode(): Int = values.contentHashCode()
     }
 
-    fun saveState(): Any = state.copy()
+    public fun saveState(): Any = state.copy()
 
-    fun restoreState(saved: Any) { state = (saved as State).copy() }
+    public fun restoreState(saved: Any) { state = (saved as State).copy() }
 
     override fun save() {
         stack.addLast(state)
@@ -1964,7 +1964,7 @@ abstract class PolyTessellator : PolyRenderer {
 
     private class ShadowMask(val bitmap: PolyBitmap, val slice: Float, val extent: Float, val width: Float)
 
-    companion object {
+    public companion object {
         private const val MAX_FADE_DRAWS = 16
 
         private const val NEAREST_TIE_BIAS = 1f / 256f
@@ -1975,7 +1975,7 @@ abstract class PolyTessellator : PolyRenderer {
         // Inverted, so no point is known to be inside a polygon without testing its edges
         private val NO_SAFE = floatArrayOf(0f, 0f, -1f, -1f, 0f, 0f, -1f, -1f)
 
-        fun layerTargetSize(current: Int, needed: Int): Int = if (current >= needed) current else (needed + 63) / 64 * 64
+        public fun layerTargetSize(current: Int, needed: Int): Int = if (current >= needed) current else (needed + 63) / 64 * 64
 
         private fun length(x: Float, y: Float): Float = sqrt(x.toDouble() * x + y.toDouble() * y).toFloat()
 
@@ -2011,7 +2011,7 @@ abstract class PolyTessellator : PolyRenderer {
             }
             return turn != 0f && flips <= 2
         }
-        const val FALLBACK_FONT = "unifont"
+        public const val FALLBACK_FONT: String = "unifont"
 
         private val cornerTrigs = arrayOfNulls<FloatArray>(17)
 

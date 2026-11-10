@@ -2,23 +2,23 @@ package org.polyfrost.compose.mc
 
 import org.polyfrost.compose.render.PolyGlyphPage
 
-object McFontQueue {
-    var measureWidth: ((text: String, scale: Float) -> Float)? = null
-    var measureHeight: ((scale: Float) -> Float)? = null
+public object McFontQueue {
+    public var measureWidth: ((text: String, scale: Float) -> Float)? = null
+    public var measureHeight: ((scale: Float) -> Float)? = null
 
     @Deprecated("Minecraft text is drawn by the active PolyRenderer", level = DeprecationLevel.HIDDEN)
-    var renderer: ((canvas: Any?, text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) -> Unit)? = null
+    public var renderer: ((canvas: Any?, text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) -> Unit)? = null
 
     @Deprecated("Minecraft text is drawn by the active PolyRenderer", level = DeprecationLevel.HIDDEN)
-    var outlineRenderer: ((canvas: Any?, text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) -> Unit)? = null
+    public var outlineRenderer: ((canvas: Any?, text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) -> Unit)? = null
 
-    fun measureTextWidth(text: String, scale: Float): Float =
+    public fun measureTextWidth(text: String, scale: Float): Float =
         measureWidth?.invoke(text, scale) ?: bundledWidth(text, scale)
 
-    fun measureTextHeight(scale: Float): Float =
+    public fun measureTextHeight(scale: Float): Float =
         measureHeight?.invoke(scale) ?: (9f * scale)
 
-    fun measureBlockHeight(lines: Int, scale: Float): Float =
+    public fun measureBlockHeight(lines: Int, scale: Float): Float =
         lines * measureTextHeight(scale) - scale
 
     private val advances = FloatArray(0x590) { Float.NaN }

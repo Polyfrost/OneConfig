@@ -36,7 +36,7 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 @ExperimentalOneConfigUiApi
-enum class TooltipPlacement {
+public enum class TooltipPlacement {
     AboveCenter,
     AboveStart,
     AboveEnd,
@@ -83,13 +83,13 @@ private class TooltipPosition(private val placement: TooltipPlacement, private v
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TooltipPopup(text: String, placement: TooltipPlacement) {
+public fun TooltipPopup(text: String, placement: TooltipPlacement) {
     TooltipPopup(text, placement, TOOLTIP_WRAP)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp) {
+public fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp) {
     val density = LocalDensity.current
     val provider = remember(density, placement) {
         TooltipPosition(placement, with(density) { TOOLTIP_GAP.roundToPx() }, with(density) { TOOLTIP_EDGE.roundToPx() })
@@ -118,13 +118,13 @@ fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp) {
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TooltipBox(text: String?, modifier: Modifier, content: @Composable () -> Unit) {
+public fun TooltipBox(text: String?, modifier: Modifier, content: @Composable () -> Unit) {
     TooltipBox(text, modifier, TooltipPlacement.AboveCenter, TOOLTIP_WRAP, content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TooltipBox(text: String?, modifier: Modifier, placement: TooltipPlacement, maxWidth: Dp, content: @Composable () -> Unit) {
+public fun TooltipBox(text: String?, modifier: Modifier, placement: TooltipPlacement, maxWidth: Dp, content: @Composable () -> Unit) {
     val source = remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }

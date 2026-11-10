@@ -9,13 +9,13 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Tooltip(text: @Composable () -> Unit, modifier: Modifier, anchor: Alignment, content: @Composable () -> Unit) {
+public fun Tooltip(text: @Composable () -> Unit, modifier: Modifier, anchor: Alignment, content: @Composable () -> Unit) {
     componentsBridge().Tooltip(text, modifier, anchor, anchor, DpOffset.Zero, content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Tooltip(
+public fun Tooltip(
     text: @Composable () -> Unit,
     modifier: Modifier,
     anchor: Alignment,

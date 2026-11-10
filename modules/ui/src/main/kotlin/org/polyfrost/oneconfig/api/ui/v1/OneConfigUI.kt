@@ -22,7 +22,7 @@ import org.apache.logging.log4j.LogManager
  * OneConfigUI.open(MyModRoute.INSTANCE);
  * ```
  */
-object OneConfigUI {
+public object OneConfigUI {
     private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
     /**
@@ -49,7 +49,7 @@ object OneConfigUI {
      */
     @JvmStatic
     @JvmOverloads
-    fun open(route: Any? = null) {
+    public fun open(route: Any? = null) {
         val bridge = bridge
         if (bridge == null) {
             LOGGER.warn("Cannot open the OneConfig UI: no OneConfigUIBridge is available")
@@ -72,9 +72,9 @@ object OneConfigUI {
      */
     @JvmStatic
     @JvmOverloads
-    fun createScreen(route: Any? = null): Any? = bridge?.createScreen(route)
+    public fun createScreen(route: Any? = null): Any? = bridge?.createScreen(route)
 
     @ExperimentalOneConfigUiApi
     @JvmStatic
-    fun isOneConfigScreen(screen: Any?): Boolean = bridge?.isOneConfigScreen(screen) ?: false
+    public fun isOneConfigScreen(screen: Any?): Boolean = bridge?.isOneConfigScreen(screen) ?: false
 }

@@ -85,7 +85,7 @@ internal object ToastViewport {
 }
 
 @Composable
-fun NotificationToasts() {
+public fun NotificationToasts() {
     val w = ToastViewport.width
     val h = ToastViewport.height
     if (w <= 0f || h <= 0f) return

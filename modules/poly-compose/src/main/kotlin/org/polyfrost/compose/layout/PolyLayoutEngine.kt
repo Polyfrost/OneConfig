@@ -2,9 +2,9 @@ package org.polyfrost.compose.layout
 
 import org.polyfrost.compose.node.PolyNode
 
-object PolyLayoutEngine {
+public object PolyLayoutEngine {
 
-    fun layout(node: PolyNode, parentWidth: Float, parentHeight: Float) {
+    public fun layout(node: PolyNode, parentWidth: Float, parentHeight: Float) {
         measure(node, parentWidth, parentHeight)
         arrangeChildren(node)
     }

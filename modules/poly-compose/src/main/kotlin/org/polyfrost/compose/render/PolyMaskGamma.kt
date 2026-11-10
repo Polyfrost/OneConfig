@@ -4,12 +4,12 @@ import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-object PolyMaskGamma {
+public object PolyMaskGamma {
     private val mac = System.getProperty("os.name").startsWith("Mac")
 
     private val tables = Array(8) { table(scale255(it), if (mac) 0f else 0.5f) }
 
-    fun bucket(argb: Int): Int {
+    public fun bucket(argb: Int): Int {
         var r = canonical(argb ushr 16 and 0xFF)
         var g = canonical(argb ushr 8 and 0xFF)
         var b = canonical(argb and 0xFF)
@@ -21,12 +21,12 @@ object PolyMaskGamma {
         return ((r * 54 + g * 183 + b * 19) shr 8) ushr 5
     }
 
-    fun apply(r: PolyGlyphPage.Raster, bucket: Int): PolyGlyphPage.Raster {
+    public fun apply(r: PolyGlyphPage.Raster, bucket: Int): PolyGlyphPage.Raster {
         val t = tables[bucket]
         return PolyGlyphPage.Raster(r.offX, r.offY, r.w, r.h, ByteArray(r.coverage.size) { t[r.coverage[it].toInt() and 0xFF] })
     }
 
-    fun table(srcI: Int, contrast: Float): ByteArray {
+    public fun table(srcI: Int, contrast: Float): ByteArray {
         val src = srcI / 255f
         val linSrc = toLuma(src)
         val dst = 1f - src
@@ -41,7 +41,7 @@ object PolyMaskGamma {
         }
     }
 
-    fun scale255(base: Int): Int {
+    public fun scale255(base: Int): Int {
         val v = base shl 5
         return v or (v ushr 3) or (v ushr 6)
     }

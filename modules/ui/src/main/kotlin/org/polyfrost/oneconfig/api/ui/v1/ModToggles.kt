@@ -16,7 +16,7 @@ import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
  * [register] their own [ModToggle] or ask OneConfig to keep the state for them with [manage] and
  * poll it through [isEnabled]
  */
-object ModToggles {
+public object ModToggles {
     private val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
     private val lock = Any()
 
@@ -35,17 +35,17 @@ object ModToggles {
     private val listeners = CopyOnWriteArrayList<Listener>()
 
     @JvmStatic
-    var revision by mutableIntStateOf(0)
+    public var revision: Int by mutableIntStateOf(0)
         private set
 
-    interface Store {
-        fun load(): Set<String>
+    public interface Store {
+        public fun load(): Set<String>
 
-        fun save(disabled: Set<String>)
+        public fun save(disabled: Set<String>)
     }
 
-    fun interface Listener {
-        fun onToggle(modId: String, enabled: Boolean)
+    public fun interface Listener {
+        public fun onToggle(modId: String, enabled: Boolean)
     }
 
     /**
@@ -54,7 +54,7 @@ object ModToggles {
      * Takes precedence over an `enabled` option detected in the mod's config
      */
     @JvmStatic
-    fun register(modId: String, toggle: ModToggle) {
+    public fun register(modId: String, toggle: ModToggle) {
         val key = normalise(modId)
         if (key.isEmpty()) {
             LOGGER.warn("Ignoring mod toggle with a blank mod id")
@@ -67,7 +67,7 @@ object ModToggles {
     @Suppress("DEPRECATION")
     @Deprecated("Binary compatibility for mods compiled against 1.4.0", level = DeprecationLevel.HIDDEN)
     @JvmStatic
-    fun register(modId: String, toggle: org.polyfrost.oneconfig.api.ui.v1.ModToggle) =
+    public fun register(modId: String, toggle: org.polyfrost.oneconfig.api.ui.v1.ModToggle): Unit =
         register(modId, toggle as ModToggle)
 
     /**
@@ -76,7 +76,7 @@ object ModToggles {
      * The mod, or a mixin into it, is expected to check [isEnabled] wherever it does its work
      */
     @JvmStatic
-    fun manage(vararg modIds: String) {
+    public fun manage(vararg modIds: String) {
         val keys = modIds.map(::normalise).filter { it.isNotEmpty() }
         if (keys.isEmpty()) return
         synchronized(lock) { managed = managed + keys }
@@ -84,7 +84,7 @@ object ModToggles {
     }
 
     @JvmStatic
-    fun toggleFor(modId: String): ModToggle? {
+    public fun toggleFor(modId: String): ModToggle? {
         val keys = keysFor(modId).toList()
         keys.firstNotNullOfOrNull(toggles::get)?.let { return it }
         return keys.firstOrNull(managed::contains)?.let(::ManagedToggle)
@@ -97,13 +97,13 @@ object ModToggles {
      * Mods OneConfig does not manage are always reported as enabled
      */
     @JvmStatic
-    fun isEnabled(modId: String): Boolean {
+    public fun isEnabled(modId: String): Boolean {
         val off = disabled
         return off.isEmpty() || modId !in off
     }
 
     @JvmStatic
-    fun setEnabled(modId: String, enabled: Boolean) {
+    public fun setEnabled(modId: String, enabled: Boolean) {
         val key = keysFor(modId).firstOrNull(managed::contains) ?: normalise(modId)
         if (key.isEmpty()) return
         val snapshot = synchronized(lock) {
@@ -128,17 +128,17 @@ object ModToggles {
     }
 
     @JvmStatic
-    fun addListener(listener: Listener) {
+    public fun addListener(listener: Listener) {
         listeners.addIfAbsent(listener)
     }
 
     @JvmStatic
-    fun removeListener(listener: Listener) {
+    public fun removeListener(listener: Listener) {
         listeners.remove(listener)
     }
 
     @JvmStatic
-    fun setStore(store: Store) {
+    public fun setStore(store: Store) {
         val loaded = try {
             store.load().mapTo(HashSet(), ::normalise)
         } catch (t: Throwable) {

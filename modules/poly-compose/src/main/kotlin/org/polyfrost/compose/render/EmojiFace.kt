@@ -8,7 +8,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class EmojiFace(private val font: ByteBuffer, outlines: ((ByteArray) -> PolyGlyphPage.Face)? = null) : PolyGlyphPage.Face {
+public class EmojiFace(private val font: ByteBuffer, outlines: ((ByteArray) -> PolyGlyphPage.Face)? = null) : PolyGlyphPage.Face {
     private val tables = HashMap<String, Int>()
     private val unitsPerEm: Int
     private val metricCount: Int
@@ -111,7 +111,7 @@ class EmojiFace(private val font: ByteBuffer, outlines: ((ByteArray) -> PolyGlyp
         if (u16(at) == 1) List(u16(at + 2)) { u16(at + 4 + it * 2) }
         else (0 until u16(at + 2)).flatMap { (u16(at + 4 + it * 6)..u16(at + 6 + it * 6)).toList() }
 
-    override fun advance(glyph: Int) = u16(table("hmtx") + min(glyph, metricCount - 1) * 4) / unitsPerEm.toFloat()
+    override fun advance(glyph: Int): Float = u16(table("hmtx") + min(glyph, metricCount - 1) * 4) / unitsPerEm.toFloat()
 
     override fun raster(glyph: Int, pixelSize: Float): PolyGlyphPage.Raster? = runCatching {
         when {
@@ -219,7 +219,7 @@ class EmojiFace(private val font: ByteBuffer, outlines: ((ByteArray) -> PolyGlyp
     private fun s16(o: Int) = font.getShort(o).toInt()
     private fun u32(o: Int) = font.getInt(o)
 
-    companion object {
+    public companion object {
         private const val FOREGROUND = 0xFFFF
         private const val LIGATURE = 4
         private const val EXTENSION = 7
@@ -264,7 +264,7 @@ class EmojiFace(private val font: ByteBuffer, outlines: ((ByteArray) -> PolyGlyp
         }
 
         @JvmStatic
-        fun system(outlines: (ByteArray) -> PolyGlyphPage.Face): EmojiFace? {
+        public fun system(outlines: (ByteArray) -> PolyGlyphPage.Face): EmojiFace? {
             val file = systemFont() ?: return null
             val mapped = FileChannel.open(file.toPath(), StandardOpenOption.READ).use { it.map(FileChannel.MapMode.READ_ONLY, 0, it.size()) }
             return EmojiFace(mapped, outlines)

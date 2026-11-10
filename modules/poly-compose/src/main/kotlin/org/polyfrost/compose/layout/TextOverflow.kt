@@ -1,6 +1,6 @@
 package org.polyfrost.compose.layout
 
-enum class TextOverflow {
+public enum class TextOverflow {
     Visible,
     Clip,
     Ellipsis,

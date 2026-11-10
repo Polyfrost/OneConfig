@@ -35,7 +35,7 @@ import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 @ApiStatus.Internal
-object NotificationsRenderer {
+public object NotificationsRenderer {
     private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
 
     private const val BASE_SCALE = 0.5f
@@ -59,13 +59,13 @@ object NotificationsRenderer {
      * Renders the toast stack into [ctx]
      */
     @JvmStatic
-    fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
+    public fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float) {
         prepare(screenWidth, screenHeight)
         draw(ctx)
     }
 
     @JvmStatic
-    fun prepare(screenWidth: Float, screenHeight: Float): Boolean {
+    public fun prepare(screenWidth: Float, screenHeight: Float): Boolean {
         val guiScale = Platform.compatibility().options().guiScale
         val scale = guiScale * BASE_SCALE
         val viewWidth = screenWidth * guiScale / scale
@@ -88,7 +88,7 @@ object NotificationsRenderer {
     }
 
     @JvmStatic
-    fun draw(ctx: RenderContext) {
+    public fun draw(ctx: RenderContext) {
         val rt = runtime ?: return
         ctx.save()
         ctx.scale(lastScale, lastScale)
@@ -127,10 +127,10 @@ object NotificationsRenderer {
     }
 
     @JvmStatic
-    fun consumeMouseButton(button: Int, pressed: Boolean): Boolean = ToastInput.consumeButton(button, pressed)
+    public fun consumeMouseButton(button: Int, pressed: Boolean): Boolean = ToastInput.consumeButton(button, pressed)
 
     @JvmStatic
-    fun isPointerOverToast(): Boolean = ToastInput.hovered() != null
+    public fun isPointerOverToast(): Boolean = ToastInput.hovered() != null
 
     internal fun dispatchClick(target: ToastHit?) {
         if (target == null) return

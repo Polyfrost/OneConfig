@@ -11,10 +11,10 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Modifier.fadingEdges(scrollState: ScrollState, color: Color): Modifier =
+public fun Modifier.fadingEdges(scrollState: ScrollState, color: Color): Modifier =
     componentsBridge().fadingEdges(this, scrollState, color, 32.dp)
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Modifier.fadingEdges(scrollState: ScrollState, color: Color, length: Dp): Modifier =
+public fun Modifier.fadingEdges(scrollState: ScrollState, color: Color, length: Dp): Modifier =
     componentsBridge().fadingEdges(this, scrollState, color, length)

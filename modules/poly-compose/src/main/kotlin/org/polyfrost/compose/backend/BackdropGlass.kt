@@ -4,7 +4,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 
-fun DrawScope.drawBackdropGlass(size: Size, cornerRadiusPx: Float, bandPx: Float, refraction: Float, alpha: Float) {
+public fun DrawScope.drawBackdropGlass(size: Size, cornerRadiusPx: Float, bandPx: Float, refraction: Float, alpha: Float) {
     if (size.width <= 0f || size.height <= 0f || alpha <= 0f) return
     drawIntoCanvas { c ->
         (c as? PolyDrawCanvas)?.polyOp {

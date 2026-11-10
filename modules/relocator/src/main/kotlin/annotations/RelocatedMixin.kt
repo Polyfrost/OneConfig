@@ -8,4 +8,4 @@ package org.polyfrost.oneconfig.relocator.annotations
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
-annotation class RelocatedMixin()
+public annotation class RelocatedMixin()

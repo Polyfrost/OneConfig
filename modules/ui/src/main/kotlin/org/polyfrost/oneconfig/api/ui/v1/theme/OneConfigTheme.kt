@@ -9,72 +9,72 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
-object OneConfigTheme {
+public object OneConfigTheme {
     @JvmStatic
-    val POLYFROSTED_DARK: OneConfigUITheme by lazy { componentsBridge().polyfrostedDark() }
+    public val POLYFROSTED_DARK: OneConfigUITheme by lazy { componentsBridge().polyfrostedDark() }
 
     @JvmStatic
-    val POLYFROSTED_LIGHT: OneConfigUITheme by lazy { componentsBridge().polyfrostedLight() }
+    public val POLYFROSTED_LIGHT: OneConfigUITheme by lazy { componentsBridge().polyfrostedLight() }
 
     @JvmStatic
-    val GLASS_DARK: OneConfigUITheme by lazy { componentsBridge().glassDark() }
+    public val GLASS_DARK: OneConfigUITheme by lazy { componentsBridge().glassDark() }
 
     @JvmStatic
-    val GLASS_LIGHT: OneConfigUITheme by lazy { componentsBridge().glassLight() }
+    public val GLASS_LIGHT: OneConfigUITheme by lazy { componentsBridge().glassLight() }
 
     @JvmStatic
     @Deprecated("Renamed to Polyfrosted", ReplaceWith("OneConfigTheme.POLYFROSTED_DARK"))
-    val POLY_GLASS_DARK: OneConfigUITheme get() = POLYFROSTED_DARK
+    public val POLY_GLASS_DARK: OneConfigUITheme get() = POLYFROSTED_DARK
 
     @JvmStatic
     @Deprecated("Renamed to Polyfrosted", ReplaceWith("OneConfigTheme.POLYFROSTED_LIGHT"))
-    val POLY_GLASS_LIGHT: OneConfigUITheme get() = POLYFROSTED_LIGHT
+    public val POLY_GLASS_LIGHT: OneConfigUITheme get() = POLYFROSTED_LIGHT
 
     @JvmStatic
-    val MINECRAFT_DARK: OneConfigUITheme by lazy { componentsBridge().minecraftDark() }
+    public val MINECRAFT_DARK: OneConfigUITheme by lazy { componentsBridge().minecraftDark() }
 
     @JvmStatic
-    val MINECRAFT_LIGHT: OneConfigUITheme by lazy { componentsBridge().minecraftLight() }
+    public val MINECRAFT_LIGHT: OneConfigUITheme by lazy { componentsBridge().minecraftLight() }
 
-    val current: OneConfigUITheme
+    public val current: OneConfigUITheme
         @Composable get() = componentsBridge().currentTheme()
 
-    val accent: Color
+    public val accent: Color
         @Composable get() = componentsBridge().accent()
 
     @JvmStatic
-    val active: OneConfigUITheme?
+    public val active: OneConfigUITheme?
         get() = componentsBridge().activeTheme()
 
     @JvmStatic
-    fun builtIn(): List<OneConfigUITheme> = listOf(
+    public fun builtIn(): List<OneConfigUITheme> = listOf(
         POLYFROSTED_DARK, POLYFROSTED_LIGHT,
         GLASS_DARK, GLASS_LIGHT,
         MINECRAFT_DARK, MINECRAFT_LIGHT,
     )
 
     @JvmStatic
-    fun activate(theme: OneConfigUITheme) {
+    public fun activate(theme: OneConfigUITheme) {
         componentsBridge().activateTheme(theme)
     }
 
     @JvmStatic
-    fun ensureLoaded() {
+    public fun ensureLoaded() {
         componentsBridge().ensureThemeLoaded()
     }
 
     @JvmStatic
-    var logoOverride: String? by mutableStateOf(null)
+    public var logoOverride: String? by mutableStateOf(null)
         private set
 
     @JvmStatic
-    fun overrideLogo(path: String?) {
+    public fun overrideLogo(path: String?) {
         logoOverride = path?.takeIf { it.isNotBlank() }
     }
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ProvideOneConfigTheme(content: @Composable () -> Unit) {
+public fun ProvideOneConfigTheme(content: @Composable () -> Unit) {
     componentsBridge().ProvideTheme(content)
 }

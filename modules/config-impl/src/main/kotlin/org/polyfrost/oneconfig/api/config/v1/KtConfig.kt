@@ -41,7 +41,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
  *
  * **Do not use in Java sources**
  */
-open class KtConfig(id: String, title: String, category: Category, icon: String? = null) :
+public open class KtConfig(id: String, title: String, category: Category, icon: String? = null) :
     Config(id, icon, title, category) {
 
     private var pendingTree: Tree? = null
@@ -76,7 +76,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         category: String? = null,
         subcategory: String? = null,
         visualizer: Visualizer
-    ) =
+    ): Provider<T> =
         Provider(def, name, description, category, subcategory, T::class.java, visualizer)
 
     @JvmSynthetic
@@ -86,7 +86,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String? = null,
         category: String? = null,
         subcategory: String? = null
-    ) =
+    ): Provider<Boolean> =
         Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer())
 
     /**
@@ -95,7 +95,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
      * A config without one falls back to a root level boolean option called `enabled`
      */
     @JvmSynthetic
-    protected fun masterToggle(def: Boolean = true) =
+    protected fun masterToggle(def: Boolean = true): Provider<Boolean> =
         Provider(def, null, null, null, null, Boolean::class.java, Visualizer.SwitchVisualizer()) {
             addMetadata("hidden", true)
             addMetadata("masterToggle", true)
@@ -114,7 +114,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
         swatch: Boolean = false,
-    ) = Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer()) {
+    ): Provider<PolyColor> = Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer()) {
         addMetadata(
             name,
             nameKey,
@@ -143,7 +143,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
-    ) = color(name, def, alpha, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, false)
+    ): Provider<PolyColor> = color(name, def, alpha, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, false)
 
     @JvmSynthetic
     protected fun color(
@@ -152,7 +152,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String? = null,
         category: String? = null,
         subcategory: String? = null
-    ) =
+    ): Provider<PolyColor> =
         Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer())
 
     @JvmSynthetic
@@ -164,7 +164,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String? = null,
         category: String? = null,
         subcategory: String? = null
-    ) =
+    ): Provider<Float> =
         Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
             addMetadata("min", min)
             addMetadata("max", max)
@@ -178,7 +178,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String? = null,
         category: String? = null,
         subcategory: String? = null
-    ) =
+    ): Provider<String> =
         Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer())
 
     private fun Node.addMetadata(
@@ -219,7 +219,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.textinput.placeholder",
         regex: String? = null
-    ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
+    ): Provider<String> = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
         addMetadata(
             name,
             nameKey,
@@ -253,7 +253,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategoryKey: String? = null,
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.textinput.placeholder"
-    ) = text(name, def, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey, placeholder, placeholderKey, null)
+    ): Provider<String> = text(name, def, nameKey, description, descriptionKey, icon, multiline, category, categoryKey, subcategory, subcategoryKey, placeholder, placeholderKey, null)
 
     @JvmSynthetic
     protected fun checkbox(
@@ -267,7 +267,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
-    ) = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.CheckboxVisualizer()) {
+    ): Provider<Boolean> = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.CheckboxVisualizer()) {
         addMetadata(
             name,
             nameKey,
@@ -293,7 +293,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
-    ) = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer()) {
+    ): Provider<Boolean> = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer()) {
         addMetadata(
             name,
             nameKey,
@@ -327,7 +327,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.numberinput.placeholder",
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
+    ): Provider<Float> = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.NumberVisualizer()) {
         addMetadata(
             name,
             nameKey,
@@ -368,7 +368,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.numberinput.placeholder",
-    ) = number(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, placeholder, placeholderKey, null)
+    ): Provider<Float> = number(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, placeholder, placeholderKey, null)
 
     @JvmSynthetic
     protected fun slider(
@@ -389,7 +389,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 1f,
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
+    ): Provider<Float> = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
         requireStep(name, min, max, step)
         addMetadata(
             name,
@@ -429,7 +429,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = -10f,
         max: Float = 100f,
         step: Float = 1f,
-    ) = slider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, step, null)
+    ): Provider<Float> = slider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, unit, unitKey, min, max, step, null)
 
     @JvmSynthetic
     protected fun keybind(
@@ -443,7 +443,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
-    ) =
+    ): Provider<OneConfigKeybind> =
         Provider(
             def,
             name,
@@ -474,7 +474,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String? = null,
         category: String? = null,
         subcategory: String? = null
-    ) =
+    ): Provider<Int> =
         Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.RadioVisualizer()) {
             addMetadata("options", options)
         }
@@ -487,7 +487,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         description: String? = null,
         category: String? = null,
         subcategory: String? = null
-    ) =
+    ): Provider<Int> =
         Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.DropdownVisualizer()) {
             addMetadata("options", options)
         }
@@ -597,7 +597,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         text: String? = null,
         textKey: String? = null,
         action: () -> Unit,
-    ) = DummyProvider(name, description, category, subcategory, Visualizer.ButtonVisualizer()) {
+    ): DummyProvider = DummyProvider(name, description, category, subcategory, Visualizer.ButtonVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         this.addMetadata("runnable", Runnable {
             runCatching(action).onFailure { ConfigManager.LOGGER.error("Failed to run button {}", name, it) }
@@ -623,7 +623,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
-    ) = DummyProvider(name, description, category, subcategory, Visualizer.InfoVisualizer()) {
+    ): DummyProvider = DummyProvider(name, description, category, subcategory, Visualizer.InfoVisualizer()) {
         addMetadata("titleKey", nameKey)
         addMetadata("descriptionKey", descriptionKey)
         addMetadata("icon", icon)
@@ -647,7 +647,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
         optionKeys: Array<String> = arrayOf(),
-    ) = Provider(def, name, description, category, subcategory, BooleanArray::class.java, Visualizer.MultiSelectDropdownVisualizer()) {
+    ): Provider<BooleanArray> = Provider(def, name, description, category, subcategory, BooleanArray::class.java, Visualizer.MultiSelectDropdownVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         this.addMetadata("options", options)
         this.addMetadata("optionsKey", optionKeys)
@@ -669,7 +669,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         subcategory: String? = "General",
         subcategoryKey: String? = null,
         optionKeys: Array<String> = arrayOf(),
-    ) = Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.MultiSelectDropdownVisualizer()) {
+    ): Provider<Int> = Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.MultiSelectDropdownVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         this.addMetadata("options", options)
         this.addMetadata("optionsKey", optionKeys)
@@ -692,7 +692,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         options: Array<String> = arrayOf(),
         optionKeys: Array<String> = arrayOf(),
         checkable: Boolean = false,
-    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.DraggableListVisualizer()) {
+    ): Provider<Array<String>> = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.DraggableListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         this.addMetadata("options", options)
         this.addMetadata("optionsKey", optionKeys)
@@ -716,7 +716,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 1f,
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderVisualizer()) {
+    ): Provider<FloatArray> = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         require(def.size == 2) { "rangeSlider '$name' needs a start and end, got ${def.size} values" }
         requireStep(name, min, max, step)
@@ -742,7 +742,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = 0f,
         max: Float = 100f,
         step: Float = 1f,
-    ) = rangeSlider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, min, max, step, null)
+    ): Provider<FloatArray> = rangeSlider(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, min, max, step, null)
 
     /** Two number inputs holding `[start, end]`, a [rangeSlider] without the track */
     @JvmSynthetic
@@ -761,7 +761,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 1f,
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberVisualizer()) {
+    ): Provider<FloatArray> = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         require(def.size == 2) { "rangeNumber '$name' needs a start and end, got ${def.size} values" }
         this.addMetadata("min", min)
@@ -788,7 +788,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         directory: Boolean = false,
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.filepicker.placeholder",
-    ) = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.FileVisualizer()) {
+    ): Provider<String> = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.FileVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         this.addMetadata("types", types)
         this.addMetadata("filterName", filterName)
@@ -816,7 +816,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.textinput.placeholder",
         regex: String? = null,
-    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.TextListVisualizer()) {
+    ): Provider<Array<String>> = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.TextListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         this.addMetadata("placeholder", placeholder)
@@ -844,7 +844,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 0f,
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.NumberListVisualizer()) {
+    ): Provider<FloatArray> = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.NumberListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         this.addMetadata("min", min)
@@ -873,7 +873,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = 0f,
         max: Float = 100f,
         step: Float = 0f,
-    ) = numberList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
+    ): Provider<FloatArray> = numberList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
 
     @JvmSynthetic
     protected fun sliderList(
@@ -895,7 +895,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 1f,
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.SliderListVisualizer()) {
+    ): Provider<FloatArray> = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.SliderListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         requireStep(name, min, max, step)
@@ -925,7 +925,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         min: Float = 0f,
         max: Float = 100f,
         step: Float = 1f,
-    ) = sliderList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
+    ): Provider<FloatArray> = sliderList(name, def, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey, maxEntries, reorderable, addText, addTextKey, min, max, step, null)
 
     /** A list of two-handle sliders, [def] holds each range's start then end so `[0, 10, 20, 30]` is 0-10 and 20-30 */
     @JvmSynthetic
@@ -948,7 +948,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 1f,
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderListVisualizer()) {
+    ): Provider<FloatArray> = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeSliderListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         require(def.size % 2 == 0) { "rangeSliderList '$name' needs a start and end for every range, got ${def.size} values" }
@@ -980,7 +980,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         max: Float = 100f,
         step: Float = 1f,
         formatter: ValueFormatter? = null,
-    ) = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberListVisualizer()) {
+    ): Provider<FloatArray> = Provider(def, name, description, category, subcategory, FloatArray::class.java, Visualizer.RangeNumberListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         require(def.size % 2 == 0) { "rangeNumberList '$name' needs a start and end for every range, got ${def.size} values" }
@@ -1008,7 +1008,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         addText: String? = null,
         addTextKey: String? = null,
         alpha: Boolean = true,
-    ) = Provider(def, name, description, category, subcategory, IntArray::class.java, Visualizer.ColorListVisualizer()) {
+    ): Provider<IntArray> = Provider(def, name, description, category, subcategory, IntArray::class.java, Visualizer.ColorListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         if (!alpha) this.addMetadata("noAlpha", Unit)
@@ -1035,7 +1035,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         directory: Boolean = false,
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.filepicker.placeholder",
-    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.FileListVisualizer()) {
+    ): Provider<Array<String>> = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.FileListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
         this.addMetadata("types", types)
@@ -1062,7 +1062,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         reorderable: Boolean = true,
         addText: String? = null,
         addTextKey: String? = "oneconfig.itemlist.add",
-    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.ItemListVisualizer()) {
+    ): Provider<Array<String>> = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.ItemListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         require(maxEntries >= 0) { "itemList '$name' has a negative maxEntries ($maxEntries)" }
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
@@ -1085,7 +1085,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         reorderable: Boolean = true,
         addText: String? = null,
         addTextKey: String? = "oneconfig.effectlist.add",
-    ) = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.EffectListVisualizer()) {
+    ): Provider<Array<String>> = Provider(def, name, description, category, subcategory, Array<String>::class.java, Visualizer.EffectListVisualizer()) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
         require(maxEntries >= 0) { "effectList '$name' has a negative maxEntries ($maxEntries)" }
             addListMetadata(maxEntries, reorderable, addText, addTextKey)
@@ -1101,19 +1101,19 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
     private fun requireStep(name: String, min: Float, max: Float, step: Float) =
         require(step <= 0f || step <= max - min) { "slider '$name' has step ($step) larger than its range ($min to $max)" }
 
-    fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
+    public fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
         if (tree == null) runInitialize(false)
         hideIf(option.name) { condition() }
     }
 
-    fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
+    public fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
         if (tree == null) runInitialize(false)
         hideIf(option.name) { condition.get() }
     }
 
     // a KProperty1 given here is a member of this config, so this is always a valid receiver
     @Suppress("UNCHECKED_CAST")
-    fun <T> addCallback(option: KProperty<T>, callback: (T?) -> Boolean) {
+    public fun <T> addCallback(option: KProperty<T>, callback: (T?) -> Boolean) {
         option.property.addCallback { callback(when (option) {
             is KProperty0<T> -> option.get()
             is KProperty1<*, T> -> (option as KProperty1<Any, T>).get(this)
@@ -1166,7 +1166,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         }
     }
 
-    fun <Type : Any> observable(
+    public fun <Type : Any> observable(
         property: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>,
         callback: (Type) -> Unit
     ): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> = callback(property) {
@@ -1174,23 +1174,23 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
         false
     }
 
-    fun <Type : Any> callback(
+    public fun <Type : Any> callback(
         property: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>,
         callback: (Type) -> Boolean
     ): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
         ObservableProvider(property, callback)
 
-    fun <Source : Any, Target : Any> transformed(
+    public fun <Source : Any, Target : Any> transformed(
         property: PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Source>>,
         to: (Source) -> Target,
         from: (Target) -> Source,
     ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Target>> = CachedTransformedProvider(property, to, from)
 
     @JvmName("withObservable")
-    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.onChange(callback: (Type) -> Unit) = observable(this, callback)
-    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.withCallback(callback: (Type) -> Boolean) = callback(this, callback)
+    public fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.onChange(callback: (Type) -> Unit): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> = observable(this, callback)
+    public fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.withCallback(callback: (Type) -> Boolean): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> = callback(this, callback)
 
-    fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.fullWidth(): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
+    public fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.fullWidth(): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
         PropertyDelegateProvider { thisRef, property ->
             provideDelegate(thisRef, property).also {
                 (thisRef.tree ?: thisRef.pendingTree()).getProp(property.name)?.addMetadata("fullWidth", true)

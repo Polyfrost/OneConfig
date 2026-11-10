@@ -9,4 +9,4 @@ package org.polyfrost.oneconfig.api.ui.v1
     AnnotationTarget.CONSTRUCTOR,
     AnnotationTarget.TYPEALIAS,
 )
-annotation class ExperimentalOneConfigUiApi
+public annotation class ExperimentalOneConfigUiApi

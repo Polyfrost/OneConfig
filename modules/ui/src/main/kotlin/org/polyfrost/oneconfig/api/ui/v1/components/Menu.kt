@@ -63,19 +63,19 @@ import org.polyfrost.oneconfig.api.ui.v1.theme.concentric
 import kotlin.math.roundToInt
 
 @ExperimentalOneConfigUiApi
-enum class MenuItemSize(internal val height: Dp, internal val textSize: TextUnit, internal val iconSize: Dp, internal val inset: Dp) {
+public enum class MenuItemSize(internal val height: Dp, internal val textSize: TextUnit, internal val iconSize: Dp, internal val inset: Dp) {
     Compact(30.dp, 13.sp, 14.dp, 8.dp),
     Regular(38.dp, 14.sp, 18.dp, 10.dp),
 }
 
 @ExperimentalOneConfigUiApi
-class MenuAction(
-    val label: String,
-    val icon: String? = null,
-    val detail: String? = null,
-    val danger: Boolean = false,
-    val enabled: Boolean = true,
-    val onClick: () -> Unit,
+public class MenuAction(
+    public val label: String,
+    public val icon: String? = null,
+    public val detail: String? = null,
+    public val danger: Boolean = false,
+    public val enabled: Boolean = true,
+    public val onClick: () -> Unit,
 )
 
 private val MENU_INSET = 4.dp
@@ -86,19 +86,19 @@ private const val HOVER_ALPHA = 0.10f
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun MenuItem(label: String, onClick: () -> Unit) {
+public fun MenuItem(label: String, onClick: () -> Unit) {
     MenuItem(label, null, null, MenuItemSize.Compact, false, false, true, null, Modifier, null, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun MenuItem(label: String, icon: String?, onClick: () -> Unit) {
+public fun MenuItem(label: String, icon: String?, onClick: () -> Unit) {
     MenuItem(label, icon, null, MenuItemSize.Compact, false, false, true, null, Modifier, null, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun MenuItem(
+public fun MenuItem(
     label: String,
     icon: String?,
     detail: String?,
@@ -166,7 +166,7 @@ fun MenuItem(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun MenuSurface(modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
+public fun MenuSurface(modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = componentsBridge().popupSurface(
             modifier.widthIn(min = MENU_MIN_WIDTH, max = MENU_MAX_WIDTH).width(IntrinsicSize.Max),
@@ -179,13 +179,13 @@ fun MenuSurface(modifier: Modifier, content: @Composable ColumnScope.() -> Unit)
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun MenuList(items: List<MenuAction>, onPicked: () -> Unit) {
+public fun MenuList(items: List<MenuAction>, onPicked: () -> Unit) {
     MenuList(items, MenuItemSize.Compact, onPicked)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun MenuList(items: List<MenuAction>, size: MenuItemSize, onPicked: () -> Unit) {
+public fun MenuList(items: List<MenuAction>, size: MenuItemSize, onPicked: () -> Unit) {
     MenuSurface(Modifier) {
         items.forEach { item ->
             MenuItem(item.label, item.icon, item.detail, size, item.danger, false, item.enabled, null, Modifier, null) {
@@ -198,7 +198,7 @@ fun MenuList(items: List<MenuAction>, size: MenuItemSize, onPicked: () -> Unit) 
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     if (!expanded) return
     EscapeCloses(onDismiss)
     val provider = remember(offset) { PointPosition(offset, true) }
@@ -209,7 +209,7 @@ fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, con
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, items: List<MenuAction>) {
+public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, items: List<MenuAction>) {
     if (!expanded) return
     EscapeCloses(onDismiss)
     val provider = remember(offset) { PointPosition(offset, true) }
@@ -232,7 +232,7 @@ private val LocalContextMenu = staticCompositionLocalOf<ContextMenuState?> { nul
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun ContextMenuHost(content: @Composable () -> Unit) {
+public fun ContextMenuHost(content: @Composable () -> Unit) {
     val state = remember { ContextMenuState() }
     CompositionLocalProvider(LocalContextMenu provides state, content = content)
     val menu = state.open ?: return
@@ -248,7 +248,7 @@ fun ContextMenuHost(content: @Composable () -> Unit) {
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun Modifier.contextMenu(items: () -> List<MenuAction>): Modifier {
+public fun Modifier.contextMenu(items: () -> List<MenuAction>): Modifier {
     val state = LocalContextMenu.current ?: return this
     val latest by rememberUpdatedState(items)
     val holder = remember { CoordinatesHolder() }

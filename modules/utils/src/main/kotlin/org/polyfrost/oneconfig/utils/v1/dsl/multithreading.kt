@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.utils.v1.dsl
 
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import org.polyfrost.oneconfig.utils.v1.Multithreading
@@ -35,13 +36,13 @@ import org.polyfrost.oneconfig.utils.v1.Multithreading
  *
  * @see Multithreading.submit
  */
-fun runAsync(block: () -> Unit) = Multithreading.submit(block)
+public fun runAsync(block: () -> Unit): Future<*> = Multithreading.submit(block)
 
 /**
  * Runs the given [block] asynchronously after the given [delay]
  *
  * @see Multithreading.schedule
  */
-fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit) = Multithreading.schedule(block, delay, timeUnit)
+public fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit): Unit = Multithreading.schedule(block, delay, timeUnit)
 
-fun schedule(time: Duration, block: () -> Unit) = Multithreading.schedule(block, time.inWholeNanoseconds, TimeUnit.NANOSECONDS)
+public fun schedule(time: Duration, block: () -> Unit): Unit = Multithreading.schedule(block, time.inWholeNanoseconds, TimeUnit.NANOSECONDS)

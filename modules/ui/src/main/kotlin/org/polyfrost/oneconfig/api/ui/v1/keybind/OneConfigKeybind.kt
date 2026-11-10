@@ -4,13 +4,13 @@ import kotlin.experimental.and
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable
 
-open class OneConfigKeybind(
-    var keyCodes: IntArray?,
-    var mouseBtns: IntArray?,
-    var mods: Byte,
-    var durationNanos: Long,
+public open class OneConfigKeybind(
+    public var keyCodes: IntArray?,
+    public var mouseBtns: IntArray?,
+    public var mods: Byte,
+    public var durationNanos: Long,
     @Transient
-    val action: (Boolean) -> Boolean,
+    public val action: (Boolean) -> Boolean,
 ) : OverwriteMergeable {
     /**
      * Human-readable name shown for this keybind in Minecraft's Controls menu or `null` if it should not be
@@ -20,7 +20,7 @@ open class OneConfigKeybind(
      * via [KeybindHelper.name]
      */
     @Transient
-    var name: String? = null
+    public var name: String? = null
 
     /**
      * Category heading this keybind is grouped under in Minecraft's Controls menu
@@ -31,7 +31,7 @@ open class OneConfigKeybind(
      * via [KeybindHelper.category]
      */
     @Transient
-    var category: String? = null
+    public var category: String? = null
 
     /**
      * The code-default keybind this one was created from so Minecraft's Controls menu resets back to the true
@@ -42,10 +42,10 @@ open class OneConfigKeybind(
      * Only its keys and modifiers are read
      */
     @Transient
-    var defaultKeybind: OneConfigKeybind? = null
+    public var defaultKeybind: OneConfigKeybind? = null
 
     @Transient
-    var firesWhileTyping = false
+    public var firesWhileTyping: Boolean = false
 
     /**
      * Serialized key inputs that could not be resolved on this Minecraft version.
@@ -53,7 +53,7 @@ open class OneConfigKeybind(
      * They stay inactive but are written back on save so they don't get erased by a version switch.
      */
     @Transient
-    var unresolvedKeyInputs: List<Any>? = null
+    public var unresolvedKeyInputs: List<Any>? = null
 
     /*
      * Serialized mouse inputs that could not be resolved on this Minecraft version.
@@ -61,11 +61,11 @@ open class OneConfigKeybind(
      * @see unresolvedKeyInputs
      */
     @Transient
-    var unresolvedMouseInputs: List<Any>? = null
+    public var unresolvedMouseInputs: List<Any>? = null
 
-    val hasUnresolvedInputs get() = !unresolvedKeyInputs.isNullOrEmpty() || !unresolvedMouseInputs.isNullOrEmpty()
+    public val hasUnresolvedInputs: Boolean get() = !unresolvedKeyInputs.isNullOrEmpty() || !unresolvedMouseInputs.isNullOrEmpty()
 
-    val isBound get() = keyCodes?.isNotEmpty() == true || mouseBtns?.isNotEmpty() == true
+    public val isBound: Boolean get() = keyCodes?.isNotEmpty() == true || mouseBtns?.isNotEmpty() == true
 
     /**
      * The single input code Minecraft's Controls menu binds to
@@ -75,16 +75,16 @@ open class OneConfigKeybind(
      * Combos and modifiers cannot be represented by a single vanilla mapping so they are shown
      * via the keybind's display label instead
      */
-    val boundCode get() = keyCodes?.firstOrNull() ?: mouseBtns?.firstOrNull() ?: -1
+    public val boundCode: Int get() = keyCodes?.firstOrNull() ?: mouseBtns?.firstOrNull() ?: -1
 
-    val isMousePrimary get() = (keyCodes?.isNotEmpty() != true) && (mouseBtns?.isNotEmpty() == true)
+    public val isMousePrimary: Boolean get() = (keyCodes?.isNotEmpty() != true) && (mouseBtns?.isNotEmpty() == true)
 
     /**
      * Create a copy of this keybind bound to the given keys/modifiers
      *
      * Preserves the action and duration and subtype and Controls-menu metadata
      */
-    open fun copyWith(keyCodes: IntArray?, mouseBtns: IntArray?, mods: Byte): OneConfigKeybind =
+    public open fun copyWith(keyCodes: IntArray?, mouseBtns: IntArray?, mods: Byte): OneConfigKeybind =
         OneConfigKeybind(keyCodes, mouseBtns, mods, durationNanos, action).also {
             it.name = name
             it.category = category
@@ -109,7 +109,7 @@ open class OneConfigKeybind(
         return this
     }
 
-    open fun test(downKeys: Set<Int>, downMouse: Set<Int>, currentMods: Byte): Boolean {
+    public open fun test(downKeys: Set<Int>, downMouse: Set<Int>, currentMods: Byte): Boolean {
         if (!isBound) return false
         if (mods != KeyModifiers.NONE && (currentMods and mods) != mods) return false
         val keysHeld = keyCodes?.all { it in downKeys } ?: true
@@ -117,7 +117,7 @@ open class OneConfigKeybind(
         return keysHeld && mouseHeld
     }
 
-    fun conflictsWith(other: OneConfigKeybind): Boolean {
+    public fun conflictsWith(other: OneConfigKeybind): Boolean {
         if (this === other || !isBound || !other.isBound) return false
         return mods == other.mods &&
             sameCodes(keyCodes, other.keyCodes) &&
@@ -137,7 +137,7 @@ open class OneConfigKeybind(
      *
      * Returns `"None"` when unbound
      */
-    fun displayName(): String {
+    public fun displayName(): String {
         if (!isBound) return "None"
         val parts = LinkedHashSet<String>()
         parts += modifierNames(mods)
@@ -146,10 +146,10 @@ open class OneConfigKeybind(
         return parts.joinToString(" + ").ifEmpty { "None" }
     }
 
-    companion object {
+    public companion object {
         /** Human-readable name for a key code */
         @JvmStatic
-        fun keyName(key: Int): String = Platform.compatibility().keys().keyName(key)
+        public fun keyName(key: Int): String = Platform.compatibility().keys().keyName(key)
 
         private fun modifierNames(mods: Byte): List<String> = buildList {
             if (KeyModifiers.has(mods, KeyModifiers.CTRL)) add("Ctrl")

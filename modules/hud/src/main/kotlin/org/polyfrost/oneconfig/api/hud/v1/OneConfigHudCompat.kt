@@ -218,41 +218,41 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     }
 }
 
-interface OneConfigHudWrapper {
-    var id: String
-    var name: String
+public interface OneConfigHudWrapper {
+    public var id: String
+    public var name: String
 
-    val modId: String? get() = null
+    public val modId: String? get() = null
 
-    var x: Float
-    var y: Float
+    public var x: Float
+    public var y: Float
 
-    var scale: Float
+    public var scale: Float
 
-    var scaledWidth: Float
-    var scaledHeight: Float
+    public var scaledWidth: Float
+    public var scaledHeight: Float
 
-    var hidden: Boolean
+    public var hidden: Boolean
         get() = false
         set(_) {}
 
-    val supportsScale: Boolean get() = true
+    public val supportsScale: Boolean get() = true
 
-    val placementReady: Boolean get() = true
+    public val placementReady: Boolean get() = true
 
-    val ownsPlacement: Boolean get() = false
+    public val ownsPlacement: Boolean get() = false
 
-    val resizeAxes: HudResize get() = HudResize.Both
+    public val resizeAxes: HudResize get() = HudResize.Both
 
-    fun onDragStart() {}
+    public fun onDragStart() {}
 
-    fun onDragEnd() {}
+    public fun onDragEnd() {}
 
-    fun linkedProperties(): List<Property<*>> = emptyList()
+    public fun linkedProperties(): List<Property<*>> = emptyList()
 
-    fun save() {}
+    public fun save() {}
 
-    fun register() {
+    public fun register() {
         val hud = OneConfigHudCompat(this)
         val modId = modId
         if (modId != null) HudManager.register(hud, modId) else HudManager.register(hud)

@@ -9,20 +9,20 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.Property
 
 @ExperimentalOneConfigUiApi
-abstract class SettingRowDecorator {
+public abstract class SettingRowDecorator {
     @Composable
-    abstract fun Decorate(property: Property<*>, content: @Composable () -> Unit)
+    public abstract fun Decorate(property: Property<*>, content: @Composable () -> Unit)
 }
 
 @ExperimentalOneConfigUiApi
-object SettingRowDecorators {
+public object SettingRowDecorators {
     private val LOGGER = LogManager.getLogger("OneConfig/SettingRowDecorators")
     private val lock = Any()
 
     private var entries by mutableStateOf(emptyList<SettingRowDecorator>())
 
     @JvmStatic
-    fun register(entry: SettingRowDecorator) {
+    public fun register(entry: SettingRowDecorator) {
         synchronized(lock) {
             if (entry in entries) {
                 LOGGER.debug("Ignoring SettingRowDecorator {} that is already registered", entry.javaClass.name)
@@ -33,12 +33,12 @@ object SettingRowDecorators {
     }
 
     @JvmStatic
-    fun unregister(entry: SettingRowDecorator): Boolean = synchronized(lock) {
+    public fun unregister(entry: SettingRowDecorator): Boolean = synchronized(lock) {
         if (entry !in entries) return false
         Snapshot.withMutableSnapshot { entries = entries - entry }
         true
     }
 
     @JvmStatic
-    fun all(): List<SettingRowDecorator> = entries
+    public fun all(): List<SettingRowDecorator> = entries
 }

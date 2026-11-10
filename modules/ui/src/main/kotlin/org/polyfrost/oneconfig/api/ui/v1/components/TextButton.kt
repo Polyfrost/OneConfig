@@ -36,7 +36,7 @@ import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 @ExperimentalOneConfigUiApi
-enum class ButtonStyle {
+public enum class ButtonStyle {
     Primary,
     Secondary,
     Danger,
@@ -49,19 +49,19 @@ private const val DANGER_HOVER_ALPHA = 0.2f
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextButton(label: String, modifier: Modifier, onClick: () -> Unit) {
+public fun TextButton(label: String, modifier: Modifier, onClick: () -> Unit) {
     TextButton(label, null, modifier, ButtonStyle.Secondary, true, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextButton(label: String, modifier: Modifier, style: ButtonStyle, onClick: () -> Unit) {
+public fun TextButton(label: String, modifier: Modifier, style: ButtonStyle, onClick: () -> Unit) {
     TextButton(label, null, modifier, style, true, onClick)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextButton(label: String, icon: String?, modifier: Modifier, style: ButtonStyle, enabled: Boolean, onClick: () -> Unit) {
+public fun TextButton(label: String, icon: String?, modifier: Modifier, style: ButtonStyle, enabled: Boolean, onClick: () -> Unit) {
     val theme = OneConfigTheme.current
     val source = remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()

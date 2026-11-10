@@ -34,5 +34,5 @@ import org.polyfrost.oneconfig.utils.v1.NetworkUtils
  *
  * @see NetworkUtils.downloadFile
  */
-fun Path.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
+public fun Path.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false): Boolean =
     NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)

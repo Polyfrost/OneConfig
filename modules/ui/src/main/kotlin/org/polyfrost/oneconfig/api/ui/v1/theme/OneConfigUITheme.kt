@@ -6,35 +6,35 @@ import androidx.compose.ui.text.font.FontFamily
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
-abstract class OneConfigUITheme {
-    abstract val name: String
+public abstract class OneConfigUITheme {
+    public abstract val name: String
 
-    abstract val pageBackground: Color
-    abstract val sidebarBackground: Color
-    abstract val chipBackground: Color
-    abstract val modCardBackground: Color
-    abstract val componentBackground: Color
-    abstract val popupBackground: Color
+    public abstract val pageBackground: Color
+    public abstract val sidebarBackground: Color
+    public abstract val chipBackground: Color
+    public abstract val modCardBackground: Color
+    public abstract val componentBackground: Color
+    public abstract val popupBackground: Color
 
-    abstract val borderColor: Color
-    abstract val textColor: Color
-    abstract val textColorSecondary: Color
-    abstract val accentTextColor: Color
+    public abstract val borderColor: Color
+    public abstract val textColor: Color
+    public abstract val textColorSecondary: Color
+    public abstract val accentTextColor: Color
 
-    abstract val shadowColor: Color
-    abstract val controlThumbColor: Color
-    abstract val favoriteColor: Color
+    public abstract val shadowColor: Color
+    public abstract val controlThumbColor: Color
+    public abstract val favoriteColor: Color
 
-    abstract val shadowEnabled: Boolean
+    public abstract val shadowEnabled: Boolean
 
-    abstract val backgroundShape: Shape
-    abstract val sideBarNavigationEntryShape: Shape
-    abstract val modCardShape: Shape
-    abstract val checkBoxShape: Shape
-    abstract val buttonShape: Shape
-    abstract val popupShape: Shape
-    abstract val circleShape: Shape
+    public abstract val backgroundShape: Shape
+    public abstract val sideBarNavigationEntryShape: Shape
+    public abstract val modCardShape: Shape
+    public abstract val checkBoxShape: Shape
+    public abstract val buttonShape: Shape
+    public abstract val popupShape: Shape
+    public abstract val circleShape: Shape
 
-    abstract val fontFamily: FontFamily
-    abstract val logoPath: String
+    public abstract val fontFamily: FontFamily
+    public abstract val logoPath: String
 }

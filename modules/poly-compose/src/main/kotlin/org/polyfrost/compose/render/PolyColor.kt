@@ -6,14 +6,14 @@ import kotlin.math.roundToInt
  * A colour where named colours such as [WHITE] hand out a fresh instance on every access so they
  * can safely be used as config defaults without one option's change leaking into another
  */
-class PolyColor @JvmOverloads constructor(
+public class PolyColor @JvmOverloads constructor(
     argb: Int = 0xFFFFFFFF.toInt(),
-    var chroma: Boolean = false,
-    var chromaSpeed: Float = 1f,
+    public var chroma: Boolean = false,
+    public var chromaSpeed: Float = 1f,
 ) {
     private var staticArgb: Int = argb
 
-    var argb: Int
+    public var argb: Int
         get() {
             if (!chroma) return staticArgb
             chromaReads++
@@ -23,46 +23,46 @@ class PolyColor @JvmOverloads constructor(
             staticArgb = value
         }
 
-    val rawArgb: Int get() = staticArgb
+    public val rawArgb: Int get() = staticArgb
 
-    var gradientEnabled: Boolean = false
+    public var gradientEnabled: Boolean = false
 
-    var gradientArgb: Int = argb
+    public var gradientArgb: Int = argb
 
-    val alpha: Int get() = (argb ushr 24) and 0xFF
-    val red: Int get() = (argb ushr 16) and 0xFF
-    val green: Int get() = (argb ushr 8) and 0xFF
-    val blue: Int get() = argb and 0xFF
+    public val alpha: Int get() = (argb ushr 24) and 0xFF
+    public val red: Int get() = (argb ushr 16) and 0xFF
+    public val green: Int get() = (argb ushr 8) and 0xFF
+    public val blue: Int get() = argb and 0xFF
 
-    val alphaF: Float get() = alpha / 255f
-    val redF: Float get() = red / 255f
-    val greenF: Float get() = green / 255f
-    val blueF: Float get() = blue / 255f
+    public val alphaF: Float get() = alpha / 255f
+    public val redF: Float get() = red / 255f
+    public val greenF: Float get() = green / 255f
+    public val blueF: Float get() = blue / 255f
 
-    fun withAlpha(a: Int): PolyColor = PolyColor((argb and 0x00FFFFFF) or ((a.coerceIn(0, 255)) shl 24), chroma, chromaSpeed)
-    fun withAlpha(a: Float): PolyColor = withAlpha((a * 255f).roundToInt())
+    public fun withAlpha(a: Int): PolyColor = PolyColor((argb and 0x00FFFFFF) or ((a.coerceIn(0, 255)) shl 24), chroma, chromaSpeed)
+    public fun withAlpha(a: Float): PolyColor = withAlpha((a * 255f).roundToInt())
 
-    fun withRed(r: Int): PolyColor = PolyColor((argb and 0xFF00FFFF.toInt()) or ((r.coerceIn(0, 255)) shl 16), chroma, chromaSpeed)
-    fun withGreen(g: Int): PolyColor = PolyColor((argb and 0xFFFF00FF.toInt()) or ((g.coerceIn(0, 255)) shl 8), chroma, chromaSpeed)
-    fun withBlue(b: Int): PolyColor = PolyColor((argb and 0xFFFFFF00.toInt()) or (b.coerceIn(0, 255)), chroma, chromaSpeed)
+    public fun withRed(r: Int): PolyColor = PolyColor((argb and 0xFF00FFFF.toInt()) or ((r.coerceIn(0, 255)) shl 16), chroma, chromaSpeed)
+    public fun withGreen(g: Int): PolyColor = PolyColor((argb and 0xFFFF00FF.toInt()) or ((g.coerceIn(0, 255)) shl 8), chroma, chromaSpeed)
+    public fun withBlue(b: Int): PolyColor = PolyColor((argb and 0xFFFFFF00.toInt()) or (b.coerceIn(0, 255)), chroma, chromaSpeed)
 
     @JvmOverloads
-    fun withChroma(chroma: Boolean, speed: Float = chromaSpeed): PolyColor =
+    public fun withChroma(chroma: Boolean, speed: Float = chromaSpeed): PolyColor =
         PolyColor(staticArgb, chroma, speed).also {
             it.gradientArgb = gradientArgb
             it.gradientEnabled = gradientEnabled
         }
 
     @JvmOverloads
-    fun withGradient(enabled: Boolean, argb: Int = gradientArgb): PolyColor =
+    public fun withGradient(enabled: Boolean, argb: Int = gradientArgb): PolyColor =
         PolyColor(staticArgb, chroma, chromaSpeed).also {
             it.gradientArgb = argb
             it.gradientEnabled = enabled
         }
 
-    fun multiplyAlpha(factor: Float): PolyColor = withAlpha((alpha * factor).roundToInt().coerceIn(0, 255))
+    public fun multiplyAlpha(factor: Float): PolyColor = withAlpha((alpha * factor).roundToInt().coerceIn(0, 255))
 
-    fun lighten(amount: Float): PolyColor {
+    public fun lighten(amount: Float): PolyColor {
         val f = amount.coerceIn(0f, 1f)
         return rgb(
             (red + (255 - red) * f).roundToInt(),
@@ -71,7 +71,7 @@ class PolyColor @JvmOverloads constructor(
         ).withAlpha(alpha)
     }
 
-    fun darken(amount: Float): PolyColor {
+    public fun darken(amount: Float): PolyColor {
         val f = amount.coerceIn(0f, 1f)
         return rgb(
             (red * (1f - f)).roundToInt(),
@@ -80,7 +80,7 @@ class PolyColor @JvmOverloads constructor(
         ).withAlpha(alpha)
     }
 
-    fun lerp(other: PolyColor, t: Float): PolyColor {
+    public fun lerp(other: PolyColor, t: Float): PolyColor {
         val f = t.coerceIn(0f, 1f)
         fun mix(a: Int, b: Int) = (a + (b - a) * f).roundToInt()
         return PolyColor(
@@ -93,9 +93,9 @@ class PolyColor @JvmOverloads constructor(
         )
     }
 
-    fun invert(): PolyColor = rgb(255 - red, 255 - green, 255 - blue).withAlpha(alpha)
+    public fun invert(): PolyColor = rgb(255 - red, 255 - green, 255 - blue).withAlpha(alpha)
 
-    fun toSkiaColor(): Int = argb
+    public fun toSkiaColor(): Int = argb
 
     override fun toString(): String = "PolyColor(#%08X)".format(argb.toLong() and 0xFFFFFFFFL)
 
@@ -115,39 +115,39 @@ class PolyColor @JvmOverloads constructor(
         return result
     }
 
-    companion object {
-        const val CHROMA_CYCLE_SECONDS = 10.0
+    public companion object {
+        public const val CHROMA_CYCLE_SECONDS: Double = 10.0
 
         @JvmField
-        var chromaReads = 0
+        public var chromaReads: Int = 0
 
-        val TRANSPARENT get() = PolyColor(0x00000000)
-        val WHITE get() = PolyColor(0xFFFFFFFF.toInt())
-        val BLACK get() = PolyColor(0xFF000000.toInt())
-        val RED get() = PolyColor(0xFFFF4444.toInt())
-        val GREEN get() = PolyColor(0xFF44FF44.toInt())
-        val BLUE get() = PolyColor(0xFF4488FF.toInt())
-        val YELLOW get() = PolyColor(0xFFFFFF44.toInt())
-        val ORANGE get() = PolyColor(0xFFFF8844.toInt())
-        val PURPLE get() = PolyColor(0xFFAA44FF.toInt())
-        val CYAN get() = PolyColor(0xFF44FFFF.toInt())
-        val PINK get() = PolyColor(0xFFFF44AA.toInt())
-        val GRAY get() = PolyColor(0xFF888888.toInt())
-        val DARK_GRAY get() = PolyColor(0xFF444444.toInt())
-        val DARKER_GRAY get() = PolyColor(0xFF222222.toInt())
-        val LIGHT_GRAY get() = PolyColor(0xFFCCCCCC.toInt())
-        val LIGHTER_GRAY get() = PolyColor(0xFFEEEEEE.toInt())
+        public val TRANSPARENT: PolyColor get() = PolyColor(0x00000000)
+        public val WHITE: PolyColor get() = PolyColor(0xFFFFFFFF.toInt())
+        public val BLACK: PolyColor get() = PolyColor(0xFF000000.toInt())
+        public val RED: PolyColor get() = PolyColor(0xFFFF4444.toInt())
+        public val GREEN: PolyColor get() = PolyColor(0xFF44FF44.toInt())
+        public val BLUE: PolyColor get() = PolyColor(0xFF4488FF.toInt())
+        public val YELLOW: PolyColor get() = PolyColor(0xFFFFFF44.toInt())
+        public val ORANGE: PolyColor get() = PolyColor(0xFFFF8844.toInt())
+        public val PURPLE: PolyColor get() = PolyColor(0xFFAA44FF.toInt())
+        public val CYAN: PolyColor get() = PolyColor(0xFF44FFFF.toInt())
+        public val PINK: PolyColor get() = PolyColor(0xFFFF44AA.toInt())
+        public val GRAY: PolyColor get() = PolyColor(0xFF888888.toInt())
+        public val DARK_GRAY: PolyColor get() = PolyColor(0xFF444444.toInt())
+        public val DARKER_GRAY: PolyColor get() = PolyColor(0xFF222222.toInt())
+        public val LIGHT_GRAY: PolyColor get() = PolyColor(0xFFCCCCCC.toInt())
+        public val LIGHTER_GRAY: PolyColor get() = PolyColor(0xFFEEEEEE.toInt())
 
-        fun rgb(r: Int, g: Int, b: Int) =
+        public fun rgb(r: Int, g: Int, b: Int): PolyColor =
             PolyColor(0xFF000000.toInt() or ((r and 0xFF) shl 16) or ((g and 0xFF) shl 8) or (b and 0xFF))
 
-        fun argb(a: Int, r: Int, g: Int, b: Int) =
+        public fun argb(a: Int, r: Int, g: Int, b: Int): PolyColor =
             PolyColor(((a and 0xFF) shl 24) or ((r and 0xFF) shl 16) or ((g and 0xFF) shl 8) or (b and 0xFF))
 
-        fun rgba(r: Int, g: Int, b: Int, a: Int) = argb(a, r, g, b)
-        fun hex(value: Long) = PolyColor(value.toInt())
-        fun hex(value: Int) = PolyColor(value)
-        fun hex(value: String): PolyColor {
+        public fun rgba(r: Int, g: Int, b: Int, a: Int): PolyColor = argb(a, r, g, b)
+        public fun hex(value: Long): PolyColor = PolyColor(value.toInt())
+        public fun hex(value: Int): PolyColor = PolyColor(value)
+        public fun hex(value: String): PolyColor {
             val s = value.trimStart('#')
             return when (s.length) {
                 6 -> PolyColor(0xFF000000.toInt() or s.toLong(16).toInt())
@@ -163,7 +163,7 @@ class PolyColor @JvmOverloads constructor(
             }
         }
 
-        fun hsv(h: Float, s: Float, v: Float, a: Float = 1f): PolyColor {
+        public fun hsv(h: Float, s: Float, v: Float, a: Float = 1f): PolyColor {
             val hh = h % 360f
             val c = v * s
             val x = c * (1f - Math.abs(((hh / 60f) % 2f) - 1f))
@@ -184,7 +184,7 @@ class PolyColor @JvmOverloads constructor(
             )
         }
 
-        fun hsl(h: Float, s: Float, l: Float, a: Float = 1f): PolyColor {
+        public fun hsl(h: Float, s: Float, l: Float, a: Float = 1f): PolyColor {
             val c = (1f - Math.abs(2f * l - 1f)) * s
             val x = c * (1f - Math.abs(((h / 60f) % 2f) - 1f))
             val m = l - c / 2f
@@ -204,7 +204,7 @@ class PolyColor @JvmOverloads constructor(
             )
         }
 
-        fun lerp(from: PolyColor, to: PolyColor, t: Float) = from.lerp(to, t)
+        public fun lerp(from: PolyColor, to: PolyColor, t: Float): PolyColor = from.lerp(to, t)
 
         private fun chromaArgb(argb: Int, speed: Float): Int {
             val alpha = (argb ushr 24) and 0xFF

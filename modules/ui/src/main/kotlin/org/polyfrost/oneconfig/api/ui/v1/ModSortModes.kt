@@ -8,23 +8,23 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.internal.extensionsBridge
 
 @ExperimentalOneConfigUiApi
-class ModSortMode @JvmOverloads constructor(
-    val id: String,
-    val icon: String,
-    val title: String,
-    val confirmation: String? = null,
-    val onSelect: () -> Unit,
+public class ModSortMode @JvmOverloads constructor(
+    public val id: String,
+    public val icon: String,
+    public val title: String,
+    public val confirmation: String? = null,
+    public val onSelect: () -> Unit,
 )
 
 @ExperimentalOneConfigUiApi
-object ModSortModes {
+public object ModSortModes {
     private val LOGGER = LogManager.getLogger("OneConfig/ModSortModes")
     private val lock = Any()
 
     private var entries by mutableStateOf(emptyList<ModSortMode>())
 
     @JvmStatic
-    fun register(mode: ModSortMode) {
+    public fun register(mode: ModSortMode) {
         synchronized(lock) {
             if (entries.any { it.id == mode.id }) {
                 LOGGER.debug("Ignoring ModSortMode {} that is already registered", mode.id)
@@ -35,15 +35,15 @@ object ModSortModes {
     }
 
     @JvmStatic
-    fun unregister(mode: ModSortMode): Boolean = synchronized(lock) {
+    public fun unregister(mode: ModSortMode): Boolean = synchronized(lock) {
         if (mode !in entries) return false
         Snapshot.withMutableSnapshot { entries = entries - mode }
         true
     }
 
     @JvmStatic
-    fun all(): List<ModSortMode> = entries
+    public fun all(): List<ModSortMode> = entries
 
     @JvmStatic
-    fun currentId(): String? = extensionsBridge()?.modSortModeId()
+    public fun currentId(): String? = extensionsBridge()?.modSortModeId()
 }

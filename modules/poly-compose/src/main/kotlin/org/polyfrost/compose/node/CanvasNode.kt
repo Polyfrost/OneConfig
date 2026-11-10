@@ -2,10 +2,10 @@ package org.polyfrost.compose.node
 
 import org.polyfrost.compose.render.RenderContext
 
-class CanvasNode : PolyNode() {
-    var onDraw: (RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit)? = null
+public class CanvasNode : PolyNode() {
+    public var onDraw: (RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit)? = null
 
-    var live = false
+    public var live: Boolean = false
 
     override fun render(ctx: RenderContext) {
         val draw = onDraw ?: return

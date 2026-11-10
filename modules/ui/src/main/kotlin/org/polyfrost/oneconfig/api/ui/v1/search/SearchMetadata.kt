@@ -3,19 +3,19 @@ package org.polyfrost.oneconfig.api.ui.v1.search
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
-class SearchMetadata internal constructor(
-    val title: String?,
-    val id: String?,
-    val description: String?,
-    val section: String?,
-    val category: String?,
-    val subcategory: String?,
-    val tags: List<String>,
-    val modTitle: String?,
-    val modDescription: String?,
-    val path: String?,
+public class SearchMetadata internal constructor(
+    public val title: String?,
+    public val id: String?,
+    public val description: String?,
+    public val section: String?,
+    public val category: String?,
+    public val subcategory: String?,
+    public val tags: List<String>,
+    public val modTitle: String?,
+    public val modDescription: String?,
+    public val path: String?,
 ) {
-    val distinctSubcategory: String?
+    public val distinctSubcategory: String?
         get() = subcategory?.takeUnless { it == category }
 
     override fun toString(): String = "SearchMetadata(title=$title, id=$id, path=$path)"

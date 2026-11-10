@@ -38,7 +38,7 @@ import org.jetbrains.skia.Image
 /**
  * The visual category of a [Notification]
  */
-enum class NotificationType(val accent: PolyColor, val iconName: String) {
+public enum class NotificationType(public val accent: PolyColor, public val iconName: String) {
     INFO(PolyColor.hex("#DFEAFF"), "info"),
     SUCCESS(PolyColor.hex("#3CAF77"), "check-circle"),
     ERROR(PolyColor.hex("#F2545A"), "alert-circle"),
@@ -54,10 +54,10 @@ enum class NotificationType(val accent: PolyColor, val iconName: String) {
  * @param primary  whether this is the emphasised accent-coloured action as opposed to a subtle one
  * @param onClick  invoked when the button is pressed
  */
-class NotificationAction @JvmOverloads constructor(
-    val label: String,
-    val primary: Boolean = false,
-    val onClick: Runnable = Runnable {},
+public class NotificationAction @JvmOverloads constructor(
+    public val label: String,
+    public val primary: Boolean = false,
+    public val onClick: Runnable = Runnable {},
 )
 
 /**
@@ -78,18 +78,18 @@ class NotificationAction @JvmOverloads constructor(
  * @param actions     optional action buttons drawn below the body
  * @param onClick     optional callback run when the body of the notification is clicked
  */
-class Notification @JvmOverloads constructor(
-    val title: String,
-    val message: String,
-    val type: NotificationType = NotificationType.INFO,
-    val icon: PolyBitmap? = null,
-    val duration: Float = DEFAULT_DURATION,
-    val progress: Callable<Float>? = null,
-    val actions: List<NotificationAction> = emptyList(),
-    val onClick: Runnable? = null,
+public class Notification @JvmOverloads constructor(
+    public val title: String,
+    public val message: String,
+    public val type: NotificationType = NotificationType.INFO,
+    public val icon: PolyBitmap? = null,
+    public val duration: Float = DEFAULT_DURATION,
+    public val progress: Callable<Float>? = null,
+    public val actions: List<NotificationAction> = emptyList(),
+    public val onClick: Runnable? = null,
 ) {
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
-    constructor(
+    public constructor(
         title: String,
         message: String,
         type: NotificationType = NotificationType.INFO,
@@ -101,28 +101,28 @@ class Notification @JvmOverloads constructor(
     ) : this(title, message, type, null as PolyBitmap?, duration, progress, actions, onClick)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
-    constructor(title: String, message: String, type: NotificationType, icon: Image?) :
+    public constructor(title: String, message: String, type: NotificationType, icon: Image?) :
         this(title, message, type, null as PolyBitmap?)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
-    constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float) :
+    public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float) :
         this(title, message, type, null as PolyBitmap?, duration)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
-    constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?) :
+    public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?) :
         this(title, message, type, null as PolyBitmap?, duration, progress)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
-    constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
+    public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
         this(title, message, type, null as PolyBitmap?, duration, progress, actions)
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @get:JvmName("getIcon")
-    val skiaIcon: Image? get() = null
+    public val skiaIcon: Image? get() = null
 
-    val id: Long = COUNTER.incrementAndGet()
+    public val id: Long = COUNTER.incrementAndGet()
 
-    val createdAt: Long = System.currentTimeMillis()
+    public val createdAt: Long = System.currentTimeMillis()
 
     internal var hovered by mutableStateOf(false)
 
@@ -131,18 +131,18 @@ class Notification @JvmOverloads constructor(
     /**
      * Whether this notification has been seen in the notifications center
      */
-    var read by mutableStateOf(false)
+    public var read: Boolean by mutableStateOf(false)
         internal set
 
-    val persistent: Boolean get() = duration <= 0f && progress == null
+    public val persistent: Boolean get() = duration <= 0f && progress == null
 
-    fun progressOrNull(): Float? {
+    public fun progressOrNull(): Float? {
         val p = progress ?: return null
         return runCatching { p.call() }.getOrNull()?.coerceIn(0f, 1f)
     }
 
-    companion object {
-        const val DEFAULT_DURATION = 4000f
+    public companion object {
+        public const val DEFAULT_DURATION: Float = 4000f
 
         private val COUNTER = AtomicLong()
     }

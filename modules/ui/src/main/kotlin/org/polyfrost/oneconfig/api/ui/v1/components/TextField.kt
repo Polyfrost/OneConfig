@@ -52,19 +52,19 @@ import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier) {
+public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier) {
     TextField(value, onValueChange, modifier, null, null, Int.MAX_VALUE, false)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier, placeholder: String?) {
+public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier, placeholder: String?) {
     TextField(value, onValueChange, modifier, placeholder, null, Int.MAX_VALUE, false)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextField(
+public fun TextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier,
@@ -81,7 +81,7 @@ fun TextField(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextField(
+public fun TextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier,
@@ -119,7 +119,7 @@ fun TextField(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextField(
+public fun TextField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier,
@@ -133,7 +133,7 @@ fun TextField(
 
 @ExperimentalOneConfigUiApi
 @Composable
-fun TextField(
+public fun TextField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier,

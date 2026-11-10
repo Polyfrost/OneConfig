@@ -4,10 +4,10 @@ import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.layout.px
 import org.polyfrost.compose.render.RenderContext
 
-class ImageNode(
+public class ImageNode(
     private val image: PolyBitmap
 ) : PolyNode() {
-    fun remeasure() {
+    public fun remeasure() {
         style.width = image.width.px
         style.height = image.height.px
     }

@@ -1,6 +1,6 @@
 package org.polyfrost.compose.layout
 
-enum class PolyAlign {
+public enum class PolyAlign {
 
     TopLeft,
     Top,
