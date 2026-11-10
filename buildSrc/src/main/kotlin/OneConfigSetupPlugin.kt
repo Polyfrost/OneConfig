@@ -257,6 +257,9 @@ class OneConfigSetupPlugin : Plugin<Project> {
             }
 
             handleApiDep(versionedCatalog["mixin-squared"])
+            // MixinSquared's API extends ASM types without declaring ASM. Loom's source remapper for dependents only sees
+            // mod dependencies, not Fabric Loader's libraries, and crashes when it can't resolve those supertypes.
+            handleApiDep(versionedCatalog["asm-tree"], transitive = true, bundle = false)
             handleApiDep(versionedCatalog["commonmark"])
 
             if (loader == "fabric") {

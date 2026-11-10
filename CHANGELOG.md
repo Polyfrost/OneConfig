@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a rare crash with OneConfig keybinds in the controls screen
 - Fixed parts of the OneConfig menus not redrawing after their cached textures expired
 - Clicking a toast or dragging a HUD editor panel no longer clicks what is underneath
+- API: Fixed Loom logging a large stack trace while remapping OneConfig's sources jar in dependent mods
 
 ## [1.6.2] - 2026-11-06
 
