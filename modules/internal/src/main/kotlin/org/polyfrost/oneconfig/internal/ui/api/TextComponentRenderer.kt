@@ -4,7 +4,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -129,9 +128,9 @@ fun Tooltip(
     TooltipArea(
         content = content, delayMillis = 200, tooltip = @Composable {
             Box(
-                modifier = modifier.liquidGlass(RoundedCornerShape(8.dp), frosted = true)
-                    .background(theme.popupBackground, shape = RoundedCornerShape(8.dp))
-                    .border(1.dp, theme.borderColor, shape = RoundedCornerShape(8.dp))
+                modifier = modifier.liquidGlass(theme.popupShape, frosted = true)
+                    .background(theme.popupBackground, shape = theme.popupShape)
+                    .border(1.dp, theme.borderColor, shape = theme.popupShape)
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 text()

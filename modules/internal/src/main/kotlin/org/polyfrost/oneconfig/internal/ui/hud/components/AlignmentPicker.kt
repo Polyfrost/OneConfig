@@ -10,7 +10,6 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
@@ -33,6 +32,7 @@ import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
 private val alignmentGrid: Map<PolyAlign, Pair<Int, Int>> = mapOf(
     PolyAlign.TopLeft     to Pair(0, 0),
@@ -67,9 +67,9 @@ fun AlignmentPicker(
     Box(
         modifier = Modifier
             .size(totalSize)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFF192126).copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-            .border(1.dp, theme.borderColor, RoundedCornerShape(8.dp))
+            .clip(theme.popupShape)
+            .background(theme.popupBackground, theme.popupShape)
+            .border(1.dp, theme.borderColor, theme.popupShape)
     ) {
         for (row in 0..2) {
             for (col in 0..2) {
@@ -180,6 +180,7 @@ private fun CellIndicator(
     color: Color,
     cellSize: Dp
 ) {
+    val indicatorRadius = LocalTheme.current.buttonShape.cornerRadiusOrNull() ?: 0.dp
     val isCenter = col == 1 && row == 1
     val isCorner = (col == 0 || col == 2) && (row == 0 || row == 2)
 
@@ -192,7 +193,7 @@ private fun CellIndicator(
                 val len = (8f * scale).dp.toPx()
 
                 when {
-                    isCenter -> drawCenterPlus(color, s, strokeWidth * 1.2f, len * 1.6f)
+                    isCenter -> drawCenterPlus(color, s, strokeWidth * 1.2f, len * 1.6f, minOf(6f, indicatorRadius.toPx()))
                     isCorner -> drawCornerBracket(col, row, color, s, strokeWidth, len)
                     else -> drawEdgeTick(col, row, color, s, strokeWidth, len)
                 }
@@ -204,7 +205,8 @@ private fun DrawScope.drawCenterPlus(
     color: Color,
     s: Size,
     strokeWidth: Float,
-    armLen: Float
+    armLen: Float,
+    cornerRadius: Float
 ) {
     val cx = s.width / 2f
     val cy = s.height / 2f
@@ -230,7 +232,7 @@ private fun DrawScope.drawCenterPlus(
         color = color.copy(alpha = 0.13f),
         topLeft = Offset(cx - boxSize / 2f, cy - boxSize / 2f),
         size = Size(boxSize, boxSize),
-        cornerRadius = CornerRadius(6f),
+        cornerRadius = CornerRadius(cornerRadius),
         style = Stroke(width = strokeWidth * 0.8f)
     )
 }

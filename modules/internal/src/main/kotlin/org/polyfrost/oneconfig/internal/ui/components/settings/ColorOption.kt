@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -341,6 +342,7 @@ internal fun ColorPickerPopup(
     gradientCapable: Boolean = false,
 ) {
     val theme = LocalTheme.current
+    val currentOnColorChanged by rememberUpdatedState(onColorChanged)
     val hue = model.hue
     val saturation = model.saturation
     val brightness = model.brightness
@@ -407,7 +409,7 @@ internal fun ColorPickerPopup(
                             model.brightness = 1f - (y / sbPaneSize.height).coerceIn(0f, 1f)
                             val c = model.currentColor()
                             hexText = colorToHex(c)
-                            onColorChanged(c)
+                            currentOnColorChanged(c)
                         }
                         update(down.position.x, down.position.y)
                         do {
@@ -459,7 +461,7 @@ internal fun ColorPickerPopup(
                             model.hue = ((x / size.width) * 360f).coerceIn(0f, 360f)
                             val c = model.currentColor()
                             hexText = colorToHex(c)
-                            onColorChanged(c)
+                            currentOnColorChanged(c)
                         }
                         update(down.position.x)
                         do {
@@ -509,7 +511,7 @@ internal fun ColorPickerPopup(
                             model.alpha = pct / 100f
                             val c = model.currentColor()
                             hexText = colorToHex(c)
-                            onColorChanged(c)
+                            currentOnColorChanged(c)
                         }
                     },
                 )
@@ -537,7 +539,7 @@ internal fun ColorPickerPopup(
                                 alphaText = (model.alpha * 100f).roundToInt().toString()
                                 val c = model.currentColor()
                                 hexText = colorToHex(c)
-                                onColorChanged(c)
+                                currentOnColorChanged(c)
                             }
                             update(down.position.x)
                             do {
@@ -600,7 +602,7 @@ internal fun ColorPickerPopup(
                 }
                 SwitchControl(chromaEnabled) {
                     model.chromaEnabled = it
-                    onColorChanged(model.currentColor())
+                    currentOnColorChanged(model.currentColor())
                 }
             }
         }
@@ -629,7 +631,7 @@ internal fun ColorPickerPopup(
                         model.gradientColor = hsbToColor((model.hue + 40f) % 360f, model.saturation, model.brightness, model.alpha)
                         gradientText = colorToHex(model.gradientColor)
                     }
-                    onColorChanged(model.currentColor())
+                    currentOnColorChanged(model.currentColor())
                 }
             }
         }
@@ -656,7 +658,7 @@ internal fun ColorPickerPopup(
                         gradientText = filtered
                         hexToColor(filtered)?.let { c ->
                             model.gradientColor = c
-                            onColorChanged(model.currentColor())
+                            currentOnColorChanged(model.currentColor())
                         }
                     },
                     singleLine = true,
@@ -700,7 +702,7 @@ internal fun ColorPickerPopup(
                             speedText = filtered
                             filtered.toFloatOrNull()?.coerceIn(0.1f, 4f)?.let {
                                 model.chromaSpeed = it
-                                onColorChanged(model.currentColor())
+                                currentOnColorChanged(model.currentColor())
                             }
                         },
                     )
@@ -722,7 +724,7 @@ internal fun ColorPickerPopup(
                                 fun update(x: Float) {
                                     model.chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
                                     speedText = "%.1f".format(model.chromaSpeed)
-                                    onColorChanged(model.currentColor())
+                                    currentOnColorChanged(model.currentColor())
                                 }
                                 update(down.position.x)
                                 do {
@@ -783,7 +785,7 @@ internal fun ColorPickerPopup(
                     hexText = filtered
                     hexToColor(filtered)?.let { c ->
                         model.applyFrom(c)
-                        onColorChanged(c)
+                        currentOnColorChanged(c)
                     }
                 },
                 singleLine = true,

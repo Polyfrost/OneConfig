@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ fun SliderControl(
 ) {
     val theme = LocalTheme.current
     var trackWidthPx by remember { mutableStateOf(0f) }
+    val currentOnValueChange by rememberUpdatedState(onValueChange)
     val fraction = animateFloatAsState(
         ((value - min) / (max - min)).coerceIn(0f, 1f),
         animationSpec = ReducedMotion.spec(spring()),
@@ -83,12 +85,12 @@ fun SliderControl(
                 }
                 awaitEachGesture {
                     val down = awaitFirstDown()
-                    xToValue(down.position.x).let { maybeTick(it); onValueChange(it) }
+                    xToValue(down.position.x).let { maybeTick(it); currentOnValueChange(it) }
                     do {
                         val event = awaitPointerEvent()
                         event.changes.forEach { ch ->
                             if (ch.pressed) {
-                                xToValue(ch.position.x).let { maybeTick(it); onValueChange(it) }
+                                xToValue(ch.position.x).let { maybeTick(it); currentOnValueChange(it) }
                                 ch.consume()
                             }
                         }

@@ -761,6 +761,7 @@ private fun DrawScope.drawSelectedHudBounds(
     bounds: HudBounds,
     mcToScreen: Float,
     showHandles: Boolean,
+    badgeRadius: Dp,
     showBadge: Boolean = true,
 ) {
     val sx = bounds.x * mcToScreen
@@ -791,7 +792,7 @@ private fun DrawScope.drawSelectedHudBounds(
 
     if (showBadge) {
         val badgeTopY = (sy - HUD_SIZE_BADGE_GAP - HUD_SIZE_BADGE_HEIGHT).coerceAtLeast(0f)
-        drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, badgeTopY)
+        drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, badgeTopY, badgeRadius)
     }
 }
 
@@ -804,7 +805,7 @@ internal fun placementLabel(p: ExternalPlacement): String {
     return "$action by ${p.mod ?: "another mod"}"
 }
 
-private fun DrawScope.drawHudPlacementBadge(label: String, centerX: Float, bottomY: Float) {
+private fun DrawScope.drawHudPlacementBadge(label: String, centerX: Float, bottomY: Float, badgeRadius: Dp) {
     val font = PolyFont.default(10f)
     val metrics = font.metrics
     val textWidth = font.measureTextWidth(label)
@@ -819,14 +820,14 @@ private fun DrawScope.drawHudPlacementBadge(label: String, centerX: Float, botto
         color = lockedHudBoxColor,
         topLeft = Offset(badgeX, topY),
         size = Size(badgeWidth, badgeHeight),
-        cornerRadius = CornerRadius(3f, 3f)
+        cornerRadius = CornerRadius(badgeRadius.toPx())
     )
     val textX = badgeX + horizontalPadding
     val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
     drawPoly { it.renderer.text(label, textX, textY, Color.White.toArgb(), font) }
 }
 
-private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float) {
+private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float, badgeRadius: Dp) {
     val font = PolyFont.default(10f)
     val metrics = font.metrics
     val textWidth = font.measureTextWidth(label)
@@ -840,7 +841,7 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
         color = selectionBlue,
         topLeft = Offset(badgeX, topY),
         size = Size(badgeWidth, badgeHeight),
-        cornerRadius = CornerRadius(3f, 3f)
+        cornerRadius = CornerRadius(badgeRadius.toPx())
     )
     val textX = badgeX + horizontalPadding
     val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
@@ -1927,7 +1928,8 @@ fun HudDesignStudio(visible: Boolean = true) {
     }
 
     val theme = LocalTheme.current
-    val selectionCornerRadius = theme.buttonShape.cornerRadiusOrNull() ?: Radii.SM
+    val badgeRadius = hudBadgeRadius()
+    val selectionCornerRadius = theme.buttonShape.cornerRadiusOrNull() ?: 0.dp
 
     // the library and return chip stay on screen while a HUD is selected but dimmed so the settings
     // panel reads as the focus
@@ -2071,7 +2073,7 @@ fun HudDesignStudio(visible: Boolean = true) {
 
                         if (isSelected || isHovered) {
                             hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
-                                drawHudPlacementBadge(placementLabel(it), sx + sw / 2, sy + sh)
+                                drawHudPlacementBadge(placementLabel(it), sx + sw / 2, sy + sh, badgeRadius)
                             }
                         }
 
@@ -2094,12 +2096,13 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                             )
-                            drawSelectedHudBounds(bounds, mcToScreen, resizable && singleSelection, showBadge = singleSelection)
+                            drawSelectedHudBounds(bounds, mcToScreen, resizable && singleSelection, badgeRadius, showBadge = singleSelection)
                         } else if (isSelected) {
                             drawSelectedHudBounds(
                                 bounds,
                                 mcToScreen,
                                 showHandles = isPrimary && singleSelection,
+                                badgeRadius = badgeRadius,
                                 showBadge = singleSelection,
                             )
                         } else if (hud.hidden) {
@@ -2142,9 +2145,9 @@ fun HudDesignStudio(visible: Boolean = true) {
                         }
                     }
 
-                    if (isDragging) drawHudDragFeedback(dragSnapper.result, mcToScreen)
+                    if (isDragging) drawHudDragFeedback(dragSnapper.result, mcToScreen, badgeRadius)
                     if (altHeld && !isDragging && !isResizing && !marqueeActive && anchorPickSources.isEmpty() && !tourBlocksEditor) {
-                        selectionMeasurement(selectedHuds, hoveredHud)?.let { drawHudMeasurement(it, mcToScreen) }
+                        selectionMeasurement(selectedHuds, hoveredHud)?.let { drawHudMeasurement(it, mcToScreen, badgeRadius) }
                     }
 
                     if (anchorPickSources.isNotEmpty()) {
@@ -2773,6 +2776,7 @@ internal fun duplicateHudGroup(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HudDragLayer(modifier: Modifier = Modifier) {
+    val badgeRadius = hudBadgeRadius()
     HudEditorViewport.observe()
     val shellLayout = LocalShell.current.layout
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
@@ -2930,7 +2934,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                         )
-                        drawSelectedHudBounds(bounds, mcToScreen, showHandles = false)
+                        drawSelectedHudBounds(bounds, mcToScreen, showHandles = false, badgeRadius = badgeRadius)
                     } else if (hud.hidden) {
                         if (hud is LegacyHud) {
                             drawRect(
@@ -2954,7 +2958,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                         )
                     }
                 }
-                if (isDragging) drawHudDragFeedback(dragSnapper.result, mcToScreen)
+                if (isDragging) drawHudDragFeedback(dragSnapper.result, mcToScreen, badgeRadius)
                 drawContent()
             }
     ) {
@@ -3489,7 +3493,7 @@ private fun EvergreenHudSuggestion(modifier: Modifier) {
                 .pointerHoverIcon(PointerIcon.Hand)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
-            Text("Get EvergreenHUD", color = Color.White.copy(0.9f), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text("Get EvergreenHUD", color = theme.accentTextColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -3745,6 +3749,7 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
+    val barRadius = minOf(2.dp, theme.buttonShape.cornerRadiusOrNull() ?: 0.dp)
     val iconAlpha by animateFloatAsState(
         if (selected) 1f else if (isHovered) 0.8f else 0.7f
     )
@@ -3760,7 +3765,7 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
                         color = Accent,
                         topLeft = Offset(-8.dp.toPx(), (size.height - barHeight) / 2f),
                         size = Size(4.dp.toPx(), barHeight),
-                        cornerRadius = CornerRadius(2.dp.toPx()),
+                        cornerRadius = CornerRadius(barRadius.toPx()),
                     )
                 }
             }

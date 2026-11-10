@@ -22,6 +22,9 @@ import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.sound.SoundThemeSelection;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
+import org.polyfrost.oneconfig.internal.ui.themes.GlassTint;
+import org.polyfrost.oneconfig.internal.ui.themes.PaletteAccent;
+import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency;
 import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
 public class ThemeConfig extends Config {
@@ -188,6 +191,12 @@ public class ThemeConfig extends Config {
     @Include
     public static int soundTheme = SOUND_THEME_MATCH;
 
+    @Include
+    public static int glassTint = GlassTint.CLEAR;
+
+    @Include
+    public static String paletteAccents = "";
+
     public static ThemeConfig INSTANCE;
 
     public ThemeConfig() {
@@ -204,6 +213,24 @@ public class ThemeConfig extends Config {
         INSTANCE.save();
     }
 
+    public static void selectGlassTint(int value) {
+        setIncluded("glassTint", value);
+    }
+
+    public static void savePaletteAccents() {
+        setIncluded("paletteAccents", PaletteAccent.encode());
+    }
+
+    private static void setIncluded(String key, Object value) {
+        if (INSTANCE == null || INSTANCE.tree == null) {
+            if (key.equals("glassTint")) glassTint = (Integer) value;
+            else paletteAccents = (String) value;
+            return;
+        }
+        INSTANCE.getProperty(key).setAs(value);
+        INSTANCE.save();
+    }
+
     @Override
     protected void initialize(boolean byConfigManager) {
         if (tree == null) {
@@ -212,6 +239,8 @@ public class ThemeConfig extends Config {
             flipOrderMigrated = false;
             soundTheme = SOUND_THEME_MATCH;
             reduceTransparency = false;
+            glassTint = GlassTint.CLEAR;
+            paletteAccents = "";
         }
         super.initialize(byConfigManager);
         if (tree == null) {
@@ -240,6 +269,7 @@ public class ThemeConfig extends Config {
         addCallback(
             "reduceTransparency", (Boolean v) -> {
                 reduceTransparency = v;
+                ReduceTransparency.setEnabled(v);
                 updateAppearance();
                 return false;
             });
@@ -271,6 +301,16 @@ public class ThemeConfig extends Config {
                 return false;
             });
         addCallback(
+            "glassTint", (Number v) -> {
+                GlassTint.setMode(v.intValue());
+                return false;
+            });
+        addCallback(
+            "paletteAccents", (String v) -> {
+                PaletteAccent.load(v);
+                return false;
+            });
+        addCallback(
             "soundTheme", (Number v) -> {
                 SoundThemeSelection.INSTANCE.setValue(v.intValue());
                 UiSounds.onSoundThemeChanged(UiSoundEvent.CLICK);
@@ -286,6 +326,9 @@ public class ThemeConfig extends Config {
         ProviderKt.setUiScalePercent(uiScale);
         ProviderKt.setPixelGridMode(pixelGrid);
         SoundThemeSelection.INSTANCE.setValue(soundTheme);
+        GlassTint.setMode(glassTint);
+        ReduceTransparency.setEnabled(reduceTransparency);
+        PaletteAccent.load(paletteAccents);
         AnimationsMotionScale.setAnimations(animations);
         ReducedMotion.setEnabled(reducedMotion || !animations);
     }

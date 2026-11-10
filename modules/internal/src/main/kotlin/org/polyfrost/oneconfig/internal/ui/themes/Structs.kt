@@ -3,6 +3,8 @@ package org.polyfrost.oneconfig.internal.ui.themes
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import java.util.concurrent.ConcurrentHashMap
@@ -76,6 +78,21 @@ data class UITheme(
     fun withControlTrackColor(color: Color): UITheme =
         copy().also { it.controlTrackColor = color }
 
+    internal fun withAccentText(color: Color): UITheme =
+        if (color == accentTextColor) this else copy(accentTextColor = color).also { it.controlTrackColor = controlTrackColor }
+
+    internal fun withOpaqueSurfaces(): UITheme {
+        val page = pageBackground.copy(alpha = 1f)
+        return copy(
+            pageBackground = page,
+            sidebarBackground = sidebarBackground.compositeOver(page),
+            chipBackground = chipBackground.compositeOver(page),
+            modCardBackground = modCardBackground.compositeOver(page),
+            componentBackground = componentBackground.compositeOver(page),
+            popupBackground = popupBackground.compositeOver(page),
+        ).also { it.controlTrackColor = controlTrackColor }
+    }
+
     // The shapes below are kept out of the constructor. PolyPlus calls the generated copy() with the
     // exact signature it was compiled against, so a new constructor parameter crashes every released
     // build of it on startup. They are looked up by theme id so they also survive that copy()
@@ -106,10 +123,21 @@ data class UITheme(
     fun withLiquidGlass(): UITheme =
         also { liquidGlassThemes += previewImage }
 
+    internal fun withoutGlassEffects(): UITheme =
+        also {
+            liquidGlassThemes -= previewImage
+            cursorEffectThemes -= previewImage
+        }
+
     val cursorEffects: Boolean get() = previewImage in cursorEffectThemes
 
     fun withCursorEffects(): UITheme =
         also { cursorEffectThemes += previewImage }
+
+    val isMinecraftStyle: Boolean get() = previewImage in minecraftStyleThemes
+
+    fun withMinecraftStyle(): UITheme =
+        also { minecraftStyleThemes += previewImage }
 
     companion object {
         val DefaultControlTrackColor = Color(0xFF74777F)
@@ -127,6 +155,25 @@ data class UITheme(
         private val liquidGlassThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
         private val cursorEffectThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val minecraftStyleThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val keyedFlags: List<MutableSet<String>>
+            get() = listOf(glowlessThemes, insetFooterThemes, translucentSelectionThemes, liquidGlassThemes, cursorEffectThemes, minecraftStyleThemes)
+
+        internal fun copyExtras(from: String, to: String) {
+            if (from == to) return
+            for (set in keyedFlags) {
+                if (from in set) set += to else set -= to
+            }
+            val shapes = extraShapes[from]
+            if (shapes != null) extraShapes[to] = shapes else extraShapes.remove(to)
+        }
+
+        internal fun clearExtras(id: String) {
+            for (set in keyedFlags) set -= id
+            extraShapes.remove(id)
+        }
     }
 }
 
@@ -137,5 +184,7 @@ data class UIBranding(
 data class UITypography(
     val family: FontFamily,
 )
+
+val UITheme.isLight: Boolean get() = textColor.luminance() < 0.5f
 
 private fun brandedLogoPath(theme: UITheme): String = OneConfigTheme.logoOverride ?: theme.branding.logoPath

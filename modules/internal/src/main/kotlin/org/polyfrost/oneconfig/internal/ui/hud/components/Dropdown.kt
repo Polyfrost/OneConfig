@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,8 +68,8 @@ inline fun <reified E : Enum<E>> Dropdown(
             Row(
                 modifier = Modifier.width(width)
                     .height(34.dp)
-                    .background(Color(0x192126).copy(1f), RoundedCornerShape(8.dp))
-                    .border(1.dp, LocalTheme.current.borderColor, RoundedCornerShape(8.dp))
+                    .background(LocalTheme.current.componentBackground, LocalTheme.current.buttonShape)
+                    .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                     .onClick(interactionSource) { expanded = true }
                     .pointerHoverIcon(PointerIcon.Hand),
                 verticalAlignment = Alignment.CenterVertically,
@@ -93,8 +92,8 @@ inline fun <reified E : Enum<E>> Dropdown(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 modifier = Modifier
-                    .background(Color(0xFF101B1F), RoundedCornerShape(8.dp))
-                    .border(1.dp, LocalTheme.current.borderColor, RoundedCornerShape(8.dp)),
+                    .background(LocalTheme.current.popupBackground, LocalTheme.current.popupShape)
+                    .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.popupShape),
                 offset = DpOffset(0.dp, 10.dp)
             ) {
                 Column(
@@ -133,14 +132,14 @@ fun <E : Enum<E>> DropdownItem(
 
     val backgroundColor by animateColorAsState(
         if (selected) Accent
-        else if (isHovered) Color(0x192126).copy(1f)
-        else Color(0x192126).copy(0f)
+        else if (isHovered) LocalTheme.current.textColor.copy(0.1f)
+        else LocalTheme.current.textColor.copy(0f)
     )
 
     Row(
         modifier = Modifier.width(width)
             .height(32.dp)
-            .background(backgroundColor, RoundedCornerShape(6.dp))
+            .background(backgroundColor, LocalTheme.current.sideBarNavigationEntryShape)
             .onClick(interactionSource, onClick = onClick)
             .hoverable(interactionSource)
             .pointerHoverIcon(PointerIcon.Hand),
@@ -148,7 +147,7 @@ fun <E : Enum<E>> DropdownItem(
     ) {
         Text(
             e.name,
-            color = LocalTheme.current.textColor,
+            color = if (selected) LocalTheme.current.accentTextColor else LocalTheme.current.textColor,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier

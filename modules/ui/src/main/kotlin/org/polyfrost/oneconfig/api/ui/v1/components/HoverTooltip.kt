@@ -8,7 +8,6 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +47,6 @@ public enum class TooltipPlacement {
 private val TOOLTIP_GAP = 8.dp
 private val TOOLTIP_EDGE = 8.dp
 private val TOOLTIP_WRAP = 240.dp
-private val TOOLTIP_SHAPE = RoundedCornerShape(8.dp)
 
 private class TooltipPosition(private val placement: TooltipPlacement, private val gap: Int, private val edge: Int) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
@@ -96,7 +94,7 @@ public fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp)
     }
     componentsBridge().Popup(provider, null, false) {
         Box(
-            modifier = componentsBridge().popupSurface(Modifier.widthIn(max = maxWidth), TOOLTIP_SHAPE)
+            modifier = componentsBridge().popupSurface(Modifier.widthIn(max = maxWidth), OneConfigTheme.current.popupShape)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
