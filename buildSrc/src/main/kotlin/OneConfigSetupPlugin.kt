@@ -354,6 +354,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
                         from(components["java"])
                         groupId = rootProject.group.toString()
                         artifactId = project.name
+                        suppressAllPomMetadataWarnings()
                     }
                 }
             }
