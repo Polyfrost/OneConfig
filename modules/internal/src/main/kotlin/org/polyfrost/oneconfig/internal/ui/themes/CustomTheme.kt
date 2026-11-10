@@ -287,26 +287,38 @@ object CustomThemes {
         return JsonArray().apply { add(spec.toJson(true)) }.toString().toByteArray(StandardCharsets.UTF_8)
     }
 
-    internal fun adoptProfileThemes() {
-        val path = runCatching { ConfigManager.active().folder.resolve(ARCHIVE_ENTRY) }.getOrNull() ?: return
-        if (!Files.exists(path)) return
+    internal fun adoptProfileThemes(): Map<String, String> {
+        val path = runCatching { ConfigManager.active().folder.resolve(ARCHIVE_ENTRY) }.getOrNull() ?: return emptyMap()
+        if (!Files.exists(path)) return emptyMap()
+        val renamed = mutableMapOf<String, String>()
         try {
             val array = JsonUtils.parseOrNull(String(Files.readAllBytes(path), StandardCharsets.UTF_8))?.takeIf { it.isJsonArray }?.asJsonArray
+            val waiting = JsonArray()
             array?.forEach { element ->
                 val obj = element.takeIf { it.isJsonObject }?.asJsonObject ?: return@forEach
                 val id = obj.get("id")?.takeIf { it.isJsonPrimitive }?.asString?.filter { it.isLetterOrDigit() }?.take(16) ?: return@forEach
-                if (id.isEmpty() || _specs.any { it.id == id }) return@forEach
+                if (id.isEmpty()) return@forEach
+                val spec = CustomThemeSpec.fromJson(obj, id) ?: return@forEach
+                val existing = _specs.firstOrNull { it.id == id }
+                if (existing != null && existing.copy(name = spec.name).toJson(false) == spec.toJson(false)) return@forEach
                 if (_specs.size >= CustomThemeSpec.MAX) {
-                    logger.warn("Skipped the imported custom theme {}: the limit of {} is reached", id, CustomThemeSpec.MAX)
+                    logger.warn("Kept the imported custom theme {} for later: the limit of {} is reached", id, CustomThemeSpec.MAX)
+                    waiting.add(obj)
                     return@forEach
                 }
-                val spec = CustomThemeSpec.fromJson(obj, id) ?: return@forEach
-                update(spec.copy(name = uniqueName(spec.name)))
+                val adopted = if (existing == null) spec else spec.copy(id = newId())
+                update(adopted.copy(name = uniqueName(adopted.name)))
+                if (adopted.id != id) renamed[id] = adopted.id
             }
-            Files.deleteIfExists(path)
+            if (waiting.size() == 0) {
+                Files.deleteIfExists(path)
+            } else {
+                Files.write(path, waiting.toString().toByteArray(StandardCharsets.UTF_8))
+            }
         } catch (e: Exception) {
             logger.error("Failed to import custom themes from {}", path, e)
         }
+        return renamed
     }
 
     private fun backUp(path: Path) {

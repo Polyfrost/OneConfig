@@ -79,8 +79,11 @@ object ThemeRegistry {
 
     fun loadFromConfig() {
         updateAccent()
-        CustomThemes.adoptProfileThemes()
+        val renamed = CustomThemes.adoptProfileThemes()
         try {
+            val selected = ThemeConfig.activeTheme
+            val moved = selected.takeIf { it.startsWith(CUSTOM_KEY_PREFIX) }?.let { renamed[it.removePrefix(CUSTOM_KEY_PREFIX)] }
+            if (moved != null) ThemeConfig.activeTheme = CUSTOM_KEY_PREFIX + moved
             val saved = if (ThemeConfig.polyfrostedRenameApplied) ThemeConfig.activeTheme else renamedThemes[ThemeConfig.activeTheme] ?: ThemeConfig.activeTheme
             val resolved = resolve(saved)
             val theme = resolved ?: registry.find { !it.isCustom && it.name == DEFAULT_THEME_NAME }
@@ -89,6 +92,7 @@ object ThemeRegistry {
                 if (resolved != null || !saved.startsWith(CUSTOM_KEY_PREFIX)) ThemeConfig.activeTheme = theme.configKey
                 syncNotificationTheme(theme)
             }
+            if (moved != null) saveThemeToConfig()
             if (!ThemeConfig.polyfrostedRenameApplied && ConfigManager.active().exists(THEMES_ID)) {
                 ThemeConfig.polyfrostedRenameApplied = true
                 saveThemeToConfig()
