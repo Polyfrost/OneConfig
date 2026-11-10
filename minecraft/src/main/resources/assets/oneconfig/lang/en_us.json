@@ -94,9 +94,6 @@
   "oneconfig.preferences.show_option_action_buttons.title": "Show More Actions Button",
   "oneconfig.preferences.show_option_action_buttons.description": "Shows a more actions button on active option rows. Right-clicking an option opens the same menu.",
 
-  "oneconfig.preferences.flip_top_option_order.title": "Sidebar Buttons at Bottom",
-  "oneconfig.preferences.flip_top_option_order.description": "Moves the Edit HUD and Global Search buttons to the bottom of the sidebar, above your account.",
-
   "oneconfig.preferences.category.search": "Search",
 
   "oneconfig.preferences.search_distance.title": "Search Typo Tolerance",
@@ -304,6 +301,8 @@
   "oneconfig.page.credits.title": "Credits",
   "oneconfig.page.credits.search": "Search Credits...",
   "oneconfig.sidebar.edit_hud": "Edit HUD",
+  "oneconfig.sidebar.about": "Changelog and credits",
+  "oneconfig.sidebar.more": "+%s more",
   "oneconfig.header.search": "Search...",
   "oneconfig.header.search.page": "Search %s...",
   "oneconfig.header.original_menu": "Original menu",

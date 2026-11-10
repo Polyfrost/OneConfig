@@ -154,16 +154,18 @@ fun NavBackStackEntry?.currentPage(): OneConfigPage? {
     return registeredPages().firstOrNull { it is BuiltinPage && entry.isOn(it.route) }
 }
 
+val OneConfigPage.inAboutMenu: Boolean get() = this is BuiltinPage && group == PageGroup.ONECONFIG
+
 class SidebarEntry(val icon: String, val label: String, val route: Any)
 
-class SidebarSection(val title: String, val entries: List<SidebarEntry>)
+class SidebarSection(val id: String, val title: String, val entries: List<SidebarEntry>)
 
 fun sidebarSections(): List<SidebarSection> {
     val pages = registeredPages()
-    val groups = pages.map { it.group }.distinct()
     return NavigationGroups.map { group ->
         SidebarSection(
-            groups.firstOrNull { it.title.fallback == group.id }?.title?.resolve() ?: group.id,
+            group.id,
+            group.title.resolve(),
             group.routes.map { def ->
                 val page = pages.firstOrNull { pageRoute(it) == def.route }
                 val label = page?.title?.resolve()

@@ -59,7 +59,7 @@ object ComposeUiHarness_Test {
     private suspend fun run() {
         if (System.getProperty("oneconfig.test.composeui") == "hud") return hudRun()
         dump("initial")
-        for (page in listOf("Profiles", "Keybinds", "Themes", "Preferences", "Changelog", "Credits", "Mods")) {
+        for (page in listOf("Profiles", "Keybinds", "Themes", "Preferences", "Mods")) {
             val before = texts()
             val entry = nodes().filter { text(it) == page }.minByOrNull { it.boundsInWindow.left }
             if (entry == null) { check("nav $page: sidebar entry", false); continue }
