@@ -59,6 +59,7 @@ import org.commonmark.node.Node
 import org.commonmark.node.SoftLineBreak
 import org.commonmark.node.StrongEmphasis
 import org.commonmark.node.Text as CmText
+import org.polyfrost.oneconfig.api.ui.v1.ChangelogSource
 import org.polyfrost.oneconfig.api.ui.v1.ChangelogSources
 import org.polyfrost.oneconfig.internal.ui.api.ChangeKind
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
@@ -88,7 +89,7 @@ private val LocalInstalledVersion = compositionLocalOf<String?> { null }
 private val installedVersion: String?
     @Composable get() = LocalInstalledVersion.current
 
-private var selectedVersion by mutableStateOf<String?>(null)
+private var selection by mutableStateOf<Pair<ChangelogSource?, String>?>(null)
 
 private val VersionListWidth = 200.dp
 
@@ -106,7 +107,8 @@ fun Changelog() {
     val query = pageSearchQuery().trim()
     val source = ChangelogSources.active()
     val view by produceState(ChangelogData.cached(source), source) {
-        value = ChangelogData.cached(source) ?: source?.let { ChangelogData.load(it) }
+        value = ChangelogData.cached(source)
+        if (value == null && source != null) value = ChangelogData.load(source)
     }
     val current = view
     if (current == null) {
@@ -129,13 +131,14 @@ fun Changelog() {
         return
     }
 
+    val selectedVersion = selection?.takeIf { it.first === source }?.second
     val selected = visible.firstOrNull { it.version == selectedVersion }
         ?: visible.firstOrNull { it.version == current.installedVersion }
         ?: visible.first()
 
     CompositionLocalProvider(LocalInstalledVersion provides current.installedVersion) {
         Row(Modifier.fillMaxSize().padding(start = PageGutter)) {
-            VersionList(visible, selected) { selectedVersion = it.version }
+            VersionList(visible, selected) { selection = source to it.version }
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 ReleaseDetail(selected)
             }

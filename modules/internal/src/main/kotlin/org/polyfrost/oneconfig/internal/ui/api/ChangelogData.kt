@@ -19,7 +19,6 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.ui.v1.ChangelogSource
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 enum class ChangeKind(val heading: String) {
@@ -54,8 +53,9 @@ object ChangelogData {
     private const val RESOURCE = "/assets/oneconfig/CHANGELOG.md"
     private const val DEVELOPER_PREFIX = "API: "
     private val LOAD_TIMEOUT = 30.seconds
-    private val releaseHeading = Regex("""^\[([^]]+)](?:\s*-\s*(\S+))?""")
-    private val loaded = ConcurrentHashMap<ChangelogSource, ChangelogView>()
+    private val releaseHeading = Regex("""^\[?([^]\s]+)]?(?:\s*-\s*(\S+))?""")
+    @Volatile
+    private var loaded: Pair<ChangelogSource, ChangelogView>? = null
 
     val releases: List<ChangelogRelease> by lazy {
         val text = runCatching {
@@ -69,21 +69,22 @@ object ChangelogData {
         ChangelogView(releases, version?.let(::cleanVersion))
     }
 
-    fun cached(source: ChangelogSource?): ChangelogView? = if (source == null) bundled else loaded[source]
+    fun cached(source: ChangelogSource?): ChangelogView? =
+        if (source == null) bundled else loaded?.takeIf { it.first === source }?.second
 
     suspend fun load(source: ChangelogSource): ChangelogView {
-        loaded[source]?.let { return it }
+        cached(source)?.let { return it }
         val view = try {
-            val text = withTimeoutOrNull(LOAD_TIMEOUT) { source.load().await() }
+            val future = withContext(Dispatchers.IO) { source.load() }
+            val text = withTimeoutOrNull(LOAD_TIMEOUT) { future.copy().await() }
                 ?: error("Timed out after $LOAD_TIMEOUT")
-            val parsed = withContext(Dispatchers.Default) { parse(text) }
-            ChangelogView(parsed, source.installedVersion()?.let(::cleanVersion))
+            withContext(Dispatchers.IO) { ChangelogView(parse(text), source.installedVersion()?.let(::cleanVersion)) }
         } catch (t: Throwable) {
             if (t is CancellationException) currentCoroutineContext().ensureActive()
             logger.error("Changelog source {} failed, showing the bundled changelog", source.javaClass.name, t)
             return bundled
         }
-        loaded[source] = view
+        loaded = source to view
         return view
     }
 
