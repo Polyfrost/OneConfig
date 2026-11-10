@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -57,6 +56,8 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -64,6 +65,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -701,7 +703,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean, enab
     if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
             visible.forEach { (prop, display) ->
-                AccordionSettingRow(prop, display, enabled, Modifier.fillMaxWidth(), compact = true)
+                AccordionSettingRow(prop, display, enabled, Modifier.fillMaxWidth(), compact = isWideControl(prop))
             }
         }
         return
@@ -797,14 +799,12 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
         menuOpen = true
     }
 
-    val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    val optionWidth = LocalOptionWidth.current
     val titleStyle = remember(theme) {
         TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
@@ -836,20 +836,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 )
             }
         }
-        val fullWidth = isFullWidth(prop)
-        val stacked = compact || fullWidth || run {
-            val titleWidth = with(density) {
-                measurer.measure(
-                    prop.localizedTitle().asRenderText(),
-                    style = titleStyle,
-                    softWrap = false,
-                    maxLines = 1,
-                ).size.width.toDp()
-            }
-            titleWidth + optionReservedWidth(prop, optionWidth) > maxWidth
-        }
-
-        if (stacked) {
+        if (isFullWidth(prop)) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -857,49 +844,89 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                if (fullWidth) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
-                        actionButton()
-                    }
-                    BoxWithConstraints(Modifier.fillMaxWidth()) {
-                        CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
-                    }
-                } else {
-                    SettingLabel(prop, nested = nested)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                    ) {
-                        actionButton()
-                        Option(prop)
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
+                    actionButton()
+                }
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
                 }
             }
         } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = verticalPadding)
-                    // as tall as a dropdown even when the control is a smaller switch or checkbox
-                    .heightIn(min = OptionControlHeight),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                SettingLabel(
-                    prop = prop,
-                    nested = nested,
-                    modifier = Modifier.weight(1f),
-                )
-
-                actionButton()
-                Option(prop)
+            val title = prop.localizedTitle().asRenderText()
+            val titleWidth = remember(title, titleStyle, measurer) {
+                measurer.measure(title, style = titleStyle, softWrap = false, maxLines = 1).size.width
             }
+            LabelledOptionRow(
+                titleWidth = titleWidth,
+                leading = if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp,
+                stack = compact,
+                verticalPadding = verticalPadding,
+                bottomPadding = if (nested) 8.dp else verticalPadding,
+                modifier = Modifier.fillMaxWidth().blockInteraction(!enabled),
+                label = { SettingLabel(prop, nested = nested) },
+                actionButton = actionButton,
+                control = { Option(prop) },
+            )
         }
 
         OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
+    }
+}
+
+/**
+ * An option's [label] beside its [control], or above it when the title would not fit on one line next to the
+ * control as it is actually laid out, or whenever [stack] asks for it
+ *
+ * [titleWidth] is the title's width on one line in pixels and [leading] what the label puts before it, such as an icon
+ */
+@Composable
+private fun LabelledOptionRow(
+    titleWidth: Int,
+    leading: Dp,
+    stack: Boolean,
+    verticalPadding: Dp,
+    bottomPadding: Dp,
+    modifier: Modifier,
+    label: @Composable () -> Unit,
+    actionButton: @Composable () -> Unit,
+    control: @Composable () -> Unit,
+) {
+    Layout(listOf(label, actionButton, control), modifier) { (labels, actions, controls), constraints ->
+        val side = 16.dp.roundToPx()
+        val top = verticalPadding.roundToPx()
+        val width = constraints.maxWidth
+        val inner = (width - side * 2).coerceAtLeast(0)
+        val loose = Constraints(maxWidth = inner)
+        val ctrl = controls.firstOrNull()?.measure(loose)
+        val action = actions.firstOrNull()?.measure(loose)
+        val ctrlWidth = ctrl?.width ?: 0
+
+        val besideGap = 16.dp.roundToPx()
+        val beside = inner - ctrlWidth - besideGap - (action?.let { it.width + besideGap } ?: 0)
+        if (!stack && titleWidth + leading.roundToPx() <= beside) {
+            val lbl = labels.first().measure(Constraints.fixedWidth(beside.coerceAtLeast(0)))
+            // as tall as a dropdown even when the control is a smaller switch or checkbox
+            val rowHeight = maxOf(lbl.height, action?.height ?: 0, ctrl?.height ?: 0, OptionControlHeight.roundToPx())
+            layout(width, rowHeight + top * 2) {
+                fun Placeable.center(x: Int) = place(x, top + (rowHeight - height) / 2)
+                lbl.center(side)
+                action?.center(side + beside + besideGap)
+                ctrl?.center(width - side - ctrlWidth)
+            }
+        } else {
+            val lbl = labels.first().measure(loose)
+            val belowGap = 10.dp.roundToPx()
+            val controlsGap = 12.dp.roundToPx()
+            val rowHeight = maxOf(action?.height ?: 0, ctrl?.height ?: 0)
+            val rowTop = top + lbl.height + belowGap
+            layout(width, rowTop + rowHeight + bottomPadding.roundToPx()) {
+                lbl.place(side, top)
+                val ctrlX = width - side - ctrlWidth
+                ctrl?.place(ctrlX, rowTop + (rowHeight - ctrl.height) / 2)
+                action?.place(ctrlX - (if (ctrl != null) controlsGap else 0) - action.width, rowTop + (rowHeight - action.height) / 2)
+            }
+        }
     }
 }
 
@@ -975,7 +1002,7 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     // empty draws nothing but stays composed, so the display listeners above notice hidden options appearing
     if (entries.isEmpty()) return
 
-    CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
+    CompositionLocalProvider(LocalOptionWidth provides 210.dp) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (searchQuery.isEmpty() && visibleCategories.size > 1) {
             FlowRow(
@@ -1000,7 +1027,10 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     }
 }
 
-/** The HUD editor's column is narrow so any row holding a wide control stacks its label above it */
+/**
+ * The HUD editor's column is narrow so any row holding a wide control stacks its label above it, and an accordion
+ * holding one lists its options in a single column where only those rows stack
+ */
 private fun hasWideControl(node: SettingNode): Boolean = when (node) {
     is SettingNode.Leaf -> isWideControl(node.prop)
     is SettingNode.Accordion -> node.body.any(::isWideControl)
