@@ -154,7 +154,7 @@ fun OneConfigInterface(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            HudDragLayer()
+            if (!shell.warming) HudDragLayer()
 
             val currentDensity = LocalDensity.current
             val scaleFactor = run {

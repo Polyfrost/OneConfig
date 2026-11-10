@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.PlatformContext
 import androidx.compose.ui.platform.WindowInfo
 import androidx.compose.ui.scene.CanvasLayersComposeScene
+import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
@@ -23,7 +24,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.pow
 import kotlinx.coroutines.CoroutineDispatcher
@@ -43,16 +43,13 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ClassPreloader
+import org.polyfrost.oneconfig.internal.MainMenuFpsSampler
 import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
-import org.polyfrost.oneconfig.internal.ui.api.ModCardTypeCollapseStore
-import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
-import org.polyfrost.oneconfig.internal.ui.api.ModHidden
-import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
@@ -61,7 +58,6 @@ import org.polyfrost.oneconfig.internal.ui.compose.sceneDensity
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
-import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.KeybindsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -171,27 +167,53 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         private const val WARM_FRAMES = 6
 
-        private const val WARM_STOP_WAIT_MS = 250L
-
         private const val PRERASTER_DROP_DELAY_S = 5L
 
-        private val warmLock = ReentrantLock()
+        private var warm: WarmScene? = null
 
         @Volatile
         private var warmStopped = false
 
+        private var warmNanos = 0L
+
+        private var warmDeferred = false
+
+        @JvmStatic
+        fun warmBusy(): Boolean = !warmStopped && !warmDeferred
+
+        @JvmStatic
+        fun warmStep(allowed: Boolean): Boolean {
+            warmDeferred = !warmStopped && !allowed
+            if (warmDeferred) {
+                warm?.close()
+                warm = null
+                warmNanos = 0L
+                return false
+            }
+            if (!warmStopped && MainMenuFpsSampler.isAnySampling()) return false
+            if (!warmStopped) {
+                val start = System.nanoTime()
+                val more = try {
+                    warm?.let { it.frame(); it.frames < WARM_FRAMES } ?: (createWarmScene()?.also { warm = it } != null)
+                } catch (t: Throwable) {
+                    LOGGER.warn("Failed to warm the OneConfig UI after {} frames; it will start cold", warm?.frames ?: 0, t)
+                    false
+                }
+                warmNanos += System.nanoTime() - start
+                if (more) return false
+                warm?.takeIf { it.frames >= WARM_FRAMES }?.let {
+                    LOGGER.info("Warmed the OneConfig UI ({} frames) in {}ms", it.frames, warmNanos / 1_000_000L)
+                }
+            }
+            warmStopped = true
+            warm?.close()
+            warm = null
+            return true
+        }
+
         @JvmStatic
         fun stopWarmUp() {
-            if (warmStopped) return
             warmStopped = true
-            val start = System.nanoTime()
-            if (!warmLock.tryLock(WARM_STOP_WAIT_MS, TimeUnit.MILLISECONDS)) {
-                LOGGER.warn("The OneConfig UI warm-up did not stop within {}ms", WARM_STOP_WAIT_MS)
-                return
-            }
-            warmLock.unlock()
-            val waited = (System.nanoTime() - start) / 1_000_000L
-            if (waited > 0) LOGGER.info("Waited {}ms for the OneConfig UI warm-up to stop", waited)
         }
 
         private fun dropPrerasteredLater() {
@@ -200,99 +222,12 @@ class OneConfigUIScreen @JvmOverloads constructor(
             }, PRERASTER_DROP_DELAY_S, TimeUnit.SECONDS)
         }
 
-        @JvmStatic
-        fun prepareWarmUp(): Runnable? {
+        private fun createWarmScene(): WarmScene? {
             if (java.lang.Boolean.getBoolean("oneconfig.debug.noWarmCompose") || sharedScreen != null || !ComposeSupport.isAvailable) return null
             val w = Platform.screen().windowWidth()
             val h = Platform.screen().windowHeight()
             if (w <= 0 || h <= 0) return null
-            ModFavorites.contains("")
-            ModHidden.contains("")
-            ModSortStore.selectedId
-            ModCardTypeCollapseStore.isCollapsed("")
-            KeybindGroupCollapseStore.isCollapsed("")
-            val density = sceneDensity()
-            val surface = Platform.screen().viewportWidth().toFloat() / w
-            return Runnable { warmUp(w, h, density, surface) }
-        }
-
-        private fun warmUp(w: Int, h: Int, density: Float, surface: Float) {
-            warmLock.lock()
-            try {
-                if (!warmStopped) warmFrames(w, h, density, surface)
-            } finally {
-                warmLock.unlock()
-            }
-        }
-
-        @OptIn(InternalComposeUiApi::class)
-        private fun warmFrames(w: Int, h: Int, density: Float, surface: Float) {
-            val start = System.nanoTime()
-            val thread = Thread.currentThread()
-            val queue = ConcurrentLinkedQueue<Runnable>()
-            val dispatcher = object : CoroutineDispatcher() {
-                override fun isDispatchNeeded(context: CoroutineContext) = Thread.currentThread() !== thread
-                override fun dispatch(context: CoroutineContext, block: Runnable) {
-                    queue += block
-                }
-            }
-            fun drain() {
-                while (true) (queue.poll() ?: return).run()
-            }
-            val failure = AtomicReference<Throwable?>()
-            var frames = 0
-            try {
-                PolyCompose.install()
-                val recomposer = FrameRecomposer(dispatcher + CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }) {}
-                val scope = SingleComposeSceneRenderingScope {}
-                val scene = try {
-                    CanvasLayersComposeScene(
-                        frameRecomposer = recomposer,
-                        platformContext = WarmPlatformContext(IntSize(w, h)),
-                        invalidateLayout = scope::onSceneInvalidation,
-                        invalidateDraw = scope::onSceneInvalidation,
-                    )
-                } catch (t: Throwable) {
-                    recomposer.close()
-                    throw t
-                }
-                val shell = ShellController(warming = true)
-                try {
-                    scene.density = Density(density)
-                    scene.size = IntSize(w, h)
-                    shell.session.resume()
-                    if (OneConfigConfig.instantSearch) shell.search.requestFocus(SearchFocus.SelectAll)
-                    scene.setContent { OneConfigInterface(w.toFloat(), h.toFloat(), shell = shell) }
-                    val renderer = WarmRenderer()
-                    val canvas = PolyCanvas(renderer)
-                    var nanos = System.nanoTime()
-                    while (frames < WARM_FRAMES && !warmStopped) {
-                        drain()
-                        recomposer.performFrame(nanos)
-                        scene.measureAndLayout()
-                        scene.sendPointerEvent(PointerEventType.Move, Offset(1f, 1f))
-                        renderer.save()
-                        renderer.scale(surface, surface)
-                        with(scope) { scene.render(recomposer, canvas, nanos) }
-                        renderer.restore()
-                        failure.get()?.let { throw it }
-                        nanos += 16_666_667L
-                        frames++
-                    }
-                } finally {
-                    try {
-                        scene.close()
-                        recomposer.close()
-                        shell.session.stop()
-                        drain()
-                    } catch (t: Throwable) {
-                        LOGGER.debug("Ignoring failure while closing the OneConfig UI warm-up scene", t)
-                    }
-                }
-                LOGGER.info("Warmed the OneConfig UI ({} frames) in {}ms", frames, (System.nanoTime() - start) / 1_000_000L)
-            } catch (t: Throwable) {
-                LOGGER.warn("Failed to warm the OneConfig UI after {} frames; it will start cold", frames, t)
-            }
+            return WarmScene(w, h, sceneDensity(), Platform.screen().viewportWidth().toFloat() / w)
         }
 
         @JvmStatic
@@ -349,6 +284,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     }
 
     override fun init() {
+        stopWarmUp()
         OneConfig.dismissFirstLaunchToast()
         updateAccent()
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
@@ -573,6 +509,83 @@ class OneConfigUIScreen @JvmOverloads constructor(
                 requestOpenCallback = openRequest
             },
         ) { }
+    }
+}
+
+@OptIn(InternalComposeUiApi::class)
+private class WarmScene(w: Int, h: Int, density: Float, private val surface: Float) {
+    private val queue = ConcurrentLinkedQueue<Runnable>()
+    private val failure = AtomicReference<Throwable?>()
+    private val scope = SingleComposeSceneRenderingScope {}
+    private val shell = ShellController(warming = true)
+    private val renderer = WarmRenderer()
+    private val canvas = PolyCanvas(renderer)
+    private var nanos = System.nanoTime()
+    var frames = 0
+        private set
+    private val recomposer: FrameRecomposer
+    private val scene: ComposeScene
+
+    init {
+        val thread = Thread.currentThread()
+        val dispatcher = object : CoroutineDispatcher() {
+            override fun isDispatchNeeded(context: CoroutineContext) = Thread.currentThread() !== thread
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                queue += block
+            }
+        }
+        PolyCompose.install()
+        recomposer = FrameRecomposer(dispatcher + CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }) {}
+        scene = try {
+            CanvasLayersComposeScene(
+                frameRecomposer = recomposer,
+                platformContext = WarmPlatformContext(IntSize(w, h)),
+                invalidateLayout = scope::onSceneInvalidation,
+                invalidateDraw = scope::onSceneInvalidation,
+            )
+        } catch (t: Throwable) {
+            recomposer.close()
+            throw t
+        }
+        try {
+            scene.density = Density(density)
+            scene.size = IntSize(w, h)
+            shell.session.resume()
+            if (OneConfigConfig.instantSearch) shell.search.requestFocus(SearchFocus.SelectAll)
+            scene.setContent { OneConfigInterface(w.toFloat(), h.toFloat(), shell = shell) }
+        } catch (t: Throwable) {
+            close()
+            throw t
+        }
+    }
+
+    fun frame() {
+        drain()
+        recomposer.performFrame(nanos)
+        scene.measureAndLayout()
+        scene.sendPointerEvent(PointerEventType.Move, Offset(1f, 1f))
+        renderer.save()
+        renderer.scale(surface, surface)
+        with(scope) { scene.render(recomposer, canvas, nanos) }
+        renderer.restore()
+        failure.get()?.let { throw it }
+        nanos += 16_666_667L
+        frames++
+    }
+
+    fun close() {
+        try {
+            scene.close()
+            recomposer.close()
+            shell.session.stop()
+            drain()
+        } catch (t: Throwable) {
+            LogManager.getLogger("OneConfig/UI").debug("Ignoring failure while closing the OneConfig UI warm-up scene", t)
+        }
+    }
+
+    private fun drain() {
+        while (true) (queue.poll() ?: return).run()
     }
 }
 

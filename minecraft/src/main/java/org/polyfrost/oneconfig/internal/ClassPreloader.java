@@ -30,13 +30,15 @@ import jdk.jfr.Recording;
 import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordingFile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.compose.render.PolyGlyphPage;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.internal.compat.CompatLoader;
 import org.polyfrost.oneconfig.internal.ui.compose.StbFonts;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 
@@ -66,28 +68,19 @@ public final class ClassPreloader {
     }
 
     public static void init() {
-        if (RECORD != null || RECORD_GLYPHS != null || Boolean.getBoolean("oneconfig.debug.noPreload")) return;
-        EventHandler.ofRemoving(FramebufferRenderEvent.End.class, e -> {
-            if (!(Platform.screen().current() instanceof TitleScreen) && !(IN_WORLD && Minecraft.getInstance().level != null)) return false;
-            Runnable warm = prepareWarmUp();
-            Thread thread = new Thread(() -> {
-                preload();
-                if (warm != null) warm.run();
-            }, "OneConfig Class Preloader");
-            thread.setDaemon(true);
-            thread.setPriority(Thread.MIN_PRIORITY);
-            thread.start();
-            return true;
-        }).register();
-    }
-
-    private static Runnable prepareWarmUp() {
-        try {
-            return OneConfigUIScreen.prepareWarmUp();
-        } catch (Throwable t) {
-            LOGGER.warn("Failed to prepare the OneConfig UI warm-up", t);
-            return null;
+        if (RECORD != null || RECORD_GLYPHS != null || Boolean.getBoolean("oneconfig.debug.noPreload")) {
+            OneConfigUIScreen.stopWarmUp();
+            return;
         }
+        Thread preloader = new Thread(ClassPreloader::preload, "OneConfig Class Preloader");
+        preloader.setDaemon(true);
+        preloader.setPriority(Thread.MIN_PRIORITY);
+        preloader.start();
+        EventManager.register(InitializationEvent.class, init -> EventHandler.ofRemoving(FramebufferRenderEvent.End.class, e -> {
+            if (preloader.isAlive() || !CompatLoader.INSTANCE.getQueuedCompatsRan()) return false;
+            boolean allowed = Minecraft.getInstance().level == null ? MainMenuFpsSampler.isMainMenu(Platform.screen().current()) : IN_WORLD;
+            return OneConfigUIScreen.warmStep(allowed);
+        }).register());
     }
 
     private static void preload() {

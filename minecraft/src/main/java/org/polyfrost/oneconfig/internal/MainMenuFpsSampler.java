@@ -35,17 +35,25 @@ import org.polyfrost.oneconfig.api.event.v1.events.MainMenuFpsEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
+import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
 public final class MainMenuFpsSampler {
     private static final String POLYPLUS_PACKAGE = "org.polyfrost.polyplus.";
 
     private static final long MAX_TICK_GAP_NANOS = 250L * 1_000_000L;
 
+    private static final long FPS_SETTLE_NANOS = 2_000L * 1_000_000L;
+
     private static volatile boolean sampling = false;
 
     private boolean started = false;
     private long lastTickNanos = 0L;
     private long elapsedNanos = 0L;
+    private long settledNanos = 0L;
     private long fpsSum = 0L;
     private int sampleCount = 0;
 
@@ -54,6 +62,30 @@ public final class MainMenuFpsSampler {
 
     public static boolean isSampling() {
         return sampling;
+    }
+
+    public static boolean isAnySampling() {
+        if (sampling) return true;
+        MethodHandle polyPlus = PolyPlusSampler.IS_SAMPLING;
+        if (polyPlus == null) return false;
+        try {
+            return (boolean) polyPlus.invokeExact();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    public static boolean isMainMenu(Object screen) {
+        return !hasOverlay() && (screen instanceof TitleScreen || screen instanceof ComposeScreen && screen.getClass().getName().startsWith(POLYPLUS_PACKAGE));
+    }
+
+    private static boolean hasOverlay() {
+        //? if >= 26.2 {
+        return Minecraft.getInstance().gui.overlay() != null;
+        //?} else if > 1.12.2 {
+        /*return Minecraft.getInstance().getOverlay() != null;
+        *///?} else
+        //return false;
     }
 
     public static void init() {
@@ -68,45 +100,62 @@ public final class MainMenuFpsSampler {
         long gap = Math.min(now - lastTickNanos, MAX_TICK_GAP_NANOS);
         lastTickNanos = now;
 
-        if (started && mc.level != null) {
-            finish();
-            return true;
-        }
+        if (started && mc.level != null) return finish();
 
         if (!mc.isWindowActive()) {
             sampling = false; // don't fight power saving while nobody is looking
             elapsedNanos = 0L;
             fpsSum = 0L;
             sampleCount = 0;
+            settledNanos = 0L;
             return false;
         }
 
         if (!started) {
-            if (!(screen instanceof TitleScreen)) return false;
+            if (!(screen instanceof TitleScreen) || hasOverlay()) return false;
             started = true;
             elapsedNanos = 0L;
             gap = 0L;
         }
-        sampling = true; // lift the menu FPS cap for the duration of the window
-        elapsedNanos += gap;
-
-        boolean representative = !(screen instanceof LevelLoadingScreen)
+        boolean representative = !OneConfigUIScreen.warmBusy() && !hasOverlay() && !(screen instanceof LevelLoadingScreen)
                 && (!(screen instanceof ComposeScreen) || screen.getClass().getName().startsWith(POLYPLUS_PACKAGE));
-        if (representative) {
-            fpsSum += Math.max(0, Platform.compatibility().fps());
-            sampleCount++;
+        sampling = representative;
+        if (!representative) {
+            settledNanos = 0L;
+            return false;
         }
+        if (settledNanos < FPS_SETTLE_NANOS) {
+            settledNanos += gap;
+            return false;
+        }
+        elapsedNanos += gap;
+        fpsSum += Math.max(0, Platform.compatibility().fps());
+        sampleCount++;
 
-        if (elapsedNanos / 1_000_000L >= MainMenuFpsEvent.WINDOW_MILLIS) {
-            finish();
-            return true;
-        }
+        if (elapsedNanos / 1_000_000L >= MainMenuFpsEvent.WINDOW_MILLIS) return finish();
         return false;
     }
 
-    private void finish() {
+    private static final class PolyPlusSampler {
+        static final MethodHandle IS_SAMPLING = find();
+
+        private static MethodHandle find() {
+            try {
+                Class<?> owner = Class.forName(POLYPLUS_PACKAGE + "client.features.AdaptiveBlurDefaults", false, MainMenuFpsSampler.class.getClassLoader());
+                return MethodHandles.publicLookup().findStatic(owner, "isSampling", MethodType.methodType(boolean.class));
+            } catch (Throwable t) {
+                return null;
+            }
+        }
+    }
+
+    private boolean finish() {
         sampling = false;
-        float average = sampleCount > 0 ? (float) fpsSum / sampleCount : 0f;
-        EventManager.INSTANCE.post(new MainMenuFpsEvent(average, sampleCount, elapsedNanos / 1_000_000L));
+        if (sampleCount == 0) {
+            started = false;
+            return false;
+        }
+        EventManager.INSTANCE.post(new MainMenuFpsEvent((float) fpsSum / sampleCount, sampleCount, elapsedNanos / 1_000_000L));
+        return true;
     }
 }

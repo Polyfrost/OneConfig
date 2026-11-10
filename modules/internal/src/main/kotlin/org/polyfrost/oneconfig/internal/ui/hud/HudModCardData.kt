@@ -80,7 +80,7 @@ internal fun hudModCardConfigs(): List<ConfigData> = synchronized(cardCache) {
 
 internal class HudModCardData(
     val hud: Hud,
-    ownerId: String,
+    private val ownerId: String,
     val owner: ConfigData?,
     override val id: String,
 ) : ConfigData {
@@ -89,11 +89,12 @@ internal class HudModCardData(
 
     override val description: String? = hud.description
 
-    override val icon: String? = if (hud is LegacyHudMarker && !isCompatHud(hud)) null else {
-        HudManager.iconFor(ownerId)
-            ?: owner?.icon
-            ?: if (ownerId == BUILTIN_HUD_CONFIG_ID) BUILTIN_HUD_ICON else "hud"
-    }
+    override val icon: String?
+        get() = if (hud is LegacyHudMarker && !isCompatHud(hud)) null else {
+            HudManager.iconFor(ownerId)
+                ?: owner?.icon
+                ?: if (ownerId == BUILTIN_HUD_CONFIG_ID) BUILTIN_HUD_ICON else "hud"
+        }
 
     override val preview: (@Composable (Modifier) -> Unit)? =
         if (hud is LegacyHudMarker) null else ({ modifier -> HudPreview(hud, modifier) })

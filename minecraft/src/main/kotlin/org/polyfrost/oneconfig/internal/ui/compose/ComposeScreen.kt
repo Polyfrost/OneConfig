@@ -47,7 +47,6 @@ import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
 import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
@@ -273,7 +272,6 @@ abstract class ComposeScreen(
     }
 
     private fun createScene(): ComposeScene {
-        OneConfigUIScreen.stopWarmUp()
         val failure = AtomicReference<Throwable?>()
         val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
         val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }

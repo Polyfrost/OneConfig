@@ -21,6 +21,10 @@ object CompatLoader {
 
     private var bypassDelay = false
 
+    @Volatile
+    var queuedCompatsRan = false
+        private set
+
     private val pathFactory: MutableMap<ModInfo, (String) -> String> = mutableMapOf()
 
     // concurrent as compat hooks may fire on other threads while ConfigEntrypoints un-marks a failed mod
@@ -214,6 +218,7 @@ object CompatLoader {
         pending.forEach { (_, value) ->
             runCatching(value).onFailure { LOGGER.error("Failed to load a queued config compat", it) }
         }
+        if (first) queuedCompatsRan = true
     }
 
     fun requireTranslations(priority: Int = 0, skip: Boolean = false, init: () -> Unit) {
