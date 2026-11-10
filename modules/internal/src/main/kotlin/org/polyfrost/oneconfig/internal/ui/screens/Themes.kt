@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,6 +64,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.concentric
 const val THEMES_ID = "themes.json"
 
 private val ThemeCardGap = 20.dp
+private val ThemeCardMinWidth = 160.dp
 
 private val VariantToggleHeight = 30.dp
 
@@ -100,11 +103,17 @@ private fun ThemesHeader() {
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         val families = ThemeRegistry.registry.groupBy { it.family }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter),
-            horizontalArrangement = Arrangement.spacedBy(ThemeCardGap),
-        ) {
-            families.forEach { (family, variants) -> ThemeCard(family, variants, Modifier.weight(1f)) }
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = PageGutter)) {
+            val count = families.size.coerceAtLeast(1)
+            val fits = (maxWidth - ThemeCardGap * (count - 1)) / count >= ThemeCardMinWidth
+            Row(
+                modifier = if (fits) Modifier.fillMaxWidth() else Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(ThemeCardGap),
+            ) {
+                families.forEach { (family, variants) ->
+                    ThemeCard(family, variants, if (fits) Modifier.weight(1f) else Modifier.width(ThemeCardMinWidth))
+                }
+            }
         }
         if (!Platform.screen().supportsBackdropGlass()) {
             Text(
