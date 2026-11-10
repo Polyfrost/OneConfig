@@ -95,7 +95,7 @@ class McUiSoundService : UiSoundService {
     override fun startAmbience(theme: UiSoundTheme, volume: Float) {
         try {
             val current = ambience
-            if (current != null && !current.isStopped && current.theme == theme && mc.soundManager.isActive(current)) {
+            if (current != null && !current.isStopped && current.theme == theme && isAlive(current)) {
                 current.updateTargetVolume(ambienceVolumeFor(theme, volume))
                 current.cancelFadeOut()
                 UiSoundDucking.setActive(true)
@@ -197,10 +197,7 @@ class McUiSoundService : UiSoundService {
                         try {
                             val current = ambience ?: return@execute
                             if (current.isStopped || current.isFadingOut || current !== ambience) return@execute
-                            if (!mc.soundManager.isActive(current)) {
-                                // 1.8.9 starts sounds asynchronously, so a stream that was just started can still
-                                // report inactive. Stop it before replacing it, otherwise it keeps playing untracked
-                                // and stopAmbience can no longer fade it out
+                            if (!isAlive(current)) {
                                 mc.soundManager.stop(current)
                                 playAmbienceInstance(current.theme, current.targetVolume, fadeIn = !mc.isPaused)
                             } else if (current.isStalledFadeIn) {
@@ -219,6 +216,16 @@ class McUiSoundService : UiSoundService {
         thread.name = "OneConfig-AmbienceLoop"
         ambienceWatchThread = thread
         thread.start()
+    }
+
+    // 1.8.9 starts streams on Paulscode's threads, so a fresh stream reports inactive until its preload ends.
+    // Stopping it then is lost: preload finishes afterwards and starts the channel untracked.
+    private fun isAlive(instance: FadingLoopSoundInstance): Boolean {
+        if (mc.soundManager.isActive(instance)) {
+            instance.seenActive = true
+            return true
+        }
+        return !instance.seenActive && System.currentTimeMillis() - instance.startedAt < START_GRACE_MS
     }
 
     private val musicRefreshUntil = AtomicLong(0)
@@ -283,6 +290,11 @@ class McUiSoundService : UiSoundService {
 
         @Volatile
         private var fadeOutStep = 0f
+
+        val startedAt = System.currentTimeMillis()
+
+        @Volatile
+        var seenActive = false
 
         val isFadingOut: Boolean
             get() = fadingOut
@@ -368,5 +380,6 @@ class McUiSoundService : UiSoundService {
         const val FADE_IN_TICKS = 30f
         const val FADE_IN_FLOOR = 0.0001f
         const val STALL_NANOS = 400_000_000L
+        const val START_GRACE_MS = 5000L
     }
 }
