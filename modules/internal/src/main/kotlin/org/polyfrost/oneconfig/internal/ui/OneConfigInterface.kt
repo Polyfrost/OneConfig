@@ -33,6 +33,7 @@ import kotlin.math.pow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalSearchFieldFocused
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
@@ -48,7 +49,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
 fun guiCloseAnimationMillis(): Long =
-    if (!ThemeConfig.guiClosingAnimation) 0L
+    if (!ThemeConfig.guiClosingAnimation || !ThemeConfig.animations) 0L
     else (ThemeConfig.animationTime * 1000f).toLong().coerceIn(1L, MAX_CLOSE_ANIMATION_MS)
 
 private const val MAX_CLOSE_ANIMATION_MS = 160L
@@ -179,7 +180,7 @@ fun OneConfigInterface(
                         val enterMs = if (ThemeConfig.guiOpenAnimation) animMs else 1
                         val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
                         val dragAlpha by animateFloatAsState(
-                            targetValue = if (shell.layout.hudDragging) ThemeConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
+                            targetValue = if (shell.layout.hudDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
                             animationSpec = tween(150),
                             label = "hudDragShellAlpha"
                         )

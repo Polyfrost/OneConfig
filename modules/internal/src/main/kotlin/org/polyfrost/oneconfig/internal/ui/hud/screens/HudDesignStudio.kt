@@ -85,7 +85,6 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
 import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -1906,7 +1905,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     }
 
     val chromeAlpha by animateFloatAsState(
-        targetValue = if (isDragging) ThemeConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
+        targetValue = if (isDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
         animationSpec = tween(150),
         label = "hudDragChromeAlpha"
     )

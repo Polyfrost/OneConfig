@@ -15,7 +15,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
+import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale;
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellAppearance;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
@@ -29,26 +29,33 @@ public class ThemeConfig extends Config {
 
     private static final String PREFERENCES_ID = "oneconfig.json";
 
-    private static final String[] MOVED_FROM_PREFERENCES = {"uiScale", "pixelGrid", "pageOpacity", "sidebarOpacity", "glowOpacity", "enableBackgroundBlur", "hudDragUiOpacity", "guiOpenAnimation", "guiClosingAnimation", "animationTime", "showPageAnimations", "pageAnimationDuration", "reducedMotion", "showOpeningPageAnimation"};
+    private static final String[] MOVED_FROM_PREFERENCES = {"uiScale", "pixelGrid", "pageOpacity", "sidebarOpacity", "glowOpacity", "enableBackgroundBlur", "guiOpenAnimation", "guiClosingAnimation", "animationTime", "showPageAnimations", "pageAnimationDuration", "reducedMotion", "showOpeningPageAnimation"};
+
+    private static final String[] ANIMATION_OPTIONS = {"reducedMotion", "guiOpenAnimation", "guiClosingAnimation", "animationTime", "showPageAnimations", "pageAnimationDuration", "showOpeningPageAnimation"};
+
+    private static final String[] TRANSPARENCY_OPTIONS = {"pageOpacity", "sidebarOpacity", "glowOpacity", "enableBackgroundBlur"};
 
     public static final int SOUND_THEME_MATCH = 0;
     public static final int SOUND_THEME_ONECONFIG = 1;
     public static final int SOUND_THEME_MINECRAFT = 2;
 
-    @Text(title = "Active Theme")
+    @Include
     public static String activeTheme = "Polyfrosted Dark";
 
     @Color(title = "Accent Color", description = "The accent color of the OneConfig Interface", icon = "paintbrush", gradient = true)
     public static PolyColor accentColor = new PolyColor(0xFF2B4BFF);
 
-    @Switch(title = "Animations", description = "Smooth, clean animations in the OneConfig Interface", icon = "refresh")
+    @Switch(title = "Animations", description = "Turns every animation in OneConfig on or off", icon = "refresh")
     public static boolean animations = true;
 
-    @Switch(title = "Polyfrosted Rename Applied")
+    @Include
     public static boolean polyfrostedRenameApplied = false;
 
     @Include
     public static boolean preferencesMigrated = false;
+
+    @Include
+    public static boolean flipOrderMigrated = false;
 
     @Slider(
         title = "oneconfig.preferences.ui_scale.title",
@@ -60,64 +67,19 @@ public class ThemeConfig extends Config {
     )
     public static float uiScale = 100f;
 
-    @Dropdown(
-        title = "oneconfig.preferences.pixel_grid.title",
+    @Switch(
+        title = "oneconfig.preferences.reduce_transparency.title",
         subcategory = "oneconfig.preferences.category.gui",
-        options = {
-            "oneconfig.preferences.pixel_grid.auto",
-            "oneconfig.preferences.pixel_grid.always",
-            "oneconfig.preferences.pixel_grid.never"
-        },
-        description = "oneconfig.preferences.pixel_grid.description"
+        description = "oneconfig.preferences.reduce_transparency.description"
     )
-    public static int pixelGrid = 0;
-
-    @Slider(
-        title = "oneconfig.preferences.page_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.page_opacity.description"
-    )
-    public static float pageOpacity = 88f;
-
-    @Slider(
-        title = "oneconfig.preferences.sidebar_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.sidebar_opacity.description"
-    )
-    public static float sidebarOpacity = 80f;
-
-    @Slider(
-        title = "oneconfig.preferences.glow_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 100f,
-        step = 1f,
-        description = "oneconfig.preferences.glow_opacity.description"
-    )
-    public static float glowOpacity = 25f;
+    public static boolean reduceTransparency = false;
 
     @Switch(
-        title = "oneconfig.preferences.background_blur.title",
+        title = "oneconfig.preferences.flip_top_option_order.title",
         subcategory = "oneconfig.preferences.category.gui",
-        description = "oneconfig.preferences.background_blur.description"
+        description = "oneconfig.preferences.flip_top_option_order.description"
     )
-    public static boolean enableBackgroundBlur = true;
-
-    @Slider(
-        title = "oneconfig.preferences.hud_drag_ui_opacity.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        min = 0f,
-        max = 1f,
-        step = 0.05f,
-        description = "oneconfig.preferences.hud_drag_ui_opacity.description"
-    )
-    public static float hudDragUiOpacity = 0.60f;
+    public static boolean flipTopOptionOrder = false;
 
     @Switch(
         title = "oneconfig.preferences.reduced_motion.title",
@@ -174,6 +136,55 @@ public class ThemeConfig extends Config {
     )
     public static boolean showOpeningPageAnimation = false;
 
+    @Dropdown(
+        title = "oneconfig.preferences.pixel_grid.title",
+        subcategory = "oneconfig.preferences.category.advanced",
+        options = {
+            "oneconfig.preferences.pixel_grid.auto",
+            "oneconfig.preferences.pixel_grid.always",
+            "oneconfig.preferences.pixel_grid.never"
+        },
+        description = "oneconfig.preferences.pixel_grid.description"
+    )
+    public static int pixelGrid = 0;
+
+    @Slider(
+        title = "oneconfig.preferences.page_opacity.title",
+        subcategory = "oneconfig.preferences.category.advanced",
+        min = 0f,
+        max = 100f,
+        step = 1f,
+        description = "oneconfig.preferences.page_opacity.description"
+    )
+    public static float pageOpacity = 88f;
+
+    @Slider(
+        title = "oneconfig.preferences.sidebar_opacity.title",
+        subcategory = "oneconfig.preferences.category.advanced",
+        min = 0f,
+        max = 100f,
+        step = 1f,
+        description = "oneconfig.preferences.sidebar_opacity.description"
+    )
+    public static float sidebarOpacity = 80f;
+
+    @Slider(
+        title = "oneconfig.preferences.glow_opacity.title",
+        subcategory = "oneconfig.preferences.category.advanced",
+        min = 0f,
+        max = 100f,
+        step = 1f,
+        description = "oneconfig.preferences.glow_opacity.description"
+    )
+    public static float glowOpacity = 25f;
+
+    @Switch(
+        title = "oneconfig.preferences.background_blur.title",
+        subcategory = "oneconfig.preferences.category.advanced",
+        description = "oneconfig.preferences.background_blur.description"
+    )
+    public static boolean enableBackgroundBlur = true;
+
     @Include
     public static int soundTheme = SOUND_THEME_MATCH;
 
@@ -198,27 +209,50 @@ public class ThemeConfig extends Config {
         if (tree == null) {
             polyfrostedRenameApplied = !Files.exists(ConfigManager.active().getFolder().resolve(id));
             preferencesMigrated = false;
+            flipOrderMigrated = false;
             soundTheme = SOUND_THEME_MATCH;
+            reduceTransparency = false;
         }
         super.initialize(byConfigManager);
-        hideIf("activeTheme", () -> true);
-        hideIf("polyfrostedRenameApplied", () -> true);
         if (tree == null) {
             return;
         }
+        for (String option : ANIMATION_OPTIONS) hideIf(option, "animations");
+        for (String option : TRANSPARENCY_OPTIONS) hideIf(option, () -> reduceTransparency);
         addCallback(
             "pageOpacity", (Number v) -> {
-                updateAppearance(v.floatValue(), sidebarOpacity, glowOpacity);
+                pageOpacity = v.floatValue();
+                updateAppearance();
                 return false;
             });
         addCallback(
             "sidebarOpacity", (Number v) -> {
-                updateAppearance(pageOpacity, v.floatValue(), glowOpacity);
+                sidebarOpacity = v.floatValue();
+                updateAppearance();
                 return false;
             });
         addCallback(
             "glowOpacity", (Number v) -> {
-                updateAppearance(pageOpacity, sidebarOpacity, v.floatValue());
+                glowOpacity = v.floatValue();
+                updateAppearance();
+                return false;
+            });
+        addCallback(
+            "reduceTransparency", (Boolean v) -> {
+                reduceTransparency = v;
+                updateAppearance();
+                return false;
+            });
+        addCallback(
+            "flipTopOptionOrder", (Boolean v) -> {
+                flipTopOptionOrder = v;
+                updateAppearance();
+                return false;
+            });
+        addCallback(
+            "animations", (Boolean v) -> {
+                AnimationsMotionScale.setAnimations(v);
+                ReducedMotion.setEnabled(reducedMotion || !v);
                 return false;
             });
         addCallback(
@@ -233,7 +267,7 @@ public class ThemeConfig extends Config {
             });
         addCallback(
             "reducedMotion", (Boolean v) -> {
-                ReducedMotion.setEnabled(v);
+                ReducedMotion.setEnabled(v || !animations);
                 return false;
             });
         addCallback(
@@ -247,16 +281,40 @@ public class ThemeConfig extends Config {
     @Override
     protected void onInitialized(Tree tree) {
         if (!preferencesMigrated) migrateFromPreferences(tree);
-        updateAppearance(pageOpacity, sidebarOpacity, glowOpacity);
+        if (!flipOrderMigrated) migrateFlipOrder(tree);
+        updateAppearance();
         ProviderKt.setUiScalePercent(uiScale);
         ProviderKt.setPixelGridMode(pixelGrid);
         SoundThemeSelection.INSTANCE.setValue(soundTheme);
-        ReducedMotion.setEnabled(reducedMotion);
+        AnimationsMotionScale.setAnimations(animations);
+        ReducedMotion.setEnabled(reducedMotion || !animations);
     }
 
-    private static void updateAppearance(float page, float sidebar, float glow) {
+    private static void updateAppearance() {
         ShellAppearance appearance = ShellController.getShared().getAppearance();
-        appearance.update(appearance.getFlipTopOptionOrder(), page, sidebar, glow);
+        if (reduceTransparency) {
+            appearance.update(flipTopOptionOrder, 100f, 100f, 0f);
+        } else {
+            appearance.update(flipTopOptionOrder, pageOpacity, sidebarOpacity, glowOpacity);
+        }
+    }
+
+    private void migrateFlipOrder(Tree tree) {
+        Path legacy = ConfigManager.active().getFolder().resolve(PREFERENCES_ID);
+        if (Files.exists(legacy)) {
+            try {
+                Tree old = ConfigManager.active().getNoRegister(legacy);
+                Node value = old == null ? null : old.get("flipTopOptionOrder");
+                if (value instanceof Property) {
+                    getProperty(tree, "flipTopOptionOrder").overwrite(value, false, false, null);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to move flipTopOptionOrder from {} into {}, retrying on the next load", PREFERENCES_ID, id, e);
+                return;
+            }
+        }
+        flipOrderMigrated = true;
+        save();
     }
 
     private void migrateFromPreferences(Tree tree) {

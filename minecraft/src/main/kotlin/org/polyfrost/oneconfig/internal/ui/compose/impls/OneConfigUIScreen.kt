@@ -51,6 +51,7 @@ import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
@@ -94,7 +95,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null }
 
     override fun blurAlpha(): Float {
-        if (!ThemeConfig.enableBackgroundBlur) return 0f
+        if (!ThemeConfig.enableBackgroundBlur || ThemeConfig.reduceTransparency) return 0f
+        if (!ThemeConfig.animations) return if (closeRequested) 0f else 1f
         val now = System.currentTimeMillis()
         val progress = if (closeRequested) {
             if (closeAnimationMs <= 0L) 0f
@@ -536,7 +538,7 @@ private class WarmScene(w: Int, h: Int, density: Float, private val surface: Flo
             }
         }
         PolyCompose.install()
-        recomposer = FrameRecomposer(dispatcher + CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }) {}
+        recomposer = FrameRecomposer(dispatcher + AnimationsMotionScale + CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }) {}
         scene = try {
             CanvasLayersComposeScene(
                 frameRecomposer = recomposer,
