@@ -3987,12 +3987,6 @@ private fun SearchBar(
         onFocused()
     }
     val theme = LocalTheme.current
-    val borderColor by animateColorAsState(
-        if (isFocused) theme.textColor.copy(.20f) else theme.textColor.copy(.10f)
-    )
-    val iconColor by animateColorAsState(
-        if (isFocused) theme.textColor.copy(0.70f) else theme.textColor.copy(0.50f)
-    )
 
     // TextFieldState needs its own migration, as it changes how every field hoists its state
     @Suppress("DEPRECATION")
@@ -4002,6 +3996,7 @@ private fun SearchBar(
             field = it
             if (it.text != value) onValueChange(it.text)
         },
+        singleLine = true,
         modifier = modifier
             .trackTextInputFocus()
             .focusRequester(focusRequester)
@@ -4016,31 +4011,19 @@ private fun SearchBar(
                 true
             },
         interactionSource = interactionSource,
-        textStyle = TextStyle(
-            color = iconColor, fontSize = 12.sp,
-            fontFamily = theme.typography.family,
-        ),
-        cursorBrush = SolidColor(iconColor)
+        textStyle = searchFieldTextStyle(),
+        cursorBrush = SolidColor(theme.textColorSecondary)
     ) { innerTextField ->
-        Row(
-            modifier = Modifier.fillMaxSize()
-                .border(1.dp, borderColor, theme.buttonShape)
-                .background(theme.componentBackground, theme.buttonShape),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon("search", color = iconColor, modifier = Modifier.padding(start = 8.dp).size(12.dp))
-            Box(modifier = Modifier.weight(1f)) {
-                if (!isFocused && value.isEmpty())
-                    Text(placeholder, color = iconColor, fontSize = 12.sp)
-                innerTextField()
-            }
-            if (showClear && (value.isNotEmpty() || onDismiss != null)) {
-                IconButton("close", modifier = Modifier.padding(end = 4.dp).size(16.dp)) {
-                    onValueChange("")
-                    onDismiss?.invoke()
-                }
-            }
-        }
+        SearchFieldFrame(
+            placeholder,
+            showPlaceholder = !isFocused && value.isEmpty(),
+            // a dismissable field keeps its button so it can always be closed, not only cleared
+            onClear = if (showClear && (value.isNotEmpty() || onDismiss != null)) ({
+                onValueChange("")
+                onDismiss?.invoke()
+            }) else null,
+            modifier = Modifier.fillMaxSize(),
+            innerTextField = innerTextField,
+        )
     }
 }
