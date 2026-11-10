@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
@@ -29,6 +28,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.hud.HudPositionTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
@@ -287,7 +287,7 @@ private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit)
     GridRow(
         col1,
         first = {
-            Box(lockNotice) {
+            HudPositionTarget(hud, lockNotice) {
                 LabeledControl("X") {
                     NumberSpinner(
                         origin.x, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, v - it.x, 0f) } },
@@ -299,7 +299,7 @@ private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit)
             }
         },
         second = {
-            Box(lockNotice) {
+            HudPositionTarget(hud, lockNotice) {
                 LabeledControl("Y") {
                     NumberSpinner(
                         origin.y, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, 0f, v - it.y) } },

@@ -295,6 +295,13 @@ fun HudSettingTarget(
     }
 }
 
+/** A [HudSettingTarget] for a control that moves [hud], so right-click resets its whole position */
+@Composable
+fun HudPositionTarget(hud: Hud, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val linked = if (hudHasPositionDefaults(hud)) (POSITION_OPTIONS - "section").toTypedArray() else emptyArray()
+    HudSettingTarget(hud, "section", *linked, modifier = modifier, content = content)
+}
+
 /** Recompose key for HUD panels whose controls use local [remember] copies of HUD fields */
 @Composable
 fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
