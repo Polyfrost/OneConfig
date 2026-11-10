@@ -287,8 +287,14 @@ object CustomThemes {
         }
         val selected = selectedCustomId(profileDir)
         val spec = selected?.let { id -> _specs.toList().firstOrNull { it.id == id } }
-        if (spec != null && out.none { it.isJsonObject && it.asJsonObject.get("id")?.takeIf { id -> id.isJsonPrimitive }?.asString == spec.id }) {
-            out.add(spec.toJson(true))
+        if (spec != null) {
+            val clash = out.firstOrNull { it.isJsonObject && it.asJsonObject.get("id")?.takeIf { id -> id.isJsonPrimitive }?.asString == spec.id }?.asJsonObject
+            val same = clash != null && CustomThemeSpec.fromJson(clash, spec.id)?.toJson(false) == spec.toJson(false)
+            if (clash != null && !same) {
+                clash.addProperty("id", newId())
+                clash.remove(SELECTED_KEY)
+            }
+            if (!same) out.add(spec.toJson(true))
         }
         return if (out.size() == 0) null else out.toString().toByteArray(StandardCharsets.UTF_8)
     }
@@ -310,7 +316,7 @@ object CustomThemes {
         val renamed = mutableMapOf<String, String>()
         val pending = mutableSetOf<String>()
         var activate: String? = null
-        var adopted = false
+        var needsSave = false
         try {
             val array = JsonUtils.parseOrNull(String(Files.readAllBytes(path), StandardCharsets.UTF_8))?.takeIf { it.isJsonArray }?.asJsonArray
             val waiting = JsonArray()
@@ -320,7 +326,10 @@ object CustomThemes {
                 if (id.isEmpty()) return@forEach
                 val spec = CustomThemeSpec.fromJson(obj, id) ?: return@forEach
                 val existing = _specs.firstOrNull { it.id == id }
-                if (existing != null && existing.copy(name = spec.name).toJson(false) == spec.toJson(false)) return@forEach
+                if (existing != null && existing.copy(name = spec.name).toJson(false) == spec.toJson(false)) {
+                    needsSave = true
+                    return@forEach
+                }
                 if (_specs.size >= CustomThemeSpec.MAX) {
                     logger.warn("Kept the imported custom theme {} for later: the limit of {} is reached", id, CustomThemeSpec.MAX)
                     if (id == selectedId) obj.addProperty(SELECTED_KEY, true)
@@ -330,11 +339,11 @@ object CustomThemes {
                 }
                 val target = if (existing == null) spec else spec.copy(id = newId())
                 update(target.copy(name = uniqueName(target.name)))
-                adopted = true
+                needsSave = true
                 if (target.id != id) renamed[id] = target.id
-                if (obj.get(SELECTED_KEY)?.takeIf { it.isJsonPrimitive }?.asBoolean == true) activate = target.id
+                if (id == selectedId && obj.get(SELECTED_KEY)?.takeIf { it.isJsonPrimitive }?.asBoolean == true) activate = target.id
             }
-            if (adopted && !flush()) return ProfileImports(renamed, pending + renamed.keys, null)
+            if (needsSave && !flush()) return ProfileImports(renamed, pending + renamed.keys, null)
             if (waiting.size() == 0) {
                 Files.deleteIfExists(path)
             } else {
