@@ -10,6 +10,7 @@ annotations = "26.1.0"
 hypixel-modapi = "1.0.1" # modules/utils compile baseline only, the platform selects the runtime version per target
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
 icu4j = "72.1" # compile baseline only, Minecraft provides ICU4J at runtime
+asm = "9.10.1" # compile baseline only, Fabric Loader provides ASM at runtime; keep <= what the minimum supported loader ships
 
 # Not in risk of needing to be relaunched / bumped by JiJ
 snakeyaml = "1.33"
@@ -54,6 +55,7 @@ junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 mixin-squared = { module = "com.github.bawnorton.mixinsquared:mixinsquared-common", version.ref = "mixin-squared" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
 
 java-objc-bridge = { module = "ca.weblite:java-objc-bridge", version.ref = "java-objc-bridge" }
 

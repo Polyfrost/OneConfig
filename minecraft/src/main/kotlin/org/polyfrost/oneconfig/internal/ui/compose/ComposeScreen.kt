@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
 import org.polyfrost.oneconfig.internal.ui.components.GlassLight
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
 import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
@@ -274,7 +275,7 @@ abstract class ComposeScreen(
     private fun createScene(): ComposeScene {
         val failure = AtomicReference<Throwable?>()
         val failureHandler = CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }
-        val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler) { sceneDirty = true }
+        val recomposer = FrameRecomposer(RenderThreadDispatcher + failureHandler + AnimationsMotionScale) { sceneDirty = true }
         val scope = SingleComposeSceneRenderingScope { sceneDirty = true }
         val sceneContext = SceneContext { showing }
         PolyCompose.install()

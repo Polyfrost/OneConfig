@@ -23,6 +23,13 @@ import net.minecraft.client.renderer.state.gui.GuiElementRenderState
 //?} else
 //import net.minecraft.client.gui.render.state.GuiElementRenderState
 import net.minecraft.resources.Identifier
+//? if >= 26.2 {
+import com.mojang.renderpearl.api.GpuFormat
+//?} else
+//import com.mojang.blaze3d.textures.TextureFormat
+import com.mojang.renderpearl.api.buffers.GpuBuffer
+import org.polyfrost.oneconfig.internal.ui.themes.BackdropSample
+import org.slf4j.LoggerFactory
 import org.polyfrost.oneconfig.internal.mixin.render.RenderPipelinesAccessor
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 import kotlin.math.max
@@ -47,6 +54,17 @@ internal object LiquidGlass {
     private val dirty = ArrayList<ScreenRectangle?>()
     private var submitted = false
     private var lastUsed = 0L
+    private const val SAMPLE_X = 8
+    private const val SAMPLE_Y = 6
+    private const val SAMPLE_TIMEOUT_NANOS = 2_000_000_000L
+    private val LOG = LoggerFactory.getLogger(LiquidGlass::class.java)
+    private var sampleBuffer: GpuBuffer? = null
+    private var sampling = false
+    private var samplingSince = 0L
+    private var sampleGeneration = 0
+    private var releaseSample = false
+    private var warnedSample = false
+    private var sampledFrame = false
 
     fun interface Range {
         fun draw(from: Int, to: Int)
@@ -176,6 +194,7 @@ internal object LiquidGlass {
         submitted = false
         drawBounds.clear()
         glassDraws.clear()
+        sampledFrame = false
         if (texture != null && System.nanoTime() - lastUsed > RELEASE_AFTER_NANOS) release()
     }
 
@@ -185,6 +204,12 @@ internal object LiquidGlass {
         view = null
         texture = null
         setup = TextureSetup.noTexture()
+        if (sampling) {
+            releaseSample = true
+        } else {
+            sampleBuffer?.close()
+            sampleBuffer = null
+        }
     }
 
     private fun covers(region: ScreenRectangle?): Boolean {
@@ -204,7 +229,81 @@ internal object LiquidGlass {
         val h = src.getHeight(0)
         if (dst.getWidth(0) != w || dst.getHeight(0) != h || dst.format != src.format) return false
         RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(src, dst, 0, 0, 0, 0, 0, w, h)
+        if (!sampledFrame) {
+            sampledFrame = true
+            if (BackdropSample.due()) sample(src)
+        }
         return true
+    }
+
+    private fun sample(src: GpuTexture) {
+        if (sampling) {
+            if (System.nanoTime() - samplingSince < SAMPLE_TIMEOUT_NANOS) return
+            sampleGeneration++
+            sampling = false
+            releaseSample = false
+            sampleBuffer?.close()
+            sampleBuffer = null
+        }
+        //? if >= 26.2 {
+        if (src.format != GpuFormat.RGBA8_UNORM || src.usage() and GpuTexture.USAGE_COPY_SRC == 0) {
+        //?} else
+        //if (src.format != TextureFormat.RGBA8 || src.usage() and GpuTexture.USAGE_COPY_SRC == 0) {
+            warnSample(null)
+            return
+        }
+        val w = src.getWidth(0)
+        val h = src.getHeight(0)
+        if (w <= 0 || h <= 0) return
+        val count = SAMPLE_X * SAMPLE_Y
+        val device = RenderSystem.getDevice()
+        val buffer = sampleBuffer?.takeUnless { it.isClosed }
+            ?: device.createBuffer({ "OneConfig glass tint sample" }, GpuBuffer.USAGE_COPY_DST or GpuBuffer.USAGE_MAP_READ, count * 4L).also { sampleBuffer = it }
+        val encoder = device.createCommandEncoder()
+        val generation = ++sampleGeneration
+        sampling = true
+        samplingSince = System.nanoTime()
+        var remaining = count
+        try {
+            for (i in 0 until count) {
+                val x = (((i % SAMPLE_X) + 0.5f) * w / SAMPLE_X).toInt().coerceIn(0, w - 1)
+                val y = (((i / SAMPLE_X) + 0.5f) * h / SAMPLE_Y).toInt().coerceIn(0, h - 1)
+                encoder.copyTextureToBuffer(src, buffer, i * 4L, { if (--remaining == 0) read(buffer, count, generation) }, 0, x, y, 1, 1)
+            }
+        } catch (e: Throwable) {
+            warnSample(e)
+        }
+    }
+
+    private fun warnSample(e: Throwable?) {
+        if (warnedSample) return
+        warnedSample = true
+        LOG.warn("OneConfig biome glass tint is unavailable on this render target", e)
+    }
+
+    private fun read(buffer: GpuBuffer, count: Int, generation: Int) {
+        if (generation != sampleGeneration) return
+        sampling = false
+        if (releaseSample) {
+            releaseSample = false
+            buffer.close()
+            if (sampleBuffer === buffer) sampleBuffer = null
+            return
+        }
+        if (buffer.isClosed) return
+        //? if >= 26.2 {
+        val view = buffer.map(true, false)
+        //?} else
+        //val view = RenderSystem.getDevice().createCommandEncoder().mapBuffer(buffer, true, false)
+        try {
+            val data = view.data()
+            BackdropSample.publish(IntArray(count) {
+                val o = it * 4
+                (0xFF shl 24) or ((data.get(o).toInt() and 0xFF) shl 16) or ((data.get(o + 1).toInt() and 0xFF) shl 8) or (data.get(o + 2).toInt() and 0xFF)
+            })
+        } finally {
+            view.close()
+        }
     }
 
     private fun union(a: ScreenRectangle, b: ScreenRectangle): ScreenRectangle {

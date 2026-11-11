@@ -140,9 +140,6 @@ class ShellSearch {
 }
 
 class ShellAppearance {
-    var flipTopOptionOrder by mutableStateOf(false)
-        private set
-
     /** Content-panel background opacity from 0 to 100 mirrored from config so slider changes apply live */
     var pageOpacity by mutableStateOf(88f)
         private set
@@ -155,8 +152,7 @@ class ShellAppearance {
     var glowOpacity by mutableStateOf(25f)
         private set
 
-    fun update(flipTopOptionOrder: Boolean, pageOpacity: Float, sidebarOpacity: Float, glowOpacity: Float) {
-        this.flipTopOptionOrder = flipTopOptionOrder
+    fun update(pageOpacity: Float, sidebarOpacity: Float, glowOpacity: Float) {
         this.pageOpacity = pageOpacity
         this.sidebarOpacity = sidebarOpacity
         this.glowOpacity = glowOpacity

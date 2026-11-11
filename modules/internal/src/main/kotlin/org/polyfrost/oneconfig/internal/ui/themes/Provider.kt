@@ -39,11 +39,15 @@ private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
 
 private var _accentEnd by mutableStateOf<Color?>(null)
 
-val Accent: Color get() = _accent
+private fun paletteAccent(): Color? = ThemeRegistry.activeTheme?.palette?.let(PaletteAccent::resolve)
 
-val AccentEnd: Color get() = _accentEnd ?: _accent
+val Accent: Color get() = paletteAccent() ?: _accent
 
-val AccentGradient: Boolean get() = _accentEnd != null
+val PlayerAccent: Color get() = _accent
+
+val AccentEnd: Color get() = paletteAccent() ?: _accentEnd ?: _accent
+
+val AccentGradient: Boolean get() = paletteAccent() == null && _accentEnd != null
 
 val AccentBrush: Brush get() = accentHorizontalBrush()
 
@@ -52,7 +56,7 @@ private val SheenBrush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 
 val AccentSheen: Brush? get() = if (ThemeRegistry.activeTheme?.liquidGlass == true) SheenBrush else null
 
 fun accentHorizontalBrush(startX: Float = 0f, endX: Float = Float.POSITIVE_INFINITY): Brush =
-    _accentEnd?.let { Brush.horizontalGradient(listOf(_accent, it), startX, endX) } ?: SolidColor(_accent)
+    paletteAccent()?.let { SolidColor(it) } ?: _accentEnd?.let { Brush.horizontalGradient(listOf(_accent, it), startX, endX) } ?: SolidColor(_accent)
 
 fun updateAccent() {
     val accentColor = ThemeConfig.accentColor
@@ -62,6 +66,10 @@ fun updateAccent() {
 }
 
 val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
+
+private const val TOAST_MIN_ALPHA = 0.92f
+
+private fun Color.withMinAlpha(min: Float): Color = if (alpha >= min) this else copy(alpha = min)
 
 private const val GRID_ANCHOR_SP = 14f
 
@@ -75,7 +83,7 @@ var uiScalePercent by mutableStateOf(100f)
 
 var pixelGridMode by mutableStateOf(0)
 
-private val UITheme.isMinecraft get() = previewImage.startsWith("minecraft")
+private val UITheme.isMinecraft get() = isMinecraftStyle
 
 private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
     minimalHeight = 24.dp,
@@ -166,28 +174,34 @@ fun Theme(
     }
 
     val target = ThemeRegistry.activeTheme ?: error("No active theme provided")
-    val animated = animateTheme(target)
+    val accent = Accent
+    val opaque = ReduceTransparency.enabled
+    val shown = target.withAccentText(target.accentTextOn(accent)).let { if (opaque) it.withOpaqueSurfaces() else it }
+    val animated = animateTheme(shown)
 
-    SideEffect { syncNotificationTheme(animated) }
+    LaunchedEffect(target, accent, opaque) { syncNotificationTheme(target) }
+    if (animated.liquidGlass) GlassTintColor.Drive()
 
     CompositionLocalProvider(
         LocalTheme provides animated,
-        LocalScrollbarStyle provides remember(animated.scrollBarShape) { scrollbarStyle(animated) },
+        LocalScrollbarStyle provides remember(animated.scrollBarShape, animated.textColorSecondary) { scrollbarStyle(animated) },
         LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight, target) else LocalDensity.current,
         content = content
     )
 }
 
-internal fun syncNotificationTheme(theme: UITheme) {
+internal fun syncNotificationTheme(source: UITheme) {
+    val accent = Accent
+    val theme = if (ReduceTransparency.enabled) source.withOpaqueSurfaces() else source
     val minecraft = theme.isMinecraft
     NotificationTheme.set(
-        background = PolyColor(theme.popupBackground.toArgb()),
+        background = PolyColor(theme.popupBackground.withMinAlpha(TOAST_MIN_ALPHA).toArgb()),
         border = PolyColor(theme.borderColor.toArgb()),
         textPrimary = PolyColor(theme.textColor.toArgb()),
         textSecondary = PolyColor(theme.textColorSecondary.toArgb()),
-        accent = PolyColor(Accent.toArgb()),
-        subtleButton = PolyColor(theme.componentBackground.toArgb()),
-        actionPrimaryText = PolyColor(theme.accentTextColor.toArgb()),
+        accent = PolyColor(accent.toArgb()),
+        subtleButton = PolyColor(theme.componentBackground.withMinAlpha(TOAST_MIN_ALPHA).toArgb()),
+        actionPrimaryText = PolyColor(theme.accentTextOn(accent).toArgb()),
         actionSubtleText = PolyColor(theme.textColor.toArgb()),
         fontTitle = if (minecraft) "minecraft-bold" else "poppins-medium",
         fontBody = if (minecraft) "minecraft" else null,

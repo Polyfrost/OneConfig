@@ -3,10 +3,13 @@ package org.polyfrost.oneconfig.internal.ui.themes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
@@ -22,8 +25,11 @@ private const val THEME_ANIM_MS = 350
  */
 @Composable
 fun animateTheme(target: UITheme): UITheme {
-    val spec = tween<Float>(THEME_ANIM_MS)
-    val colorSpec = tween<Color>(THEME_ANIM_MS)
+    val last = remember { arrayOf(target) }
+    val editing = target.isCustom && last[0].previewImage == target.previewImage && last[0] != target
+    SideEffect { last[0] = target }
+    val spec: AnimationSpec<Float> = if (editing) snap() else tween(THEME_ANIM_MS)
+    val colorSpec: AnimationSpec<Color> = if (editing) snap() else tween(THEME_ANIM_MS)
 
     val pageBackground by animateColorAsState(target.pageBackground, colorSpec, label = "pageBackground")
     val sidebarBackground by animateColorAsState(target.sidebarBackground, colorSpec, label = "sidebarBackground")
@@ -79,7 +85,7 @@ fun animateTheme(target: UITheme): UITheme {
  */
 @Composable
 private fun animateCornerShape(target: Shape, spec: AnimationSpec<Float>): Shape {
-    val targetRadius = target.cornerRadiusOrNull() ?: return target
-    val animated by animateFloatAsState(targetRadius.value, spec, label = "cornerRadius")
-    return RoundedCornerShape(animated.dp)
+    val targetRadius = target.cornerRadiusOrNull()
+    val animated by animateFloatAsState(targetRadius?.value ?: 0f, if (targetRadius == null) snap() else spec, label = "cornerRadius")
+    return if (targetRadius == null) target else RoundedCornerShape(animated.dp)
 }

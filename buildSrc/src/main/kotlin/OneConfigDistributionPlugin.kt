@@ -53,14 +53,15 @@ class OneConfigDistributionPlugin : Plugin<Project> {
         val curseforgeToken = listOf("oneconfig.publish.curseforge.token", "publish.curseforge.token", "curseforge.token").firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
         val rawMinecraftVersion = versionedCatalog.versions["minecraft"].requiredVersion
         val minecraftVersion = modrinthMinecraftVersionOverride[rawMinecraftVersion] ?: listOf(rawMinecraftVersion)
-        val changelogs = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readText() ?: "No changelog provided."
+        val modVersion = project.version.toString()
+        val releaseNotes = rootProject.file("CHANGELOG.md").takeIf { it.exists() }?.readText()?.let { releaseNotes(it, modVersion) }
+        val changelogs = releaseNotes?.let { "## $modVersion\n\n$it" } ?: "No changelog provided."
 
         val validateChangelog = tasks.register("validateChangelog") {
             description = "Validates that the changelog is written for the current version."
-            val changelogText = changelogs
-            val modVersion = project.version.toString()
+            val hasNotes = releaseNotes != null
             doLast {
-                if (!changelogText.contains(modVersion)) {
+                if (!hasNotes) {
                     throw GradleException("Changelog for version $modVersion not found.")
                 }
             }
@@ -125,4 +126,11 @@ class OneConfigDistributionPlugin : Plugin<Project> {
 
         if (curseforgeId != null && isOrnithe) tasks.register("publishCurseforge")
     }
+}
+
+private fun releaseNotes(changelog: String, version: String): String? {
+    val heading = Regex("^## \\[${Regex.escape(version)}].*$",RegexOption.MULTILINE).find(changelog) ?: return null
+    val rest = changelog.substring(heading.range.last + 1)
+    val end = Regex("^## ", RegexOption.MULTILINE).find(rest)?.range?.first ?: rest.length
+    return rest.substring(0, end).trim().takeIf { it.isNotEmpty() }
 }

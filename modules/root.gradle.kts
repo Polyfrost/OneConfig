@@ -166,6 +166,7 @@ subprojects {
                 from(components["java"])
                 artifactId = project.name
                 groupId = project.group.toString()
+                suppressAllPomMetadataWarnings()
             }
         }
     }
@@ -185,6 +186,7 @@ subprojects {
                 named<MavenPublication>("mavenJava") {
                     artifactId = project.name
                     groupId = project.group.toString()
+                    suppressAllPomMetadataWarnings()
 
                     signing {
                         isRequired = providers.gradleProperty("signing.keyId").isPresent

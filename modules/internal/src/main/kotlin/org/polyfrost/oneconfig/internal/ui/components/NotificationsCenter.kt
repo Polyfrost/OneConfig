@@ -46,7 +46,7 @@ private val ErrorColor = Color(0xFFF2545A)
 fun NotificationsCenter() {
     val theme = LocalTheme.current
     val history = NotificationsManager.history
-    val panelBg = theme.popupBackground.copy(alpha = 0.8f)
+    val panelBg = theme.popupBackground
 
     Column(
         modifier = Modifier
@@ -182,11 +182,12 @@ private fun NotificationRow(notification: Notification) {
 
 @Composable
 private fun ActionButton(notification: Notification, action: NotificationAction) {
+    val theme = LocalTheme.current
     val source = rememberInteractionSource()
     val isHovered by source.collectIsHoveredAsState()
 
-    val base = if (action.primary) Accent else Color.White.copy(0.08f)
-    val background by animateColorAsState(if (isHovered) Color.White.copy(0.12f).compositeOver(base) else base)
+    val base = if (action.primary) Accent else theme.textColor.copy(0.08f)
+    val background by animateColorAsState(if (isHovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
 
     Box(
         modifier = Modifier
@@ -201,7 +202,7 @@ private fun ActionButton(notification: Notification, action: NotificationAction)
     ) {
         Text(
             action.label,
-            color = Color.White.copy(0.9f),
+            color = if (action.primary) theme.accentTextColor else theme.textColor,
             fontSize = 12.sp,
             lineHeight = 18.sp,
             fontWeight = FontWeight.Medium,

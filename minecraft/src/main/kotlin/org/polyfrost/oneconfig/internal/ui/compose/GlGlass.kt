@@ -1,9 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui.compose
 
 import org.lwjgl.opengl.GL11
+import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL12
+import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL21
 import org.lwjgl.opengl.GL30
+import org.polyfrost.oneconfig.internal.ui.themes.BackdropSample
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import kotlin.math.ceil
@@ -28,11 +32,21 @@ internal object GlGlass {
     private var target = -1
     private var targetW = 0
     private var targetH = 0
+    private var fresh = false
+    private var sampleTex = 0
+    private var sampleFbo = 0
+    private var samplePbo = 0
+    private var samplePending = false
+    private var sampleFailed = false
+    private val sampleBytes: ByteBuffer by lazy { BufferUtils.createByteBuffer(SAMPLE * SAMPLE * 4) }
+
+    private const val SAMPLE = 8
 
     fun begin(target: Int, w: Int, h: Int) {
         this.target = target
         targetW = w
         targetH = h
+        fresh = true
     }
 
     fun end() {
@@ -61,6 +75,78 @@ internal object GlGlass {
         texture = 0
         texW = 0
         texH = 0
+        releaseSample()
+    }
+
+    private fun releaseSample() {
+        if (sampleFbo != 0) GL30.glDeleteFramebuffers(sampleFbo)
+        if (sampleTex != 0) GL11.glDeleteTextures(sampleTex)
+        if (samplePbo != 0) GL15.glDeleteBuffers(samplePbo)
+        sampleFbo = 0
+        sampleTex = 0
+        samplePbo = 0
+        samplePending = false
+    }
+
+    private fun sample() {
+        if (sampleFailed) return
+        val previousPbo = GL11.glGetInteger(GL21.GL_PIXEL_PACK_BUFFER_BINDING)
+        try {
+            if (sampleTex == 0) {
+                sampleTex = GL11.glGenTextures()
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, sampleTex)
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR)
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR)
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, SAMPLE, SAMPLE, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, null as ByteBuffer?)
+                sampleFbo = GL30.glGenFramebuffers()
+                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, sampleFbo)
+                GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, sampleTex, 0)
+                check(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER) == GL30.GL_FRAMEBUFFER_COMPLETE) { "tint sample framebuffer is incomplete" }
+                samplePbo = GL15.glGenBuffers()
+                GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, samplePbo)
+                GL15.glBufferData(GL21.GL_PIXEL_PACK_BUFFER, (SAMPLE * SAMPLE * 4).toLong(), GL15.GL_STREAM_READ)
+            }
+            GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, samplePbo)
+            if (samplePending) {
+                val bytes = sampleBytes
+                bytes.clear()
+                GL15.glGetBufferSubData(GL21.GL_PIXEL_PACK_BUFFER, 0L, bytes)
+                BackdropSample.publish(IntArray(SAMPLE * SAMPLE) {
+                    val o = it * 4
+                    (0xFF shl 24) or ((bytes.get(o).toInt() and 0xFF) shl 16) or ((bytes.get(o + 1).toInt() and 0xFF) shl 8) or (bytes.get(o + 2).toInt() and 0xFF)
+                })
+            }
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, target)
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, fbo)
+            GL30.glBlitFramebuffer(0, 0, targetW, targetH, 0, 0, targetW, targetH, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST)
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, fbo)
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, sampleFbo)
+            GL30.glBlitFramebuffer(0, 0, targetW, targetH, 0, 0, SAMPLE, SAMPLE, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_LINEAR)
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, sampleFbo)
+            val alignment = GL11.glGetInteger(GL11.GL_PACK_ALIGNMENT)
+            val rowLength = GL11.glGetInteger(GL11.GL_PACK_ROW_LENGTH)
+            val skipPixels = GL11.glGetInteger(GL11.GL_PACK_SKIP_PIXELS)
+            val skipRows = GL11.glGetInteger(GL11.GL_PACK_SKIP_ROWS)
+            GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4)
+            GL11.glPixelStorei(GL11.GL_PACK_ROW_LENGTH, 0)
+            GL11.glPixelStorei(GL11.GL_PACK_SKIP_PIXELS, 0)
+            GL11.glPixelStorei(GL11.GL_PACK_SKIP_ROWS, 0)
+            try {
+                GL11.glReadPixels(0, 0, SAMPLE, SAMPLE, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, 0L)
+            } finally {
+                GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, alignment)
+                GL11.glPixelStorei(GL11.GL_PACK_ROW_LENGTH, rowLength)
+                GL11.glPixelStorei(GL11.GL_PACK_SKIP_PIXELS, skipPixels)
+                GL11.glPixelStorei(GL11.GL_PACK_SKIP_ROWS, skipRows)
+            }
+            samplePending = true
+        } catch (e: Throwable) {
+            LOG.warn("OneConfig glass tint sampling is unavailable", e)
+            sampleFailed = true
+            releaseSample()
+        } finally {
+            GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, previousPbo)
+        }
     }
 
     private fun copy(glass: GlProgram.Batch, scaleX: Float, scaleY: Float, offsetX: Float, offsetY: Float): Boolean {
@@ -90,6 +176,10 @@ internal object GlGlass {
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, target)
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, fbo)
             GL30.glBlitFramebuffer(x0, y0, x1, y1, x0, y0, x1, y1, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST)
+            if (fresh) {
+                fresh = false
+                if (BackdropSample.due()) sample()
+            }
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, target)
             return true
         } catch (e: Throwable) {

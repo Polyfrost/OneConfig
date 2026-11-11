@@ -149,13 +149,15 @@ internal fun nodeGroup(node: Node, key: String, default: String): String {
 
 internal fun Property<*>.isHidden(): Boolean = display == Property.Display.HIDDEN
 
+private fun Property<*>.isUnlisted(): Boolean = isHidden() || getMetadata<Any?>("keybindsPageOnly") == true
+
 internal fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
     val subcategories = category.subcategories.mapNotNull { subcategory ->
         val nodes = subcategory.nodes.filter { node ->
             when (node) {
-                is SettingNode.Leaf -> !node.prop.isHidden()
-                is SettingNode.Accordion -> node.head?.isHidden() == false || node.body.any { !it.isHidden() }
-                is SettingNode.Submenu -> node.head?.isHidden() == false || node.content.any { filterHiddenNodes(it) != null }
+                is SettingNode.Leaf -> !node.prop.isUnlisted()
+                is SettingNode.Accordion -> node.head?.isUnlisted() == false || node.body.any { !it.isUnlisted() }
+                is SettingNode.Submenu -> node.head?.isUnlisted() == false || node.content.any { filterHiddenNodes(it) != null }
             }
         }
         if (nodes.isEmpty()) null else subcategory.copy(nodes = nodes)

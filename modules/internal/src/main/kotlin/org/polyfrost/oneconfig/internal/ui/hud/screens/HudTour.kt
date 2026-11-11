@@ -49,6 +49,7 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
 internal enum class HudTourFocus {
     None,
@@ -175,8 +176,9 @@ internal fun HudTourOverlay(
             .fillMaxSize()
             .onSizeChanged { rootSize = it }
     ) {
+        val spotlightRadius = theme.modCardShape.cornerRadiusOrNull() ?: 0.dp
         Canvas(Modifier.fillMaxSize()) {
-            val radius = CornerRadius(8.dp.toPx())
+            val radius = CornerRadius(minOf(8.dp, spotlightRadius).toPx())
             val cutout = Path().apply {
                 fillType = PathFillType.EvenOdd
                 val margin = 2.dp.toPx()
@@ -268,8 +270,9 @@ internal fun HudTourOverlay(
 @Composable
 private fun TourDragHint(from: Rect, to: Rect) {
     val progress = if (ReducedMotion.enabled) 0f else tourDragProgress()
+    val ghostRadius = LocalTheme.current.buttonShape.cornerRadiusOrNull() ?: 0.dp
     Canvas(Modifier.fillMaxSize()) {
-        val radius = CornerRadius(4.dp.toPx())
+        val radius = CornerRadius(minOf(4.dp, ghostRadius).toPx())
         val stroke = 1.5.dp.toPx()
         val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
         drawRoundRect(
@@ -315,7 +318,7 @@ private fun TourButton(text: String, primary: Boolean, enabled: Boolean = true, 
     val isHovered by source.collectIsHoveredAsState()
     val base = if (primary) Accent else Color.Transparent
     val background by animateColorAsState(
-        if (isHovered && enabled) Color.White.copy(0.12f).compositeOver(base) else base
+        if (isHovered && enabled) (if (primary) Color.White else theme.textColor).copy(0.12f).compositeOver(base) else base
     )
     val alpha by animateFloatAsState(if (enabled) 1f else 0.4f, label = "tourButtonAlpha")
     Box(
@@ -329,7 +332,7 @@ private fun TourButton(text: String, primary: Boolean, enabled: Boolean = true, 
     ) {
         Text(
             text,
-            color = if (primary) Color.White.copy(0.9f) else theme.textColorSecondary,
+            color = if (primary) theme.accentTextColor else theme.textColorSecondary,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
         )

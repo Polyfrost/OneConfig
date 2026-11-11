@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -611,7 +610,7 @@ private fun HudAlignRow(onAlign: (HudAlign) -> Unit) {
                 Box(
                     modifier = Modifier
                         .size(24.dp)
-                        .background(hover, RoundedCornerShape(4.dp))
+                        .background(hover, theme.buttonShape)
                         .pointerHoverIcon(PointerIcon.Hand)
                         .clickable(interactionSource, indication = null) { onAlign(align) }
                         .semantics { contentDescription = align.label },

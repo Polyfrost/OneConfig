@@ -22,7 +22,7 @@ enum class UiSoundTheme {
 
         fun of(theme: UITheme?): UiSoundTheme {
             theme ?: return MODERN
-            return if (theme.previewImage.startsWith("minecraft-")) MINECRAFT else MODERN
+            return if (theme.isMinecraftStyle) MINECRAFT else MODERN
         }
     }
 }
