@@ -109,7 +109,7 @@ class McUiSoundService : UiSoundService {
                 } catch (_: Throwable) {
                 }
             }
-            playAmbienceInstance(theme, ambienceVolumeFor(theme, volume), fadeIn = true)
+            playAmbienceInstance(theme, ambienceVolumeFor(theme, volume), fadeIn = !mc.isPaused)
             UiSoundDucking.setActive(true)
             driveAmbienceLoop()
             driveMusicDuckFade()
@@ -283,8 +283,11 @@ class McUiSoundService : UiSoundService {
         val isFadingOut: Boolean
             get() = fadingOut
 
+        private val ticksStalled: Boolean
+            get() = System.nanoTime() - lastTickAt > STALL_NANOS
+
         val isStalledFadeIn: Boolean
-            get() = fadingIn && System.nanoTime() - lastTickAt > STALL_NANOS
+            get() = fadingIn && ticksStalled
 
         init {
             looping = nativeLoop
@@ -319,6 +322,7 @@ class McUiSoundService : UiSoundService {
         }
 
         private fun retarget() {
+            if (ticksStalled) volume = targetVolume
             rampStep = maxOf(abs(targetVolume - volume), FADE_IN_FLOOR) / FADE_IN_TICKS
         }
 
