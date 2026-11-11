@@ -84,7 +84,7 @@ public abstract class ReflectiveCollector implements PropertyCollector {
             }
             superClass = superClass.getSuperclass();
         }
-        for (Class<?> sub : cls.getDeclaredClasses()) {
+        for (Class<?> sub : depth >= maxDepth ? cls.getDeclaredClasses() : DeclarationOrder.sort(cls.getDeclaredClasses())) {
             if (depth >= maxDepth) {
                 LOGGER.warn("Reached max depth for tree {} ignoring further subclasses!", tree.getID());
                 return;

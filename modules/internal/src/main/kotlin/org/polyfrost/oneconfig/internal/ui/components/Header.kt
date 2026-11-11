@@ -67,9 +67,11 @@ import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionP
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
+import org.polyfrost.oneconfig.internal.ui.search.submenuTrail
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
+import org.polyfrost.oneconfig.internal.ui.shell.ShellNavigation
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -114,12 +116,7 @@ fun Header(modifier: Modifier = Modifier) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text(
-                                info.text,
-                                color = LocalTheme.current.textColor,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            TitleBreadcrumb(info.segments, controller)
                             TitleAuthorByline(info.authors)
                             TitleInfoTooltip(info)
                         }
@@ -171,8 +168,10 @@ fun Header(modifier: Modifier = Modifier) {
  * The header title and its extra info, resolved purely from the entry currently on top of the back
  * stack.
  */
+private data class TitleSegment(val text: Any, val route: ModConfigRoute? = null)
+
 private data class HeaderTitle(
-    val text: String,
+    val segments: List<TitleSegment>,
     val authors: String? = null,
     val credits: String? = null,
     val version: String? = null,
@@ -184,11 +183,16 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
     val destination = entry.destination
 
     if (destination.hasRoute(ModConfigRoute::class)) {
-        val id = runCatching { entry.toRoute<ModConfigRoute>().id }.getOrNull() ?: return null
-        val config = ConfigRegistry.findById(id) ?: return null
-        val tree = ConfigRegistry.findTree(id)
+        val route = runCatching { entry.toRoute<ModConfigRoute>() }.getOrNull() ?: return null
+        val config = ConfigRegistry.findById(route.id) ?: return null
+        val tree = ConfigRegistry.findTree(route.id)
+        val ids = route.submenu?.split('/').orEmpty()
+        val trail = route.submenu?.let { tree?.submenuTrail(it) }.orEmpty()
         return HeaderTitle(
-            text = config.title.asRenderText(),
+            segments = listOf(TitleSegment(config.title.asRenderText(), ModConfigRoute(route.id))) +
+                trail.mapIndexed { index, tree ->
+                    TitleSegment(tree.localizedTitle().asRenderText(), ModConfigRoute(route.id, submenu = ids.take(index + 1).joinToString("/")))
+                },
             authors = config.authors,
             credits = config.credits,
             version = config.version,
@@ -196,7 +200,34 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
         )
     }
 
-    return entry.currentPageTitle()?.let { HeaderTitle(it) }
+    return entry.currentPageTitle()?.let { HeaderTitle(listOf(TitleSegment(it))) }
+}
+
+@Composable
+private fun TitleBreadcrumb(segments: List<TitleSegment>, controller: ShellNavigation) {
+    val theme = LocalTheme.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        segments.forEachIndexed { index, segment ->
+            val route = segment.route.takeIf { index < segments.lastIndex }
+            if (index > 0) {
+                Text("/", Modifier.padding(horizontal = 6.dp), color = theme.textColorSecondary, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+            }
+            if (route == null) {
+                Text(segment.text, color = theme.textColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+            } else {
+                val interactionSource = rememberInteractionSource()
+                val isHovered by interactionSource.collectIsHoveredAsState()
+                val color by animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
+                Text(
+                    segment.text,
+                    Modifier.pointerHoverIcon(PointerIcon.Hand).onClick(interactionSource) { controller.navigate(route) },
+                    color = color,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
 }
 
 @Composable

@@ -410,6 +410,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun categoryKey ()Ljava/lang/String;
 	public abstract fun categoryTranslation ()Z
+	public abstract fun collapsed ()Z
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun descriptionKey ()Ljava/lang/String;
 	public abstract fun descriptionTranslation ()Z
@@ -724,6 +725,9 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun value ()[Ljava/lang/String;
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Primary : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/RadioButton : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun categoryKey ()Ljava/lang/String;
@@ -842,6 +846,14 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun subcategoryTranslation ()Z
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun titleTranslation ()Z
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Submenu : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun title ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Switch : java/lang/annotation/Annotation {
