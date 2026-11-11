@@ -57,6 +57,8 @@ internal fun hudSearchMatches(query: String, vararg labels: String) =
  * With [checked] the header gets a switch and an arrow: the switch turns the group on or off and folds it to match,
  * and while off the body is dimmed and ignores input. A search keeps the card open so its matches stay visible
  *
+ * Without [checked], a non-null [collapsedByDefault] still gives the header an arrow and picks whether the card starts folded
+ *
  * [onReset] adds a reset button after the title, shown while [canReset]. [content] is laid out in the panel grid and
  * given the first column's width
  */
@@ -69,14 +71,16 @@ internal fun CardSection(
     onCheckedChange: (Boolean) -> Unit = {},
     onReset: (() -> Unit)? = null,
     canReset: Boolean = true,
+    collapsedByDefault: Boolean? = null,
     content: @Composable (col1: Dp) -> Unit,
 ) {
     if (!hudSearchMatches(query, title, *labels)) return
-    var expanded by remember { mutableStateOf(checked != false) }
+    val foldable = checked != null || collapsedByDefault != null
+    var expanded by remember { mutableStateOf(checked ?: (collapsedByDefault != true)) }
     Accordion(
         title = title,
-        expanded = checked == null || expanded || query.isNotEmpty(),
-        onExpandedChange = if (checked != null) ({ expanded = it }) else null,
+        expanded = !foldable || expanded || query.isNotEmpty(),
+        onExpandedChange = if (foldable) ({ expanded = it }) else null,
         checked = checked,
         onCheckedChange = {
             onCheckedChange(it)
