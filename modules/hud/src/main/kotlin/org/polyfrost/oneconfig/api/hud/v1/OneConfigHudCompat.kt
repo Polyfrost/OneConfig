@@ -142,9 +142,6 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     private var pinX = 0f
     private var pinY = 0f
 
-    override val hasCustomX: Boolean get() = true
-    override val hasCustomY: Boolean get() = true
-
     // unpinned the wrapper decides which point holds still when it resizes
     override val pivotFractionX: Float get() =
         pin?.let { fracOf(it).first } ?: guard("resizePivotX", 0f) { wrapper.resizePivotX }

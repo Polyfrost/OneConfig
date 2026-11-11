@@ -744,11 +744,13 @@ public abstract class Hud(
      * `true` if [x] is overridden to geometry that does not come from this HUD's anchor and so does not follow the pivot
      *
      * Such a HUD keeps its [x] when its width changes unless it overrides [pivotFractionX] and [xForWidth]
+     *
+     * Defaults to whether a subclass overrides [x]
      */
-    protected open val hasCustomX: Boolean get() = false
+    protected open val hasCustomX: Boolean get() = geometryOverrides.get(javaClass)[0]
 
     /** Same as [hasCustomX] for [y] */
-    protected open val hasCustomY: Boolean get() = false
+    protected open val hasCustomY: Boolean get() = geometryOverrides.get(javaClass)[1]
 
     /**
      * How far across this HUD's box the point that holds still while it resizes horizontally sits
@@ -789,6 +791,7 @@ public abstract class Hud(
      * Predicting from [pivotFractionX] alone ignores that clamp, which depends on the width
      */
     public open fun xForWidth(width: Float): Float {
+        observeInstances()
         if (hasCustomX) return x
         val a = resolvedAnchorX
         val raw = rawX(a, width)
@@ -797,6 +800,7 @@ public abstract class Hud(
 
     /** Where [y] ends up if this HUD's height becomes [height], including the keep-on-screen clamp */
     public open fun yForHeight(height: Float): Float {
+        observeInstances()
         if (hasCustomY) return y
         val a = resolvedAnchorY
         val raw = rawY(a, height)
@@ -1741,6 +1745,13 @@ public abstract class Hud(
         private const val PENDING_WRITE_TTL_NANOS = 10_000_000_000L
 
         private val pendingWrites = WeakHashMap<Any, PendingWrite>()
+
+        private val geometryOverrides = object : ClassValue<BooleanArray>() {
+            override fun computeValue(type: Class<*>) = booleanArrayOf(
+                type.getMethod("getX").declaringClass != Hud::class.java,
+                type.getMethod("getY").declaringClass != Hud::class.java,
+            )
+        }
 
         private var instancesRevisionCache = 0
         private var instancesRevisionWrites = -1

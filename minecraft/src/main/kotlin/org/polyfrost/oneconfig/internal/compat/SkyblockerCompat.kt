@@ -342,6 +342,14 @@ object SkyblockerCompat {
         reflow()
     }
 
+    internal fun resizePivotX(type: StatusBarType): Float {
+        val bar = bar(type) ?: return 0f
+        val anchor = bar.anchor ?: return 0f
+        val outerEdgeHolds = anchor.sizeRule.isTargetSize &&
+            runCatching { positioner().getRow(anchor, bar.gridY).getOrNull(bar.gridX + 1) == null }.getOrDefault(false)
+        return if (anchor.isRight == outerEdgeHolds) 1f else 0f
+    }
+
     private fun rowNeighbour(bar: StatusBar, anchor: BarPositioner.BarAnchor): StatusBar? {
         val row = runCatching { positioner().getRow(anchor, bar.gridY) }.getOrNull() ?: return null
         return row.getOrNull(bar.gridX + 1) ?: row.getOrNull(bar.gridX - 1)
@@ -560,6 +568,8 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
         get() = runCatching { (bar?.getWidth() ?: 0) > 0 }.getOrDefault(false)
 
     override val resizeAxes: HudResize get() = HudResize.Width
+
+    override val resizePivotX: Float get() = SkyblockerCompat.resizePivotX(type)
 
     override var hidden: Boolean
         get() = bar?.enabled == false
