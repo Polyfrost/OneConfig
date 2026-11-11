@@ -53,6 +53,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ServerRestrictions
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
@@ -616,12 +617,12 @@ public object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
-        if (!isEditing && hud.frameHidden) return false
+        if (!isEditing && (hud.frameHidden || ServerRestrictions.isHudDisabled(hud.id))) return false
         return isShown(hud)
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
-        !isEditing && hud.frameHidden && hud.keepsHiddenBackground && isShown(hud)
+        !isEditing && hud.frameHidden && hud.keepsHiddenBackground && isShown(hud) && !ServerRestrictions.isHudDisabled(hud.id)
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
@@ -1193,7 +1194,7 @@ public object HudManager {
     }
 
     private fun drawHud(hud: Hud, root: RootNode, ctx: RenderContext) {
-        if (isEditing && hud.hidden) {
+        if (isEditing && (hud.hidden || ServerRestrictions.isHudDisabled(hud.id))) {
             ctx.saveLayerAlpha(HIDDEN_HUD_ALPHA)
             root.render(ctx)
             ctx.restore()

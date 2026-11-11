@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.api.ui.v1.ServerRestrictions
 
 enum class ConfigSource {
     OC,
@@ -24,7 +25,7 @@ interface ConfigData {
     val category: Config.Category
     val onOpen: (() -> Unit)? get() = null
 
-    val toggle: ModToggle? get() = ModToggles.toggleFor(id)
+    val toggle: ModToggle? get() = ServerRestrictions.guard(id, ModToggles.toggleFor(id))
 
     val preview: (@Composable (Modifier) -> Unit)? get() = null
 }

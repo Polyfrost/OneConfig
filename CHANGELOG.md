@@ -5,6 +5,11 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- API: `ServerRestrictions`, which lets the server a player is on switch mods and HUDs off for the session without touching the player's own settings. A restricted mod shows a locked switch on its card, and a restricted HUD is not drawn
+
 ## [1.7.0] - 2026-11-11
 
 ### Added
