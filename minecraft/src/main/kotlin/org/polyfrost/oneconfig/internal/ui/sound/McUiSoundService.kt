@@ -295,6 +295,9 @@ class McUiSoundService : UiSoundService {
             attenuation = SoundInstance.Attenuation.NONE
             //? if > 1.8.9
             relative = true
+            //? if = 1.8.9 {
+            /*moveToListener()
+            *///?}
             volume = if (fadeIn) FADE_IN_FLOOR else targetVolume
             pitch = 1f
         }
@@ -319,8 +322,20 @@ class McUiSoundService : UiSoundService {
             rampStep = maxOf(abs(targetVolume - volume), FADE_IN_FLOOR) / FADE_IN_TICKS
         }
 
+        //? if = 1.8.9 {
+        /*private fun moveToListener() {
+            val listener = SimpleSoundInstance.listenerPosition()
+            x = listener[0]
+            y = listener[1]
+            z = listener[2]
+        }
+        *///?}
+
         override fun tick() {
             lastTickAt = System.nanoTime()
+            //? if = 1.8.9 {
+            /*moveToListener()
+            *///?}
             if (fadingOut) {
                 volume -= fadeOutStep
                 if (volume <= 0f) {
