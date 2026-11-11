@@ -177,6 +177,20 @@ public object HudManager {
     @ApiStatus.Internal
     public val editorOpenRevision: MutableIntState = mutableIntStateOf(0)
 
+    /** Compose cannot see writes to [guiScreenWidth] and [guiScreenHeight] so this is bumped when either changes */
+    @ApiStatus.Internal
+    public val screenRevision: MutableIntState = mutableIntStateOf(0)
+
+    private var notedScreenW = Float.NaN
+    private var notedScreenH = Float.NaN
+
+    private fun noteScreenSize() {
+        if (guiScreenWidth == notedScreenW && guiScreenHeight == notedScreenH) return
+        notedScreenW = guiScreenWidth
+        notedScreenH = guiScreenHeight
+        screenRevision.intValue++
+    }
+
     private val redrawCacheDisabled = java.lang.Boolean.getBoolean("oneconfig.hud.nocache")
 
     @Volatile private var contentDirty = true
@@ -693,6 +707,7 @@ public object HudManager {
         afterPreparation: Runnable? = null,
     ): Float {
         drainProfileReload()
+        noteScreenSize()
         migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
         prepareScale = scale

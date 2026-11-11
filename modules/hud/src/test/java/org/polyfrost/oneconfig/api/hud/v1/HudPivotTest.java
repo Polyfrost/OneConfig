@@ -32,6 +32,24 @@ class HudPivotTest {
         );
     }
 
+    static class ForwardingXHud extends PlainHud {
+        @Override public float getX() { return super.getX(); }
+    }
+
+    @Test
+    void forwardedXFollowsAnchor() {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        ForwardingXHud hud = new ForwardingXHud();
+        hud.setGrowthAnchor(HudAnchor.TopRight);
+        hud.setX(500f);
+        float x = hud.getX();
+        assertAll(
+            () -> assertEquals(x - 100f, hud.xForWidth(hud.getScaledWidth() + 100f), 0.01f),
+            () -> assertEquals(1f, hud.getPivotFractionX(), 0.01f)
+        );
+    }
+
     @Test
     void predictionsObserveInstanceChanges() {
         ConfigManager.active();
@@ -43,5 +61,6 @@ class HudPivotTest {
             return null;
         });
         assertTrue(reads.contains(HudManager.INSTANCE.getInstancesRevision()));
+        assertTrue(reads.contains(HudManager.INSTANCE.getScreenRevision()));
     }
 }

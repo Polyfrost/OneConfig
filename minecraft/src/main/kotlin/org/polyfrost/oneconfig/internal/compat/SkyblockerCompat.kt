@@ -342,12 +342,22 @@ object SkyblockerCompat {
         reflow()
     }
 
-    internal fun resizePivotX(type: StatusBarType): Float {
+    // mirrors FancyStatusBars.updatePositions: detached bars are clamped onto the screen, and in a row
+    // the edge facing the anchor holds unless the last bar of a target-size row trades width inward
+    internal fun xForWidth(type: StatusBarType, width: Float): Float {
         val bar = bar(type) ?: return 0f
-        val anchor = bar.anchor ?: return 0f
+        val x = bar.getX().toFloat()
+        val anchor = bar.anchor
+        if (anchor == null) {
+            val screen = guiScaledWidth()
+            if (screen <= 0f) return x
+            val w = width.coerceIn(BAR_MIN_WIDTH, maxOf(screen, BAR_MIN_WIDTH))
+            return x.coerceIn(0f, maxOf(screen - w, 0f))
+        }
         val outerEdgeHolds = anchor.sizeRule.isTargetSize &&
             runCatching { positioner().getRow(anchor, bar.gridY).getOrNull(bar.gridX + 1) == null }.getOrDefault(false)
-        return if (anchor.isRight == outerEdgeHolds) 1f else 0f
+        val pivot = if (anchor.isRight == outerEdgeHolds) 1f else 0f
+        return x + pivot * (bar.getWidth() - width)
     }
 
     private fun rowNeighbour(bar: StatusBar, anchor: BarPositioner.BarAnchor): StatusBar? {
@@ -569,7 +579,7 @@ private class SkyblockerBarWrapper(private val type: StatusBarType) : OneConfigH
 
     override val resizeAxes: HudResize get() = HudResize.Width
 
-    override val resizePivotX: Float get() = SkyblockerCompat.resizePivotX(type)
+    override fun xForWidth(width: Float): Float = SkyblockerCompat.xForWidth(type, width)
 
     override var hidden: Boolean
         get() = bar?.enabled == false

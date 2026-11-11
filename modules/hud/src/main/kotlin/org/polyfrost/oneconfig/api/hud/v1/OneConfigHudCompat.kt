@@ -142,18 +142,12 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     private var pinX = 0f
     private var pinY = 0f
 
-    // unpinned the wrapper decides which point holds still when it resizes
-    override val pivotFractionX: Float get() =
-        pin?.let { fracOf(it).first } ?: guard("resizePivotX", 0f) { wrapper.resizePivotX }
-
-    override val pivotFractionY: Float get() =
-        pin?.let { fracOf(it).second } ?: guard("resizePivotY", 0f) { wrapper.resizePivotY }
-
+    // unpinned the wrapper lays itself out so only it knows where it lands
     override fun xForWidth(width: Float): Float =
-        pin?.let { pinX - fracOf(it).first * width } ?: (x + pivotFractionX * (scaledWidth - width))
+        pin?.let { pinX - fracOf(it).first * width } ?: guard("xForWidth", x) { wrapper.xForWidth(width) }
 
     override fun yForHeight(height: Float): Float =
-        pin?.let { pinY - fracOf(it).second * height } ?: (y + pivotFractionY * (scaledHeight - height))
+        pin?.let { pinY - fracOf(it).second * height } ?: guard("yForHeight", y) { wrapper.yForHeight(height) }
 
     private fun fracOf(p: HudAnchor): Pair<Float, Float> {
         val w = scaledWidth
@@ -269,11 +263,11 @@ public interface OneConfigHudWrapper {
 
     public val resizeAxes: HudResize get() = HudResize.Both
 
-    /** How far across the box the point that stays put sits when this resizes horizontally, 0 for left and 1 for right */
-    public val resizePivotX: Float get() = 0f
+    /** Where [x] ends up if this resizes to [width] */
+    public fun xForWidth(width: Float): Float = x
 
-    /** How far down the box the point that stays put sits when this resizes vertically, 0 for top and 1 for bottom */
-    public val resizePivotY: Float get() = 0f
+    /** Where [y] ends up if this resizes to [height] */
+    public fun yForHeight(height: Float): Float = y
 
     public fun onDragStart() {}
 
