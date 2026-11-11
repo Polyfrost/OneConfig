@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -76,7 +77,10 @@ private val MenuPadding = 4.dp
 private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 
 private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
-private val POSITION_OPTIONS = setOf("section", "relativeX", "relativeY")
+private val POSITION_OPTIONS = setOf(
+    "section", "relativeX", "relativeY",
+    "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY",
+)
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
 fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
@@ -96,14 +100,14 @@ fun resetHudProperty(hud: Hud, optionId: String) {
 
 fun hudHasResettableDefaults(hud: Hud): Boolean {
     val tree = hud.tree ?: return false
-    return treeHasResettableDefaults(tree)
+    return treeHasResettableDefaults(tree, root = true)
 }
 
-private fun treeHasResettableDefaults(tree: Tree): Boolean {
+private fun treeHasResettableDefaults(tree: Tree, root: Boolean): Boolean {
     for (node in tree.map.values) {
         when (node) {
-            is Property<*> -> if (optionHasDefault(node)) return true
-            is Tree -> if (treeHasResettableDefaults(node)) return true
+            is Property<*> -> if (!(root && (node.id ?: node.getID()) in POSITION_OPTIONS) && optionHasDefault(node)) return true
+            is Tree -> if (treeHasResettableDefaults(node, root = false)) return true
         }
     }
     return false
@@ -112,7 +116,7 @@ private fun treeHasResettableDefaults(tree: Tree): Boolean {
 fun resetAllHudProperties(hud: Hud) {
     val tree = hud.tree ?: return
     resetHudStaticSize(hud)
-    resetTreeDefaults(hud, tree)
+    resetTreeDefaults(tree, root = true)
     finishHudReset(hud)
 }
 
@@ -124,22 +128,50 @@ private fun resetHudStaticSize(hud: Hud) {
     }
 }
 
-fun hudHasPositionDefaults(hud: Hud): Boolean =
-    POSITION_OPTIONS.any { id ->
-        hudProperty(hud, id)?.let { optionHasDefault(it) } == true
+fun hudHasPositionDefaults(hud: Hud): Boolean = hud.defaultPosition() != null
+
+/** Counts the HUD's position too when [position] is set */
+fun hudOptionsCanReset(hud: Hud, optionIds: Collection<String>, position: Boolean = false): Boolean =
+    (position && hudCanResetPosition(hud)) || optionIds.any { id ->
+        val prop = hudProperty(hud, id) ?: return@any false
+        val default = prop.getMetadata<Any?>("default") ?: return@any false
+        prop.get() != default
     }
 
-fun resetHudPosition(hud: Hud) {
-    var reset = false
-    for (id in POSITION_OPTIONS) {
+/** Resets the HUD's position too when [position] is set */
+fun resetHudOptions(hud: Hud, optionIds: Collection<String>, position: Boolean = false) {
+    for (id in optionIds) {
         val prop = hudProperty(hud, id) ?: continue
-        if (!optionHasDefault(prop)) continue
-        resetOption(prop)
-        reset = true
+        if (optionHasDefault(prop)) performHudOptionReset(hud, prop, id)
     }
-    if (!reset) return
+    if (position && hudHasPositionDefaults(hud)) resetPositionOptions(hud)
+    finishHudReset(hud)
+}
+
+/** Whether [hud] sits on its default position, or has none to compare against */
+private fun hudIsAtDefaultPosition(hud: Hud): Boolean {
+    val section = hudProperty(hud, "section")?.getMetadata<Any?>("default") ?: return true
+    val x = (hudProperty(hud, "relativeX")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
+    val y = (hudProperty(hud, "relativeY")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
+    return section == hud.section && abs(x - hud.relativeX) < 1e-4f && abs(y - hud.relativeY) < 1e-4f
+}
+
+/** Whether [resetHudPosition] would move [hud] or drop its anchor right now */
+fun hudCanResetPosition(hud: Hud): Boolean =
+    hudHasPositionDefaults(hud) && (hud.isAnchored || hud.isMergeAnchored || !hudIsAtDefaultPosition(hud))
+
+fun resetHudPosition(hud: Hud) {
+    if (!resetPositionOptions(hud)) return
     bumpHudUiEpoch(hud)
     hud.updateAndRecalculate()
+}
+
+private fun resetPositionOptions(hud: Hud): Boolean {
+    val props = POSITION_OPTIONS.mapNotNull { id -> hudProperty(hud, id)?.takeIf(::optionHasDefault) }
+    if (props.isEmpty()) return false
+    hud.dropMergeLinks()
+    for (prop in props) resetOption(prop)
+    return true
 }
 
 private fun finishHudReset(hud: Hud) {
@@ -162,7 +194,10 @@ private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String)
         "staticH" -> {
             if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticHeight()
         }
-        else -> resetOption(prop)
+        else -> {
+            if (optionId in POSITION_OPTIONS) hud.dropMergeLinks()
+            resetOption(prop)
+        }
     }
     hud.captureStaticSizeDefaults(force = optionId in STATIC_SIZE_OPTIONS)
 }
@@ -179,27 +214,35 @@ fun repairHudStaticSize(hud: Hud) {
     bumpHudUiEpoch(hud)
 }
 
-private fun resetTreeDefaults(hud: Hud, tree: Tree, seen: MutableSet<Property<*>> = identitySet()) {
+private fun resetTreeDefaults(tree: Tree, root: Boolean, seen: MutableSet<Property<*>> = identitySet()) {
     for (node in tree.map.values) {
         when (node) {
             is Property<*> -> {
                 val optionId = node.id ?: node.getID()
-                if (optionId !in STATIC_SIZE_OPTIONS && optionHasDefault(node)) resetOption(node, seen)
+                val builtIn = root && (optionId in STATIC_SIZE_OPTIONS || optionId in POSITION_OPTIONS)
+                if (!builtIn && optionHasDefault(node)) resetOption(node, seen)
             }
-            is Tree -> resetTreeDefaults(hud, node, seen)
+            is Tree -> resetTreeDefaults(node, root = false, seen = seen)
         }
     }
 }
 
-/** Wraps a HUD settings control so right-click offers "Reset to default" for [optionId] */
+/**
+ * Wraps a HUD settings control so right-click offers "Reset to default" for [optionId] and the [linkedIds] the
+ * control also sets
+ */
 @Composable
 fun HudSettingTarget(
     hud: Hud,
     optionId: String,
+    vararg linkedIds: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val prop = remember(hud, optionId) { hudProperty(hud, optionId) }
+    val linked = remember(hud, linkedIds.toList()) {
+        linkedIds.mapNotNull { id -> hudProperty(hud, id)?.let { id to it } }
+    }
     if (prop == null) {
         Box(modifier) { content() }
         return
@@ -242,13 +285,22 @@ fun HudSettingTarget(
             expanded = menuOpen,
             offset = menuOffset,
             onDismiss = { menuOpen = false },
-            resetEnabled = canResetHudOption(hud, prop, optionId),
+            resetEnabled = canResetHudOption(hud, prop, optionId) ||
+                linked.any { (id, p) -> canResetHudOption(hud, p, id) },
             onReset = {
                 performHudOptionReset(hud, prop, optionId)
+                for ((id, p) in linked) performHudOptionReset(hud, p, id)
                 finishHudReset(hud)
             },
         )
     }
+}
+
+/** A [HudSettingTarget] for a control that moves [hud], so right-click resets its whole position */
+@Composable
+fun HudPositionTarget(hud: Hud, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val linked = if (hudHasPositionDefaults(hud)) (POSITION_OPTIONS - "section").toTypedArray() else emptyArray()
+    HudSettingTarget(hud, "section", *linked, modifier = modifier, content = content)
 }
 
 /** Recompose key for HUD panels whose controls use local [remember] copies of HUD fields */
@@ -429,9 +481,19 @@ fun HudCanvasResetMenu(
                 onDismiss()
             }
             HudMenuDivider()
+            if (actionTargets.any(::hudHasPositionDefaults)) {
+                HudMenuRow(
+                    icon = "move",
+                    text = "Reset position",
+                    enabled = actionTargets.any { hudCanResetPosition(it) },
+                ) {
+                    actionTargets.filter { hudCanResetPosition(it) }.forEach(::resetHudPosition)
+                    onDismiss()
+                }
+            }
             HudMenuRow(
                 icon = "refresh",
-                text = "Reset all to default",
+                text = "Reset HUD settings",
                 enabled = resetEnabled,
                 hint = resetHint,
             ) {

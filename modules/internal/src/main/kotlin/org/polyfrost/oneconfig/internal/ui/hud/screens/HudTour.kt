@@ -71,8 +71,9 @@ internal enum class HudTourStep(
     Merging("merging", HudTourFocus.None, interactive = true),
     Anchoring("anchoring", HudTourFocus.AnchorMenu),
     Settings("settings", HudTourFocus.Panel),
-    Designer("designer", HudTourFocus.Panel, category = StudioCategory.Designer),
-    Fonts("fonts", HudTourFocus.Panel, category = StudioCategory.Designer),
+    Style("style", HudTourFocus.Panel, category = StudioCategory.Style),
+    Fonts("fonts", HudTourFocus.Panel, category = StudioCategory.Style),
+    Layout("layout", HudTourFocus.Panel, category = StudioCategory.Layout),
     Done("done", HudTourFocus.None);
 
     val title: String get() = tourString("$id.title")

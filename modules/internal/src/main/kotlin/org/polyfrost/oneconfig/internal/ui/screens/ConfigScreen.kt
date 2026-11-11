@@ -1,9 +1,19 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -16,6 +26,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,15 +49,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -55,9 +68,11 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.function.Consumer
@@ -75,6 +90,8 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Chip
+import org.polyfrost.oneconfig.internal.ui.components.ContentSlide
+import org.polyfrost.oneconfig.internal.ui.components.ContentSlide.tabSlide
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
@@ -91,6 +108,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionControlHeight
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -193,59 +211,96 @@ private fun ConfigScreenContent(
         val index = remember(categories) { buildSearchIndex(categories) }
         val search = rememberSearchResults(index, localSearchQuery, LocalConfigId.current ?: pageKey, pageKey)
         val results = search.results
-        val entries = remember(index, selectedCategory, localSearchQuery, revision, results) {
-            when {
-                localSearchQuery.isBlank() ->
-                    selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
-                results == null -> emptyList()
-                else -> flattenSearchEntries(searchCategories(results))
+
+        // a search lists every category at once so only switching categories slides
+        val shown = updateTransition(selectedCategory.takeIf { localSearchQuery.isBlank() }, label = "category")
+        shown.AnimatedContent(
+            // keeps the sliding options inside the page instead of drawing over its edges
+            modifier = Modifier.clipToBounds(),
+            transitionSpec = { EnterTransition.None togetherWith ExitTransition.KeepUntilTransitionsFinished using null },
+            contentKey = { it?.name },
+        ) { category ->
+            val from = shown.currentState
+            val to = shown.targetState
+            val direction = when {
+                from == null || to == null || from == to -> 0
+                categories.indexOf(to) > categories.indexOf(from) -> 1
+                else -> -1
             }
-        }
-
-        val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
-
-        val emptyMessage = when {
-            entries.isNotEmpty() -> null
-            localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
-            results == null -> translated("oneconfig.search.searching", "Searching...")
-            else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
-        }
-
-        if (emptyMessage != null && header == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+            val leaving = transition.targetState != EnterExitState.Visible
+            val progress = transition.animateFloat({ ContentSlide.tabProgressSpec(direction != 0) }, label = "slide") {
+                if (it == EnterExitState.Visible) 1f else 0f
             }
-            return@Column
-        }
+            // the page header stays put while the options under it slide
+            val slide = Modifier.tabSlide({ progress.value }, leaving, direction, fade = !leaving)
 
-        ScrollbarBox(lazyListState, PageGutter, Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = lazyListState,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = PageGutter),
-            ) {
-                if (header != null) {
-                    item(key = "header") {
-                        Box(Modifier.layout { measurable, constraints ->
-                            val gutter = PageGutter.roundToPx() * 2
-                            val placeable = measurable.measure(
-                                constraints.copy(minWidth = constraints.minWidth + gutter, maxWidth = constraints.maxWidth + gutter)
-                            )
-                            layout(placeable.width - gutter, placeable.height) { placeable.place(-gutter / 2, 0) }
-                        }) { header() }
-                    }
+            val entries = remember(index, category, localSearchQuery, revision, results) {
+                when {
+                    localSearchQuery.isBlank() ->
+                        category?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
+                    results == null -> emptyList()
+                    else -> flattenSearchEntries(searchCategories(results))
                 }
-                if (emptyMessage != null) {
-                    item(key = "empty") {
-                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                            Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+            }
+
+            // each category keeps its own place in the list
+            val lazyListState = rememberRestorableLazyListState(
+                category?.let { "$pageKey/${it.name}" } ?: pageKey,
+                localSearchQuery,
+                search.query,
+            )
+
+            val emptyMessage = when {
+                entries.isNotEmpty() -> null
+                localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
+                results == null -> translated("oneconfig.search.searching", "Searching...")
+                else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
+            }
+
+            if (emptyMessage != null && header == null) {
+                Box(Modifier.fillMaxSize().then(slide), contentAlignment = Alignment.Center) {
+                    Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+                }
+                return@AnimatedContent
+            }
+
+            ScrollbarBox(
+                lazyListState,
+                PageGutter,
+                Modifier.fillMaxSize().then(if (leaving) Modifier.graphicsLayer { alpha = progress.value } else Modifier),
+            ) {
+                LazyColumn(
+                    state = lazyListState,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = PageGutter),
+                ) {
+                    if (header != null) {
+                        item(key = "header") {
+                            Box(
+                                Modifier
+                                    .then(if (leaving) Modifier.alpha(0f) else Modifier)
+                                    .layout { measurable, constraints ->
+                                        val gutter = PageGutter.roundToPx() * 2
+                                        val placeable = measurable.measure(
+                                            constraints.copy(minWidth = constraints.minWidth + gutter, maxWidth = constraints.maxWidth + gutter)
+                                        )
+                                        layout(placeable.width - gutter, placeable.height) { placeable.place(-gutter / 2, 0) }
+                                    }
+                            ) { header() }
                         }
                     }
-                }
-                items(entries) { entry ->
-                    val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
-                    val lock = locked && (option == null || option !== lockExempt)
-                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
+                    if (emptyMessage != null) {
+                        item(key = "empty") {
+                            Box(Modifier.fillMaxWidth().padding(vertical = 24.dp).then(slide), contentAlignment = Alignment.Center) {
+                                Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+                            }
+                        }
+                    }
+                    items(entries) { entry ->
+                        val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
+                        val lock = locked && (option == null || option !== lockExempt)
+                        Box(slide.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
+                    }
                 }
             }
         }
@@ -439,26 +494,31 @@ private fun SubcategoryHeader(title: String) {
 
 @Composable
 private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) {
-    val theme = LocalTheme.current
-    val shape = theme.modCardShape
-
     var expanded by remember(node) {
         mutableStateOf(
             if (node.tree.getMetadata<Boolean>("collapsed") == true) false
             else node.head?.shown() != false
         )
     }
-    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
-
     val head = node.head
-    if (head != null && head.isBooleanHead() && head.hasVisualizer()) {
+    var headOn by remember(node) { mutableStateOf(head?.shown() == true) }
+    if (head != null && head.isBooleanHead()) {
         DisposableEffect(head) {
             val boolHead = Property.recast<Boolean>(head)
-            val listener = Predicate<Boolean> { value -> expanded = value == true; false }
+            val listener = Predicate<Boolean> { value ->
+                headOn = value == true
+                if (head.hasVisualizer()) expanded = value == true
+                false
+            }
             boolHead.addCallback(listener)
             onDispose { boolHead.removeCallback(listener) }
         }
     }
+    val headDisplay = head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
+    val switchHead = head != null && !head.hasVisualizer()
+    if (switchHead && headDisplay == Property.Display.HIDDEN) return
+    val enabled = !switchHead || (headOn && headDisplay != Property.Display.DISABLED)
+    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
 
     GroupCard {
         GroupHeader(
@@ -466,30 +526,107 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             head = head,
             chevronRotation = chevronRotation,
             compact = compact,
-            onHeadChange = { expanded = it },
+            onHeadChange = { expanded = it; headOn = it },
             onClick = { expanded = !expanded },
         )
 
-        AnimatedVisibility(
-            visible = expanded,
-            enter = ReducedMotion.enter(expandVertically()),
-            exit = ReducedMotion.exit(shrinkVertically()),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
-                        brush = remember(theme.borderColor) {
-                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
-                        },
-                        shape = shape
-                    )
-                    .padding(bottom = 12.dp)
-            ) {
-                AccordionOptionsGrid(node.body, compact = compact)
+        AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                AccordionOptionsGrid(node.body, compact = compact, enabled = enabled)
             }
         }
+    }
+}
+
+private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
+
+private fun foldEnter() = ReducedMotion.enter(
+    expandVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
+)
+
+private fun foldExit() = ReducedMotion.exit(
+    shrinkVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
+)
+
+/**
+ * A card whose header folds [body] open and closed, or which follows [expanded] alone with no arrow when
+ * [onExpandedChange] is null
+ *
+ * [titleActions] sit just after the title
+ */
+@Composable
+internal fun Accordion(
+    title: Any,
+    expanded: Boolean,
+    onExpandedChange: ((Boolean) -> Unit)?,
+    checked: Boolean? = null,
+    onCheckedChange: (Boolean) -> Unit = {},
+    headEnabled: Boolean = true,
+    description: Any? = null,
+    icon: String? = null,
+    titleActions: @Composable RowScope.() -> Unit = {},
+    body: @Composable (enabled: Boolean) -> Unit,
+) {
+    val theme = LocalTheme.current
+    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
+    Column(Modifier.optionCard()) {
+        CardHeader(
+            title,
+            description,
+            icon,
+            titleActions,
+            Modifier
+                .then(if (onExpandedChange != null) Modifier.onClick(rememberInteractionSource()) { onExpandedChange(!expanded) } else Modifier)
+                .alpha(if (headEnabled) 1f else displayAlpha(Property.Display.DISABLED)),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (checked != null) {
+                    Box(Modifier.blockInteraction(!headEnabled)) { SwitchControl(checked, onCheckedChange) }
+                }
+                if (onExpandedChange != null) {
+                    Icon("up", color = theme.textColorSecondary, modifier = Modifier.size(12.dp).rotate(chevronRotation))
+                }
+            }
+        }
+        AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body(checked != false && headEnabled) }
+        }
+    }
+}
+
+@Composable
+private fun CardHeader(
+    title: Any,
+    description: Any? = null,
+    icon: String? = null,
+    titleActions: @Composable RowScope.() -> Unit = {},
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            icon?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(title, color = theme.textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                    titleActions()
+                }
+                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
+            }
+        }
+        trailing()
     }
 }
 
@@ -534,11 +671,7 @@ private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
             onClick = { expanded = !expanded },
         )
 
-        AnimatedVisibility(
-            visible = expanded,
-            enter = ReducedMotion.enter(expandVertically()),
-            exit = ReducedMotion.exit(shrinkVertically()),
-        ) {
+        AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP),
@@ -551,28 +684,7 @@ private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
 
 @Composable
 private fun GroupCard(content: @Composable ColumnScope.() -> Unit) {
-    val theme = LocalTheme.current
-    val shape = theme.modCardShape
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .hoverGlow(shape)
-            .background(theme.modCardBackground, shape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, shape)
-            .drawWithCache {
-                val color = theme.textColor
-                val gradient = Brush.radialGradient(
-                    colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
-                    center = Offset(size.width / 2f, 0f),
-                    radius = size.width * 0.8f,
-                )
-                onDrawBehind { drawRect(gradient) }
-            },
-        content = content,
-    )
+    Column(Modifier.optionCard(), content = content)
 }
 
 /**
@@ -769,40 +881,37 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         return
     }
 
-    val theme = LocalTheme.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(displayAlpha(display))
-            .hoverGlow(theme.modCardShape)
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, theme.modCardShape)
-    ) {
-        val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f)
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
-        SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
+    Box(Modifier.optionCard()) {
+        Box(Modifier.alpha(displayAlpha(display))) {
+            SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
+        }
     }
 }
 
+/** The card behind an option or accordion */
 @Composable
-private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, modifier: Modifier, compact: Boolean = false) {
-    Box(modifier.alpha(displayAlpha(display))) {
-        SettingContent(prop, nested = true, compact = compact, enabled = display != Property.Display.DISABLED)
+private fun Modifier.optionCard(): Modifier {
+    val theme = LocalTheme.current
+    val shape = theme.modCardShape
+    val border = remember(theme.borderColor) { Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))) }
+    return fillMaxWidth()
+        .clip(shape)
+        .hoverGlow(shape)
+        .background(theme.modCardBackground, shape)
+        .border(1.dp, border, shape)
+}
+
+@Composable
+private fun AccordionSettingRow(
+    prop: Property<*>,
+    display: Property.Display,
+    groupEnabled: Boolean,
+    modifier: Modifier,
+    compact: Boolean = false,
+) {
+    val effectiveDisplay = if (groupEnabled) display else Property.Display.DISABLED
+    Box(modifier.alpha(displayAlpha(effectiveDisplay))) {
+        SettingContent(prop, nested = true, compact = compact, enabled = effectiveDisplay != Property.Display.DISABLED)
     }
 }
 
@@ -879,7 +988,7 @@ private inline fun buildOptionRows(body: List<Property<*>>, isWide: (Property<*>
 }
 
 @Composable
-private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
+private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean, enabled: Boolean) {
     val visible = rememberVisibleOptions(body)
     val displays = remember(visible) { visible.toMap() }
     val visibleProps = remember(visible) { visible.map { it.first } }
@@ -887,7 +996,7 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
     if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
             visible.forEach { (prop, display) ->
-                AccordionSettingRow(prop, display, Modifier.fillMaxWidth(), compact = true)
+                AccordionSettingRow(prop, display, enabled, Modifier.fillMaxWidth(), compact = isWideControl(prop))
             }
         }
         return
@@ -909,17 +1018,17 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
                 when (row) {
                     is OptionRow.Single -> {
                         if (row.wide) {
-                            AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.fillMaxWidth())
+                            AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.fillMaxWidth())
                         } else {
                             Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                                AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.weight(1f))
+                                AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.weight(1f))
                                 Spacer(Modifier.weight(1f))
                             }
                         }
                     }
                     is OptionRow.Pair -> Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                        AccordionSettingRow(row.first, displays.getValue(row.first), Modifier.weight(1f))
-                        AccordionSettingRow(row.second, displays.getValue(row.second), Modifier.weight(1f))
+                        AccordionSettingRow(row.first, displays.getValue(row.first), enabled, Modifier.weight(1f))
+                        AccordionSettingRow(row.second, displays.getValue(row.second), enabled, Modifier.weight(1f))
                     }
                 }
             }
@@ -952,7 +1061,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
 
     val visualizer = prop.getMetadata<Any?>("visualizer")
     if (visualizer == Visualizer.InfoVisualizer::class.java || visualizer is Visualizer.InfoVisualizer) {
-        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = verticalPadding)) {
+        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled, keyboard = true).padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }
         return
@@ -971,12 +1080,10 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
         menuOpen = true
     }
 
-    val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    val optionWidth = LocalOptionWidth.current
     val titleStyle = rememberTitleStyle()
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
@@ -1008,59 +1115,97 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 )
             }
         }
-        val fullWidth = isFullWidth(prop)
-        val stacked = compact || fullWidth ||
-            measurer.titleWidth(prop, titleStyle, density) + optionReservedWidth(prop, optionWidth) > maxWidth
-
-        if (stacked) {
+        if (isFullWidth(prop)) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .blockInteraction(!enabled)
+                    .blockInteraction(!enabled, keyboard = true)
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                if (fullWidth) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
-                        actionButton()
-                    }
-                    BoxWithConstraints(Modifier.fillMaxWidth()) {
-                        CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
-                    }
-                } else {
-                    SettingLabel(prop, nested = nested)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                    ) {
-                        actionButton()
-                        Option(prop)
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
+                    actionButton()
+                }
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
                 }
             }
         } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = verticalPadding),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                SettingLabel(
-                    prop = prop,
-                    nested = nested,
-                    modifier = Modifier.weight(1f),
-                )
-
-                actionButton()
-                Option(prop)
+            val title = prop.localizedTitle().asRenderText()
+            val titleWidth = remember(title, titleStyle, measurer) {
+                measurer.measure(title, style = titleStyle, softWrap = false, maxLines = 1).size.width
             }
+            LabelledOptionRow(
+                titleWidth = titleWidth,
+                leading = if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp,
+                stack = compact,
+                verticalPadding = verticalPadding,
+                bottomPadding = if (nested) 8.dp else verticalPadding,
+                modifier = Modifier.fillMaxWidth().blockInteraction(!enabled, keyboard = true),
+                label = { SettingLabel(prop, nested = nested) },
+                actionButton = actionButton,
+                control = { Option(prop) },
+            )
         }
 
         OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
+    }
+}
+
+/**
+ * An option's [label] beside its [control], or above it when the title would not fit on one line next to the
+ * control as it is actually laid out, or whenever [stack] asks for it
+ *
+ * [titleWidth] is the title's width on one line in pixels and [leading] what the label puts before it, such as an icon
+ */
+@Composable
+private fun LabelledOptionRow(
+    titleWidth: Int,
+    leading: Dp,
+    stack: Boolean,
+    verticalPadding: Dp,
+    bottomPadding: Dp,
+    modifier: Modifier,
+    label: @Composable () -> Unit,
+    actionButton: @Composable () -> Unit,
+    control: @Composable () -> Unit,
+) {
+    Layout(listOf(label, actionButton, control), modifier) { (labels, actions, controls), constraints ->
+        val side = 16.dp.roundToPx()
+        val top = verticalPadding.roundToPx()
+        val width = constraints.maxWidth
+        val inner = (width - side * 2).coerceAtLeast(0)
+        val loose = Constraints(maxWidth = inner)
+        val ctrl = controls.firstOrNull()?.measure(loose)
+        val action = actions.firstOrNull()?.measure(loose)
+        val ctrlWidth = ctrl?.width ?: 0
+
+        val besideGap = 16.dp.roundToPx()
+        val beside = inner - ctrlWidth - besideGap - (action?.let { it.width + besideGap } ?: 0)
+        if (!stack && titleWidth + leading.roundToPx() <= beside) {
+            val lbl = labels.first().measure(Constraints.fixedWidth(beside.coerceAtLeast(0)))
+            // as tall as a dropdown even when the control is a smaller switch or checkbox
+            val rowHeight = maxOf(lbl.height, action?.height ?: 0, ctrl?.height ?: 0, OptionControlHeight.roundToPx())
+            layout(width, rowHeight + top * 2) {
+                fun Placeable.center(x: Int) = place(x, top + (rowHeight - height) / 2)
+                lbl.center(side)
+                action?.center(side + beside + besideGap)
+                ctrl?.center(width - side - ctrlWidth)
+            }
+        } else {
+            val lbl = labels.first().measure(loose)
+            val belowGap = 10.dp.roundToPx()
+            val controlsGap = 12.dp.roundToPx()
+            val rowHeight = maxOf(action?.height ?: 0, ctrl?.height ?: 0)
+            val rowTop = top + lbl.height + belowGap
+            layout(width, rowTop + rowHeight + bottomPadding.roundToPx()) {
+                lbl.place(side, top)
+                val ctrlX = width - side - ctrlWidth
+                ctrl?.place(ctrlX, rowTop + (rowHeight - ctrl.height) / 2)
+                action?.place(ctrlX - (if (ctrl != null) controlsGap else 0) - action.width, rowTop + (rowHeight - action.height) / 2)
+            }
+        }
     }
 }
 
@@ -1111,6 +1256,14 @@ private fun SettingLabel(
     }
 }
 
+/** Whether [tree] has any custom options besides the built-in ones */
+@Composable
+internal fun rememberHasHudOptions(tree: Tree?): Boolean {
+    val categories = remember(tree) { tree?.let(::buildCategories).orEmpty() }
+    val revision = rememberDisplayRevision(categories)
+    return remember(categories, revision) { categories.any { filterHiddenNodes(it) != null } }
+}
+
 @Composable
 fun HudConfigScreen(tree: Tree, searchQuery: String) {
     key(System.identityHashCode(tree)) { HudConfigScreenContent(tree, searchQuery) }
@@ -1118,43 +1271,37 @@ fun HudConfigScreen(tree: Tree, searchQuery: String) {
 
 @Composable
 private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
-    val categories = remember(tree) { buildCategories(tree) { !isHudInternal(it) } }
-    var selectedCategory by remember(tree) { mutableStateOf(categories.firstOrNull()) }
-
+    val categories = remember(tree) { buildCategories(tree) }
     val revision = rememberDisplayRevision(categories)
-    val entries = remember(categories, selectedCategory, searchQuery, revision) {
+    val visibleCategories = remember(categories, revision) { categories.filter { filterHiddenNodes(it) != null } }
+    var chosenCategory by remember(tree) { mutableStateOf<CategoryGroup?>(null) }
+    val selectedCategory = chosenCategory?.takeIf { it in visibleCategories } ?: visibleCategories.firstOrNull()
+    val entries = remember(visibleCategories, selectedCategory, searchQuery, revision) {
         if (searchQuery.isEmpty()) {
             selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
         } else {
-            flattenSearchEntries(filterCategories(categories, searchQuery).mapNotNull(::filterHiddenNodes))
+            flattenSearchEntries(filterCategories(visibleCategories, searchQuery).mapNotNull(::filterHiddenNodes))
         }
     }
-    // the panel's built-in sections may still match so an empty search result here stays silent
-    if (entries.isEmpty() && searchQuery.isNotEmpty()) return
+    // empty draws nothing but stays composed, so the display listeners above notice hidden options appearing
+    if (entries.isEmpty()) return
 
-    CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
+    CompositionLocalProvider(LocalOptionWidth provides 210.dp) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        if (searchQuery.isEmpty() && categories.size > 1) {
+        if (searchQuery.isEmpty() && visibleCategories.size > 1) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                categories.forEach { category ->
+                visibleCategories.forEach { category ->
                     Chip(
                         label = category.name,
                         selected = selectedCategory == category,
-                        onClick = { selectedCategory = category }
+                        onClick = { chosenCategory = category }
                     )
                 }
             }
-        }
-
-        if (entries.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
-            }
-            return@Column
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1164,11 +1311,10 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     }
 }
 
-private fun isHudInternal(node: Node): Boolean {
-    return node.getMetadata<Any?>("hudInternal") != null
-}
-
-/** The HUD editor's column is narrow so any row holding a wide control stacks its label above it */
+/**
+ * The HUD editor's column is narrow so any row holding a wide control stacks its label above it, and an accordion
+ * holding one lists its options in a single column where only those rows stack
+ */
 private fun hasWideControl(node: SettingNode): Boolean = when (node) {
     is SettingNode.Leaf -> isWideControl(node.prop)
     is SettingNode.Accordion -> node.body.any(::isWideControl) || node.head?.let(::isWideControl) == true

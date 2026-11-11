@@ -289,12 +289,16 @@ public abstract class Hud(
     }
 
     /**
-     * Stores the reset defaults for [section]/[relativeX]/[relativeY] derived from [defaultPosition]
+     * Stores the reset defaults for [section]/[relativeX]/[relativeY] derived from [defaultPosition], removing them
+     * when it is null so nothing resets the HUD to wherever it happened to be when its config was built
      */
     public fun capturePositionDefaults() {
         val t = tree ?: return
         if (!persistOwnState) return
-        val (dx, dy) = defaultPosition()
+        val (dx, dy) = defaultPosition() ?: run {
+            for (id in listOf("section", "relativeX", "relativeY")) t.getProp(id)?.removeMetadata("default")
+            return
+        }
         val curSection = section
         val curX = relativeX
         val curY = relativeY
@@ -986,12 +990,20 @@ public abstract class Hud(
     private var _customScale: MutableState<Float> = mutableStateOf(1f)
     public open var customScale: Float get() = _customScale.value; set(v) { _customScale.put(v) }
 
+    private var _fixedGuiScale: MutableState<Float> = mutableStateOf(1f)
+
+    /** Minecraft's GUI scale when this HUD stopped following it, so it keeps its size while [useGuiScale] is off */
+    @get:ApiStatus.Internal
+    @set:ApiStatus.Internal
+    public var fixedGuiScale: Float get() = _fixedGuiScale.value; set(v) { _fixedGuiScale.put(v) }
+
     public val effectiveScale: Float
-        get() {
-            if (useGuiScale) return customScale
-            val gui = Platform.compatibility().options().guiScale
-            return if (gui > 0f) customScale / gui else customScale
-        }
+        get() = if (useGuiScale) customScale else scaleAtFixedGuiScale(customScale, fixedGuiScale)
+
+    private fun scaleAtFixedGuiScale(scale: Float, fixed: Float): Float {
+        val gui = Platform.compatibility().options().guiScale
+        return if (gui > 0f) scale * fixed / gui else scale
+    }
 
     public fun getPoppinsFontName(): String {
         val base = when {
@@ -1297,6 +1309,7 @@ public abstract class Hud(
     @Transient private var flagHidden = false
     @Transient private var flagUseGuiScale = true
     @Transient private var flagCustomScale = 1f
+    @Transient private var flagFixedGuiScale = 1f
 
     private fun refreshFrameFlags(): Boolean {
         if (HudManager.isEditing || Snapshot.isInSnapshot) return false
@@ -1308,6 +1321,7 @@ public abstract class Hud(
                 flagHidden = hidden
                 flagUseGuiScale = useGuiScale
                 flagCustomScale = customScale
+                flagFixedGuiScale = fixedGuiScale
             }
         }
         return true
@@ -1324,9 +1338,7 @@ public abstract class Hud(
     internal val frameEffectiveScale: Float
         get() {
             if (hasExternalGeometry || !refreshFrameFlags()) return effectiveScale
-            if (flagUseGuiScale) return flagCustomScale
-            val gui = Platform.compatibility().options().guiScale
-            return if (gui > 0f) flagCustomScale / gui else flagCustomScale
+            return if (flagUseGuiScale) flagCustomScale else scaleAtFixedGuiScale(flagCustomScale, flagFixedGuiScale)
         }
 
     @get:ApiStatus.Internal
@@ -1437,9 +1449,10 @@ public abstract class Hud(
             tree["textWeight"] = ktProperty(out::textWeight).apply { addDisplayCondition(hideFromConfigUi) }
             tree["textAlign"] = ktProperty(out::textAlign).apply { addDisplayCondition(hideFromConfigUi) }
             tree["useGuiScale"] = ktProperty(out::useGuiScale).apply {
-                description = "Uses Minecraft's current GUI scale for this HUD. Turn this off to use a custom HUD scale."
+                description = "Scale this HUD with Minecraft's GUI scale. Turn this off to keep it the same size at any GUI scale."
                 addDisplayCondition(hideFromConfigUi)
             }
+            tree["fixedGuiScale"] = ktProperty(out::fixedGuiScale).apply { addDisplayCondition(hideFromConfigUi) }
             if (out.persistOwnState) {
                 tree["customScale"] = ktProperty(out::customScale).apply { addDisplayCondition(hideFromConfigUi) }
             }
@@ -1508,7 +1521,13 @@ public abstract class Hud(
     public open fun setup() {}
     public abstract fun update(): Boolean
     public open fun updateFrequency(): Long = -1L
-    public open fun defaultPosition(): Pair<Float, Float> = 10f to 10f
+    /**
+     * Where this HUD belongs on screen, for example the spot the vanilla element it replaces sits in
+     *
+     * Null when it has no natural place, in which case it starts in the top left corner and the editor offers no
+     * way to reset its position
+     */
+    public open fun defaultPosition(): Pair<Float, Float>? = null
 
     /**
      * Return `false` to skip drawing this HUD while it has nothing to show. Unlike [hidden], this
@@ -1641,6 +1660,7 @@ public abstract class Hud(
         _textAlign = mutableStateOf(this@Hud.textAlign)
         _useGuiScale = mutableStateOf(this@Hud.useGuiScale)
         _customScale = mutableStateOf(this@Hud.customScale)
+        _fixedGuiScale = mutableStateOf(this@Hud.fixedGuiScale)
         _showBackground = mutableStateOf(this@Hud.showBackground)
         _bgColor = mutableStateOf(this@Hud.bgColor)
         _bgChroma = mutableStateOf(this@Hud.bgChroma)

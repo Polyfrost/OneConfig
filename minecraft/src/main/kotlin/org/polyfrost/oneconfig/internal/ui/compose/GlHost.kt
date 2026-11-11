@@ -378,17 +378,32 @@ object GlHost {
     private var glScreen: ((RenderContext) -> Unit)? = null
     private var glScreenDirty = false
     private var glBlurAlpha = 0f
+    private var glBackdrop = false
+    private var glBeneath: ((RenderContext) -> Unit)? = null
     private var glUnderlay: GuiDraw? = null
     private var screenFrame: GlRenderer? = null
 
-    fun screen(dirty: Boolean, blurAlpha: Float, underlay: GuiDraw?, paint: (RenderContext) -> Unit) {
+    fun screen(
+        dirty: Boolean,
+        blurAlpha: Float,
+        underlay: GuiDraw?,
+        backdrop: Boolean = false,
+        beneath: ((RenderContext) -> Unit)? = null,
+        paint: (RenderContext) -> Unit,
+    ) {
         glScreen = paint
         glBlurAlpha = blurAlpha
+        glBackdrop = backdrop
+        glBeneath = beneath
         glUnderlay = underlay
         if (dirty) glScreenDirty = true
     }
 
     private var drawnBeforeBlit = false
+
+    /** Whether this frame's screen was blurred, so a blurred copy from an earlier frame is never shown */
+    var backdropFresh = false
+        private set
 
     /**
      * Whether vanilla GUI can be drawn between the blur and the OneConfig screen, which the fallback below
@@ -435,11 +450,16 @@ object GlHost {
         val paint = glScreen
         if (paint == null) {
             screenFrame = null
+            backdropFresh = false
             GlBlur.release()
             GlGlass.release()
         } else {
             glScreen = null
-            if (glBlurAlpha > 0f && !vanillaPipeline) drawBlur(fbo, glBlurAlpha)
+            glBeneath?.let { beneath -> drawGl(fbo, null, draw = beneath) }
+            val fresh = (glBlurAlpha > 0f || glBackdrop) && !vanillaPipeline && drawBlur(fbo, glBlurAlpha)
+            // repaint when the blurred copy comes or goes, or the cached frame keeps showing the old state
+            if (fresh != backdropFresh) glScreenDirty = true
+            backdropFresh = fresh
             //? if < 1.21.11
             //if (drawsGuiOverScreen) glUnderlay?.let { drawGui(it) }
             val reuse = screenFrame?.takeUnless { glScreenDirty }
@@ -508,15 +528,17 @@ object GlHost {
     }
     *///?}
 
-    private fun drawBlur(fbo: Int, alpha: Float) {
+    private fun drawBlur(fbo: Int, alpha: Float): Boolean {
         val w = Platform.screen().viewportWidth()
         val h = Platform.screen().viewportHeight()
-        if (w <= 0 || h <= 0) return
+        if (w <= 0 || h <= 0) return false
         gl.capture()
         try {
             GlBlur.draw(fbo, w, h, alpha, client.isPaused)
+            return true
         } catch (e: Throwable) {
             LOG.warn("GlHost.drawBlur() error", e)
+            return false
         } finally {
             gl.restore()
         }

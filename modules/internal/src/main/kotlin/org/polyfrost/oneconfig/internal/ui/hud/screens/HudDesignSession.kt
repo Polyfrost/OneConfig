@@ -98,7 +98,7 @@ object HudDesignSession {
         return true
     }
 
-    /** Action for the "Reset HUD to Default" keybind returning `true` if any HUD was reset */
+    /** Action for the "Reset HUD Settings" keybind returning `true` if any HUD was reset */
     @JvmStatic
     fun handleReset(pressed: Boolean): Boolean {
         if (!pressed) return false

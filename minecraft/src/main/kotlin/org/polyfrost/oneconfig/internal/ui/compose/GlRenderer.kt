@@ -272,6 +272,12 @@ class GlRenderer private constructor(private val inLive: Boolean) : PolyTessella
         flush()
     }
 
+    override fun backdropSource(): BackdropSource? {
+        val id = GlBlur.backdropTexture
+        if (id == 0 || !GlHost.backdropFresh) return null
+        return BackdropSource(GlTextures.external(id), GlBlur.backdropWidth.toFloat(), GlBlur.backdropHeight.toFloat(), false)
+    }
+
     fun draw(fbo: Int, w: Int, h: Int, topDown: Boolean, clear: Boolean, kept: Boolean = false) {
         flush()
         drawBatches(fbo, w, h, topDown, clear, batches, segments(lives), kept, false)

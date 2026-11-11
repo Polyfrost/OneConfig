@@ -1183,6 +1183,7 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public static final field JOIN_MITER I
 	public static final field JOIN_ROUND I
 	public fun animatedScale (FF)V
+	public fun backdrop (FFFFF)V
 	public fun backdropGlass (FFFFFFFF)V
 	public fun clipOutRect (FFFF)V
 	public fun clipPolygon ([F)V
@@ -1236,6 +1237,7 @@ public final class org/polyfrost/compose/render/PolyRenderer$Companion {
 
 public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static fun animatedScale (Lorg/polyfrost/compose/render/PolyRenderer;FF)V
+	public static fun backdrop (Lorg/polyfrost/compose/render/PolyRenderer;FFFFF)V
 	public static fun backdropGlass (Lorg/polyfrost/compose/render/PolyRenderer;FFFFFFFF)V
 	public static fun clipOutRect (Lorg/polyfrost/compose/render/PolyRenderer;FFFF)V
 	public static fun clipPolygon (Lorg/polyfrost/compose/render/PolyRenderer;[F)V
@@ -1295,7 +1297,9 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun <init> ()V
 	public fun animatedScale (FF)V
 	protected final fun appendDrawBoxes ([F)V
+	public fun backdrop (FFFFF)V
 	public fun backdropGlass (FFFFFFFF)V
+	protected fun backdropSource ()Lorg/polyfrost/compose/render/PolyTessellator$BackdropSource;
 	protected final fun begin (Ljava/lang/Object;ZZ)V
 	public static synthetic fun begin$default (Lorg/polyfrost/compose/render/PolyTessellator;Ljava/lang/Object;ZZILjava/lang/Object;)V
 	protected final fun beginDraw ()V
@@ -1357,6 +1361,14 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	protected final fun touchAll ()V
 	public fun translate (FF)V
 	protected fun writeStateKey ()V
+}
+
+protected final class org/polyfrost/compose/render/PolyTessellator$BackdropSource {
+	public fun <init> (Ljava/lang/Object;FFZ)V
+	public final fun getHeight ()F
+	public final fun getTexture ()Ljava/lang/Object;
+	public final fun getTopDown ()Z
+	public final fun getWidth ()F
 }
 
 public final class org/polyfrost/compose/render/PolyTessellator$Companion {

@@ -3,7 +3,6 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,8 +14,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 
-val LocalOptionWidth = compositionLocalOf { 300.dp }
-
 @Composable
 fun TextOption(data: TextOptionData) {
     var text by remember(data.prop) { mutableStateOf(data.strProp.shown() ?: "") }
@@ -26,7 +23,7 @@ fun TextOption(data: TextOptionData) {
     TextField(
         text,
         { text = it; if (regex == null || it.isEmpty() || regex.matches(it)) data.strProp.set(it) },
-        Modifier.width(LocalOptionWidth.current).then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier),
+        Modifier.width(LocalOptionWidth.current).heightIn(min = if (data.multiline) 96.dp else OptionControlHeight),
         data.placeholder,
         "text-input",
         Int.MAX_VALUE,

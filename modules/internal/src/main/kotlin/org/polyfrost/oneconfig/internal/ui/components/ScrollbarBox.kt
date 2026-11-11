@@ -56,10 +56,12 @@ internal fun ScrollbarBox(
     val thickness = LocalScrollbarStyle.current.thickness
     Box(modifier.wheelScroll(state).scrollable(state, Orientation.Vertical, reverseDirection = true)) {
         content()
-        VerticalScrollbar(
-            adapter = adapter,
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                .padding(end = ((gutter - thickness) / 2).coerceAtLeast(0.dp)),
-        )
+        Box(Modifier.matchParentSize()) {
+            VerticalScrollbar(
+                adapter = adapter,
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+                    .padding(end = ((gutter - thickness) / 2).coerceAtLeast(0.dp)),
+            )
+        }
     }
 }

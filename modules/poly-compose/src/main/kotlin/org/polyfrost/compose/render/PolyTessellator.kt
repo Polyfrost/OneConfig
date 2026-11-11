@@ -822,6 +822,46 @@ public abstract class PolyTessellator : PolyRenderer {
         val tv = if (filterQuality == FilterQuality.None) ((g?.let { abs(it.v(1f) - it.v(0f)) } ?: 1f) / bitmap.height * NEAREST_TIE_BIAS) else 0f
         val ua = (g?.u(u0) ?: u0) + tu; val va = (g?.v(v0) ?: v0) + tv
         val ub = (g?.u(u1) ?: u1) + tu; val vb = (g?.v(v1) ?: v1) + tv
+        texturedQuad(x, y, w, h, x0, y0, x1, y1, ua, va, ub, vb, tint)
+    }
+
+    /**
+     * A blurred copy of the screen for [backdrop] to sample, covering [width] by [height] device pixels with its
+     * rows stored bottom up as framebuffer textures are, or top down when [topDown] is set
+     */
+    @Suppress("REDUNDANT_VISIBILITY_MODIFIER")
+    protected class BackdropSource(
+        public val texture: Any,
+        public val width: Float,
+        public val height: Float,
+        public val topDown: Boolean,
+    )
+
+    protected open fun backdropSource(): BackdropSource? = null
+
+    override fun backdrop(x: Float, y: Float, w: Float, h: Float, alpha: Float) {
+        beginDraw()
+        val src = backdropSource() ?: return
+        val tint = (alpha.coerceIn(0f, 1f) * 255f).roundToInt() shl 24 or 0xFFFFFF
+        if (mulAlpha(tint, state.alpha) ushr 24 == 0 || cpuOnly || src.width <= 0f || src.height <= 0f) return
+        begin(src.texture, false)
+        val x0 = x * state.sx + state.tx
+        val y0 = y * state.sy + state.ty
+        val x1 = x0 + w * state.sx
+        val y1 = y0 + h * state.sy
+        val v0 = if (src.topDown) y0 / src.height else 1f - y0 / src.height
+        val v1 = if (src.topDown) y1 / src.height else 1f - y1 / src.height
+        texturedQuad(x, y, w, h, x0, y0, x1, y1, x0 / src.width, v0, x1 / src.width, v1, tint)
+    }
+
+    /**
+     * Draws the texture bound by [begin] over the device rectangle [x0], [y0] to [x1], [y1] which is [x], [y] sized
+     * [w] by [h] before transforming, cut to the rounded clip when one is set
+     */
+    private fun texturedQuad(
+        x: Float, y: Float, w: Float, h: Float, x0: Float, y0: Float, x1: Float, y1: Float,
+        ua: Float, va: Float, ub: Float, vb: Float, tint: Int,
+    ) {
         val rc = state.rclip
         if (rc != null && state.rot == null && state.sx > 0f && state.sy > 0f && x1 > x0 && y1 > y0) {
             val k = rc.box
@@ -839,7 +879,7 @@ public abstract class PolyTessellator : PolyRenderer {
                 return
             }
         }
-        quadPx(x0, y0, x1, y1, ua, va, ub, vb, c)
+        quadPx(x0, y0, x1, y1, ua, va, ub, vb, mulAlpha(tint, state.alpha))
     }
 
     override fun shadow(x: Float, y: Float, w: Float, h: Float, radius: Float, shadow: PolyShadow): Unit =

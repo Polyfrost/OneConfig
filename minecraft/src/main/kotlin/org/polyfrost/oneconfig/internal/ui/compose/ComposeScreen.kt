@@ -429,7 +429,12 @@ abstract class ComposeScreen(
             extractPanorama(ctx, tickDelta)
         }
         //? if >= 1.21.11 {
-        UiBlur.extract(ctx, blurAlpha())
+        UiBlur.beginFrame()
+        // the blur takes every stratum before the current one, so what's drawn beneath it needs its own
+        if (extractBeneathBlur(ctx)) ctx.nextStratum()
+        val blur = blurAlpha()
+        UiBlur.extract(ctx, blur)
+        if (blur <= 0f && wantsBackdrop()) UiBlur.request(ctx)
         underlay?.invoke(ctx)
         //?}
     }
@@ -437,8 +442,24 @@ abstract class ComposeScreen(
 
     protected open fun blurAlpha(): Float = 0f
 
+    /**
+     * Whether the blurred copy of the screen should be made each frame without being drawn, for parts of this
+     * screen that draw it behind themselves with [org.polyfrost.compose.render.PolyRenderer.backdrop]
+     */
+    protected open fun wantsBackdrop(): Boolean = false
+
     /** Vanilla GUI drawn between the blur and this screen */
     internal open val underlay: GuiDraw? get() = null
+
+    //? if >= 1.21.11 {
+    /** Draws what the game would have drawn under this screen before its blur is taken, returning whether it drew */
+    protected open fun extractBeneathBlur(ctx: GuiGraphicsExtractor): Boolean = false
+
+    private var paintedWithBackdrop = false
+    //?} else {
+    /*/** Draws what the game would have drawn under this screen before its blur is taken */
+    protected open val beneathBlur: ((RenderContext) -> Unit)? get() = null
+    *///?}
 
     protected open val retainsScene: Boolean get() = false
 
@@ -563,13 +584,21 @@ abstract class ComposeScreen(
 
         if (liveScene() == null) return
 
+        //? if >= 1.21.11 {
+        // repaint when the blurred copy comes or goes, or the cached scene keeps showing the old state
+        val backdrop = UiBlur.backdrop != null
+        if (backdrop != paintedWithBackdrop) {
+            paintedWithBackdrop = backdrop
+            sceneDirty = true
+        }
+        //?}
         val wasDirty = sceneDirty || awaitingFirstFrame || renderMode == RenderMode.CONTINUOUS
         sceneDirty = false
         awaitingFirstFrame = false
         //? if >= 1.21.11 {
         recording.render(ctx, wasDirty) { paint(it, nanos) }
         //?} else
-        //GlHost.screen(wasDirty, blurAlpha(), underlay) { paint(it, nanos) }
+        //GlHost.screen(wasDirty, blurAlpha(), underlay, wantsBackdrop(), beneathBlur) { paint(it, nanos) }
     }
 
     private fun trackLight(pointer: Offset) {

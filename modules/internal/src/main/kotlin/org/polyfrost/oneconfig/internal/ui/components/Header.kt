@@ -17,13 +17,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -46,10 +43,8 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -384,18 +379,6 @@ fun GlobalSearchBar() {
         search.consumeFocusRequest()
     }
 
-    val searchTextStyle = TextStyle(
-        color = LocalTheme.current.textColorSecondary,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        fontFamily = LocalTheme.current.typography.family,
-        lineHeight = 12.sp,
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.Both,
-        ),
-    )
-
     // TextFieldState needs its own migration, as it changes how every field hoists its state
     @Suppress("DEPRECATION")
     BasicTextField(
@@ -403,65 +386,18 @@ fun GlobalSearchBar() {
         onValueChange = { searchText = it },
         singleLine = true,
         cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
-        textStyle = searchTextStyle,
+        textStyle = searchFieldTextStyle(),
         interactionSource = interactionSource,
         modifier = Modifier.trackTextInputFocus()
             .focusRequester(focusRequester)
             .onFocusChanged { searchFocused?.value = it.isFocused }
     ) { innerTextField ->
-        Box(
-            modifier = Modifier
-                .width(256.dp).height(32.dp)
-                .liquidGlass(LocalTheme.current.sideBarNavigationEntryShape)
-                .background(
-                    LocalTheme.current.chipBackground,
-                    LocalTheme.current.sideBarNavigationEntryShape
-                )
-                .border(
-                    1.dp,
-                    LocalTheme.current.borderColor,
-                    LocalTheme.current.sideBarNavigationEntryShape
-                ),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxHeight(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        "search",
-                        color = LocalTheme.current.textColorSecondary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    if (searchText.text.isEmpty() && !isFocused) {
-                        Text(
-                            placeholder,
-                            color = LocalTheme.current.textColorSecondary,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 12.sp,
-                            lineHeight = 12.sp,
-                        )
-                    }
-                    innerTextField()
-                }
-                if (searchText.text.isNotEmpty()) {
-                    IconButton("close", modifier = Modifier.size(16.dp)) {
-                        searchText = TextFieldValue()
-                    }
-                }
-            }
-        }
+        SearchFieldFrame(
+            placeholder,
+            showPlaceholder = searchText.text.isEmpty() && !isFocused,
+            onClear = if (searchText.text.isNotEmpty()) ({ searchText = TextFieldValue() }) else null,
+            modifier = Modifier.size(256.dp, 32.dp),
+            innerTextField = innerTextField,
+        )
     }
 }

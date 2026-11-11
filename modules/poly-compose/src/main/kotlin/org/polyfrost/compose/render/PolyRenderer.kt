@@ -89,6 +89,14 @@ public interface PolyRenderer {
 
     public fun backdropGlass(x: Float, y: Float, w: Float, h: Float, radius: Float, band: Float, refraction: Float, alpha: Float) {}
 
+    /**
+     * Draws the blurred copy of what's behind the UI over [x], [y] sized [w] by [h], lined up with the screen so it
+     * reads as the UI blurring what's under it
+     *
+     * Renderers without a blurred copy draw nothing
+     */
+    public fun backdrop(x: Float, y: Float, w: Float, h: Float, alpha: Float) {}
+
     public fun save()
     public fun restore()
 

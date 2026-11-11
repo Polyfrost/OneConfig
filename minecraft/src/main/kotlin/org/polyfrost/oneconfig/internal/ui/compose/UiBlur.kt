@@ -32,6 +32,7 @@ object UiBlur {
     private val a = OffscreenTarget()
     private val b = OffscreenTarget()
     private var pending = false
+    private var requested = false
     private var blurred: RenderTarget? = null
     private var blurredAt = 0L
 
@@ -40,16 +41,34 @@ object UiBlur {
     private var infoKey = 0L
 
     fun extract(ctx: GuiGraphicsExtractor, alpha: Float) {
-        if (alpha <= 0f) return
+        if (alpha <= 0f || !request(ctx)) return
         val main = Minecraft.getInstance().gameRenderer.mainRenderTarget()
-        if (!out.resolve((main.width + 3) / 4, (main.height + 3) / 4)) return
         val target = out.target ?: return
-        pending = true
-        ctx.blurBeforeThisStratum()
         val renderer = BlazeRenderer(Minecraft.getInstance().window.guiScale.toFloat())
         renderer.texture(target, 0f, 0f, main.width.toFloat(), main.height.toFloat(), 0f, 1f, 1f, 0f, alpha)
         for (op in renderer.finish()) op(ctx)
     }
+
+    /** Starts a screen's frame with no blur asked for yet, so [backdrop] never shows one left from an earlier frame */
+    fun beginFrame() {
+        requested = false
+    }
+
+    /** Blurs what's been drawn so far this frame into [backdrop] without drawing it, returning false when it can't */
+    fun request(ctx: GuiGraphicsExtractor): Boolean {
+        val main = Minecraft.getInstance().gameRenderer.mainRenderTarget()
+        if (!out.resolve((main.width + 3) / 4, (main.height + 3) / 4)) return false
+        pending = true
+        requested = true
+        ctx.blurBeforeThisStratum()
+        return true
+    }
+
+    /** This frame's blurred copy of the screen, stretched over the whole main target when drawn, or null without one */
+    val backdrop: GpuTextureView? get() = if (requested) out.target?.colorTextureView else null
+
+    val backdropWidth: Int get() = Minecraft.getInstance().gameRenderer.mainRenderTarget().width
+    val backdropHeight: Int get() = Minecraft.getInstance().gameRenderer.mainRenderTarget().height
 
     @JvmStatic
     fun process(): Boolean {

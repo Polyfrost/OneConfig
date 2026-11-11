@@ -156,7 +156,10 @@ internal fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
         val nodes = subcategory.nodes.filter { node ->
             when (node) {
                 is SettingNode.Leaf -> !node.prop.isUnlisted()
-                is SettingNode.Accordion -> node.head?.isUnlisted() == false || node.body.any { !it.isUnlisted() }
+                is SettingNode.Accordion -> when {
+                    node.head != null && !node.head.hasVisualizer() -> !node.head.isUnlisted()
+                    else -> node.head?.isUnlisted() == false || node.body.any { !it.isUnlisted() }
+                }
                 is SettingNode.Submenu -> node.head?.isUnlisted() == false || node.content.any { filterHiddenNodes(it) != null }
             }
         }
@@ -256,11 +259,12 @@ internal fun buildSearchIndex(
     return owners
 }
 
-/** Narrows one row to what its hits matched handling accordions and hidden options */
+/** Narrows one row to what its hits matched handling accordions and hidden options, a hidden switch head hiding its accordion */
 internal fun searchNode(node: SettingNode, documents: List<SearchDocument<*>>): SettingNode? {
     return when (node) {
         is SettingNode.Leaf -> node.takeUnless { it.prop.isHidden() }
         is SettingNode.Accordion -> {
+            if (node.head?.let { !it.hasVisualizer() && it.isHidden() } == true) return null
             val whole = documents.any { it.payload === node.tree || it.payload === node.head }
             val body = if (whole) node.body else documents.mapNotNull { it.payload as? Property<*> }
             val visible = body.any { !it.isHidden() } || (whole && node.head?.isHidden() == false)
