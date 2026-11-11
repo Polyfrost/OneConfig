@@ -46,8 +46,10 @@ internal enum class MergeAxis { X, Y }
  *
  * Where two neighbours differ in size the step between them gets a concave fillet
  *
- * Only HUDs which share the same background style (colour chroma and radius) and touch along an
- * edge are fused
+ * Only HUDs which share the same background colour and chroma and touch along an edge are fused
+ *
+ * Each outer corner keeps the radius of the HUD it belongs to and a step takes the smaller radius of the two HUDs
+ * meeting there
  *
  * Everything else keeps drawing its own rounded rectangle
  */
@@ -88,11 +90,10 @@ internal object HudBackgroundMerge {
         private val bgColor: Int,
         val chroma: Boolean,
         private val chromaSpeed: Float,
-        private val radius: Float,
-        private val loops: List<FloatArray>,
+        private val loops: List<Loop>,
     ) {
         private val path by lazy(LazyThreadSafetyMode.NONE) {
-            PolyPath().also { pb -> for (loop in loops) emitLoop(pb, loop, radius) }
+            PolyPath().also { pb -> for (loop in loops) emitLoop(pb, loop) }
         }
 
         fun draw(ctx: RenderContext) {
@@ -135,7 +136,7 @@ internal object HudBackgroundMerge {
         for (component in components.values) {
             if (component.size < 2) continue
             val members = component.map { items[it] }
-            val loops = outlines(members.map { floatArrayOf(it.x, it.y, it.w, it.h) })
+            val loops = outlines(members.map { floatArrayOf(it.x, it.y, it.w, it.h) }, FloatArray(members.size) { members[it].radius })
             if (loops.isEmpty()) continue
             val first = members[0]
             out.add(
@@ -143,7 +144,7 @@ internal object HudBackgroundMerge {
                     members.map { it.hud },
                     axisLinks(items, component, neighbours, MergeAxis.X) +
                         axisLinks(items, component, neighbours, MergeAxis.Y),
-                    first.hud.bgColor, first.hud.bgChroma, first.hud.bgChromaSpeed, first.radius, loops,
+                    first.hud.bgColor, first.hud.bgChroma, first.hud.bgChromaSpeed, loops,
                 )
             )
         }
@@ -158,8 +159,7 @@ internal object HudBackgroundMerge {
 
     fun sameStyle(a: Hud, b: Hud): Boolean =
         a.bgColor == b.bgColor && a.bgChroma == b.bgChroma &&
-            (!a.bgChroma || abs(a.bgChromaSpeed - b.bgChromaSpeed) <= EPS) &&
-            abs(a.bgRadius * a.effectiveScale - b.bgRadius * b.effectiveScale) <= EPS
+            (!a.bgChroma || abs(a.bgChromaSpeed - b.bgChromaSpeed) <= EPS)
 
     private class Contact(val other: Int, val pins: Int)
 
@@ -354,7 +354,11 @@ internal object HudBackgroundMerge {
         return n
     }
 
-    fun outlines(rects: List<FloatArray>): List<FloatArray> = trace(snapEdges(rects))
+    /** One closed outline of a fused shape as x, y pairs with the corner radius at each point */
+    class Loop(val points: FloatArray, val radii: FloatArray)
+
+    /** Outlines the union of [rects] given as x, y, width, height where each rect rounds its own corners by [radii] */
+    fun outlines(rects: List<FloatArray>, radii: FloatArray): List<Loop> = trace(snapEdges(rects), radii)
 
     private fun snapEdges(rects: List<FloatArray>): List<FloatArray> {
         val xs = snapMap(rects.flatMap { listOf(it[0], it[0] + it[2]) })
@@ -383,7 +387,7 @@ internal object HudBackgroundMerge {
         return out
     }
 
-    private fun trace(rects: List<FloatArray>): List<FloatArray> {
+    private fun trace(rects: List<FloatArray>, radii: FloatArray): List<Loop> {
         val xs = rects.flatMap { listOf(it[0], it[0] + it[2]) }.distinct().sorted()
         val ys = rects.flatMap { listOf(it[1], it[1] + it[3]) }.distinct().sorted()
         val nx = xs.size - 1
@@ -401,6 +405,36 @@ internal object HudBackgroundMerge {
 
         fun cov(i: Int, j: Int) = i in 0 until nx && j in 0 until ny && covered[i][j]
 
+        // overlapping HUDs can share a cell so the HUD whose own corner is at the point wins
+        fun ownerRadius(i: Int, j: Int, x: Float, y: Float): Float {
+            if (!cov(i, j)) return 0f
+            val cx = (xs[i] + xs[i + 1]) / 2f
+            val cy = (ys[j] + ys[j + 1]) / 2f
+            var fallback = -1
+            for (k in rects.indices) {
+                val r = rects[k]
+                if (cx <= r[0] || cx >= r[0] + r[2] || cy <= r[1] || cy >= r[1] + r[3]) continue
+                val cornerX = abs(x - r[0]) <= EPS || abs(x - (r[0] + r[2])) <= EPS
+                val cornerY = abs(y - r[1]) <= EPS || abs(y - (r[1] + r[3])) <= EPS
+                if (cornerX && cornerY) return radii[k]
+                if (fallback < 0) fallback = k
+            }
+            return if (fallback < 0) 0f else radii[fallback]
+        }
+
+        fun cornerRadius(px: Int, py: Int, cx: Int, cy: Int, bx: Int, by: Int): Float {
+            // the cell between the incoming edge reversed and the outgoing edge is inside a convex corner
+            // and is the empty notch of a concave one
+            val i = if (bx - cx - (cx - px) > 0) cx else cx - 1
+            val j = if (by - cy - (cy - py) > 0) cy else cy - 1
+            val x = xs[cx]
+            val y = ys[cy]
+            if (cov(i, j)) return ownerRadius(i, j, x, y)
+            val otherI = if (i == cx) cx - 1 else cx
+            val otherJ = if (j == cy) cy - 1 else cy
+            return minOf(ownerRadius(otherI, j, x, y), ownerRadius(i, otherJ, x, y))
+        }
+
         // directed clockwise in screen space with y down so every loop keeps the filled area on its right
         val next = HashMap<Int, MutableList<Int>>()
         fun node(i: Int, j: Int) = i * (ny + 1) + j
@@ -417,7 +451,7 @@ internal object HudBackgroundMerge {
             }
         }
 
-        val loops = ArrayList<FloatArray>()
+        val loops = ArrayList<Loop>()
         while (next.isNotEmpty()) {
             val start = next.keys.first()
             val points = ArrayList<Int>()
@@ -435,35 +469,34 @@ internal object HudBackgroundMerge {
                 }
             }
             if (!closed || points.size < 4) continue
-            loops.add(toCoordinates(points, xs, ys, ny))
+            val coords = ArrayList<Float>(points.size * 2)
+            val corners = ArrayList<Float>(points.size)
+            for (k in points.indices) {
+                val prev = points[(k - 1 + points.size) % points.size]
+                val cur = points[k]
+                val nxt = points[(k + 1) % points.size]
+                val px = prev / (ny + 1)
+                val py = prev % (ny + 1)
+                val cx = cur / (ny + 1)
+                val cy = cur % (ny + 1)
+                val bx = nxt / (ny + 1)
+                val by = nxt % (ny + 1)
+                if ((px == cx && cx == bx) || (py == cy && cy == by)) continue
+                coords.add(xs[cx])
+                coords.add(ys[cy])
+                corners.add(cornerRadius(px, py, cx, cy, bx, by))
+            }
+            loops.add(Loop(coords.toFloatArray(), corners.toFloatArray()))
         }
         return loops
     }
 
-    private fun toCoordinates(points: List<Int>, xs: List<Float>, ys: List<Float>, ny: Int): FloatArray {
-        val out = ArrayList<Float>(points.size * 2)
-        for (k in points.indices) {
-            val prev = points[(k - 1 + points.size) % points.size]
-            val cur = points[k]
-            val nxt = points[(k + 1) % points.size]
-            val px = prev / (ny + 1)
-            val py = prev % (ny + 1)
-            val cx = cur / (ny + 1)
-            val cy = cur % (ny + 1)
-            val bx = nxt / (ny + 1)
-            val by = nxt % (ny + 1)
-            if ((px == cx && cx == bx) || (py == cy && cy == by)) continue
-            out.add(xs[cx])
-            out.add(ys[cy])
-        }
-        return out.toFloatArray()
-    }
-
-    private fun emitLoop(pb: PolyPath, loop: FloatArray, radius: Float) {
-        val n = loop.size / 2
+    private fun emitLoop(pb: PolyPath, loop: Loop) {
+        val points = loop.points
+        val n = points.size / 2
         if (n < 3) return
-        fun px(k: Int) = loop[(k % n) * 2]
-        fun py(k: Int) = loop[(k % n) * 2 + 1]
+        fun px(k: Int) = points[(k % n) * 2]
+        fun py(k: Int) = points[(k % n) * 2 + 1]
 
         pb.moveTo((px(0) + px(1)) / 2f, (py(0) + py(1)) / 2f)
         for (k in 1..n) {
@@ -471,7 +504,7 @@ internal object HudBackgroundMerge {
             val cy = py(k)
             val prevLen = hypot(cx - px(k - 1), cy - py(k - 1))
             val nextLen = hypot(px(k + 1) - cx, py(k + 1) - cy)
-            val r = minOf(radius, prevLen / 2f, nextLen / 2f)
+            val r = minOf(loop.radii[k % n], prevLen / 2f, nextLen / 2f)
             val mx = (cx + px(k + 1)) / 2f
             val my = (cy + py(k + 1)) / 2f
             if (r <= EPS) {
