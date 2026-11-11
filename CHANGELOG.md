@@ -5,7 +5,7 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.0] - 2026-11-11
 
 ### Added
 - PolyGlass Dark and PolyGlass Light themes, with real frosted glass behind the menus
@@ -15,8 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Precision editing in the HUD editor: X and Y fields you can drag or type math into, distances shown while holding Alt, live gap labels, snapping to equal spacing and padding, and a grid you toggle with G
 - A Reduced Motion setting that drops sliding, scaling and bouncing from OneConfig's menus and keeps fades
 - A new Changelog page that lists every release, and a new Credits page
+- Links to a Modrinth version in a changelog open that version's changelog inside OneConfig
+- An underline text style for HUDs
 - API: A public UI component kit with text fields, menus, tooltips, dialogs, buttons, tabs, player heads, drag-to-reorder lists, an Esc stack and accessibility helpers
 - API: A `swatch` option for `@Color` and the Kotlin config DSL
+- API: `@Submenu`, which opens a group of options on a page of its own, and `@Primary`, which puts an option on the header row of its accordion or submenu
+- API: The horizontal and vertical pivot of a HUD can now be read separately
+- API: HUD default positions are now optional
 - API: The `relocator` module is no longer part of the public API. It was never meant to be, and we don't believe anyone was using it anyway.
 
 ### Changed
@@ -27,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modifier-only OneConfig keybinds, such as a lone Shift or Ctrl, now open and close the menu when you let go of the key
 - Updated open and close sounds for the OneConfig menu
 - Mod Menu now lists OneConfig as a single mod instead of a separate "OneConfig (Platform Module)" entry
+- The HUD editor's settings panel now has Settings and Display tabs, fits its content and moves off the selected HUD. Style and Layout options sit in folding cards, and OneConfig's blur shows behind the editor
+- The Visibility card in the HUD editor stays folded until you change one of its options
+- Resizing a HUD now changes its scale instead of its text size
+- Turning off an accordion's switch now disables the options inside it
+- Every number field now keeps its unit next to the value
 
 ### Removed
 - API: Removed DevAuth dependency
@@ -37,6 +47,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed parts of the OneConfig menus not redrawing after their cached textures expired
 - Clicking a toast or dragging a HUD editor panel no longer clicks what is underneath
 - Fixed the game crashing on launchers that inject fake mods
+- Fixed every page after the first going blank when Animations is turned off
+- The menu ambience now fades in when you open OneConfig
+- Fixed UI sounds panning with the camera on 1.8.9
+- Errors in OneConfig's menus are now logged instead of failing silently
+- Fixed HUDs changing size when you change the GUI scale
+- Fixed HUD backgrounds not merging when the HUDs use different scales
+- Fixed chroma colours drifting out of step between the colour picker, accent colours and HUDs
+- Fixed text on colour swatches being hard to read on some colours
+- Fixed formatted text, such as coloured mod names, laying out wrong
 - API: Fixed Loom logging a large stack trace while remapping OneConfig's sources jar in dependent mods
 
 ## [1.6.2] - 2026-11-06
