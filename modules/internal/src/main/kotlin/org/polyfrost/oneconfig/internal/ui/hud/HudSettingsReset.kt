@@ -100,14 +100,14 @@ fun resetHudProperty(hud: Hud, optionId: String) {
 
 fun hudHasResettableDefaults(hud: Hud): Boolean {
     val tree = hud.tree ?: return false
-    return treeHasResettableDefaults(tree)
+    return treeHasResettableDefaults(tree, root = true)
 }
 
-private fun treeHasResettableDefaults(tree: Tree): Boolean {
+private fun treeHasResettableDefaults(tree: Tree, root: Boolean): Boolean {
     for (node in tree.map.values) {
         when (node) {
-            is Property<*> -> if ((node.id ?: node.getID()) !in POSITION_OPTIONS && optionHasDefault(node)) return true
-            is Tree -> if (treeHasResettableDefaults(node)) return true
+            is Property<*> -> if (!(root && (node.id ?: node.getID()) in POSITION_OPTIONS) && optionHasDefault(node)) return true
+            is Tree -> if (treeHasResettableDefaults(node, root = false)) return true
         }
     }
     return false
@@ -116,7 +116,7 @@ private fun treeHasResettableDefaults(tree: Tree): Boolean {
 fun resetAllHudProperties(hud: Hud) {
     val tree = hud.tree ?: return
     resetHudStaticSize(hud)
-    resetTreeDefaults(hud, tree)
+    resetTreeDefaults(tree, root = true)
     finishHudReset(hud)
 }
 
@@ -144,9 +144,7 @@ fun resetHudOptions(hud: Hud, optionIds: Collection<String>, position: Boolean =
         val prop = hudProperty(hud, id) ?: continue
         if (optionHasDefault(prop)) performHudOptionReset(hud, prop, id)
     }
-    if (position && hudHasPositionDefaults(hud)) {
-        for (id in POSITION_OPTIONS) hudProperty(hud, id)?.takeIf(::optionHasDefault)?.let(::resetOption)
-    }
+    if (position && hudHasPositionDefaults(hud)) resetPositionOptions(hud)
     finishHudReset(hud)
 }
 
@@ -160,19 +158,20 @@ private fun hudIsAtDefaultPosition(hud: Hud): Boolean {
 
 /** Whether [resetHudPosition] would move [hud] or drop its anchor right now */
 fun hudCanResetPosition(hud: Hud): Boolean =
-    hudHasPositionDefaults(hud) && (hud.isAnchored || !hudIsAtDefaultPosition(hud))
+    hudHasPositionDefaults(hud) && (hud.isAnchored || hud.isMergeAnchored || !hudIsAtDefaultPosition(hud))
 
 fun resetHudPosition(hud: Hud) {
-    var reset = false
-    for (id in POSITION_OPTIONS) {
-        val prop = hudProperty(hud, id) ?: continue
-        if (!optionHasDefault(prop)) continue
-        resetOption(prop)
-        reset = true
-    }
-    if (!reset) return
+    if (!resetPositionOptions(hud)) return
     bumpHudUiEpoch(hud)
     hud.updateAndRecalculate()
+}
+
+private fun resetPositionOptions(hud: Hud): Boolean {
+    val props = POSITION_OPTIONS.mapNotNull { id -> hudProperty(hud, id)?.takeIf(::optionHasDefault) }
+    if (props.isEmpty()) return false
+    hud.dropMergeLinks()
+    for (prop in props) resetOption(prop)
+    return true
 }
 
 private fun finishHudReset(hud: Hud) {
@@ -195,7 +194,10 @@ private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String)
         "staticH" -> {
             if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticHeight()
         }
-        else -> resetOption(prop)
+        else -> {
+            if (optionId in POSITION_OPTIONS) hud.dropMergeLinks()
+            resetOption(prop)
+        }
     }
     hud.captureStaticSizeDefaults(force = optionId in STATIC_SIZE_OPTIONS)
 }
@@ -212,16 +214,15 @@ fun repairHudStaticSize(hud: Hud) {
     bumpHudUiEpoch(hud)
 }
 
-private fun resetTreeDefaults(hud: Hud, tree: Tree, seen: MutableSet<Property<*>> = identitySet()) {
+private fun resetTreeDefaults(tree: Tree, root: Boolean, seen: MutableSet<Property<*>> = identitySet()) {
     for (node in tree.map.values) {
         when (node) {
             is Property<*> -> {
                 val optionId = node.id ?: node.getID()
-                if (optionId !in STATIC_SIZE_OPTIONS && optionId !in POSITION_OPTIONS && optionHasDefault(node)) {
-                    resetOption(node, seen)
-                }
+                val builtIn = root && (optionId in STATIC_SIZE_OPTIONS || optionId in POSITION_OPTIONS)
+                if (!builtIn && optionHasDefault(node)) resetOption(node, seen)
             }
-            is Tree -> resetTreeDefaults(hud, node, seen)
+            is Tree -> resetTreeDefaults(node, root = false, seen = seen)
         }
     }
 }

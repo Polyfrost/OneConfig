@@ -109,7 +109,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Layout
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Style
-import org.polyfrost.oneconfig.internal.ui.screens.hasHudOptions
+import org.polyfrost.oneconfig.internal.ui.screens.rememberHasHudOptions
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
@@ -3100,11 +3100,12 @@ private fun DesignStudioPanel(
     onSearchChange: (String) -> Unit,
 ) {
     val theme = LocalTheme.current
-    val categories = remember(selectedHud) {
+    val legacyHasOptions = rememberHasHudOptions(selectedHud?.takeIf { it is LegacyHud }?.tree)
+    val categories = remember(selectedHud, legacyHasOptions) {
         StudioCategory.entries.filter {
             when (it) {
                 // hide settings tab for legacy HUDs that would leave it empty
-                StudioCategory.Settings -> selectedHud !is LegacyHud || selectedHud.tree?.let(::hasHudOptions) == true
+                StudioCategory.Settings -> selectedHud !is LegacyHud || legacyHasOptions
                 StudioCategory.Style -> selectedHud !is LegacyHud
                 StudioCategory.Layout -> true
             }

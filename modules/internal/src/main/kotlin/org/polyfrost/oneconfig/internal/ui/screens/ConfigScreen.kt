@@ -780,7 +780,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
 
     val visualizer = prop.getMetadata<Any?>("visualizer")
     if (visualizer == Visualizer.InfoVisualizer::class.java || visualizer is Visualizer.InfoVisualizer) {
-        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = verticalPadding)) {
+        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled, keyboard = true).padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }
         return
@@ -840,7 +840,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .blockInteraction(!enabled)
+                    .blockInteraction(!enabled, keyboard = true)
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -863,7 +863,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 stack = compact,
                 verticalPadding = verticalPadding,
                 bottomPadding = if (nested) 8.dp else verticalPadding,
-                modifier = Modifier.fillMaxWidth().blockInteraction(!enabled),
+                modifier = Modifier.fillMaxWidth().blockInteraction(!enabled, keyboard = true),
                 label = { SettingLabel(prop, nested = nested) },
                 actionButton = actionButton,
                 control = { Option(prop) },
@@ -978,7 +978,12 @@ private fun SettingLabel(
 }
 
 /** Whether [tree] has any custom options besides the built-in ones */
-internal fun hasHudOptions(tree: Tree): Boolean = buildCategories(tree).any { filterHiddenNodes(it) != null }
+@Composable
+internal fun rememberHasHudOptions(tree: Tree?): Boolean {
+    val categories = remember(tree) { tree?.let(::buildCategories).orEmpty() }
+    val revision = rememberDisplayRevision(categories)
+    return remember(categories, revision) { categories.any { filterHiddenNodes(it) != null } }
+}
 
 @Composable
 fun HudConfigScreen(tree: Tree, searchQuery: String) {
