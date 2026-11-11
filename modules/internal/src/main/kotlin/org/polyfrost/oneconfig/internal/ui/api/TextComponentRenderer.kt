@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.ui.api
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -10,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -21,8 +21,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.ComponentIteratorType
-import net.kyori.adventure.text.event.HoverEvent
+import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
@@ -44,71 +43,43 @@ fun TextComponent(
     overflow: TextOverflow = TextOverflow.Clip,
     colorProducer: ColorProducer? = null,
 ) {
-     Row {
-        component.iterable(ComponentIteratorType.DEPTH_FIRST).forEach {
-            val text = @Composable {
-                BasicText(
-                    text(it), style = TextStyle(
-                        fontSize = fontSize, fontWeight = fontWeight,
-                        fontFamily = LocalTheme.current.typography.family,
-                        color = color,
-                        lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
-                        textAlign = textAlign,
-                    ),
-                    maxLines = maxLines,
-                    overflow = overflow,
-                    modifier = modifier,
-                    color = colorProducer,
-                )
-            }
-
-            val event = it.hoverEvent()
-            val hover = when (val temp = event?.action()) {
-                HoverEvent.Action.SHOW_TEXT -> {
-                    event.value() as Component
-                }
-                else -> null
-            }
-            if (hover != null) {
-                Tooltip(
-                    text = { TextComponent(hover, color = color) },
-                    modifier,
-                    anchor = Alignment.TopCenter
-                ) {
-                    text()
-                }
-            } else  {
-                text()
-            }
-        }
-    }
+    BasicText(
+        buildAnnotatedString { appendComponent(component, Style.empty()) },
+        modifier,
+        TextStyle(
+            fontSize = fontSize, fontWeight = fontWeight,
+            fontFamily = LocalTheme.current.typography.family,
+            color = color,
+            lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
+            textAlign = textAlign,
+        ),
+        maxLines = maxLines,
+        overflow = overflow,
+        color = colorProducer,
+    )
 }
 
-@Composable
-fun text(text: Component) = buildAnnotatedString {
-    withStyle(
-        SpanStyle(color = text.color()?.let { Color(it.value()).copy(alpha = 1f) } ?: Color.Unspecified,
-            textGeometricTransform = if (text.hasDecoration(KyoriDecoration.ITALIC)) TextGeometricTransform(
-                1f, 0.5f
-            ) else null,
-            textDecoration = if (text.hasDecoration(KyoriDecoration.STRIKETHROUGH) || text.hasDecoration(
-                    KyoriDecoration.UNDERLINED
-                )
-            ) {
-                TextDecoration.combine(
-                    buildList {
-                        if (text.hasDecoration(KyoriDecoration.STRIKETHROUGH)) {
-                            add(TextDecoration.LineThrough)
-                        }
-                        if (text.hasDecoration(KyoriDecoration.UNDERLINED)) {
-                            add(TextDecoration.Underline)
-                        }
-                    })
-            } else null,
-            fontWeight = if (text.hasDecoration(KyoriDecoration.BOLD)) FontWeight.Bold else null)) {
-        append(parseLegacyFormatting(Platform.compatibility().resolveComponent(text.children(emptyList())), Color.Unspecified))
+// children inherit the style they don't set from their parent
+private fun AnnotatedString.Builder.appendComponent(component: Component, inherited: Style) {
+    val style = component.style().merge(inherited, Style.Merge.Strategy.IF_ABSENT_ON_TARGET)
+    withStyle(spanStyle(style)) {
+        append(parseLegacyFormatting(Platform.compatibility().resolveComponent(component.children(emptyList())), Color.Unspecified))
     }
+    component.children().forEach { appendComponent(it, style) }
 }
+
+private fun spanStyle(style: Style) = SpanStyle(
+    color = style.color()?.let { Color(it.value()).copy(alpha = 1f) } ?: Color.Unspecified,
+    textGeometricTransform = if (style.hasDecoration(KyoriDecoration.ITALIC)) TextGeometricTransform(1f, 0.5f) else null,
+    textDecoration = if (style.hasDecoration(KyoriDecoration.STRIKETHROUGH) || style.hasDecoration(KyoriDecoration.UNDERLINED)) {
+        TextDecoration.combine(
+            buildList {
+                if (style.hasDecoration(KyoriDecoration.STRIKETHROUGH)) add(TextDecoration.LineThrough)
+                if (style.hasDecoration(KyoriDecoration.UNDERLINED)) add(TextDecoration.Underline)
+            })
+    } else null,
+    fontWeight = if (style.hasDecoration(KyoriDecoration.BOLD)) FontWeight.Bold else null,
+)
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
