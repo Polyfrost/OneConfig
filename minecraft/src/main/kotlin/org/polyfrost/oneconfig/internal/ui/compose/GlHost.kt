@@ -9,6 +9,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.RenderTargetFbo
+import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.slf4j.LoggerFactory
@@ -252,7 +253,7 @@ object GlHost {
             val frame = hudFrame ?: return
             guiGraphics.flush()
             runCatching { frame.drawVanilla(Platform.screen().viewportWidth(), Platform.screen().viewportHeight(), topDown = false) }
-                .onFailure { LOG.warn("GlHost.blitHud() error", it) }
+                .onFailure { UiErrors.warn("GlHost.blitHud() error", it) }
             return
         }
         *///?}
@@ -521,7 +522,7 @@ object GlHost {
             }
             *///?}
         } catch (e: Throwable) {
-            LOG.warn("GlHost.drawGui() error", e)
+            UiErrors.warn("GlHost.drawGui() error", e)
         } finally {
             drawingGui = false
         }
@@ -537,7 +538,7 @@ object GlHost {
             GlBlur.draw(fbo, w, h, alpha, client.isPaused)
             return true
         } catch (e: Throwable) {
-            LOG.warn("GlHost.drawBlur() error", e)
+            UiErrors.warn("GlHost.drawBlur() error", e)
             return false
         } finally {
             gl.restore()
@@ -555,7 +556,7 @@ object GlHost {
                 it.drawVanilla(w, h, topDown = false)
             }
         } catch (e: Throwable) {
-            LOG.warn("GlHost.drawGl() error", e)
+            UiErrors.warn("GlHost.drawGl() error", e)
             null
         }
         *///?}
@@ -565,7 +566,7 @@ object GlHost {
             renderer.draw(fbo, w, h, topDown = false, clear = false, kept = kept)
             return renderer
         } catch (e: Throwable) {
-            LOG.warn("GlHost.drawGl() error", e)
+            UiErrors.warn("GlHost.drawGl() error", e)
             return null
         } finally {
             gl.restore()
@@ -624,7 +625,7 @@ object GlHost {
         //? if = 1.21.1 {
         /*if (vanillaPipeline) {
             hudFrame = runCatching { GlRenderer().also { draw(RenderContext(it), null) } }
-                .onFailure { LOG.warn("GlHost.drawHudGl() error", it) }
+                .onFailure { UiErrors.warn("GlHost.drawHudGl() error", it) }
                 .getOrNull()
             return
         }
@@ -642,7 +643,7 @@ object GlHost {
             //~ if = 1.8.9 'topDown = true' -> 'topDown = false'
             GlRenderer.Layer.draw(fbo, rt.width, rt.height, topDown = true, clear = true, stableLayer, volatileLayer)
         } catch (e: Throwable) {
-            LOG.warn("GlHost.drawHudGl() error", e)
+            UiErrors.warn("GlHost.drawHudGl() error", e)
         } finally {
             gl.restore()
         }

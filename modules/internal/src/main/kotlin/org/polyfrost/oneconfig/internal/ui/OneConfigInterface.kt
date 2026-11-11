@@ -112,6 +112,7 @@ fun OneConfigInterface(
                 } catch (t: Throwable) {
                     LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
                     runCatching { shell.navigation.navigate(ModsGraph) }
+                        .onFailure { UiErrors.error("Failed to open the OneConfig UI on the mods page", it) }
                 }
             }
         } finally {
