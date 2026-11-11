@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
+import com.google.common.collect.Iterables;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.fabricmc.loader.api.FabricLoader;
@@ -49,7 +50,7 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
                         metadata.getId(),
                         metadata.getName(),
                         metadata.getVersion().getFriendlyString(),
-                        mod.getRootPaths().getFirst(),
+                        Iterables.getFirst(mod.getRootPaths(), null),
                         metadata.getIconPath(Integer.MAX_VALUE).orElse(null),
                         metadata.getAuthors().stream()
                                 .map(person -> person.getName())
