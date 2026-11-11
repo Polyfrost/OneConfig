@@ -82,6 +82,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getPadLeft ()F
 	public final fun getPadRight ()F
 	public final fun getPadTop ()F
+	public fun getPivotFractionX ()F
+	public fun getPivotFractionY ()F
 	public final fun getPoppinsFontName ()Ljava/lang/String;
 	public final fun getPosSchema ()I
 	public fun getRelativeX ()F
@@ -89,6 +91,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getRenderedH ()F
 	public fun getRenderedW ()F
 	public fun getResizeAxes ()Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+	protected fun getResizePin ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getRuntime ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public final fun getRuntimeOrNull ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
 	public fun getScaledHeight ()F
@@ -212,6 +215,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected fun updateRelativeX (F)V
 	protected fun updateRelativeY (F)V
 	protected final fun updateWhenChanged (Ljava/lang/String;)V
+	public fun xForWidth (F)F
+	public fun yForHeight (F)F
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
@@ -334,6 +339,8 @@ public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudW
 	public abstract fun setScaledWidth (F)V
 	public abstract fun setX (F)V
 	public abstract fun setY (F)V
+	public fun xForWidth (F)F
+	public fun yForHeight (F)F
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper$DefaultImpls {
@@ -349,6 +356,8 @@ public final class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper$Defaul
 	public static fun register (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
 	public static fun save (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;)V
 	public static fun setHidden (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;Z)V
+	public static fun xForWidth (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;F)F
+	public static fun yForHeight (Lorg/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper;F)F
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Section : java/lang/Enum {

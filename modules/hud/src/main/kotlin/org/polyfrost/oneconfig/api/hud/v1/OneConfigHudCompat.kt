@@ -135,9 +135,28 @@ private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     }
 
     // the size updates immediately so no deferred unpin is needed
-    private var pin: HudAnchor? = null
+    private val pinState = mutableStateOf<HudAnchor?>(null)
+    private var pin: HudAnchor?
+        get() = pinState.value
+        set(v) { pinState.value = v }
     private var pinX = 0f
     private var pinY = 0f
+
+    // unpinned the wrapper lays itself out so only it knows where it lands
+    override fun xForWidth(width: Float): Float =
+        pin?.let { pinX - fracOf(it).first * width } ?: guard("xForWidth", x) { wrapper.xForWidth(width) }
+
+    override fun yForHeight(height: Float): Float =
+        pin?.let { pinY - fracOf(it).second * height } ?: guard("yForHeight", y) { wrapper.yForHeight(height) }
+
+    private fun fracOf(p: HudAnchor): Pair<Float, Float> {
+        val w = scaledWidth
+        val h = scaledHeight
+        return Pair(
+            if (w == 0f) 0f else (anchorPointX(p) - x) / w,
+            if (h == 0f) 0f else (anchorPointY(p) - y) / h,
+        )
+    }
 
     override fun pinCorner(pin: HudAnchor) {
         this.pin = pin
@@ -243,6 +262,12 @@ public interface OneConfigHudWrapper {
     public val ownsPlacement: Boolean get() = false
 
     public val resizeAxes: HudResize get() = HudResize.Both
+
+    /** Where [x] ends up if this resizes to [width] */
+    public fun xForWidth(width: Float): Float = x
+
+    /** Where [y] ends up if this resizes to [height] */
+    public fun yForHeight(height: Float): Float = y
 
     public fun onDragStart() {}
 

@@ -518,7 +518,7 @@ public abstract class Hud(
     public open var x: Float
         get() {
             val a = resolvedAnchorX
-            val w = scaledWidth
+            val w = predictedW.takeUnless { it.isNaN() } ?: scaledWidth
             val raw = rawX(a, w)
             return if (a != null) raw else keepVisibleX(raw, w)
         }
@@ -527,7 +527,7 @@ public abstract class Hud(
     public open var y: Float
         get() {
             val a = resolvedAnchorY
-            val h = scaledHeight
+            val h = predictedH.takeUnless { it.isNaN() } ?: scaledHeight
             val raw = rawY(a, h)
             return if (a != null) raw else keepVisibleY(raw, h)
         }
@@ -647,13 +647,19 @@ public abstract class Hud(
         staticW = width
     }
 
-    private var pinnedCorner: HudAnchor? = null
-        set(v) {
-            if (field == v) return
-            field = v
-            bumpRevision()
-        }
+    // compose state so a composable reading the pivot is invalidated when an editor resize pins or unpins
+    private var _pinnedCorner: MutableState<HudAnchor?> = mutableStateOf(null)
+    private var pinnedCorner: HudAnchor?
+        get() = _pinnedCorner.value
+        set(v) { _pinnedCorner.put(v) }
     private var unpinPending = false
+
+    /**
+     * The corner that holds still while this HUD is resized, or `null` to use the anchor
+     *
+     * Subclasses that track their own pin override this
+     */
+    protected open val resizePin: HudAnchor? get() = pinnedCorner
 
     @ApiStatus.Internal
     public open fun pinCorner(pin: HudAnchor) {
@@ -736,6 +742,74 @@ public abstract class Hud(
         isAnchored -> selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
         else -> (mergeLinkX ?: mergeLinkY)?.selfPoint
             ?: selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
+    }
+
+    /**
+     * How far across this HUD's box the point that holds still while it resizes horizontally sits
+     *
+     * 0 is the left edge and 1 the right. Measured from [xForWidth] so it agrees with it, including
+     * overrides of [x] and the keep-on-screen clamp
+     *
+     * A merge can hold each axis against a different neighbour so this can disagree with
+     * [effectiveSelfAnchorPoint]
+     */
+    public open val pivotFractionX: Float get() {
+        val w = scaledWidth
+        return xForWidth(w) - xForWidth(w + 1f)
+    }
+
+    /**
+     * How far down this HUD's box the point that holds still while it resizes vertically sits
+     *
+     * 0 is the top edge and 1 the bottom. Measured from [yForHeight] so it agrees with it
+     *
+     * A merge can hold each axis against a different neighbour so this can disagree with
+     * [effectiveSelfAnchorPoint]
+     */
+    public open val pivotFractionY: Float get() {
+        val h = scaledHeight
+        return yForHeight(h) - yForHeight(h + 1f)
+    }
+
+    // anchor targets resolve by instance and the section offset by screen size, neither of which is a state write
+    private fun observeLayoutInputs() {
+        HudManager.instancesRevision.intValue
+        HudManager.screenRevision.intValue
+    }
+
+    @Transient
+    private var predictedW = Float.NaN
+
+    @Transient
+    private var predictedH = Float.NaN
+
+    /**
+     * Where [x] ends up if this HUD's width becomes [width]
+     *
+     * Reads [x] with [width] standing in for [scaledWidth], so overrides of [x] that build on the
+     * default and the keep-on-screen clamp are both included
+     */
+    public open fun xForWidth(width: Float): Float {
+        observeLayoutInputs()
+        val prev = predictedW
+        predictedW = width
+        try {
+            return x
+        } finally {
+            predictedW = prev
+        }
+    }
+
+    /** Where [y] ends up if this HUD's height becomes [height], see [xForWidth] */
+    public open fun yForHeight(height: Float): Float {
+        observeLayoutInputs()
+        val prev = predictedH
+        predictedH = height
+        try {
+            return y
+        } finally {
+            predictedH = prev
+        }
     }
 
     /** Moves this HUD's own anchor point to [point] without moving the HUD on screen */
@@ -1620,7 +1694,7 @@ public abstract class Hud(
         _runtime = null
         lastDraw = null
         revision = AtomicInteger(this@Hud.revision.get())
-        pinnedCorner = null
+        _pinnedCorner = mutableStateOf(null)
         unpinPending = false
         isVisible = mutableStateOf(false)
         chainExternal = emptyList()
