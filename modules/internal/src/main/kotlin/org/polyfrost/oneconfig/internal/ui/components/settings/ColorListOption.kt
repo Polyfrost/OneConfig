@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -34,6 +33,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.readableOn
 
 private val DefaultEntryColor = Color.White
 
@@ -75,7 +75,7 @@ private fun RowScope.ColorSwatch(
     val color = remember(argb) { Color(argb).let { if (hasAlpha) it else it.copy(alpha = 1f) } }
     val model = remember(hasAlpha) { ColorPickerModel(color, hasAlpha) }
 
-    val textColor = animateColorAsState(if (color.luminance() > 0.6f) Color.Black else Color.White)
+    val textColor = animateColorAsState(readableOn(color))
 
     Box(modifier = Modifier.weight(1f)) {
         Row(

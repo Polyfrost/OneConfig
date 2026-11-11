@@ -41,7 +41,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -73,6 +72,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.readableOn
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
 private val PickerShape @Composable get() = LocalTheme.current.popupShape
@@ -310,9 +310,7 @@ internal fun ColorPicker(
     val isHovered by interactionSource.collectIsHoveredAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    val textColor = animateColorAsState(
-        if (color.luminance() > 0.6f) Color.Black else Color.White
-    )
+    val textColor = animateColorAsState(readableOn(color))
 
     val borderColor = animateColorAsState(
         if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
