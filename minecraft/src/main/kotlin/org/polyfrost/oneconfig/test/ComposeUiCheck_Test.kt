@@ -72,7 +72,10 @@ object ComposeUiCheck_Test {
 
     private fun testRoute(): Any? {
         val r = System.getProperty("oneconfig.test.composeui.route") ?: return null
-        if (r.startsWith("mod:")) return ModConfigRoute(r.removePrefix("mod:"))
+        if (r.startsWith("mod:")) {
+            val parts = r.removePrefix("mod:").split(':', limit = 2)
+            return ModConfigRoute(parts[0], null, parts.getOrNull(1))
+        }
         return Class.forName("org.polyfrost.oneconfig.internal.ui.navigation.graph.${r}Graph").getField("INSTANCE").get(null)
     }
 

@@ -11,11 +11,21 @@ import org.polyfrost.oneconfig.internal.ui.api.MASTER_TOGGLE
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
+import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 
-/** One row of a settings list being a single property or an accordion with the body it expands to */
+internal const val PRIMARY = "primary"
+internal const val SUBMENU = "submenu"
+
+/**
+ * One row of a settings list being a single property, an accordion with the body it expands to or a submenu
+ * opening its options on a page of their own
+ *
+ * [Submenu.path] is the ids of the submenus down to it joined by "/"
+ */
 internal sealed interface SettingNode {
     data class Leaf(val prop: Property<*>) : SettingNode
-    data class Accordion(val tree: Tree, val head: Property<Boolean>?, val body: List<Property<*>>) : SettingNode
+    data class Accordion(val tree: Tree, val head: Property<*>?, val body: List<Property<*>>) : SettingNode
+    data class Submenu(val tree: Tree, val head: Property<*>?, val path: String, val content: List<CategoryGroup>) : SettingNode
 }
 
 internal data class CategoryGroup(
@@ -37,9 +47,9 @@ internal sealed interface ConfigListEntry {
 /**
  * Splits [tree] into the rows a settings screen renders grouped by category and subcategory
  *
- * [include] can filter the elements
+ * [path] is where [tree] sits among the submenus and [include] can filter the elements
  */
-internal fun buildCategories(tree: Tree, include: (Node) -> Boolean = { true }): List<CategoryGroup> {
+internal fun buildCategories(tree: Tree, path: String? = null, include: (Node) -> Boolean = { true }): List<CategoryGroup> {
     val grouped = LinkedHashMap<String, LinkedHashMap<String, MutableList<SettingNode>>>()
     tree.map.values.forEach { node ->
         if (!include(node)) return@forEach
@@ -54,7 +64,10 @@ internal fun buildCategories(tree: Tree, include: (Node) -> Boolean = { true }):
                     bucket += SettingNode.Leaf(node)
                 }
             }
-            is Tree -> buildAccordionNode(node)?.let(bucket::add)
+            is Tree -> {
+                val row = if (node.isSubmenu()) buildSubmenuNode(node, path) else buildAccordionNode(node)
+                row?.let(bucket::add)
+            }
         }
     }
 
@@ -67,32 +80,67 @@ internal fun buildCategories(tree: Tree, include: (Node) -> Boolean = { true }):
 }
 
 internal fun buildAccordionNode(tree: Tree): SettingNode.Accordion? {
-    val properties = tree.map.values.filterIsInstance<Property<*>>()
-    if (properties.isEmpty()) {
-        return null
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    val head = properties.firstOrNull(::isAccordionToggle) as? Property<Boolean>
-    val body = properties
+    val head = groupHead(tree)
+    val body = tree.map.values
+        .filterIsInstance<Property<*>>()
         .filter { it !== head }
         .filter(::isRenderableProperty)
 
-    if (body.isEmpty()) {
+    if (body.isEmpty() && head == null) {
         return null
     }
 
     return SettingNode.Accordion(tree, head, body)
 }
 
+private fun buildSubmenuNode(tree: Tree, parentPath: String?): SettingNode.Submenu? {
+    val path = if (parentPath == null) tree.id else "$parentPath/${tree.id}"
+    val content = submenuContent(tree, path)
+    val head = groupHead(tree)
+    if (content.isEmpty() && head == null) {
+        return null
+    }
+
+    return SettingNode.Submenu(tree, head, path, content)
+}
+
+/** The option shown on the header of [tree] which is the marked primary or else the toggle of an old style accordion */
+internal fun groupHead(tree: Tree): Property<*>? {
+    val properties = tree.map.values.filterIsInstance<Property<*>>()
+    return properties.firstOrNull { it.getMetadata<Boolean>(PRIMARY) == true }
+        ?: properties.firstOrNull(::isAccordionToggle)
+}
+
 private fun isAccordionToggle(prop: Property<*>): Boolean {
-    val isBoolean = prop.type == Boolean::class.java || prop.type == Boolean::class.javaPrimitiveType
-    return isBoolean && prop.getMetadata<Any?>("visualizer") == null && prop.getMetadata<Any?>(MASTER_TOGGLE) == null
+    return prop.isBooleanHead() && !prop.hasVisualizer() && prop.getMetadata<Any?>(MASTER_TOGGLE) == null
+}
+
+internal fun Property<*>.isBooleanHead(): Boolean = type == Boolean::class.java || type == Boolean::class.javaPrimitiveType
+
+internal fun Property<*>.hasVisualizer(): Boolean = getMetadata<Any?>("visualizer") != null
+
+internal fun Tree.isSubmenu(): Boolean = getMetadata<Boolean>(SUBMENU) == true
+
+/** The submenus from this tree down to the one at [path] or null when a part of it is missing or no submenu */
+internal fun Tree.submenuTrail(path: String): List<Tree>? {
+    val trail = ArrayList<Tree>()
+    var current = this
+    for (id in path.split('/')) {
+        current = (current.get(id) as? Tree)?.takeIf { it.isSubmenu() } ?: return null
+        trail += current
+    }
+    return trail
+}
+
+/** The rows of the page of the submenu [tree] without its own head which sits on the row opening it */
+internal fun submenuContent(tree: Tree, path: String?): List<CategoryGroup> {
+    val head = groupHead(tree)
+    return buildCategories(tree, path) { it !== head }
 }
 
 internal fun isRenderableProperty(prop: Property<*>): Boolean {
     if (prop.getMetadata<Any?>("hidden") != null) return false
-    return prop.getMetadata<Any?>("visualizer") != null
+    return prop.hasVisualizer()
 }
 
 internal fun nodeGroup(node: Node, key: String, default: String): String {
@@ -108,7 +156,11 @@ internal fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
         val nodes = subcategory.nodes.filter { node ->
             when (node) {
                 is SettingNode.Leaf -> !node.prop.isUnlisted()
-                is SettingNode.Accordion -> if (node.head != null) !node.head.isUnlisted() else node.body.any { !it.isUnlisted() }
+                is SettingNode.Accordion -> when {
+                    node.head != null && !node.head.hasVisualizer() -> !node.head.isUnlisted()
+                    else -> node.head?.isUnlisted() == false || node.body.any { !it.isUnlisted() }
+                }
+                is SettingNode.Submenu -> node.head?.isUnlisted() == false || node.content.any { filterHiddenNodes(it) != null }
             }
         }
         if (nodes.isEmpty()) null else subcategory.copy(nodes = nodes)
@@ -149,36 +201,56 @@ internal class SearchRow(
     /**
      * How this row is headed inside its mod
      *
-     * The category or the subcategory when the config has one category or null when it has one of each
+     * The titles of the submenus holding it or else the category or the subcategory when the config has one
+     * category or null when it has one of each
      */
     val groupLabel: String?,
     val node: SettingNode,
     val mod: ConfigData? = null,
 )
 
-/** Maps every node the corpus can return back to the row which renders it */
+/**
+ * Maps every node the corpus can return back to the row which renders it
+ *
+ * [trail] is the titles of the submenus [categories] sit in and labels the options inside them
+ */
 internal fun buildSearchIndex(
     categories: List<CategoryGroup>,
     modTitle: String? = null,
     mod: ConfigData? = null,
+    trail: String? = null,
 ): Map<Node, SearchRow> {
     val owners = IdentityHashMap<Node, SearchRow>()
     val singleCategory = categories.size == 1
     categories.forEach { category ->
         category.subcategories.forEach { subcategory ->
             val groupLabel = when {
+                trail != null -> trail
                 !singleCategory -> category.name
                 category.subcategories.size > 1 -> subcategory.name
                 else -> null
             }
+            val subcategoryLabel = when {
+                trail == null -> subcategory.name
+                subcategory.name == ConfigVisualizer.DEFAULT_SUBCATEGORY -> trail
+                else -> "$trail / ${subcategory.name}"
+            }
             subcategory.nodes.forEach { node ->
-                val row = SearchRow(modTitle, category.name, subcategory.name, groupLabel, node, mod)
+                val row = SearchRow(modTitle, category.name, subcategoryLabel, groupLabel, node, mod)
                 when (node) {
                     is SettingNode.Leaf -> owners[node.prop] = row
                     is SettingNode.Accordion -> {
                         owners[node.tree] = row
                         node.head?.let { owners[it] = row }
                         node.body.forEach { owners[it] = row }
+                    }
+                    is SettingNode.Submenu -> {
+                        owners[node.tree] = row
+                        node.head?.let { owners[it] = row }
+                        // the options inside are listed under the category of the row opening them
+                        val inside = node.content.map { it.copy(name = category.name) }
+                        val insideTrail = listOfNotNull(trail, node.tree.localizedTitle().asRenderText()).joinToString(" / ")
+                        owners.putAll(buildSearchIndex(inside, modTitle, mod, insideTrail))
                     }
                 }
             }
@@ -187,17 +259,18 @@ internal fun buildSearchIndex(
     return owners
 }
 
-/** Narrows one row to what its hits matched handling accordions and hidden options, a hidden head hiding its accordion */
+/** Narrows one row to what its hits matched handling accordions and hidden options, a hidden switch head hiding its accordion */
 internal fun searchNode(node: SettingNode, documents: List<SearchDocument<*>>): SettingNode? {
     return when (node) {
         is SettingNode.Leaf -> node.takeUnless { it.prop.isHidden() }
         is SettingNode.Accordion -> {
-            if (node.head?.isHidden() == true) return null
+            if (node.head?.let { !it.hasVisualizer() && it.isHidden() } == true) return null
             val whole = documents.any { it.payload === node.tree || it.payload === node.head }
             val body = if (whole) node.body else documents.mapNotNull { it.payload as? Property<*> }
-            val visible = body.any { !it.isHidden() } || (whole && node.head != null)
+            val visible = body.any { !it.isHidden() } || (whole && node.head?.isHidden() == false)
             if (visible) node.copy(body = body) else null
         }
+        is SettingNode.Submenu -> node.takeIf { documents.isNotEmpty() }
     }
 }
 

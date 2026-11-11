@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.SemanticsOwner
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import com.mojang.blaze3d.platform.InputConstants
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,8 +37,9 @@ object ComposeUiHarness_Test {
     private const val MOUSE_BACK = 4
     //?} else
     //private const val MOUSE_BACK = 3
+    private const val MOUSE_FORWARD = MOUSE_BACK + 1
     private val out = StringBuilder()
-    private val SHOTS = setOf("page-Themes", "page-Profiles", "mod-config", "dropdown-open", "bob-after", "search-te")
+    private val SHOTS = setOf("page-Themes", "page-Profiles", "mod-config", "dropdown-open", "bob-after", "search-te", "submenu", "nested-submenu", "accordion-primaries")
     private var fails = 0
 
     fun start() {
@@ -91,9 +93,10 @@ object ComposeUiHarness_Test {
             checkboxTest()
             sliderTest()
             dump("bob-after")
+            submenuTest()
             val before2 = texts()
             var backs = 0
-            while (backs < 4 && "Test Kt Config" !in texts()) {
+            while (backs < 6 && "Test Kt Config" !in texts()) {
                 press(true, MOUSE_BACK); press(false, MOUSE_BACK)
                 backs++
                 delay(1000)
@@ -105,6 +108,56 @@ object ComposeUiHarness_Test {
             check("escape: closes UI", screen() == null)
         }
         screen()?.testPointer = null
+    }
+
+    private suspend fun submenuTest() {
+        val before = texts()
+        clickText("Accordions")
+        delay(900)
+        scrollTo("Button primary")
+        check("tab Accordions: shown", (texts() - before).size >= 3)
+        dump("accordion-primaries")
+
+        clickText("Submenus")
+        delay(900)
+        scrollTo("Showcase")
+        check("tab Submenus: rows listed", "Showcase" in texts() && "Showcase switch" !in texts())
+        clickText("Showcase")
+        delay(1200)
+        check("submenu: page shown", "Showcase switch" in texts())
+        check("submenu: header breadcrumb", headerHas("Test Mod", "Showcase") && !headerHas("Nested page"))
+        dump("submenu")
+
+        scrollTo("Nested page")
+        clickText("Nested page")
+        delay(1200)
+        check("nested submenu: header breadcrumb", headerHas("Test Mod", "Showcase", "Nested page"))
+        dump("nested-submenu")
+        clickHeader("Showcase")
+        delay(1000)
+        check("breadcrumb: Showcase segment opens the page", headerHas("Showcase") && !headerHas("Nested page") && "Nested page" in texts())
+        clickHeader("Test Mod")
+        delay(1000)
+        check("breadcrumb: mod segment opens the root page", "Submenus" in texts() && "Accordions" in texts() && !headerHas("Showcase"))
+        press(true, MOUSE_BACK); press(false, MOUSE_BACK)
+        delay(1000)
+        press(true, MOUSE_BACK); press(false, MOUSE_BACK)
+        delay(1000)
+        check("breadcrumb: back returns to the nested page", headerHas("Nested page"))
+        press(true, MOUSE_BACK); press(false, MOUSE_BACK)
+        delay(1000)
+        check("nested submenu: back shows the parent page", headerHas("Showcase") && !headerHas("Nested page"))
+
+        press(true, MOUSE_BACK); press(false, MOUSE_BACK)
+        delay(1000)
+        check("submenu: back lists the rows", "Showcase" in texts() && "Showcase switch" !in texts())
+        press(true, MOUSE_FORWARD); press(false, MOUSE_FORWARD)
+        delay(1000)
+        check("submenu: forward shows the page", headerHas("Test Mod", "Showcase"))
+        check("submenu: forward restores the scroll position", "Nested page" in texts() && "Showcase switch" !in texts())
+        press(true, MOUSE_BACK); press(false, MOUSE_BACK)
+        delay(1000)
+        check("submenu: back again lists the rows", "Showcase" in texts() && "Showcase switch" !in texts())
     }
 
     private suspend fun hudRun() {
@@ -151,6 +204,22 @@ object ComposeUiHarness_Test {
         check("hud: escape closes editor", screen() == null)
     }
 
+    private suspend fun scrollTo(label: String) {
+        val area = nodes().filter { it.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange) != null }
+            .maxByOrNull { it.boundsInWindow.height } ?: return
+        moveTo(area.boundsInWindow.center)
+        repeat(60) { scroll(1.0); delay(30) }
+        delay(300)
+        for (i in 0 until 60) {
+            if (label in texts()) break
+            scroll(-1.0)
+            delay(60)
+        }
+        val row = nodes().firstOrNull { text(it) == label && it.visible() }
+        if (row != null && row.boundsInWindow.bottom > area.boundsInWindow.bottom - 120) scroll(-1.0)
+        delay(400)
+    }
+
     private suspend fun scrollTest(label: String) {
         val area = nodes().filter { it.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange) != null }
             .maxByOrNull { it.boundsInWindow.height }
@@ -186,6 +255,19 @@ object ComposeUiHarness_Test {
         key(InputConstants.KEY_BACKSPACE); key(InputConstants.KEY_BACKSPACE)
         delay(400)
         check("text: cleared '${editable(field.id)}'", editable(field.id).isNullOrEmpty())
+    }
+
+    private fun headerNodes(): List<SemanticsNode> {
+        val field = nodes().firstOrNull { it.config.getOrNull(SemanticsActions.SetText) != null } ?: return emptyList()
+        val row = field.boundsInWindow
+        return nodes().filter { it.visible() && abs(it.boundsInWindow.center.y - row.center.y) < row.height }
+    }
+
+    private fun headerHas(vararg segments: String) = headerNodes().mapNotNullTo(HashSet()) { text(it) }.containsAll(segments.toList())
+
+    private suspend fun clickHeader(t: String) {
+        val n = headerNodes().firstOrNull { text(it) == t }
+        if (n == null) check("click header '$t': found", false) else click(n.boundsInWindow.center)
     }
 
     private suspend fun clickText(t: String) {
