@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.sound
 
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.abs
 import java.util.concurrent.atomic.AtomicLong
 import net.minecraft.client.Minecraft
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance
@@ -108,7 +109,7 @@ class McUiSoundService : UiSoundService {
                 } catch (_: Throwable) {
                 }
             }
-            playAmbienceInstance(theme, ambienceVolumeFor(theme, volume))
+            playAmbienceInstance(theme, ambienceVolumeFor(theme, volume), fadeIn = true)
             UiSoundDucking.setActive(true)
             driveAmbienceLoop()
             driveMusicDuckFade()
@@ -142,19 +143,24 @@ class McUiSoundService : UiSoundService {
         )
     }
 
-    private fun playAmbienceInstance(theme: UiSoundTheme, targetVolume: Float) {
+    private fun playAmbienceInstance(
+        theme: UiSoundTheme,
+        targetVolume: Float,
+        fadeIn: Boolean,
+        soundId: String = nextAmbienceSoundId(theme, ambienceSoundIds(theme)),
+    ) {
         val soundIds = ambienceSoundIds(theme)
         //? if > 1.8.9 {
-        val event = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("oneconfig", nextAmbienceSoundId(theme, soundIds)))
+        val event = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("oneconfig", soundId))
         //?} else
-        //val event = Identifier("oneconfig", nextAmbienceSoundId(theme, soundIds))
+        //val event = Identifier("oneconfig", soundId)
         //? if >= 1.21.6 {
         val source = SoundSource.UI
         //?} elif > 1.8.9 {
         /*val source = SoundSource.MASTER
         *///? }
         //~ if = 1.8.9 '(event, source,' -> '(event,'
-        val instance = FadingLoopSoundInstance(event, source, targetVolume, theme, soundIds.size == 1)
+        val instance = FadingLoopSoundInstance(event, source, targetVolume, theme, soundId, soundIds.size == 1, fadeIn)
         ambience = instance
         mc.soundManager.play(instance)
     }
@@ -192,7 +198,10 @@ class McUiSoundService : UiSoundService {
                             val current = ambience ?: return@execute
                             if (current.isStopped || current.isFadingOut || current !== ambience) return@execute
                             if (!mc.soundManager.isActive(current)) {
-                                playAmbienceInstance(current.theme, current.targetVolume)
+                                playAmbienceInstance(current.theme, current.targetVolume, fadeIn = !mc.isPaused)
+                            } else if (current.isStalledFadeIn) {
+                                mc.soundManager.stop(current)
+                                playAmbienceInstance(current.theme, current.targetVolume, fadeIn = false, soundId = current.soundId)
                             }
                         } catch (_: Throwable) {
                         }
@@ -250,15 +259,32 @@ class McUiSoundService : UiSoundService {
         source: SoundSource,
         @Volatile var targetVolume: Float,
         val theme: UiSoundTheme,
+        val soundId: String,
         private val nativeLoop: Boolean,
+        fadeIn: Boolean,
         //~ if = 1.8.9 '(event, source, RandomSource.create())' -> '(event)'
     ) : AbstractTickableSoundInstance(event, source, RandomSource.create()) {
 
         @Volatile
         private var fadingOut = false
 
+        @Volatile
+        private var fadingIn = fadeIn
+
+        @Volatile
+        private var lastTickAt = System.nanoTime()
+
+        @Volatile
+        private var rampStep = maxOf(targetVolume, FADE_IN_FLOOR) / FADE_IN_TICKS
+
+        @Volatile
+        private var fadeOutStep = 0f
+
         val isFadingOut: Boolean
             get() = fadingOut
+
+        val isStalledFadeIn: Boolean
+            get() = fadingIn && System.nanoTime() - lastTickAt > STALL_NANOS
 
         init {
             looping = nativeLoop
@@ -269,36 +295,55 @@ class McUiSoundService : UiSoundService {
             attenuation = SoundInstance.Attenuation.NONE
             //? if > 1.8.9
             relative = true
-            volume = targetVolume
+            volume = if (fadeIn) FADE_IN_FLOOR else targetVolume
             pitch = 1f
         }
 
         fun beginFadeOut() {
+            fadeOutStep = maxOf(volume, FADE_IN_FLOOR) / FADE_TICKS
+            fadingIn = false
             fadingOut = true
         }
 
         fun cancelFadeOut() {
             fadingOut = false
-            volume = targetVolume
+            retarget()
         }
 
         fun updateTargetVolume(newTarget: Float) {
             targetVolume = newTarget
-            if (!fadingOut) volume = newTarget
+            retarget()
+        }
+
+        private fun retarget() {
+            rampStep = maxOf(abs(targetVolume - volume), FADE_IN_FLOOR) / FADE_IN_TICKS
         }
 
         override fun tick() {
-            if (!fadingOut) return
-            volume -= targetVolume / FADE_TICKS
-            if (volume <= 0f) {
-                volume = 0f
-                //$ if > 1.8.9 'stop()' else 'done = true'
-                stop()
+            lastTickAt = System.nanoTime()
+            if (fadingOut) {
+                volume -= fadeOutStep
+                if (volume <= 0f) {
+                    volume = 0f
+                    //$ if > 1.8.9 'stop()' else 'done = true'
+                    stop()
+                }
+                return
             }
+            val target = targetVolume
+            volume = when {
+                volume < target -> minOf(target, volume + rampStep)
+                volume > target -> maxOf(target, volume - rampStep)
+                else -> volume
+            }
+            if (volume == target) fadingIn = false
         }
     }
 
     private companion object {
         const val FADE_TICKS = 80f
+        const val FADE_IN_TICKS = 30f
+        const val FADE_IN_FLOOR = 0.0001f
+        const val STALL_NANOS = 400_000_000L
     }
 }
