@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -69,6 +68,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import androidx.compose.ui.graphics.BlendMode
@@ -191,7 +191,7 @@ private fun DialogButton(text: String, primary: Boolean, icon: String? = null, o
     val source = rememberInteractionSource()
     val hovered by source.collectIsHoveredAsState()
     val base = if (primary) Accent else theme.textColor.copy(0.08f)
-    val background by animateColorAsState(if (hovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
+    val background by animateAccentColorAsState(hovered to primary, if (hovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
     val ink = if (primary) theme.accentTextColor else theme.textColor
     Row(
         Modifier.clip(theme.buttonShape)

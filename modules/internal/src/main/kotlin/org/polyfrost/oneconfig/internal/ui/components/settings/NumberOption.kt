@@ -209,10 +209,10 @@ fun formatSpinnerValue(v: Float, step: Float = 0f): String {
     return String.format(Locale.ROOT, "%.${maxOf(2, stepDecimals)}f", v)
 }
 
-// only consumed by a value-based BasicTextField, see the note on its call site
+// for value-based BasicTextFields, see the TextFieldState note where they're used
 @Suppress("DEPRECATION")
 @Composable
-private fun rememberUnitSuffix(unit: String?): VisualTransformation {
+internal fun rememberUnitSuffix(unit: String?): VisualTransformation {
     val color = LocalTheme.current.textColorSecondary
     return remember(unit, color) {
         if (unit == null) VisualTransformation.None else VisualTransformation { typed ->
@@ -405,10 +405,7 @@ fun NumberSpinner(
                     Box {
                         Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
                         if (formatted != null) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                if (unit != null) Text(unit, color = theme.textColorSecondary, fontSize = 13.sp)
-                            }
+                            Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
@@ -454,5 +451,6 @@ fun NumberOption(data: NumberOptionData) {
         step = step,
         width = 87.dp,
         format = data.format,
+        unit = data.unit,
     )
 }

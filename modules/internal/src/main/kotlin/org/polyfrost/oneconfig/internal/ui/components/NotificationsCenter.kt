@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val PanelWidth = 368.dp
@@ -187,7 +188,7 @@ private fun ActionButton(notification: Notification, action: NotificationAction)
     val isHovered by source.collectIsHoveredAsState()
 
     val base = if (action.primary) Accent else theme.textColor.copy(0.08f)
-    val background by animateColorAsState(if (isHovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
+    val background by animateAccentColorAsState(isHovered to action.primary, if (isHovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
 
     Box(
         modifier = Modifier

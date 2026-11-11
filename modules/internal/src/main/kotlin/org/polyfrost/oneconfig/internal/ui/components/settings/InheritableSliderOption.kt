@@ -45,6 +45,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 /**
@@ -66,7 +67,7 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
     val span = (data.max - data.min).takeIf { it != 0f } ?: 1f
     val fraction = animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), animationSpec = ReducedMotion.spec(spring()))
 
-    val filledColor = animateColorAsState(if (inherited) theme.textColorSecondary.copy(alpha = 0.4f) else Accent)
+    val filledColor = animateAccentColorAsState(inherited, if (inherited) theme.textColorSecondary.copy(alpha = 0.4f) else Accent)
     val thumbColor = animateColorAsState(
         if (inherited) theme.controlThumbColor.copy(alpha = 0.5f) else theme.controlThumbColor
     )
@@ -177,11 +178,12 @@ private fun InheritChip(label: String, active: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val background = animateColorAsState(
+    val background = animateAccentColorAsState(
+        active to isHovered,
         if (active) Accent.copy(alpha = 0.2f) else if (isHovered) theme.componentBackground else theme.chipBackground
     )
-    val border = animateColorAsState(if (active) Accent else theme.borderColor)
-    val textColor = animateColorAsState(if (active) Accent else theme.textColorSecondary)
+    val border = animateAccentColorAsState(active, if (active) Accent else theme.borderColor)
+    val textColor = animateAccentColorAsState(active, if (active) Accent else theme.textColorSecondary)
 
     Box(
         modifier = Modifier

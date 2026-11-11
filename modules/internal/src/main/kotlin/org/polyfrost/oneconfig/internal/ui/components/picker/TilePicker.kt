@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.picker
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,6 +63,7 @@ import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 interface PickerEntry {
@@ -123,14 +123,15 @@ fun <T : PickerEntry> PickerTile(
     val interaction = rememberInteractionSource()
     val hovered by interaction.collectIsHoveredAsState()
     val interactive = enabled && onClick != null
-    val background by animateColorAsState(
+    val background by animateAccentColorAsState(
+        listOf(selected, hovered, interactive),
         when {
             selected -> Accent.copy(alpha = 0.18f).compositeOver(theme.modCardBackground)
             hovered && interactive -> theme.componentBackground
             else -> theme.modCardBackground
         }
     )
-    val border by animateColorAsState(if (selected) Accent else theme.borderColor)
+    val border by animateAccentColorAsState(selected, if (selected) Accent else theme.borderColor)
     val contentAlpha = if (enabled) 1f else 0.45f
 
     PickerTooltip(entry, enabled = tooltip) {

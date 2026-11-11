@@ -3661,7 +3661,7 @@ private fun EvergreenHudSuggestion(modifier: Modifier) {
     val theme = LocalTheme.current
     val source = rememberInteractionSource()
     val isHovered by source.collectIsHoveredAsState()
-    val background by animateColorAsState(if (isHovered) Color.White.copy(0.12f).compositeOver(Accent) else Accent)
+    val background by animateAccentColorAsState(isHovered, if (isHovered) Color.White.copy(0.12f).compositeOver(Accent) else Accent)
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
@@ -3770,7 +3770,8 @@ private fun LegacyHudPreviewCard(
     val theme = LocalTheme.current
 
     var isHovered by remember { mutableStateOf(false) }
-    val backgroundColor by animateColorAsState(
+    val backgroundColor by animateAccentColorAsState(
+        isHovered,
         if (isHovered) Accent else theme.popupBackground,
         animationSpec = tween(150)
     )
@@ -3852,7 +3853,8 @@ private fun ComposeHudPreviewCard(
     val theme = LocalTheme.current
 
     var isHovered by remember { mutableStateOf(false) }
-    val backgroundColor by animateColorAsState(
+    val backgroundColor by animateAccentColorAsState(
+        isHovered,
         if (isHovered) Accent else theme.popupBackground,
         animationSpec = tween(150)
     )

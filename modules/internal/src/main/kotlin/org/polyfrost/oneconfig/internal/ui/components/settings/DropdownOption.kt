@@ -25,6 +25,7 @@ import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
@@ -101,7 +102,8 @@ internal fun DropdownFrame(
     val theme = LocalTheme.current
     val triggerInteraction = rememberInteractionSource()
     val isHovered by triggerInteraction.collectIsHoveredAsState()
-    val borderColor = animateColorAsState(
+    val borderColor = animateAccentColorAsState(
+        expanded,
         if (expanded) Accent
         else theme.borderColor
     )
@@ -109,7 +111,8 @@ internal fun DropdownFrame(
         if (isHovered || expanded) theme.textColor
         else theme.textColorSecondary
     )
-    val backgroundColor = animateColorAsState(
+    val backgroundColor = animateAccentColorAsState(
+        expanded,
         if (expanded) Accent.copy(0.2f).compositeOver(theme.componentBackground)
         else theme.componentBackground
     )
@@ -187,7 +190,8 @@ internal fun DropdownItem(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val itemShape = MenuItemShape
 
-    val bgColor = animateColorAsState(
+    val bgColor = animateAccentColorAsState(
+        selected to isHovered,
         if (selected) Accent
         else if (isHovered) theme.modCardBackground
         else theme.modCardBackground.copy(0f)

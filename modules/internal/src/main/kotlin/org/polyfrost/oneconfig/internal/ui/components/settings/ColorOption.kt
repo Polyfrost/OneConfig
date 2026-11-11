@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -40,7 +41,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -72,6 +72,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.readableOn
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
 private val PickerShape @Composable get() = LocalTheme.current.popupShape
@@ -150,13 +151,36 @@ internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
     var saturation by mutableFloatStateOf(hsb[1])
     var brightness by mutableFloatStateOf(hsb[2])
     var alpha by mutableFloatStateOf(initialColor.alpha)
-    var chromaEnabled by mutableStateOf(false)
+    private var chromaState by mutableStateOf(false)
+    var chromaEnabled: Boolean
+        get() = chromaState
+        set(value) {
+            if (!value) {
+                hue = savedHue()
+                chromaTurn = 0f
+            }
+            chromaState = value
+        }
     val alphaEnabled = hasAlpha
     var chromaSpeed by mutableFloatStateOf(1f)
     var gradientEnabled by mutableStateOf(false)
     var gradientColor by mutableStateOf(initialColor)
 
+    /** How far [hue] is turned past the saved hue, so the picker matches every other chroma colour right now */
+    private var chromaTurn = 0f
+
     fun currentColor(): Color = hsbToColor(hue, saturation, brightness, alpha)
+
+    /** The colour to save, which is [currentColor] with any chroma turn taken back out */
+    fun savedColor(): Color = hsbToColor(savedHue(), saturation, brightness, alpha)
+
+    private fun savedHue(): Float = (hue - chromaTurn).mod(360f)
+
+    fun turnChroma() {
+        val turn = PolyColor.chromaTurn(chromaSpeed) * 360f
+        hue = (savedHue() + turn) % 360f
+        chromaTurn = turn
+    }
 
     fun applyFrom(color: Color) {
         val newHsb = colorToHsb(color)
@@ -172,14 +196,11 @@ internal fun ChromaColorAnimation(
     model: ColorPickerModel,
     onColorChanged: (Color) -> Unit,
 ) {
-    LaunchedEffect(model.chromaEnabled, model.chromaSpeed) {
+    LaunchedEffect(model.chromaEnabled) {
         if (!model.chromaEnabled) return@LaunchedEffect
-        var lastNanos = withInfiniteAnimationFrameNanos { it }
         while (true) {
-            withInfiniteAnimationFrameNanos { frameNanos ->
-                val dt = (frameNanos - lastNanos) / 1_000_000_000f
-                lastNanos = frameNanos
-                model.hue = (model.hue + (360f / PolyColor.CHROMA_CYCLE_SECONDS.toFloat()) * model.chromaSpeed * dt) % 360f
+            withInfiniteAnimationFrameNanos {
+                model.turnChroma()
                 onColorChanged(model.currentColor())
             }
         }
@@ -210,7 +231,7 @@ fun ColorOption(data: ColorOptionData) {
     val initialColor = remember(data.prop, initialValue) {
         when (val v = initialValue) {
             is Color -> v
-            is PolyColor -> Color(v.argb).let {
+            is PolyColor -> Color(v.rawArgb).let {
                 if (data.alpha) it else it.copy(alpha = 1f)
             }
 
@@ -236,7 +257,7 @@ fun ColorOption(data: ColorOptionData) {
         }
     }
     fun persistColor(color: Color) {
-        currentColor = color
+        currentColor = pickerModel.currentColor()
         @Suppress("UNCHECKED_CAST")
         when {
             data.prop.type == Int::class.javaObjectType || data.prop.type == Int::class.javaPrimitiveType ->
@@ -289,9 +310,7 @@ internal fun ColorPicker(
     val isHovered by interactionSource.collectIsHoveredAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    val textColor = animateColorAsState(
-        if (color.luminance() > 0.6f) Color.Black else Color.White
-    )
+    val textColor = animateColorAsState(readableOn(color))
 
     val borderColor = animateColorAsState(
         if (isHovered || expanded) theme.textColor.copy(0.3f) else theme.borderColor
@@ -365,6 +384,7 @@ internal fun ColorPickerPopup(
 ) {
     val theme = LocalTheme.current
     val currentOnColorChanged by rememberUpdatedState(onColorChanged)
+    fun save() = currentOnColorChanged(model.savedColor())
     val hue = model.hue
     val saturation = model.saturation
     val brightness = model.brightness
@@ -372,13 +392,10 @@ internal fun ColorPickerPopup(
     val chromaEnabled = model.chromaEnabled
     val chromaSpeed = model.chromaSpeed
     var hexText by remember(model) { mutableStateOf(colorToHex(model.currentColor())) }
+    var hexFocused by remember { mutableStateOf(false) }
     var alphaText by remember(model) { mutableStateOf((model.alpha * 100f).roundToInt().toString()) }
     var speedText by remember(model) { mutableStateOf("%.1f".format(model.chromaSpeed)) }
     var gradientText by remember(model) { mutableStateOf(colorToHex(model.gradientColor)) }
-
-    LaunchedEffect(model.chromaEnabled, model.hue) {
-        if (model.chromaEnabled) hexText = colorToHex(model.currentColor())
-    }
 
     val currentColor = model.currentColor()
 
@@ -431,7 +448,7 @@ internal fun ColorPickerPopup(
                             model.brightness = 1f - (y / sbPaneSize.height).coerceIn(0f, 1f)
                             val c = model.currentColor()
                             hexText = colorToHex(c)
-                            currentOnColorChanged(c)
+                            save()
                         }
                         update(down.position.x, down.position.y)
                         do {
@@ -483,7 +500,7 @@ internal fun ColorPickerPopup(
                             model.hue = ((x / size.width) * 360f).coerceIn(0f, 360f)
                             val c = model.currentColor()
                             hexText = colorToHex(c)
-                            currentOnColorChanged(c)
+                            save()
                         }
                         update(down.position.x)
                         do {
@@ -525,7 +542,7 @@ internal fun ColorPickerPopup(
                 Text("Opacity", color = theme.textColorSecondary, fontSize = 12.sp)
                 SliderValueField(
                     text = alphaText,
-                    suffix = "%",
+                    unit = "%",
                     onValueChange = { input ->
                         val filtered = input.filter { it.isDigit() }.take(3)
                         alphaText = filtered
@@ -533,7 +550,7 @@ internal fun ColorPickerPopup(
                             model.alpha = pct / 100f
                             val c = model.currentColor()
                             hexText = colorToHex(c)
-                            currentOnColorChanged(c)
+                            save()
                         }
                     },
                 )
@@ -561,7 +578,7 @@ internal fun ColorPickerPopup(
                                 alphaText = (model.alpha * 100f).roundToInt().toString()
                                 val c = model.currentColor()
                                 hexText = colorToHex(c)
-                                currentOnColorChanged(c)
+                                save()
                             }
                             update(down.position.x)
                             do {
@@ -624,7 +641,8 @@ internal fun ColorPickerPopup(
                 }
                 SwitchControl(chromaEnabled) {
                     model.chromaEnabled = it
-                    currentOnColorChanged(model.currentColor())
+                    hexText = colorToHex(model.currentColor())
+                    save()
                 }
             }
         }
@@ -653,7 +671,7 @@ internal fun ColorPickerPopup(
                         model.gradientColor = hsbToColor((model.hue + 40f) % 360f, model.saturation, model.brightness, model.alpha)
                         gradientText = colorToHex(model.gradientColor)
                     }
-                    currentOnColorChanged(model.currentColor())
+                    save()
                 }
             }
         }
@@ -680,7 +698,7 @@ internal fun ColorPickerPopup(
                         gradientText = filtered
                         hexToColor(filtered)?.let { c ->
                             model.gradientColor = c
-                            currentOnColorChanged(model.currentColor())
+                            save()
                         }
                     },
                     singleLine = true,
@@ -718,13 +736,13 @@ internal fun ColorPickerPopup(
                     Text("Speed", color = theme.textColorSecondary, fontSize = 12.sp)
                     SliderValueField(
                         text = speedText,
-                        suffix = "x",
+                        unit = "x",
                         onValueChange = { input ->
                             val filtered = filterNumberInput(input).take(4)
                             speedText = filtered
                             filtered.toFloatOrNull()?.coerceIn(0.1f, 4f)?.let {
                                 model.chromaSpeed = it
-                                currentOnColorChanged(model.currentColor())
+                                save()
                             }
                         },
                     )
@@ -746,7 +764,7 @@ internal fun ColorPickerPopup(
                                 fun update(x: Float) {
                                     model.chromaSpeed = ((x / size.width) * 4f).coerceIn(0.1f, 4f)
                                     speedText = "%.1f".format(model.chromaSpeed)
-                                    currentOnColorChanged(model.currentColor())
+                                    save()
                                 }
                                 update(down.position.x)
                                 do {
@@ -801,13 +819,13 @@ internal fun ColorPickerPopup(
             // TextFieldState needs its own migration, as it changes how every field hoists its state
             @Suppress("DEPRECATION")
             BasicTextField(
-                value = hexText,
+                value = if (chromaEnabled && !hexFocused) colorToHex(currentColor) else hexText,
                 onValueChange = { input ->
                     val filtered = input.filter { it.isLetterOrDigit() }.take(8)
                     hexText = filtered
                     hexToColor(filtered)?.let { c ->
                         model.applyFrom(c)
-                        currentOnColorChanged(c)
+                        save()
                     }
                 },
                 singleLine = true,
@@ -818,6 +836,10 @@ internal fun ColorPickerPopup(
                 ),
                 cursorBrush = SolidColor(theme.textColor),
                 modifier = Modifier.trackTextInputFocus()
+                    .onFocusChanged {
+                        if (it.isFocused && !hexFocused) hexText = colorToHex(model.currentColor())
+                        hexFocused = it.isFocused
+                    }
                     .weight(1f)
                     .background(theme.componentBackground, LocalTheme.current.sideBarNavigationEntryShape)
                     .border(1.dp, theme.borderColor, LocalTheme.current.sideBarNavigationEntryShape)
@@ -840,7 +862,7 @@ internal fun ColorPickerPopup(
 private fun SliderValueField(
     text: String,
     onValueChange: (String) -> Unit,
-    suffix: String = "",
+    unit: String? = null,
     width: Dp = 56.dp,
 ) {
     val theme = LocalTheme.current
@@ -866,15 +888,8 @@ private fun SliderValueField(
                 textAlign = TextAlign.End,
             ),
             cursorBrush = SolidColor(theme.textColor),
+            visualTransformation = rememberUnitSuffix(unit),
             modifier = Modifier.trackTextInputFocus().weight(1f),
         )
-        if (suffix.isNotEmpty()) {
-            Text(
-                suffix,
-                color = theme.textColorSecondary,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = 4.dp),
-            )
-        }
     }
 }

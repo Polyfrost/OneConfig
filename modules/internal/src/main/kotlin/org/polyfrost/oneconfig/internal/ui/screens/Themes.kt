@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
@@ -68,6 +67,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundTheme
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.CustomThemeSpec
 import org.polyfrost.oneconfig.internal.ui.themes.CustomThemes
 import org.polyfrost.oneconfig.internal.ui.themes.GlassTint
@@ -294,7 +294,8 @@ internal fun ThemeCardShell(
     val hovered by interactionSource.collectIsHoveredAsState()
     var actionFocused by remember { mutableStateOf(false) }
     val actionAlpha by animateFloatAsState(if (hovered || actionFocused) 1f else 0f)
-    val borderColor by animateColorAsState(
+    val borderColor by animateAccentColorAsState(
+        selected,
         if (selected) Accent else theme.borderColor
     )
     val borderWidth by animateDpAsState(
@@ -669,7 +670,8 @@ private fun SoundThemeCard(option: SoundThemeOption, isSelected: Boolean, modifi
         translated("oneconfig.themes.sound_theme.${option.key}.caption", option.caption)
     }
 
-    val borderColor by animateColorAsState(
+    val borderColor by animateAccentColorAsState(
+        isSelected,
         if (isSelected) Accent else theme.borderColor
     )
     val borderWidth by animateDpAsState(

@@ -47,7 +47,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,12 +63,10 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val ChainShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-
-/** Compose's default text cursor thickness */
-private val CaretWidth = 2.dp
 
 /** One slot in the chain where [id] is stable across reorders so equal values stay distinct rows */
 private data class ChainEntry(val id: Int, val value: Float)
@@ -152,7 +149,7 @@ fun NumberChainOption(data: NumberChainOptionData) {
                         else -> baseOffset
                     }
                     val animatedOffset = animateFloatAsState(targetOffset, ReducedMotion.spec(spring()))
-                    val bgColor = animateColorAsState(if (isDragging) Accent else theme.chipBackground)
+                    val bgColor = animateAccentColorAsState(isDragging, if (isDragging) Accent else theme.chipBackground)
                     val contentColor = animateColorAsState(
                         when {
                             !movable -> theme.textColorSecondary
@@ -289,18 +286,9 @@ private fun ChainValueEditor(
     onCommit: (Float) -> Unit,
 ) {
     val theme = LocalTheme.current
-    val density = LocalDensity.current
-    val measurer = rememberTextMeasurer()
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf(formatSpinnerValue(initial)) }
     var focused by remember { mutableStateOf(false) }
-
-    val style = remember(theme) {
-        TextStyle(color = theme.textColor, fontSize = 13.sp, fontFamily = theme.typography.family)
-    }
-    // a text field fills whatever width it is given so the unit sits against a field measured to its text
-    // the field keeps room for a caret past the last digit which the unit is shifted back across
-    val fieldWidth = with(density) { measurer.measure(text, style).size.width.toDp() } + CaretWidth
 
     fun commit() = onCommit(text.toFloatOrNull()?.coerceIn(min, max) ?: initial)
 
@@ -312,21 +300,9 @@ private fun ChainValueEditor(
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { commit() }),
-        textStyle = style,
+        textStyle = TextStyle(color = theme.textColor, fontSize = 13.sp, fontFamily = theme.typography.family),
         cursorBrush = SolidColor(theme.textColor),
-        decorationBox = { innerTextField ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(fieldWidth)) { innerTextField() }
-                if (unit != null) {
-                    Text(
-                        unit,
-                        color = theme.textColor,
-                        fontSize = 13.sp,
-                        modifier = Modifier.offset(x = -CaretWidth),
-                    )
-                }
-            }
-        },
+        visualTransformation = rememberUnitSuffix(unit),
         modifier = modifier.trackTextInputFocus()
             .focusRequester(focusRequester)
             .onFocusChanged { state ->

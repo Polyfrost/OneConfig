@@ -34,12 +34,14 @@ fun Settings(hud: Hud?, query: String) {
             hud.tree?.let { HudConfigScreen(it, query) }
 
             if (hud !is LegacyHudMarker) {
+                val canReset = remember(showInF3, showInTab, showInScreens, showInChat) {
+                    hudOptionsCanReset(hud, VISIBILITY_OPTIONS)
+                }
                 CardSection(
                     "Visibility", query, "Show in F3 Screen", "Show in Tab List", "Show in GUIs", "Show in Chat",
                     onReset = { resetHudOptions(hud, VISIBILITY_OPTIONS) },
-                    canReset = remember(showInF3, showInTab, showInScreens, showInChat) {
-                        hudOptionsCanReset(hud, VISIBILITY_OPTIONS)
-                    },
+                    canReset = canReset,
+                    collapsedByDefault = !canReset,
                 ) {
                     HudSettingTarget(hud, "showInF3") {
                         SwitchRow("Show in F3 Screen", showInF3) {
