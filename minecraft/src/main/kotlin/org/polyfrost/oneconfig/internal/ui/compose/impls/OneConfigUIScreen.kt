@@ -49,6 +49,7 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
+import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
@@ -312,7 +313,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         try {
             shell.session.updatePlayerName(Minecraft.getInstance().user.name)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            UiErrors.warn("Failed to read the player name for the OneConfig UI", t)
             shell.session.updatePlayerName("Player")
         }
         val keepFocus = if (shell.search.fieldFocused) SearchFocus.Focus else SearchFocus.Unfocus
@@ -346,7 +348,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
             } else {
                 shell.session.updateVersionLabel(loaderStr)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            UiErrors.warn("Failed to build the version label for the OneConfig UI", t)
             shell.session.updateVersionLabel("OneConfig")
         }
 

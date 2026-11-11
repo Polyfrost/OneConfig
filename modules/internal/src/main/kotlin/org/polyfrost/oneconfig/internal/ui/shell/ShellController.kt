@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
+import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
@@ -207,7 +208,7 @@ class ShellTransitions {
     var lastNavWasBack: Boolean = false
         private set
 
-    fun animates(): Boolean = !awaitingInitialRoute && animatePages
+    fun animates(): Boolean = !awaitingInitialRoute && animatePages && AnimationsMotionScale.animations
 
     fun beginOpening() {
         awaitingInitialRoute = true

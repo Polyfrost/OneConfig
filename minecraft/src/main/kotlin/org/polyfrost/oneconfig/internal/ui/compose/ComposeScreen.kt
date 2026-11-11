@@ -47,6 +47,7 @@ import org.polyfrost.oneconfig.internal.ui.components.GlassLight
 import org.polyfrost.oneconfig.internal.ui.components.LocalUiOversample
 import org.polyfrost.oneconfig.internal.ui.components.LocalWheelRouter
 import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
+import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
@@ -97,7 +98,8 @@ private object SystemClipboardManager : ClipboardManager {
         return try {
             val data = ClipboardHelper.getString() ?: return null
             AnnotatedString(data)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            UiErrors.warn("Failed to read the clipboard", t, LOGGER)
             null
         }
     }
@@ -105,7 +107,8 @@ private object SystemClipboardManager : ClipboardManager {
     override fun setText(annotatedString: AnnotatedString) {
         try {
             ClipboardHelper.setString(annotatedString.text)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            UiErrors.warn("Failed to write the clipboard", t, LOGGER)
         }
     }
 
@@ -134,7 +137,8 @@ private object SystemClipboard : Clipboard {
             if (transferable != null) {
                 ClipboardHelper.setTransferable(transferable)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            UiErrors.warn("Failed to write the clipboard", t, LOGGER)
         }
     }
 }
@@ -214,10 +218,11 @@ abstract class ComposeScreen(
         if (scenePoisoned) return
         scenePoisoned = true
         sceneDirty = true
-        LOGGER.error(
+        UiErrors.error(
             "Compose scene for ${this::class.java.simpleName} failed and has been discarded; " +
                 "it will be rebuilt on the next frame.",
             cause,
+            LOGGER,
         )
     }
 
