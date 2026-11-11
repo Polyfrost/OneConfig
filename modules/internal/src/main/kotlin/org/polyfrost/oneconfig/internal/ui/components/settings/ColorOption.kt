@@ -525,7 +525,7 @@ internal fun ColorPickerPopup(
                 Text("Opacity", color = theme.textColorSecondary, fontSize = 12.sp)
                 SliderValueField(
                     text = alphaText,
-                    suffix = "%",
+                    unit = "%",
                     onValueChange = { input ->
                         val filtered = input.filter { it.isDigit() }.take(3)
                         alphaText = filtered
@@ -718,7 +718,7 @@ internal fun ColorPickerPopup(
                     Text("Speed", color = theme.textColorSecondary, fontSize = 12.sp)
                     SliderValueField(
                         text = speedText,
-                        suffix = "x",
+                        unit = "x",
                         onValueChange = { input ->
                             val filtered = filterNumberInput(input).take(4)
                             speedText = filtered
@@ -840,7 +840,7 @@ internal fun ColorPickerPopup(
 private fun SliderValueField(
     text: String,
     onValueChange: (String) -> Unit,
-    suffix: String = "",
+    unit: String? = null,
     width: Dp = 56.dp,
 ) {
     val theme = LocalTheme.current
@@ -866,15 +866,8 @@ private fun SliderValueField(
                 textAlign = TextAlign.End,
             ),
             cursorBrush = SolidColor(theme.textColor),
+            visualTransformation = rememberUnitSuffix(unit),
             modifier = Modifier.trackTextInputFocus().weight(1f),
         )
-        if (suffix.isNotEmpty()) {
-            Text(
-                suffix,
-                color = theme.textColorSecondary,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = 4.dp),
-            )
-        }
     }
 }
