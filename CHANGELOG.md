@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new Changelog page that lists every release, and a new Credits page
 - API: A public UI component kit with text fields, menus, tooltips, dialogs, buttons, tabs, player heads, drag-to-reorder lists, an Esc stack and accessibility helpers
 - API: A `swatch` option for `@Color` and the Kotlin config DSL
+- API: The `relocator` module is no longer part of the public API. It was never meant to be, and we don't believe anyone was using it anyway.
 
 ### Changed
 - The old PolyGlass theme is now called Polyfrosted

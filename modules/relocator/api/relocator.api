@@ -1,6 +1,0 @@
-public abstract interface annotation class org/polyfrost/oneconfig/relocator/annotations/MoulConfig : java/lang/annotation/Annotation {
-}
-
-public abstract interface annotation class org/polyfrost/oneconfig/relocator/annotations/RelocatedMixin : java/lang/annotation/Annotation {
-}
-

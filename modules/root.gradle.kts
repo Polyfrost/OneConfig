@@ -111,7 +111,7 @@ subprojects {
         }
     }
 
-    if (name !in listOf("internal", "compose-bundle")) {
+    if (name !in listOf("compose-bundle", "internal", "relocator")) {
         configure<KotlinJvmProjectExtension> {
             explicitApi()
             @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4
