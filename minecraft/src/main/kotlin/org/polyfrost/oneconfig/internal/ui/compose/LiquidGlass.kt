@@ -13,11 +13,17 @@ import com.mojang.renderpearl.api.textures.GpuTexture
 import com.mojang.renderpearl.api.textures.GpuTextureView
 import java.util.Collections
 import java.util.IdentityHashMap
+//? if >= 26.2 {
+import java.util.Optional
+import org.joml.Vector4fc
+//?} else
+//import java.util.OptionalInt
 //? if < 26.2
 //import java.lang.reflect.Method
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.navigation.ScreenRectangle
 import net.minecraft.client.gui.render.TextureSetup
+import net.minecraft.client.renderer.RenderPipelines
 //? if >= 26.1 {
 import net.minecraft.client.renderer.state.gui.GuiElementRenderState
 //?} else
@@ -28,6 +34,7 @@ import com.mojang.renderpearl.api.GpuFormat
 //?} else
 //import com.mojang.blaze3d.textures.TextureFormat
 import com.mojang.renderpearl.api.buffers.GpuBuffer
+import org.polyfrost.oneconfig.internal.ui.GpuBackend
 import org.polyfrost.oneconfig.internal.ui.themes.BackdropSample
 import org.slf4j.LoggerFactory
 import org.polyfrost.oneconfig.internal.mixin.render.RenderPipelinesAccessor
@@ -79,7 +86,7 @@ internal object LiquidGlass {
             view?.close()
             current?.close()
             val device = RenderSystem.getDevice()
-            val created = device.createTexture({ "OneConfig liquid glass backdrop" }, GpuTexture.USAGE_COPY_DST or GpuTexture.USAGE_TEXTURE_BINDING, color.format, main.width, main.height, 1, 1)
+            val created = device.createTexture({ "OneConfig liquid glass backdrop" }, GpuTexture.USAGE_COPY_DST or GpuTexture.USAGE_TEXTURE_BINDING or GpuTexture.USAGE_RENDER_ATTACHMENT, color.format, main.width, main.height, 1, 1)
             val createdView = device.createTextureView(created)
             texture = created
             view = createdView
@@ -228,12 +235,41 @@ internal object LiquidGlass {
         val w = src.getWidth(0)
         val h = src.getHeight(0)
         if (dst.getWidth(0) != w || dst.getHeight(0) != h || dst.format != src.format) return false
-        RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(src, dst, 0, 0, 0, 0, 0, w, h)
+        //? if >= 26.2 {
+        val blit = !GpuBackend.isVulkan && src.format == GpuFormat.RGBA8_UNORM
+        //?} else
+        //val blit = !GpuBackend.isVulkan && src.format == TextureFormat.RGBA8
+        val srcView = target.colorTextureView
+        val dstView = view
+        if (blit && srcView != null && dstView != null) blit(srcView, dstView)
+        else RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(src, dst, 0, 0, 0, 0, 0, w, h)
         if (!sampledFrame) {
             sampledFrame = true
             if (BackdropSample.due()) sample(src)
         }
         return true
+    }
+
+    private fun blit(src: GpuTextureView, dst: GpuTextureView) {
+        //? if >= 26.2 {
+        val clear = Optional.empty<Vector4fc>()
+        //?} else
+        //val clear = OptionalInt.empty()
+        RenderSystem.getDevice().createCommandEncoder().createRenderPass({ "OneConfig liquid glass backdrop" }, dst, clear).use { rp ->
+            //? if >= 26.3 {
+            rp.setPipeline(RenderSystem.getCompiledPipeline(RenderPipelines.TRACY_BLIT))
+            //?} else
+            //rp.setPipeline(RenderPipelines.TRACY_BLIT)
+            RenderSystem.bindDefaultUniforms(rp)
+            //? if >= 26.3 {
+            rp.setUniform("InSampler", src, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST))
+            //?} else
+            //rp.bindTexture("InSampler", src, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST))
+            //? if >= 26.2 {
+            rp.draw(3, 1, 0, 0)
+            //?} else
+            //rp.draw(0, 3)
+        }
     }
 
     private fun sample(src: GpuTexture) {
