@@ -164,6 +164,25 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OptionWidgets {
 	public static final fun refresh (Lorg/polyfrost/oneconfig/api/config/v1/Property;)V
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/ServerRestrictions {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ServerRestrictions;
+	public static final fun addListener (Lorg/polyfrost/oneconfig/api/ui/v1/ServerRestrictions$Listener;)V
+	public static final fun clear ()V
+	public static final fun disabledHuds ()Ljava/util/Set;
+	public static final fun disabledMods ()Ljava/util/Set;
+	public static final fun guard (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;)Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;
+	public static final fun guardHud (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;)Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;
+	public static final fun isHudDisabled (Ljava/lang/String;)Z
+	public static final fun isModDisabled (Ljava/lang/String;)Z
+	public static final fun removeListener (Lorg/polyfrost/oneconfig/api/ui/v1/ServerRestrictions$Listener;)V
+	public static final fun set (Ljava/util/Collection;Ljava/util/Collection;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ServerRestrictions$Listener {
+	public abstract fun onChange (Ljava/util/Set;)V
+}
+
 public abstract class org/polyfrost/oneconfig/api/ui/v1/SettingRowDecorator {
 	public static final field $stable I
 	public fun <init> ()V

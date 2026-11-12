@@ -58,6 +58,7 @@ import org.polyfrost.oneconfig.internal.compat.CompatLoader;
 import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
 import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
+import org.polyfrost.oneconfig.internal.compat.toggle.ServerLocks;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
@@ -337,6 +338,7 @@ public class OneConfig implements ClientModInitializer {
                     ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
                     BuiltinHudRegistrar.register();
                     ModGates.register();
+                    ServerLocks.register();
                     //? if skyblock
                     FirmamentHudCompat.register();
                     //? if > 1.8.9

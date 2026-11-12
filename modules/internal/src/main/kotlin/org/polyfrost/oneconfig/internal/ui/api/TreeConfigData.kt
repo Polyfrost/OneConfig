@@ -6,6 +6,7 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModCardIcons
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.api.ui.v1.ServerRestrictions
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedValue
 
@@ -69,7 +70,12 @@ class TreeConfigData(
             ?: modInfo?.description?.nonBlankOrNull()
 
     override val toggle: ModToggle?
-        get() = ModToggles.toggleFor(id) ?: tree.findMasterSwitch()?.let(::PropertyModToggle)
+        get() {
+            val toggle = ModToggles.toggleFor(id) ?: tree.findMasterSwitch()?.let(::PropertyModToggle)
+            // a config can be named after something other than its mod, which is what a server restricts
+            val restricted = modInfo?.id?.takeIf(ServerRestrictions::isModDisabled) ?: id
+            return ServerRestrictions.guard(restricted, toggle)
+        }
 
     private var resolvedModInfo: ModInfo? = null
 

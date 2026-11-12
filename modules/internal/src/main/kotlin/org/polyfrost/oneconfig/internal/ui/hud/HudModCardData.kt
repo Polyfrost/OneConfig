@@ -8,6 +8,7 @@ import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
+import org.polyfrost.oneconfig.api.ui.v1.ServerRestrictions
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -112,7 +113,9 @@ internal class HudModCardData(
     private fun placed(): List<Hud> =
         if (activeInstancesSnapshot().any { it === hud }) listOf(hud) else HudManager.getHudsOfType(hud::class.java)
 
-    override val toggle: ModToggle? = if (isCompatHud(hud)) null else object : ModToggle {
+    override val toggle: ModToggle? get() = ServerRestrictions.guardHud(hud.id, hiddenToggle)
+
+    private val hiddenToggle: ModToggle? = if (isCompatHud(hud)) null else object : ModToggle {
         override fun isEnabled(): Boolean {
             HudManager.revision
             HudManager.instancesRevision.intValue

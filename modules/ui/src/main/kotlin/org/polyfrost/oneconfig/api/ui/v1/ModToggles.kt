@@ -94,12 +94,29 @@ public object ModToggles {
      * Whether the [manage]d mod [modId] is switched on
      *
      * Cheap enough to call every frame. [modId] has to be the lowercase id passed to [manage].
-     * Mods OneConfig does not manage are always reported as enabled
+     * Mods OneConfig does not manage are reported as enabled unless the server restricts them, see [ServerRestrictions]
      */
     @JvmStatic
     public fun isEnabled(modId: String): Boolean {
+        if (ServerRestrictions.isModDisabled(modId)) return false
         val off = disabled
         return off.isEmpty() || modId !in off
+    }
+
+    /** Tells listeners about the managed mods a server restriction switched on or off without saving anything */
+    internal fun serverRestrictionsChanged(changed: Set<String>) {
+        bump()
+        for (key in changed) {
+            if (key !in managed || key in disabled) continue
+            val enabled = isEnabled(key)
+            listeners.forEach {
+                try {
+                    it.onToggle(key, enabled)
+                } catch (t: Throwable) {
+                    LOGGER.error("Mod toggle listener {} failed", it, t)
+                }
+            }
+        }
     }
 
     @JvmStatic
