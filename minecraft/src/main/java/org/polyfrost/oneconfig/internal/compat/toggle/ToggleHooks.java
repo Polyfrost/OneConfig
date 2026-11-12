@@ -85,7 +85,7 @@ public final class ToggleHooks {
         hook("vignettetweaks", "VignetteAir", "VignetteHealth", "VignetteHunger", "VignetteTotem");
         //? if >= 1.21.1
         hook("waveycapes", "WaveyCapes");
-        hook("wwaypoints", "WWaypoints");
+        hook("wwaypoints", "WWaypoints", "WWaypointsToasts");
         hook(YACL, "YaclSave");
         hook("yacl-load", "YaclLoad");
         hook("zoomify", "Zoomify");

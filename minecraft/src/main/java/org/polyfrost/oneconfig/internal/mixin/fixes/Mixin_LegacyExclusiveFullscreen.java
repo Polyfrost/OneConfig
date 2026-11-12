@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin.fixes;
 
 //? if >= 26.3 {
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.mojang.blaze3d.platform.MacosUtil;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.Options;
 import net.minecraft.nbt.CompoundTag;
@@ -29,7 +30,7 @@ public class Mixin_LegacyExclusiveFullscreen {
 
     @Inject(method = "load", at = @At("RETURN"))
     private void oneconfig$exclusiveForLegacyMode(CallbackInfo ci) {
-        if (!oneconfig$exclusiveSaved && LegacyVideoModeFormat.isLegacy(fullscreenVideoModeString)) exclusiveFullscreen.set(true);
+        if (!MacosUtil.IS_MACOS && !oneconfig$exclusiveSaved && LegacyVideoModeFormat.isLegacy(fullscreenVideoModeString)) exclusiveFullscreen.set(true);
     }
 }
 //?}
