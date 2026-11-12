@@ -42,6 +42,8 @@ import net.minecraft.network.chat.TextColor
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
+import org.polyfrost.oneconfig.internal.compat.GnetumCompat
+import org.polyfrost.oneconfig.internal.compat.GnetumOffscreenState
 import org.polyfrost.oneconfig.internal.ui.OffscreenTarget
 import org.polyfrost.oneconfig.internal.ui.hud.GuiTargetRedirect
 //? if >= 26.1 {
@@ -916,7 +918,7 @@ internal object McOutlines {
             val mc = Minecraft.getInstance()
             val slot = OffscreenGuiRenderers.acquire(mc)
             try {
-                renderInto(mc, slot.state, slot.renderer, rt)
+                GnetumCompat.restoring { renderInto(mc, slot.state, slot.renderer, rt) }
             } finally {
                 OffscreenGuiRenderers.release(slot)
             }
@@ -1001,7 +1003,7 @@ internal object OffscreenGuiRenderers {
     fun acquire(mc: Minecraft): Slot {
         val least = slots.minByOrNull { if (it.held) Int.MAX_VALUE else it.renders }
         val slot = least?.takeUnless { it.held || it.renders >= MAX_RENDERS_PER_FRAME || (it.renders > 0 && slots.size < spreadSlots) }
-            ?: GuiRenderState().let { Slot(it, create(mc, it)) }.also(slots::add)
+            ?: GuiRenderState().let { (it as? GnetumOffscreenState)?.`oneconfig$markOffscreen`(); Slot(it, create(mc, it)) }.also(slots::add)
         slot.held = true
         slot.renders++
         slot.lastFrame = frame
@@ -1331,7 +1333,7 @@ internal class LayerOp private constructor(
 
     private fun renderInto(mc: Minecraft, state: GuiRenderState, renderer: GuiRenderer, rt: RenderTarget, gs: Int) {
         val graphics = GuiGraphicsExtractor(mc, state, bounds.width(), bounds.height())
-        stacking(graphics) { for (op in ops) op(graphics) }
+        GnetumCompat.restoring { stacking(graphics) { for (op in ops) op(graphics) } }
         val previousTarget = GuiTargetRedirect.target
         val previousScissor = GuiTargetRedirect.scissorTransform
         val previousSize = GuiTargetRedirect.itemRenderSizePx

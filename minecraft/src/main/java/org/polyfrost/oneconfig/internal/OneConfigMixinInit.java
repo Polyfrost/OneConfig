@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+//? if >= 1.21.11
+import net.fabricmc.loader.api.FabricLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
@@ -206,6 +208,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("render.RenderPipelinesAccessor");
         mixins.add("render.Mixin_GuiRendererKeptMeshes");
         mixins.add("render.Mixin_GuiRenderStateStacking");
+        if (FabricLoader.getInstance().isModLoaded("gnetum")) mixins.add("compat.Mixin_GnetumOffscreenState");
         mixins.add("render.Mixin_UiBlur");
         mixins.add("render.PostChainAccessor");
         mixins.add("render.PostPassAccessor");
