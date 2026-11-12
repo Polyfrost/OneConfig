@@ -5,6 +5,14 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-11-12
+
+### Fixed
+- Fixed macOS getting stuck in exclusive fullscreen. Exclusive fullscreen is turned off once for existing Mac installs, including ones that share a symlinked `options.txt`
+- Fixed the PolyGlass themes flickering on integrated GPUs
+- Fixed the menus drawing wrong with Gnetum installed
+- Turning off wWaypoints in OneConfig now also hides its toasts
+
 ## [1.7.0] - 2026-11-11
 
 ### Added
