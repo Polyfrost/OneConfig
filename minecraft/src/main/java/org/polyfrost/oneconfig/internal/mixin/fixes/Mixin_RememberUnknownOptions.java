@@ -10,6 +10,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridge
 import org.lwjgl.opengl.DisplayMode;
 import org.polyfrost.oneconfig.internal.legacy.LegacyOptionsFormat;
 import org.polyfrost.oneconfig.internal.utils.LegacyVideoModeFormat;
+import org.polyfrost.oneconfig.internal.utils.MacExclusiveFullscreenReset;
 import pl.tomgirl.pylon.window.DisplaySdl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -105,12 +106,22 @@ public abstract class Mixin_RememberUnknownOptions {
     private void ocfg$applyFullscreenResolution(CallbackInfo ci) {
         int[] size = null;
         Boolean exclusive = null;
-        for (String line : ocfg$loadedLines) {
+        int exclusiveLine = -1;
+        for (int i = 0; i < ocfg$loadedLines.size(); i++) {
+            String line = ocfg$loadedLines.get(i);
             if (line.startsWith(LegacyVideoModeFormat.OPTION_PREFIX)) {
                 size = LegacyVideoModeFormat.toSize(line.substring(LegacyVideoModeFormat.OPTION_PREFIX.length()));
             } else if (line.startsWith("exclusiveFullscreen:")) {
                 exclusive = "true".equals(line.substring("exclusiveFullscreen:".length()).trim());
+                exclusiveLine = i;
             }
+        }
+        if (MacExclusiveFullscreenReset.pending(file)) {
+            if (Boolean.TRUE.equals(exclusive)) {
+                exclusive = false;
+                ocfg$loadedLines.set(exclusiveLine, "exclusiveFullscreen:false");
+            }
+            MacExclusiveFullscreenReset.reset(file);
         }
         DisplaySdl display = DisplaySdl.instance();
         if (exclusive != null) display.setExclusiveFullscreen(exclusive);
