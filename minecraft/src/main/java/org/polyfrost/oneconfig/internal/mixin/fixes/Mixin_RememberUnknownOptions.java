@@ -115,7 +115,7 @@ public abstract class Mixin_RememberUnknownOptions {
         DisplaySdl display = DisplaySdl.instance();
         if (exclusive != null) display.setExclusiveFullscreen(exclusive);
         if (size == null) return;
-        if (exclusive == null) display.setExclusiveFullscreen(true);
+        if (exclusive == null && !System.getProperty("os.name", "").startsWith("Mac")) display.setExclusiveFullscreen(true);
         display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
     }
 

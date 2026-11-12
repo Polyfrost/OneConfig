@@ -15,10 +15,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Mixin(Options.class)
-public class Mixin_LegacyExclusiveFullscreen {
+public abstract class Mixin_LegacyExclusiveFullscreen {
     @Shadow public String fullscreenVideoModeString;
     @Shadow @Final private OptionInstance<Boolean> exclusiveFullscreen;
+    @Shadow public abstract void save();
 
     @Unique private boolean oneconfig$exclusiveSaved;
 
@@ -30,7 +36,23 @@ public class Mixin_LegacyExclusiveFullscreen {
 
     @Inject(method = "load", at = @At("RETURN"))
     private void oneconfig$exclusiveForLegacyMode(CallbackInfo ci) {
-        if (!MacosUtil.IS_MACOS && !oneconfig$exclusiveSaved && LegacyVideoModeFormat.isLegacy(fullscreenVideoModeString)) exclusiveFullscreen.set(true);
+        if (MacosUtil.IS_MACOS) oneconfig$undoMacExclusive();
+        else if (!oneconfig$exclusiveSaved && LegacyVideoModeFormat.isLegacy(fullscreenVideoModeString)) exclusiveFullscreen.set(true);
+    }
+
+    @Unique
+    private void oneconfig$undoMacExclusive() {
+        Path marker = Paths.get("oneconfig", "macos-exclusive-fullscreen-reset");
+        if (Files.exists(marker)) return;
+        try {
+            Files.createDirectories(marker.getParent());
+            Files.createFile(marker);
+        } catch (IOException e) {
+            return;
+        }
+        if (!exclusiveFullscreen.get()) return;
+        exclusiveFullscreen.set(false);
+        save();
     }
 }
 //?}
