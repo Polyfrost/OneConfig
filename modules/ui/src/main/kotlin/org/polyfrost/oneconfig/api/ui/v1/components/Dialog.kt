@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -103,7 +104,9 @@ private fun DialogLayer(onDismiss: () -> Unit, dismissOnScrim: Boolean, dismissO
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            panel()
+            Box(Modifier.graphicsLayer { alpha = fade.value }) {
+                panel()
+            }
         }
     }
 }
