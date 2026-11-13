@@ -5,6 +5,7 @@ package org.polyfrost.oneconfig.api.ui.v1
 import java.util.ServiceLoader
 import java.util.concurrent.ConcurrentHashMap
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
@@ -131,4 +132,15 @@ public object OneConfigUI {
     @ExperimentalOneConfigUiApi
     @JvmStatic
     public fun isOneConfigScreen(screen: Any?): Boolean = bridge?.isOneConfigScreen(screen) ?: false
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun ensureInitialized() {
+        try {
+            Class.forName(KeybindManager::class.java.name, true, KeybindManager::class.java.classLoader)
+        } catch (t: Throwable) {
+            LOGGER.warn("Failed to arm the OneConfig keybind handlers", t)
+        }
+        bridge?.ensureInitialized()
+    }
 }

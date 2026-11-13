@@ -1,8 +1,13 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
+import java.util.concurrent.atomic.AtomicBoolean
+import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUIBridge
+import org.polyfrost.oneconfig.internal.OneConfig
+import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.resolveOpenTarget
@@ -34,4 +39,28 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
     }
 
     override fun isOneConfigScreen(screen: Any?): Boolean = screen is OneConfigUIScreen
+
+    private val startupChecked = AtomicBoolean(false)
+
+    @OptIn(ExperimentalOneConfigUiApi::class)
+    @Suppress("SENSELESS_COMPARISON")
+    override fun ensureInitialized() {
+        if (Minecraft.getInstance() == null || !startupChecked.compareAndSet(false, true)) return
+        try {
+            Class.forName(ComposeScreen::class.java.name, true, ComposeScreen::class.java.classLoader)
+        } catch (t: Throwable) {
+            LOGGER.warn("Failed to arm the OneConfig screen input handlers", t)
+        }
+        Minecraft.getInstance().schedule(Runnable { finishSkippedStartup() })
+    }
+
+    private fun finishSkippedStartup() {
+        if (OneConfig.isInitialized()) return
+        LOGGER.warn("OneConfig did not start with the game; starting it now so its screens work")
+        try {
+            OneConfig.INSTANCE.onInitializeClient()
+        } catch (t: Throwable) {
+            LOGGER.error("OneConfig failed to start late", t)
+        }
+    }
 }

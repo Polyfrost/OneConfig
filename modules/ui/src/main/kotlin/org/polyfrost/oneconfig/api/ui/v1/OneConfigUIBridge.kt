@@ -11,4 +11,7 @@ public interface OneConfigUIBridge {
     public fun open(route: Any?)
 
     public fun isOneConfigScreen(screen: Any?): Boolean = false
+
+    @ExperimentalOneConfigUiApi
+    public fun ensureInitialized() {}
 }
