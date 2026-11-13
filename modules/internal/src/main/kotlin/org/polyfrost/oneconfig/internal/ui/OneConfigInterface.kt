@@ -32,7 +32,9 @@ import kotlin.math.pow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.FeedbackHosts
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalSearchFieldFocused
@@ -56,6 +58,7 @@ private const val MAX_CLOSE_ANIMATION_MS = 160L
 
 private const val GRAPH_WAIT_TIMEOUT_MS = 10_000L
 
+@OptIn(InternalOneConfigUiApi::class)
 @Composable
 fun OneConfigInterface(
     windowWidth: Float,
@@ -186,18 +189,21 @@ fun OneConfigInterface(
                             label = "hudDragShellAlpha"
                         )
 
-                        RetainedVisibility(
-                            visible = visible,
-                            enter = tween(enterMs, easing = EaseOutExpo),
-                            exit = tween(exitMs, easing = EaseOutCubic),
-                            alphaMultiplier = dragAlpha,
-                            openKey = openRevision,
-                            modifier = Modifier.onGloballyPositioned {
-                                shell.layout.updateShellBounds(it.boundsInRoot())
-                            },
-                        ) { _ ->
-                            Shell(windowWidth, windowHeight, shellBackdrop)
+                        val shellContent: @Composable () -> Unit = {
+                            RetainedVisibility(
+                                visible = visible,
+                                enter = tween(enterMs, easing = EaseOutExpo),
+                                exit = tween(exitMs, easing = EaseOutCubic),
+                                alphaMultiplier = dragAlpha,
+                                openKey = openRevision,
+                                modifier = Modifier.onGloballyPositioned {
+                                    shell.layout.updateShellBounds(it.boundsInRoot())
+                                },
+                            ) { _ ->
+                                Shell(windowWidth, windowHeight, shellBackdrop)
+                            }
                         }
+                        if (shell.warming) shellContent() else FeedbackHosts(shellContent)
                     }
                 }
             }

@@ -87,15 +87,15 @@ public object ToastDefaults {
 @ExperimentalOneConfigUiApi
 @Composable
 public fun ToastHost(modifier: Modifier = Modifier, alignment: Alignment = ToastDefaults.alignment) {
-    ToastHostLayer(modifier, alignment, fallback = false)
+    val slot = Toasts.hosts.rememberSlot(fallback = false, depth = feedbackDepth())
+    ToastHostLayer(slot, modifier, alignment)
 }
 
 @Composable
-internal fun ToastHostLayer(modifier: Modifier, alignment: Alignment, fallback: Boolean) {
-    val slot = Toasts.hosts.rememberSlot(fallback)
-    if (!Toasts.hosts.isActive(slot)) return
+internal fun ToastHostLayer(slot: Any, modifier: Modifier, alignment: Alignment) {
     val shown = Toasts.queue.take(ToastDefaults.maxVisible)
     if (shown.isEmpty()) return
+    if (!Toasts.hosts.isActive(slot)) return
     val marginPx = with(LocalDensity.current) { ToastDefaults.margin.roundToPx() }
     val provider = remember(alignment, marginPx) { WindowAlignedPosition(alignment, marginPx) }
     val fromBottom = alignment == Alignment.BottomStart || alignment == Alignment.BottomCenter || alignment == Alignment.BottomEnd

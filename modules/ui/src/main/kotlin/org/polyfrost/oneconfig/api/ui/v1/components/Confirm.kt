@@ -18,7 +18,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.delay
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
 
@@ -50,8 +49,10 @@ public object Confirm {
         mutateFeedbackState { queue += request }
     }
 
-    internal fun finish(request: Request) {
-        mutateFeedbackState { queue -= request }
+    internal fun finish(request: Request): Boolean {
+        var removed = false
+        mutateFeedbackState { removed = queue.remove(request) }
+        return removed
     }
 }
 
@@ -69,20 +70,16 @@ public object ConfirmDefaults {
 }
 
 @Composable
-internal fun ConfirmHost() {
-    val slot = Confirm.hosts.rememberSlot(fallback = false)
-    if (!Confirm.hosts.isActive(slot)) return
+internal fun ConfirmHost(slot: Any) {
     val request = Confirm.queue.firstOrNull() ?: return
-    if (runCatching { Platform.screen().current<Any?>() }.getOrNull() == null) return
+    if (!Confirm.hosts.isActive(slot)) return
+    if (currentScreen() == null) return
     key(request) {
         ConfirmDialog(
             request.title,
             request.text,
             request.confirmLabel,
-            onConfirm = {
-                Confirm.finish(request)
-                request.onConfirm()
-            },
+            onConfirm = { if (Confirm.finish(request)) request.onConfirm() },
             onDismiss = { Confirm.finish(request) },
             style = request.style,
             icon = request.icon,

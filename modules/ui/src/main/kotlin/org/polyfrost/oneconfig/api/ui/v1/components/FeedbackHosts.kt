@@ -10,36 +10,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 
-private val LocalFeedbackHosted = staticCompositionLocalOf { false }
+private val LocalFeedbackDepth = staticCompositionLocalOf { 0 }
 
 @InternalOneConfigUiApi
 @ExperimentalOneConfigUiApi
 @Composable
 public fun FeedbackHosts(content: @Composable () -> Unit) {
-    if (LocalFeedbackHosted.current) {
+    val depth = LocalFeedbackDepth.current + 1
+    val confirmSlot = Confirm.hosts.rememberSlot(fallback = false, depth = depth)
+    val toastSlot = Toasts.hosts.rememberSlot(fallback = true, depth = depth)
+    CompositionLocalProvider(LocalFeedbackDepth provides depth) {
         content()
-        return
-    }
-    CompositionLocalProvider(LocalFeedbackHosted provides true) {
-        content()
-        ConfirmHost()
-        ToastHostLayer(Modifier, ToastDefaults.alignment, fallback = true)
+        ConfirmHost(confirmSlot)
+        ToastHostLayer(toastSlot, Modifier, ToastDefaults.alignment)
     }
 }
 
+@Composable
+internal fun feedbackDepth(): Int = LocalFeedbackDepth.current
+
 internal class HostStack {
-    private class Entry(val token: Any, val fallback: Boolean)
+    private class Entry(val token: Any, val fallback: Boolean, val depth: Int, val owner: Any?)
 
     private val entries = mutableStateListOf<Entry>()
 
     @Composable
-    fun rememberSlot(fallback: Boolean): Any {
+    fun rememberSlot(fallback: Boolean, depth: Int): Any {
         val token = remember { Any() }
-        DisposableEffect(token, fallback) {
-            val entry = Entry(token, fallback)
+        val owner = remember { currentScreen() }
+        DisposableEffect(token, fallback, depth) {
+            val entry = Entry(token, fallback, depth, owner)
             entries += entry
             onDispose { entries -= entry }
         }
@@ -47,10 +51,16 @@ internal class HostStack {
     }
 
     fun isActive(token: Any): Boolean {
-        val active = entries.lastOrNull { !it.fallback } ?: entries.lastOrNull()
-        return active?.token === token
+        val screen = currentScreen()
+        val onScreen = if (screen == null) emptyList() else entries.filter { it.owner === screen }
+        val candidates = onScreen.ifEmpty { entries.toList() }
+        val preferred = candidates.filter { !it.fallback }.ifEmpty { candidates }
+        val deepest = preferred.maxOfOrNull { it.depth } ?: return false
+        return preferred.lastOrNull { it.depth == deepest }?.token === token
     }
 }
+
+internal fun currentScreen(): Any? = runCatching { Platform.screen().current<Any?>() }.getOrNull()
 
 internal fun mutateFeedbackState(block: () -> Unit) {
     if (Snapshot.current.readOnly) Snapshot.global { Snapshot.withMutableSnapshot(block) }
