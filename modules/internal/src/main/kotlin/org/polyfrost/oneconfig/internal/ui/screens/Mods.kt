@@ -560,6 +560,7 @@ private val ModCardToggleRing = 12.dp
 private val ModCardToggleGlow = 5.dp
 
 private const val ModCardToggleRingDarken = 0.42f
+private val ModCardToggleRingShade = Color(0xFF181600)
 
 /**
  * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
@@ -770,7 +771,7 @@ fun ModCard(
                         modifier = Modifier.size(ModCardToggleRing),
                     )
                 } else Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
-                    val shade = theme.shadowColor.copy(alpha = 1f)
+                    val shade = ModCardToggleRingShade
                     val unavailable = theme.controlTrackColor
                     val ringStart = if (toggle != null) lerp(Accent, shade, ModCardToggleRingDarken) else unavailable.copy(alpha = 0.5f)
                     val ringEnd = if (toggle != null) lerp(AccentEnd, shade, ModCardToggleRingDarken) else ringStart
