@@ -4,33 +4,26 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -38,35 +31,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.delay
+import org.polyfrost.oneconfig.api.ui.v1.components.ArmedConfirmButton
+import org.polyfrost.oneconfig.api.ui.v1.components.Chip
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerPopup
+import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuHeading
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.SegmentedChips
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
 import org.polyfrost.oneconfig.internal.ui.components.glassHover
-import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
 import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
-import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.SliderControl
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
-import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
-import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.CustomBase
 import org.polyfrost.oneconfig.internal.ui.themes.CustomCorners
@@ -79,7 +76,6 @@ import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.contrastRatio
 import org.polyfrost.oneconfig.internal.ui.themes.customSpec
 import org.polyfrost.oneconfig.internal.ui.themes.isCustom
-import org.polyfrost.oneconfig.internal.ui.themes.palette
 import org.polyfrost.oneconfig.internal.ui.themes.previewAsset
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import kotlin.math.roundToInt
@@ -90,13 +86,11 @@ private const val SECONDARY_CONTRAST = 3f
 
 private val EditorLabelWidth = 110.dp
 
-private val EditorControlHeight = 30.dp
+private val EditorControlHeight = ControlSize.Compact.height
 
 private val EditorFieldWidth = 320.dp
 
 private val EditorGap = 8.dp
-
-private val DangerColor = Color(0xFFE35B5B)
 
 private fun baseOf(theme: UITheme): CustomBase = theme.customSpec?.base ?: when {
     theme.liquidGlass -> CustomBase.POLYGLASS
@@ -145,6 +139,76 @@ internal fun createCustomFrom(source: UITheme): Boolean {
     return true
 }
 
+private fun duplicateCustom(spec: CustomThemeSpec): EditorNotice? {
+    val copy = CustomThemes.import(spec.encode()) ?: return EditorNotice.Message(fullMessage())
+    val named = copy.copy(name = customCopyName(spec.name))
+    CustomThemes.update(named)
+    activateCustom(named)
+    return null
+}
+
+private fun copyCodeNotice(spec: CustomThemeSpec): EditorNotice =
+    if (ClipboardHelper.setString(spec.encode())) {
+        EditorNotice.Message(translated("oneconfig.themes.custom.copied", "Code copied"))
+    } else {
+        EditorNotice.Message(translated("oneconfig.themes.custom.copy_failed", "Couldn't reach the clipboard"))
+    }
+
+private fun deleteCustom(spec: CustomThemeSpec) {
+    if (ThemeRegistry.activeTheme?.customSpec?.id == spec.id) {
+        val fallback = ThemeRegistry.registry.firstOrNull { !it.isCustom && baseOf(it) == spec.base && it.isLight == spec.light }
+            ?: ThemeRegistry.registry.firstOrNull { !it.isCustom }
+        fallback?.let(ThemeRegistry::activate)
+    }
+    CustomThemes.remove(spec.id)
+}
+
+private fun askDeleteCustom(spec: CustomThemeSpec) {
+    Confirm.ask(
+        translated("oneconfig.themes.custom.delete_title", "Delete \"%s\"?", spec.name),
+        translated("oneconfig.themes.custom.delete_text", "This custom theme will be gone for good. Copy its code first if you want to keep it."),
+        translated("oneconfig.themes.custom.delete", "Delete"),
+        { deleteCustom(spec) },
+        icon = "trash",
+    )
+}
+
+private fun customThemeMenu(spec: CustomThemeSpec, active: Boolean, onNotice: (EditorNotice?) -> Unit): List<MenuEntry> {
+    val full = CustomThemes.specs.size >= CustomThemeSpec.MAX
+    return listOf(
+        MenuAction(
+            translated("oneconfig.themes.menu.activate", "Activate"),
+            { activateCustom(spec) },
+            icon = "check-circle",
+            enabled = !active,
+        ),
+        MenuAction(
+            translated("oneconfig.themes.menu.edit", "Edit"),
+            { if (!active) activateCustom(spec) },
+            icon = "paintbrush",
+        ),
+        MenuAction(
+            translated("oneconfig.themes.custom.duplicate", "Duplicate"),
+            { duplicateCustom(spec)?.let { onNotice(it) } },
+            icon = "copy-plus",
+            enabled = !full,
+            disabledReason = if (full) fullMessage() else null,
+        ),
+        MenuAction(
+            translated("oneconfig.themes.custom.copy", "Copy code"),
+            { onNotice(copyCodeNotice(spec)) },
+            icon = "copy",
+        ),
+        MenuSeparator,
+        MenuAction(
+            translated("oneconfig.themes.custom.delete", "Delete"),
+            { askDeleteCustom(spec) },
+            icon = "trash",
+            danger = true,
+        ),
+    )
+}
+
 private fun baseLabel(base: CustomBase): String = when (base) {
     CustomBase.POLYFROSTED -> translated("oneconfig.themes.custom.base.polyfrosted", "Polyfrosted")
     CustomBase.POLYGLASS -> translated("oneconfig.themes.custom.base.polyglass", "PolyGlass")
@@ -169,7 +233,7 @@ private fun fixContrast(color: Color, background: Color, target: Float): Color {
 }
 
 @Composable
-internal fun CustomThemeCard(modifier: Modifier, onPaste: () -> Unit) {
+internal fun CustomThemeCard(modifier: Modifier, onNotice: (EditorNotice?) -> Unit) {
     val theme = LocalTheme.current
     val specs = CustomThemes.specs
     val active = theme.customSpec
@@ -193,111 +257,75 @@ internal fun CustomThemeCard(modifier: Modifier, onPaste: () -> Unit) {
         },
         controls = {
             if (shown != null) {
-                ThemeDropdown(specs, shown, { it.name }) { spec ->
+                ThemeSelect(specs, shown, { it.name }) { spec ->
                     pickedId = spec.id
-                    if (active != null) activateCustom(spec) else UiSounds.play(UiSoundEvent.CLICK)
+                    if (active != null) activateCustom(spec)
                 }
             }
             if (specs.size < CustomThemeSpec.MAX) StartFromButton(startOpen) { startOpen = it }
             if (active == null) {
-                SquareControlButton("clipboard", translated("oneconfig.themes.tooltip.custom_paste", "Add a theme from a code"), onPaste)
+                IconButton(
+                    "clipboard",
+                    translated("oneconfig.themes.tooltip.custom_paste", "Add a theme from a code"),
+                    { onNotice(pastedThemeNotice()) },
+                    style = IconButtonStyle.Framed,
+                    size = ControlSize.Compact,
+                    tooltipPlacement = TooltipPlacement.AboveCenter,
+                )
             }
         },
         footer = {
             ThemeCaption(translated("oneconfig.themes.caption.custom", "Make your own from any theme"))
+        },
+        menu = {
+            if (shown == null) emptyList() else customThemeMenu(shown, active?.id == shown.id, onNotice)
         },
     )
 }
 
 @Composable
 private fun StartFromButton(open: Boolean, onOpenChange: (Boolean) -> Unit) {
-    val theme = LocalTheme.current
     Box {
-        SquareControlButton("plus", translated("oneconfig.themes.tooltip.custom_new", "New custom theme")) { onOpenChange(!open) }
-        SimpleDropdownMenu(
-            expanded = open,
-            onDismissRequest = { onOpenChange(false) },
-            offset = DpOffset(0.dp, 8.dp),
-        ) {
-            Column(
-                Modifier
-                    .width(240.dp)
-                    .clip(theme.popupShape)
-                    .background(theme.popupBackground, theme.popupShape)
-                    .border(1.dp, theme.borderColor, theme.popupShape)
-                    .padding(6.dp),
-            ) {
-                StartFromHeading(translated("oneconfig.themes.custom.start_from", "Start from"))
-                Column(
-                    Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    ThemeRegistry.registry.filterNot { it.isCustom }.forEach { source ->
-                        StartFromRow(source.name, {
-                            @Suppress("DEPRECATION")
-                            Image(
-                                painter = painterResource("/assets/oneconfig/images/${source.previewAsset}.svg"),
-                                contentDescription = null,
-                                modifier = Modifier.size(StartFromPreviewWidth, StartFromPreviewHeight),
-                            )
-                        }) {
-                            onOpenChange(false)
-                            createCustomFrom(source)
-                        }
-                    }
-                    if (CustomThemes.specs.isNotEmpty()) {
-                        StartFromHeading(translated("oneconfig.themes.custom.start_from.yours", "Your custom themes"))
-                        CustomThemes.specs.forEach { spec ->
-                            StartFromRow(spec.name, {
-                                CustomThemePreview(spec, Modifier.size(StartFromPreviewWidth, StartFromPreviewHeight))
-                            }) {
-                                onOpenChange(false)
-                                createCustomFrom(customTheme(spec))
-                            }
-                        }
-                    }
-                }
-            }
+        IconButton(
+            "plus",
+            translated("oneconfig.themes.tooltip.custom_new", "New custom theme"),
+            { onOpenChange(!open) },
+            style = IconButtonStyle.Framed,
+            size = ControlSize.Compact,
+            tooltipPlacement = TooltipPlacement.AboveCenter,
+        )
+        if (open) DropdownMenu(true, { onOpenChange(false) }, startFromEntries())
+    }
+}
+
+private fun startFromEntries(): List<MenuEntry> = buildList {
+    add(MenuHeading(translated("oneconfig.themes.custom.start_from", "Start from")))
+    ThemeRegistry.registry.filterNot { it.isCustom }.forEach { source ->
+        add(MenuAction(source.name, { createCustomFrom(source) }, leading = { StartFromPreview(source.previewAsset) }))
+    }
+    val yours = CustomThemes.specs.toList()
+    if (yours.isNotEmpty()) {
+        add(MenuHeading(translated("oneconfig.themes.custom.start_from.yours", "Your custom themes")))
+        yours.forEach { spec ->
+            add(
+                MenuAction(
+                    spec.name,
+                    { createCustomFrom(customTheme(spec)) },
+                    leading = { CustomThemePreview(spec, Modifier.size(StartFromPreviewWidth, StartFromPreviewHeight)) },
+                )
+            )
         }
     }
 }
 
+@Suppress("DEPRECATION")
 @Composable
-private fun StartFromHeading(text: String) {
-    Text(
-        text,
-        color = LocalTheme.current.textColorSecondary,
-        fontSize = 12.sp,
-        modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
+private fun StartFromPreview(asset: String) {
+    Image(
+        painter = painterResource("/assets/oneconfig/images/$asset.svg"),
+        contentDescription = null,
+        modifier = Modifier.size(StartFromPreviewWidth, StartFromPreviewHeight),
     )
-}
-
-@Composable
-private fun StartFromRow(name: String, preview: @Composable () -> Unit, onPick: () -> Unit) {
-    val theme = LocalTheme.current
-    val source = rememberInteractionSource()
-    val hovered by source.collectIsHoveredAsState()
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(if (hovered) theme.modCardBackground else Color.Transparent, theme.buttonShape)
-            .hoverable(source)
-            .keepSearchFocus()
-            .clickable(source, indication = null, onClick = onPick)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        preview()
-        Text(
-            name,
-            color = theme.textColor,
-            fontSize = 13.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
 }
 
 @Composable
@@ -394,16 +422,21 @@ internal fun ThemeCodeNotice(notice: EditorNotice, onNotice: (EditorNotice?) -> 
                 color = theme.textColor,
                 fontSize = 13.sp,
             )
-            EditorButton(translated("oneconfig.themes.custom.import", "Add"), selected = true) {
-                val imported = CustomThemes.import(notice.code)
-                if (imported == null) {
-                    onNotice(EditorNotice.Message(fullMessage()))
-                } else {
-                    onNotice(null)
-                    activateCustom(imported)
-                }
-            }
-            EditorButton(translated("oneconfig.themes.custom.cancel", "Cancel")) { onNotice(null) }
+            TextButton(
+                translated("oneconfig.themes.custom.import", "Add"),
+                {
+                    val imported = CustomThemes.import(notice.code)
+                    if (imported == null) {
+                        onNotice(EditorNotice.Message(fullMessage()))
+                    } else {
+                        onNotice(null)
+                        activateCustom(imported)
+                    }
+                },
+                style = ControlStyle.Primary,
+                size = ControlSize.Compact,
+            )
+            TextButton(translated("oneconfig.themes.custom.cancel", "Cancel"), { onNotice(null) }, size = ControlSize.Compact)
         }
     }
 }
@@ -412,7 +445,6 @@ internal fun ThemeCodeNotice(notice: EditorNotice, onNotice: (EditorNotice?) -> 
 internal fun CustomThemeEditor(spec: CustomThemeSpec, noticeState: MutableState<EditorNotice?>) {
     val theme = LocalTheme.current
     var notice by noticeState
-    var confirmDelete by remember(spec.id) { mutableStateOf(false) }
     val update: (CustomThemeSpec) -> Unit = { CustomThemes.update(it) }
     Column(
         Modifier
@@ -438,15 +470,17 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec, noticeState: MutableState<
         }
         EditorRow(translated("oneconfig.themes.custom.base", "Base")) {
             FlexibleLayout(horizontalSpacing = EditorGap, verticalSpacing = EditorGap) {
-                CustomBase.entries.forEach { base ->
-                    EditorButton(baseLabel(base), selected = spec.base == base) {
-                        if (spec.base != base) update(spec.copy(base = base))
-                    }
-                }
-                SegmentGroup {
-                    ToggleSegment("moon", lightHint(false), !spec.light) { update(spec.copy(light = false)); UiSounds.play(UiSoundEvent.CLICK) }
-                    ToggleSegment("sun", lightHint(true), spec.light) { update(spec.copy(light = true)); UiSounds.play(UiSoundEvent.CLICK) }
-                }
+                SegmentedChips(
+                    CustomBase.entries,
+                    spec.base,
+                    { if (it != spec.base) update(spec.copy(base = it)) },
+                    label = ::baseLabel,
+                    size = ControlSize.Compact,
+                )
+                IconSegments(
+                    listOf(IconSegment(false, "moon", lightHint(false)), IconSegment(true, "sun", lightHint(true))),
+                    spec.light,
+                ) { update(spec.copy(light = it)) }
             }
         }
         EditorRow(translated("oneconfig.themes.custom.colours", "Colours")) {
@@ -483,33 +517,40 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec, noticeState: MutableState<
                         color = theme.textColorSecondary,
                         fontSize = 13.sp,
                     )
-                    EditorButton(translated("oneconfig.themes.custom.contrast.fix", "Fix")) {
-                        update(
-                            spec.copy(
-                                text = if (textLow) fixContrast(spec.text, spec.background, TEXT_CONTRAST) else spec.text,
-                                textSecondary = if (secondaryLow) fixContrast(spec.textSecondary, spec.background, SECONDARY_CONTRAST) else spec.textSecondary,
+                    TextButton(
+                        translated("oneconfig.themes.custom.contrast.fix", "Fix"),
+                        {
+                            update(
+                                spec.copy(
+                                    text = if (textLow) fixContrast(spec.text, spec.background, TEXT_CONTRAST) else spec.text,
+                                    textSecondary = if (secondaryLow) fixContrast(spec.textSecondary, spec.background, SECONDARY_CONTRAST) else spec.textSecondary,
+                                )
                             )
-                        )
-                    }
+                        },
+                        size = ControlSize.Compact,
+                    )
                 }
             }
         }
         EditorRow(translated("oneconfig.themes.custom.accent", "Accent")) {
             Row(horizontalArrangement = Arrangement.spacedBy(EditorGap), verticalAlignment = Alignment.CenterVertically) {
                 ColorField(null, spec.accent ?: PlayerAccent, spec.accent != null) { update(spec.copy(accent = it)) }
-                EditorButton(translated("oneconfig.themes.custom.accent.player", "Use my accent"), selected = spec.accent == null) {
-                    if (spec.accent != null) update(spec.copy(accent = null))
-                }
+                Chip(
+                    translated("oneconfig.themes.custom.accent.player", "Use my accent"),
+                    spec.accent == null,
+                    { if (spec.accent != null) update(spec.copy(accent = null)) },
+                    size = ControlSize.Compact,
+                )
             }
         }
         EditorRow(translated("oneconfig.themes.custom.corners", "Corners")) {
-            FlexibleLayout(horizontalSpacing = EditorGap, verticalSpacing = EditorGap) {
-                CustomCorners.entries.forEach { corners ->
-                    EditorButton(cornersLabel(corners), selected = spec.corners == corners) {
-                        if (spec.corners != corners) update(spec.copy(corners = corners))
-                    }
-                }
-            }
+            SegmentedChips(
+                CustomCorners.entries,
+                spec.corners,
+                { if (it != spec.corners) update(spec.copy(corners = it)) },
+                label = ::cornersLabel,
+                size = ControlSize.Compact,
+            )
         }
         if (spec.base == CustomBase.POLYGLASS) {
             EditorRow(translated("oneconfig.themes.custom.glass", "Glass")) {
@@ -532,49 +573,33 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec, noticeState: MutableState<
         }
         EditorRow("") {
             FlexibleLayout(horizontalSpacing = EditorGap, verticalSpacing = EditorGap) {
-                ThemeHint(translated("oneconfig.themes.tooltip.custom_copy", "Copy a code you can share")) {
-                    EditorButton(translated("oneconfig.themes.custom.copy", "Copy code"), icon = "copy") {
-                        notice = if (ClipboardHelper.setString(spec.encode())) {
-                            EditorNotice.Message(translated("oneconfig.themes.custom.copied", "Code copied"))
-                        } else {
-                            EditorNotice.Message(translated("oneconfig.themes.custom.copy_failed", "Couldn't reach the clipboard"))
-                        }
-                    }
+                TooltipBox(translated("oneconfig.themes.tooltip.custom_copy", "Copy a code you can share"), placement = TooltipPlacement.AboveCenter) {
+                    TextButton(translated("oneconfig.themes.custom.copy", "Copy code"), "copy", { notice = copyCodeNotice(spec) }, size = ControlSize.Compact)
                 }
-                ThemeHint(translated("oneconfig.themes.tooltip.custom_paste", "Add a theme from a code")) {
-                    EditorButton(translated("oneconfig.themes.custom.paste", "Paste code"), icon = "clipboard") {
-                        notice = pastedThemeNotice()
-                    }
+                TooltipBox(translated("oneconfig.themes.tooltip.custom_paste", "Add a theme from a code"), placement = TooltipPlacement.AboveCenter) {
+                    TextButton(translated("oneconfig.themes.custom.paste", "Paste code"), "clipboard", { notice = pastedThemeNotice() }, size = ControlSize.Compact)
                 }
-                EditorButton(translated("oneconfig.themes.custom.duplicate", "Duplicate"), icon = "copy-plus") {
-                    val copy = CustomThemes.import(spec.encode())
-                    if (copy == null) {
-                        notice = EditorNotice.Message(fullMessage())
-                    } else {
-                        val named = copy.copy(name = customCopyName(spec.name))
-                        update(named)
-                        activateCustom(named)
-                    }
+                TextButton(
+                    translated("oneconfig.themes.custom.duplicate", "Duplicate"),
+                    "copy-plus",
+                    { duplicateCustom(spec)?.let { notice = it } },
+                    size = ControlSize.Compact,
+                )
+                TooltipBox(translated("oneconfig.themes.tooltip.custom_reset", "Put the colours back to the base theme's"), placement = TooltipPlacement.AboveCenter) {
+                    TextButton(
+                        translated("oneconfig.themes.custom.reset", "Reset to base"),
+                        "refresh",
+                        { update(CustomThemeSpec.fromBase(spec.id, spec.name, spec.base, spec.light)) },
+                        size = ControlSize.Compact,
+                    )
                 }
-                ThemeHint(translated("oneconfig.themes.tooltip.custom_reset", "Put the colours back to the base theme's")) {
-                    EditorButton(translated("oneconfig.themes.custom.reset", "Reset to base"), icon = "refresh") {
-                        update(CustomThemeSpec.fromBase(spec.id, spec.name, spec.base, spec.light))
-                    }
-                }
-                EditorButton(
-                    if (confirmDelete) translated("oneconfig.themes.custom.delete_confirm", "Click again to delete") else translated("oneconfig.themes.custom.delete", "Delete"),
-                    icon = "trash",
-                    danger = true,
-                    selected = confirmDelete,
-                ) {
-                    if (!confirmDelete) {
-                        confirmDelete = true
-                    } else {
-                        val fallback = ThemeRegistry.registry.firstOrNull { !it.isCustom && baseOf(it) == spec.base && it.isLight == spec.light }
-                            ?: ThemeRegistry.registry.firstOrNull { !it.isCustom }
-                        fallback?.let(ThemeRegistry::activate)
-                        CustomThemes.remove(spec.id)
-                    }
+                key(spec.id) {
+                    ArmedConfirmButton(
+                        translated("oneconfig.themes.custom.delete", "Delete"),
+                        { deleteCustom(spec) },
+                        armedText = translated("oneconfig.themes.custom.delete_confirm", "Click again to delete"),
+                        size = ControlSize.Compact,
+                    )
                 }
             }
         }
@@ -597,55 +622,15 @@ private fun EditorRow(label: String, content: @Composable () -> Unit) {
     }
 }
 
-@Composable
-private fun EditorButton(
-    label: String,
-    icon: String? = null,
-    selected: Boolean = false,
-    danger: Boolean = false,
-    onClick: () -> Unit,
-) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val shape = theme.buttonShape
-    val fill = when {
-        selected && danger -> DangerColor
-        selected -> Accent
-        else -> theme.componentBackground
-    }
-    val ink = when {
-        selected && danger -> Color.White
-        selected -> theme.accentTextColor
-        danger -> DangerColor
-        else -> theme.textColor
-    }
-    Row(
-        Modifier
-            .height(EditorControlHeight)
-            .liquidGlass(shape)
-            .background(fill, shape)
-            .border(1.dp, if (danger) DangerColor.copy(alpha = 0.6f) else if (selected) Color.Transparent else theme.borderColor, shape)
-            .glassHover(shape, pull = 0.75.dp)
-            .keepSearchFocus()
-            .clickable(interactionSource, indication = null, onClick = onClick)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (icon != null) Icon(icon, color = ink, modifier = Modifier.size(14.dp))
-        Text(label, color = ink, fontSize = 13.sp, maxLines = 1)
-    }
-}
-
 private fun opaqueHex(color: Color): String = "#%06X".format(color.toArgb() and 0xFFFFFF)
 
 @Composable
 private fun ColorField(label: String?, color: Color, selected: Boolean, onChange: (Color) -> Unit) {
     val theme = LocalTheme.current
     var expanded by remember { mutableStateOf(false) }
-    val interactionSource = rememberInteractionSource()
     val shape = theme.buttonShape
+    val circle = theme.shapes.circle
+    val hex = opaqueHex(color)
     Box {
         Row(
             Modifier
@@ -654,9 +639,12 @@ private fun ColorField(label: String?, color: Color, selected: Boolean, onChange
                 .background(theme.componentBackground, shape)
                 .border(if (selected) 2.dp else 1.dp, if (selected) Accent else theme.borderColor, shape)
                 .glassHover(shape, pull = 0.75.dp)
-                .keepSearchFocus()
-                .clickable(interactionSource, indication = null) { expanded = !expanded }
-                .pointerHoverIcon(PointerIcon.Hand)
+                .oneConfigClickable(
+                    if (label == null) hex else "$label $hex",
+                    { expanded = !expanded },
+                    shape = shape,
+                    indication = false,
+                )
                 .padding(horizontal = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -664,27 +652,19 @@ private fun ColorField(label: String?, color: Color, selected: Boolean, onChange
             Box(
                 Modifier
                     .size(14.dp)
-                    .background(color.copy(alpha = 1f), CircleShape)
-                    .border(1.dp, theme.borderColor, CircleShape)
+                    .background(color.copy(alpha = 1f), circle)
+                    .border(1.dp, theme.borderColor, circle)
             )
             if (label != null) Text(label, color = theme.textColor, fontSize = 13.sp, maxLines = 1)
-            Text(opaqueHex(color), color = theme.textColorSecondary, fontSize = 13.sp, maxLines = 1)
+            Text(hex, color = theme.textColorSecondary, fontSize = 13.sp, maxLines = 1)
         }
         if (expanded) {
-            ShellPopup(
-                alignment = Alignment.TopStart,
-                offset = IntOffset(0, 38),
-                onDismissRequest = { expanded = false },
-                properties = PopupProperties(focusable = true),
-            ) {
-                val model = remember { ColorPickerModel(color.copy(alpha = 1f), false) }
-                ColorPickerPopup(
-                    model = model,
-                    onColorChanged = { onChange(it.copy(alpha = color.alpha)) },
-                    onClose = { expanded = false },
-                    chromaCapable = false,
-                )
-            }
+            val model = rememberColorPickerModel(color.copy(alpha = 1f), hasAlpha = false)
+            ColorPickerPopup(
+                model,
+                { onChange(it.copy(alpha = color.alpha)) },
+                { expanded = false },
+            )
         }
     }
 }
