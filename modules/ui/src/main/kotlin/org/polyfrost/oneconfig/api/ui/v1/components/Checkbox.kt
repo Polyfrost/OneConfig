@@ -89,7 +89,7 @@ internal fun CheckboxBox(checked: Boolean, hovered: Boolean, modifier: Modifier)
         contentAlignment = Alignment.Center,
     ) {
         AnimatedVisibility(checked, enter = Motion.enter(fadeIn(tween(FADE_MILLIS))), exit = Motion.exit(fadeOut(tween(FADE_MILLIS)))) {
-            Icon("tick", theme.textColor, Modifier.size(TICK_SIZE))
+            Icon("tick", null, Modifier.size(TICK_SIZE), tint = theme.textColor)
         }
     }
 }

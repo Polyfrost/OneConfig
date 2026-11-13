@@ -98,6 +98,7 @@ public fun Text(
     }
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun Text(
@@ -125,21 +126,21 @@ public fun Text(
 @ExperimentalOneConfigUiApi
 @Composable
 public fun Text(text: Any, modifier: Modifier, color: Color) {
-    Text(text, modifier, color, 14.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
+    AnyText(text, modifier, color, OneConfigTheme.typography.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Normal), TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun Text(text: Any, modifier: Modifier, color: Color, fontSize: TextUnit) {
-    Text(text, modifier, color, fontSize, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
+    AnyText(text, modifier, color, OneConfigTheme.typography.body.copy(fontSize = fontSize, fontWeight = FontWeight.Normal), TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun Text(text: Any, modifier: Modifier, color: Color, fontSize: TextUnit, fontWeight: FontWeight) {
-    Text(text, modifier, color, fontSize, null, BaselineShift.None, fontWeight, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
+    AnyText(text, modifier, color, OneConfigTheme.typography.body.copy(fontSize = fontSize, fontWeight = fontWeight), TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
 }
 
 @Composable

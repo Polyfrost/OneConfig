@@ -59,8 +59,8 @@ public fun EmptyState(
     ) {
         when (state) {
             LoadState.Loading -> ProgressBar(null, Modifier.widthIn(max = PROGRESS_WIDTH).padding(bottom = spacing.xs))
-            is LoadState.Error -> Icon("alert-circle", theme.error, Modifier.size(ICON_SIZE))
-            LoadState.Idle -> if (icon != null) Icon(icon, theme.mutedText, Modifier.size(ICON_SIZE))
+            is LoadState.Error -> Icon("alert-circle", null, Modifier.size(ICON_SIZE), tint = theme.error)
+            LoadState.Idle -> if (icon != null) Icon(icon, null, Modifier.size(ICON_SIZE), tint = theme.mutedText)
         }
         LayoutText(
             title,

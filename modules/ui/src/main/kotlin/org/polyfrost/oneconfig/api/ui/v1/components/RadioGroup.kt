@@ -47,7 +47,6 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.selectableGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
@@ -208,13 +207,10 @@ private fun RadioItem(
             text,
             Modifier,
             color,
-            style.fontSize,
-            null,
-            BaselineShift.None,
-            style.fontWeight ?: FontWeight.Normal,
-            if (vertical) TextAlign.Start else TextAlign.Center,
+            OneConfigTheme.typography.body.copy(fontSize = style.fontSize, fontWeight = style.fontWeight ?: FontWeight.Normal),
             1,
             TextOverflow.Ellipsis,
+            textAlign = if (vertical) TextAlign.Start else TextAlign.Center,
         )
     }
 }

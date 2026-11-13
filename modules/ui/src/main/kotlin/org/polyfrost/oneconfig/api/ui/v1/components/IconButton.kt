@@ -57,7 +57,7 @@ public fun IconButton(
     interactionSource: MutableInteractionSource? = null,
 ) {
     IconButtonFrame(contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, interactionSource) { color ->
-        Icon(icon, if (tint == Color.Unspecified) color else tint, Modifier.size(IconButtonDefaults.iconSize(size)))
+        Icon(icon, null, Modifier.size(IconButtonDefaults.iconSize(size)), if (tint == Color.Unspecified) color else tint)
     }
 }
 

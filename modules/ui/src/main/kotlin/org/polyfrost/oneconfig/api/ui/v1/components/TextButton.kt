@@ -106,7 +106,7 @@ public fun TextButton(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         leading?.invoke()
-        Text(text, Modifier, content, ButtonDefaults.fontSize(size), null, BaselineShift.None, FontWeight.Normal, TextAlign.Center, 1, TextOverflow.Ellipsis)
+        Text(text, Modifier, content, OneConfigTheme.typography.body.copy(fontSize = ButtonDefaults.fontSize(size), fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         trailing?.invoke()
     }
 }
@@ -128,7 +128,7 @@ public fun TextButton(
     val tint = ButtonDefaults.contentColor(style)
     TextButton(
         text, onClick, modifier, style, size, enabled, fillWidth,
-        leading = { Icon(icon, tint, Modifier.size(ButtonDefaults.iconSize(size))) },
+        leading = { Icon(icon, null, Modifier.size(ButtonDefaults.iconSize(size)), tint) },
         trailing = trailing,
         interactionSource = interactionSource,
     )

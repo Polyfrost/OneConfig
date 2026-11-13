@@ -44,7 +44,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -115,26 +114,20 @@ public fun Slider(
                     label ?: "",
                     Modifier.weight(1f),
                     theme.textColor,
-                    typography.label.fontSize,
-                    null,
-                    BaselineShift.None,
-                    typography.label.fontWeight ?: FontWeight.Normal,
-                    TextAlign.Start,
+                    OneConfigTheme.typography.body.copy(fontSize = typography.label.fontSize, fontWeight = typography.label.fontWeight ?: FontWeight.Normal),
                     1,
                     TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Start,
                 )
                 if (valueText != null) {
                     Text(
                         valueText(value),
                         Modifier,
                         theme.textColorSecondary,
-                        typography.small.fontSize,
-                        null,
-                        BaselineShift.None,
-                        typography.small.fontWeight ?: FontWeight.Normal,
-                        TextAlign.End,
+                        OneConfigTheme.typography.body.copy(fontSize = typography.small.fontSize, fontWeight = typography.small.fontWeight ?: FontWeight.Normal),
                         1,
                         TextOverflow.Clip,
+                        textAlign = TextAlign.End,
                     )
                 }
             }

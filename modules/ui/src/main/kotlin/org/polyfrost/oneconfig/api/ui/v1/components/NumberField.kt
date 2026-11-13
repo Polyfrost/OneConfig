@@ -201,7 +201,7 @@ private fun StepArrow(icon: String, label: String, enabled: Boolean, onClick: ()
             .oneConfigClickable(label, onClick, enabled = enabled, shape = theme.shapes.small, indication = false, interactionSource = source),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, color, Modifier.size(14.dp))
+        Icon(icon, null, Modifier.size(14.dp), tint = color)
     }
 }
 

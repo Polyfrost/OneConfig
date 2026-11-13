@@ -33,7 +33,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -193,18 +192,15 @@ public fun KeybindField(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(theme.spacing.m),
     ) {
-        Icon("keyboard", content, Modifier.size(KEY_ICON_SIZE))
+        Icon("keyboard", null, Modifier.size(KEY_ICON_SIZE), tint = content)
         Text(
             shown,
             Modifier,
             content,
-            typography.label.fontSize,
-            null,
-            BaselineShift.None,
-            typography.label.fontWeight ?: FontWeight.Normal,
-            TextAlign.Start,
+            OneConfigTheme.typography.body.copy(fontSize = typography.label.fontSize, fontWeight = typography.label.fontWeight ?: FontWeight.Normal),
             Int.MAX_VALUE,
             TextOverflow.Clip,
+            textAlign = TextAlign.Start,
         )
     }
 }

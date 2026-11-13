@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -109,9 +108,9 @@ public fun Chip(
     ) {
         when {
             leading != null -> leading()
-            icon != null -> Icon(icon, content, Modifier.size(ChipDefaults.iconSize(size)))
+            icon != null -> Icon(icon, null, Modifier.size(ChipDefaults.iconSize(size)), tint = content)
         }
-        Text(label, Modifier, content, ChipDefaults.fontSize(size), null, BaselineShift.None, FontWeight.Normal, TextAlign.Center, 1, TextOverflow.Ellipsis)
+        Text(label, Modifier, content, OneConfigTheme.typography.body.copy(fontSize = ChipDefaults.fontSize(size), fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         trailing?.invoke()
     }
 }

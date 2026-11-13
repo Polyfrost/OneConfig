@@ -67,6 +67,7 @@ public fun Icon(
     )
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun Icon(iconName: String, color: Color, modifier: Modifier) {

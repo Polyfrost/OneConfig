@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -119,26 +118,20 @@ public fun SwitchRow(
                 title,
                 Modifier,
                 theme.textColor,
-                typography.body.fontSize,
-                null,
-                BaselineShift.None,
-                typography.body.fontWeight ?: FontWeight.Normal,
-                TextAlign.Start,
+                OneConfigTheme.typography.body.copy(fontSize = typography.body.fontSize, fontWeight = typography.body.fontWeight ?: FontWeight.Normal),
                 Int.MAX_VALUE,
                 TextOverflow.Clip,
+                textAlign = TextAlign.Start,
             )
             if (description != null) {
                 Text(
                     description,
                     Modifier,
                     theme.textColorSecondary,
-                    typography.small.fontSize,
-                    null,
-                    BaselineShift.None,
-                    typography.small.fontWeight ?: FontWeight.Normal,
-                    TextAlign.Start,
+                    OneConfigTheme.typography.body.copy(fontSize = typography.small.fontSize, fontWeight = typography.small.fontWeight ?: FontWeight.Normal),
                     Int.MAX_VALUE,
                     TextOverflow.Clip,
+                    textAlign = TextAlign.Start,
                 )
             }
         }
@@ -157,13 +150,10 @@ private fun SwitchStateLabel(text: String) {
         text,
         Modifier,
         theme.textColorSecondary,
-        style.fontSize,
-        null,
-        BaselineShift.None,
-        style.fontWeight ?: FontWeight.Normal,
-        TextAlign.Start,
+        OneConfigTheme.typography.body.copy(fontSize = style.fontSize, fontWeight = style.fontWeight ?: FontWeight.Normal),
         1,
         TextOverflow.Clip,
+        textAlign = TextAlign.Start,
     )
 }
 

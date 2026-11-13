@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -68,15 +67,11 @@ public fun LinkText(
                 drawLine(color, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
             },
             color,
-            13.sp,
-            null,
-            BaselineShift.None,
-            FontWeight.Normal,
-            TextAlign.Start,
+            OneConfigTheme.typography.body.copy(fontSize = 13.sp, fontWeight = FontWeight.Normal),
             1,
             TextOverflow.Ellipsis,
         )
-        if (icon != null) Icon(icon, color, Modifier.size(12.dp))
+        if (icon != null) Icon(icon, null, Modifier.size(12.dp), tint = color)
     }
 }
 

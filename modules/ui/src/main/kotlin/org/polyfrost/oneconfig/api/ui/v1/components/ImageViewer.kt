@@ -37,6 +37,7 @@ public fun ImageViewer(
     index: Int,
     onIndexChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onDismiss: (() -> Unit)? = null,
     image: @Composable (Int) -> Unit,
 ) {
     val theme = OneConfigTheme.current
@@ -46,6 +47,7 @@ public fun ImageViewer(
     val latestShown by rememberUpdatedState(shown)
     val latestCount by rememberUpdatedState(count)
     val latestChange by rememberUpdatedState(onIndexChange)
+    if (onDismiss != null) EscapeCloses(onDismiss)
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     val position = layoutString("oneconfig.ui.image.position", "%s of %s", shown + 1, count)
     Box(

@@ -117,7 +117,6 @@ public fun ToggleRow(
     interactionSource: MutableInteractionSource? = null,
 ) {
     val theme = OneConfigTheme.current
-    val accent = OneConfigTheme.accent
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     val active = hovered && enabled
@@ -147,42 +146,12 @@ public fun ToggleRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(label, Modifier, theme.textColor, if (size == ControlSize.Compact) 13.sp else 14.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
+            Text(label, Modifier, theme.textColor, OneConfigTheme.typography.body.copy(fontSize = if (size == ControlSize.Compact) 13.sp else 14.sp, fontWeight = FontWeight.Normal))
             if (description != null) {
-                Text(description, Modifier, theme.textColorSecondary, 12.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
+                Text(description, Modifier, theme.textColorSecondary, OneConfigTheme.typography.body.copy(fontSize = 12.sp, fontWeight = FontWeight.Normal))
             }
         }
-        val boxColor by animateColorAsState(if (checked) accent else theme.componentBackground, spec)
-        val boxBorder by animateColorAsState(
-            when {
-                checked -> accent
-                active -> theme.textColorSecondary
-                else -> theme.borderColor
-            },
-            spec,
-        )
-        Box(
-            modifier = Modifier
-                .size(CHECK_SIZE)
-                .clip(theme.checkBoxShape)
-                .background(boxColor, theme.checkBoxShape)
-                .border(1.5.dp, boxBorder, theme.checkBoxShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            this@Row.AnimatedVisibility(visible = checked, enter = Motion.enter(fadeIn()), exit = Motion.exit(fadeOut())) {
-                val tick = theme.accentTextColor
-                Canvas(Modifier.size(12.dp)) {
-                    val w = this.size.width
-                    val h = this.size.height
-                    val path = Path().apply {
-                        moveTo(w * 0.2f, h * 0.52f)
-                        lineTo(w * 0.42f, h * 0.72f)
-                        lineTo(w * 0.8f, h * 0.3f)
-                    }
-                    drawPath(path, color = tick, style = Stroke(width = w * 0.16f, cap = StrokeCap.Round))
-                }
-            }
-        }
+        CheckboxBox(checked, active, Modifier)
     }
 }
 

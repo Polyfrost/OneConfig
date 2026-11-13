@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -238,10 +237,10 @@ private fun TabContent(tab: TabItem<*>, color: Color, size: ControlSize) {
         val painter = tab.iconPainter
         when {
             painter != null -> Image(painter, null, Modifier.size(iconSize), colorFilter = ColorFilter.tint(color))
-            tab.icon != null -> Icon(tab.icon, color, Modifier.size(iconSize))
+            tab.icon != null -> Icon(tab.icon, null, Modifier.size(iconSize), tint = color)
         }
         if (tab.label.isNotEmpty()) {
-            Text(tab.label, Modifier, color, if (size == ControlSize.Compact) 13.sp else 14.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Center, 1, TextOverflow.Ellipsis)
+            Text(tab.label, Modifier, color, OneConfigTheme.typography.body.copy(fontSize = if (size == ControlSize.Compact) 13.sp else 14.sp, fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         }
         tab.badge?.let { TabBadge(it) }
     }
@@ -262,6 +261,6 @@ private fun TabBadge(text: String) {
             .padding(horizontal = 5.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, Modifier, theme.accentTextColor, 10.sp, null, BaselineShift.None, FontWeight.Medium, TextAlign.Center, 1, TextOverflow.Clip)
+        Text(text, Modifier, theme.accentTextColor, OneConfigTheme.typography.body.copy(fontSize = 10.sp, fontWeight = FontWeight.Medium), 1, TextOverflow.Clip, textAlign = TextAlign.Center)
     }
 }

@@ -482,7 +482,7 @@ private fun FieldDecoration(
     ) {
         when {
             leading != null -> leading()
-            leadingIcon != null -> Icon(leadingIcon, iconColor, Modifier.size(TextFieldDefaults.iconSize(size)))
+            leadingIcon != null -> Icon(leadingIcon, null, Modifier.size(TextFieldDefaults.iconSize(size)), iconColor)
         }
         FieldText(empty, placeholder, singleLine, fontSize, inner)
         trailing?.invoke()
@@ -503,11 +503,7 @@ private fun RowScope.FieldText(
                 placeholder,
                 Modifier,
                 OneConfigTheme.current.textColorSecondary,
-                fontSize,
-                null,
-                BaselineShift.None,
-                FontWeight.Normal,
-                TextAlign.Start,
+                OneConfigTheme.typography.body.copy(fontSize = fontSize, fontWeight = FontWeight.Normal),
                 if (singleLine) 1 else Int.MAX_VALUE,
                 TextOverflow.Ellipsis,
             )
