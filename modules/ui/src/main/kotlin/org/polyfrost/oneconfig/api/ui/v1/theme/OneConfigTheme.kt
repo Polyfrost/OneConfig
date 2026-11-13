@@ -10,8 +10,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
-import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
+import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenuRoot
 import org.polyfrost.oneconfig.api.ui.v1.components.FeedbackHosts
+import org.polyfrost.oneconfig.api.ui.v1.components.ProvideOneConfigTextContextMenu
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
@@ -117,7 +118,7 @@ public fun ProvideOneConfigTheme(
             content()
         } else {
             CompositionLocalProvider(LocalThemeProvided provides true) {
-                EscapeAwareTextMenus { FeedbackHosts(content) }
+                ProvideOneConfigTextContextMenu { ContextMenuRoot { FeedbackHosts(content) } }
             }
         }
     }

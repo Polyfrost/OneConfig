@@ -51,7 +51,9 @@ import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
-import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
+import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenuRoot
+import org.polyfrost.oneconfig.api.ui.v1.components.FeedbackHosts
+import org.polyfrost.oneconfig.api.ui.v1.components.ProvideOneConfigTextContextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
@@ -385,7 +387,7 @@ abstract class ComposeScreen(
                 scrollConfig.provided(),
                 LocalWheelRouter provides wheelRouter,
             ) {
-                EscapeAwareTextMenus { compose() }
+                ProvideOneConfigTextContextMenu { ContextMenuRoot { FeedbackHosts { compose() } } }
             }
         }
     }

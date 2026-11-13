@@ -12,4 +12,7 @@ class OneConfigUIKeybindRecordingBridgeImpl : OneConfigUIKeybindRecordingBridge 
         KeybindRecordingBus.clearEscapeHandler(onEscape)
         KeybindRecordingBus.clearMouseHandler(onMouse)
     }
+
+    override val isRecording: Boolean
+        get() = KeybindRecordingBus.isRecording
 }

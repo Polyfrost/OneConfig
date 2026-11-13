@@ -9,6 +9,8 @@ public interface OneConfigUIKeybindRecordingBridge {
     public fun startRecording(onEscape: () -> Unit, onMouse: (button: Int, pressed: Boolean) -> Unit)
 
     public fun stopRecording(onEscape: () -> Unit, onMouse: (button: Int, pressed: Boolean) -> Unit)
+
+    public val isRecording: Boolean
 }
 
 @ExperimentalOneConfigUiApi
