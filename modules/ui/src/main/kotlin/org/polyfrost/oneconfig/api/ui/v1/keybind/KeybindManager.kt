@@ -87,10 +87,11 @@ public object KeybindManager {
         }
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     @JvmStatic
     public fun register(bind: OneConfigKeybind): OneConfigKeybind {
         if (bind !in binds) binds.add(bind)
-        bridge?.register(bind)
+        if (bind.mirrorToVanilla) bridge?.register(bind)
         return bind
     }
 
@@ -110,9 +111,11 @@ public object KeybindManager {
      * Use after mutating a keybind's [OneConfigKeybind.name]/[OneConfigKeybind.category] so the vanilla
      * mapping picks up the new metadata
      */
+    @OptIn(ExperimentalOneConfigUiApi::class)
     @JvmStatic
     public fun refreshMinecraftBinding(bind: OneConfigKeybind) {
-        if (bind in binds) bridge?.register(bind)
+        if (bind !in binds) return
+        if (bind.mirrorToVanilla) bridge?.register(bind) else bridge?.unregister(bind)
     }
 
     /**
@@ -123,12 +126,14 @@ public object KeybindManager {
      *
      * Nothing happens if [old] was never registered
      */
+    @OptIn(ExperimentalOneConfigUiApi::class)
     @JvmStatic
     public fun replace(old: OneConfigKeybind?, new: OneConfigKeybind): OneConfigKeybind {
         if (old != null && new !== old) {
             if (new.name == null) new.name = old.name
             if (new.category == null) new.category = old.category
             if (new.defaultKeybind == null) new.defaultKeybind = old.defaultKeybind
+            if (!old.mirrorToVanilla) new.mirrorToVanilla = false
         }
         if (old === new) {
             bridge?.sync(new)

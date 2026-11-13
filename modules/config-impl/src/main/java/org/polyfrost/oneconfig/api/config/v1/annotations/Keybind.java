@@ -79,4 +79,6 @@ public @interface Keybind {
 
     @Deprecated
     String subcategoryKey() default "";
+
+    boolean mirrorToVanilla() default true;
 }

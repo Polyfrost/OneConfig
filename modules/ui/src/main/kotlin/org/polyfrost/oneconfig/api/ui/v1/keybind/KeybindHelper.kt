@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind
 
 import java.util.function.Consumer
 import kotlin.experimental.or
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 public class KeybindHelper {
     private val keyCodes = mutableListOf<Int>()
@@ -13,6 +14,7 @@ public class KeybindHelper {
     private var action: ((Boolean) -> Boolean)? = null
     private var name: String? = null
     private var category: String? = null
+    private var mirrorToVanilla = true
 
     public fun key(vararg codes: Int): KeybindHelper = apply { keyCodes.addAll(codes.asList()) }
     public fun mouse(vararg btns: Int): KeybindHelper = apply { mouseBtns.addAll(btns.asList()) }
@@ -26,6 +28,8 @@ public class KeybindHelper {
      * Defaults to "OneConfig"
      */
     public fun category(category: String): KeybindHelper = apply { this.category = category }
+    @ExperimentalOneConfigUiApi
+    public fun mirrorToVanilla(mirror: Boolean): KeybindHelper = apply { mirrorToVanilla = mirror }
     public fun shift(): KeybindHelper = apply { mods = mods or KeyModifiers.SHIFT }
     public fun ctrl(): KeybindHelper = apply { mods = mods or KeyModifiers.CTRL }
     public fun alt(): KeybindHelper = apply { mods = mods or KeyModifiers.ALT }
@@ -46,6 +50,7 @@ public class KeybindHelper {
      * Config-backed (`@Keybind`) binds exist only to be bound by the user and are polled by the owning code
      * so they build with a no-op action
      */
+    @OptIn(ExperimentalOneConfigUiApi::class)
     public fun build(): OneConfigKeybind {
         val fn = action ?: NO_OP
         val keys = keyCodes.toIntArray().takeIf { it.isNotEmpty() }
@@ -55,6 +60,7 @@ public class KeybindHelper {
         bind.name = name
         bind.category = category
         bind.firesWhileTyping = firesWhileTyping
+        bind.mirrorToVanilla = mirrorToVanilla
         return bind
     }
 
