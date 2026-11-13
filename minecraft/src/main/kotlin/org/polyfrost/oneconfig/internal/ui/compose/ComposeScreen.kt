@@ -600,7 +600,7 @@ abstract class ComposeScreen(
         val nanos = System.nanoTime()
         withScene { scene ->
             recomposerOrNull?.performFrame(nanos)
-            scene.measureAndLayout()
+            retryingDisposedLayers { scene.measureAndLayout() }
         }
         if (ItemCatalog.renderIcons()) sceneDirty = true
 
@@ -640,7 +640,7 @@ abstract class ComposeScreen(
             val scope = renderScopeOrNull
             val canvas = PolyCanvas(ctx.renderer)
             val rendered = if (recomposer == null || scope == null) null else withScene {
-                with(scope) { it.render(recomposer, canvas, nanos) }
+                retryingDisposedLayers { with(scope) { it.render(recomposer, canvas, nanos) } }
             }
             if (rendered != null) sceneRebuilds = 0
         } catch (t: Throwable) {
@@ -1204,6 +1204,21 @@ abstract class ComposeScreen(
         fun isWheelStep(value: Double) = abs(value * 120 - round(value * 120)) < 1e-3
 
         const val MAX_SCENE_REBUILDS = 3
+    }
+}
+
+private const val DISPOSED_LAYER_RETRIES = 3
+
+private const val DISPOSED_OWNER_MESSAGE = "RootNodeOwner is already disposed"
+
+private inline fun <T> retryingDisposedLayers(block: () -> T): T {
+    var attempt = 0
+    while (true) {
+        try {
+            return block()
+        } catch (e: IllegalArgumentException) {
+            if (e.message != DISPOSED_OWNER_MESSAGE || ++attempt > DISPOSED_LAYER_RETRIES) throw e
+        }
     }
 }
 
