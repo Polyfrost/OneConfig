@@ -1,11 +1,16 @@
 package org.polyfrost.oneconfig.api.ui.v1.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 @ExperimentalOneConfigUiApi
@@ -39,6 +44,15 @@ public object OneConfigTheme {
     public val current: OneConfigUITheme
         @Composable get() = componentsBridge().currentTheme()
 
+    public val typography: OneConfigTypography
+        @Composable get() = current.typography
+
+    public val shapes: OneConfigShapes
+        @Composable get() = current.shapes
+
+    public val spacing: OneConfigSpacing
+        @Composable get() = current.spacing
+
     public val accent: Color
         @Composable get() = componentsBridge().accent()
 
@@ -63,6 +77,18 @@ public object OneConfigTheme {
         componentsBridge().ensureThemeLoaded()
     }
 
+    @Composable
+    public fun shape(radius: Dp): Shape = componentsBridge().themeShape(radius)
+
+    @Composable
+    public fun icon(name: String): String = componentsBridge().themeIcon(name)
+
+    @JvmStatic
+    public fun custom(base: OneConfigUITheme, id: String, name: String, block: ThemeBuilder.() -> Unit): OneConfigUITheme {
+        require(id.isNotBlank()) { "A custom theme needs a non-blank id" }
+        return componentsBridge().customTheme(base, id, name, ThemeBuilder().apply(block))
+    }
+
     @JvmStatic
     public var logoOverride: String? by mutableStateOf(null)
         private set
@@ -75,6 +101,32 @@ public object OneConfigTheme {
 
 @ExperimentalOneConfigUiApi
 @Composable
+public fun ProvideOneConfigTheme(
+    theme: OneConfigUITheme? = null,
+    scaleToUi: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val nested = LocalThemeProvided.current
+    if (nested && theme == null && !scaleToUi) {
+        content()
+        return
+    }
+    componentsBridge().ProvideTheme(theme, scaleToUi) {
+        if (nested) {
+            content()
+        } else {
+            CompositionLocalProvider(LocalThemeProvided provides true) {
+                EscapeAwareTextMenus(content)
+            }
+        }
+    }
+}
+
+private val LocalThemeProvided = staticCompositionLocalOf { false }
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
 public fun ProvideOneConfigTheme(content: @Composable () -> Unit) {
-    componentsBridge().ProvideTheme(content)
+    ProvideOneConfigTheme(null, false, content)
 }

@@ -65,7 +65,10 @@ fun updateAccent() {
     _accentEnd = if (accentColor.gradientEnabled && !accentColor.chroma) Color(accentColor.gradientArgb) else null
 }
 
-val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
+val LocalTheme = compositionLocalOf<UITheme> {
+    runCatching { ThemeRegistry.activeTheme }.getOrNull()
+        ?: error("The OneConfig UI has not initialised yet, so there is no theme to use. Wait for OneConfig to finish loading before composing OneConfig UI.")
+}
 
 private const val TOAST_MIN_ALPHA = 0.92f
 
@@ -163,6 +166,15 @@ fun Theme(
     designWidth: Dp = DESIGN_WIDTH_DP.dp,
     designHeight: Dp = DESIGN_HEIGHT_DP.dp,
     content: @Composable () -> Unit,
+) = ThemeWith(null, pixelGrid, designWidth, designHeight, content)
+
+@Composable
+fun ThemeWith(
+    theme: UITheme?,
+    pixelGrid: Boolean,
+    designWidth: Dp = DESIGN_WIDTH_DP.dp,
+    designHeight: Dp = DESIGN_HEIGHT_DP.dp,
+    content: @Composable () -> Unit,
 ) {
     SideEffect { updateAccent() }
 
@@ -173,7 +185,7 @@ fun Theme(
         }
     }
 
-    val target = ThemeRegistry.activeTheme ?: error("No active theme provided")
+    val target = theme ?: ThemeRegistry.activeTheme ?: error("No active theme provided")
     val accent = Accent
     val opaque = ReduceTransparency.enabled
     val shown = target.withAccentText(target.accentTextOn(accent)).let { if (opaque) it.withOpaqueSurfaces() else it }

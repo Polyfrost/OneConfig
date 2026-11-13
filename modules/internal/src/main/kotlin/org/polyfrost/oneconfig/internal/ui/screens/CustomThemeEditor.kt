@@ -81,7 +81,6 @@ import org.polyfrost.oneconfig.internal.ui.themes.customSpec
 import org.polyfrost.oneconfig.internal.ui.themes.isCustom
 import org.polyfrost.oneconfig.internal.ui.themes.palette
 import org.polyfrost.oneconfig.internal.ui.themes.previewAsset
-import org.polyfrost.oneconfig.internal.ui.themes.isLight
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import kotlin.math.roundToInt
 

@@ -44,10 +44,19 @@ import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassDark
 import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassLight
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedDark
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedLight
-import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
+import org.polyfrost.oneconfig.api.ui.v1.components.UiSound
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeBuilder
+import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQueryOrNull as shellPageSearchQueryOrNull
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
+import org.polyfrost.oneconfig.internal.ui.themes.ThemeWith
+import org.polyfrost.oneconfig.internal.ui.themes.modTheme
+import org.polyfrost.oneconfig.internal.ui.themes.themedShape
 
 class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     @Composable
@@ -57,7 +66,32 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     override fun accent(): Color = Accent
 
     @Composable
-    override fun ProvideTheme(content: @Composable () -> Unit) = Theme(content)
+    override fun ProvideTheme(theme: OneConfigUITheme?, scaleToUi: Boolean, content: @Composable () -> Unit) {
+        ensureThemeLoaded()
+        ThemeWith(theme as? UITheme, scaleToUi, content = content)
+    }
+
+    @Composable
+    override fun themeShape(radius: Dp): Shape = themedShape(radius)
+
+    @Composable
+    override fun themeIcon(name: String): String = LocalTheme.current.iconOverrides[name] ?: name
+
+    override fun customTheme(base: OneConfigUITheme, id: String, name: String, builder: ThemeBuilder): OneConfigUITheme =
+        modTheme(base, id, name, builder)
+
+    override fun playSound(sound: UiSound) {
+        UiSounds.play(
+            when (sound) {
+                UiSound.Click -> UiSoundEvent.CLICK
+                UiSound.Open -> UiSoundEvent.OPEN
+                UiSound.Close -> UiSoundEvent.CLOSE
+                UiSound.SliderTick -> UiSoundEvent.SLIDER_TICK
+            },
+        )
+    }
+
+    override fun keepSearchFocus(modifier: Modifier): Modifier = modifier.keepSearchFocus()
 
     override fun polyfrostedDark(): OneConfigUITheme = PolyfrostedDark
 
@@ -173,4 +207,10 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
 
     @Composable
     override fun pageSearchQuery(): String = shellPageSearchQuery()
+
+    @Composable
+    override fun optionWidthOrNull(): Dp? = LocalOptionWidthOrNull.current
+
+    @Composable
+    override fun pageSearchQueryOrNull(): String? = shellPageSearchQueryOrNull()
 }

@@ -16,6 +16,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ChangelogSources {
 public abstract interface annotation class org/polyfrost/oneconfig/api/ui/v1/ExperimentalOneConfigUiApi : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/ui/v1/InternalOneConfigUiApi : java/lang/annotation/Annotation {
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ModCardIconProvider {
 	public abstract fun iconFor (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
@@ -67,6 +70,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ModCardTypes {
 	public static final fun registerResolver (Lorg/polyfrost/oneconfig/api/ui/v1/ModCardTypeResolver;)V
 	public static final fun typeFor (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/ModCardType;
 	public static final fun types ()Ljava/util/List;
+	public static final fun unassign (Ljava/lang/String;)Z
+	public static final fun unregister (Ljava/lang/String;)Z
+	public static final fun unregisterResolver (Lorg/polyfrost/oneconfig/api/ui/v1/ModCardTypeResolver;)Z
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/ModSortMode {
@@ -134,6 +140,16 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ModsPageDecorators {
 	public static final fun all ()Ljava/util/List;
 	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/ModsPageDecorator;)V
 	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/ModsPageDecorator;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigPrefs {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigPrefs;
+	public static final fun getAnimationsEnabled ()Z
+	public static final fun getBackgroundBlur ()Z
+	public static final fun getGuiOpenAnimation ()Z
+	public static final fun getReducedMotion ()Z
+	public static final fun getUiScale ()F
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
@@ -344,6 +360,34 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/CommonKt {
 	public static final fun rememberInteractionSource (Landroidx/compose/runtime/Composer;I)Landroidx/compose/foundation/interaction/MutableInteractionSource;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ControlDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlDefaults;
+	public final fun getDisabledAlpha (Landroidx/compose/runtime/Composer;I)F
+	public final fun getSize ()Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ControlSize : java/lang/Enum {
+	public static final field Compact Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;
+	public static final field Large Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;
+	public static final field Regular Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getHeight-D9Ej5fM ()F
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ControlStyle : java/lang/Enum {
+	public static final field Danger Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;
+	public static final field DangerFilled Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;
+	public static final field Ghost Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;
+	public static final field Primary Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;
+	public static final field Secondary Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/components/ControlsKt {
 	public static final fun IconButton (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final fun IconButton-_trzp-w (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Color;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
@@ -367,15 +411,24 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/DialogKt {
 public final class org/polyfrost/oneconfig/api/ui/v1/components/EscapeClosesKt {
 	public static final fun EscapeAwareTextMenus (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun EscapeCloses (Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun handleEscapeStack (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/EscapeStack {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/components/EscapeStack;
 	public static final fun closeTop ()Z
+	public static final fun dispatch ()Z
 	public static final fun getHasOpen ()Z
 	public static final fun push (Lkotlin/jvm/functions/Function0;)V
 	public static final fun remove (Lkotlin/jvm/functions/Function0;)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/HoverState {
+	public static final field $stable I
+	public fun <init> (Landroidx/compose/foundation/interaction/MutableInteractionSource;Z)V
+	public final fun getHovered ()Z
+	public final fun getInteractionSource ()Landroidx/compose/foundation/interaction/MutableInteractionSource;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/HoverTooltipKt {
@@ -388,6 +441,14 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/HoverTooltipKt {
 public final class org/polyfrost/oneconfig/api/ui/v1/components/IconKt {
 	public static final fun Icon-3IgeMak (Ljava/lang/String;JLandroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;I)V
 	public static final fun Icon-iJQMabo (Ljava/lang/String;JLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/InteractionKt {
+	public static final fun hiddenUntilHover (Landroidx/compose/ui/Modifier;Z)Landroidx/compose/ui/Modifier;
+	public static final fun oneConfigClickable (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lorg/polyfrost/oneconfig/api/ui/v1/a11y/A11yRole;ZLjava/lang/Boolean;Ljava/lang/Boolean;Landroidx/compose/ui/graphics/Shape;ZLorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;Landroidx/compose/foundation/interaction/MutableInteractionSource;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun oneConfigClickable$default (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lorg/polyfrost/oneconfig/api/ui/v1/a11y/A11yRole;ZLjava/lang/Boolean;Ljava/lang/Boolean;Landroidx/compose/ui/graphics/Shape;ZLorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;Landroidx/compose/foundation/interaction/MutableInteractionSource;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun playUiSound (Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;)V
+	public static final fun rememberHoverState (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/components/HoverState;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/MenuAction {
@@ -425,6 +486,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/MenuKt {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/OptionWidthKt {
 	public static final fun getCurrentOptionWidth (Landroidx/compose/runtime/Composer;I)F
+	public static final fun getCurrentOptionWidthOrNull (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/unit/Dp;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/PlayerHeadKt {
@@ -502,6 +564,16 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/UiSound : java/lang/Enum {
+	public static final field Click Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;
+	public static final field Close Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;
+	public static final field Open Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;
+	public static final field SliderTick Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindNotInScreen : org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind {
@@ -708,6 +780,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/page/PageGroup$Companion {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/page/PageSearchQueryKt {
 	public static final fun getCurrentPageSearchQuery (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
+	public static final fun getCurrentPageSearchQueryOrNull (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/page/PageText {
@@ -791,11 +864,43 @@ public final class org/polyfrost/oneconfig/api/ui/v1/search/SearchScope$Companio
 	public final fun config (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/search/SearchScope;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigShapes {
+	public static final field $stable I
+	public fun <init> (Landroidx/compose/ui/graphics/Shape;Landroidx/compose/ui/graphics/Shape;Landroidx/compose/ui/graphics/Shape;Landroidx/compose/ui/graphics/Shape;Landroidx/compose/ui/graphics/Shape;Landroidx/compose/ui/graphics/Shape;)V
+	public final fun getCircle ()Landroidx/compose/ui/graphics/Shape;
+	public final fun getField ()Landroidx/compose/ui/graphics/Shape;
+	public final fun getLarge ()Landroidx/compose/ui/graphics/Shape;
+	public final fun getMedium ()Landroidx/compose/ui/graphics/Shape;
+	public final fun getPill ()Landroidx/compose/ui/graphics/Shape;
+	public final fun getSmall ()Landroidx/compose/ui/graphics/Shape;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigSpacing {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigSpacing$Companion;
+	public static final field Default Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigSpacing;
+	public fun <init> ()V
+	public synthetic fun <init> (FFFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getL-D9Ej5fM ()F
+	public final fun getM-D9Ej5fM ()F
+	public final fun getPageGutter-D9Ej5fM ()F
+	public final fun getS-D9Ej5fM ()F
+	public final fun getXl-D9Ej5fM ()F
+	public final fun getXs-D9Ej5fM ()F
+	public final fun getXxl-D9Ej5fM ()F
+	public final fun getXxs-D9Ej5fM ()F
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigSpacing$Companion {
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme;
 	public static final fun activate (Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;)V
 	public static final fun builtIn ()Ljava/util/List;
+	public static final fun custom (Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public static final fun ensureLoaded ()V
 	public final fun getAccent (Landroidx/compose/runtime/Composer;I)J
 	public static final fun getActive ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
@@ -809,16 +914,36 @@ public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme {
 	public static final fun getPOLYFROSTED_LIGHT ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public static final fun getPOLY_GLASS_DARK ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public static final fun getPOLY_GLASS_LIGHT ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public final fun getShapes (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigShapes;
+	public final fun getSpacing (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigSpacing;
+	public final fun getTypography (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTypography;
+	public final fun icon (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
 	public static final fun overrideLogo (Ljava/lang/String;)V
+	public final fun shape-8Feqmps (FLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/graphics/Shape;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigThemeKt {
-	public static final fun ProvideOneConfigTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final synthetic fun ProvideOneConfigTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ProvideOneConfigTheme (Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
+public class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTypography {
+	public static final field $stable I
+	public fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;)V
+	public fun <init> (Landroidx/compose/ui/text/font/FontFamily;)V
+	public final fun getBody ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getCaption ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getEyebrow ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getHeading ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getLabel ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getMono ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getSmall ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getTitle ()Landroidx/compose/ui/text/TextStyle;
 }
 
 public abstract class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme {
 	public static final field $stable I
-	public fun <init> ()V
+	public fun getAccentBrush ()Landroidx/compose/ui/graphics/Brush;
 	public abstract fun getAccentTextColor-0d7_KjU ()J
 	public abstract fun getBackgroundShape ()Landroidx/compose/ui/graphics/Shape;
 	public abstract fun getBorderColor-0d7_KjU ()J
@@ -828,25 +953,93 @@ public abstract class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme {
 	public abstract fun getCircleShape ()Landroidx/compose/ui/graphics/Shape;
 	public abstract fun getComponentBackground-0d7_KjU ()J
 	public abstract fun getControlThumbColor-0d7_KjU ()J
+	public fun getControlTrackColor-0d7_KjU ()J
+	public fun getDisabledAlpha ()F
+	public fun getError-0d7_KjU ()J
 	public abstract fun getFavoriteColor-0d7_KjU ()J
+	public fun getFocusRingColor-0d7_KjU ()J
 	public abstract fun getFontFamily ()Landroidx/compose/ui/text/font/FontFamily;
+	public fun getHoverOverlayAlpha ()F
+	public fun getInfo-0d7_KjU ()J
 	public abstract fun getLogoPath ()Ljava/lang/String;
 	public abstract fun getModCardBackground-0d7_KjU ()J
 	public abstract fun getModCardShape ()Landroidx/compose/ui/graphics/Shape;
+	public fun getMutedText-0d7_KjU ()J
 	public abstract fun getName ()Ljava/lang/String;
+	public fun getOnError-0d7_KjU ()J
+	public fun getOnSuccess-0d7_KjU ()J
 	public abstract fun getPageBackground-0d7_KjU ()J
+	public final fun getPageSurface-0d7_KjU ()J
 	public abstract fun getPopupBackground-0d7_KjU ()J
 	public abstract fun getPopupShape ()Landroidx/compose/ui/graphics/Shape;
+	public fun getPressedOverlayAlpha ()F
+	public fun getScrimColor-0d7_KjU ()J
 	public abstract fun getShadowColor-0d7_KjU ()J
 	public abstract fun getShadowEnabled ()Z
+	public fun getShapes ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigShapes;
 	public abstract fun getSideBarNavigationEntryShape ()Landroidx/compose/ui/graphics/Shape;
 	public abstract fun getSidebarBackground-0d7_KjU ()J
+	public fun getSpacing ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigSpacing;
+	public fun getStyle ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/ThemeStyle;
+	public fun getSuccess-0d7_KjU ()J
 	public abstract fun getTextColor-0d7_KjU ()J
 	public abstract fun getTextColorSecondary-0d7_KjU ()J
+	public fun getTypography ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTypography;
+	public fun getWarning-0d7_KjU ()J
+	public fun isLight ()Z
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/theme/RadiiKt {
 	public static final fun concentric-73KfpEQ (Landroidx/compose/ui/graphics/Shape;FFLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/graphics/Shape;
 	public static final fun concentric-ziNgDLE (Landroidx/compose/ui/graphics/Shape;FLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/graphics/Shape;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/ThemeBuilder {
+	public static final field $stable I
+	public final fun getAccentTextColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getBorderColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getChipBackground-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getComponentBackground-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getControlThumbColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getControlTrackColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getFavoriteColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getModCardBackground-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getPageBackground-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getPopupBackground-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getShadowColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getShadowEnabled ()Ljava/lang/Boolean;
+	public final fun getSidebarBackground-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getTextColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getTextColorSecondary-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun setAccentTextColor-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setBorderColor-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setChipBackground-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setComponentBackground-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setControlThumbColor-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setControlTrackColor-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setFavoriteColor-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setModCardBackground-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setPageBackground-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setPopupBackground-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setShadowColor-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setShadowEnabled (Ljava/lang/Boolean;)V
+	public final fun setSidebarBackground-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setTextColor-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+	public final fun setTextColorSecondary-Y2TPw74 (Landroidx/compose/ui/graphics/Color;)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/ThemeStyle : java/lang/Enum {
+	public static final field Flat Lorg/polyfrost/oneconfig/api/ui/v1/theme/ThemeStyle;
+	public static final field Glass Lorg/polyfrost/oneconfig/api/ui/v1/theme/ThemeStyle;
+	public static final field Pixel Lorg/polyfrost/oneconfig/api/ui/v1/theme/ThemeStyle;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/theme/ThemeStyle;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/theme/ThemeStyle;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/theme/ThemeTokensKt {
+	public static final fun contrastAgainst--OWjLjI (JJ)F
+	public static final fun legibleOn-jxsXWHM (JJF)J
+	public static synthetic fun legibleOn-jxsXWHM$default (JJFILjava/lang/Object;)J
 }
 

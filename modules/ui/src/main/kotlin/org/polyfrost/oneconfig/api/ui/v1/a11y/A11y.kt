@@ -32,6 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 
 @ExperimentalOneConfigUiApi
 public enum class A11yRole(public val spoken: String) {
@@ -128,22 +129,20 @@ private val RING_WIDTH = 2.dp
 private val HALO_WIDTH = 1.dp
 private const val HALO_ALPHA = 0.7f
 
-@Composable
-private fun isMinecraftTheme(): Boolean {
-    val theme = OneConfigTheme.current
-    return theme === OneConfigTheme.MINECRAFT_DARK || theme === OneConfigTheme.MINECRAFT_LIGHT
-}
-
 @ExperimentalOneConfigUiApi
 public fun Modifier.focusRing(): Modifier = focusRing(null)
 
 @ExperimentalOneConfigUiApi
 public fun Modifier.focusRing(shape: Shape?): Modifier = composed {
     var focused by remember { mutableStateOf(false) }
-    val minecraft = isMinecraftTheme()
-    val ring = if (minecraft) Color.White else OneConfigTheme.accent
-    val halo = (if (minecraft) Color.Black else OneConfigTheme.current.pageBackground).copy(alpha = HALO_ALPHA)
-    val outline = shape ?: OneConfigTheme.current.buttonShape
+    val theme = OneConfigTheme.current
+    val ring = theme.focusRingColor
+    val halo = when {
+        theme.style != ThemeStyle.Pixel -> theme.pageBackground
+        theme.isLight -> Color.White
+        else -> Color.Black
+    }.copy(alpha = HALO_ALPHA)
+    val outline = shape ?: theme.buttonShape
     onFocusChanged { focused = it.isFocused }.drawWithContent {
         drawContent()
         if (focused && A11y.keyboardMode) drawFocusRing(outline, ring, halo)

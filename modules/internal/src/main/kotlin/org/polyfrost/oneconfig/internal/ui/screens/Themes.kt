@@ -82,7 +82,6 @@ import org.polyfrost.oneconfig.internal.ui.themes.isCustom
 import org.polyfrost.oneconfig.internal.ui.themes.palette
 import org.polyfrost.oneconfig.internal.ui.themes.syncNotificationTheme
 import org.polyfrost.oneconfig.internal.ui.themes.previewAsset
-import org.polyfrost.oneconfig.internal.ui.themes.isLight
 
 const val THEMES_ID = "themes.json"
 

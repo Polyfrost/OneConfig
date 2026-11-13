@@ -40,7 +40,6 @@ import kotlin.math.sqrt
 import kotlinx.coroutines.launch
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.isLight
 
 private const val PRESS_SCALE = 1.03f
 

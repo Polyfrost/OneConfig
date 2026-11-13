@@ -16,9 +16,13 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.window.PopupPositionProvider
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.UiSound
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeBuilder
 
 @ExperimentalOneConfigUiApi
+@InternalOneConfigUiApi
 public interface OneConfigUIComponentsBridge {
     @Composable
     public fun currentTheme(): OneConfigUITheme
@@ -27,7 +31,19 @@ public interface OneConfigUIComponentsBridge {
     public fun accent(): Color
 
     @Composable
-    public fun ProvideTheme(content: @Composable () -> Unit)
+    public fun ProvideTheme(theme: OneConfigUITheme?, scaleToUi: Boolean, content: @Composable () -> Unit)
+
+    @Composable
+    public fun themeShape(radius: Dp): Shape
+
+    @Composable
+    public fun themeIcon(name: String): String
+
+    public fun customTheme(base: OneConfigUITheme, id: String, name: String, builder: ThemeBuilder): OneConfigUITheme
+
+    public fun playSound(sound: UiSound)
+
+    public fun keepSearchFocus(modifier: Modifier): Modifier
 
     public fun polyfrostedDark(): OneConfigUITheme
 
@@ -121,6 +137,12 @@ public interface OneConfigUIComponentsBridge {
 
     @Composable
     public fun pageSearchQuery(): String
+
+    @Composable
+    public fun optionWidthOrNull(): Dp?
+
+    @Composable
+    public fun pageSearchQueryOrNull(): String?
 }
 
 @ExperimentalOneConfigUiApi

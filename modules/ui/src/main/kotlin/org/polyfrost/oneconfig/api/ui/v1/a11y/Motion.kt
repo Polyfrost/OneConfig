@@ -15,7 +15,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.ui.unit.IntOffset
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
-import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
+import org.polyfrost.oneconfig.api.ui.v1.OneConfigPrefs
 
 @ExperimentalOneConfigUiApi
 public object Motion {
@@ -23,7 +23,7 @@ public object Motion {
 
     @JvmStatic
     public val reduced: Boolean
-        get() = runCatching { componentsBridge().reducedMotion() }.getOrDefault(false)
+        get() = OneConfigPrefs.reducedMotion
 
     @JvmStatic
     public fun <T> spec(spec: AnimationSpec<T>): AnimationSpec<T> = if (reduced) snap() else spec

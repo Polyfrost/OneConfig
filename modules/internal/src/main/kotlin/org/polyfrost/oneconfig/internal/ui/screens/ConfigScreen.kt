@@ -105,6 +105,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
@@ -841,7 +842,7 @@ private fun HeadControl(head: Property<*>, display: Property.Display, onHeadChan
         when {
             !head.hasVisualizer() -> HeadSwitch(Property.recast(head), onHeadChange)
             isFullWidth(head) -> BoxWithConstraints(Modifier.fillMaxWidth()) {
-                CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(head) }
+                CompositionLocalProvider(LocalOptionWidth provides maxWidth, LocalOptionWidthOrNull provides maxWidth) { Option(head) }
             }
             else -> Option(head)
         }
@@ -1128,7 +1129,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     actionButton()
                 }
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
+                    CompositionLocalProvider(LocalOptionWidth provides maxWidth, LocalOptionWidthOrNull provides maxWidth) { Option(prop) }
                 }
             }
         } else {
@@ -1286,7 +1287,7 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     // empty draws nothing but stays composed, so the display listeners above notice hidden options appearing
     if (entries.isEmpty()) return
 
-    CompositionLocalProvider(LocalOptionWidth provides 210.dp) {
+    CompositionLocalProvider(LocalOptionWidth provides 210.dp, LocalOptionWidthOrNull provides 210.dp) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (searchQuery.isEmpty() && visibleCategories.size > 1) {
             FlowRow(
