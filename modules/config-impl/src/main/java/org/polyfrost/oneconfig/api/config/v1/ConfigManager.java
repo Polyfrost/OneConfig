@@ -61,6 +61,7 @@ import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
 import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.v1.migrate.MigrationRunner;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
@@ -482,6 +483,7 @@ public final class ConfigManager {
             LOGGER.info("opening profile {}", profile);
             active = new ConfigManager(PROFILES_DIR.resolve(profile), serializers).withWatcher();
         }
+        MigrationRunner.profileOpened(active.getFolder());
         boolean wasRebinding = REBINDING_PROFILES.get();
         REBINDING_PROFILES.set(Boolean.TRUE);
         try {
@@ -1421,6 +1423,7 @@ public final class ConfigManager {
     }
 
     public Backend.RegistrationResult register(Tree t) {
+        if (this == active) MigrationRunner.beforeLoad(getFolder());
         if (this == active && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))) {
             Config.captureDefaults(t);
         }
@@ -1458,6 +1461,7 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public Collection<Tree> gatherAll(String sub) {
+        if (this == active) MigrationRunner.beforeLoad(getFolder());
         return backend.gatherAll(sub);
     }
 
