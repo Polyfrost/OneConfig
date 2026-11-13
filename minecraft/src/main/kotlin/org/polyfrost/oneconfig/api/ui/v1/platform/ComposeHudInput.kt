@@ -28,7 +28,10 @@ internal object ComposeHudInput {
     }
 
     @JvmStatic
-    fun consumeButton(button: Int, pressed: Boolean): Boolean {
+    fun consumeButton(button: Int, pressed: Boolean): Boolean =
+        consumeLayerButton(button, pressed) || HudFrameHooks.consumeButton(button, pressed)
+
+    private fun consumeLayerButton(button: Int, pressed: Boolean): Boolean {
         val pointerButton = when (button) {
             InputConstants.MOUSE_BUTTON_LEFT -> PointerButton.Primary
             InputConstants.MOUSE_BUTTON_RIGHT -> PointerButton.Secondary
