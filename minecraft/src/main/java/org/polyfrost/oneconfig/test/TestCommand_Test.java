@@ -67,8 +67,8 @@ public class TestCommand_Test {
         Notifications.success("Modpack downloaded!", "All-of-Fabric-6-0.1.0");
         Notifications.error("Game crashed on launch", "Main profile");
         Notifications.builder("8 mods have updates", "DamageTint, Hytils-Reborn, Chatting, OverflowAnimations, PolyBlur, 3 more")
-                .action(new NotificationAction("Update all", true, () -> Platform.compatibility().displayChatMessage("Update all clicked")))
-                .action(new NotificationAction("See mods", false, () -> Platform.compatibility().displayChatMessage("See mods clicked")))
+                .action(new NotificationAction("Update all", true, true, true, () -> Platform.compatibility().displayChatMessage("Update all clicked")))
+                .action(new NotificationAction("See mods", false, true, true, () -> Platform.compatibility().displayChatMessage("See mods clicked")))
                 .persistent()
                 .send();
     }

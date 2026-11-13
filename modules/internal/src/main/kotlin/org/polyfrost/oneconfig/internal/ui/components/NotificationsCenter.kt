@@ -17,9 +17,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
@@ -32,6 +38,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
+import org.polyfrost.oneconfig.api.ui.v1.theme.contrastAgainst
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -39,9 +46,6 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 private val PanelWidth = 368.dp
 private val PanelShape @Composable get() = LocalTheme.current.popupShape
 private val ButtonShape @Composable get() = LocalTheme.current.buttonShape
-
-private val SuccessColor = Color(0xFF3CAF77)
-private val ErrorColor = Color(0xFFF2545A)
 
 @Composable
 fun NotificationsCenter() {
@@ -111,7 +115,7 @@ private fun NotificationRow(notification: Notification) {
 
     Row(horizontalArrangement = Arrangement.spacedBy(13.dp)) {
         Box(Modifier.size(32.dp).padding(4.dp), contentAlignment = Alignment.Center) {
-            Icon(notification.type.iconName, color = accent, modifier = Modifier.size(24.dp))
+            Icon(notification.iconName ?: notification.type.iconName, color = accent, modifier = Modifier.size(24.dp))
         }
         Column(
             modifier = Modifier.weight(1f),
@@ -149,7 +153,7 @@ private fun NotificationRow(notification: Notification) {
                 )
             }
 
-            val progress = notification.progressOrNull()
+            val progress = liveProgress(notification)
             if (progress != null) {
                 Box(
                     Modifier
@@ -187,23 +191,25 @@ private fun ActionButton(notification: Notification, action: NotificationAction)
     val source = rememberInteractionSource()
     val isHovered by source.collectIsHoveredAsState()
 
-    val base = if (action.primary) Accent else theme.textColor.copy(0.08f)
-    val background by animateAccentColorAsState(isHovered to action.primary, if (isHovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
+    val hovered = isHovered && action.enabled
+    val base = if (action.primary) actionFillFor(notification.type) else theme.textColor.copy(0.08f)
+    val background by animateAccentColorAsState(hovered to action.primary, if (hovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
 
     Box(
         modifier = Modifier
+            .alpha(if (action.enabled) 1f else theme.disabledAlpha)
             .clip(ButtonShape)
             .background(background, ButtonShape)
-            .onClick(source) {
+            .onClick(source, action.enabled) {
                 action.onClick.run()
-                NotificationsManager.remove(notification)
+                if (action.dismissOnClick) NotificationsManager.remove(notification)
             }
-            .pointerHoverIcon(PointerIcon.Hand)
+            .then(if (action.enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
         Text(
             action.label,
-            color = if (action.primary) theme.accentTextColor else theme.textColor,
+            color = if (action.primary) onActionFillFor(notification.type) else theme.textColor,
             fontSize = 12.sp,
             lineHeight = 18.sp,
             fontWeight = FontWeight.Medium,
@@ -240,9 +246,38 @@ private fun Footer() {
 @Composable
 private fun accentFor(type: NotificationType): Color = when (type) {
     NotificationType.INFO -> LocalTheme.current.textColor
-    NotificationType.SUCCESS -> SuccessColor
-    NotificationType.ERROR -> ErrorColor
+    NotificationType.SUCCESS -> LocalTheme.current.success
+    NotificationType.ERROR -> LocalTheme.current.error
+    NotificationType.WARNING -> LocalTheme.current.warning
     NotificationType.PROGRESS -> Accent
+}
+
+@Composable
+private fun actionFillFor(type: NotificationType): Color = when (type) {
+    NotificationType.SUCCESS -> LocalTheme.current.success
+    NotificationType.ERROR -> LocalTheme.current.error
+    NotificationType.WARNING -> LocalTheme.current.warning
+    else -> Accent
+}
+
+@Composable
+private fun onActionFillFor(type: NotificationType): Color = when (type) {
+    NotificationType.SUCCESS -> LocalTheme.current.onSuccess
+    NotificationType.ERROR -> LocalTheme.current.onError
+    NotificationType.WARNING -> LocalTheme.current.warning.let { if (Color.White.contrastAgainst(it) >= Color.Black.contrastAgainst(it)) Color.White else Color.Black }
+    else -> LocalTheme.current.accentTextColor
+}
+
+@Composable
+private fun liveProgress(notification: Notification): Float? {
+    var frame by remember(notification.id) { mutableLongStateOf(0L) }
+    val progress = frame.let { notification.progressOrNull() }
+    if (progress != null && progress < 1f && notification.progress != null) {
+        LaunchedEffect(notification.id) {
+            while (true) withFrameNanos { frame = it }
+        }
+    }
+    return progress
 }
 
 private fun relativeTime(createdAt: Long, now: Long = System.currentTimeMillis()): String {

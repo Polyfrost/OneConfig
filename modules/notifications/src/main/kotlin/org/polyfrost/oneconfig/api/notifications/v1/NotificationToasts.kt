@@ -110,50 +110,47 @@ private fun Toast(notification: Notification) {
     val progressValue = remember { mutableStateOf(quantize(notification.progressOrNull() ?: 0f)) }
 
     LaunchedEffect(notification.id) {
-        val tracksProgress = notification.progress != null
-
-        fun sampleProgress(): Float {
-            val p = notification.progressOrNull() ?: 0f
-            progressValue.value = quantize(p)
-            return p
-        }
-
         val enterStart = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }
             val t = ((now - enterStart).coerceAtLeast(0L).toFloat() / ENTER_NANOS).coerceIn(0f, 1f)
             appear = easeOutCubic(t)
-            if (tracksProgress) sampleProgress()
+            notification.progressOrNull()?.let { progressValue.value = quantize(it) }
             if (t >= 1f) break
         }
         appear = 1f
 
-        when {
-            notification.progress != null -> {
-                while (!notification.dismissRequested) {
-                    if (sampleProgress() >= 1f) break
-                    withFrameNanos { }
+        var revision = notification.revision
+        var remaining = durationNanos(notification)
+        var completedAt = -1L
+        var last = withFrameNanos { it }
+        while (!notification.dismissRequested) {
+            val now = withFrameNanos { it }
+            val dt = now - last
+            last = now
+            if (notification.revision != revision) {
+                revision = notification.revision
+                remaining = durationNanos(notification)
+                completedAt = -1L
+            }
+            val progress = notification.progressOrNull()
+            if (progress != null) {
+                progressValue.value = quantize(progress)
+                if (progress < 1f) {
+                    completedAt = -1L
+                } else {
+                    if (completedAt < 0L) completedAt = now
+                    if (now - completedAt >= PROGRESS_LINGER_NANOS) break
                 }
-                val lingerStart = withFrameNanos { it }
-                while (withFrameNanos { it } - lingerStart < PROGRESS_LINGER_NANOS && !notification.dismissRequested) { }
+                continue
             }
-            notification.persistent -> {
-                while (!notification.dismissRequested) withFrameNanos { }
-            }
-            else -> {
-                val durationNanos = (notification.duration * 1_000_000L).toLong().coerceAtLeast(1L)
-                var remaining = durationNanos
-                var last = withFrameNanos { it }
-                while (remaining > 0L && !notification.dismissRequested) {
-                    val now = withFrameNanos { it }
-                    val dt = now - last
-                    last = now
-                    if (!notification.hovered) remaining -= dt
-                    timeFraction.value = quantize((remaining.toFloat() / durationNanos).coerceIn(0f, 1f))
-                }
-                timeFraction.value = 0f
-            }
+            completedAt = -1L
+            if (notification.persistent) continue
+            if (!notification.hovered) remaining -= dt
+            timeFraction.value = quantize((remaining.toFloat() / durationNanos(notification)).coerceIn(0f, 1f))
+            if (remaining <= 0L) break
         }
+        timeFraction.value = 0f
 
         val exitStart = withFrameNanos { it }
         while (true) {
@@ -165,7 +162,7 @@ private fun Toast(notification: Notification) {
         NotificationsManager.dismiss(notification)
     }
 
-    val hasProgress = notification.progress != null
+    val hasProgress = notification.tracksProgress
     val bgBase = if (notification.hovered) NotificationTheme.background.lighten(0.06f) else NotificationTheme.background
 
     PolyColumn(
@@ -183,8 +180,9 @@ private fun Toast(notification: Notification) {
             PolyColumn(gap = 4f) {
                 PolyText(notification.title, color = NotificationTheme.accentFor(notification.type), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
                 val bodyFont = messageFont()
-                val lines = remember(notification.message, bodyFont) {
-                    wrapText(notification.message, TEXT_WIDTH, bodyFont)
+                val message = notification.message
+                val lines = remember(message, bodyFont) {
+                    wrapText(message, TEXT_WIDTH, bodyFont)
                 }
                 for (line in lines) {
                     PolyText(line, color = NotificationTheme.textSecondary, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
@@ -209,6 +207,9 @@ private fun Toast(notification: Notification) {
     }
 }
 
+private fun durationNanos(notification: Notification): Long =
+    notification.durationMillis.coerceIn(1L, Long.MAX_VALUE / 1_000_000L) * 1_000_000L
+
 private fun quantize(value: Float): Float {
     val barPixels = (CONTENT_WIDTH * ToastViewport.scale).coerceAtLeast(1f)
     return Math.round(value * barPixels) / barPixels
@@ -232,17 +233,18 @@ private fun ProgressBar(progress: () -> Float) {
 
 @Composable
 private fun ActionButton(notification: Notification, action: NotificationAction) {
-    val hovered = ToastInput.hoveredAction === action
-    val base = if (action.primary) NotificationTheme.accent else NotificationTheme.subtleButton
-    val bg = if (hovered) base.lighten(0.12f) else base
+    val hovered = action.enabled && ToastInput.hoveredAction === action
+    val type = notification.type
+    val base = if (action.primary) NotificationTheme.actionFillFor(type) else NotificationTheme.subtleButton
+    val fill = if (hovered) base.lighten(0.12f) else base
+    val textColor = if (action.primary) NotificationTheme.onActionFillFor(type) else NotificationTheme.actionSubtleText
     PolyBox(
         modifier = PolyModifier
-            .background(bg, NotificationTheme.radiusButton)
+            .background(if (action.enabled) fill else fill.multiplyAlpha(DISABLED_ALPHA), NotificationTheme.radiusButton)
             .padding(horizontal = 12f, vertical = 6f)
             .tag(ToastHit.Action(notification, action)),
     ) {
-        val textColor = if (action.primary) NotificationTheme.actionPrimaryText else NotificationTheme.actionSubtleText
-        PolyText(action.label, color = textColor, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
+        PolyText(action.label, color = if (action.enabled) textColor else textColor.multiplyAlpha(DISABLED_ALPHA), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
     }
 }
 
@@ -257,12 +259,16 @@ private fun ToastIcon(notification: Notification) {
     } else {
         val accent = NotificationTheme.accentFor(notification.type)
         val iconFolder = NotificationTheme.iconFolder
+        val name = notification.iconName ?: notification.type.iconName
         PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
-            val name = notification.type.iconName
             // white masks tinted when drawn, so animating theme colours don't rasterize and cache a mask per colour
-            val img = iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, WHITE) }
-                ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, WHITE)
+            val img = if (name.endsWith(".svg")) {
+                SvgMask.get(if (name.startsWith("/")) name else "/$name", pixelSize, WHITE)
+            } else {
+                iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, WHITE) }
+                    ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, WHITE)
+            }
             if (img != null) image(img, x, y, w, h, 0f, 0f, 1f, 1f, accent)
         }
     }
@@ -270,6 +276,7 @@ private fun ToastIcon(notification: Notification) {
 
 private const val TEXT_WIDTH = CONTENT_WIDTH - ICON_SIZE - ICON_GAP
 private const val WHITE = -1
+private const val DISABLED_ALPHA = 0.5f
 
 private fun messageFont(): PolyFont = NotificationTheme.fontBody?.let { PolyFont(it, MESSAGE_SIZE) } ?: PolyFont.default(MESSAGE_SIZE)
 

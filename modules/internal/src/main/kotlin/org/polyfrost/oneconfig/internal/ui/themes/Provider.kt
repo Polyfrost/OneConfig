@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.themes
 
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.ScrollbarStyle
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,21 +14,33 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontListFontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import java.io.File
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.round
 import kotlinx.coroutines.delay
+import org.polyfrost.compose.backend.PolyFontSource
+import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
+import org.polyfrost.oneconfig.api.ui.v1.theme.contrastAgainst
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
 import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
@@ -205,21 +218,56 @@ fun ThemeWith(
 internal fun syncNotificationTheme(source: UITheme) {
     val accent = Accent
     val theme = if (ReduceTransparency.enabled) source.withOpaqueSurfaces() else source
-    val minecraft = theme.isMinecraft
+    val pixel = theme.style == ThemeStyle.Pixel
+    val unitDensity = Density(1f)
+
+    fun poly(color: Color): PolyColor = PolyColor(color.toArgb())
+
+    fun onFill(fill: Color): Color =
+        if (Color.White.contrastAgainst(fill) >= Color.Black.contrastAgainst(fill)) Color.White else Color.Black
+
+    fun radius(shape: Shape, width: Float, height: Float): Float =
+        (shape as? CornerBasedShape)?.topStart?.toPx(Size(width, height), unitDensity) ?: 0f
+
+    fun fontKey(style: TextStyle): String? {
+        val wanted = (style.fontWeight ?: FontWeight.Normal).weight
+        val font = (style.fontFamily as? FontListFontFamily)?.fonts.orEmpty()
+            .filterIsInstance<PolyFontSource>()
+            .filter { it.style == FontStyle.Normal }
+            .minByOrNull { abs(it.weight.weight - wanted) } ?: return null
+        val key = if (pixel) "${font.key}#pixel" else font.key
+        if (FontManager.fontData(key) != null) return key
+        val loaded = FontManager.fontData(font.key)?.let { runCatching { FontManager.register(key, it, pixel) }.isSuccess }
+            ?: when {
+                font.key.startsWith("res:") -> FontManager.loadFromResource(font.key.removePrefix("res:"), key, pixelAligned = pixel)
+                font.key.startsWith("file:") -> runCatching { FontManager.register(key, File(font.key.removePrefix("file:")).readBytes(), pixel) }.isSuccess
+                else -> false
+            }
+        return key.takeIf { loaded }
+    }
+
     NotificationTheme.set(
-        background = PolyColor(theme.popupBackground.withMinAlpha(TOAST_MIN_ALPHA).toArgb()),
-        border = PolyColor(theme.borderColor.toArgb()),
-        textPrimary = PolyColor(theme.textColor.toArgb()),
-        textSecondary = PolyColor(theme.textColorSecondary.toArgb()),
-        accent = PolyColor(accent.toArgb()),
-        subtleButton = PolyColor(theme.componentBackground.withMinAlpha(TOAST_MIN_ALPHA).toArgb()),
-        actionPrimaryText = PolyColor(theme.accentTextOn(accent).toArgb()),
-        actionSubtleText = PolyColor(theme.textColor.toArgb()),
-        fontTitle = if (minecraft) "minecraft-bold" else "poppins-medium",
-        fontBody = if (minecraft) "minecraft" else null,
-        radiusCard = if (minecraft) 0f else 12f,
-        radiusButton = if (minecraft) 0f else 4f,
-        radiusProgress = if (minecraft) 0f else 3f,
+        background = poly(theme.popupBackground.withMinAlpha(TOAST_MIN_ALPHA)),
+        border = poly(theme.borderColor),
+        textPrimary = poly(theme.textColor),
+        textSecondary = poly(theme.textColorSecondary),
+        accent = poly(accent),
+        subtleButton = poly(theme.componentBackground.withMinAlpha(TOAST_MIN_ALPHA)),
+        actionPrimaryText = poly(theme.accentTextOn(accent)),
+        actionSubtleText = poly(theme.textColor),
+        fontTitle = fontKey(theme.typography.heading),
+        fontBody = fontKey(theme.typography.small),
+        radiusCard = radius(theme.shapes.large, 340f, 72f),
+        radiusButton = radius(theme.shapes.medium, 80f, 26f),
+        radiusProgress = radius(theme.shapes.pill, 312f, 6f),
+        success = poly(theme.success),
+        error = poly(theme.error),
+        warning = poly(theme.warning),
+        info = poly(theme.info),
+        onSuccess = poly(theme.onSuccess),
+        onError = poly(theme.onError),
+        onWarning = poly(onFill(theme.warning)),
+        onInfo = poly(onFill(theme.info)),
     )
-    NotificationTheme.useIconFolder(if (minecraft) "minecraft" else null)
+    NotificationTheme.useIconFolder(if (pixel) "minecraft" else null)
 }
