@@ -16,6 +16,36 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ChangelogSources {
 public abstract interface annotation class org/polyfrost/oneconfig/api/ui/v1/ExperimentalOneConfigUiApi : java/lang/annotation/Annotation {
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/IconSpec {
+	public static final field $stable I
+	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/IconSpec$Companion;
+	public fun <init> (Ljava/lang/String;III)V
+	public fun <init> (Ljava/lang/String;IIII)V
+	public fun <init> (Ljava/lang/String;IIIII)V
+	public fun <init> (Ljava/lang/String;IIIIII)V
+	public fun <init> (Ljava/lang/String;IIIIIIZ)V
+	public synthetic fun <init> (Ljava/lang/String;IIIIIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()I
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getPixelated ()Z
+	public final fun getSheetHeight ()I
+	public final fun getSheetWidth ()I
+	public final fun getWidth ()I
+	public final fun getX ()I
+	public final fun getY ()I
+	public static final fun grid (Ljava/lang/String;III)Lorg/polyfrost/oneconfig/api/ui/v1/IconSpec;
+	public static final fun grid (Ljava/lang/String;IIII)Lorg/polyfrost/oneconfig/api/ui/v1/IconSpec;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/IconSpec$Companion {
+	public final fun grid (Ljava/lang/String;III)Lorg/polyfrost/oneconfig/api/ui/v1/IconSpec;
+	public final fun grid (Ljava/lang/String;IIII)Lorg/polyfrost/oneconfig/api/ui/v1/IconSpec;
+	public static synthetic fun grid$default (Lorg/polyfrost/oneconfig/api/ui/v1/IconSpec$Companion;Ljava/lang/String;IIIIILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/ui/v1/IconSpec;
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/ui/v1/InternalOneConfigUiApi : java/lang/annotation/Annotation {
 }
 
@@ -113,6 +143,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ModToggles {
 	public static final fun manage ([Ljava/lang/String;)V
 	public static final fun register (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;)V
 	public static final synthetic fun register (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/ModToggle;)V
+	public static final fun registerReadOnly (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public static final fun registerReadOnly (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun registerReadOnly$default (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public static final fun removeListener (Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles$Listener;)V
 	public static final fun setEnabled (Ljava/lang/String;Z)V
 	public static final fun setStore (Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles$Store;)V
@@ -159,6 +192,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
 	public static final fun createScreen (Ljava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun createScreen$default (Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun ensureInitialized ()V
+	public static final fun getCurrentPageArgument ()Ljava/lang/Object;
 	public static final fun isOneConfigScreen (Ljava/lang/Object;)Z
 	public static final fun open ()V
 	public static final synthetic fun open (Ljava/lang/Object;)V
@@ -176,17 +210,30 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/OneConfigUIBri
 	public fun ensureInitialized ()V
 	public fun isOneConfigScreen (Ljava/lang/Object;)Z
 	public abstract fun open (Ljava/lang/Object;)V
+	public fun openPage (Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;Ljava/lang/Object;)V
+	public fun takePageArgument ()Ljava/lang/Object;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge$DefaultImpls {
 	public static fun ensureInitialized (Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge;)V
 	public static fun isOneConfigScreen (Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge;Ljava/lang/Object;)Z
+	public static fun openPage (Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge;Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;Ljava/lang/Object;)V
+	public static fun takePageArgument (Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge;)Ljava/lang/Object;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/OptionWidgets {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/OptionWidgets;
 	public static final fun refresh (Lorg/polyfrost/oneconfig/api/config/v1/Property;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/ReadOnlyModToggle : org/polyfrost/oneconfig/api/toggle/v1/ModToggle {
+	public abstract fun getLockedReason ()Ljava/lang/String;
+	public fun setEnabled (Z)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/ReadOnlyModToggle$DefaultImpls {
+	public static fun setEnabled (Lorg/polyfrost/oneconfig/api/ui/v1/ReadOnlyModToggle;Z)V
 }
 
 public abstract class org/polyfrost/oneconfig/api/ui/v1/SettingRowDecorator {
@@ -201,6 +248,20 @@ public final class org/polyfrost/oneconfig/api/ui/v1/SettingRowDecorators {
 	public static final fun all ()Ljava/util/List;
 	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/SettingRowDecorator;)V
 	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/SettingRowDecorator;)Z
+}
+
+public abstract class org/polyfrost/oneconfig/api/ui/v1/TreeHeaderDecorator {
+	public static final field $stable I
+	public fun <init> ()V
+	public abstract fun Decorate (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/TreeHeaderDecorators {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/TreeHeaderDecorators;
+	public static final fun all ()Ljava/util/List;
+	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/TreeHeaderDecorator;)V
+	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/TreeHeaderDecorator;)Z
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/a11y/A11y {
@@ -1121,6 +1182,11 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/UiSound : java/l
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/config/PropertyStates {
+	public static final fun asFlow (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun collectAsState (Lorg/polyfrost/oneconfig/api/config/v1/Property;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindNotInScreen : org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind {
 	public static final field $stable I
 	public fun <init> ([I[IBJLkotlin/jvm/functions/Function1;)V
@@ -1340,6 +1406,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/page/OneConfigPages {
 	public static final fun modConfig (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget;
 	public static final fun modConfig (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/page/ModConfigTarget;
 	public static final fun register (Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;)V
+	public static final fun registerIfAbsent (Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;)Z
 	public static final fun unregister (Ljava/lang/String;)Z
 }
 

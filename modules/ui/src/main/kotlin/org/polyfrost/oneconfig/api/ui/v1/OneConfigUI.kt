@@ -61,9 +61,23 @@ public object OneConfigUI {
     @ExperimentalOneConfigUiApi
     @JvmStatic
     @JvmOverloads
-    public fun open(page: OneConfigPage, @Suppress("UNUSED_PARAMETER") argument: Any? = null) {
-        open(OneConfigDestination.Custom(page))
+    public fun open(page: OneConfigPage, argument: Any? = null) {
+        if (argument == null) {
+            open(OneConfigDestination.Custom(page))
+            return
+        }
+        val bridge = bridge
+        if (bridge == null) {
+            LOGGER.warn("Cannot open the OneConfig UI: no OneConfigUIBridge is available")
+            return
+        }
+        bridge.openPage(page, argument)
     }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public val currentPageArgument: Any?
+        get() = bridge?.takePageArgument()
 
     @ExperimentalOneConfigUiApi
     @JvmStatic

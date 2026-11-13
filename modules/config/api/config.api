@@ -1,3 +1,39 @@
+public final class org/polyfrost/oneconfig/api/config/v1/MetaKey {
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/MetaKeys {
+	public static final field CATEGORY Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field COLLAPSED Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field DESCRIPTION Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field FULL_WIDTH Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field HIDDEN Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field HIDE_LABEL Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field ICON Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/MetaKeys;
+	public static final field LABELS Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field MAX Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field MIN Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field OPTIONS Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field ORDER Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field STEP Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field SUBCATEGORY Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field TITLE Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field UNIT Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+	public static final field VISUALIZER Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/MetaKeysKt {
+	public static final field ENABLE_TOGGLE_KEY Ljava/lang/String;
+	public static final fun get (Lorg/polyfrost/oneconfig/api/config/v1/Node;Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;)Ljava/lang/Object;
+	public static final fun getEnableToggle (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public static final fun set (Lorg/polyfrost/oneconfig/api/config/v1/Node;Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;Ljava/lang/Object;)V
+}
+
 public abstract class org/polyfrost/oneconfig/api/config/v1/Node {
 	protected static final field LOGGER Lorg/apache/logging/log4j/Logger;
 	public field description Ljava/lang/Object;
@@ -57,6 +93,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public final fun addCallback (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addCallback (Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addCallback ([Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public final fun addDependent (Lorg/polyfrost/oneconfig/api/config/v1/Property;)V
 	public final fun addDisplayCondition (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition (Ljava/util/function/Supplier;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition (Lorg/polyfrost/oneconfig/api/config/v1/Property;Z)Lorg/polyfrost/oneconfig/api/config/v1/Property;
@@ -77,6 +114,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun removeCallback (Ljava/util/function/Predicate;)Z
 	public final fun removeCallbackIf (Ljava/util/function/Predicate;)Z
+	public final fun removeDependent (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Z
 	public final fun removeDisplayConditionIf (Ljava/util/function/Predicate;)Z
 	public final fun removeDisplayListener (Ljava/util/function/Consumer;)Z
 	public fun revaluateDisplay ()V

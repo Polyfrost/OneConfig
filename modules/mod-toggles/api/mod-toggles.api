@@ -2,6 +2,8 @@ public abstract interface class org/polyfrost/oneconfig/api/toggle/v1/ModToggle 
 	public static final field ENTRYPOINT Ljava/lang/String;
 	public abstract fun isEnabled ()Z
 	public fun needsSetup ()Z
+	public static fun of (Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;
+	public static fun of (Ljava/util/function/BooleanSupplier;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;
 	public abstract fun setEnabled (Z)V
 }
 

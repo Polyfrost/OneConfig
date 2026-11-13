@@ -30,11 +30,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +77,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorator
 import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
+import org.polyfrost.oneconfig.api.ui.v1.ReadOnlyModToggle
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -109,6 +112,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -484,6 +488,14 @@ fun ModCard(
     val toggleRevision = ModToggles.revision
     val toggle = remember(mod, toggleRevision) { mod.toggle }
     var enabled by rememberModEnabled(toggle)
+    val locked = toggle is ReadOnlyModToggle
+    if (toggle is ReadOnlyModToggle) {
+        LaunchedEffect(toggle) {
+            while (true) {
+                withFrameMillis { enabled = toggle.isEnabled() }
+            }
+        }
+    }
     val footerAccent by animateFloatAsState(if (enabled) 1f else 0f)
     val insetFooter = theme.insetModFooter
     val insetFooterShape = theme.modCardShape.concentric(ModCardInsetFooterInset)
@@ -561,7 +573,7 @@ fun ModCard(
                     .background(AccentBrush, alpha = footerAccent)
                     .accentSheen(alpha = footerAccent)
                     .then(
-                        if (toggle != null && interactive) {
+                        if (toggle != null && interactive && !locked) {
                             Modifier
                                 .focusProperties { canFocus = false }
                                 .onClick(footerInteractions) {
@@ -646,7 +658,12 @@ fun ModCard(
             Tooltip(
                 text = {
                     Text(
-                        if (toggle != null) "This mod can be toggled on and off." else "This mod doesn't support being toggled.",
+                        when {
+                            toggle is ReadOnlyModToggle -> toggle.lockedReason?.takeIf { it.isNotBlank() }
+                                ?: translated("oneconfig.mods.toggle.locked", "This mod is switched on and off somewhere else.")
+                            toggle != null -> "This mod can be toggled on and off."
+                            else -> "This mod doesn't support being toggled."
+                        },
                         color = theme.textColor,
                         fontSize = 12.sp,
                     )
@@ -654,7 +671,13 @@ fun ModCard(
                 modifier = Modifier,
                 anchor = Alignment.TopCenter,
             ) {
-                Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
+                if (locked) {
+                    Icon(
+                        "lock",
+                        color = if (enabled) Accent else theme.textColor.copy(alpha = 0.6f),
+                        modifier = Modifier.size(ModCardToggleRing),
+                    )
+                } else Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
                     val ringStart = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
                     val ringEnd = if (toggle != null) lerp(AccentEnd, ModCardToggleRingShade, 0.42f) else ringStart
                     val ring = lerp(ringStart, ringEnd, 0.5f)

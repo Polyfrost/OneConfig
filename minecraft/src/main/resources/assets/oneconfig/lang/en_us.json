@@ -599,5 +599,6 @@
   "oneconfig.menu.option.copy_value": "Copy value",
   "oneconfig.menu.option.paste_value": "Paste value",
   "oneconfig.menu.option.copy_hex": "Copy hex",
-  "oneconfig.menu.option.paste_hex": "Paste hex"
+  "oneconfig.menu.option.paste_hex": "Paste hex",
+  "oneconfig.mods.toggle.locked": "This mod is switched on and off somewhere else."
 }

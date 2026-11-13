@@ -6,10 +6,15 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUIBridge
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
 import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
+import org.polyfrost.oneconfig.internal.ui.navigation.PageArguments
+import org.polyfrost.oneconfig.internal.ui.navigation.PageRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.pageRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.resolveOpenTarget
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 
@@ -37,6 +42,17 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
             Platform.screen().display(OneConfigUIScreen.forRoute(target))
         }
     }
+
+    @OptIn(ExperimentalOneConfigUiApi::class)
+    override fun openPage(page: OneConfigPage, argument: Any?) {
+        if (argument != null && OneConfigPages.byId(page.id) === page && pageRoute(page) == PageRoute(page.id)) {
+            PageArguments.offer(page.id, argument)
+        }
+        open(page)
+    }
+
+    @OptIn(ExperimentalOneConfigUiApi::class)
+    override fun takePageArgument(): Any? = PageArguments.take()
 
     override fun isOneConfigScreen(screen: Any?): Boolean = screen is OneConfigUIScreen
 

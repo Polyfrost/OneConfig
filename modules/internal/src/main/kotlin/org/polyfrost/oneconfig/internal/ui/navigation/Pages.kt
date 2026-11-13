@@ -1,7 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -120,12 +127,56 @@ fun resolveOpenTarget(target: Any?): Any? = when (target) {
     else -> target
 }
 
+object PageArguments {
+    private class Delivery(val pageId: String, val argument: Any)
+
+    private var revision by mutableIntStateOf(0)
+
+    @Volatile
+    private var pending: Delivery? = null
+
+    @Volatile
+    private var current: Delivery? = null
+
+    fun offer(pageId: String, argument: Any) {
+        pending = Delivery(pageId, argument)
+        Snapshot.withMutableSnapshot { revision++ }
+    }
+
+    fun take(): Any? {
+        val delivery = current ?: return null
+        current = null
+        return delivery.argument
+    }
+
+    private fun claim(pageId: String): Delivery? {
+        val delivery = pending?.takeIf { it.pageId == pageId } ?: return null
+        pending = null
+        current = delivery
+        return delivery
+    }
+
+    private class Latest(var delivery: Delivery?)
+
+    @Composable
+    fun Deliver(pageId: String, content: @Composable () -> Unit) {
+        val round = revision
+        val delivered = remember(pageId, round) { claim(pageId) }
+        val latest = remember(pageId) { Latest(null) }
+        if (delivered != null) latest.delivery = delivered
+        DisposableEffect(pageId) {
+            onDispose { if (current?.pageId == pageId) current = null }
+        }
+        key(latest.delivery) { content() }
+    }
+}
+
 fun NavGraphBuilder.pageDestinations() {
     composable<PageRoute> { entry ->
         val id = entry.toRoute<PageRoute>().pageId
         val page = OneConfigPages.byId(id)
         if (page != null) {
-            page.Content()
+            PageArguments.Deliver(id) { page.Content() }
             return@composable
         }
         val shell = LocalShell.current
