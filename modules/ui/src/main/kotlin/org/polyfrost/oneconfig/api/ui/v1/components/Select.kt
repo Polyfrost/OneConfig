@@ -146,7 +146,7 @@ private fun SelectField(
         Motion.spec(tween(FADE_MILLIS)),
     )
     val chevron by animateFloatAsState(if (expanded) 0f else 180f, Motion.spec(tween(FADE_MILLIS)))
-    Box(modifier) {
+    Box(modifier, propagateMinConstraints = true) {
         Row(
             modifier = Modifier
                 .onKeyEvent { event ->
