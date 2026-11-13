@@ -4,8 +4,10 @@ import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.ImageBitmap
 import java.util.UUID
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
+@InternalOneConfigUiApi
 public interface OneConfigUIPlayerHeadBridge {
     public fun face(id: UUID): ImageBitmap?
 

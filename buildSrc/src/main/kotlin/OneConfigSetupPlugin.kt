@@ -432,6 +432,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
         tasks.withType<KotlinCompile>().configureEach {
             // FixedScrollConfig relies on Compose internals, for which there is no public alternative
             compilerOptions.freeCompilerArgs.add("-Xdont-warn-on-error-suppression")
+            compilerOptions.optIn.add("org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi")
         }
 
         tasks.withType<Jar>().configureEach {

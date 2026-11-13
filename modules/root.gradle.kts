@@ -119,6 +119,7 @@ subprojects {
                 filters.exclude {
                     byNames.add("org.polyfrost.oneconfig.api.**.internal.**")
                     annotatedWith.add("org.jetbrains.annotations.ApiStatus.Internal")
+                    annotatedWith.add("org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi")
                 }
             }
         }
@@ -129,8 +130,10 @@ subprojects {
     }
 
     val kotlinModuleName = project.name
+    val seesUiApi = name in listOf("ui", "hud", "internal")
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName
+        if (seesUiApi) compilerOptions.optIn.add("org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi")
         if (name.contains("Test")) {
             // JUnit 6's nullable assertion parameters get misread as non-null
             compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=ignore")

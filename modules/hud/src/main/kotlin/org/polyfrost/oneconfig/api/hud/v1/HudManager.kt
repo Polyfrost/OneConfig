@@ -53,6 +53,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
@@ -591,6 +592,7 @@ public object HudManager {
     }
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     public fun updateIfDue(hud: Hud) {
         val frequency = hud.updateFrequency()
         if (frequency >= 0L) {
@@ -739,6 +741,7 @@ public object HudManager {
     }
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     @JvmOverloads
     public fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null, alwaysRender: Boolean = false, liveChroma: Boolean = false): Boolean {
         var volatileContent = false
@@ -933,6 +936,7 @@ public object HudManager {
      * so without this they would show up bare
      */
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     public fun drawMergedBackgrounds(ctx: RenderContext) {
         for (group in frameGroups) {
             try {
@@ -1031,6 +1035,7 @@ public object HudManager {
         this == other || (this.isNaN() && other.isNaN())
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     public fun prepare(screenWidth: Float, screenHeight: Float) {
         prepareFrame(screenWidth, screenHeight, {
             prepareOrder.clear()
@@ -1045,6 +1050,7 @@ public object HudManager {
     }
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     @JvmOverloads
     public fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float, volatileCtx: RenderContext? = null) {
         val prepared = preparedFrameValid

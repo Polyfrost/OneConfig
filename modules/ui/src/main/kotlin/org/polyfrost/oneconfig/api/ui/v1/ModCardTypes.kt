@@ -72,6 +72,44 @@ public object ModCardTypes {
         bump()
     }
 
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun unregister(typeId: String): Boolean {
+        val removed = synchronized(lock) {
+            if (typesById[typeId] == null) return@synchronized false
+            typesById = typesById - typeId
+            sortedTypes = typesById.values.sortedWith(TypeOrder)
+            true
+        }
+        if (removed) bump()
+        return removed
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun unassign(modId: String): Boolean {
+        val key = normalise(modId)
+        val removed = synchronized(lock) {
+            if (key !in assignments) return@synchronized false
+            assignments = assignments - key
+            true
+        }
+        if (removed) bump()
+        return removed
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun unregisterResolver(resolver: ModCardTypeResolver): Boolean {
+        val removed = synchronized(lock) {
+            if (resolver !in resolvers) return@synchronized false
+            resolvers = resolvers - resolver
+            true
+        }
+        if (removed) bump()
+        return removed
+    }
+
     @JvmStatic
     public fun types(): List<ModCardType> = sortedTypes
 
