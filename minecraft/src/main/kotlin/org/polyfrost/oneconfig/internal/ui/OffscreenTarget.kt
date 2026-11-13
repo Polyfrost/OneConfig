@@ -1,7 +1,13 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import com.mojang.blaze3d.pipeline.RenderTarget
+import java.util.concurrent.CopyOnWriteArrayList
 import org.slf4j.LoggerFactory
+
+//? if < 1.21.10 {
+/*import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
+*///?}
 
 //? if >= 26.2 {
 import com.mojang.renderpearl.api.GpuFormat
@@ -142,4 +148,63 @@ object GpuBackend {
 
 interface TextureRenderer {
     fun texture(target: RenderTarget, x: Float, y: Float, w: Float, h: Float, u0: Float, v0: Float, u1: Float, v1: Float, alpha: Float)
+}
+
+object FramePresentHooks {
+    private val LOG = LoggerFactory.getLogger("OneConfig/FramePresentHooks")
+
+    private class Deferred(var frames: Int, val action: () -> Unit)
+
+    private val callbacks = CopyOnWriteArrayList<() -> Unit>()
+    private val deferred = ArrayList<Deferred>()
+
+    init {
+        //? if < 1.21.10 {
+        /*EventManager.register(FramebufferRenderEvent.Start::class.java, Runnable { run() })
+        *///?}
+    }
+
+    fun add(callback: () -> Unit): AutoCloseable {
+        callbacks += callback
+        return AutoCloseable { callbacks.remove(callback) }
+    }
+
+    fun later(frames: Int, action: () -> Unit) {
+        deferred += Deferred(frames, action)
+    }
+
+    @JvmStatic
+    fun run() {
+        for (callback in callbacks) {
+            try {
+                callback()
+            } catch (t: Throwable) {
+                LOG.warn("A frame present hook failed", t)
+            }
+        }
+        if (deferred.isEmpty()) return
+        val due = ArrayList<Deferred>()
+        val iterator = deferred.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (--entry.frames > 0) continue
+            iterator.remove()
+            due += entry
+        }
+        for (entry in due) {
+            try {
+                entry.action()
+            } catch (t: Throwable) {
+                LOG.warn("A deferred frame task failed", t)
+            }
+        }
+    }
+}
+
+object PreviewNameTag {
+    @JvmField
+    var rendering: Boolean = false
+
+    @JvmField
+    var show: Boolean = false
 }
