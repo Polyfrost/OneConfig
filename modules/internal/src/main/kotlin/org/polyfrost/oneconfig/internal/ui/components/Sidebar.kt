@@ -467,7 +467,6 @@ private fun AboutButton() {
                             if (nav.currentRoute == route) shell.search.clear() else nav.navigate(route)
                         },
                         icon = page.icon,
-                        checked = entry.isOn(route),
                     )
                 },
                 placement = Placement.AboveStart,
