@@ -144,7 +144,8 @@ private fun MenuIconButton(action: MenuAction, onSelect: () -> Unit) {
     LaunchedEffect(highlighted, keyboard) {
         if (highlighted && keyboard) A11y.focused(tooltip, A11yRole.Button, null, null)
     }
-    val ring = if (highlighted && keyboard) Modifier.border(1.dp, theme.focusRingColor, theme.buttonShape) else Modifier
+    val ringShape = if (action.painter != null || action.icon != null) IconButtonDefaults.shape(IconButtonStyle.Ghost) else ButtonDefaults.shape
+    val ring = if (highlighted && keyboard) Modifier.border(1.dp, theme.focusRingColor, ringShape) else Modifier
     Box(Modifier.menuNavPosition(nav).then(ring)) {
         val modifier = if (level != null) Modifier.notFocusable() else Modifier
         when {
