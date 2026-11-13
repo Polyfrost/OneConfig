@@ -28,8 +28,10 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuItemSize
@@ -89,7 +91,7 @@ fun resetOption(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()
 @Composable
 fun Option(prop: Property<*>) {
     val vis = remember(System.identityHashCode(prop)) {
-        when (val raw = prop.getMetadata<Any>("visualizer")) {
+        when (val raw = prop[MetaKeys.VISUALIZER]) {
             is Visualizer -> raw
             is Class<*> -> (raw.getDeclaredConstructor().newInstance() as? Visualizer)
             else -> null

@@ -284,7 +284,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                prop.getMetadata<String>("icon")?.let {
+                (prop.getMetadata<Any?>("icon") as? String)?.let {
                     Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

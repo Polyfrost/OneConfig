@@ -6,6 +6,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.api.config.v1.SliderBounds
@@ -22,7 +23,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
 sealed class OptionData(val prop: Property<*>) {
     val title: Any get() = localizedText(prop.getMetadata("titleKey"), prop.title ?: prop.id ?: "")
     val description: Any? get() = prop.localizedDescription()
-    val icon: String? get() = prop.getMetadata("icon")
+    val icon: String? get() = prop.getMetadata<Any?>(MetaKeys.ICON.name) as? String
 }
 
 class BooleanOptionData(prop: Property<*>, val style: Style) : OptionData(prop) {
@@ -518,9 +519,9 @@ private fun Number.toComponentType(component: Class<*>): Any = when (component) 
 private fun Property<*>.optionLabels(): List<Any>? {
     // explicit display labels win over ones derived from raw option values and are positionally aligned
     // with "options"
-    getMetadata<Any>("optionLabels").optionList().takeIf { it.isNotEmpty() }?.let { return it }
+    getMetadata<Any>(MetaKeys.LABELS.name).optionList().takeIf { it.isNotEmpty() }?.let { return it }
 
-    val raw = getMetadata<Any>("options") ?: return null
+    val raw = getMetadata<Any>(MetaKeys.OPTIONS.name) ?: return null
     val keys = getMetadata<Any>("optionsKey").optionList().map { it.toString() }
     val labels = when {
         raw is Iterable<*> -> raw.map { it ?: "" }
@@ -536,7 +537,7 @@ private fun Property<*>.optionLabels(): List<Any>? {
 private fun Property<*>.optionValues(): List<Any>? = getMetadata<Any>("optionValues").optionList().takeIf { it.isNotEmpty() }
 
 private fun Property<*>.optionLabelMap(): Map<String, Any> {
-    val options = getMetadata<Any>("options").optionList().map { it.toString() }
+    val options = getMetadata<Any>(MetaKeys.OPTIONS.name).optionList().map { it.toString() }
     val labels = optionLabels() ?: return emptyMap()
     return options.zip(labels).toMap()
 }

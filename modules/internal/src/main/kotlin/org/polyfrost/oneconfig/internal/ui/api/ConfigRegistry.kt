@@ -142,7 +142,7 @@ object ConfigRegistry {
     ): Boolean {
         MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
         if (tree.id == null || tree.title == null) return false
-        if (tree.getMetadata<Any?>("hidden") != null) return false
+        if (tree.getMetadata<Any?>("hidden") == true) return false
         return upsert(TreeConfigData(tree, source, onOpen), bumpRevision)
     }
 
