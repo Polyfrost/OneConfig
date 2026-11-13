@@ -29,7 +29,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,9 +51,9 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
@@ -114,7 +113,7 @@ private data class ProfileActionResult(
 )
 
 private val ProfileCardHeight = 180.dp
-private const val OverlayFrameTimeoutMs = 500L
+private const val BusyOverlayDelayMs = 400L
 private enum class ProfileEditor { Rename, Clone, Icon }
 private val ProfileIconOptions = listOf(
     "profiles",
@@ -174,7 +173,6 @@ fun Profiles() {
             val ownerJob = scope.coroutineContext[Job]!!
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 withContext(NonCancellable) {
-                    awaitOverlayDrawn()
                     val result = withContext(Dispatchers.IO) {
                         try {
                             action()
@@ -224,7 +222,6 @@ fun Profiles() {
             busy = true
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 withContext(NonCancellable) {
-                    awaitOverlayDrawn()
                     val choice = try {
                         withContext(Dispatchers.IO) { prompt() }
                     } catch (failure: Throwable) {
@@ -399,15 +396,14 @@ fun Profiles() {
     }
 }
 
-private suspend fun awaitOverlayDrawn() {
-    withTimeoutOrNull(OverlayFrameTimeoutMs) {
-        withFrameNanos { }
-        withFrameNanos { }
-    }
-}
-
 @Composable
 private fun ProfileBusyOverlay() {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(BusyOverlayDelayMs)
+        shown = true
+    }
+    if (!shown) return
     val theme = LocalTheme.current
     ModalDialog(onDismiss = {}, dismissOnScrim = false, dismissOnEscape = false) {
         Text(
