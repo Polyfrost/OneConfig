@@ -1,23 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -33,16 +27,19 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenu
-import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
-import org.polyfrost.oneconfig.api.ui.v1.components.MenuItemSize
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuCustomItem
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.MoreButton
+import org.polyfrost.oneconfig.api.ui.v1.components.OptionMenuContributors
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 
@@ -107,7 +104,7 @@ fun Option(prop: Property<*>) {
     val value = prop.shown()
     Text(
         when (value) {
-            is Boolean -> if (value) "On" else "Off"
+            is Boolean -> if (value) translated("oneconfig.control.on", "On") else translated("oneconfig.control.off", "Off")
             null -> "—"
             else -> value.toString()
         },
@@ -137,40 +134,109 @@ fun BooleanOption(data: BooleanOptionData) {
     }
 }
 
-@Composable
-fun OptionActionButton(
-    visible: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val color = if (isHovered) theme.textColor else theme.textColorSecondary
-
-    if (!visible) {
-        Box(modifier = modifier.size(24.dp).alpha(0f))
-        return
+fun optionMenuEntries(
+    prop: Property<*>,
+    onReset: (() -> Unit)? = null,
+    resetEnabled: Boolean? = null,
+    onUnbind: (() -> Unit)? = null,
+): List<MenuEntry> {
+    val isKeybind = runCatching { prop.get() is OneConfigKeybind }.getOrDefault(false)
+    val reset = onReset ?: { if (prop.get() is OneConfigKeybind) resetKeybindOption(prop) else resetOption(prop) }
+    val builtIn = OptionMenuContributors.builtInEntries(prop, onReset = reset)
+    val canReset = resetEnabled ?: optionHasDefault(prop)
+    val entries = ArrayList<MenuEntry>(builtIn.size + 4)
+    builtIn.forEachIndexed { index, entry ->
+        entries += if (index == 0 && !canReset && entry is MenuAction) entry.disabled() else entry
     }
+    if (isKeybind || onUnbind != null) {
+        entries += MenuAction(
+            translated("oneconfig.menu.option.unbind", "Unbind"),
+            onUnbind ?: { unbindKeybindOption(prop) },
+            icon = "close",
+            enabled = prop.display != Property.Display.DISABLED,
+        )
+    }
+    val contributed = OptionMenuContributors.entriesFor(prop)
+    if (contributed.isNotEmpty()) {
+        entries += MenuSeparator
+        entries += contributed
+    }
+    return entries
+}
 
-    Tooltip(
-        text = {
-            Text("More actions. Right-click option as shortcut.", color = theme.textColor, fontSize = 12.sp)
-        },
-        modifier = Modifier,
-        anchor = Alignment.TopCenter,
-    ) {
-        Box(
-            modifier = modifier
-                .size(24.dp)
-                .clip(theme.sideBarNavigationEntryShape)
-                .onClick(interactionSource, onClick)
-                .pointerHoverIcon(PointerIcon.Hand),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon("dots-vertical", color = color, modifier = Modifier.size(16.dp))
+private fun MenuAction.disabled(): MenuAction = MenuAction(
+    label,
+    onClick,
+    icon = icon,
+    painter = painter,
+    detail = detail,
+    style = style,
+    enabled = false,
+    disabledReason = disabledReason,
+    checked = checked,
+    shortcutHint = shortcutHint,
+    badge = badge,
+    size = size,
+    leading = leading,
+    children = children,
+)
+
+@Stable
+class OptionMenuState internal constructor(private val prop: Property<*>) {
+    private var openCount by mutableIntStateOf(0)
+
+    internal var onReset: (() -> Unit)? = null
+    internal var resetEnabled: Boolean? = null
+
+    private val tracker = MenuCustomItem { TrackOpen() }
+
+    internal var buttonEntries: List<MenuEntry> by mutableStateOf(deferredEntries())
+        private set
+
+    val isOpen: Boolean get() = openCount > 0
+
+    fun entries(): List<MenuEntry> = optionMenuEntries(prop, onReset, resetEnabled) + tracker
+
+    private fun deferredEntries(): List<MenuEntry> = DeferredMenuEntries(::entries)
+
+    @Composable
+    private fun TrackOpen() {
+        DisposableEffect(Unit) {
+            openCount++
+            onDispose {
+                openCount--
+                buttonEntries = deferredEntries()
+            }
         }
     }
+}
+
+private class DeferredMenuEntries(compute: () -> List<MenuEntry>) : AbstractList<MenuEntry>() {
+    private val entries by lazy(LazyThreadSafetyMode.NONE, compute)
+
+    override val size: Int get() = entries.size
+
+    override fun get(index: Int): MenuEntry = entries[index]
+}
+
+@Composable
+fun rememberOptionMenu(prop: Property<*>, onReset: (() -> Unit)? = null, resetEnabled: Boolean? = null): OptionMenuState {
+    val state = remember(System.identityHashCode(prop)) { OptionMenuState(prop) }
+    state.onReset = onReset
+    state.resetEnabled = resetEnabled
+    return state
+}
+
+fun Modifier.optionContextMenu(menu: OptionMenuState, enabled: Boolean = true): Modifier =
+    contextMenu(enabled) { menu.entries() }
+
+@Composable
+fun OptionMoreButton(menu: OptionMenuState, visible: Boolean, modifier: Modifier = Modifier) {
+    MoreButton(
+        menu.buttonEntries,
+        modifier.hiddenUntilHover(visible || menu.isOpen),
+        contentDescription = translated("oneconfig.option.more_actions", "More actions. Right-click option as shortcut."),
+    )
 }
 
 /**
@@ -188,20 +254,7 @@ fun OptionContextMenu(
     onUnbind: (() -> Unit)? = null,
 ) {
     if (!expanded) return
-    val isKeybind = remember(System.identityHashCode(prop)) { prop.get() is OneConfigKeybind }
-    val effectiveReset = onReset ?: if (isKeybind) ({ resetKeybindOption(prop) }) else null
-    val effectiveUnbind = onUnbind ?: if (isKeybind) ({ unbindKeybindOption(prop) }) else null
-    ContextMenu(expanded, offset, onDismiss) {
-        MenuItem("Reset to default", "refresh", null, MenuItemSize.Compact, false, false, resetEnabled, null, Modifier, null) {
-            if (effectiveReset != null) effectiveReset() else resetOption(prop)
-            onDismiss()
-        }
-        if (effectiveUnbind != null) {
-            MenuItem("Unbind", "close") {
-                effectiveUnbind()
-                onDismiss()
-            }
-        }
-    }
+    val entries = remember(System.identityHashCode(prop)) { optionMenuEntries(prop, onReset, resetEnabled, onUnbind) }
+    ContextMenu(expanded, offset, onDismiss, entries)
 }
 

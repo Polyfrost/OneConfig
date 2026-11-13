@@ -1,10 +1,9 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -33,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
@@ -43,15 +42,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -114,6 +119,38 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
     var lastTickIndex by remember { mutableStateOf(-1) }
 
+    fun moveBy(id: Int, delta: Int): Boolean {
+        val from = items.indexOfFirst { it.id == id }
+        val to = from + delta
+        if (from < 0 || to !in items.indices) return false
+        val list = items.toMutableList()
+        list.add(to, list.removeAt(from))
+        items = list
+        save(list)
+        return true
+    }
+
+    fun rowMenu(item: ListEntry): List<MenuEntry> {
+        val index = items.indexOfFirst { it.id == item.id }
+        if (index < 0) return emptyList()
+        return listOf(
+            MenuAction(
+                translated("oneconfig.list.move_up", "Move up"),
+                { moveBy(item.id, -1) },
+                icon = "up",
+                enabled = index > 0,
+                shortcutHint = translated("oneconfig.list.move_up.shortcut", "Alt+Up"),
+            ),
+            MenuAction(
+                translated("oneconfig.list.move_down", "Move down"),
+                { moveBy(item.id, 1) },
+                icon = "down",
+                enabled = index < items.lastIndex,
+                shortcutHint = translated("oneconfig.list.move_down.shortcut", "Alt+Down"),
+            ),
+        )
+    }
+
     val draggableState = rememberDraggableState { delta ->
         if (draggingIndex == -1) return@rememberDraggableState
         dragAccum = (dragAccum + delta).coerceIn(
@@ -136,13 +173,13 @@ fun DraggableListOption(data: DraggableListOptionData) {
             .padding(15.dp),
     ) {
         val scrollState = rememberScrollState()
-        Box(
+        ScrollContainer(
+            state = scrollState,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 280.dp)
-                .fadingEdges(scrollState, theme.componentBackground)
-                .wheelScroll(scrollState)
-                .verticalScroll(scrollState),
+                .heightIn(max = 280.dp),
+            scrollbar = scrollState.maxValue > 0,
+            fadingEdges = true,
         ) {
           Box(
             modifier = Modifier
@@ -162,13 +199,13 @@ fun DraggableListOption(data: DraggableListOptionData) {
                         dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                         else -> baseOffset
                     }
-                    val animatedOffset = animateFloatAsState(targetOffset, ReducedMotion.spec(spring()))
+                    val animatedOffset = Motion.animateFloatAsState(targetOffset, spring(), label = "listEntryOffset")
 
                     val bgColor = animateAccentColorAsState(
                         isDragging,
                         if (isDragging) Accent else theme.componentBackground
                     )
-                    val contentColor = animateColorAsState(
+                    val contentColor = Motion.animateColorAsState(
                         if (isDragging || isHovered) theme.textColor else theme.textColorSecondary
                     )
 
@@ -182,6 +219,15 @@ fun DraggableListOption(data: DraggableListOptionData) {
                             .graphicsLayer {}
                             .animatedFrame(ListItemShape, fill = { bgColor.value }, border = { theme.borderColor })
                             .hoverable(rowInteraction)
+                            .contextMenu { rowMenu(item) }
+                            .onPreviewKeyEvent { event ->
+                                val delta = event.reorderDelta()
+                                delta != 0 && moveBy(item.id, delta).also { moved ->
+                                    if (moved) UiSounds.play(UiSoundEvent.SLIDER_TICK)
+                                }
+                            }
+                            .a11y((optionLabels[item.value] ?: item.value).asRenderText(), A11yRole.Option, null, null, ListItemShape, true)
+                            .focusable(interactionSource = rowInteraction)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(15.dp),

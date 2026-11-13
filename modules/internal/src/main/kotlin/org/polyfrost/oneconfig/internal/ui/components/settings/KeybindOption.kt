@@ -44,14 +44,13 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-
-private val CONFLICT_COLOR = Color(0xFFE0524F)
 
 /** Human-readable name for a platform key code */
 private fun keyCodeToName(code: Int): String = OneConfigKeybind.keyName(code)
@@ -70,7 +69,7 @@ private fun splitModifiers(codes: List<Int>): Pair<Byte, IntArray> {
     return mods to keys.toIntArray()
 }
 
-private fun keybindDisplayName(keybind: OneConfigKeybind?): String = keybind?.displayName() ?: "None"
+private fun keybindDisplayName(keybind: OneConfigKeybind?): String = keybind?.displayName() ?: translated("oneconfig.keybind.none", "None")
 
 @Suppress("UNCHECKED_CAST")
 private fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, mods: Byte): OneConfigKeybind {
@@ -161,7 +160,7 @@ fun KeybindOption(data: KeybindOptionData) {
         listOf(recording, hasConflict, isHovered),
         when {
             recording -> Accent
-            hasConflict -> CONFLICT_COLOR
+            hasConflict -> theme.error
             isHovered -> theme.textColor.copy(0.2f)
             else -> theme.borderColor
         }
@@ -170,7 +169,7 @@ fun KeybindOption(data: KeybindOptionData) {
         recording to hasConflict,
         when {
             recording -> Accent
-            hasConflict -> CONFLICT_COLOR
+            hasConflict -> theme.error
             else -> theme.textColor
         }
     )
@@ -281,7 +280,7 @@ fun KeybindOption(data: KeybindOptionData) {
         )
         Text(
             when {
-                recording && recordedKeys.isEmpty() && recordedMouse.isEmpty() -> "Press keys..."
+                recording && recordedKeys.isEmpty() && recordedMouse.isEmpty() -> translated("oneconfig.keybind.recording", "Press keys...")
                 recording -> (recordedKeys.map { keyCodeToName(it) } + recordedMouse.map { mouseButtonToName(it) })
                     .joinToString(" + ")
                 else -> displayName

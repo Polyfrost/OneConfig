@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
@@ -27,28 +26,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.IdentityHashMap
-import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.components.CollapsibleHeader
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
@@ -58,18 +49,17 @@ import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
+import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroupCollapseStore
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
-import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.keybind.collectAllKeybindGroups
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
@@ -79,9 +69,6 @@ import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
-
-private val CONFLICT_COLOR = Color(0xFFE0524F)
 
 @Composable
 fun Keybinds() {
@@ -99,13 +86,15 @@ fun Keybinds() {
 
     if (visibleGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            val message = when {
-                localSearchQuery.isBlank() -> translated("oneconfig.search.no_keybinds", "No keybinds available.")
+            when {
+                localSearchQuery.isBlank() ->
+                    EmptyState(translated("oneconfig.search.no_keybinds", "No keybinds available."), icon = "keyboard")
                 // nothing to say until the first search comes back
-                searchResults == null -> translated("oneconfig.search.searching", "Searching...")
-                else -> translated("oneconfig.search.no_keybinds_match", "No keybinds match \"%s\"", localSearchQuery)
+                searchResults == null ->
+                    EmptyState(translated("oneconfig.search.searching", "Searching..."), state = LoadState.Loading)
+                else ->
+                    EmptyState(translated("oneconfig.search.no_keybinds_match", "No keybinds match \"%s\"", localSearchQuery), icon = "search")
             }
-            Text(message, color = LocalTheme.current.textColorSecondary, fontSize = 15.sp)
         }
         return
     }
@@ -185,15 +174,11 @@ private fun searchKeybindGroups(groups: List<KeybindGroup>, query: String): List
 @Composable
 private fun KeybindGroupHeader(group: KeybindGroup, expanded: Boolean, onToggle: () -> Unit) {
     val theme = LocalTheme.current
-    val interaction = rememberInteractionSource()
-    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .onClick(interaction, onClick = onToggle)
-            .padding(top = 4.dp, bottom = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    CollapsibleHeader(
+        label = group.modTitle.asRenderText(),
+        expanded = expanded,
+        onToggle = onToggle,
+        contentPadding = PaddingValues(top = 4.dp, bottom = 2.dp),
     ) {
         group.modIcon?.let { icon ->
             Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(18.dp))
@@ -203,11 +188,6 @@ private fun KeybindGroupHeader(group: KeybindGroup, expanded: Boolean, onToggle:
             color = theme.textColorSecondary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-        )
-        Icon(
-            "up",
-            color = theme.textColorSecondary,
-            modifier = Modifier.size(12.dp).rotate(chevronRotation),
         )
     }
 }
@@ -220,37 +200,17 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) return
     val enabled = display != Property.Display.DISABLED
-    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
-    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
-    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
+    val menu = rememberOptionMenu(prop)
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons
-    fun openMenuFromActionButton() {
-        menuOffset = actionMenuOffset.value
-        menuOpen = true
-    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
-            .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
-            .pointerInput(System.identityHashCode(prop)) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
-                            val pos = event.changes.first().position
-                            menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
-                            menuOpen = true
-                            event.changes.forEach { it.consume() }
-                        }
-                    }
-                }
-            }
+            .optionContextMenu(menu)
             .hoverGlow(shape)
             .background(theme.modCardBackground, shape)
             .border(
@@ -308,31 +268,20 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            Icon("alert-circle", color = CONFLICT_COLOR, modifier = Modifier.size(12.dp))
+                            Icon("alert-circle", color = theme.error, modifier = Modifier.size(12.dp))
                             Text(
-                                "Conflicts with $names",
-                                color = CONFLICT_COLOR,
+                                translated("oneconfig.keybind.conflicts", "Conflicts with %s", names),
+                                color = theme.error,
                                 fontSize = 11.sp,
                             )
                         }
                     }
                 }
             }
-            if (showActionButton) {
-                OptionActionButton(
-                    visible = isRowHovered || menuOpen,
-                    modifier = Modifier.onGloballyPositioned {
-                        val pos = it.positionInRoot() - rowOrigin.value
-                        actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                    },
-                    onClick = ::openMenuFromActionButton,
-                )
-            }
+            if (showActionButton) OptionMoreButton(menu, visible = isRowHovered)
             Box(Modifier.blockInteraction(!enabled)) {
                 Option(prop)
             }
         }
-
-        OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
     }
 }

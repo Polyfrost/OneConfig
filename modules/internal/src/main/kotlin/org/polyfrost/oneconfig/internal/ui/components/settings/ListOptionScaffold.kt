@@ -1,7 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -38,25 +35,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import java.util.ArrayDeque
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
-import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
-import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -72,7 +81,6 @@ import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
 internal val ListEntryHeight = 34.dp
 internal val ListEntrySpacing = 8.dp
-internal val ListInvalidColor = Color(0xFFFF4444)
 
 private val ContainerPadding = 8.dp
 private val ContainerShape @Composable get() = LocalTheme.current.modCardShape
@@ -96,19 +104,68 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
 
     val size: Int get() = entries.size
 
-    fun add(value: T) = apply(entries + ListRowEntry(nextId++, value))
+    private var insertAt = -1
+
+    fun add(value: T) {
+        val at = insertAt
+        if (at in 0..entries.size) {
+            insertAt = at + 1
+            val list = entries.toMutableList()
+            list.add(at, ListRowEntry(nextId++, value))
+            apply(list)
+        } else {
+            apply(entries + ListRowEntry(nextId++, value))
+        }
+    }
 
     fun update(id: Int, value: T) = apply(entries.map { if (it.id == id) it.copy(value = value) else it })
 
-    fun remove(id: Int) = apply(entries.filterNot { it.id == id })
+    fun remove(id: Int) {
+        insertAt = -1
+        apply(entries.filterNot { it.id == id })
+    }
 
     fun move(from: Int, to: Int) {
+        insertAt = -1
         val list = entries.toMutableList()
         list.add(to, list.removeAt(from))
         apply(list)
     }
 
+    fun indexOf(id: Int): Int = entries.indexOfFirst { it.id == id }
+
+    fun moveBy(id: Int, delta: Int): Boolean {
+        val from = indexOf(id)
+        val to = from + delta
+        if (from < 0 || to !in entries.indices) return false
+        move(from, to)
+        return true
+    }
+
+    fun duplicate(id: Int) {
+        val index = indexOf(id)
+        if (index < 0) return
+        val list = entries.toMutableList()
+        list.add(index + 1, ListRowEntry(nextId++, entries[index].value))
+        apply(list)
+    }
+
+    fun addAtEnd(onAdd: () -> Unit) {
+        insertAt = -1
+        onAdd()
+    }
+
+    fun insertAbove(id: Int, onAdd: () -> Unit) {
+        val index = indexOf(id)
+        if (index < 0) return
+        val before = entries.size
+        insertAt = index
+        onAdd()
+        if (entries.size != before) insertAt = -1
+    }
+
     fun replace(values: List<T>) {
+        insertAt = -1
         val existing = HashMap<T, ArrayDeque<ListRowEntry<T>>>()
         entries.forEach { entry ->
             existing.getOrPut(entry.value) { ArrayDeque() }.addLast(entry)
@@ -179,6 +236,41 @@ internal fun <T> ListOptionContainer(
         }
     }
 
+    val full = maxEntries > 0 && entries.size >= maxEntries
+
+    fun rowMenu(entry: ListRowEntry<T>): List<MenuEntry> {
+        val index = state.indexOf(entry.id)
+        if (index < 0) return emptyList()
+        val canAdd = maxEntries <= 0 || state.size < maxEntries
+        return buildList<MenuEntry> {
+            if (reorderable) {
+                add(
+                    MenuAction(
+                        translated("oneconfig.list.move_up", "Move up"),
+                        { state.moveBy(entry.id, -1) },
+                        icon = "up",
+                        enabled = index > 0,
+                        shortcutHint = translated("oneconfig.list.move_up.shortcut", "Alt+Up"),
+                    ),
+                )
+                add(
+                    MenuAction(
+                        translated("oneconfig.list.move_down", "Move down"),
+                        { state.moveBy(entry.id, 1) },
+                        icon = "down",
+                        enabled = index < state.size - 1,
+                        shortcutHint = translated("oneconfig.list.move_down.shortcut", "Alt+Down"),
+                    ),
+                )
+                add(MenuSeparator)
+            }
+            add(MenuAction(translated("oneconfig.list.duplicate", "Duplicate"), { state.duplicate(entry.id) }, icon = "copy-plus", enabled = canAdd))
+            add(MenuAction(translated("oneconfig.list.insert_above", "Insert above"), { state.insertAbove(entry.id, onAdd) }, icon = "plus", enabled = canAdd))
+            add(MenuSeparator)
+            add(MenuAction(translated("oneconfig.list.remove", "Remove"), { state.remove(entry.id) }, icon = "trash", danger = true))
+        }
+    }
+
     Column(
         modifier = Modifier
             .width(LocalOptionWidth.current)
@@ -190,19 +282,21 @@ internal fun <T> ListOptionContainer(
     ) {
         if (entries.isNotEmpty()) {
             val scrollState = rememberScrollState()
-            val containmentModifier = if (containScroll) {
-                Modifier.containVerticalScroll(scrollState)
+            val containment = if (containScroll) {
+                Modifier
+                    .containVerticalScroll(scrollState)
+                    .wheelScroll(scrollState, contain = { scrollState.maxValue > 0 })
             } else {
                 Modifier
             }
-            Box(
+            ScrollContainer(
+                state = scrollState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = maxHeight)
-                    .fadingEdges(scrollState, theme.componentBackground)
-                    .then(containmentModifier)
-                    .wheelScroll(scrollState, contain = { containScroll && scrollState.maxValue > 0 })
-                    .verticalScroll(scrollState),
+                    .then(containment),
+                scrollbar = scrollState.maxValue > 0,
+                fadingEdges = true,
             ) {
                 Box(
                     modifier = Modifier
@@ -220,7 +314,7 @@ internal fun <T> ListOptionContainer(
                                 dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                                 else -> baseOffset
                             }
-                            val animatedOffset = animateFloatAsState(targetOffset, ReducedMotion.spec(spring()))
+                            val animatedOffset = Motion.animateFloatAsState(targetOffset, spring(), label = "listEntryOffset")
 
                             EntryRow(
                                 valid = !invalid(entry.value),
@@ -229,7 +323,14 @@ internal fun <T> ListOptionContainer(
                                     .fillMaxWidth()
                                     .height(entryHeight)
                                     .offset { IntOffset(0, (if (isDragging) targetOffset else animatedOffset.value).roundToInt()) }
-                                    .zIndex(if (isDragging) 1f else 0f),
+                                    .zIndex(if (isDragging) 1f else 0f)
+                                    .contextMenu { rowMenu(entry) }
+                                    .onPreviewKeyEvent { event ->
+                                        val delta = event.reorderDelta()
+                                        reorderable && delta != 0 && state.moveBy(entry.id, delta).also { moved ->
+                                            if (moved) UiSounds.play(UiSoundEvent.SLIDER_TICK)
+                                        }
+                                    },
                                 dragHandle = if (!reorderable) null else { handleModifier ->
                                     handleModifier.draggable(
                                         orientation = Orientation.Vertical,
@@ -251,9 +352,18 @@ internal fun <T> ListOptionContainer(
             }
         }
 
-        if (showAddWhenFull || maxEntries <= 0 || entries.size < maxEntries) {
-            AddEntryButton(addText, entryHeight, onAdd)
+        if (showAddWhenFull || !full) {
+            AddEntryButton(addText, entryHeight) { state.addAtEnd(onAdd) }
         }
+    }
+}
+
+internal fun KeyEvent.reorderDelta(): Int {
+    if (type != KeyEventType.KeyDown || !isAltPressed) return 0
+    return when (key) {
+        Key.DirectionUp -> -1
+        Key.DirectionDown -> 1
+        else -> 0
     }
 }
 
@@ -272,10 +382,10 @@ private fun EntryRow(
     val fieldInteraction = rememberInteractionSource()
     val isFocused by fieldInteraction.collectIsFocusedAsState()
 
-    val contentColor = animateColorAsState(
+    val contentColor = Motion.animateColorAsState(
         if (dragging || isHovered || isFocused) theme.textColor else theme.textColorSecondary
     )
-    val borderColor = animateColorAsState(if (valid) theme.borderColor else ListInvalidColor)
+    val borderColor = Motion.animateColorAsState(if (valid) theme.borderColor else theme.error)
 
     Row(
         modifier = modifier
@@ -301,47 +411,24 @@ private fun EntryRow(
 
         content(ListRowContext(contentColor, fieldInteraction, isFocused))
 
-        Icon(
+        IconButton(
             "trash",
-            modifier = Modifier
-                .size(16.dp)
-                .pointerHoverIcon(PointerIcon.Hand)
-                .onClick(rememberInteractionSource(), onRemove),
-            tint = { contentColor.value },
+            translated("oneconfig.list.remove", "Remove"),
+            onRemove,
+            size = ControlSize.Compact,
+            danger = true,
         )
     }
 }
 
 @Composable
 private fun AddEntryButton(label: Any, entryHeight: Dp, onClick: () -> Unit) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val contentColor = animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(entryHeight)
-            .clip(EntryShape)
-            .graphicsLayer {}
-            .border(1.dp, theme.borderColor, EntryShape)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .hoverable(interactionSource)
-            .onClick(interactionSource, onClick)
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Icon("plus", modifier = Modifier.size(16.dp), tint = { contentColor.value })
-        Text(
-            label,
-            modifier = Modifier.weight(1f, fill = false),
-            color = Color.Unspecified,
-            colorProducer = { contentColor.value },
-            fontSize = 13.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+    TextButton(
+        label.asRenderText(),
+        "plus",
+        onClick,
+        Modifier.height(entryHeight),
+        size = ControlSize.Compact,
+        fillWidth = true,
+    )
 }

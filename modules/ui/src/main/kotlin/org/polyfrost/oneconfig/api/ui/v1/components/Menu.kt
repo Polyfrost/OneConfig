@@ -158,6 +158,7 @@ public fun MenuItem(label: String, onClick: () -> Unit) {
     MenuItem(label, onClick, Modifier)
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun MenuItem(label: String, icon: String?, onClick: () -> Unit) {
