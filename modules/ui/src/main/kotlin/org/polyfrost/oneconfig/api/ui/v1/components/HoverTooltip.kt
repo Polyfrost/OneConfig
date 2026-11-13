@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,17 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupPositionProvider
+import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.isKeyboardMode
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
@@ -46,7 +45,6 @@ public enum class TooltipPlacement {
 
 private val TOOLTIP_GAP = 8.dp
 private val TOOLTIP_EDGE = 8.dp
-private val TOOLTIP_WRAP = 240.dp
 
 private class TooltipPosition(private val placement: TooltipPlacement, private val gap: Int, private val edge: Int) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
@@ -80,14 +78,34 @@ private class TooltipPosition(private val placement: TooltipPlacement, private v
 }
 
 @ExperimentalOneConfigUiApi
+public object TooltipDefaults {
+    public val maxWidth: Dp = 240.dp
+
+    public const val delayMillis: Long = 300L
+
+    public val placement: TooltipPlacement = TooltipPlacement.AboveCenter
+}
+
+@ExperimentalOneConfigUiApi
 @Composable
 public fun TooltipPopup(text: String, placement: TooltipPlacement) {
-    TooltipPopup(text, placement, TOOLTIP_WRAP)
+    TooltipPopup(text, placement, TooltipDefaults.maxWidth)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
 public fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp) {
+    TooltipSurface(placement, maxWidth) { TooltipText(text) }
+}
+
+@Composable
+private fun TooltipText(text: String) {
+    val theme = OneConfigTheme.current
+    Text(text, Modifier, theme.textColor, theme.typography.label.copy(fontWeight = FontWeight.Normal), textAlign = TextAlign.Center)
+}
+
+@Composable
+private fun TooltipSurface(placement: TooltipPlacement, maxWidth: Dp, content: @Composable () -> Unit) {
     val density = LocalDensity.current
     val provider = remember(density, placement) {
         TooltipPosition(placement, with(density) { TOOLTIP_GAP.roundToPx() }, with(density) { TOOLTIP_EDGE.roundToPx() })
@@ -98,37 +116,77 @@ public fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text,
-                Modifier,
-                OneConfigTheme.current.textColor,
-                13.sp,
-                null,
-                BaselineShift.None,
-                FontWeight.Normal,
-                TextAlign.Center,
-                Int.MAX_VALUE,
-                TextOverflow.Clip,
-            )
+            content()
         }
     }
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun TooltipBox(text: String?, modifier: Modifier, content: @Composable () -> Unit) {
-    TooltipBox(text, modifier, TooltipPlacement.AboveCenter, TOOLTIP_WRAP, content)
+public fun TooltipBox(
+    text: String?,
+    modifier: Modifier = Modifier,
+    placement: TooltipPlacement = TooltipDefaults.placement,
+    maxWidth: Dp = TooltipDefaults.maxWidth,
+    showOnFocus: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    val tooltip: (@Composable () -> Unit)? = if (text == null) null else { { TooltipText(text) } }
+    TooltipHost(tooltip, modifier, placement, maxWidth, showOnFocus, content)
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun TooltipBox(text: String?, modifier: Modifier, placement: TooltipPlacement, maxWidth: Dp, content: @Composable () -> Unit) {
+public fun TooltipBox(
+    tooltip: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    placement: TooltipPlacement = TooltipDefaults.placement,
+    maxWidth: Dp = TooltipDefaults.maxWidth,
+    showOnFocus: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    TooltipHost(tooltip, modifier, placement, maxWidth, showOnFocus, content)
+}
+
+@Composable
+private fun TooltipHost(
+    tooltip: (@Composable () -> Unit)?,
+    modifier: Modifier,
+    placement: TooltipPlacement,
+    maxWidth: Dp,
+    showOnFocus: Boolean,
+    content: @Composable () -> Unit,
+) {
     val source = remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
     val keyboard = isKeyboardMode()
+    val wanted = tooltip != null && (hovered || showOnFocus && focused && keyboard)
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(wanted) {
+        if (wanted) {
+            delay(TooltipDefaults.delayMillis)
+            shown = true
+        } else {
+            shown = false
+        }
+    }
     Box(modifier.hoverable(source).onFocusChanged { focused = it.hasFocus }) {
         content()
-        if (text != null && (hovered || focused && keyboard)) TooltipPopup(text, placement, maxWidth)
+        if (shown && tooltip != null) TooltipSurface(placement, maxWidth, tooltip)
     }
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TooltipBox(text: String?, modifier: Modifier, content: @Composable () -> Unit) {
+    TooltipBox(text, modifier, TooltipDefaults.placement, TooltipDefaults.maxWidth, true, content)
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TooltipBox(text: String?, modifier: Modifier, placement: TooltipPlacement, maxWidth: Dp, content: @Composable () -> Unit) {
+    TooltipBox(text, modifier, placement, maxWidth, true, content)
 }
