@@ -231,6 +231,24 @@ internal class HudHistory {
 
     fun redo(): List<Hud>? = step(redoStack, undoStack)
 
+    /** Goes back to how the layout was when this history started, one [redo] per step to bring it back */
+    fun undoAll(): List<Hud>? {
+        val now = capture()
+        val last = recorded
+        if (last == null || last.owner !== now.owner) {
+            reset(now)
+            return null
+        }
+        if (!sameLayout(last, now)) record(now)
+        if (undoStack.isEmpty()) return null
+        recorded?.let(redoStack::addLast)
+        while (undoStack.size > 1) redoStack.addLast(undoStack.removeLast())
+        val revived = restore(undoStack.removeLast())
+        recorded = capture()
+        settling = null
+        return revived
+    }
+
     private fun step(from: ArrayDeque<Layout>, to: ArrayDeque<Layout>): List<Hud>? {
         val now = capture()
         val last = recorded

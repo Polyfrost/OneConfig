@@ -341,6 +341,7 @@ fun HudCanvasResetMenu(
     undoEnabled: Boolean = false,
     onRedo: () -> Unit = {},
     redoEnabled: Boolean = false,
+    onUndoAll: () -> Unit = {},
     preview: Boolean = false,
     onMeasured: (IntSize) -> Unit = {},
 ) {
@@ -480,6 +481,10 @@ fun HudCanvasResetMenu(
                 onRedo()
                 onDismiss()
             }
+            HudMenuRow(icon = "undo", text = "Undo all", enabled = undoEnabled) {
+                onUndoAll()
+                onDismiss()
+            }
             HudMenuDivider()
             if (actionTargets.any(::hudHasPositionDefaults)) {
                 HudMenuRow(
@@ -543,6 +548,7 @@ fun HudCanvasPasteMenu(
     undoEnabled: Boolean = false,
     onRedo: () -> Unit = {},
     redoEnabled: Boolean = false,
+    onUndoAll: () -> Unit = {},
     onTour: (() -> Unit)? = null,
 ) {
     if (!expanded) return
@@ -572,6 +578,10 @@ fun HudCanvasPasteMenu(
             }
             HudMenuRow(icon = "redo", text = "Redo", enabled = redoEnabled, hint = redoHint) {
                 onRedo()
+                onDismiss()
+            }
+            HudMenuRow(icon = "undo", text = "Undo all", enabled = undoEnabled) {
+                onUndoAll()
                 onDismiss()
             }
             HudMenuDivider()
