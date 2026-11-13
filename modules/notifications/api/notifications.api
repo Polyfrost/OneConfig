@@ -11,10 +11,11 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/ComposableSingle
 	public final fun getLambda$-1339950985$notifications ()Lkotlin/jvm/functions/Function2;
 }
 
-public final class org/polyfrost/oneconfig/api/notifications/v1/Notification {
+public final class org/polyfrost/oneconfig/api/notifications/v1/Notification : org/polyfrost/oneconfig/api/notifications/v1/NotificationHandle {
 	public static final field $stable I
 	public static final field Companion Lorg/polyfrost/oneconfig/api/notifications/v1/Notification$Companion;
 	public static final field DEFAULT_DURATION F
+	public static final field DEFAULT_DURATION_MILLIS J
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;)V
@@ -24,25 +25,38 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/Notification {
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;FLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;FLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;F)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/util/List;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;F)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;J)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZ)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;Ljava/lang/Runnable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;Ljava/lang/Runnable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun dismiss ()V
 	public final fun getActions ()Ljava/util/List;
 	public final fun getCreatedAt ()J
-	public final fun getDuration ()F
+	public final synthetic fun getDuration ()F
+	public final fun getDurationMillis ()J
 	public final synthetic fun getIcon ()Lorg/jetbrains/skia/Image;
 	public final fun getIcon ()Lorg/polyfrost/compose/render/PolyBitmap;
+	public final fun getIconName ()Ljava/lang/String;
 	public final fun getId ()J
 	public final fun getMessage ()Ljava/lang/String;
 	public final fun getOnClick ()Ljava/lang/Runnable;
+	public final fun getOnDismiss ()Ljava/lang/Runnable;
 	public final fun getPersistent ()Z
 	public final fun getProgress ()Ljava/util/concurrent/Callable;
 	public final fun getRead ()Z
 	public final fun getTitle ()Ljava/lang/String;
 	public final fun getType ()Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;
 	public final fun progressOrNull ()Ljava/lang/Float;
+	public fun update (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Ljava/lang/Float;)V
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/Notification$Companion {
@@ -52,17 +66,34 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationActi
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Z)V
-	public fun <init> (Ljava/lang/String;ZLjava/lang/Runnable;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/Runnable;)V
 	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/Runnable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;ZZ)V
+	public fun <init> (Ljava/lang/String;ZZZ)V
+	public fun <init> (Ljava/lang/String;ZZZLjava/lang/Runnable;)V
+	public synthetic fun <init> (Ljava/lang/String;ZZZLjava/lang/Runnable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDismissOnClick ()Z
+	public final fun getEnabled ()Z
 	public final fun getLabel ()Ljava/lang/String;
 	public final fun getOnClick ()Ljava/lang/Runnable;
 	public final fun getPrimary ()Z
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/notifications/v1/NotificationHandle {
+	public abstract fun dismiss ()V
+	public abstract fun update (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Ljava/lang/Float;)V
+	public static synthetic fun update$default (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Ljava/lang/Float;ILjava/lang/Object;)V
+}
+
+public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationHandle$DefaultImpls {
+	public static synthetic fun update$default (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Ljava/lang/Float;ILjava/lang/Object;)V
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationTheme {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationTheme;
 	public final fun accentFor (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/compose/render/PolyColor;
+	public final fun actionFillFor (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getAccent ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getActionPrimaryText ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getActionSubtleText ()Lorg/polyfrost/compose/render/PolyColor;
@@ -72,6 +103,11 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationThem
 	public final fun getFontBody ()Ljava/lang/String;
 	public final fun getFontTitle ()Ljava/lang/String;
 	public final fun getIconFolder ()Ljava/lang/String;
+	public final fun getInfo ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getOnError ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getOnInfo ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getOnSuccess ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getOnWarning ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getRadiusButton ()F
 	public final fun getRadiusCard ()F
 	public final fun getRadiusProgress ()F
@@ -79,6 +115,8 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationThem
 	public final fun getSuccess ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getTextPrimary ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getTextSecondary ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getWarning ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun onActionFillFor (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/compose/render/PolyColor;
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationToastsKt {
@@ -90,6 +128,7 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationType
 	public static final field INFO Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;
 	public static final field PROGRESS Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;
 	public static final field SUCCESS Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;
+	public static final field WARNING Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;
 	public final fun getAccent ()Lorg/polyfrost/compose/render/PolyColor;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getIconName ()Ljava/lang/String;
@@ -104,8 +143,10 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/Notifications {
 	public static final fun clearAll ()V
 	public static final fun dismiss (Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;)V
 	public static final fun error (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun error (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun error (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun error (Ljava/lang/String;Ljava/lang/String;J)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static synthetic fun error$default (Ljava/lang/String;Ljava/lang/String;FILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static synthetic fun error$default (Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final synthetic fun icon (Ljava/lang/String;)Lorg/jetbrains/skia/Image;
 	public static final fun icon (Ljava/lang/String;)Lorg/polyfrost/compose/render/PolyBitmap;
 	public static final synthetic fun icon (Ljava/lang/String;I)Lorg/jetbrains/skia/Image;
@@ -113,37 +154,71 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/Notifications {
 	public static synthetic fun icon$default (Ljava/lang/String;IILjava/lang/Object;)Lorg/jetbrains/skia/Image;
 	public static synthetic fun icon$default (Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/compose/render/PolyBitmap;
 	public static final fun info (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun info (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun info (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun info (Ljava/lang/String;Ljava/lang/String;J)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static synthetic fun info$default (Ljava/lang/String;Ljava/lang/String;FILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static synthetic fun info$default (Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun progress (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final fun progress (Ljava/lang/String;Ljava/lang/String;Ljava/util/concurrent/Callable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun send (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
 	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;FLjava/util/concurrent/Callable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;Ljava/util/List;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;Ljava/util/List;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;Ljava/util/List;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;J)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZ)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
 	public static synthetic fun send$default (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/jetbrains/skia/Image;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;Ljava/util/List;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static synthetic fun send$default (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;Ljava/util/List;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static synthetic fun send$default (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;Ljava/lang/Runnable;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;J)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZ)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static final fun sendOnce (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
+	public static synthetic fun sendOnce$default (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;Lorg/polyfrost/compose/render/PolyBitmap;Ljava/lang/String;JZLjava/util/concurrent/Callable;Ljava/util/List;Ljava/lang/Runnable;Ljava/lang/Runnable;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationHandle;
 	public static final fun success (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
-	public static final fun success (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final synthetic fun success (Ljava/lang/String;Ljava/lang/String;F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun success (Ljava/lang/String;Ljava/lang/String;J)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public static synthetic fun success$default (Ljava/lang/String;Ljava/lang/String;FILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static synthetic fun success$default (Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun warning (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static final fun warning (Ljava/lang/String;Ljava/lang/String;J)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
+	public static synthetic fun warning$default (Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder {
 	public static final field $stable I
 	public final fun action (Ljava/lang/String;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
 	public final fun action (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationAction;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
-	public final fun duration (F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
+	public final synthetic fun duration (F)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
+	public final fun duration (J)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
+	public final fun icon (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
 	public final synthetic fun icon (Lorg/jetbrains/skia/Image;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
 	public final fun icon (Lorg/polyfrost/compose/render/PolyBitmap;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
 	public final fun onClick (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
+	public final fun onDismiss (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
 	public final fun persistent ()Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
+	public final fun persistent (Z)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
 	public final fun progress (Ljava/util/concurrent/Callable;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;
 	public final fun send ()Lorg/polyfrost/oneconfig/api/notifications/v1/Notification;
 	public final fun type (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/oneconfig/api/notifications/v1/Notifications$Builder;

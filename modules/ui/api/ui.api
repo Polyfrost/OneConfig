@@ -1234,6 +1234,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {
 	public final fun inScreens ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun key ([I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun meta ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public final fun mirrorToVanilla (Z)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun mouse ([I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun name (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun register ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
@@ -1270,6 +1271,12 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final fun unregister (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindMetadata {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindMetadata;
+	public static final field NO_MIRROR Ljava/lang/String;
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindUtils {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindUtils;
@@ -1298,6 +1305,7 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun getFiresWhileTyping ()Z
 	public final fun getHasUnresolvedInputs ()Z
 	public final fun getKeyCodes ()[I
+	public final fun getMirrorToVanilla ()Z
 	public final fun getMods ()B
 	public final fun getMouseBtns ()[I
 	public final fun getName ()Ljava/lang/String;
@@ -1312,6 +1320,7 @@ public class org/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind : org/po
 	public final fun setDurationNanos (J)V
 	public final fun setFiresWhileTyping (Z)V
 	public final fun setKeyCodes ([I)V
+	public final fun setMirrorToVanilla (Z)V
 	public final fun setMods (B)V
 	public final fun setMouseBtns ([I)V
 	public final fun setName (Ljava/lang/String;)V
