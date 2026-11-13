@@ -1,17 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -36,17 +37,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -54,7 +53,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.launch
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.EscapeCloses
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.NotificationsCenterPanel
+import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberAnchoredPosition
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberHoverState
+import org.polyfrost.oneconfig.api.ui.v1.components.smoothWheelScroll
 import org.polyfrost.oneconfig.internal.ui.navigation.inAboutMenu
 import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.pageRoute
@@ -112,14 +122,25 @@ private fun Navigation(modifier: Modifier) {
     ) {
         Branding()
         Column(Modifier.fillMaxWidth().weight(1f, fill = false)) {
-            Box(
-                Modifier.fillMaxWidth().weight(1f, fill = false)
-                    .onGloballyPositioned { overflow.viewportBottom = it.positionInRoot().y + it.size.height }
-                    .verticalScroll(scroll),
-                contentAlignment = Alignment.TopCenter,
-            ) {
-                CompositionLocalProvider(LocalNavOverflow provides overflow) {
-                    Box(Modifier.padding(vertical = 4.dp)) { NavigationEntries() }
+            Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
+                Box(
+                    Modifier.fillMaxWidth()
+                        .onGloballyPositioned { overflow.viewportBottom = it.positionInRoot().y + it.size.height }
+                        .smoothWheelScroll(scroll)
+                        .verticalScroll(scroll),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    CompositionLocalProvider(LocalNavOverflow provides overflow) {
+                        Box(Modifier.padding(vertical = 4.dp)) { NavigationEntries() }
+                    }
+                }
+                val thickness = LocalScrollbarStyle.current.thickness
+                Box(Modifier.matchParentSize()) {
+                    VerticalScrollbar(
+                        rememberScrollbarAdapter(scroll),
+                        Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+                            .padding(end = (((SidebarWidth - SidebarEntryWidth) / 2 - thickness) / 2).coerceAtLeast(0.dp)),
+                    )
                 }
             }
             Box(Modifier.fillMaxWidth().height(EditHudGap)) {
@@ -132,7 +153,7 @@ private fun Navigation(modifier: Modifier) {
                         modifier = Modifier.padding(start = 26.dp, top = 6.dp)
                             .onClick(source) {
                                 scope.launch {
-                                    if (ReducedMotion.enabled) scroll.scrollTo(scroll.maxValue) else scroll.animateScrollTo(scroll.maxValue)
+                                    if (Motion.reduced) scroll.scrollTo(scroll.maxValue) else scroll.animateScrollTo(scroll.maxValue)
                                 }
                             }
                             .pointerHoverIcon(PointerIcon.Hand),
@@ -146,6 +167,8 @@ private fun Navigation(modifier: Modifier) {
 }
 
 private val EditHudGap = 74.dp
+
+private val SidebarEntryWidth = 225.dp
 
 private class NavOverflow {
     val centers = mutableStateMapOf<Any, Float>()
@@ -252,32 +275,32 @@ private fun NavigationSection(title: String? = null, collapsed: Boolean? = null,
 private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -> Unit, trackKey: Any, content: @Composable () -> Unit) {
     val source = rememberInteractionSource()
     val hovered by source.collectIsHoveredAsState()
-    val chevronRotation by animateFloatAsState(if (collapsed) 90f else 180f)
     val theme = LocalTheme.current
     Column(horizontalAlignment = Alignment.Start) {
         TrackOverflow(trackKey, enabled = collapsed) {
-            Row(
-                Modifier.width(225.dp).padding(start = 6.dp, end = 6.dp, bottom = 2.dp)
-                    .onClick(source) { onToggle() }
-                    .pointerHoverIcon(PointerIcon.Hand),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            CollapsibleHeader(
+                label = title,
+                expanded = !collapsed,
+                onToggle = onToggle,
+                modifier = Modifier.width(SidebarEntryWidth),
+                contentPadding = PaddingValues(start = 6.dp, end = 6.dp, bottom = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                interactionSource = source,
             ) {
                 Text(
                     title.uppercase(),
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier.weight(1f),
                     color = if (hovered) theme.textColor else theme.textColor.copy(0.8f),
                     fontWeight = FontWeight.Medium, fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Icon("up", color = theme.textColorSecondary, modifier = Modifier.padding(start = 8.dp).size(12.dp).rotate(chevronRotation))
             }
         }
         AnimatedVisibility(
             visible = !collapsed,
-            enter = ReducedMotion.enter(expandVertically()),
-            exit = ReducedMotion.exit(shrinkVertically()),
+            enter = Motion.enter(expandVertically()),
+            exit = Motion.exit(shrinkVertically()),
         ) {
             Column(
                 Modifier.padding(top = 8.dp),
@@ -298,21 +321,21 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
     val theme = LocalTheme.current
     val translucent = theme.translucentSelection
-    val selectedAlpha = animateFloatAsState(if (isSelected) 1f else 0f)
-    val textAndIconColor = animateColorAsState(
+    val selectedAlpha = Motion.animateFloatAsState(if (isSelected) 1f else 0f)
+    val textAndIconColor = Motion.animateColorAsState(
         if (isSelected && translucent) theme.textColor
         else if (isSelected) theme.accentTextColor
         else if (isHovered) theme.textColor
         else theme.textColor.copy(0.8f)
     )
-    val borderColor = animateColorAsState(
+    val borderColor = Motion.animateColorAsState(
         if (isSelected && translucent) theme.borderColor.copy(0f)
         else if (isHovered || isSelected) theme.borderColor
         else theme.borderColor.copy(0f)
     )
 
     Row(
-        modifier = Modifier.size(225.dp, 33.dp)
+        modifier = Modifier.size(SidebarEntryWidth, 33.dp)
             .glassHover(theme.sideBarNavigationEntryShape, pull = 0.75.dp)
             .graphicsLayer {}
             .animatedFrame(
@@ -335,37 +358,37 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 @Composable
 private fun NotificationBell() {
     var expanded by remember { mutableStateOf(false) }
-    var bellHeightPx by remember { mutableStateOf(0) }
-    val interactionSource = rememberInteractionSource()
+    val theme = LocalTheme.current
+    val close: () -> Unit = {
+        expanded = false
+        NotificationsManager.markAllRead()
+    }
 
     Box(
-        modifier = Modifier
-            .onSizeChanged { bellHeightPx = it.height }
-            .onClick(interactionSource) {
+        modifier = Modifier.oneConfigClickable(
+            translated("oneconfig.sidebar.notifications", "Notifications"),
+            {
                 expanded = !expanded
                 if (!expanded) NotificationsManager.markAllRead()
-            }
-            .pointerHoverIcon(PointerIcon.Hand)
+            },
+            indication = false,
+        ),
     ) {
         IconWithIndicator(
             iconName = "bell",
-            color = LocalTheme.current.textColor,
+            color = theme.textColor,
             modifier = Modifier.size(18.dp),
             showIndicator = NotificationsManager.unreadCount > 0,
         )
 
         if (expanded) {
+            EscapeCloses(close)
             ShellPopup(
-                // open up and to the right of the bell
-                alignment = Alignment.BottomStart,
-                offset = IntOffset(0, -(bellHeightPx + 12)),
-                onDismissRequest = {
-                    expanded = false
-                    NotificationsManager.markAllRead()
-                },
+                popupPositionProvider = rememberAnchoredPosition(Placement.AboveStart, gap = PopupGap),
+                onDismissRequest = close,
                 properties = PopupProperties(focusable = true),
             ) {
-                Box(Modifier.shellTransition()) { NotificationsCenter() }
+                NotificationsCenterPanel(Modifier.shellTransition())
             }
         }
     }
@@ -418,63 +441,39 @@ private fun Account() {
 @Composable
 private fun AboutButton() {
     var expanded by remember { mutableStateOf(false) }
-    var heightPx by remember { mutableStateOf(0) }
-    val interactionSource = rememberInteractionSource()
-    val hovered by interactionSource.collectIsHoveredAsState()
+    val hover = rememberHoverState()
     val theme = LocalTheme.current
     val controller = LocalShellNavController.current
     val shell = LocalShell.current
     val entry by controller.currentBackStackEntryAsState()
     val pages = registeredPages().filter { it.inAboutMenu && it.showInSidebar }
     val active = pages.any { entry.isOn(pageRoute(it)) }
+    val label = translated("oneconfig.sidebar.about", "Changelog and credits")
 
-    Tooltip(
-        text = { Text(translated("oneconfig.sidebar.about", "Changelog and credits"), color = theme.textColor, fontSize = 12.sp) },
-        modifier = Modifier,
-        anchor = Alignment.TopCenter,
-    ) {
-        Box(
-            modifier = Modifier
-                .onSizeChanged { heightPx = it.height }
-                .onClick(interactionSource) { expanded = !expanded }
-                .pointerHoverIcon(PointerIcon.Hand)
-        ) {
-            Icon("info", modifier = Modifier.size(18.dp), color = if (hovered || expanded || active) theme.textColor else theme.textColor.copy(0.8f))
+    TooltipBox(if (expanded) null else label, placement = TooltipPlacement.AboveCenter) {
+        Box(Modifier.oneConfigClickable(label, { expanded = !expanded }, indication = false, interactionSource = hover.interactionSource)) {
+            Icon("info", modifier = Modifier.size(18.dp), color = if (hover.hovered || expanded || active) theme.textColor else theme.textColor.copy(0.8f))
 
-            if (expanded) {
-                ShellPopup(
-                    alignment = Alignment.BottomStart,
-                    offset = IntOffset(0, -(heightPx + 12)),
-                    onDismissRequest = { expanded = false },
-                    properties = PopupProperties(focusable = true),
-                ) {
-                    SidebarMenu {
-                        pages.forEach { page ->
-                            val route = pageRoute(page)
-                            NavigationEntry(page.icon, page.title.resolve(), route, entry.isOn(route)) {
-                                expanded = false
-                                val nav = shell.navigation
-                                if (nav.currentRoute == route) shell.search.clear() else nav.navigate(route)
-                            }
-                        }
-                    }
-                }
-            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismiss = { expanded = false },
+                entries = pages.map { page ->
+                    val route = pageRoute(page)
+                    MenuAction(
+                        page.title.resolve(),
+                        {
+                            expanded = false
+                            val nav = shell.navigation
+                            if (nav.currentRoute == route) shell.search.clear() else nav.navigate(route)
+                        },
+                        icon = page.icon,
+                        checked = entry.isOn(route),
+                    )
+                },
+                placement = Placement.AboveStart,
+            )
         }
     }
 }
 
-@Composable
-private fun SidebarMenu(content: @Composable () -> Unit) {
-    val theme = LocalTheme.current
-    Column(
-        Modifier.shellTransition()
-            .liquidGlass(theme.popupShape, frosted = true)
-            .background(theme.popupBackground, theme.popupShape)
-            .border(1.dp, theme.borderColor, theme.popupShape)
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        content()
-    }
-}
+private val PopupGap = 12.dp

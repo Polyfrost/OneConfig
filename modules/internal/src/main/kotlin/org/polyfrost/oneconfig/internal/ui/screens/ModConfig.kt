@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import java.util.function.Predicate
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
-import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.search.submenuTrail
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
@@ -33,16 +35,34 @@ fun ModConfig(id: String, initialCategory: String? = null, submenu: String? = nu
 
     when {
         config == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Unknown mod: $id", color = LocalTheme.current.textColorSecondary)
+            EmptyState(
+                translated("oneconfig.modconfig.unknown", "Mod not found"),
+                icon = "alert-circle",
+                text = translated("oneconfig.modconfig.unknown.text", "No mod with the id %s is loaded.", id),
+            )
         }
         tree?.getMetadata<Boolean>("ui_only") == true && externalOpen != null -> Box(
             Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            Text("This mod opens its own settings screen.", color = LocalTheme.current.textColorSecondary)
+            EmptyState(
+                translated("oneconfig.modconfig.external", "This mod opens its own settings screen."),
+                icon = "external-link",
+                action = {
+                    TextButton(
+                        translated("oneconfig.modconfig.external.open", "Open settings"),
+                        "external-link",
+                        externalOpen,
+                        style = ControlStyle.Primary,
+                    )
+                },
+            )
         }
         tree == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("This mod manages its own configuration.", color = LocalTheme.current.textColorSecondary)
+            EmptyState(
+                translated("oneconfig.modconfig.own", "This mod manages its own configuration."),
+                icon = "settings",
+            )
         }
         else -> {
             val toggleRevision = ModToggles.revision

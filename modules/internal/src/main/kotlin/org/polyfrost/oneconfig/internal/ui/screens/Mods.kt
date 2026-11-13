@@ -1,16 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -59,8 +54,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -68,16 +61,32 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorator
 import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
 import org.polyfrost.oneconfig.api.ui.v1.ReadOnlyModToggle
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.ModCardMenuContributors
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -87,15 +96,15 @@ import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
 import org.polyfrost.oneconfig.internal.ui.api.ModHidden
 import org.polyfrost.oneconfig.internal.ui.api.ModOrder
 import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
+import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
 import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
 import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
 import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
 import org.polyfrost.oneconfig.internal.ui.components.Chip
+import org.polyfrost.oneconfig.internal.ui.components.CollapsibleHeader
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
@@ -105,13 +114,14 @@ import org.polyfrost.oneconfig.internal.ui.components.glassHover
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberGridReorderState
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
 import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
 import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
+import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
+import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
@@ -124,6 +134,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.internal.ui.themes.contrastRatio
+import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 
 enum class ModCategory(
     val title: String,
@@ -142,6 +153,8 @@ enum class ModCategory(
     QoL("Quality of Life", "qol", Config.Category.QOL),
     Other("Other", null, Config.Category.OTHER),
     Hidden("Hidden", "eye-off", null, hiddenOnly = true);
+
+    val label: String get() = translated("oneconfig.mods.category.${name.lowercase()}", title)
 }
 
 @Composable
@@ -178,7 +191,7 @@ private fun ModsPage() {
                 }
                 if (shown) {
                     Chip(
-                        label = it.title,
+                        label = it.label,
                         selected = activeCategory == it,
                         icon = it.icon,
                         onClick = {
@@ -225,10 +238,19 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     }
     if (filtered.isEmpty() && (category.favoritesOnly || category.hiddenOnly)) {
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                if (category.hiddenOnly) "No hidden mods." else "No favorite mods.",
-                color = LocalTheme.current.textColorSecondary,
-            )
+            if (category.hiddenOnly) {
+                EmptyState(
+                    translated("oneconfig.mods.empty.hidden", "No hidden mods"),
+                    icon = "eye-off",
+                    text = translated("oneconfig.mods.empty.hidden.text", "Mods you hide from their card show up here."),
+                )
+            } else {
+                EmptyState(
+                    translated("oneconfig.mods.empty.favorites", "No favorite mods"),
+                    icon = "star",
+                    text = translated("oneconfig.mods.empty.favorites.text", "Star a mod on its card to keep it here."),
+                )
+            }
         }
         return
     }
@@ -314,14 +336,14 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 when (entry) {
                     is ModGridEntry.Header -> ModTypeHeader(
                         entry,
-                        modifier = if (animateItems) Modifier.animateItem(placementSpec = modCardPlacementSpec()) else Modifier,
+                        modifier = if (animateItems) Modifier.animateItem(placementSpec = Motion.itemPlacementSpec()) else Modifier,
                         onToggle = { ModCardTypeCollapseStore.toggle(entry.type.id) },
                     )
 
                     is ModGridEntry.Card -> {
                         val mod = entry.data
                         val dragging = reorderState.draggingKey == mod.id
-                        val outlineAlpha = animateFloatAsState(if (dragging) 1f else 0f)
+                        val outlineAlpha = Motion.animateFloatAsState(if (dragging) 1f else 0f)
                         val favoriteSlot = if (dragging) dropFavorite == true else ModFavorites.isFavorite(mod.id)
                         ModCard(
                             mod,
@@ -329,7 +351,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                                 .then(
                                     if (animateItems) {
                                         Modifier.animateItem(
-                                            placementSpec = if (dragging) null else modCardPlacementSpec(),
+                                            placementSpec = if (dragging) null else Motion.itemPlacementSpec(),
                                         )
                                     } else {
                                         Modifier
@@ -360,23 +382,21 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
 @Composable
 private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modifier, onToggle: () -> Unit) {
     val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val chevronRotation by animateFloatAsState(if (entry.expanded) 180f else 90f)
+    val title = localizedLabel(entry.type.title) ?: entry.type.title
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .onClick(interactionSource, onClick = onToggle)
-            .pointerHoverIcon(PointerIcon.Hand),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    CollapsibleHeader(
+        label = title,
+        expanded = entry.expanded,
+        onToggle = onToggle,
+        modifier = modifier,
+        trailing = { Rule(Modifier.weight(1f)) },
     ) {
         Rule(Modifier.weight(1f))
         remember(entry.type.icon) { entry.type.icon?.takeIf(::canRenderIcon) }?.let { icon ->
             Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(14.dp))
         }
         Text(
-            localizedLabel(entry.type.title) ?: entry.type.title,
+            title,
             color = theme.textColorSecondary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
@@ -384,12 +404,6 @@ private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modif
         if (!entry.expanded && entry.cardCount > 0) {
             Text("(${entry.cardCount})", color = theme.textColorSecondary, fontSize = 11.sp)
         }
-        Icon(
-            "up",
-            color = theme.textColorSecondary,
-            modifier = Modifier.size(12.dp).rotate(chevronRotation),
-        )
-        Rule(Modifier.weight(1f))
     }
 }
 
@@ -397,14 +411,6 @@ private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modif
 private fun Rule(modifier: Modifier) {
     Box(modifier.height(1.dp).background(LocalTheme.current.borderColor))
 }
-
-private fun modCardPlacementSpec() = if (ReducedMotion.enabled) null else ModCardPlacementSpec
-
-private val ModCardPlacementSpec = spring(
-    dampingRatio = Spring.DampingRatioNoBouncy,
-    stiffness = Spring.StiffnessMediumLow,
-    visibilityThreshold = IntOffset.VisibilityThreshold,
-)
 
 private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
     firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == key } }
@@ -414,6 +420,96 @@ private fun openModCard(mod: ConfigData, navigation: ShellNavigation) {
     when {
         onOpen != null -> onOpen()
         mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
+    }
+}
+
+private fun modCardMenu(mod: ConfigData, navigation: ShellNavigation): List<MenuEntry> {
+    val toggle = mod.toggle
+    val favorite = ModFavorites.isFavorite(mod.id)
+    val hidden = ModHidden.isHidden(mod.id)
+    val tree = ConfigRegistry.findTree(mod.id)
+    val resettable = mod.source == ConfigSource.OC && tree != null && tree.getMetadata<Boolean>("ui_only") != true
+    val hasHud = HudManager.providers().any { it.configId == mod.id } || HudManager.instances().any { it.configId == mod.id }
+    val contributed = ModCardMenuContributors.entriesFor(mod.id)
+    return buildList {
+        add(
+            MenuAction(
+                translated("oneconfig.mods.menu.open", "Open settings"),
+                { openModCard(mod, navigation) },
+                icon = "settings",
+                enabled = mod.onOpen != null || mod.source == ConfigSource.OC,
+            ),
+        )
+        add(
+            MenuAction(
+                if (favorite) translated("oneconfig.mods.menu.unfavorite", "Remove from favorites")
+                else translated("oneconfig.mods.menu.favorite", "Add to favorites"),
+                { ModFavorites.toggle(mod.id) },
+                icon = if (favorite) "star-filled" else "star",
+            ),
+        )
+        add(
+            MenuAction(
+                if (hidden) translated("oneconfig.mods.menu.show", "Show mod") else translated("oneconfig.mods.menu.hide", "Hide mod"),
+                { ModHidden.toggle(mod.id) },
+                icon = if (hidden) "eye" else "eye-off",
+            ),
+        )
+        if (toggle != null) {
+            val on = toggle.isEnabled()
+            add(
+                MenuAction(
+                    if (on) translated("oneconfig.mods.menu.disable", "Disable") else translated("oneconfig.mods.menu.enable", "Enable"),
+                    {
+                        if (!on && toggle.needsSetup()) openModCard(mod, navigation) else toggle.setEnabled(!on)
+                    },
+                    icon = if (on) "x-circle" else "check-circle",
+                    enabled = toggle !is ReadOnlyModToggle,
+                    disabledReason = (toggle as? ReadOnlyModToggle)?.lockedReason?.takeIf { it.isNotBlank() }
+                        ?: translated("oneconfig.mods.toggle.locked", "This mod is switched on and off somewhere else."),
+                ),
+            )
+        }
+        if (hasHud || resettable) add(MenuSeparator)
+        if (hasHud) {
+            add(MenuAction(translated("oneconfig.mods.menu.hud_editor", "Open HUD editor"), { HudManager.openEditor() }, icon = "hud"))
+        }
+        if (resettable) {
+            add(
+                MenuAction(
+                    translated("oneconfig.mods.menu.reset", "Reset to defaults"),
+                    { confirmReset(mod, tree) },
+                    icon = "refresh",
+                    danger = true,
+                ),
+            )
+        }
+        add(MenuSeparator)
+        add(MenuAction(translated("oneconfig.mods.menu.copy_id", "Copy mod id"), { ClipboardHelper.setString(mod.id) }, icon = "copy", detail = mod.id))
+        if (contributed.isNotEmpty()) {
+            add(MenuSeparator)
+            addAll(contributed)
+        }
+    }
+}
+
+private fun confirmReset(mod: ConfigData, tree: Tree) {
+    val ownSwitch = (mod.toggle as? PropertyModToggle)?.property
+    Confirm.ask(
+        title = translated("oneconfig.mods.menu.reset.title", "Reset %s?", mod.title.asRenderText()),
+        text = translated("oneconfig.mods.menu.reset.text", "Every setting of this mod goes back to its default. This can't be undone."),
+        confirmLabel = translated("oneconfig.mods.menu.reset.confirm", "Reset settings"),
+        onConfirm = { resetTree(tree, identitySet().also { seen -> ownSwitch?.let(seen::add) }) },
+        icon = "refresh",
+    )
+}
+
+private fun resetTree(tree: Tree, seen: MutableSet<Property<*>>) {
+    for (node in tree.map.values) {
+        when (node) {
+            is Property<*> -> resetOption(node, seen)
+            is Tree -> resetTree(node, seen)
+        }
     }
 }
 
@@ -459,15 +555,11 @@ private val ModCardGlowHeight = 50.dp
 
 private val ModCardInsetFooterInset = 6.dp
 
-private val FavoriteStarColor = Color(0xFFFFD700)
-
 private val ModCardToggleDot = 6.dp
 private val ModCardToggleRing = 12.dp
 private val ModCardToggleGlow = 5.dp
-private val ModCardToggleUnavailable = Color(0xFF4F505B)
 
-// the accent is darkened towards this for the ring, which for the default accent gives the ring of the design
-private val ModCardToggleRingShade = Color(0xFF181600)
+private const val ModCardToggleRingDarken = 0.42f
 
 /**
  * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
@@ -496,13 +588,13 @@ fun ModCard(
             }
         }
     }
-    val footerAccent by animateFloatAsState(if (enabled) 1f else 0f)
+    val footerAccent by Motion.animateFloatAsState(if (enabled) 1f else 0f)
     val insetFooter = theme.insetModFooter
     val insetFooterShape = theme.modCardShape.concentric(ModCardInsetFooterInset)
-    val footerTextColor by animateColorAsState(
+    val footerTextColor by Motion.animateColorAsState(
         if (enabled) (if (insetFooter && contrastRatio(theme.textColor, Accent) >= 3f) theme.textColor else theme.accentTextColor) else theme.textColor.copy(alpha = 0.75f)
     )
-    val glowStrength by animateFloatAsState(if (enabled) 0.5f else 0f)
+    val glowStrength by Motion.animateFloatAsState(if (enabled) 0.5f else 0f)
     val navigation = LocalShell.current.navigation
     val open = {
         val onOpen = mod.onOpen
@@ -524,8 +616,8 @@ fun ModCard(
                     // cards never take focus, otherwise they slide in from off screen when scrolled back into view
                     Modifier
                         .focusProperties { canFocus = false }
-                        .onClick(interactionSource) { openModCard(mod, navigation) }
-                        .pointerHoverIcon(PointerIcon.Hand)
+                        .contextMenu { modCardMenu(mod, navigation) }
+                        .oneConfigClickable(mod.title.asRenderText(), { openModCard(mod, navigation) }, indication = false, interactionSource = interactionSource)
                 } else {
                     Modifier
                 },
@@ -576,15 +668,21 @@ fun ModCard(
                         if (toggle != null && interactive && !locked) {
                             Modifier
                                 .focusProperties { canFocus = false }
-                                .onClick(footerInteractions) {
-                                    if (!enabled && toggle.needsSetup()) {
-                                        open()
-                                    } else {
-                                        toggle.setEnabled(!enabled)
-                                        enabled = toggle.isEnabled()
-                                    }
-                                }
-                                .pointerHoverIcon(PointerIcon.Hand)
+                                .oneConfigClickable(
+                                    mod.title.asRenderText(),
+                                    {
+                                        if (!enabled && toggle.needsSetup()) {
+                                            open()
+                                        } else {
+                                            toggle.setEnabled(!enabled)
+                                            enabled = toggle.isEnabled()
+                                        }
+                                    },
+                                    role = A11yRole.Switch,
+                                    checked = enabled,
+                                    indication = false,
+                                    interactionSource = footerInteractions,
+                                )
                         } else {
                             Modifier
                         },
@@ -623,7 +721,7 @@ fun ModCard(
                             LinearGradientShader(Offset.Zero, Offset(size.width, 0f), listOf(Accent, AccentEnd)),
                             LinearGradientShader(
                                 Offset(0f, glowTop), Offset(0f, size.height),
-                                listOf(Color.Black.copy(0f), Color.Black.copy(0.2f), Color.Black.copy(0.4f)),
+                                listOf(Accent.copy(0f), Accent.copy(0.2f), Accent.copy(0.4f)),
                                 listOf(0f, 0.4f, 1f),
                             ),
                             BlendMode.DstIn,
@@ -652,24 +750,18 @@ fun ModCard(
             HideToggle(
                 mod = mod,
                 cardInteractions = interactionSource,
+                interactive = interactive,
             )
         }
         Box(Modifier.align(Alignment.TopEnd).padding(11.dp)) {
-            Tooltip(
-                text = {
-                    Text(
-                        when {
-                            toggle is ReadOnlyModToggle -> toggle.lockedReason?.takeIf { it.isNotBlank() }
-                                ?: translated("oneconfig.mods.toggle.locked", "This mod is switched on and off somewhere else.")
-                            toggle != null -> "This mod can be toggled on and off."
-                            else -> "This mod doesn't support being toggled."
-                        },
-                        color = theme.textColor,
-                        fontSize = 12.sp,
-                    )
+            TooltipBox(
+                when {
+                    toggle is ReadOnlyModToggle -> toggle.lockedReason?.takeIf { it.isNotBlank() }
+                        ?: translated("oneconfig.mods.toggle.locked", "This mod is switched on and off somewhere else.")
+                    toggle != null -> translated("oneconfig.mods.toggle.available", "This mod can be toggled on and off.")
+                    else -> translated("oneconfig.mods.toggle.unavailable", "This mod doesn't support being toggled.")
                 },
-                modifier = Modifier,
-                anchor = Alignment.TopCenter,
+                placement = TooltipPlacement.AboveCenter,
             ) {
                 if (locked) {
                     Icon(
@@ -678,10 +770,12 @@ fun ModCard(
                         modifier = Modifier.size(ModCardToggleRing),
                     )
                 } else Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
-                    val ringStart = if (toggle != null) lerp(Accent, ModCardToggleRingShade, 0.42f) else ModCardToggleUnavailable.copy(alpha = 0.5f)
-                    val ringEnd = if (toggle != null) lerp(AccentEnd, ModCardToggleRingShade, 0.42f) else ringStart
+                    val shade = theme.shadowColor.copy(alpha = 1f)
+                    val unavailable = theme.controlTrackColor
+                    val ringStart = if (toggle != null) lerp(Accent, shade, ModCardToggleRingDarken) else unavailable.copy(alpha = 0.5f)
+                    val ringEnd = if (toggle != null) lerp(AccentEnd, shade, ModCardToggleRingDarken) else ringStart
                     val ring = lerp(ringStart, ringEnd, 0.5f)
-                    val dot = ModCardToggleUnavailable
+                    val dot = unavailable
                     // drawn around one centre, since laying the dot out inside the ring lands it on a pixel boundary off-centre
                     Box(
                         Modifier.fillMaxSize().drawWithCache {
@@ -729,66 +823,77 @@ private fun FavoriteStar(
     modifier: Modifier = Modifier,
 ) {
     val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha = animateFloatAsState(
-        when {
-            favorite -> 1f
-            !hoverHint -> 0f
-            hovered -> 1f
-            cardHovered -> 0.6f
-            else -> 0f
-        }
-    )
-    val color by animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
-
-    Box(
-        modifier = modifier
-            .size(24.dp)
-            .graphicsLayer { this.alpha = alpha.value }
-            .then(
-                if (interactive) {
-                    Modifier
-                        .focusProperties { canFocus = false }
-                        .onClick(interactionSource) { ModFavorites.toggle(mod.id) }
-                        .pointerHoverIcon(PointerIcon.Hand)
-                } else {
-                    Modifier
-                },
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(if (favorite) "star-filled" else "star", color = color, modifier = Modifier.size(18.dp))
-    }
+    val color by Motion.animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
+    CardCornerToggle(
+        icon = if (favorite) "star-filled" else "star",
+        label = if (favorite) translated("oneconfig.mods.menu.unfavorite", "Remove from favorites")
+        else translated("oneconfig.mods.menu.favorite", "Add to favorites"),
+        color = color,
+        shown = favorite || hoverHint && cardHovered,
+        emphasized = favorite,
+        interactive = interactive,
+        modifier = modifier,
+    ) { ModFavorites.toggle(mod.id) }
 }
 
 @Composable
 private fun HideToggle(
     mod: ConfigData,
     cardInteractions: InteractionSource,
+    interactive: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val hidden = ModHidden.isHidden(mod.id)
-    val interactionSource = rememberInteractionSource()
-    val hovered by interactionSource.collectIsHoveredAsState()
     val cardHovered by cardInteractions.collectIsHoveredAsState()
-    val alpha = animateFloatAsState(
-        when {
-            hidden || hovered -> 1f
-            cardHovered -> 0.6f
-            else -> 0f
-        }
-    )
-
-    Box(
-        modifier = modifier
-            .size(24.dp)
-            .graphicsLayer { this.alpha = alpha.value }
-            .onClick(interactionSource) { ModHidden.toggle(mod.id) }
-            .pointerHoverIcon(PointerIcon.Hand),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(if (hidden) "eye-off" else "eye", color = LocalTheme.current.textColor, modifier = Modifier.size(18.dp))
-    }
+    CardCornerToggle(
+        icon = if (hidden) "eye-off" else "eye",
+        label = if (hidden) translated("oneconfig.mods.menu.show", "Show mod") else translated("oneconfig.mods.menu.hide", "Hide mod"),
+        color = LocalTheme.current.textColor,
+        shown = hidden || cardHovered,
+        emphasized = hidden,
+        interactive = interactive,
+        modifier = modifier,
+    ) { ModHidden.toggle(mod.id) }
 }
+
+@Composable
+private fun CardCornerToggle(
+    icon: String,
+    label: String,
+    color: Color,
+    shown: Boolean,
+    emphasized: Boolean,
+    interactive: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val source = remember { MutableInteractionSource() }
+    val hovered by source.collectIsHoveredAsState()
+    val emphasis by Motion.animateFloatAsState(if (emphasized || hovered) 1f else CardToggleHintAlpha)
+    val toggleModifier = modifier
+        .size(CardToggleSize)
+        .hiddenUntilHover(shown)
+        .focusProperties { canFocus = false }
+        .graphicsLayer { alpha = emphasis }
+    if (!interactive) {
+        Box(toggleModifier, contentAlignment = Alignment.Center) {
+            Icon(icon, color = color, modifier = Modifier.size(CardToggleIconSize))
+        }
+        return
+    }
+    IconButton(
+        icon,
+        label,
+        onClick,
+        toggleModifier,
+        size = ControlSize.Large,
+        tooltip = null,
+        tint = color,
+        interactionSource = source,
+    )
+}
+
+private val CardToggleSize = 24.dp
+private val CardToggleIconSize = 18.dp
+private const val CardToggleHintAlpha = 0.6f
