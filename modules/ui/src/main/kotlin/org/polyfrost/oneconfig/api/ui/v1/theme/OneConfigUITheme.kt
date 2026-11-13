@@ -80,6 +80,14 @@ public abstract class OneConfigUITheme @InternalOneConfigUiApi constructor() {
 
     public open val accentBrush: Brush get() = SolidColor(accentTextColor)
 
+    public open val onMedia: Color get() = Color.White
+
+    public open val onMediaShadow: Color get() = Color.Black.copy(alpha = 0.6f)
+
+    public open val checkerLight: Color get() = if (isLight) Color(0xFFFFFFFF) else Color(0xFF9A9A9A)
+
+    public open val checkerDark: Color get() = if (isLight) Color(0xFFD0D0D0) else Color(0xFF6A6A6A)
+
     public open val shapes: OneConfigShapes
         get() = OneConfigShapes(
             small = checkBoxShape,

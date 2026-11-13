@@ -43,16 +43,25 @@ public enum class A11yRole(public val spoken: String) {
     Option("option"),
     Link("link"),
     TextField("edit box"),
+    Slider("slider"),
+    RadioButton("radio button"),
+    MenuItem("menu item"),
+    Dialog("dialog"),
+    Heading("heading"),
+    Image("image"),
+    ProgressBar("progress bar"),
     ;
 
     internal val semanticsRole: Role?
         get() = when (this) {
-            Button -> Role.Button
+            Button, MenuItem -> Role.Button
             Tab -> Role.Tab
             Checkbox -> Role.Checkbox
             Switch -> Role.Switch
             Option -> Role.DropdownList
-            Link, TextField -> null
+            RadioButton -> Role.RadioButton
+            Image -> Role.Image
+            Link, TextField, Slider, Dialog, Heading, ProgressBar -> null
         }
 }
 

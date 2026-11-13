@@ -3,6 +3,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,9 +13,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
@@ -41,25 +46,46 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.a11y.a11yField
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
-@ExperimentalOneConfigUiApi
-@Composable
-public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier) {
-    TextField(value, onValueChange, modifier, null, null, Int.MAX_VALUE, false)
-}
+private const val FIELD_FADE_MILLIS = 150
 
 @ExperimentalOneConfigUiApi
-@Composable
-public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier, placeholder: String?) {
-    TextField(value, onValueChange, modifier, placeholder, null, Int.MAX_VALUE, false)
+public object TextFieldDefaults {
+    public val size: ControlSize = ControlSize.Regular
+
+    public val horizontalPadding: Dp = 12.dp
+
+    public val contentSpacing: Dp = 10.dp
+
+    public val fill: Color
+        @Composable get() = OneConfigTheme.current.modCardBackground
+
+    public val border: Color
+        @Composable get() = OneConfigTheme.current.borderColor
+
+    public val focusBorder: Color
+        @Composable get() = OneConfigTheme.accent
+
+    public val errorBorder: Color
+        @Composable get() = OneConfigTheme.current.error
+
+    public val shape: Shape
+        @Composable get() = OneConfigTheme.current.shapes.field
+
+    public fun fontSize(size: ControlSize): TextUnit = if (size == ControlSize.Compact) 13.sp else 14.sp
+
+    public fun iconSize(size: ControlSize): Dp = if (size == ControlSize.Compact) 14.dp else 16.dp
 }
 
 @ExperimentalOneConfigUiApi
@@ -67,38 +93,23 @@ public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: M
 public fun TextField(
     value: String,
     onValueChange: (String) -> Unit,
-    modifier: Modifier,
-    placeholder: String?,
-    leadingIcon: String?,
-    maxLength: Int,
-    invalid: Boolean,
-) {
-    TextField(
-        value, onValueChange, modifier, placeholder, leadingIcon, maxLength, invalid,
-        true, true, true, 14.sp, null, false, null, null, null, null,
-    )
-}
-
-@ExperimentalOneConfigUiApi
-@Composable
-public fun TextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier,
-    placeholder: String?,
-    leadingIcon: String?,
-    maxLength: Int,
-    invalid: Boolean,
-    enabled: Boolean,
-    singleLine: Boolean,
-    framed: Boolean,
-    fontSize: TextUnit,
-    label: String?,
-    masked: Boolean,
-    focusRequester: FocusRequester?,
-    interactionSource: MutableInteractionSource?,
-    trailing: (@Composable () -> Unit)?,
-    onSubmit: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    enabled: Boolean = true,
+    invalid: Boolean = false,
+    singleLine: Boolean = true,
+    size: ControlSize = TextFieldDefaults.size,
+    label: String? = null,
+    leadingIcon: String? = null,
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    masked: Boolean = false,
+    maxLength: Int = Int.MAX_VALUE,
+    framed: Boolean = true,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    focusRequester: FocusRequester? = null,
+    onSubmit: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     var local by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
     val shown = if (local.text == value) {
@@ -112,8 +123,8 @@ public fun TextField(
             local = next
             if (next.text != value) onValueChange(next.text)
         },
-        modifier, placeholder, leadingIcon, maxLength, invalid, enabled, singleLine, framed, fontSize, label, masked,
-        focusRequester, interactionSource, trailing, onSubmit,
+        modifier, placeholder, enabled, invalid, singleLine, size, label, leadingIcon, leading, trailing, masked, maxLength, framed,
+        fontSize, focusRequester, onSubmit, interactionSource,
     )
 }
 
@@ -122,44 +133,101 @@ public fun TextField(
 public fun TextField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
-    modifier: Modifier,
-    placeholder: String?,
-) {
-    TextField(
-        value, onValueChange, modifier, placeholder, null, Int.MAX_VALUE, false,
-        true, true, true, 14.sp, null, false, null, null, null, null,
-    )
-}
-
-@ExperimentalOneConfigUiApi
-@Composable
-public fun TextField(
-    value: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
-    modifier: Modifier,
-    placeholder: String?,
-    leadingIcon: String?,
-    maxLength: Int,
-    invalid: Boolean,
-    enabled: Boolean,
-    singleLine: Boolean,
-    framed: Boolean,
-    fontSize: TextUnit,
-    label: String?,
-    masked: Boolean,
-    focusRequester: FocusRequester?,
-    interactionSource: MutableInteractionSource?,
-    trailing: (@Composable () -> Unit)?,
-    onSubmit: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    enabled: Boolean = true,
+    invalid: Boolean = false,
+    singleLine: Boolean = true,
+    size: ControlSize = TextFieldDefaults.size,
+    label: String? = null,
+    leadingIcon: String? = null,
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    masked: Boolean = false,
+    maxLength: Int = Int.MAX_VALUE,
+    framed: Boolean = true,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    focusRequester: FocusRequester? = null,
+    onSubmit: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     FieldCore(
-        value, onValueChange, modifier, placeholder, leadingIcon, maxLength, invalid, enabled, singleLine, framed, fontSize, label, masked,
-        focusRequester, interactionSource, trailing, onSubmit,
+        value, onValueChange, modifier, placeholder, enabled, invalid, singleLine, size, label, leadingIcon, leading, trailing, masked,
+        maxLength, framed, fontSize, focusRequester, onSubmit, interactionSource,
     )
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
 @Composable
-private fun FieldCore(
+public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier) {
+    TextField(value, onValueChange, modifier, placeholder = null)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier, placeholder: String?) {
+    TextField(value, onValueChange, modifier, placeholder, enabled = true)
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier,
+    placeholder: String?,
+    leadingIcon: String?,
+    maxLength: Int,
+    invalid: Boolean,
+) {
+    TextField(value, onValueChange, modifier, placeholder, invalid = invalid, leadingIcon = leadingIcon, maxLength = maxLength)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier,
+    placeholder: String?,
+    leadingIcon: String?,
+    maxLength: Int,
+    invalid: Boolean,
+    enabled: Boolean,
+    singleLine: Boolean,
+    framed: Boolean,
+    fontSize: TextUnit,
+    label: String?,
+    masked: Boolean,
+    focusRequester: FocusRequester?,
+    interactionSource: MutableInteractionSource?,
+    trailing: (@Composable () -> Unit)?,
+    onSubmit: (() -> Unit)?,
+) {
+    TextField(
+        value, onValueChange, modifier, placeholder, enabled, invalid, singleLine, TextFieldDefaults.size, label, leadingIcon, null, trailing,
+        masked, maxLength, framed, fontSize, focusRequester, onSubmit, interactionSource,
+    )
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TextField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    modifier: Modifier,
+    placeholder: String?,
+) {
+    TextField(value, onValueChange, modifier, placeholder, enabled = true)
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TextField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier,
@@ -178,8 +246,42 @@ private fun FieldCore(
     trailing: (@Composable () -> Unit)?,
     onSubmit: (() -> Unit)?,
 ) {
+    TextField(
+        value, onValueChange, modifier, placeholder, enabled, invalid, singleLine, TextFieldDefaults.size, label, leadingIcon, null, trailing,
+        masked, maxLength, framed, fontSize, focusRequester, onSubmit, interactionSource,
+    )
+}
+
+@Suppress("DEPRECATION")
+@Composable
+internal fun FieldCore(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    modifier: Modifier,
+    placeholder: String?,
+    enabled: Boolean,
+    invalid: Boolean,
+    singleLine: Boolean,
+    size: ControlSize,
+    label: String?,
+    leadingIcon: String?,
+    leading: (@Composable () -> Unit)?,
+    trailing: (@Composable () -> Unit)?,
+    masked: Boolean,
+    maxLength: Int,
+    framed: Boolean,
+    fontSize: TextUnit,
+    focusRequester: FocusRequester?,
+    onSubmit: (() -> Unit)?,
+    interactionSource: MutableInteractionSource?,
+    fill: Color? = null,
+    glass: Boolean = false,
+    transformation: VisualTransformation? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val style = rememberFieldStyle(fontSize)
+    val textSize = if (fontSize.isSpecified) fontSize else TextFieldDefaults.fontSize(size)
+    val style = rememberFieldStyle(textSize)
     val focused by source.collectIsFocusedAsState()
     val previous = remember { arrayOf(value) }
     LaunchedEffect(value) {
@@ -191,15 +293,19 @@ private fun FieldCore(
     BasicTextField(
         value = value,
         onValueChange = { next -> onValueChange(next.limitedFrom(value, maxLength)) },
-        modifier = fieldModifier(modifier, source, invalid, enabled, singleLine, framed, spokenLabel(label ?: placeholder, value.text, masked), focusRequester, onSubmit),
+        modifier = fieldModifier(
+            modifier, source, invalid, enabled, singleLine, framed, fill ?: TextFieldDefaults.fill, glass,
+            spokenLabel(label ?: placeholder, value.text, masked), focusRequester, onSubmit,
+        ),
         enabled = enabled,
         singleLine = singleLine,
         textStyle = style,
         cursorBrush = SolidColor(OneConfigTheme.accent),
-        visualTransformation = maskFor(masked),
+        visualTransformation = transformation ?: maskFor(masked),
+        keyboardOptions = keyboardOptions,
         interactionSource = source,
         decorationBox = { inner ->
-            FieldDecoration(value.text.isEmpty(), framed, placeholder, leadingIcon, singleLine, fontSize, source, trailing, inner)
+            FieldDecoration(value.text.isEmpty(), framed, placeholder, leadingIcon, leading, singleLine, size, textSize, source, trailing, inner)
         },
     )
 }
@@ -304,6 +410,8 @@ private fun fieldModifier(
     enabled: Boolean,
     singleLine: Boolean,
     framed: Boolean,
+    fill: Color,
+    glass: Boolean,
     label: String?,
     focusRequester: FocusRequester?,
     onSubmit: (() -> Unit)?,
@@ -312,12 +420,18 @@ private fun fieldModifier(
     val focused by source.collectIsFocusedAsState()
     val border by animateColorAsState(
         when {
-            invalid -> DangerColor
-            focused -> OneConfigTheme.accent
-            else -> theme.borderColor
+            invalid -> TextFieldDefaults.errorBorder
+            focused -> TextFieldDefaults.focusBorder
+            else -> TextFieldDefaults.border
         },
+        Motion.spec(tween(FIELD_FADE_MILLIS)),
     )
-    val shape = theme.sideBarNavigationEntryShape
+    val shape = TextFieldDefaults.shape
+    val frame = when {
+        !framed -> Modifier
+        glass -> Modifier.glassFrame(shape, { fill }, { border }, hover = false)
+        else -> Modifier.background(fill, shape).border(1.dp, border, shape)
+    }
     return modifier
         .trackTextInputFocus()
         .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
@@ -333,14 +447,8 @@ private fun fieldModifier(
                 Modifier
             },
         )
-        .graphicsLayer { alpha = if (enabled) 1f else DISABLED_ALPHA }
-        .then(
-            if (framed) {
-                Modifier.background(theme.modCardBackground, shape).border(1.dp, border, shape)
-            } else {
-                Modifier
-            },
-        )
+        .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
+        .then(frame)
 }
 
 @Composable
@@ -349,7 +457,9 @@ private fun FieldDecoration(
     framed: Boolean,
     placeholder: String?,
     leadingIcon: String?,
+    leading: (@Composable () -> Unit)?,
     singleLine: Boolean,
+    size: ControlSize,
     fontSize: TextUnit,
     source: MutableInteractionSource,
     trailing: (@Composable () -> Unit)?,
@@ -358,13 +468,22 @@ private fun FieldDecoration(
     val theme = OneConfigTheme.current
     val hovered by source.collectIsHoveredAsState()
     val focused by source.collectIsFocusedAsState()
-    val iconColor by animateColorAsState(if (hovered || focused) theme.textColor else theme.textColorSecondary)
+    val iconColor by animateColorAsState(if (hovered || focused) theme.textColor else theme.textColorSecondary, Motion.spec(tween(FIELD_FADE_MILLIS)))
     Row(
-        modifier = if (framed) Modifier.padding(horizontal = 12.dp, vertical = 7.dp) else Modifier,
+        modifier = if (framed) {
+            Modifier
+                .defaultMinSize(minHeight = size.height)
+                .padding(horizontal = TextFieldDefaults.horizontalPadding, vertical = if (singleLine) 4.dp else 7.dp)
+        } else {
+            Modifier
+        },
         verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(TextFieldDefaults.contentSpacing),
     ) {
-        if (leadingIcon != null) Icon(leadingIcon, iconColor, Modifier.size(18.dp))
+        when {
+            leading != null -> leading()
+            leadingIcon != null -> Icon(leadingIcon, iconColor, Modifier.size(TextFieldDefaults.iconSize(size)))
+        }
         FieldText(empty, placeholder, singleLine, fontSize, inner)
         trailing?.invoke()
     }
