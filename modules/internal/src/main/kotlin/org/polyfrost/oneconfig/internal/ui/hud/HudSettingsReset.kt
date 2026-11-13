@@ -299,6 +299,7 @@ fun HudCanvasResetMenu(
         undoEnabled = false,
         onRedo = {},
         redoEnabled = false,
+        onUndoAll = {},
         highlightAnchor = preview,
     )
     ShellPopup(
@@ -329,6 +330,7 @@ internal fun hudCanvasMenuEntries(
     undoEnabled: Boolean,
     onRedo: () -> Unit,
     redoEnabled: Boolean,
+    onUndoAll: () -> Unit,
 ): List<MenuEntry> = buildHudCanvasMenuEntries(
     hud = hud,
     targets = targets,
@@ -347,6 +349,7 @@ internal fun hudCanvasMenuEntries(
     undoEnabled = undoEnabled,
     onRedo = onRedo,
     redoEnabled = redoEnabled,
+    onUndoAll = onUndoAll,
     highlightAnchor = false,
 )
 
@@ -368,6 +371,7 @@ private fun buildHudCanvasMenuEntries(
     undoEnabled: Boolean,
     onRedo: () -> Unit,
     redoEnabled: Boolean,
+    onUndoAll: () -> Unit,
     highlightAnchor: Boolean,
 ): List<MenuEntry> {
     val actionTargets = targets.ifEmpty { listOf(hud) }
@@ -469,6 +473,7 @@ private fun buildHudCanvasMenuEntries(
     entries += MenuSeparator
     entries += undoAction(onUndo, undoEnabled)
     entries += redoAction(onRedo, redoEnabled)
+    entries += undoAllAction(onUndoAll, undoEnabled)
 
     entries += MenuSeparator
     if (actionTargets.any(::hudHasPositionDefaults)) {
@@ -506,12 +511,14 @@ internal fun hudCanvasPasteMenuEntries(
     undoEnabled: Boolean,
     onRedo: () -> Unit,
     redoEnabled: Boolean,
+    onUndoAll: () -> Unit,
     onTour: (() -> Unit)?,
     onShortcuts: () -> Unit,
 ): List<MenuEntry> {
     val entries = ArrayList<MenuEntry>(9)
     entries += undoAction(onUndo, undoEnabled)
     entries += redoAction(onRedo, redoEnabled)
+    entries += undoAllAction(onUndoAll, undoEnabled)
     entries += MenuSeparator
     entries += pasteAction(onPaste, pasteEnabled)
     entries += MenuAction(
@@ -545,6 +552,13 @@ private fun undoAction(onUndo: () -> Unit, enabled: Boolean): MenuAction = MenuA
     icon = "undo",
     enabled = enabled,
     shortcutHint = keybindHint(OneConfigConfig.hudUndoKeybind),
+)
+
+private fun undoAllAction(onUndoAll: () -> Unit, enabled: Boolean): MenuAction = MenuAction(
+    translated("oneconfig.hud.menu.undo_all", "Undo all"),
+    onUndoAll,
+    icon = "undo",
+    enabled = enabled,
 )
 
 private fun redoAction(onRedo: () -> Unit, enabled: Boolean): MenuAction = MenuAction(
