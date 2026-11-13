@@ -62,8 +62,9 @@ public fun IconButton(
     tooltipPlacement: TooltipPlacement = TooltipPlacement.BelowCenter,
     tint: Color = Color.Unspecified,
     interactionSource: MutableInteractionSource? = null,
+    shape: Shape = IconButtonDefaults.shape(style),
 ) {
-    IconButtonFrame(contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, interactionSource) { color ->
+    IconButtonFrame(contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, interactionSource, shape) { color ->
         Icon(icon, null, Modifier.size(IconButtonDefaults.iconSize(size)), if (tint == Color.Unspecified) color else tint)
     }
 }
@@ -84,8 +85,9 @@ public fun IconButton(
     tooltipPlacement: TooltipPlacement = TooltipPlacement.BelowCenter,
     tint: Color = Color.Unspecified,
     interactionSource: MutableInteractionSource? = null,
+    shape: Shape = IconButtonDefaults.shape(style),
 ) {
-    IconButtonFrame(contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, interactionSource) { color ->
+    IconButtonFrame(contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, interactionSource, shape) { color ->
         Image(painter, null, Modifier.size(IconButtonDefaults.iconSize(size)), colorFilter = ColorFilter.tint(if (tint == Color.Unspecified) color else tint))
     }
 }
@@ -142,6 +144,7 @@ internal fun IconButtonFrame(
     tooltip: String?,
     placement: TooltipPlacement,
     interactionSource: MutableInteractionSource?,
+    shape: Shape = IconButtonDefaults.shape(style),
     glyph: @Composable (Color) -> Unit,
 ) {
     val theme = OneConfigTheme.current
@@ -187,7 +190,6 @@ internal fun IconButtonFrame(
         spec,
     )
     val content by animateColorAsState(IconButtonDefaults.contentColor(style, active, selected, danger), spec)
-    val shape = IconButtonDefaults.shape(style)
     val glass = style == IconButtonStyle.Framed || accented
     Box(
         modifier = modifier

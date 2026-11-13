@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.withFrameMillis
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.CompositeShader
 import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
@@ -78,6 +80,8 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
@@ -133,6 +137,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
+import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 import org.polyfrost.oneconfig.internal.ui.themes.contrastRatio
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 
@@ -740,7 +745,7 @@ fun ModCard(
                 }
             )
         }
-        Row(Modifier.padding(4.dp)) {
+        Row(Modifier.padding(CardToggleInset)) {
             FavoriteStar(
                 mod = mod,
                 favorite = favorite,
@@ -835,6 +840,7 @@ private fun FavoriteStar(
         emphasized = favorite,
         interactive = interactive,
         modifier = modifier,
+        shape = cardCornerShape(),
     ) { ModFavorites.toggle(mod.id) }
 }
 
@@ -867,6 +873,7 @@ private fun CardCornerToggle(
     emphasized: Boolean,
     interactive: Boolean,
     modifier: Modifier = Modifier,
+    shape: Shape = IconButtonDefaults.shape(IconButtonStyle.Ghost),
     onClick: () -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
@@ -892,9 +899,22 @@ private fun CardCornerToggle(
         tooltip = null,
         tint = color,
         interactionSource = source,
+        shape = shape,
     )
 }
 
+@Composable
+private fun cardCornerShape(): Shape {
+    val theme = LocalTheme.current
+    val base = IconButtonDefaults.shape(IconButtonStyle.Ghost)
+    val outer = theme.modCardShape.cornerRadiusOrNull() ?: return base
+    val button = theme.buttonShape.cornerRadiusOrNull() ?: return base
+    val inner = minOf(button, CardToggleSize / 4)
+    val corner = (outer - CardToggleInset).coerceAtLeast(inner)
+    return remember(corner, inner) { RoundedCornerShape(topStart = corner, topEnd = inner, bottomEnd = inner, bottomStart = inner) }
+}
+
+private val CardToggleInset = 4.dp
 private val CardToggleSize = 24.dp
 private val CardToggleIconSize = 18.dp
 private const val CardToggleHintAlpha = 0.6f
