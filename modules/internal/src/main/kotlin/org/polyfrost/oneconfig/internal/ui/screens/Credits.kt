@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import java.util.UUID
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.PlayerHead
 import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -138,8 +139,8 @@ fun Credits() {
                 }
             }
             if (shownPeople.isEmpty() && shownThankedPeople.isEmpty() && shownThanks.isEmpty()) {
-                Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                    Text(translated("oneconfig.credits.nomatch", "No credits match \"%s\"", query), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+                Box(Modifier.fillMaxWidth().padding(top = 16.dp), contentAlignment = Alignment.Center) {
+                    EmptyState(translated("oneconfig.credits.nomatch", "No credits match \"%s\"", query), icon = "search")
                 }
             }
             if (query.isEmpty()) Legal()
