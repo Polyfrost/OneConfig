@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.ui.v1.platform.ComposeHudInput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +23,7 @@ import net.minecraft.client.KeyboardHandler;
 
 //? if = 1.8.9 {
 /*import org.lwjgl.input.Keyboard;
+import org.polyfrost.oneconfig.internal.legacy.KeyCodes;
 import org.polyfrost.oneconfig.internal.legacy.LegacyInputEvents;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 *///?}
@@ -31,6 +33,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class Mixin_KeyInputEvent {
 
     //? if >= 1.21.10 {
+    @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
+    private void oneconfig$hudEscape(long handle, int action, KeyEvent event, CallbackInfo ci) {
+        if (handle == Platform.compatibility().windowHandle() && ComposeHudInput.consumeKey(event.key(), oneconfig$state(action))) {
+            ci.cancel();
+        }
+    }
+
     @ModifyVariable(method = "keyPress", at = @At(value = "STORE"), ordinal = 0)
     private boolean keyCallback(boolean original, long handle, int action, KeyEvent event) {
         EventManager.INSTANCE.post(new KeyInputEvent(event.key(), (char) 0, oneconfig$state(action)));
@@ -46,8 +55,12 @@ public class Mixin_KeyInputEvent {
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) event.codepoint(), KeyInputEvent.PRESSED));
     }
     //?} elif > 1.8.9 {
-    /*@Inject(method = "keyPress", at = @At("HEAD"))
+    /*@Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
     private void keyCallback(long window, int key, int scancode, int action, int mods, CallbackInfo ci) {
+        if (window == Platform.compatibility().windowHandle() && ComposeHudInput.consumeKey(key, oneconfig$state(action))) {
+            ci.cancel();
+            return;
+        }
         EventManager.INSTANCE.post(new KeyInputEvent(key, (char) 0, oneconfig$state(action)));
     }
 
@@ -59,9 +72,22 @@ public class Mixin_KeyInputEvent {
         EventManager.INSTANCE.post(new KeyInputEvent(0, (char) codepoint, KeyInputEvent.PRESSED));
     }
     *///?} else {
-    /*@Inject(method = "next", at = @At("RETURN"), remap = false)
+    /*@Inject(method = "next", at = @At("RETURN"), remap = false, cancellable = true)
     private static void keyCallback(CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue() && !LegacyInputEvents.deferred) LegacyInputEvents.postKeyboard();
+        if (!cir.getReturnValue() || LegacyInputEvents.deferred) return;
+        if (oneconfig$hudConsumesLegacy()) {
+            cir.setReturnValue(Keyboard.next());
+            return;
+        }
+        LegacyInputEvents.postKeyboard();
+    }
+
+    @Unique
+    private static boolean oneconfig$hudConsumesLegacy() {
+        int keyCode = Keyboard.getEventKey();
+        if (keyCode <= 0) return false;
+        int state = Keyboard.isRepeatEvent() ? KeyInputEvent.REPEAT : Keyboard.getEventKeyState() ? KeyInputEvent.PRESSED : KeyInputEvent.RELEASED;
+        return ComposeHudInput.consumeKey(KeyCodes.fromLegacy(keyCode).getValue(), state);
     }
     *///?}
 
