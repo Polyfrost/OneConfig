@@ -257,11 +257,10 @@ private fun findPlayer(id: UUID?): Player? {
 private fun localProfileId(): UUID? = runCatching { Minecraft.getInstance().user.profileId }.getOrNull()
 
 private fun partialTick(): Float {
-    val client = Minecraft.getInstance()
     //? if >= 1.21.4 {
-    return client.deltaTracker.getGameTimeDeltaPartialTick(false)
+    return Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(false)
     //?} elif > 1.8.9 {
-    /*return client.timer.getGameTimeDeltaPartialTick(false)
+    /*return Minecraft.getInstance().timer.getGameTimeDeltaPartialTick(false)
     *///?} else
     //return 1f
 }
@@ -351,7 +350,8 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
     *///? }
 }
 //?} else if > 1.8.9 {
-/*private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, partialTick: Float) {
+/*@Suppress("DEPRECATION")
+private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, partialTick: Float) {
     val client = Minecraft.getInstance()
     val width = rt.width
     val height = rt.height
