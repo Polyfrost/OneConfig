@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.ui
 
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +32,7 @@ import kotlin.math.pow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalSearchFieldFocused
@@ -180,9 +180,9 @@ fun OneConfigInterface(
                         val animMs = (ThemeConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
                         val enterMs = if (ThemeConfig.guiOpenAnimation) animMs else 1
                         val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
-                        val dragAlpha by animateFloatAsState(
-                            targetValue = if (shell.layout.hudDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
-                            animationSpec = tween(150),
+                        val dragAlpha by Motion.animateFloatAsState(
+                            target = if (shell.layout.hudDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
+                            spec = tween(150),
                             label = "hudDragShellAlpha"
                         )
 

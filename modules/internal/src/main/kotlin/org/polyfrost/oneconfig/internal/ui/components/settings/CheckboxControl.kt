@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -15,14 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
@@ -38,7 +38,7 @@ fun CheckboxIndicator(
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val accentAlpha = animateFloatAsState(if (checked) 1f else 0f)
+    val accentAlpha = Motion.animateFloatAsState(if (checked) 1f else 0f)
     val borderColor = animateAccentColorAsState(
         checked to isHovered,
         when {
@@ -54,11 +54,18 @@ fun CheckboxIndicator(
             .graphicsLayer {}
             .clip(theme.checkBoxShape)
             .animatedFrame(theme.checkBoxShape, fill = { theme.componentBackground }, accentAlpha = { accentAlpha.value }, borderWidth = 1.5.dp, border = { borderColor.value })
-            .onClick(interactionSource, onToggle)
-            .pointerHoverIcon(PointerIcon.Hand),
+            .oneConfigClickable(
+                label = null,
+                onClick = onToggle,
+                role = A11yRole.Checkbox,
+                checked = checked,
+                shape = theme.checkBoxShape,
+                indication = false,
+                interactionSource = interactionSource,
+            ),
         contentAlignment = Alignment.Center,
     ) {
-        AnimatedVisibility(checked, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(checked, enter = Motion.enter(fadeIn()), exit = Motion.exit(fadeOut())) {
             Icon("tick", modifier = Modifier.size(26.dp), color = theme.textColor)
         }
     }
@@ -70,7 +77,7 @@ fun CheckboxControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(if (checked) "On" else "Off", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+        Text(if (checked) translated("oneconfig.control.on", "On") else translated("oneconfig.control.off", "Off"), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
         CheckboxIndicator(checked, onToggle = { onCheckedChange(!checked) })
     }
 }

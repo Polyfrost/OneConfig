@@ -1,15 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 enum class IconButtonType {
@@ -28,31 +27,39 @@ fun IconButton(
     hoverBorder: Boolean = false,
     onClick: () -> Unit,
 ) {
+    val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val iconColor = animateColorAsState(
+    val iconColor = Motion.animateColorAsState(
         if (!enabled) {
-            LocalTheme.current.textColorSecondary.copy(alpha = 0.35f)
+            theme.textColorSecondary.copy(alpha = theme.disabledAlpha)
         } else {
             if (isHovered) hoveredForeground else foreground
         }
     )
-    val borderColor = animateColorAsState(
-        if (hoverBorder && enabled && isHovered) LocalTheme.current.borderColor
-        else LocalTheme.current.borderColor.copy(0f)
+    val borderColor = Motion.animateColorAsState(
+        if (hoverBorder && enabled && isHovered) theme.borderColor
+        else theme.borderColor.copy(0f)
     )
 
     Icon(
         iconName,
         tint = { iconColor.value },
-        modifier = Modifier.onClick(interactionSource, enabled, onClick)
-            .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
+        modifier = Modifier
+            .oneConfigClickable(
+                label = null,
+                onClick = onClick,
+                enabled = enabled,
+                shape = theme.buttonShape,
+                indication = false,
+                interactionSource = interactionSource,
+            )
             .then(modifier)
             // inset the glyph so the outline doesn't hug it; size bordered buttons 8dp larger to keep the icon size
             .then(
-                if (hoverBorder) Modifier.animatedFrame(LocalTheme.current.buttonShape, border = { borderColor.value }).padding(4.dp)
+                if (hoverBorder) Modifier.animatedFrame(theme.buttonShape, border = { borderColor.value }).padding(4.dp)
                 else Modifier
             )
     )
@@ -71,12 +78,22 @@ fun SelectableIconButton(
 
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val iconColor = animateColorAsState(
+    val iconColor = Motion.animateColorAsState(
         if (isHovered || selected) hoveredForeground else foreground
     )
 
     Icon(
         iconName,
-        tint = { iconColor.value }, modifier = Modifier.onClick(interactionSource, onClick).then(modifier)
+        tint = { iconColor.value },
+        modifier = Modifier
+            .oneConfigClickable(
+                label = null,
+                onClick = onClick,
+                selected = selected,
+                shape = LocalTheme.current.buttonShape,
+                indication = false,
+                interactionSource = interactionSource,
+            )
+            .then(modifier)
     )
 }

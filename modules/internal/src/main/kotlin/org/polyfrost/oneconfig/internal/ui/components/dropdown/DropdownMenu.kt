@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import javax.swing.Box
@@ -127,7 +128,7 @@ fun SimpleDropdownMenuContent(
     content: @Composable BoxScope.() -> Unit
 ) {
     val transition = rememberTransition(expandedStates, "SimpleDropDownMenu")
-    val alpha by transition.animateFloat(transitionSpec = { tween() }) { expanded ->
+    val alpha by transition.animateFloat(transitionSpec = { Motion.finiteSpec(tween<Float>()) }) { expanded ->
         if (expanded) 1f else 0f
     }
 
