@@ -31,6 +31,8 @@ internal sealed interface StudioCommand {
 
     data object Redo : StudioCommand
 
+    data object UndoAll : StudioCommand
+
     data object Search : StudioCommand
 }
 
@@ -172,6 +174,14 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         post(StudioCommand.Undo)
+        return true
+    }
+
+    @JvmStatic
+    fun handleUndoAll(pressed: Boolean): Boolean {
+        if (!pressed) return false
+        if (!HudManager.isEditorOpen) return false
+        post(StudioCommand.UndoAll)
         return true
     }
 
