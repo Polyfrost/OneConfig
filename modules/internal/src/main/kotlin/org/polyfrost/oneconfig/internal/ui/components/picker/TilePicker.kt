@@ -4,7 +4,6 @@ import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,7 +23,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -33,17 +31,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -51,8 +47,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
@@ -172,8 +170,8 @@ fun PickerTooltip(
         return
     }
     val theme = LocalTheme.current
-    Tooltip(
-        text = {
+    TooltipBox(
+        tooltip = {
             Column {
                 Text(
                     entry.displayName,
@@ -184,10 +182,23 @@ fun PickerTooltip(
                 Text(entry.id, color = theme.textColorSecondary, fontSize = 9.sp)
             }
         },
-        modifier = Modifier,
-        anchor = anchor,
+        placement = anchor.toTooltipPlacement(),
         content = content,
     )
+}
+
+private fun Alignment.toTooltipPlacement(): TooltipPlacement {
+    val bias = this as? BiasAlignment
+    val above = (bias?.verticalBias ?: 1f) < 0f
+    val horizontal = bias?.horizontalBias ?: 0f
+    return when {
+        above && horizontal < 0f -> TooltipPlacement.AboveStart
+        above && horizontal > 0f -> TooltipPlacement.AboveEnd
+        above -> TooltipPlacement.AboveCenter
+        horizontal < 0f -> TooltipPlacement.BelowStart
+        horizontal > 0f -> TooltipPlacement.BelowEnd
+        else -> TooltipPlacement.BelowCenter
+    }
 }
 
 /** Adaptive grid of [PickerTile]s where [selected] and [enabled] are queried per entry so selection rules stay with the caller */
@@ -251,9 +262,6 @@ fun PickerSearchField(
     autoFocus: Boolean = false,
     placeholderKey: String = PickerStrings.Search,
 ) {
-    val theme = LocalTheme.current
-    val interaction = rememberInteractionSource()
-    val focused by interaction.collectIsFocusedAsState()
     val focusRequester = remember { FocusRequester() }
 
     if (autoFocus) {
@@ -262,44 +270,13 @@ fun PickerSearchField(
         }
     }
 
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        textStyle = TextStyle(color = theme.textColor, fontSize = 12.sp, fontFamily = theme.typography.family),
-        cursorBrush = SolidColor(theme.textColor),
-        interactionSource = interaction,
-        modifier = modifier.trackTextInputFocus().focusRequester(focusRequester),
-        decorationBox = { inner ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .clip(PickerTileShape)
-                    .background(theme.componentBackground, PickerTileShape)
-                    .border(1.dp, if (focused) Accent else theme.borderColor, PickerTileShape)
-                    .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon("search", modifier = Modifier.size(14.dp), color = theme.textColorSecondary)
-                Box(modifier = Modifier.weight(1f)) {
-                    if (value.isEmpty()) {
-                        Text(
-                            localizedString(null, placeholderKey),
-                            color = theme.textColorSecondary,
-                            fontSize = 12.sp,
-                        )
-                    }
-                    inner()
-                }
-                if (value.isNotEmpty()) {
-                    IconButton("close", modifier = Modifier.size(14.dp)) { onValueChange("") }
-                }
-            }
-        },
+    SearchField(
+        value,
+        onValueChange,
+        modifier.fillMaxWidth(),
+        placeholder = localizedString(null, placeholderKey),
+        size = ControlSize.Regular,
+        focusRequester = focusRequester,
     )
 }
 

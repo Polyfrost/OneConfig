@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -40,7 +39,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.internal.ui.api.settings.RangeOptionData
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -180,8 +179,8 @@ internal fun RangeSliderTrack(
 
     val thumbPx = with(LocalDensity.current) { thumbWidth.toPx() }
     val span = (max - min).takeIf { it != 0f } ?: 1f
-    val startFraction = animateFloatAsState(((minOf(start, end) - min) / span).coerceIn(0f, 1f), animationSpec = ReducedMotion.spec(spring()))
-    val endFraction = animateFloatAsState(((maxOf(start, end) - min) / span).coerceIn(0f, 1f), animationSpec = ReducedMotion.spec(spring()))
+    val startFraction = Motion.animateFloatAsState(((minOf(start, end) - min) / span).coerceIn(0f, 1f), spring())
+    val endFraction = Motion.animateFloatAsState(((maxOf(start, end) - min) / span).coerceIn(0f, 1f), spring())
 
     Box(
         modifier = modifier

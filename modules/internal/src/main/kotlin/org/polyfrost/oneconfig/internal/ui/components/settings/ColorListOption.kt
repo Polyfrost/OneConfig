@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -14,26 +13,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerPopup as KitColorPickerPopup
+import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.readableOn
+import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 
 private val DefaultEntryColor = Color.White
 
@@ -75,9 +76,29 @@ private fun RowScope.ColorSwatch(
     val color = remember(argb) { Color(argb).let { if (hasAlpha) it else it.copy(alpha = 1f) } }
     val model = remember(hasAlpha) { ColorPickerModel(color, hasAlpha) }
 
-    val textColor = animateColorAsState(readableOn(color))
+    val textColor = Motion.animateColorAsState(readableOn(color))
+    val latestOnColorChange by rememberUpdatedState(onColorChange)
+    val hex = colorToHex(color)
 
-    Box(modifier = Modifier.weight(1f)) {
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .contextMenu {
+                swatchMenu(
+                    model,
+                    copy = { ClipboardHelper.setString("#$hex") },
+                    paste = { pasted ->
+                        val next = if (hasAlpha) pasted else pasted.copy(alpha = 1f)
+                        model.set(next)
+                        latestOnColorChange(next)
+                    },
+                    reset = {
+                        model.set(DefaultEntryColor)
+                        latestOnColorChange(DefaultEntryColor)
+                    },
+                )
+            },
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxHeight()
@@ -85,30 +106,28 @@ private fun RowScope.ColorSwatch(
                 .clip(shape)
                 .background(color, shape)
                 .border(1.dp, theme.borderColor, shape)
-                .pointerHoverIcon(PointerIcon.Hand)
-                .onClick(interactionSource) { onExpandedChange(!expanded) }
+                .oneConfigClickable(
+                    label = "${translated("oneconfig.colour", "Colour")} #$hex",
+                    onClick = { onExpandedChange(!expanded) },
+                    shape = shape,
+                    indication = false,
+                    interactionSource = interactionSource,
+                )
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon("paintbrush", tint = { textColor.value }, modifier = Modifier.size(12.dp))
-            Text("#${colorToHex(color)}", color = Color.Unspecified, fontSize = 12.sp, colorProducer = { textColor.value })
+            Text("#$hex", color = Color.Unspecified, fontSize = 12.sp, colorProducer = { textColor.value })
         }
 
         if (expanded) {
-            ShellPopup(
-                alignment = Alignment.TopEnd,
-                offset = IntOffset(0, 38),
-                onDismissRequest = { onExpandedChange(false) },
-                properties = PopupProperties(focusable = true),
-            ) {
-                ColorPickerPopup(
-                    model = model,
-                    onColorChanged = onColorChange,
-                    onClose = { onExpandedChange(false) },
-                    chromaCapable = false,
-                )
-            }
+            KitColorPickerPopup(
+                model,
+                onColorChange,
+                { onExpandedChange(false) },
+                placement = Placement.BelowEnd,
+            )
         }
     }
 }

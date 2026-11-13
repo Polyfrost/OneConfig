@@ -1,10 +1,9 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -23,11 +22,13 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.RadioGroup
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -42,6 +43,11 @@ private val RadioItemMinHeight = OptionControlHeight - RadioPadding * 2
 
 @Composable
 fun RadioButtonOption(data: RadioButtonOptionData) {
+    RadioButtonOption(data, true)
+}
+
+@Composable
+fun RadioButtonOption(data: RadioButtonOptionData, enabled: Boolean) {
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
         data.prop.type.superclass?.isEnum == true -> data.prop.type.superclass
@@ -64,15 +70,24 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
     }
 
-    Radio(options, selectedIdx, Modifier.widthIn(max = LocalOptionWidth.current)) { index ->
-        selectedIdx = index
-        @Suppress("UNCHECKED_CAST")
-        if (enumClass != null) {
-            (data.prop as Property<Any>).set(values[index])
-        } else {
-            (data.prop as Property<Any>).set(index)
-        }
-    }
+    val labels = options.map { it.asRenderText() }
+    RadioGroup(
+        selected = selectedIdx,
+        options = labels.indices.toList(),
+        onSelect = { index ->
+            selectedIdx = index
+            @Suppress("UNCHECKED_CAST")
+            if (enumClass != null) {
+                (data.prop as Property<Any>).set(values[index])
+            } else {
+                (data.prop as Property<Any>).set(index)
+            }
+        },
+        modifier = Modifier.widthIn(max = LocalOptionWidth.current).liquidGlass(RadioShape),
+        label = { labels[it] },
+        orientation = Orientation.Horizontal,
+        enabled = enabled,
+    )
 }
 
 /**
@@ -112,18 +127,9 @@ fun Radio(
             modifier = fill.padding(RadioPadding)
         ) {
             if (indicatorReady) {
-                val indicatorOffset = animateDpAsState(
-                    targetValue = with(density) { itemWidths.take(selected).sumOf { it.intValue }.toDp() },
-                    animationSpec = ReducedMotion.spec(spring()),
-                )
-                val indicatorWidth = animateDpAsState(
-                    targetValue = with(density) { itemWidths[selected].intValue.toDp() },
-                    animationSpec = ReducedMotion.spec(spring()),
-                )
-                val indicatorHeight = animateDpAsState(
-                    targetValue = with(density) { rowHeight.toDp() }.coerceAtLeast(RadioItemMinHeight),
-                    animationSpec = ReducedMotion.spec(spring()),
-                )
+                val indicatorOffset = Motion.animateDpAsState(with(density) { itemWidths.take(selected).sumOf { it.intValue }.toDp() }, spring())
+                val indicatorWidth = Motion.animateDpAsState(with(density) { itemWidths[selected].intValue.toDp() }, spring())
+                val indicatorHeight = Motion.animateDpAsState(with(density) { rowHeight.toDp() }.coerceAtLeast(RadioItemMinHeight), spring())
                 Box(
                     modifier = Modifier
                         .layout { measurable, _ ->
@@ -145,9 +151,7 @@ fun Radio(
                     val interactionSource = rememberInteractionSource()
                     val isHovered by interactionSource.collectIsHoveredAsState()
                     val isSelected = index == selected
-                    val color = animateColorAsState(
-                        if (isSelected || isHovered) theme.textColor else theme.textColorSecondary
-                    )
+                    val color = Motion.animateColorAsState(if (isSelected || isHovered) theme.textColor else theme.textColorSecondary)
                     Box(
                         modifier = Modifier
                             .weight(1f, fill = fillWidth)

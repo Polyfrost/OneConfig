@@ -1,19 +1,15 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -26,22 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.SegmentedChips
 import org.polyfrost.oneconfig.internal.ui.api.settings.InheritableSliderOptionData
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
-import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -65,12 +56,10 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
 
     val thumbDp = 19.dp
     val span = (data.max - data.min).takeIf { it != 0f } ?: 1f
-    val fraction = animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), animationSpec = ReducedMotion.spec(spring()))
+    val fraction = Motion.animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), spring())
 
     val filledColor = animateAccentColorAsState(inherited, if (inherited) theme.textColorSecondary.copy(alpha = 0.4f) else Accent)
-    val thumbColor = animateColorAsState(
-        if (inherited) theme.controlThumbColor.copy(alpha = 0.5f) else theme.controlThumbColor
-    )
+    val thumbColor = Motion.animateColorAsState(if (inherited) theme.controlThumbColor.copy(alpha = 0.5f) else theme.controlThumbColor)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -164,37 +153,17 @@ fun InheritableSliderOption(data: InheritableSliderOptionData) {
             width = 80.dp,
             format = data.format,
         )
-        InheritChip(label = data.inheritLabel, active = inherited) {
-            if (!inherited) {
-                data.inherit()
-                revision++
-            }
-        }
-    }
-}
-
-@Composable
-private fun InheritChip(label: String, active: Boolean, onClick: () -> Unit) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val background = animateAccentColorAsState(
-        active to isHovered,
-        if (active) Accent.copy(alpha = 0.2f) else if (isHovered) theme.componentBackground else theme.chipBackground
-    )
-    val border = animateAccentColorAsState(active, if (active) Accent else theme.borderColor)
-    val textColor = animateAccentColorAsState(active, if (active) Accent else theme.textColorSecondary)
-
-    Box(
-        modifier = Modifier
-            .graphicsLayer {}
-            .liquidGlass(theme.sideBarNavigationEntryShape)
-            .animatedFrame(theme.sideBarNavigationEntryShape, fill = { background.value }, border = { border.value })
-            .onClick(interactionSource, onClick)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(label, color = Color.Unspecified, fontSize = 12.sp, colorProducer = { textColor.value })
+        SegmentedChips(
+            options = listOf(true),
+            selected = inherited,
+            onSelect = {
+                if (!inherited) {
+                    data.inherit()
+                    revision++
+                }
+            },
+            label = { data.inheritLabel },
+            size = ControlSize.Compact,
+        )
     }
 }

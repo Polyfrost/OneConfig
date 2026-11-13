@@ -1,7 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -12,14 +10,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.Select
+import org.polyfrost.oneconfig.api.ui.v1.components.fadingEdgesMask
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.smoothWheelScroll
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.DropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.*
@@ -35,6 +38,11 @@ private val MenuItemShape @Composable get() = DropdownShape.concentric(MenuPaddi
 
 @Composable
 fun DropdownOption(data: DropdownOptionData) {
+    DropdownOption(data, true)
+}
+
+@Composable
+fun DropdownOption(data: DropdownOptionData, enabled: Boolean) {
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
         data.prop.type.superclass?.isEnum == true -> data.prop.type.superclass
@@ -64,7 +72,7 @@ fun DropdownOption(data: DropdownOptionData) {
         )
     }
 
-    Dropdown(options, selectedIdx, onSelect = { index ->
+    Dropdown(options, selectedIdx, { index ->
         selectedIdx = index
         @Suppress("UNCHECKED_CAST")
         if (enumClass != null) {
@@ -74,21 +82,27 @@ fun DropdownOption(data: DropdownOptionData) {
         } else {
             (data.prop as Property<Any>).set(index)
         }
-    })
+    }, LocalOptionWidth.current, enabled)
 }
 
 /** [options] can be anything [Text] can show, such as translated text */
 @Composable
 fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: Dp = LocalOptionWidth.current) {
-    var expanded by remember { mutableStateOf(false) }
-    DropdownFrame(options.getOrElse(selected) { "—" }, expanded, { expanded = it }, width) {
-        options.forEachIndexed { index, option ->
-            DropdownItem(option, selected = index == selected) {
-                onSelect(index)
-                expanded = false
-            }
-        }
-    }
+    Dropdown(options, selected, onSelect, width, true)
+}
+
+@Composable
+fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: Dp, enabled: Boolean) {
+    val labels = options.map { it.asRenderText() }
+    Select(
+        selected = selected,
+        options = labels.indices.toList(),
+        onSelect = onSelect,
+        modifier = Modifier.width(width).heightIn(min = OptionControlHeight),
+        label = { labels[it] },
+        enabled = enabled,
+        placeholder = "—",
+    )
 }
 
 @Composable
@@ -97,6 +111,7 @@ internal fun DropdownFrame(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     width: Dp = LocalOptionWidth.current,
+    enabled: Boolean = true,
     menu: @Composable ColumnScope.() -> Unit,
 ) {
     val theme = LocalTheme.current
@@ -107,30 +122,32 @@ internal fun DropdownFrame(
         if (expanded) Accent
         else theme.borderColor
     )
-    val textColor = animateColorAsState(
-        if (isHovered || expanded) theme.textColor
-        else theme.textColorSecondary
-    )
+    val textColor = Motion.animateColorAsState(if ((isHovered && enabled) || expanded) theme.textColor else theme.textColorSecondary)
     val backgroundColor = animateAccentColorAsState(
         expanded,
         if (expanded) Accent.copy(0.2f).compositeOver(theme.componentBackground)
         else theme.componentBackground
     )
-    val chevronRotation = animateFloatAsState(
-        if (expanded) 0f else 180f
-    )
+    val chevronRotation = Motion.animateFloatAsState(if (expanded) 0f else 180f)
+    val disabledAlpha = OneConfigTheme.current.disabledAlpha
 
     Box {
         Row(
             modifier = Modifier
                 .width(width)
                 .height(OptionControlHeight)
-                .graphicsLayer {}
+                .graphicsLayer { alpha = if (enabled) 1f else disabledAlpha }
                 .liquidGlass(DropdownShape)
                 .animatedFrame(DropdownShape, fill = { backgroundColor.value }, border = { borderColor.value })
-                .onClick(triggerInteraction) { onExpandedChange(!expanded) }
-                .hoverable(triggerInteraction)
-                .pointerHoverIcon(PointerIcon.Hand)
+                .oneConfigClickable(
+                    label = label.asRenderText(),
+                    onClick = { onExpandedChange(!expanded) },
+                    role = A11yRole.Option,
+                    enabled = enabled,
+                    shape = DropdownShape,
+                    indication = false,
+                    interactionSource = triggerInteraction,
+                )
                 .padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -164,8 +181,8 @@ internal fun DropdownFrame(
                 Column(
                     modifier = Modifier
                         .heightIn(max = 280.dp)
-                        .fadingEdges(scrollState, theme.componentBackground)
-                        .wheelScroll(scrollState)
+                        .smoothWheelScroll(scrollState)
+                        .fadingEdgesMask(scrollState)
                         .verticalScroll(scrollState)
                         .padding(MenuPadding)
                         .fillMaxWidth(),
@@ -196,9 +213,7 @@ internal fun DropdownItem(
         else if (isHovered) theme.modCardBackground
         else theme.modCardBackground.copy(0f)
     )
-    val contentColor = animateColorAsState(
-        if (selected || isHovered) theme.textColor else theme.textColorSecondary
-    )
+    val contentColor = Motion.animateColorAsState(if (selected || isHovered) theme.textColor else theme.textColorSecondary)
 
     Row(
         modifier = Modifier
@@ -206,9 +221,15 @@ internal fun DropdownItem(
             .clip(itemShape)
             .graphicsLayer {}
             .animatedFrame(itemShape, fill = { bgColor.value }, border = { Color.Transparent })
-            .onClick(interactionSource, onClick)
-            .hoverable(interactionSource)
-            .pointerHoverIcon(PointerIcon.Hand)
+            .oneConfigClickable(
+                label = label.asRenderText(),
+                onClick = onClick,
+                role = A11yRole.MenuItem,
+                selected = selected,
+                shape = itemShape,
+                indication = false,
+                interactionSource = interactionSource,
+            )
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(15.dp),

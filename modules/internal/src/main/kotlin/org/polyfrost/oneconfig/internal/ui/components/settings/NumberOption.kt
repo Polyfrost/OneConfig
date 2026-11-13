@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.background
@@ -11,10 +10,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -25,8 +23,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -37,13 +36,6 @@ import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -55,7 +47,10 @@ import java.math.BigDecimal
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.TextFieldDefaults
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -209,32 +204,12 @@ fun formatSpinnerValue(v: Float, step: Float = 0f): String {
     return String.format(Locale.ROOT, "%.${maxOf(2, stepDecimals)}f", v)
 }
 
-// for value-based BasicTextFields, see the TextFieldState note where they're used
-@Suppress("DEPRECATION")
-@Composable
-internal fun rememberUnitSuffix(unit: String?): VisualTransformation {
-    val color = LocalTheme.current.textColorSecondary
-    return remember(unit, color) {
-        if (unit == null) VisualTransformation.None else VisualTransformation { typed ->
-            val shown = AnnotatedString.Builder(typed).apply {
-                pushStyle(SpanStyle(color = color))
-                append(unit)
-                pop()
-            }.toAnnotatedString()
-            TransformedText(shown, object : OffsetMapping {
-                override fun originalToTransformed(offset: Int) = offset
-                override fun transformedToOriginal(offset: Int) = offset.coerceAtMost(typed.length)
-            })
-        }
-    }
-}
-
 @Composable
 private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val hoverInteraction = rememberInteractionSource()
     val hovered by hoverInteraction.collectIsHoveredAsState()
-    val color = animateColorAsState(
+    val color = Motion.animateColorAsState(
         when {
             !enabled -> theme.textColorSecondary.copy(alpha = 0.4f)
             hovered -> theme.textColor
@@ -366,69 +341,63 @@ fun NumberSpinner(
         Modifier
     }
 
+    val disabledAlpha = OneConfigTheme.current.disabledAlpha
+    val frameShape = TextFieldDefaults.shape
+    val frameBorder = Motion.animateColorAsState(if (focused) TextFieldDefaults.focusBorder else TextFieldDefaults.border)
+
     Row(
         modifier = Modifier
-            .alpha(if (enabled) 1f else 0.5f)
+            .graphicsLayer { alpha = if (enabled) 1f else disabledAlpha }
             .size(width, OptionControlHeight)
-            .background(theme.componentBackground, theme.sideBarNavigationEntryShape)
-            .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape),
+            .background(theme.componentBackground, frameShape)
+            .border(1.dp, frameBorder.value, frameShape),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // TextFieldState needs its own migration, as it changes how every field hoists its state
-        @Suppress("DEPRECATION")
-        BasicTextField(
-            value = text,
-            onValueChange = { input ->
-                val filtered = if (math) filterExpressionInput(input) else filterNumberInput(input)
-                if (filtered != text) edited = true
-                text = filtered
-                if (!math) filtered.toFloatOrNull()?.coerceIn(min, max)?.let(onValueChange)
-            },
-            enabled = enabled,
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = TextStyle(
-                color = theme.textColor,
-                fontSize = 13.sp,
-                fontFamily = theme.typography.family,
-            ),
-            cursorBrush = SolidColor(theme.textColor),
-            visualTransformation = rememberUnitSuffix(unit),
-            // the field itself stays in the tree while the formatted text covers it so clicking it still focuses it for editing
-            decorationBox = { innerTextField ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (label != null) Text(label, modifier = scrubModifier, color = theme.textColor, fontSize = 13.sp)
-                    if (icon != null) Icon(icon, color = theme.textColor, modifier = scrubModifier.size(12.dp))
-                    Box {
-                        Box(Modifier.alpha(if (formatted == null) 1f else 0f)) { innerTextField() }
-                        if (formatted != null) {
-                            Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Row(
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (label != null) Text(label, modifier = scrubModifier, color = theme.textColor, fontSize = 13.sp)
+            if (icon != null) Icon(icon, color = theme.textColor, modifier = scrubModifier.size(12.dp))
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                TextField(
+                    text,
+                    { input ->
+                        if (!enabled) return@TextField
+                        val filtered = if (math) filterExpressionInput(input) else filterNumberInput(input)
+                        if (filtered != text) edited = true
+                        text = filtered
+                        if (!math) filtered.toFloatOrNull()?.coerceIn(min, max)?.let(onValueChange)
+                    },
+                    Modifier
+                        .fillMaxWidth()
+                        .alpha(if (formatted == null) 1f else 0f)
+                        .focusProperties { canFocus = enabled }
+                        .onPreviewKeyEvent {
+                            if (!math || it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                            if (it.key != Key.Enter && it.key != Key.NumPadEnter) return@onPreviewKeyEvent false
+                            commitTyped()
+                            focusManager.clearFocus()
+                            true
                         }
-                    }
+                        .onFocusChanged {
+                            if (focused && !it.isFocused) {
+                                if (math) commitTyped()
+                                onEditEnd?.invoke()
+                            }
+                            if (!focused && it.isFocused) edited = false
+                            focused = it.isFocused
+                        },
+                    framed = false,
+                    fontSize = 13.sp,
+                    trailing = unit?.let { suffix -> @Composable { Text(suffix, color = theme.textColorSecondary, fontSize = 13.sp) } },
+                )
+                if (formatted != null) {
+                    Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-            },
-            modifier = Modifier.trackTextInputFocus()
-                .onPreviewKeyEvent {
-                    if (!math || it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    if (it.key != Key.Enter && it.key != Key.NumPadEnter) return@onPreviewKeyEvent false
-                    commitTyped()
-                    focusManager.clearFocus()
-                    true
-                }
-                .onFocusChanged {
-                    if (focused && !it.isFocused) {
-                        if (math) commitTyped()
-                        onEditEnd?.invoke()
-                    }
-                    if (!focused && it.isFocused) edited = false
-                    focused = it.isFocused
-                }
-                .weight(1f)
-                .padding(start = 8.dp, top = 5.dp, bottom = 5.dp),
-        )
+            }
+        }
 
         SpinnerArrows(value, arrowLo, arrowHi, step) { if (enabled) commit(it) }
     }
