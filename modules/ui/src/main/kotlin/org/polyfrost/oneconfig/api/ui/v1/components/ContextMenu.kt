@@ -6,8 +6,10 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalContext
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -79,6 +81,8 @@ public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Un
 
 @ExperimentalOneConfigUiApi
 public class ContextMenuState internal constructor(private val host: ContextMenuHostState?) {
+    internal var locals: CompositionLocalContext? = null
+
     public val isOpen: Boolean
         get() = host?.open?.owner === this
 
@@ -88,7 +92,7 @@ public class ContextMenuState internal constructor(private val host: ContextMenu
             return
         }
         if (entries.isEmpty()) return
-        host.show(OpenContextMenu(at.round(), entries, this, null))
+        host.show(OpenContextMenu(at.round(), entries, this, null, locals))
     }
 
     public fun close() {
@@ -102,6 +106,7 @@ public class ContextMenuState internal constructor(private val host: ContextMenu
 public fun rememberContextMenuState(): ContextMenuState {
     val host = LocalContextMenuHost.current
     val state = remember(host) { ContextMenuState(host) }
+    state.locals = currentCompositionLocalContext
     DisposableEffect(state) {
         onDispose { state.close() }
     }
@@ -158,6 +163,7 @@ internal class OpenContextMenu(
     val entries: List<MenuEntry>,
     val owner: Any?,
     val onClosed: (() -> Unit)?,
+    val locals: CompositionLocalContext? = null,
 )
 
 internal data class PressKey(val id: PointerId, val uptime: Long)
@@ -216,6 +222,7 @@ internal fun Modifier.contextMenuTrigger(
 ): Modifier {
     val latestEntries by rememberUpdatedState(entries)
     val latestOpened by rememberUpdatedState(onOpened)
+    val latestLocals by rememberUpdatedState(currentCompositionLocalContext)
     val anchor = remember { AnchorHolder() }
     val focus = remember { FocusRequester() }
     return this
@@ -228,7 +235,7 @@ internal fun Modifier.contextMenuTrigger(
             if (list.isEmpty()) return@onKeyEvent false
             val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
             val restoreFocus = { runCatching { focus.requestFocus() }; Unit }
-            host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus))
+            host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus, latestLocals))
             latestOpened?.invoke()
             true
         }
@@ -245,7 +252,7 @@ internal fun Modifier.contextMenuTrigger(
                     val list = latestEntries()
                     if (list.isEmpty()) continue
                     event.changes.forEach { it.consume() }
-                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, null), latestOpened)
+                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, null, latestLocals), latestOpened)
                     awaitPointerEvent(PointerEventPass.Final)
                     host.commit(key)
                 }
@@ -257,7 +264,14 @@ internal fun Modifier.contextMenuTrigger(
 internal fun ContextMenuLayer(host: ContextMenuHostState) {
     val menu = host.open ?: return
     key(menu) {
-        ContextMenuPopup(menu.at, false, menu.entries, Modifier) { host.close(menu) }
+        val locals = menu.locals
+        if (locals == null) {
+            ContextMenuPopup(menu.at, false, menu.entries, Modifier) { host.close(menu) }
+        } else {
+            CompositionLocalProvider(locals) {
+                ContextMenuPopup(menu.at, false, menu.entries, Modifier) { host.close(menu) }
+            }
+        }
     }
 }
 
