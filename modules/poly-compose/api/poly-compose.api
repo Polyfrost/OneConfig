@@ -1453,6 +1453,16 @@ public final class org/polyfrost/compose/render/RenderContext {
 	public final fun translate (FF)V
 }
 
+public final class org/polyfrost/compose/render/ShapeDrawingKt {
+	public static final fun addRoundedRect (Lorg/polyfrost/compose/render/PolyPath;FFFFFFFF)V
+	public static final fun addShape (Lorg/polyfrost/compose/render/PolyPath;Ljava/awt/Shape;)V
+	public static final fun fillShape (Lorg/polyfrost/compose/render/RenderContext;Ljava/awt/Shape;Lorg/polyfrost/compose/render/PolyColor;)V
+	public static final fun roundedRect (Lorg/polyfrost/compose/render/RenderContext;FFFFLorg/polyfrost/compose/render/PolyColor;FFFF)V
+	public static final fun snappedRect (Lorg/polyfrost/compose/render/RenderContext;FFFF)[F
+	public static final fun strokeShape (Lorg/polyfrost/compose/render/RenderContext;Ljava/awt/Shape;Lorg/polyfrost/compose/render/PolyColor;FII)V
+	public static synthetic fun strokeShape$default (Lorg/polyfrost/compose/render/RenderContext;Ljava/awt/Shape;Lorg/polyfrost/compose/render/PolyColor;FIIILjava/lang/Object;)V
+}
+
 public final class org/polyfrost/compose/runtime/PolyApplier : androidx/compose/runtime/AbstractApplier {
 	public static final field $stable I
 	public fun <init> (Lorg/polyfrost/compose/node/PolyNode;)V

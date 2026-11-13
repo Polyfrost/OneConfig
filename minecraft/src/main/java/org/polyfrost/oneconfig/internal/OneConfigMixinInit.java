@@ -187,6 +187,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("skia.Mixin_SkiaFrame");
         mixins.add("render.Mixin_FramePresentHooks");
         mixins.add("render.Mixin_EntityPreviewNameTag");
+        mixins.add("render.Mixin_HudFrameState");
+        mixins.add("render.Mixin_VanillaHudElements");
         //? if >= 26.1 {
         mixins.add("blaze3d.GpuDeviceAccessor");
         mixins.add("blaze3d.GlDeviceAccessor");
