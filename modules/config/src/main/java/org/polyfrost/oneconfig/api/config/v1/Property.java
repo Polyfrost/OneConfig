@@ -62,6 +62,7 @@ public abstract class Property<T> extends Node implements Serializable {
     private transient List<Consumer<Display>> displayListeners = null;
     private transient Display display = Display.SHOWN;
     private transient List<Supplier<Display>> conditions = null;
+    private transient List<WeakReference<Property<?>>> dependents = null;
 
     protected Property(@Nullable String id, @Nullable Object title, @Nullable Object description, @NotNull Class<T> type) {
         super(id, title, description);
@@ -178,6 +179,32 @@ public abstract class Property<T> extends Node implements Serializable {
         }
     }
 
+    @ApiStatus.Experimental
+    public final void addDependent(@NotNull Property<?> dependent) {
+        if (dependents == null) dependents = new ArrayList<>(2);
+        for (WeakReference<Property<?>> ref : dependents) {
+            if (ref.get() == dependent) return;
+        }
+        dependents.add(new WeakReference<>(dependent));
+    }
+
+    @ApiStatus.Experimental
+    public final boolean removeDependent(@NotNull Property<?> dependent) {
+        return dependents != null && dependents.removeIf(ref -> {
+            Property<?> p = ref.get();
+            return p == null || p == dependent;
+        });
+    }
+
+    private void notifyDependents() {
+        if (dependents == null) return;
+        for (WeakReference<Property<?>> ref : new ArrayList<>(dependents)) {
+            Property<?> p = ref.get();
+            if (p == null) dependents.remove(ref);
+            else p.revaluateDisplay();
+        }
+    }
+
     protected final void clearDisplayConditions() {
         conditions = null;
         display = Display.SHOWN;
@@ -259,6 +286,12 @@ public abstract class Property<T> extends Node implements Serializable {
         }
         if (that.conditions != null) this.addDisplayCondition(that.conditions);
         if (that.callbacks != null) addCallback((Collection) that.callbacks);
+        if (that.dependents != null) {
+            for (WeakReference<Property<?>> ref : that.dependents) {
+                Property<?> p = ref.get();
+                if (p != null) addDependent(p);
+            }
+        }
         if (root != null) {
             overwritten = root.getOrPutChild("reserved:overwritten");
             ((Tree) overwritten).put(new Tree(that.getID(), null, null, null));
@@ -318,6 +351,7 @@ public abstract class Property<T> extends Node implements Serializable {
      * Use this method with caution
      */
     public boolean setReferential(@Nullable T value) {
+        boolean cancelled = false;
         if (callbacks != null) {
             T prev = get();
             set0(value);
@@ -326,14 +360,16 @@ public abstract class Property<T> extends Node implements Serializable {
                     if (p.test(value)) {
                         LOGGER.info("property {} set cancelled by {}", this.getID(), p);
                         set0(prev);
-                        return true;
+                        cancelled = true;
+                        break;
                     }
                 } catch (Throwable t) {
                     LOGGER.error("failed to call cancellable callback {} on property {}", p, this.getID(), t);
                 }
             }
         } else set0(value);
-        return false;
+        notifyDependents();
+        return cancelled;
     }
 
     protected abstract void set0(@Nullable T value);

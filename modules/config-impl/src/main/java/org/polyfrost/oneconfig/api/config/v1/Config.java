@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -363,15 +362,14 @@ public abstract class Config {
         whenInitialized(() -> {
             Property<?> opt = getProperty(option).addDisplayCondition(condition);
             if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
-            WeakReference<Property<?>> ref = new WeakReference<>(opt);
-            tree.onAllProps((s, p) -> {
-                if (p == opt) return;
-                p.addCallback(t -> {
-                    Property<?> self = ref.get();
-                    if (self != null) self.revaluateDisplay();
-                    return false;
-                });
-            });
+            watchAll(tree, opt);
+        });
+    }
+
+    private static void watchAll(Tree tree, Property<?> dependent) {
+        tree.onAll((id, node) -> {
+            if (node instanceof Tree) watchAll((Tree) node, dependent);
+            else if (node instanceof Property && node != dependent) ((Property<?>) node).addDependent(dependent);
         });
     }
 
