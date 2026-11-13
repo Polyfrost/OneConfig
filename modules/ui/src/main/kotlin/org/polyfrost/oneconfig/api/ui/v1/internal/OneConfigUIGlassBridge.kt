@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,6 +20,17 @@ public interface OneConfigUIGlassBridge {
     public fun liquidGlass(modifier: Modifier, shape: Shape): Modifier
 
     public fun animatedFrame(modifier: Modifier, shape: Shape, fill: () -> Color, accentAlpha: () -> Float, border: () -> Color): Modifier
+
+    @Composable
+    public fun liquidGlass(modifier: Modifier, shape: Shape, frosted: Boolean): Modifier
+
+    @Composable
+    public fun backdropBlur(modifier: Modifier, shape: Shape): Modifier
+
+    public fun wheelScroll(modifier: Modifier, state: ScrollableState, orientation: Orientation): Modifier
+
+    @Composable
+    public fun ProvideThemeVariant(dark: Boolean, keepAccent: Boolean, content: @Composable () -> Unit)
 }
 
 @ExperimentalOneConfigUiApi

@@ -158,6 +158,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
 	public static final fun createScreen ()Ljava/lang/Object;
 	public static final fun createScreen (Ljava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun createScreen$default (Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun ensureInitialized ()V
 	public static final fun isOneConfigScreen (Ljava/lang/Object;)Z
 	public static final fun open ()V
 	public static final synthetic fun open (Ljava/lang/Object;)V
@@ -172,11 +173,13 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge {
 	public abstract fun createScreen (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun ensureInitialized ()V
 	public fun isOneConfigScreen (Ljava/lang/Object;)Z
 	public abstract fun open (Ljava/lang/Object;)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge$DefaultImpls {
+	public static fun ensureInitialized (Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge;)V
 	public static fun isOneConfigScreen (Lorg/polyfrost/oneconfig/api/ui/v1/OneConfigUIBridge;Ljava/lang/Object;)Z
 }
 
@@ -388,6 +391,10 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/CardGridKt {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/CheckboxKt {
 	public static final fun Checkbox (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/CheckerboardKt {
+	public static final fun transparencyCheckerboard-rAjV9yQ (Landroidx/compose/ui/Modifier;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/ChipDefaults {
@@ -894,6 +901,16 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ReorderState {
 	public final fun isDragging ()Z
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ScrollingKt {
+	public static final fun ScrollContainer (Landroidx/compose/foundation/ScrollState;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/gestures/Orientation;ZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Scrollbar (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Scrollbar (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun fadingEdgesMask-wH6b6FI (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/gestures/ScrollableState;F)Landroidx/compose/ui/Modifier;
+	public static synthetic fun fadingEdgesMask-wH6b6FI$default (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/gestures/ScrollableState;FILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun smoothWheelScroll (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/foundation/gestures/Orientation;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun smoothWheelScroll$default (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/foundation/gestures/Orientation;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SearchFieldKt {
 	public static final fun SearchField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
@@ -946,6 +963,22 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/StatusMessage {
 public final class org/polyfrost/oneconfig/api/ui/v1/components/StatusTextKt {
 	public static final fun StatusText (Lorg/polyfrost/oneconfig/api/ui/v1/components/StatusMessage;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun rememberStatusMessage (JLandroidx/compose/runtime/Composer;II)Lorg/polyfrost/oneconfig/api/ui/v1/components/StatusMessage;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind : java/lang/Enum {
+	public static final field Card Lorg/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind;
+	public static final field Field Lorg/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind;
+	public static final field Panel Lorg/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind;
+	public static final field Popup Lorg/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/SurfacesKt {
+	public static final fun ProvideThemeVariant (ZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun liquidGlass (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;ZLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun themedSurface (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/SurfaceKind;Landroidx/compose/ui/graphics/Shape;ZLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SwitchKt {

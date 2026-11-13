@@ -2,8 +2,6 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.foundation.LocalScrollbarStyle
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,8 +44,8 @@ public fun <T> CardGrid(
 ) {
     val spacing = OneConfigTheme.current.spacing
     val entries = remember(items, key, group) { cardGridEntries(items, key, group) }
-    val gutter = LocalScrollbarStyle.current.thickness + spacing.xs * 2
-    Box(modifier) {
+    val gutter = themedScrollbarStyle().thickness + spacing.xs * 2
+    Box(modifier.smoothWheelScroll(state)) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minCellWidth),
             modifier = Modifier.fillMaxSize(),
@@ -76,10 +73,7 @@ public fun <T> CardGrid(
             }
         }
         Box(Modifier.matchParentSize()) {
-            VerticalScrollbar(
-                rememberScrollbarAdapter(state),
-                Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(horizontal = spacing.xs),
-            )
+            Scrollbar(state, Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(horizontal = spacing.xs))
         }
     }
 }
