@@ -79,7 +79,7 @@ private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
 private val POSITION_OPTIONS = setOf(
     "section", "relativeX", "relativeY",
-    "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY",
+    "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY", "movedByPlayer",
 )
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */

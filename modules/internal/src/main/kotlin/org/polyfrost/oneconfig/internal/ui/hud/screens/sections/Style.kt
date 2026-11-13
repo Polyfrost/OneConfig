@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
 import androidx.compose.foundation.background
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.Weight
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
@@ -48,7 +51,7 @@ private val TEXT_OPTIONS = listOf(
 )
 private val BACKGROUND_OPTIONS = listOf(
     "showBackground", "bgRadius", "bgColor", "bgChroma", "bgChromaSpeed", "mergeBackground", "mergeDiagonally",
-    "keepBgWhenHidden",
+    "keepBgWhenHidden", "borderEnabled", "borderColor", "borderChroma", "borderChromaSpeed", "borderSize",
 )
 
 enum class CaseType(val icon: String) {
@@ -110,6 +113,12 @@ fun Style(hud: Hud?, query: String) {
     var mergeBackground by remember { mutableStateOf(hud.mergeBackground) }
     var mergeDiagonally by remember { mutableStateOf(hud.mergeDiagonally) }
     var keepBgWhenHidden by remember { mutableStateOf(hud.keepBgWhenHidden) }
+    var borderEnabled by remember { mutableStateOf(hud.borderEnabled) }
+    var borderSize by remember { mutableStateOf(hud.borderSize) }
+    var borderColor by remember { mutableStateOf(Color(hud.borderColor)) }
+    var borderChroma by remember { mutableStateOf(hud.borderChroma) }
+    var borderChromaSpeed by remember { mutableStateOf(hud.borderChromaSpeed) }
+    val hasBorderOptions = hud.tree?.getProp("borderEnabled") != null
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         CardSection(
@@ -282,7 +291,8 @@ fun Style(hud: Hud?, query: String) {
 
         CardSection(
             "Background", query, "Show Background", "Radius", "Color", "Background Color", "Merge",
-            "Merge with neighbours", "Diagonal", "Keep hidden", "Keep Background When Hidden",
+            "Merge with neighbours", "Diagonal", "Keep hidden", "Keep Background When Hidden", "Border", "Border size",
+            "Border color",
             checked = showBackground,
             onCheckedChange = { Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it } },
             onReset = { resetHudOptions(hud, BACKGROUND_OPTIONS) },
@@ -320,6 +330,53 @@ fun Style(hud: Hud?, query: String) {
                     }
                 },
             )
+            if (hasBorderOptions) {
+                GridRow(
+                    col1,
+                    first = {
+                        HudSettingTarget(hud, "borderEnabled") {
+                            LabeledControl("Border") {
+                                SwitchControl(borderEnabled) {
+                                    Snapshot.withMutableSnapshot { borderEnabled = it; hud.borderEnabled = it }
+                                }
+                            }
+                        }
+                    },
+                    second = {
+                        FadingCell(borderEnabled) {
+                            HudSettingTarget(hud, "borderSize") {
+                                LabeledControl("Border size") {
+                                    NumberSpinner(
+                                        borderSize, { Snapshot.withMutableSnapshot { borderSize = it; hud.borderSize = it } },
+                                        0f, 10f, 0.5f, width = GridCol2, unit = "px"
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    third = {
+                        FadingCell(borderEnabled) {
+                            HudSettingTarget(hud, "borderColor", "borderChroma", "borderChromaSpeed") {
+                                LabeledControl("Border color") {
+                                    ColorSwatch(
+                                        borderColor,
+                                        chroma = borderChroma, chromaSpeed = borderChromaSpeed,
+                                        onColorChanged = {
+                                            Snapshot.withMutableSnapshot { borderColor = it; hud.borderColor = it.toArgb() }
+                                        },
+                                        onChromaChanged = { en, sp ->
+                                            Snapshot.withMutableSnapshot {
+                                                borderChroma = en; hud.borderChroma = en
+                                                borderChromaSpeed = sp; hud.borderChromaSpeed = sp
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    },
+                )
+            }
             if (hud.canMergeBackground()) {
                 GridRow(
                     col1,
