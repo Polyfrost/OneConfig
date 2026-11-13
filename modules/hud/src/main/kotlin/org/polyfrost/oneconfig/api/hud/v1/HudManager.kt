@@ -263,8 +263,10 @@ public object HudManager {
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
+    private const val KNOWN_GROUPS = "knownGroups"
 
     private val knownProviders = LinkedHashSet<String>()
+    private val knownGroups = LinkedHashSet<String>()
     private var registryTree: Tree? = null
 
     private fun registryProperty() = Properties.simple(
@@ -273,28 +275,47 @@ public object HudManager {
         emptyArray<String>(), Array<String>::class.java
     )
 
+    private fun knownGroupsProperty() = Properties.simple(
+        KNOWN_GROUPS, "Known HUD groups",
+        "Default HUD groups which have already been applied once.",
+        emptyArray<String>(), Array<String>::class.java
+    )
+
     private fun loadRegistry() {
         try {
             val mgr = ConfigManager.active()
             val t = mgr.trees().firstOrNull { it.id == REGISTRY_ID }
-                ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty())).get()
+                ?: mgr.register(Tree.tree(REGISTRY_ID).put(registryProperty()).put(knownGroupsProperty())).get()
             if (t.getProp(KNOWN_HUDS) == null) t.put(registryProperty())
+            if (t.getProp(KNOWN_GROUPS) == null) t.put(knownGroupsProperty())
             t.addMetadata("hidden", true)
             t.addMetadata(ConfigManager.PROFILE_LOCAL_METADATA, true)
             registryTree = t
-            when (val known = t.getProp(KNOWN_HUDS)?.get()) {
-                is Array<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
-                is Iterable<*> -> known.forEach { if (it != null) knownProviders.add(it.toString()) }
-            }
+            readInto(t.getProp(KNOWN_HUDS)?.get(), knownProviders)
+            readInto(t.getProp(KNOWN_GROUPS)?.get(), knownGroups)
         } catch (e: Exception) {
             LOGGER.error("Failed to load HUD registry, HUD deletions may not persist", e)
         }
+    }
+
+    private fun readInto(stored: Any?, into: MutableSet<String>) {
+        when (stored) {
+            is Array<*> -> stored.forEach { if (it != null) into.add(it.toString()) }
+            is Iterable<*> -> stored.forEach { if (it != null) into.add(it.toString()) }
+        }
+    }
+
+    internal fun isGroupKnown(id: String): Boolean = id in knownGroups
+
+    internal fun markGroupKnown(id: String) {
+        if (knownGroups.add(id)) saveRegistry()
     }
 
     private fun saveRegistry() {
         val t = registryTree ?: return
         try {
             t.getProp(KNOWN_HUDS)?.setAs(knownProviders.toTypedArray())
+            t.getProp(KNOWN_GROUPS)?.setAs(knownGroups.toTypedArray())
             ConfigManager.active().save(REGISTRY_ID)
         } catch (e: Exception) {
             LOGGER.error("Failed to save HUD registry", e)
@@ -708,6 +729,7 @@ public object HudManager {
     ): Float {
         drainProfileReload()
         noteScreenSize()
+        if (init) HudGroups.applyPendingDefaults()
         migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
         prepareScale = scale
@@ -1278,6 +1300,7 @@ public object HudManager {
             }
         }
         knownProviders.clear()
+        knownGroups.clear()
         registryTree = null
         zOrderCache = emptyList()
         preparedFrameValid = false
@@ -1498,6 +1521,13 @@ public object HudManager {
         }
 
         if (registryChanged) saveRegistry()
+
+        try {
+            HudGroups.applyDefaults()
+        } catch (e: Throwable) {
+            if (e.isFatalHudFailure()) throw e
+            LOGGER.error("Failed to apply default HUD groups", e)
+        }
 
         LOGGER.info("HUD load took {}ms, loaded {} HUDs from {} providers ({} registered)",
             (System.nanoTime() - now) / 1_000_000.0, i, used.size, hudProviders.size)

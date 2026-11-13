@@ -62,13 +62,13 @@ enum class Modifiers(val icon: String) {
     Underline("underline");
 }
 
-private enum class ShadowMode(val title: String) {
+internal enum class ShadowMode(val title: String) {
     Off("Off"),
     Normal("Normal"),
     Full("Full");
 }
 
-private enum class MergeMode(val title: String) {
+internal enum class MergeMode(val title: String) {
     Off("Off"),
     Normal("Normal"),
     Diagonal("Diagonal");
@@ -142,49 +142,19 @@ fun Style(hud: Hud?, query: String) {
                 third = {
                     HudSettingTarget(hud, "textBold") {
                         LabeledControl("Modifiers") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(LocalTheme.current.componentBackground, LocalTheme.current.buttonShape)
-                                    .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    SelectableIconButton(
-                                        Modifiers.Bold.icon,
-                                        selected = textBold,
-                                        modifier = Modifier.size(18.dp),
-                                        onClick = {
-                                            Snapshot.withMutableSnapshot {
-                                                textBold = !textBold; hud.textBold = textBold
-                                            }
-                                        }
-                                    )
-                                    SelectableIconButton(
-                                        Modifiers.Italic.icon,
-                                        selected = textItalic,
-                                        modifier = Modifier.size(18.dp),
-                                        onClick = {
-                                            Snapshot.withMutableSnapshot {
-                                                textItalic = !textItalic; hud.textItalic = textItalic
-                                            }
-                                        }
-                                    )
-                                    SelectableIconButton(
-                                        Modifiers.Underline.icon,
-                                        selected = textUnderline,
-                                        modifier = Modifier.size(18.dp),
-                                        onClick = {
-                                            Snapshot.withMutableSnapshot {
-                                                textUnderline = !textUnderline; hud.textUnderline = textUnderline
-                                            }
-                                        }
-                                    )
-                                }
-                            }
+                            ModifierButtons(
+                                listOf(
+                                    ModifierToggle(Modifiers.Bold.icon, textBold) {
+                                        Snapshot.withMutableSnapshot { textBold = !textBold; hud.textBold = textBold }
+                                    },
+                                    ModifierToggle(Modifiers.Italic.icon, textItalic) {
+                                        Snapshot.withMutableSnapshot { textItalic = !textItalic; hud.textItalic = textItalic }
+                                    },
+                                    ModifierToggle(Modifiers.Underline.icon, textUnderline) {
+                                        Snapshot.withMutableSnapshot { textUnderline = !textUnderline; hud.textUnderline = textUnderline }
+                                    },
+                                ),
+                            )
                         }
                     }
                 },
@@ -363,9 +333,38 @@ fun Style(hud: Hud?, query: String) {
     }
 }
 
+internal class ModifierToggle(val icon: String, val selected: Boolean, val onToggle: () -> Unit)
+
+/** A row of icon switches that light up while on */
+@Composable
+internal fun ModifierButtons(toggles: List<ModifierToggle>) {
+    val theme = LocalTheme.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(theme.componentBackground, theme.buttonShape)
+            .border(1.dp, theme.borderColor, theme.buttonShape)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            for (toggle in toggles) {
+                SelectableIconButton(
+                    toggle.icon,
+                    selected = toggle.selected,
+                    modifier = Modifier.size(18.dp),
+                    onClick = toggle.onToggle,
+                )
+            }
+        }
+    }
+}
+
 /** [ColorPicker] for a HUD colour stored as separate colour, chroma and speed fields */
 @Composable
-private fun ColorSwatch(
+internal fun ColorSwatch(
     color: Color,
     chroma: Boolean = false,
     chromaSpeed: Float = 1f,

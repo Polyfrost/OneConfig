@@ -389,6 +389,11 @@ public abstract class Hud(
         return minSize
     }
 
+    /** Drops the size measured this frame for a caller which has just changed what it depends on */
+    internal fun forgetMinimumSize() {
+        minSizeFrame = Long.MIN_VALUE
+    }
+
     public open val scaledWidth: Float get() {
         val scale = effectiveScale
         val w = if (staticWidth || renderedW <= 0f) staticW * scale else renderedW
@@ -1004,6 +1009,22 @@ public abstract class Hud(
         setAbsolutePosition(absX, absY)
     }
 
+    private var _groupPath: MutableState<String> = mutableStateOf("")
+
+    /**
+     * The ids of the groups this HUD is in from the outermost down to the one it sits directly in,
+     * joined by [HudGroups.SEPARATOR], or empty when it is not grouped
+     *
+     * Prefer [HudGroups] over setting this directly
+     */
+    @get:ApiStatus.Experimental
+    @set:ApiStatus.Experimental
+    public var groupPath: String get() = _groupPath.value; set(v) { _groupPath.put(v) }
+
+    /** The group this HUD sits directly in or `null` when it is not grouped */
+    @get:ApiStatus.Experimental
+    public val group: HudGroup? get() = HudGroups.of(this)
+
     /** Whether [hud] is this HUD's anchor target or the target of one of its targets */
     public fun anchorChainContains(hud: Hud): Boolean {
         var current = anchorParent
@@ -1494,6 +1515,7 @@ public abstract class Hud(
                 tree["selfAnchorPoint"] = ktProperty(out::selfAnchorPoint).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorOffsetX"] = ktProperty(out::anchorOffsetX).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorOffsetY"] = ktProperty(out::anchorOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["groupPath"] = ktProperty(out::groupPath).apply { addDisplayCondition(hideFromConfigUi) }
             }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
@@ -1718,6 +1740,7 @@ public abstract class Hud(
         _mergeLinkY = mutableStateOf(null)
         _anchorOffsetX = mutableStateOf(this@Hud.anchorOffsetX)
         _anchorOffsetY = mutableStateOf(this@Hud.anchorOffsetY)
+        _groupPath = mutableStateOf(this@Hud.groupPath)
         _padTop = mutableStateOf(this@Hud.padTop)
         _padBottom = mutableStateOf(this@Hud.padBottom)
         _padLeft = mutableStateOf(this@Hud.padLeft)

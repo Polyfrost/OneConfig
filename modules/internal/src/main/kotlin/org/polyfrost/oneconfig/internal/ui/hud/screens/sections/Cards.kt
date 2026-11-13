@@ -137,11 +137,14 @@ internal fun GridRow(
     }
 }
 
-/** [label] above its control */
+/** [label] above its control, with a note beside it while the control is [mixed] between several HUDs */
 @Composable
-internal fun LabeledControl(label: String, content: @Composable () -> Unit) {
+internal fun LabeledControl(label: String, mixed: Boolean = false, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(label, color = LocalTheme.current.textColor, fontSize = 14.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(label, color = LocalTheme.current.textColor, fontSize = 14.sp)
+            if (mixed) Text("Mixed", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+        }
         content()
     }
 }
@@ -160,8 +163,8 @@ internal fun ControlRow(label: String, content: @Composable RowScope.() -> Unit)
 }
 
 @Composable
-internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    ControlRow(label) { SwitchControl(checked, onCheckedChange) }
+internal fun SwitchRow(label: String, checked: Boolean, mixed: Boolean = false, onCheckedChange: (Boolean) -> Unit) {
+    ControlRow(label) { SwitchControl(checked, mixed, onCheckedChange) }
 }
 
 /**

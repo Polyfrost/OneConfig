@@ -26,14 +26,23 @@
 
 package org.polyfrost.oneconfig.internal.ui.hud.screens;
 
+import java.util.Arrays;
+import java.util.List;
 import kotlin.Pair;
+import kotlin.Unit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.hud.v1.Hud;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.TextHud;
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedAmount;
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedColor;
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedOptions;
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedProperty;
+import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedToggle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -177,6 +186,55 @@ class HudHistoryTest {
 
         assertEquals(1, history.redo().size());
         assertNotNull(HudManager.INSTANCE.instanceById(id));
+    }
+
+    @Test
+    void oneEditToSeveralHudsIsOneStep() {
+        Hud first = place();
+        Hud second = place();
+        List<Hud> both = Arrays.asList(first, second);
+        float padding = first.getPadLeft();
+        boolean background = first.getShowBackground();
+        history.poll(false);
+
+        ((SharedToggle) SharedOptions.find("showBackground")).apply(both, !background);
+        ((SharedAmount) SharedOptions.find("padLeft")).apply(both, 6f);
+        ((SharedColor) SharedOptions.find("textColor")).apply(both, 0xFF112233);
+        settle();
+
+        assertNotNull(history.undo());
+        for (Hud hud : both) {
+            assertEquals(background, hud.getShowBackground());
+            assertEquals(padding, hud.getPadLeft(), 0.001f);
+            assertEquals(0xFFFFFFFF, hud.getTextColor());
+        }
+        assertNull(history.undo(), "every HUD went back in the one step");
+
+        assertNotNull(history.redo());
+        for (Hud hud : both) {
+            assertEquals(!background, hud.getShowBackground());
+            assertEquals(6f, hud.getPadLeft(), 0.001f);
+            assertEquals(0xFF112233, hud.getTextColor());
+        }
+        assertNull(history.redo());
+    }
+
+    @Test
+    void oneEditThroughASharedPropertyIsOneStep() {
+        Hud first = place();
+        Hud second = place();
+        List<Hud> both = Arrays.asList(first, second);
+        history.poll(false);
+        List<Property<?>> props = Arrays.asList(first.getTree().getProp("brackets"), second.getTree().getProp("brackets"));
+        Property<Object> proxy = new SharedProperty("brackets", props).proxy(() -> Unit.INSTANCE);
+
+        proxy.set(true);
+        settle();
+
+        for (Hud hud : both) assertEquals(true, ((TextHud) hud).getBrackets());
+        assertNotNull(history.undo());
+        for (Hud hud : both) assertEquals(false, ((TextHud) hud).getBrackets());
+        assertNull(history.undo(), "both HUDs went back in the one step");
     }
 
     private void settle() {
