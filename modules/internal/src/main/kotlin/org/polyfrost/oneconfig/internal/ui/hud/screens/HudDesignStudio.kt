@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
@@ -38,6 +37,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.Layout
@@ -45,11 +45,9 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -91,6 +89,24 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.OneConfigUI
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton as KitIconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberContextMenuState
+import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
 import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
@@ -98,9 +114,11 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.*
-import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasPasteMenu
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
+import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasMenuEntries
+import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasPasteMenuEntries
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
@@ -133,8 +151,8 @@ private var lockedHudToast: Notification? = null
 internal fun notifyHudLocked() {
     lockedHudToast?.let { if (NotificationsManager.contains(it)) return }
     lockedHudToast = Notifications.info(
-        "HUD element locked",
-        "Unlock in settings to change its position.",
+        translated("oneconfig.hud.locked.title", "HUD element locked"),
+        translated("oneconfig.hud.locked.message", "Unlock in settings to change its position."),
     )
 }
 
@@ -221,21 +239,44 @@ private const val PANEL_RESIZE_STIFFNESS = Spring.StiffnessMediumLow
 private val selectionBlue = Color(SELECTION_BLUE_ARGB)
 private val marqueeFillColor = Color(SELECTION_BLUE_ARGB).copy(alpha = 0.15f)
 
-private val idleHudBoxColor = Color.White.copy(0.2f)
-private val hoveredHudBoxColor = Color.White.copy(0.5f)
-private val hiddenHudBoxColor = Color.White.copy(0.4f)
 private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
 
 // locked HUDs get a dashed amber box instead of the plain white one
-private val lockedHudBoxColor = Color(0xFFE0A44C)
 private val lockedHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 4f), 0f)
 
-private val hiddenLegacyScrimColor = Color.Black.copy(0.45f)
+private const val IDLE_HUD_BOX_ALPHA = 0.2f
+private const val HOVERED_HUD_BOX_ALPHA = 0.5f
+private const val HIDDEN_HUD_BOX_ALPHA = 0.4f
 
-// backdrop for the per-HUD action bar so the icons stay readable over any HUD content
-private val hudActionBarBackground = Color.Black.copy(0.55f)
-private val hudActionBarBorder = Color.White.copy(0.12f)
-private val hudActionBarDeleteColor = Color(0xFFE5484D)
+private class StudioCanvasColors(
+    val idleBox: Color,
+    val hoveredBox: Color,
+    val hiddenBox: Color,
+    val locked: Color,
+    val onLocked: Color,
+    val hiddenLegacyScrim: Color,
+    val anchorLine: Color,
+    val anchorPickScrim: Color,
+    val handleFill: Color,
+)
+
+@Composable
+private fun rememberStudioCanvasColors(): StudioCanvasColors {
+    val theme = LocalTheme.current
+    return remember(theme) {
+        StudioCanvasColors(
+            idleBox = theme.onMedia.copy(alpha = IDLE_HUD_BOX_ALPHA),
+            hoveredBox = theme.onMedia.copy(alpha = HOVERED_HUD_BOX_ALPHA),
+            hiddenBox = theme.onMedia.copy(alpha = HIDDEN_HUD_BOX_ALPHA),
+            locked = theme.warning,
+            onLocked = theme.pageSurface,
+            hiddenLegacyScrim = theme.scrimColor,
+            anchorLine = theme.info,
+            anchorPickScrim = theme.scrimColor.copy(alpha = theme.scrimColor.alpha / 2f),
+            handleFill = theme.onMedia,
+        )
+    }
+}
 
 private const val SNAP_DISTANCE_PX = 6f
 
@@ -425,9 +466,7 @@ private val ANCHOR_POINTS = listOf(
 
 private const val ANCHOR_DOT_RADIUS_PX = 5f
 private const val ANCHOR_HIT_RADIUS_PX = 10f
-private val anchorLineColor = Color(0xFF0D99FF)
 private val anchorLineDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f), 0f)
-private val anchorPickScrimColor = Color.Black.copy(0.25f)
 
 private fun anchorFractions(hud: Hud, point: HudAnchor): Pair<Float, Float> {
     val resolved = if (point == HudAnchor.Auto) hud.effectiveGrowthAnchor else point
@@ -754,6 +793,7 @@ private fun DrawScope.drawSelectedHudBounds(
     mcToScreen: Float,
     showHandles: Boolean,
     badgeRadius: Dp,
+    handleFill: Color,
     showBadge: Boolean = true,
 ) {
     val sx = bounds.x * mcToScreen
@@ -777,7 +817,7 @@ private fun DrawScope.drawSelectedHudBounds(
             Offset(sx + sw, sy + sh),
         ).forEach { corner ->
             val topLeft = Offset(corner.x - handleSize / 2, corner.y - handleSize / 2)
-            drawRect(color = Color.White, topLeft = topLeft, size = Size(handleSize, handleSize))
+            drawRect(color = handleFill, topLeft = topLeft, size = Size(handleSize, handleSize))
             drawRect(color = selectionBlue, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
         }
     }
@@ -789,15 +829,22 @@ private fun DrawScope.drawSelectedHudBounds(
 }
 
 internal fun placementLabel(p: ExternalPlacement): String {
-    val action = when {
-        p.moved && p.scaled -> "Moved and scaled"
-        p.scaled -> "Scaled"
-        else -> "Moved"
+    val mod = p.mod ?: translated("oneconfig.hud.placement.another_mod", "another mod")
+    return when {
+        p.moved && p.scaled -> translated("oneconfig.hud.placement.moved_scaled", "Moved and scaled by %s", mod)
+        p.scaled -> translated("oneconfig.hud.placement.scaled", "Scaled by %s", mod)
+        else -> translated("oneconfig.hud.placement.moved", "Moved by %s", mod)
     }
-    return "$action by ${p.mod ?: "another mod"}"
 }
 
-private fun DrawScope.drawHudPlacementBadge(label: String, centerX: Float, bottomY: Float, badgeRadius: Dp) {
+private fun DrawScope.drawHudPlacementBadge(
+    label: String,
+    centerX: Float,
+    bottomY: Float,
+    badgeRadius: Dp,
+    fill: Color,
+    textColor: Color,
+) {
     val font = PolyFont.default(10f)
     val metrics = font.metrics
     val textWidth = font.measureTextWidth(label)
@@ -809,14 +856,14 @@ private fun DrawScope.drawHudPlacementBadge(label: String, centerX: Float, botto
     val topY = bottomY + HUD_SIZE_BADGE_GAP
 
     drawRoundRect(
-        color = lockedHudBoxColor,
+        color = fill,
         topLeft = Offset(badgeX, topY),
         size = Size(badgeWidth, badgeHeight),
         cornerRadius = CornerRadius(badgeRadius.toPx())
     )
     val textX = badgeX + horizontalPadding
     val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
-    drawPoly { it.renderer.text(label, textX, textY, Color.White.toArgb(), font) }
+    drawPoly { it.renderer.text(label, textX, textY, textColor.toArgb(), font) }
 }
 
 private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float, badgeRadius: Dp) {
@@ -844,10 +891,11 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
 @Composable
 private fun HudActionButton(
     icon: String,
+    label: String,
     size: Dp,
-    foreground: Color,
-    hoveredForeground: Color,
     sound: UiSoundEvent,
+    tint: Color = Color.Unspecified,
+    danger: Boolean = false,
     onClick: () -> Unit,
 ) {
     Box(
@@ -864,12 +912,15 @@ private fun HudActionButton(
                 }
             },
     ) {
-        IconButton(
+        KitIconButton(
             icon,
-            modifier = Modifier.size(size),
-            foreground = foreground,
-            hoveredForeground = hoveredForeground,
-            onClick = onClick,
+            label,
+            onClick,
+            Modifier.size(size),
+            size = ControlSize.Large,
+            danger = danger,
+            tooltip = null,
+            tint = tint,
         )
     }
 }
@@ -889,7 +940,8 @@ private fun HudActionBar(
     val bounds = hudBounds(hud) ?: return
     if (bounds.width <= 0f || bounds.height <= 0f) return
     val layout = hudActionBarLayout(hud, mcToScreen, actionIconPx, actionBarGapPx) ?: return
-    val shape = LocalTheme.current.buttonShape
+    val theme = LocalTheme.current
+    val shape = theme.buttonShape
     val iconSize = (actionIconPx / densityFloat).dp
     val barX = (layout.x / densityFloat).coerceAtLeast(0f)
     val barY = (layout.y / densityFloat).coerceAtLeast(0f)
@@ -900,45 +952,43 @@ private fun HudActionBar(
         modifier = Modifier
             .padding(start = barX.dp, top = barY.dp)
             .graphicsLayer { alpha = chromeAlpha }
-            .background(hudActionBarBackground, shape)
-            .border(1.dp, hudActionBarBorder, shape)
+            .themedSurface(SurfaceKind.Popup, shape)
             .padding(barPadding),
         horizontalArrangement = Arrangement.spacedBy((actionBarGapPx / densityFloat).dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HudActionButton(
             "settings",
+            translated("oneconfig.hud.menu.settings", "Settings"),
             iconSize,
-            foreground = Color.White.copy(0.7f),
-            hoveredForeground = Color.White,
             sound = UiSoundEvent.HUD_SELECT,
             onClick = onSettings,
         )
         HudActionButton(
             if (isHidden) "eye-off" else "eye",
+            if (isHidden) translated("oneconfig.hud.menu.show", "Show") else translated("oneconfig.hud.menu.hide", "Hide"),
             iconSize,
-            foreground = Color.White.copy(0.7f),
-            hoveredForeground = Color.White,
             sound = UiSoundEvent.CLICK,
         ) {
             Snapshot.withMutableSnapshot { hud.hidden = !hud.hidden }
         }
         HudActionButton(
             if (isLocked) "lock" else "unlock",
+            if (isLocked) translated("oneconfig.hud.menu.unlock", "Unlock") else translated("oneconfig.hud.menu.lock", "Lock"),
             iconSize,
-            foreground = if (isLocked) Accent else Color.White.copy(0.7f),
-            hoveredForeground = if (isLocked) Accent else Color.White,
             sound = UiSoundEvent.CLICK,
+            tint = if (isLocked) Accent else Color.Unspecified,
         ) {
             Snapshot.withMutableSnapshot { hud.locked = !hud.locked }
         }
         if (hud.canDelete()) {
             HudActionButton(
                 "trash",
+                translated("oneconfig.hud.menu.delete", "Delete HUD"),
                 iconSize,
-                foreground = hudActionBarDeleteColor.copy(alpha = 0.7f),
-                hoveredForeground = hudActionBarDeleteColor,
                 sound = UiSoundEvent.CLICK,
+                tint = theme.error,
+                danger = true,
                 onClick = onDelete,
             )
         }
@@ -1089,8 +1139,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     var panelBoxSize by remember { mutableStateOf(IntSize.Zero) }
     var panelTargetHeight by remember { mutableStateOf<Int?>(null) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
-    var hudContextMenuTarget by remember { mutableStateOf<Hud?>(null) }
-    var hudContextMenuOffset by remember { mutableStateOf(IntOffset.Zero) }
+    val canvasMenu = rememberContextMenuState()
     // a locked HUD currently being pressed so a far enough move can explain why it is not following
     var lockedPressHud by remember { mutableStateOf<Hud?>(null) }
     var lockedPressOrigin by remember { mutableStateOf(Offset.Zero) }
@@ -1098,7 +1147,6 @@ fun HudDesignStudio(visible: Boolean = true) {
     val history = remember { HudHistory() }
     var pointerDown by remember { mutableStateOf(false) }
     var hudClipboard by remember { mutableStateOf<List<Hud>>(emptyList()) }
-    var pasteMenuOffset by remember { mutableStateOf<IntOffset?>(null) }
     var marqueeStart by remember { mutableStateOf<Offset?>(null) }
     var marqueeCurrent by remember { mutableStateOf<Offset?>(null) }
     var marqueeActive by remember { mutableStateOf(false) }
@@ -1136,8 +1184,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     val panelVisible = panelHud != null
 
     fun clearTransientEditorState() {
-        hudContextMenuTarget = null
-        pasteMenuOffset = null
+        canvasMenu.close()
         anchorPickSources = emptyList()
         anchorPickSelf = null
         hoveredAnchor = null
@@ -1330,7 +1377,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                             if (pasted.isNotEmpty()) {
                                 Snapshot.withMutableSnapshot {
                                     selectedHuds = pasted.toSet()
-                                    pasteMenuOffset = null
+                                    canvasMenu.close()
                                 }
                             }
                             UiSounds.play(UiSoundEvent.CLICK)
@@ -1376,7 +1423,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                     val live = HudManager.activeInstances
                                     selectedHuds = selectedHuds.filterTo(LinkedHashSet()) { it in live } + revived
                                     if (hoveredHud !in live) hoveredHud = null
-                                    if (hudContextMenuTarget !in live) hudContextMenuTarget = null
+                                    canvasMenu.close()
                                 }
                                 UiSounds.play(UiSoundEvent.CLICK)
                             }
@@ -1409,7 +1456,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     val librarySections = remember(groupedHuds, modNames) {
         groupedHuds.mapNotNull { (modId, huds) ->
             huds.takeIf { it.isNotEmpty() }
-                ?.let { HudLibrarySection(modId, modId?.let { id -> modNames[id] } ?: "Other", it) }
+                ?.let { HudLibrarySection(modId, modId?.let { id -> modNames[id] } ?: translated("oneconfig.hud.library.other", "Other"), it) }
         }
     }
     val scrolledLibraryMod by remember(librarySections, librarySectionIndexes, libraryScrollState) {
@@ -1562,15 +1609,92 @@ fun HudDesignStudio(visible: Boolean = true) {
                             UiSounds.play(UiSoundEvent.HUD_SELECT)
                             selectedHuds = setOf(hit)
                         }
-                        hudContextMenuTarget = hit
-                        hudContextMenuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                         closeLibrary()
-                        pasteMenuOffset = null
-                    } else {
-                        hudContextMenuTarget = null
-                        pasteMenuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
                     }
                 }
+                val root = rootCoords[0]?.takeIf { it.isAttached } ?: return@safePointerEvent
+                val toMc = Platform.screen().screenToMcScale()
+                val pasteAt = Offset(pos.x * toMc, pos.y * toMc)
+                val canUndo = history.canUndo
+                val canRedo = history.canRedo
+                val entries = if (hit != null) {
+                    val targets = if (hit in selectedHuds) selectedHuds.toList() else listOf(hit)
+                    hudCanvasMenuEntries(
+                        hud = hit,
+                        targets = targets,
+                        onSettings = { settingsHud ->
+                            Snapshot.withMutableSnapshot {
+                                selectedHuds = setOf(settingsHud)
+                                panelOpen = true
+                            }
+                        },
+                        settingsEnabled = targets.size <= 1,
+                        onCopy = { _ ->
+                            Snapshot.withMutableSnapshot { hudClipboard = targets }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                        },
+                        onCut = { _ ->
+                            Snapshot.withMutableSnapshot { hudClipboard = targets }
+                            deleteHuds(targets)
+                        },
+                        onPaste = { _ ->
+                            val pasted = duplicateHudGroup(hudClipboard, pasteAt)
+                            if (pasted.isNotEmpty()) {
+                                Snapshot.withMutableSnapshot { selectedHuds = pasted.toSet() }
+                            }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                        },
+                        pasteEnabled = hudClipboard.any(::canDuplicateHud),
+                        onDuplicate = { _ ->
+                            val pasted = duplicateHudGroup(targets)
+                            if (pasted.isNotEmpty()) {
+                                Snapshot.withMutableSnapshot { selectedHuds = pasted.toSet() }
+                            }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                        },
+                        duplicateEnabled = targets.any(::canDuplicateHud),
+                        onAnchor = { _ ->
+                            Snapshot.withMutableSnapshot {
+                                anchorPickSources = targets
+                                // one HUD chooses which of its own points is pinned while a multi-selection has no
+                                // single box to pick on so each keeps its growth anchor
+                                anchorPickSelf = if (targets.size == 1) null else HudAnchor.Auto
+                                hoveredAnchor = null
+                                hoveredHud = null
+                                closeLibrary()
+                            }
+                        },
+                        anchorEnabled = targets.isNotEmpty() && anchorTargetsFor(targets).isNotEmpty(),
+                        onDelete = { _ -> deleteHuds(targets) },
+                        onUndo = { HudDesignSession.handleUndo(true) },
+                        undoEnabled = canUndo,
+                        onRedo = { HudDesignSession.handleRedo(true) },
+                        redoEnabled = canRedo,
+                    )
+                } else {
+                    hudCanvasPasteMenuEntries(
+                        pasteEnabled = hudClipboard.any(::canDuplicateHud),
+                        onPaste = {
+                            val pasted = duplicateHudGroup(hudClipboard, pasteAt)
+                            if (pasted.isNotEmpty()) {
+                                Snapshot.withMutableSnapshot { selectedHuds = pasted.toSet() }
+                            }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                        },
+                        onSelectAll = {
+                            Snapshot.withMutableSnapshot {
+                                selectedHuds = HudManager.activeInstances.filter { !it.locked }.toSet()
+                            }
+                            UiSounds.play(UiSoundEvent.CLICK)
+                        },
+                        onUndo = { HudDesignSession.handleUndo(true) },
+                        undoEnabled = canUndo,
+                        onRedo = { HudDesignSession.handleRedo(true) },
+                        redoEnabled = canRedo,
+                        onTour = { startTour() },
+                    )
+                }
+                canvasMenu.open(root.localToWindow(pos), entries)
                 return@safePointerEvent
             }
             pressWasSecondary = false
@@ -1600,14 +1724,14 @@ fun HudDesignStudio(visible: Boolean = true) {
                         resizeStartScale = selected.customScale
                         hoveredHud = selected
                         closeLibrary()
-                        pasteMenuOffset = null
+                        canvasMenu.close()
                     }
                     return@safePointerEvent
                 }
             }
             // clicks inside the bar belong to its buttons so never select or drag the HUD behind it
             if (hoveredHud?.let { hitTestHudActionBar(it, pos.x, pos.y, mcToScreen, actionIconPx, actionBarGapPx) } == true) {
-                Snapshot.withMutableSnapshot { pasteMenuOffset = null }
+                canvasMenu.close()
                 return@safePointerEvent
             }
             val s = Platform.screen().screenToMcScale()
@@ -1651,7 +1775,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     marqueeCurrent = pos
                     marqueeActive = true
                     marqueeAdditive = actionPressed || shift
-                    pasteMenuOffset = null
+                    canvasMenu.close()
                 }
             }
         }
@@ -1923,7 +2047,8 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     val theme = LocalTheme.current
     val badgeRadius = hudBadgeRadius()
-    val selectionCornerRadius = theme.buttonShape.cornerRadiusOrNull() ?: 0.dp
+    val canvasColors = rememberStudioCanvasColors()
+    val marqueeShape = OneConfigTheme.shape(Radii.SM)
 
     // the library and return chip stay on screen while a HUD is selected but dimmed so the settings
     // panel reads as the focus
@@ -2139,7 +2264,7 @@ fun HudDesignStudio(visible: Boolean = true) {
 
                         if (isSelected || isHovered) {
                             hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
-                                drawHudPlacementBadge(placementLabel(it), sx + sw / 2, sy + sh, badgeRadius)
+                                drawHudPlacementBadge(placementLabel(it), sx + sw / 2, sy + sh, badgeRadius, canvasColors.locked, canvasColors.onLocked)
                             }
                         }
 
@@ -2147,7 +2272,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                             // no selection handles because a locked HUD can be neither moved nor resized
                             if (isSelected || isHovered) {
                                 drawRect(
-                                    color = lockedHudBoxColor,
+                                    color = canvasColors.locked,
                                     topLeft = Offset(sx, sy),
                                     size = Size(sw, sh),
                                     style = Stroke(width = 1f, pathEffect = lockedHudDashEffect)
@@ -2162,32 +2287,33 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                             )
-                            drawSelectedHudBounds(bounds, mcToScreen, resizable && singleSelection, badgeRadius, showBadge = singleSelection)
+                            drawSelectedHudBounds(bounds, mcToScreen, resizable && singleSelection, badgeRadius, canvasColors.handleFill, showBadge = singleSelection)
                         } else if (isSelected) {
                             drawSelectedHudBounds(
                                 bounds,
                                 mcToScreen,
                                 showHandles = isPrimary && singleSelection,
                                 badgeRadius = badgeRadius,
+                                handleFill = canvasColors.handleFill,
                                 showBadge = singleSelection,
                             )
                         } else if (hud.hidden) {
                             if (hud is LegacyHud) {
                                 drawRect(
-                                    color = hiddenLegacyScrimColor,
+                                    color = canvasColors.hiddenLegacyScrim,
                                     topLeft = Offset(sx, sy),
                                     size = Size(sw, sh),
                                 )
                             }
                             drawRect(
-                                color = if (isHovered) hoveredHudBoxColor else hiddenHudBoxColor,
+                                color = if (isHovered) canvasColors.hoveredBox else canvasColors.hiddenBox,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f, pathEffect = hiddenHudDashEffect)
                             )
                         } else {
                             drawRect(
-                                color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,
+                                color = if (isHovered) canvasColors.hoveredBox else canvasColors.idleBox,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f)
@@ -2201,13 +2327,13 @@ fun HudDesignStudio(visible: Boolean = true) {
                         val to = if (parent == null) null else anchorPointOf(parent, hovered.effectiveAnchorPoint)
                         if (from != null && to != null) {
                             drawLine(
-                                color = anchorLineColor,
+                                color = canvasColors.anchorLine,
                                 start = from * mcToScreen,
                                 end = to * mcToScreen,
                                 strokeWidth = 1.5f,
                                 pathEffect = anchorLineDashEffect,
                             )
-                            drawCircle(anchorLineColor, radius = ANCHOR_DOT_RADIUS_PX, center = to * mcToScreen)
+                            drawCircle(canvasColors.anchorLine, radius = ANCHOR_DOT_RADIUS_PX, center = to * mcToScreen)
                         }
                     }
 
@@ -2217,7 +2343,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     }
 
                     if (anchorPickSources.isNotEmpty()) {
-                        drawRect(color = anchorPickScrimColor, size = size)
+                        drawRect(color = canvasColors.anchorPickScrim, size = size)
                         val hotAnchor = hoveredAnchor
                         val self = anchorPickSelf
                         val source = anchorPickSources[0]
@@ -2240,9 +2366,9 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 val hot = self == point ||
                                     (hotAnchor?.first === source && hotAnchor.second == point)
                                 val radius = if (hot) ANCHOR_DOT_RADIUS_PX + 2f else ANCHOR_DOT_RADIUS_PX
-                                drawCircle(Color.White, radius = radius, center = center)
+                                drawCircle(canvasColors.handleFill, radius = radius, center = center)
                                 drawCircle(
-                                    color = if (hot) Accent else anchorLineColor,
+                                    color = if (hot) Accent else canvasColors.anchorLine,
                                     radius = radius - 2f,
                                     center = center,
                                 )
@@ -2252,7 +2378,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         for (target in targets) {
                             val b = hudBounds(target) ?: continue
                             drawRect(
-                                color = anchorLineColor.copy(alpha = 0.5f),
+                                color = canvasColors.anchorLine.copy(alpha = 0.5f),
                                 topLeft = Offset(b.x * mcToScreen, b.y * mcToScreen),
                                 size = Size(b.width * mcToScreen, b.height * mcToScreen),
                                 style = Stroke(width = 1f),
@@ -2262,9 +2388,9 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 val center = p * mcToScreen
                                 val hot = hotAnchor?.first === target && hotAnchor.second == point
                                 val radius = if (hot) ANCHOR_DOT_RADIUS_PX + 2f else ANCHOR_DOT_RADIUS_PX
-                                drawCircle(Color.White, radius = radius, center = center)
+                                drawCircle(canvasColors.handleFill, radius = radius, center = center)
                                 drawCircle(
-                                    color = if (hot) Accent else anchorLineColor,
+                                    color = if (hot) Accent else canvasColors.anchorLine,
                                     radius = radius - 2f,
                                     center = center,
                                 )
@@ -2280,21 +2406,18 @@ fun HudDesignStudio(visible: Boolean = true) {
                         val w = abs(renderCurrent.x - renderStart.x)
                         val h = abs(renderCurrent.y - renderStart.y)
                         if (w > 0f && h > 0f) {
-                            val cornerRadiusPx = selectionCornerRadius.toPx()
-                            val cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx)
-                            drawRoundRect(
-                                color = marqueeFillColor.copy(alpha = marqueeFillColor.alpha * marqueeAlpha),
-                                topLeft = Offset(left, top),
-                                size = Size(w, h),
-                                cornerRadius = cornerRadius,
-                            )
-                            drawRoundRect(
-                                color = selectionBlue.copy(alpha = selectionBlue.alpha * marqueeAlpha),
-                                topLeft = Offset(left, top),
-                                size = Size(w, h),
-                                cornerRadius = cornerRadius,
-                                style = Stroke(width = 1.dp.toPx()),
-                            )
+                            val outline = marqueeShape.createOutline(Size(w, h), layoutDirection, this)
+                            translate(left, top) {
+                                drawOutline(
+                                    outline,
+                                    color = marqueeFillColor.copy(alpha = marqueeFillColor.alpha * marqueeAlpha),
+                                )
+                                drawOutline(
+                                    outline,
+                                    color = selectionBlue.copy(alpha = selectionBlue.alpha * marqueeAlpha),
+                                    style = Stroke(width = 1.dp.toPx()),
+                                )
+                            }
                         }
                     }
                 }
@@ -2324,14 +2447,14 @@ fun HudDesignStudio(visible: Boolean = true) {
         // one line of guidance for the gestures the canvas cannot show on its own
         val hintText = when {
             anchorPickSources.isNotEmpty() && anchorPickSelf == null ->
-                "Click the point on this HUD that gets anchored  ·  Esc to cancel"
+                translated("oneconfig.hud.hint.anchor_self", "Click the point on this HUD that gets anchored  ·  Esc to cancel")
             anchorPickSources.isNotEmpty() ->
-                "Click the point to anchor it to  ·  Right click to remove the anchor  ·  Esc to go back"
+                translated("oneconfig.hud.hint.anchor_target", "Click the point to anchor it to  ·  Right click to remove the anchor  ·  Esc to go back")
             isDragging -> null
             lockedPressHud != null || hoveredHud?.locked == true ->
-                "This HUD is locked  ·  Use the lock button above it to move or resize it"
+                translated("oneconfig.hud.hint.locked", "This HUD is locked  ·  Use the lock button above it to move or resize it")
             hoveredHud?.let { it.bgMerged && !it.locked } == true ->
-                "Drag to move the merged HUDs together  ·  Click it first, then drag, to pull it out"
+                translated("oneconfig.hud.hint.merged", "Drag to move the merged HUDs together  ·  Click it first, then drag, to pull it out")
             else -> null
         }
         var lastHint by remember { mutableStateOf("") }
@@ -2550,106 +2673,6 @@ fun HudDesignStudio(visible: Boolean = true) {
             }
         }
 
-        val contextMenuTargets = hudContextMenuTarget?.let { hud ->
-            if (hud in selectedHuds) selectedHuds.toList() else listOf(hud)
-        } ?: emptyList()
-
-        val menuOpen = hudContextMenuTarget != null || pasteMenuOffset != null
-        val canUndo = remember(menuOpen) { menuOpen && history.canUndo }
-        val canRedo = remember(menuOpen) { menuOpen && history.canRedo }
-
-        HudCanvasResetMenu(
-            hud = hudContextMenuTarget,
-            expanded = hudContextMenuTarget != null,
-            offset = hudContextMenuOffset,
-            onDismiss = { hudContextMenuTarget = null },
-            targets = contextMenuTargets,
-            settingsEnabled = contextMenuTargets.size <= 1,
-            onSettings = { hud ->
-                Snapshot.withMutableSnapshot {
-                    hudContextMenuTarget = null
-                    selectedHuds = setOf(hud)
-                    panelOpen = true
-                }
-            },
-            onCopy = { _ ->
-                Snapshot.withMutableSnapshot { hudClipboard = contextMenuTargets }
-                UiSounds.play(UiSoundEvent.CLICK)
-            },
-            onCut = { _ ->
-                Snapshot.withMutableSnapshot {
-                    hudClipboard = contextMenuTargets
-                    hudContextMenuTarget = null
-                }
-                deleteHuds(contextMenuTargets)
-            },
-            onPaste = { _ ->
-                val s = Platform.screen().screenToMcScale()
-                val pasted = duplicateHudGroup(
-                    hudClipboard,
-                    Offset(hudContextMenuOffset.x * s, hudContextMenuOffset.y * s),
-                )
-                if (pasted.isNotEmpty()) {
-                    Snapshot.withMutableSnapshot { selectedHuds = pasted.toSet() }
-                }
-                UiSounds.play(UiSoundEvent.CLICK)
-            },
-            pasteEnabled = hudClipboard.any(::canDuplicateHud),
-            onDuplicate = { _ ->
-                val pasted = duplicateHudGroup(contextMenuTargets)
-                if (pasted.isNotEmpty()) {
-                    Snapshot.withMutableSnapshot { selectedHuds = pasted.toSet() }
-                }
-                UiSounds.play(UiSoundEvent.CLICK)
-            },
-            duplicateEnabled = contextMenuTargets.any(::canDuplicateHud),
-            onAnchor = { _ ->
-                Snapshot.withMutableSnapshot {
-                    anchorPickSources = contextMenuTargets
-                    // one HUD chooses which of its own points is pinned while a multi-selection has no
-                    // single box to pick on so each keeps its growth anchor
-                    anchorPickSelf = if (contextMenuTargets.size == 1) null else HudAnchor.Auto
-                    hoveredAnchor = null
-                    hoveredHud = null
-                    closeLibrary()
-                }
-            },
-            anchorEnabled = contextMenuTargets.isNotEmpty() &&
-                anchorTargetsFor(contextMenuTargets).isNotEmpty(),
-            onDelete = { _ -> deleteHuds(contextMenuTargets) },
-            onUndo = { HudDesignSession.handleUndo(true) },
-            undoEnabled = canUndo,
-            onRedo = { HudDesignSession.handleRedo(true) },
-            redoEnabled = canRedo,
-        )
-
-        HudCanvasPasteMenu(
-            expanded = pasteMenuOffset != null,
-            offset = pasteMenuOffset ?: IntOffset.Zero,
-            pasteEnabled = hudClipboard.any(::canDuplicateHud),
-            onDismiss = { pasteMenuOffset = null },
-            onPaste = {
-                val off = pasteMenuOffset ?: return@HudCanvasPasteMenu
-                val s = Platform.screen().screenToMcScale()
-                val pasted = duplicateHudGroup(hudClipboard, Offset(off.x * s, off.y * s))
-                if (pasted.isNotEmpty()) {
-                    Snapshot.withMutableSnapshot { selectedHuds = pasted.toSet() }
-                }
-                UiSounds.play(UiSoundEvent.CLICK)
-            },
-            onSelectAll = {
-                Snapshot.withMutableSnapshot {
-                    selectedHuds = HudManager.activeInstances.filter { !it.locked }.toSet()
-                }
-                UiSounds.play(UiSoundEvent.CLICK)
-            },
-            onUndo = { HudDesignSession.handleUndo(true) },
-            undoEnabled = canUndo,
-            onRedo = { HudDesignSession.handleRedo(true) },
-            redoEnabled = canRedo,
-            onTour = { startTour() },
-        )
-
         var lastTourStep by remember { mutableStateOf(HudTourStep.entries.first()) }
         tourStep?.let { lastTourStep = it }
         AnimatedVisibility(
@@ -2862,6 +2885,7 @@ internal fun duplicateHudGroup(
 @Composable
 fun HudDragLayer(modifier: Modifier = Modifier) {
     val badgeRadius = hudBadgeRadius()
+    val canvasColors = rememberStudioCanvasColors()
     HudEditorViewport.observe()
     val shellLayout = LocalShell.current.layout
     var hoveredHud by remember { mutableStateOf<Hud?>(null) }
@@ -3005,7 +3029,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     if (hud.locked) {
                         if (isHovered) {
                             drawRect(
-                                color = lockedHudBoxColor,
+                                color = canvasColors.locked,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f, pathEffect = lockedHudDashEffect)
@@ -3019,24 +3043,24 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                         )
-                        drawSelectedHudBounds(bounds, mcToScreen, showHandles = false, badgeRadius = badgeRadius)
+                        drawSelectedHudBounds(bounds, mcToScreen, showHandles = false, badgeRadius = badgeRadius, handleFill = canvasColors.handleFill)
                     } else if (hud.hidden) {
                         if (hud is LegacyHud) {
                             drawRect(
-                                color = hiddenLegacyScrimColor,
+                                color = canvasColors.hiddenLegacyScrim,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                             )
                         }
                         drawRect(
-                            color = if (isHovered) hoveredHudBoxColor else hiddenHudBoxColor,
+                            color = if (isHovered) canvasColors.hoveredBox else canvasColors.hiddenBox,
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                             style = Stroke(width = 1f, pathEffect = hiddenHudDashEffect)
                         )
                     } else {
                         drawRect(
-                            color = if (isHovered) hoveredHudBoxColor else idleHudBoxColor,
+                            color = if (isHovered) canvasColors.hoveredBox else canvasColors.idleBox,
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                             style = Stroke(width = 1f)
@@ -3168,7 +3192,7 @@ private fun DesignStudioPanel(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text(title ?: "HUD", color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                    Text(title ?: translated("oneconfig.hud", "HUD"), color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
                     subtitle?.let {
                         Text(it, color = theme.textColorSecondary, fontSize = 12.sp)
                     }
@@ -3198,7 +3222,7 @@ private fun DesignStudioPanel(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (categories.size > 1) categories.forEach {
-                        Chip(it.title, it == shownCategory, it.icon) { onCategoryChange(it) }
+                        Chip(translated("oneconfig.hud.tab.${it.name.lowercase()}", it.title), it == shownCategory, it.icon) { onCategoryChange(it) }
                     }
                     Spacer(Modifier.weight(1f))
                     SearchToggle(Modifier.fillMaxHeight().aspectRatio(1f).graphicsLayer { alpha = if (searchProgress > 0f) 0f else 1f }) {
@@ -3210,7 +3234,7 @@ private fun DesignStudioPanel(
                     SearchBar(
                         searchText,
                         onSearchChange,
-                        "Search settings...",
+                        translated("oneconfig.hud.panel.search", "Search settings..."),
                         focusRequested = focusSearch || searchFocusRequested,
                         onFocused = {
                             focusSearch = false
@@ -3242,13 +3266,8 @@ private fun DesignStudioPanel(
                     },
                 ) { category ->
                     val panelScrollState = rememberScrollState()
-                    ScrollbarBox(panelScrollState, StudioPanelGutter) {
-                        SectionStack(
-                            Modifier.fillMaxWidth()
-                                .wheelScroll(panelScrollState)
-                                .verticalScroll(panelScrollState)
-                                .padding(horizontal = StudioPanelGutter),
-                        ) {
+                    ScrollContainer(panelScrollState) {
+                        SectionStack(Modifier.fillMaxWidth().padding(start = StudioPanelGutter)) {
                             // like the main config screen, a search spans every category rather than only the open one
                             categories.forEach {
                                 if (query.isNotEmpty() || it == category) when (it) {
@@ -3267,20 +3286,14 @@ private fun DesignStudioPanel(
 
 @Composable
 private fun SearchToggle(modifier: Modifier, onClick: () -> Unit) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val hovered by interactionSource.collectIsHoveredAsState()
-    val iconColor by animateColorAsState(theme.textColor.copy(if (hovered) 1f else 0.7f))
-    Box(
-        modifier = modifier
-            .background(theme.chipBackground, theme.sideBarNavigationEntryShape)
-            .border(1.dp, theme.borderColor, theme.sideBarNavigationEntryShape)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .onClick(interactionSource) { onClick() },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon("search", color = iconColor, modifier = Modifier.size(16.dp))
-    }
+    KitIconButton(
+        "search",
+        translated("oneconfig.hud.panel.search_button", "Search settings"),
+        onClick,
+        modifier,
+        style = IconButtonStyle.Framed,
+        tooltip = null,
+    )
 }
 
 @Composable
@@ -3305,6 +3318,7 @@ private val Hud.addableToLibrary: Boolean
     get() = multipleInstancesAllowed() || !HudManager.hasHudOfType(this::class.java)
 
 private val StudioPanelGutter = 16.dp
+private val FILTER_BAR_RADIUS = 2.dp
 
 /** The blurred page tinted card the editor's panel, HUD library and mod list float on, like the main screen's page */
 @Composable
@@ -3554,9 +3568,9 @@ private fun HudLibraryPanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("HUDs", color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+            Text(translated("oneconfig.hud.library.title", "HUDs"), color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
             if (!suggestEvergreenHud) {
-                SearchBar(searchText, onSearchChange, "Search HUDs...", searchFocusRequested, onSearchFocused)
+                SearchBar(searchText, onSearchChange, translated("oneconfig.hud.library.search", "Search HUDs..."), searchFocusRequested, onSearchFocused)
                 IconButton("close", modifier = Modifier.size(32.dp), hoverBorder = true, onClick = onClose)
             }
         }
@@ -3565,7 +3579,7 @@ private fun HudLibraryPanel(
             return@Column
         }
         Text(
-            "Click to add  ·  Drag to place it yourself",
+            translated("oneconfig.hud.library.hint", "Click to add  ·  Drag to place it yourself"),
             modifier = Modifier.padding(horizontal = StudioPanelGutter),
             color = theme.textColorSecondary,
             fontSize = 11.sp,
@@ -3615,10 +3629,10 @@ private fun HudLibraryPanel(
                     ) {
                         if (sections.isEmpty()) {
                             item(key = "empty") {
-                                Text(
-                                    "No HUDs found",
-                                    color = theme.textColorSecondary,
-                                    fontSize = 14.sp,
+                                EmptyState(
+                                    title = translated("oneconfig.hud.library.empty", "No HUDs found"),
+                                    modifier = Modifier.fillParentMaxWidth(),
+                                    icon = "search",
                                 )
                             }
                         }
@@ -3658,34 +3672,24 @@ private fun HudLibraryPanel(
 
 @Composable
 private fun EvergreenHudSuggestion(modifier: Modifier) {
-    val theme = LocalTheme.current
-    val source = rememberInteractionSource()
-    val isHovered by source.collectIsHoveredAsState()
-    val background by animateAccentColorAsState(isHovered, if (isHovered) Color.White.copy(0.12f).compositeOver(Accent) else Accent)
-    Column(
+    EmptyState(
+        title = translated("oneconfig.hud.library.none_installed", "No HUDs installed"),
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text("No HUDs installed", color = theme.textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        Text(
+        icon = "hud",
+        text = translated(
+            "oneconfig.hud.library.evergreen_body",
             "Install EvergreenHUD for FPS, CPS, coordinates, ping, and many more HUDs.",
-            color = theme.textColorSecondary,
-            fontSize = 12.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
-        Box(
-            modifier = Modifier
-                .clip(theme.buttonShape)
-                .background(background, theme.buttonShape)
-                .onClick(source) { NetworkUtils.browseLink("https://modrinth.com/mod/evergreenhud") }
-                .pointerHoverIcon(PointerIcon.Hand)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-        ) {
-            Text("Get EvergreenHUD", color = theme.accentTextColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-        }
-    }
+        ),
+        action = {
+            TextButton(
+                text = translated("oneconfig.hud.library.evergreen_action", "Get EvergreenHUD"),
+                icon = "external-link",
+                onClick = { NetworkUtils.browseLink("https://modrinth.com/mod/evergreenhud") },
+                style = ControlStyle.Primary,
+                size = ControlSize.Compact,
+            )
+        },
+    )
 }
 
 @Composable
@@ -3713,10 +3717,25 @@ private fun ModIconColumn(
 }
 
 private const val PREVIEW_SCALE = 2f
-private val hudCardOverlayScrim = Color.Black.copy(0.4f)
+
+private fun libraryCardMenu(hud: Hud, onAdd: (Hud) -> Unit): List<MenuEntry> = buildList {
+    add(MenuAction(translated("oneconfig.hud.library.add", "Add to screen"), { onAdd(hud) }, icon = "plus"))
+    val modId = hud.configId ?: return@buildList
+    val config = ConfigRegistry.findById(modId) ?: return@buildList
+    val onOpen = config.onOpen
+    if (onOpen == null && config.source != ConfigSource.OC) return@buildList
+    add(
+        MenuAction(
+            translated("oneconfig.hud.library.mod_settings", "Open mod settings"),
+            { if (onOpen != null) onOpen() else OneConfigUI.open(OneConfigDestination.ModConfig(OneConfigPages.modConfig(modId))) },
+            icon = "settings",
+        ),
+    )
+}
 
 @Composable
 private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
+    val theme = LocalTheme.current
     AnimatedVisibility(
         visible = visible,
         modifier = Modifier.matchParentSize(),
@@ -3724,10 +3743,10 @@ private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
         exit = fadeOut(tween(150)),
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().background(hudCardOverlayScrim),
+            modifier = Modifier.fillMaxSize().background(theme.scrimColor),
             contentAlignment = Alignment.Center,
         ) {
-            Icon("plus", modifier = Modifier.size(20.dp), color = Color.White)
+            Icon("plus", modifier = Modifier.size(20.dp), color = theme.onMedia)
         }
     }
 }
@@ -3787,12 +3806,14 @@ private fun LegacyHudPreviewCard(
             .background(backgroundColor, theme.buttonShape)
             .border(1.dp, theme.borderColor, theme.buttonShape)
             .clip(theme.buttonShape)
+            .contextMenu { libraryCardMenu(hud, onCardClick) }
             .safePointerEvent(PointerEventType.Enter) { isHovered = true }
             .safePointerEvent(PointerEventType.Exit) {
                 isHovered = false
                 if (!dragStarted) pressPos = null
             }
             .safePointerEvent(PointerEventType.Press) { event ->
+                if (event.buttons.isSecondaryPressed) return@safePointerEvent
                 val pos = event.changes.firstOrNull()?.position
                 if (pos != null) {
                     pressPos = pos
@@ -3830,7 +3851,7 @@ private fun LegacyHudPreviewCard(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            localizedLabel(hud.title) ?: "Legacy HUD",
+            localizedLabel(hud.title) ?: translated("oneconfig.hud.legacy", "Legacy HUD"),
             color = theme.textColor.copy(0.85f),
             fontSize = 12.sp,
             modifier = Modifier.padding(cardPadding),
@@ -3871,12 +3892,14 @@ private fun ComposeHudPreviewCard(
             .background(backgroundColor, theme.buttonShape)
             .border(1.dp, theme.borderColor, theme.buttonShape)
             .clip(theme.buttonShape)
+            .contextMenu { libraryCardMenu(hud, onCardClick) }
             .safePointerEvent(PointerEventType.Enter) { isHovered = true }
             .safePointerEvent(PointerEventType.Exit) {
                 isHovered = false
                 if (!dragStarted) pressPos = null
             }
             .safePointerEvent(PointerEventType.Press) { event ->
+                if (event.buttons.isSecondaryPressed) return@safePointerEvent
                 val pos = event.changes.firstOrNull()?.position
                 if (pos != null) {
                     pressPos = pos
@@ -3939,7 +3962,7 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
-    val barRadius = minOf(2.dp, theme.buttonShape.cornerRadiusOrNull() ?: 0.dp)
+    val barShape = OneConfigTheme.shape(FILTER_BAR_RADIUS)
     val iconAlpha by animateFloatAsState(
         if (selected) 1f else if (isHovered) 0.8f else 0.7f
     )
@@ -3951,12 +3974,10 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
                 drawContent()
                 if (selected) {
                     val barHeight = 24.dp.toPx()
-                    drawRoundRect(
-                        color = Accent,
-                        topLeft = Offset(-8.dp.toPx(), (size.height - barHeight) / 2f),
-                        size = Size(4.dp.toPx(), barHeight),
-                        cornerRadius = CornerRadius(barRadius.toPx()),
-                    )
+                    val outline = barShape.createOutline(Size(4.dp.toPx(), barHeight), layoutDirection, this)
+                    translate(-8.dp.toPx(), (size.height - barHeight) / 2f) {
+                        drawOutline(outline, color = Accent)
+                    }
                 }
             }
             .onClick(interactionSource) { onClick() },
@@ -3977,11 +3998,11 @@ private fun SearchBar(
     placeholder: String,
     focusRequested: Boolean = false,
     onFocused: () -> Unit = {},
-    modifier: Modifier = Modifier.size(181.dp, 32.dp),
+    modifier: Modifier = Modifier.width(181.dp),
     onDismiss: (() -> Unit)? = null,
     showClear: Boolean = true,
 ) {
-    val interactionSource = rememberInteractionSource()
+    val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     // a dismissable field closes once it is left empty and unfocused
     var hadFocus by remember { mutableStateOf(false) }
@@ -3990,57 +4011,31 @@ private fun SearchBar(
         else if (hadFocus && value.isEmpty()) onDismiss?.invoke()
     }
     val focusRequester = remember { FocusRequester() }
-    // holds the selection alongside the caller's text so a focus request can select the query
-    var field by remember { mutableStateOf(TextFieldValue(value)) }
-    val current = field.copy(text = value)
-
     LaunchedEffect(focusRequested) {
         if (!focusRequested) return@LaunchedEffect
-        field = current.copy(selection = TextRange(0, value.length))
         try {
             focusRequester.requestFocus()
         } catch (_: IllegalStateException) {
         }
         onFocused()
     }
-    val theme = LocalTheme.current
-
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
-        current,
-        {
-            field = it
-            if (it.text != value) onValueChange(it.text)
+    SearchField(
+        query = value,
+        onQueryChange = onValueChange,
+        // clears the text first then dismisses the field so escape only closes the studio after both
+        modifier = modifier.onPreviewKeyEvent { event ->
+            if (event.type != KeyEventType.KeyDown || event.key != Key.Escape) return@onPreviewKeyEvent false
+            when {
+                value.isNotEmpty() -> onValueChange("")
+                onDismiss != null -> onDismiss()
+                else -> return@onPreviewKeyEvent false
+            }
+            true
         },
-        singleLine = true,
-        modifier = modifier
-            .trackTextInputFocus()
-            .focusRequester(focusRequester)
-            // clears the text first then dismisses the field so escape only closes the studio after both
-            .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown || event.key != Key.Escape) return@onPreviewKeyEvent false
-                when {
-                    value.isNotEmpty() -> onValueChange("")
-                    onDismiss != null -> onDismiss()
-                    else -> return@onPreviewKeyEvent false
-                }
-                true
-            },
+        placeholder = placeholder,
+        clearable = showClear,
+        size = ControlSize.Regular,
+        focusRequester = focusRequester,
         interactionSource = interactionSource,
-        textStyle = searchFieldTextStyle(),
-        cursorBrush = SolidColor(theme.textColorSecondary)
-    ) { innerTextField ->
-        SearchFieldFrame(
-            placeholder,
-            showPlaceholder = !isFocused && value.isEmpty(),
-            // a dismissable field keeps its button so it can always be closed, not only cleared
-            onClear = if (showClear && (value.isNotEmpty() || onDismiss != null)) ({
-                onValueChange("")
-                onDismiss?.invoke()
-            }) else null,
-            modifier = Modifier.fillMaxSize(),
-            innerTextField = innerTextField,
-        )
-    }
+    )
 }

@@ -74,16 +74,16 @@ fun Layout(hud: Hud?, query: String) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val scalable = hud !is LegacyHudMarker || hud.supportsScale
             CardSection(
-                if (scalable) "Position & Scale" else "Position", query,
-                "X", "Y", "Lock position", "Reset to default position",
-                *if (scalable) arrayOf("Scale", "Follow GUI scale", "Use Minecraft GUI Scale") else emptyArray(),
+                if (scalable) hudPanelText("position_scale", "Position & Scale") else hudPanelText("position", "Position"), query,
+                "X", "Y", hudPanelText("lock_position", "Lock position"), "Reset to default position",
+                *if (scalable) arrayOf(hudPanelText("scale", "Scale"), hudPanelText("follow_gui_scale", "Follow GUI scale"), "Use Minecraft GUI Scale") else emptyArray(),
                 onReset = { resetHudOptions(hud, POSITION_SCALE_OPTIONS, position = true) },
                 canReset = hudOptionsCanReset(hud, POSITION_SCALE_OPTIONS, position = true),
             ) { col1 ->
                 HudPositionFields(hud, col1) {
                     if (scalable) {
                         HudSettingTarget(hud, "customScale") {
-                            LabeledControl("Scale") {
+                            LabeledControl(hudPanelText("scale", "Scale")) {
                                 NumberSpinner(
                                     hud.customScale, { Snapshot.withMutableSnapshot { hud.customScale = it } },
                                     0.25f, 4f, 0.25f, width = GridCol3, unit = "x"
@@ -96,17 +96,17 @@ fun Layout(hud: Hud?, query: String) {
                     val secondary = LocalTheme.current.textColorSecondary
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(placementLabel(it), color = secondary, fontSize = 12.sp)
-                        if (!it.moved && it.scaled) Text("Reset position to follow it", color = secondary, fontSize = 12.sp)
+                        if (!it.moved && it.scaled) Text(hudPanelText("reset_to_follow", "Reset position to follow it"), color = secondary, fontSize = 12.sp)
                     }
                 }
                 HudSettingTarget(hud, "locked") {
-                    SwitchRow("Lock position", locked) {
+                    SwitchRow(hudPanelText("lock_position", "Lock position"), locked) {
                         Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
                     }
                 }
                 if (hud !is LegacyHudMarker) {
                     HudSettingTarget(hud, "useGuiScale") {
-                        SwitchRow("Follow GUI scale", hud.useGuiScale) {
+                        SwitchRow(hudPanelText("follow_gui_scale", "Follow GUI scale"), hud.useGuiScale) {
                             Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) }
                         }
                     }
@@ -115,7 +115,7 @@ fun Layout(hud: Hud?, query: String) {
 
             if (hud !is LegacyHudMarker) {
                 CardSection(
-                    "Size & Alignment", query, "Static size", "Width", "Height", "Anchor", "Content alignment",
+                    hudPanelText("size_alignment", "Size & Alignment"), query, hudPanelText("static_size", "Static size"), hudPanelText("width", "Width"), hudPanelText("height", "Height"), hudPanelText("anchor", "Anchor"), hudPanelText("content_alignment", "Content alignment"),
                     "Alignment", "Growth anchor",
                     onReset = { resetHudOptions(hud, SIZE_OPTIONS) },
                     canReset = hudOptionsCanReset(hud, SIZE_OPTIONS),
@@ -124,7 +124,7 @@ fun Layout(hud: Hud?, query: String) {
                         staticWidth,
                         row = {
                             HudSettingTarget(hud, "staticWidth") {
-                                SwitchRow("Static size", staticWidth) {
+                                SwitchRow(hudPanelText("static_size", "Static size"), staticWidth) {
                                     Snapshot.withMutableSnapshot {
                                         staticWidth = it; hud.staticWidth = it
                                         if (it) {
@@ -142,7 +142,7 @@ fun Layout(hud: Hud?, query: String) {
                                 col1,
                                 first = {
                                     HudSettingTarget(hud, "staticW") {
-                                        LabeledControl("Width") {
+                                        LabeledControl(hudPanelText("width", "Width")) {
                                             NumberSpinner(
                                                 staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
                                                 20f, 2000f, 1f, width = col1, unit = "px", scrub = true, math = true,
@@ -152,7 +152,7 @@ fun Layout(hud: Hud?, query: String) {
                                 },
                                 second = {
                                     HudSettingTarget(hud, "staticH") {
-                                        LabeledControl("Height") {
+                                        LabeledControl(hudPanelText("height", "Height")) {
                                             NumberSpinner(
                                                 staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
                                                 8f, 2000f, 1f, width = GridCol2, unit = "px", scrub = true, math = true,
@@ -165,7 +165,7 @@ fun Layout(hud: Hud?, query: String) {
                     )
 
                     HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
-                        LabeledControl(if (staticWidth) "Content alignment" else "Anchor") {
+                        LabeledControl(if (staticWidth) hudPanelText("content_alignment", "Content alignment") else hudPanelText("anchor", "Anchor")) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -182,8 +182,8 @@ fun Layout(hud: Hud?, query: String) {
                                     }
                                 }
                                 Text(
-                                    if (staticWidth) "Aligns the content inside the fixed box"
-                                    else "Pins this corner or edge in place;\nthe HUD only grows away from it",
+                                    if (staticWidth) hudPanelText("content_alignment.hint", "Aligns the content inside the fixed box")
+                                    else hudPanelText("anchor.hint", "Pins this corner or edge in place;\nthe HUD only grows away from it"),
                                     color = LocalTheme.current.textColorSecondary,
                                     fontSize = 12.sp
                                 )
@@ -193,12 +193,12 @@ fun Layout(hud: Hud?, query: String) {
                 }
 
                 CardSection(
-                    "Padding", query, "Horizontal", "Vertical", "Per side", "Left", "Right", "Top", "Bottom",
+                    hudPanelText("padding", "Padding"), query, hudPanelText("horizontal", "Horizontal"), hudPanelText("vertical", "Vertical"), hudPanelText("per_side", "Per side"), hudPanelText("left", "Left"), hudPanelText("right", "Right"), hudPanelText("top", "Top"), hudPanelText("bottom", "Bottom"),
                     onReset = { resetHudOptions(hud, PADDING_OPTIONS) },
                     canReset = hudOptionsCanReset(hud, PADDING_OPTIONS),
                 ) { col1 ->
                     val perSideSwitch: @Composable () -> Unit = {
-                        LabeledControl("Per side") {
+                        LabeledControl(hudPanelText("per_side", "Per side")) {
                             SwitchControl(perSide) {
                                 perSide = it
                                 // leaving per side mode evens the sides out so the two fields show what is applied
@@ -217,9 +217,9 @@ fun Layout(hud: Hud?, query: String) {
                                 col1,
                                 first = {
                                     if (perSide) {
-                                        HudSettingTarget(hud, "padLeft") { PadSpinner("Left", padLeft, col1) { padLeft = it; hud.padLeft = it } }
+                                        HudSettingTarget(hud, "padLeft") { PadSpinner(hudPanelText("left", "Left"), padLeft, col1) { padLeft = it; hud.padLeft = it } }
                                     } else {
-                                        PadSpinner("Horizontal", padLeft, col1) {
+                                        PadSpinner(hudPanelText("horizontal", "Horizontal"), padLeft, col1) {
                                             padLeft = it; hud.padLeft = it
                                             padRight = it; hud.padRight = it
                                         }
@@ -227,9 +227,9 @@ fun Layout(hud: Hud?, query: String) {
                                 },
                                 second = {
                                     if (perSide) {
-                                        HudSettingTarget(hud, "padTop") { PadSpinner("Top", padTop, GridCol2) { padTop = it; hud.padTop = it } }
+                                        HudSettingTarget(hud, "padTop") { PadSpinner(hudPanelText("top", "Top"), padTop, GridCol2) { padTop = it; hud.padTop = it } }
                                     } else {
-                                        PadSpinner("Vertical", padTop, GridCol2) {
+                                        PadSpinner(hudPanelText("vertical", "Vertical"), padTop, GridCol2) {
                                             padTop = it; hud.padTop = it
                                             padBottom = it; hud.padBottom = it
                                         }
@@ -241,8 +241,8 @@ fun Layout(hud: Hud?, query: String) {
                         folded = {
                             GridRow(
                                 col1,
-                                first = { HudSettingTarget(hud, "padRight") { PadSpinner("Right", padRight, col1) { padRight = it; hud.padRight = it } } },
-                                second = { HudSettingTarget(hud, "padBottom") { PadSpinner("Bottom", padBottom, GridCol2) { padBottom = it; hud.padBottom = it } } },
+                                first = { HudSettingTarget(hud, "padRight") { PadSpinner(hudPanelText("right", "Right"), padRight, col1) { padRight = it; hud.padRight = it } } },
+                                second = { HudSettingTarget(hud, "padBottom") { PadSpinner(hudPanelText("bottom", "Bottom"), padBottom, GridCol2) { padBottom = it; hud.padBottom = it } } },
                             )
                         },
                     )

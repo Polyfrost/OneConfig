@@ -1,78 +1,57 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.internal.ui.hud
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.Icon
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuCustomItem
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuIconRow
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuList
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip
-import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.shellTransition
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
+import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
+import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudAlign
 import org.polyfrost.oneconfig.internal.ui.hud.screens.alignHuds
 import org.polyfrost.oneconfig.internal.ui.hud.screens.tourString
-import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.concentric
 
-private val MenuPadding = 4.dp
+private val MenuIconSize = 14.dp
 
 private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 
@@ -248,24 +227,18 @@ fun HudSettingTarget(
         return
     }
 
-    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
-    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
-
-    Box(
-        modifier = modifier.pointerInput(System.identityHashCode(prop)) {
-            awaitPointerEventScope {
-                while (true) {
-                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                    if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
-                        val pos = event.changes.first().position
-                        menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
-                        menuOpen = true
-                        event.changes.forEach { it.consume() }
-                    }
-                }
-            }
+    val menu = rememberOptionMenu(
+        prop,
+        onReset = {
+            performHudOptionReset(hud, prop, optionId)
+            for ((id, p) in linked) performHudOptionReset(hud, p, id)
+            finishHudReset(hud)
         },
-    ) {
+        resetEnabled = canResetHudOption(hud, prop, optionId) ||
+            linked.any { (id, p) -> canResetHudOption(hud, p, id) },
+    )
+
+    Box(modifier = modifier.optionContextMenu(menu)) {
         val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
         if (description != null) {
             Tooltip(
@@ -280,19 +253,6 @@ fun HudSettingTarget(
         } else {
             content()
         }
-        OptionContextMenu(
-            prop = prop,
-            expanded = menuOpen,
-            offset = menuOffset,
-            onDismiss = { menuOpen = false },
-            resetEnabled = canResetHudOption(hud, prop, optionId) ||
-                linked.any { (id, p) -> canResetHudOption(hud, p, id) },
-            onReset = {
-                performHudOptionReset(hud, prop, optionId)
-                for ((id, p) in linked) performHudOptionReset(hud, p, id)
-                finishHudReset(hud)
-            },
-        )
     }
 }
 
@@ -311,8 +271,6 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
     }
 }
 
-private val DeleteMenuColor = Color(0xFFE5484D)
-
 /**
  * Right-click menu on a HUD element in the design studio canvas
  *
@@ -326,361 +284,270 @@ fun HudCanvasResetMenu(
     offset: IntOffset,
     onDismiss: () -> Unit,
     targets: List<Hud> = emptyList(),
-    onSettings: (Hud) -> Unit = {},
-    settingsEnabled: Boolean = true,
-    onCopy: (Hud) -> Unit = {},
-    onCut: (Hud) -> Unit = {},
-    onPaste: (Hud) -> Unit = {},
-    pasteEnabled: Boolean = false,
-    onDuplicate: (Hud) -> Unit = {},
-    duplicateEnabled: Boolean = true,
-    onAnchor: (Hud) -> Unit = {},
-    anchorEnabled: Boolean = true,
-    onDelete: (Hud) -> Unit = {},
-    onUndo: () -> Unit = {},
-    undoEnabled: Boolean = false,
-    onRedo: () -> Unit = {},
-    redoEnabled: Boolean = false,
     preview: Boolean = false,
     onMeasured: (IntSize) -> Unit = {},
 ) {
     if (hud == null || !expanded) return
-    val theme = LocalTheme.current
-    val actionTargets = targets.ifEmpty { listOf(hud) }
-    val anyAnchored = actionTargets.any { it.isAnchored }
-    val resetEnabled = actionTargets.any { hudHasResettableDefaults(it) }
-    val deletable = actionTargets.any { it.canDelete() }
-    val allHidden = actionTargets.all { it.hidden }
-    val allLocked = actionTargets.all { it.locked }
-    val showHints = OneConfigConfig.showKeybindHints
-    val settingsHint = if (showHints) keybindHint(OneConfigConfig.hudSettingsKeybind) else null
-    val visibilityHint = if (showHints) keybindHint(OneConfigConfig.hudVisibilityKeybind) else null
-    val lockHint = if (showHints) keybindHint(OneConfigConfig.hudLockKeybind) else null
-    val duplicateHint = if (showHints) keybindHint(OneConfigConfig.hudDuplicateKeybind) else null
-    val resetHint = if (showHints) keybindHint(OneConfigConfig.hudResetKeybind) else null
-    val copyHint = if (showHints) keybindHint(OneConfigConfig.hudCopyKeybind) else null
-    val cutHint = if (showHints) keybindHint(OneConfigConfig.hudCutKeybind) else null
-    val pasteHint = if (showHints) keybindHint(OneConfigConfig.hudPasteKeybind) else null
-    val deleteHint = if (showHints) keybindHint(OneConfigConfig.hudDeleteKeybind) else null
-    val undoHint = if (showHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
-    val redoHint = if (showHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
+    val entries = buildHudCanvasMenuEntries(
+        hud = hud,
+        targets = targets,
+        onSettings = {},
+        settingsEnabled = true,
+        onCopy = {},
+        onCut = {},
+        onPaste = {},
+        pasteEnabled = false,
+        onDuplicate = {},
+        duplicateEnabled = true,
+        onAnchor = {},
+        anchorEnabled = true,
+        onDelete = {},
+        onUndo = {},
+        undoEnabled = false,
+        onRedo = {},
+        redoEnabled = false,
+        highlightAnchor = preview,
+    )
     ShellPopup(
         alignment = Alignment.TopStart,
         offset = offset,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = !preview, dismissOnClickOutside = !preview),
     ) {
-        Column(
-            // without this the separator's fillMaxWidth stretches the menu out to the whole screen
-            modifier = Modifier
-                .onSizeChanged(onMeasured)
-                .blockInteraction(preview)
-                .widthIn(min = 190.dp, max = 240.dp)
-                .shellTransition()
-                .liquidGlass(theme.popupShape, frosted = true)
-                .background(theme.popupBackground, theme.popupShape)
-                .border(1.dp, theme.borderColor, theme.popupShape)
-                .padding(MenuPadding),
-        ) {
-            HudMenuRow(
-                icon = "settings",
-                text = "Settings",
-                enabled = settingsEnabled,
-                hint = settingsHint,
-            ) {
-                onSettings(hud)
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = if (allHidden) "eye-off" else "eye",
-                text = if (allHidden) "Show" else "Hide",
-                hint = visibilityHint,
-            ) {
-                Snapshot.withMutableSnapshot {
-                    val hide = actionTargets.any { !it.hidden }
-                    actionTargets.forEach { it.hidden = hide }
-                }
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = if (allLocked) "lock" else "unlock",
-                text = if (allLocked) "Unlock" else "Lock",
-                color = if (allLocked) Accent else null,
-                hint = lockHint,
-            ) {
-                Snapshot.withMutableSnapshot {
-                    val lock = actionTargets.any { !it.locked }
-                    actionTargets.forEach { it.locked = lock }
-                }
-                onDismiss()
-            }
-            HudAlignRow { align ->
-                onDismiss()
-                alignHuds(actionTargets, align)
-            }
-            Box(
-                modifier = if (preview) {
-                    Modifier
-                        .background(Accent.copy(alpha = 0.18f), theme.buttonShape)
-                        .border(1.dp, Accent, theme.buttonShape)
-                } else {
-                    Modifier
-                }
-            ) {
-                HudMenuRow(
-                    icon = "align",
-                    text = "Anchor",
-                    enabled = anchorEnabled,
-                ) {
-                    onAnchor(hud)
-                    onDismiss()
-                }
-            }
-            if (anyAnchored) {
-                HudMenuRow(icon = "x-circle", text = "Remove anchor") {
-                    Snapshot.withMutableSnapshot {
-                        actionTargets.forEach { it.clearAnchor() }
-                    }
-                    onDismiss()
-                }
-            }
-            HudMenuDivider()
-            HudMenuRow(icon = "copy", text = "Copy", hint = copyHint) {
-                onCopy(hud)
-                onDismiss()
-            }
-            HudMenuRow(icon = "scissors", text = "Cut", hint = cutHint) {
-                onCut(hud)
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = "clipboard",
-                text = "Paste",
-                enabled = pasteEnabled,
-                hint = pasteHint,
-            ) {
-                onPaste(hud)
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = "copy-plus",
-                text = "Duplicate",
-                enabled = duplicateEnabled,
-                hint = duplicateHint,
-            ) {
-                onDuplicate(hud)
-                onDismiss()
-            }
-            HudMenuDivider()
-            HudMenuRow(icon = "undo", text = "Undo", enabled = undoEnabled, hint = undoHint) {
-                onUndo()
-                onDismiss()
-            }
-            HudMenuRow(icon = "redo", text = "Redo", enabled = redoEnabled, hint = redoHint) {
-                onRedo()
-                onDismiss()
-            }
-            HudMenuDivider()
-            if (actionTargets.any(::hudHasPositionDefaults)) {
-                HudMenuRow(
-                    icon = "move",
-                    text = "Reset position",
-                    enabled = actionTargets.any { hudCanResetPosition(it) },
-                ) {
-                    actionTargets.filter { hudCanResetPosition(it) }.forEach(::resetHudPosition)
-                    onDismiss()
-                }
-            }
-            HudMenuRow(
-                icon = "refresh",
-                text = "Reset HUD settings",
-                enabled = resetEnabled,
-                hint = resetHint,
-            ) {
-                actionTargets.forEach { resetAllHudProperties(it) }
-                onDismiss()
-            }
-            if (deletable) {
-                HudMenuRow(
-                    icon = "trash",
-                    text = "Delete HUD",
-                    color = DeleteMenuColor,
-                    hint = deleteHint,
-                ) {
-                    onDelete(hud)
-                    onDismiss()
-                }
-            }
-        }
+        MenuList(entries, onDismiss, Modifier.onSizeChanged(onMeasured).blockInteraction(preview, keyboard = true))
     }
 }
 
-@Composable
-private fun HudMenuDivider() {
-    val theme = LocalTheme.current
-    Box(
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(theme.borderColor)
+internal fun hudCanvasMenuEntries(
+    hud: Hud,
+    targets: List<Hud>,
+    onSettings: (Hud) -> Unit,
+    settingsEnabled: Boolean,
+    onCopy: (Hud) -> Unit,
+    onCut: (Hud) -> Unit,
+    onPaste: (Hud) -> Unit,
+    pasteEnabled: Boolean,
+    onDuplicate: (Hud) -> Unit,
+    duplicateEnabled: Boolean,
+    onAnchor: (Hud) -> Unit,
+    anchorEnabled: Boolean,
+    onDelete: (Hud) -> Unit,
+    onUndo: () -> Unit,
+    undoEnabled: Boolean,
+    onRedo: () -> Unit,
+    redoEnabled: Boolean,
+): List<MenuEntry> = buildHudCanvasMenuEntries(
+    hud = hud,
+    targets = targets,
+    onSettings = onSettings,
+    settingsEnabled = settingsEnabled,
+    onCopy = onCopy,
+    onCut = onCut,
+    onPaste = onPaste,
+    pasteEnabled = pasteEnabled,
+    onDuplicate = onDuplicate,
+    duplicateEnabled = duplicateEnabled,
+    onAnchor = onAnchor,
+    anchorEnabled = anchorEnabled,
+    onDelete = onDelete,
+    onUndo = onUndo,
+    undoEnabled = undoEnabled,
+    onRedo = onRedo,
+    redoEnabled = redoEnabled,
+    highlightAnchor = false,
+)
+
+private fun buildHudCanvasMenuEntries(
+    hud: Hud,
+    targets: List<Hud>,
+    onSettings: (Hud) -> Unit,
+    settingsEnabled: Boolean,
+    onCopy: (Hud) -> Unit,
+    onCut: (Hud) -> Unit,
+    onPaste: (Hud) -> Unit,
+    pasteEnabled: Boolean,
+    onDuplicate: (Hud) -> Unit,
+    duplicateEnabled: Boolean,
+    onAnchor: (Hud) -> Unit,
+    anchorEnabled: Boolean,
+    onDelete: (Hud) -> Unit,
+    onUndo: () -> Unit,
+    undoEnabled: Boolean,
+    onRedo: () -> Unit,
+    redoEnabled: Boolean,
+    highlightAnchor: Boolean,
+): List<MenuEntry> {
+    val actionTargets = targets.ifEmpty { listOf(hud) }
+    val allHidden = actionTargets.all { it.hidden }
+    val allLocked = actionTargets.all { it.locked }
+    val entries = ArrayList<MenuEntry>(24)
+
+    entries += MenuAction(
+        translated("oneconfig.hud.menu.settings", "Settings"),
+        { onSettings(hud) },
+        icon = "settings",
+        enabled = settingsEnabled,
+        shortcutHint = keybindHint(OneConfigConfig.hudSettingsKeybind),
     )
+    entries += MenuAction(
+        if (allHidden) translated("oneconfig.hud.menu.show", "Show") else translated("oneconfig.hud.menu.hide", "Hide"),
+        {
+            Snapshot.withMutableSnapshot {
+                val hide = actionTargets.any { !it.hidden }
+                actionTargets.forEach { it.hidden = hide }
+            }
+        },
+        icon = if (allHidden) "eye-off" else "eye",
+        shortcutHint = keybindHint(OneConfigConfig.hudVisibilityKeybind),
+    )
+    val lockIcon = if (allLocked) "lock" else "unlock"
+    entries += MenuAction(
+        if (allLocked) translated("oneconfig.hud.menu.unlock", "Unlock") else translated("oneconfig.hud.menu.lock", "Lock"),
+        {
+            Snapshot.withMutableSnapshot {
+                val lock = actionTargets.any { !it.locked }
+                actionTargets.forEach { it.locked = lock }
+            }
+        },
+        icon = lockIcon,
+        shortcutHint = keybindHint(OneConfigConfig.hudLockKeybind),
+        leading = if (allLocked) accentMenuIcon(lockIcon) else null,
+    )
+    entries += MenuIconRow(
+        HudAlign.entries.map { align ->
+            MenuAction(alignLabel(align), { alignHuds(actionTargets, align) }, icon = align.icon)
+        },
+    )
+    val anchorLabel = translated("oneconfig.hud.menu.anchor", "Anchor")
+    entries += if (highlightAnchor) {
+        MenuCustomItem { MenuItem(anchorLabel, {}, icon = "align", enabled = anchorEnabled, selected = true) }
+    } else {
+        MenuAction(anchorLabel, { onAnchor(hud) }, icon = "align", enabled = anchorEnabled)
+    }
+    if (actionTargets.any { it.isAnchored }) {
+        entries += MenuAction(
+            translated("oneconfig.hud.menu.remove_anchor", "Remove anchor"),
+            {
+                Snapshot.withMutableSnapshot {
+                    actionTargets.forEach { it.clearAnchor() }
+                }
+            },
+            icon = "x-circle",
+        )
+    }
+
+    entries += MenuSeparator
+    entries += MenuAction(
+        translated("oneconfig.menu.text.copy", "Copy"),
+        { onCopy(hud) },
+        icon = "copy",
+        shortcutHint = keybindHint(OneConfigConfig.hudCopyKeybind),
+    )
+    entries += MenuAction(
+        translated("oneconfig.menu.text.cut", "Cut"),
+        { onCut(hud) },
+        icon = "scissors",
+        shortcutHint = keybindHint(OneConfigConfig.hudCutKeybind),
+    )
+    entries += pasteAction({ onPaste(hud) }, pasteEnabled)
+    entries += MenuAction(
+        translated("oneconfig.hud.menu.duplicate", "Duplicate"),
+        { onDuplicate(hud) },
+        icon = "copy-plus",
+        enabled = duplicateEnabled,
+        shortcutHint = keybindHint(OneConfigConfig.hudDuplicateKeybind),
+    )
+
+    entries += MenuSeparator
+    entries += undoAction(onUndo, undoEnabled)
+    entries += redoAction(onRedo, redoEnabled)
+
+    entries += MenuSeparator
+    if (actionTargets.any(::hudHasPositionDefaults)) {
+        entries += MenuAction(
+            translated("oneconfig.hud.menu.reset_position", "Reset position"),
+            { actionTargets.filter { hudCanResetPosition(it) }.forEach(::resetHudPosition) },
+            icon = "move",
+            enabled = actionTargets.any { hudCanResetPosition(it) },
+        )
+    }
+    entries += MenuAction(
+        translated("oneconfig.hud.menu.reset_settings", "Reset HUD settings"),
+        { actionTargets.forEach { resetAllHudProperties(it) } },
+        icon = "refresh",
+        enabled = actionTargets.any { hudHasResettableDefaults(it) },
+        shortcutHint = keybindHint(OneConfigConfig.hudResetKeybind),
+    )
+    if (actionTargets.any { it.canDelete() }) {
+        entries += MenuAction(
+            translated("oneconfig.hud.menu.delete", "Delete HUD"),
+            { onDelete(hud) },
+            icon = "trash",
+            shortcutHint = keybindHint(OneConfigConfig.hudDeleteKeybind),
+            danger = true,
+        )
+    }
+    return entries
+}
+
+internal fun hudCanvasPasteMenuEntries(
+    pasteEnabled: Boolean,
+    onPaste: () -> Unit,
+    onSelectAll: () -> Unit,
+    onUndo: () -> Unit,
+    undoEnabled: Boolean,
+    onRedo: () -> Unit,
+    redoEnabled: Boolean,
+    onTour: (() -> Unit)?,
+): List<MenuEntry> {
+    val entries = ArrayList<MenuEntry>(8)
+    entries += undoAction(onUndo, undoEnabled)
+    entries += redoAction(onRedo, redoEnabled)
+    entries += MenuSeparator
+    entries += pasteAction(onPaste, pasteEnabled)
+    entries += MenuAction(
+        translated("oneconfig.menu.text.select_all", "Select all"),
+        onSelectAll,
+        icon = "select-all",
+        shortcutHint = keybindHint(OneConfigConfig.hudSelectAllKeybind),
+    )
+    if (onTour != null) {
+        entries += MenuSeparator
+        entries += MenuAction(tourString("menu"), onTour, icon = "info")
+    }
+    return entries
+}
+
+private fun pasteAction(onPaste: () -> Unit, enabled: Boolean): MenuAction = MenuAction(
+    translated("oneconfig.menu.text.paste", "Paste"),
+    onPaste,
+    icon = "clipboard",
+    enabled = enabled,
+    shortcutHint = keybindHint(OneConfigConfig.hudPasteKeybind),
+)
+
+private fun undoAction(onUndo: () -> Unit, enabled: Boolean): MenuAction = MenuAction(
+    translated("oneconfig.hud.menu.undo", "Undo"),
+    onUndo,
+    icon = "undo",
+    enabled = enabled,
+    shortcutHint = keybindHint(OneConfigConfig.hudUndoKeybind),
+)
+
+private fun redoAction(onRedo: () -> Unit, enabled: Boolean): MenuAction = MenuAction(
+    translated("oneconfig.hud.menu.redo", "Redo"),
+    onRedo,
+    icon = "redo",
+    enabled = enabled,
+    shortcutHint = keybindHint(OneConfigConfig.hudRedoKeybind),
+)
+
+private fun alignLabel(align: HudAlign): String =
+    translated("oneconfig.hud.align.${align.name.lowercase()}", align.label)
+
+private fun accentMenuIcon(icon: String): @Composable () -> Unit = {
+    Icon(icon, null, Modifier.size(MenuIconSize), Accent)
 }
 
 private fun keybindHint(keybind: OneConfigKeybind?): String? =
-    keybind?.takeIf { it.isBound }?.displayName()
-
-/** Context popup shown on empty canvas space when there is a HUD in the clipboard */
-@Composable
-fun HudCanvasPasteMenu(
-    expanded: Boolean,
-    offset: IntOffset,
-    pasteEnabled: Boolean,
-    onDismiss: () -> Unit,
-    onPaste: () -> Unit,
-    onSelectAll: () -> Unit,
-    onUndo: () -> Unit = {},
-    undoEnabled: Boolean = false,
-    onRedo: () -> Unit = {},
-    redoEnabled: Boolean = false,
-    onTour: (() -> Unit)? = null,
-) {
-    if (!expanded) return
-    val theme = LocalTheme.current
-    val pasteHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudPasteKeybind) else null
-    val selectAllHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudSelectAllKeybind) else null
-    val undoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudUndoKeybind) else null
-    val redoHint = if (OneConfigConfig.showKeybindHints) keybindHint(OneConfigConfig.hudRedoKeybind) else null
-    ShellPopup(
-        alignment = Alignment.TopStart,
-        offset = offset,
-        onDismissRequest = onDismiss,
-        properties = PopupProperties(focusable = true),
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(min = 190.dp, max = 240.dp)
-                .shellTransition()
-                .liquidGlass(theme.popupShape, frosted = true)
-                .background(theme.popupBackground, theme.popupShape)
-                .border(1.dp, theme.borderColor, theme.popupShape)
-                .padding(MenuPadding),
-        ) {
-            HudMenuRow(icon = "undo", text = "Undo", enabled = undoEnabled, hint = undoHint) {
-                onUndo()
-                onDismiss()
-            }
-            HudMenuRow(icon = "redo", text = "Redo", enabled = redoEnabled, hint = redoHint) {
-                onRedo()
-                onDismiss()
-            }
-            HudMenuDivider()
-            HudMenuRow(
-                icon = "clipboard",
-                text = "Paste",
-                enabled = pasteEnabled,
-                hint = pasteHint,
-            ) {
-                onPaste()
-                onDismiss()
-            }
-            HudMenuRow(
-                icon = "select-all",
-                text = "Select All",
-                enabled = true,
-                hint = selectAllHint,
-            ) {
-                onSelectAll()
-                onDismiss()
-            }
-            if (onTour != null) {
-                HudMenuDivider()
-                HudMenuRow(icon = "info", text = tourString("menu")) {
-                    onDismiss()
-                    onTour()
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HudMenuRow(
-    icon: String,
-    text: String,
-    enabled: Boolean = true,
-    color: Color? = null,
-    hint: String? = null,
-    onClick: () -> Unit,
-) {
-    val theme = LocalTheme.current
-    val rowColor = color ?: if (enabled) theme.textColor else theme.textColorSecondary
-    val hintColor = if (enabled) theme.textColorSecondary else theme.textColorSecondary.copy(alpha = 0.5f)
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val hoverBgColor by animateColorAsState(
-        targetValue = if (enabled && isHovered) {
-            theme.textColor.copy(alpha = 0.10f)
-        } else {
-            theme.textColor.copy(alpha = 0f)
-        },
-        animationSpec = tween(120),
-        label = "hudMenuRowHover"
-    )
-    val itemShape = theme.popupShape.concentric(MenuPadding)
-    Row(
-        modifier = Modifier
-            .clip(itemShape)
-            .background(hoverBgColor, itemShape)
-            .then(
-                if (enabled) {
-                    Modifier.onClick(interactionSource, onClick = onClick)
-                        .hoverable(interactionSource)
-                        .pointerHoverIcon(PointerIcon.Hand)
-                } else {
-                    Modifier
-                },
-            )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(icon, color = rowColor, modifier = Modifier.size(14.dp))
-        Text(text, color = rowColor, fontSize = 13.sp, modifier = Modifier.weight(1f))
-        if (hint != null) {
-            Text(hint, color = hintColor, fontSize = 10.sp)
-        }
-    }
-}
-
-@Composable
-private fun HudAlignRow(onAlign: (HudAlign) -> Unit) {
-    val theme = LocalTheme.current
-    Row(
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        for (align in HudAlign.entries) {
-            val interactionSource = rememberInteractionSource()
-            val isHovered by interactionSource.collectIsHoveredAsState()
-            val hover by animateColorAsState(theme.textColor.copy(alpha = if (isHovered) 0.10f else 0f), tween(120))
-            Tooltip(
-                text = { Text(align.label, color = theme.textColor, fontSize = 12.sp) },
-                modifier = Modifier,
-                anchor = Alignment.TopCenter,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(hover, theme.buttonShape)
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(interactionSource, indication = null) { onAlign(align) }
-                        .semantics { contentDescription = align.label },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(align.icon, theme.textColor, Modifier.size(14.dp))
-                }
-            }
-        }
-    }
-}
+    if (OneConfigConfig.showKeybindHints) keybind?.takeIf { it.isBound }?.displayName() else null

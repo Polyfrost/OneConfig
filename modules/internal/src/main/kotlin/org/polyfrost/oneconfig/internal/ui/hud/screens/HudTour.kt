@@ -1,36 +1,25 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathFillType
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -40,14 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.ModalPanel
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
@@ -86,8 +76,10 @@ internal enum class HudTourStep(
 
 internal fun tourString(key: String): String = Platform.i18n().translateString("oneconfig.hud.tour.$key")
 
-private val tourScrimColor = Color.Black.copy(0.6f)
 private val TOUR_CARD_WIDTH = 280.dp
+private val SPOTLIGHT_RADIUS = 8.dp
+private val GHOST_RADIUS = 4.dp
+private const val TOUR_MOTION_MILLIS = 220
 
 private fun placeTourCard(
     root: IntSize,
@@ -144,13 +136,14 @@ internal fun HudTourOverlay(
 
     val hole = focus?.inflate(with(density) { 6.dp.toPx() })
     val target = hole ?: Rect(Offset(rootSize.width / 2f, rootSize.height / 2f), Size.Zero)
-    val holeSpec = tween<Float>(if (ReducedMotion.enabled) 0 else 220)
-    val holeLeft by animateFloatAsState(target.left, holeSpec, label = "tourHoleLeft")
-    val holeTop by animateFloatAsState(target.top, holeSpec, label = "tourHoleTop")
-    val holeRight by animateFloatAsState(target.right, holeSpec, label = "tourHoleRight")
-    val holeBottom by animateFloatAsState(target.bottom, holeSpec, label = "tourHoleBottom")
-    val ringAlpha by animateFloatAsState(if (hole != null) 1f else 0f, holeSpec, label = "tourRingAlpha")
-    val scrimAlpha by animateFloatAsState(if (step.interactive) 0f else 1f, tween(220), label = "tourScrimAlpha")
+    val holeSpec = tween<Float>(TOUR_MOTION_MILLIS)
+    val holeLeft by Motion.animateFloatAsState(target.left, holeSpec, label = "tourHoleLeft")
+    val holeTop by Motion.animateFloatAsState(target.top, holeSpec, label = "tourHoleTop")
+    val holeRight by Motion.animateFloatAsState(target.right, holeSpec, label = "tourHoleRight")
+    val holeBottom by Motion.animateFloatAsState(target.bottom, holeSpec, label = "tourHoleBottom")
+    val ringAlpha by Motion.animateFloatAsState(if (hole != null) 1f else 0f, holeSpec, label = "tourRingAlpha")
+    val scrimAlpha by Motion.animateFloatAsState(if (step.interactive) 0f else 1f, holeSpec, label = "tourScrimAlpha")
+    val scrimColor = theme.scrimColor
 
     val measured = rootSize.width > 0 && cardSize.width > 0
     var cardPlaced by remember { mutableStateOf(false) }
@@ -167,9 +160,9 @@ internal fun HudTourOverlay(
     } else {
         Offset.Zero
     }
-    val cardSpec = tween<Float>(durationMillis = if (cardPlaced && !ReducedMotion.enabled) 220 else 0)
-    val cardX by animateFloatAsState(cardSlot.x, cardSpec, label = "tourCardX")
-    val cardY by animateFloatAsState(cardSlot.y, cardSpec, label = "tourCardY")
+    val cardSpec = tween<Float>(durationMillis = if (cardPlaced) TOUR_MOTION_MILLIS else 0)
+    val cardX by Motion.animateFloatAsState(cardSlot.x, cardSpec, label = "tourCardX")
+    val cardY by Motion.animateFloatAsState(cardSlot.y, cardSpec, label = "tourCardY")
     LaunchedEffect(measured) { if (measured) cardPlaced = true }
 
     Box(
@@ -177,9 +170,9 @@ internal fun HudTourOverlay(
             .fillMaxSize()
             .onSizeChanged { rootSize = it }
     ) {
-        val spotlightRadius = theme.modCardShape.cornerRadiusOrNull() ?: 0.dp
+        val spotlightRadius = OneConfigTheme.shape(SPOTLIGHT_RADIUS).cornerRadiusOrNull() ?: 0.dp
         Canvas(Modifier.fillMaxSize()) {
-            val radius = CornerRadius(minOf(8.dp, spotlightRadius).toPx())
+            val radius = CornerRadius(spotlightRadius.toPx())
             val cutout = Path().apply {
                 fillType = PathFillType.EvenOdd
                 val margin = 2.dp.toPx()
@@ -193,7 +186,7 @@ internal fun HudTourOverlay(
                 )
                 addRoundRect(RoundRect(holeLeft, holeTop, holeRight, holeBottom, radius))
             }
-            drawPath(cutout, tourScrimColor.copy(alpha = tourScrimColor.alpha * scrimAlpha))
+            drawPath(cutout, scrimColor.copy(alpha = scrimColor.alpha * scrimAlpha))
             if (ringAlpha > 0f) {
                 drawRoundRect(
                     color = Accent.copy(alpha = ringAlpha),
@@ -207,7 +200,7 @@ internal fun HudTourOverlay(
 
         if (dragHint != null) TourDragHint(dragHint.first, dragHint.second)
 
-        Column(
+        ModalPanel(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset {
@@ -217,20 +210,17 @@ internal fun HudTourOverlay(
                 }
                 .graphicsLayer { alpha = if (measured) 1f else 0f }
                 .then(cardModifier)
-                .onSizeChanged { cardSize = it }
-                .width(TOUR_CARD_WIDTH)
-                .liquidGlass(theme.popupShape, frosted = true)
-                .background(theme.popupBackground, theme.popupShape)
-                .border(1.dp, theme.borderColor, theme.popupShape)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .onSizeChanged { cardSize = it },
+            width = TOUR_CARD_WIDTH,
+            padding = PaddingValues(16.dp),
+            spacing = 8.dp,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 for (entry in HudTourStep.entries) {
                     Box(
                         Modifier
                             .size(6.dp)
-                            .background(if (entry.ordinal <= step.ordinal) Accent else theme.borderColor, CircleShape)
+                            .background(if (entry.ordinal <= step.ordinal) Accent else theme.borderColor, theme.shapes.circle)
                     )
                 }
             }
@@ -270,10 +260,11 @@ internal fun HudTourOverlay(
 
 @Composable
 private fun TourDragHint(from: Rect, to: Rect) {
-    val progress = if (ReducedMotion.enabled) 0f else tourDragProgress()
-    val ghostRadius = LocalTheme.current.buttonShape.cornerRadiusOrNull() ?: 0.dp
+    val progress = tourDragProgress()
+    val ghostRadius = OneConfigTheme.shape(GHOST_RADIUS).cornerRadiusOrNull() ?: 0.dp
+    val handleRing = LocalTheme.current.onMedia
     Canvas(Modifier.fillMaxSize()) {
-        val radius = CornerRadius(minOf(4.dp, ghostRadius).toPx())
+        val radius = CornerRadius(ghostRadius.toPx())
         val stroke = 1.5.dp.toPx()
         val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
         drawRoundRect(
@@ -287,18 +278,17 @@ private fun TourDragHint(from: Rect, to: Rect) {
         val ghost = from.translate((to.topLeft - from.topLeft) * progress)
         drawRoundRect(Accent.copy(alpha = 0.2f), ghost.topLeft, ghost.size, radius)
         drawRoundRect(Accent, ghost.topLeft, ghost.size, radius, style = Stroke(width = stroke))
-        drawCircle(Color.White, radius = 7.dp.toPx(), center = ghost.center)
+        drawCircle(handleRing, radius = 7.dp.toPx(), center = ghost.center)
         drawCircle(Accent, radius = 5.dp.toPx(), center = ghost.center)
     }
 }
 
 @Composable
 private fun tourDragProgress(): Float {
-    val transition = rememberInfiniteTransition(label = "tourDragHint")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
+    val progress by Motion.animateInfiniteFloat(
+        initial = 0f,
+        target = 1f,
+        spec = infiniteRepeatable(
             keyframes {
                 durationMillis = 2200
                 0f at 0
@@ -314,29 +304,11 @@ private fun tourDragProgress(): Float {
 
 @Composable
 private fun TourButton(text: String, primary: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
-    val theme = LocalTheme.current
-    val source = rememberInteractionSource()
-    val isHovered by source.collectIsHoveredAsState()
-    val base = if (primary) Accent else Color.Transparent
-    val background by animateAccentColorAsState(
-        listOf(isHovered, enabled, primary),
-        if (isHovered && enabled) (if (primary) Color.White else theme.textColor).copy(0.12f).compositeOver(base) else base
+    TextButton(
+        text,
+        onClick,
+        style = if (primary) ControlStyle.Primary else ControlStyle.Ghost,
+        size = ControlSize.Compact,
+        enabled = enabled,
     )
-    val alpha by animateFloatAsState(if (enabled) 1f else 0.4f, label = "tourButtonAlpha")
-    Box(
-        modifier = Modifier
-            .graphicsLayer { this.alpha = alpha }
-            .clip(theme.buttonShape)
-            .background(background, theme.buttonShape)
-            .onClick(source, enabled, onClick)
-            .pointerHoverIcon(if (enabled) PointerIcon.Hand else PointerIcon.Default)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    ) {
-        Text(
-            text,
-            color = if (primary) theme.accentTextColor else theme.textColorSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-        )
-    }
 }

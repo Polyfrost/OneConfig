@@ -312,6 +312,10 @@ public final class org/polyfrost/oneconfig/api/ui/v1/a11y/A11yRole : java/lang/E
 public final class org/polyfrost/oneconfig/api/ui/v1/a11y/Motion {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/a11y/Motion;
+	public final fun animateColorAsState-KTwxG1Y (JLandroidx/compose/animation/core/AnimationSpec;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public final fun animateDpAsState-Kz89ssw (FLandroidx/compose/animation/core/AnimationSpec;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public final fun animateFloatAsState (FLandroidx/compose/animation/core/AnimationSpec;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public final fun animateInfiniteFloat (FFLandroidx/compose/animation/core/InfiniteRepeatableSpec;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
 	public static final fun enter (Landroidx/compose/animation/EnterTransition;)Landroidx/compose/animation/EnterTransition;
 	public static final fun exit (Landroidx/compose/animation/ExitTransition;)Landroidx/compose/animation/ExitTransition;
 	public static final fun finiteSpec (Landroidx/compose/animation/core/FiniteAnimationSpec;)Landroidx/compose/animation/core/FiniteAnimationSpec;
@@ -825,7 +829,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/MenuKt {
 	public static final fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun ContextMenuHost (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun MenuItem (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZZLjava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
-	public static final fun MenuItem (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final synthetic fun MenuItem (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun MenuItem (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final fun MenuItem (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZLjava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun MenuList (Ljava/util/List;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
