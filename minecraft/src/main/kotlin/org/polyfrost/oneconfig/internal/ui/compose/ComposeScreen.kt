@@ -382,7 +382,7 @@ abstract class ComposeScreen(
                 LocalClipboardManager provides SystemClipboardManager,
                 LocalClipboard provides SystemClipboard,
                 LocalUiOversample provides surfaceScale(),
-                FixedScrollConfig.provided(),
+                scrollConfig.provided(),
                 LocalWheelRouter provides wheelRouter,
             ) {
                 EscapeAwareTextMenus { compose() }
@@ -496,6 +496,7 @@ abstract class ComposeScreen(
         showing = false
         sceneContextOrNull?.sync()
         ComposeSceneContextImpl.resetPointerIcon()
+        wheelRouter.stopFallback()
         releaseHeldButtons()
         consumedButtons.clear()
         lightInside = false
@@ -577,6 +578,20 @@ abstract class ComposeScreen(
 
         if (metricsChanged) {
             withScene { it.invalidatePositionInWindow() }
+        }
+
+        wheelRouter.glideFrame { step ->
+            glideCarry += step
+            val density = sceneDensity()
+            if (abs(glideCarry.x * density) >= 1f || abs(glideCarry.y * density) >= 1f) {
+                val carried = glideCarry
+                glideCarry = Offset.Zero
+                val pointer = pointerPosition()
+                withScene {
+                    it.sendPointerEvent(PointerEventType.Scroll, glideAnchor, scrollDelta = carried)
+                    if (pointer != glideAnchor) it.sendPointerEvent(PointerEventType.Move, pointer)
+                }
+            }
         }
 
         // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
@@ -784,10 +799,14 @@ abstract class ComposeScreen(
             // side buttons are handled before this, and Compose ignores other clicks while one is held
             else -> return
         }
+        if (type == PointerEventType.Press) wheelRouter.stopFallback()
         withScene { it.sendPointerEvent(type, button = pointerButton, position = pointerPosition()) }
     }
 
     private val wheelRouter = WheelRouter()
+    private val scrollConfig = FixedScrollConfig(wheelRouter)
+    private var glideAnchor = Offset.Zero
+    private var glideCarry = Offset.Zero
 
     private var lastPreciseScrollNanos = 0L
 
@@ -817,7 +836,14 @@ abstract class ComposeScreen(
                 it.sendPointerEvent(PointerEventType.Scroll, position, scrollDelta = delta)
             }
         }
-        if (precise) dispatch() else wheelRouter.route(delta, dispatch)
+        if (precise) {
+            wheelRouter.stopFallback()
+            dispatch()
+        } else {
+            glideAnchor = position
+            glideCarry = Offset.Zero
+            wheelRouter.route(delta, dispatch)
+        }
     }
 
     /** Whether a scroll came from a trackpad, which is applied directly instead of gliding */
