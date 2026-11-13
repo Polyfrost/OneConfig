@@ -5,18 +5,22 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import net.kyori.adventure.text.Component
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColorPickerModel
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
@@ -28,9 +32,12 @@ import org.polyfrost.oneconfig.internal.ui.api.Tooltip as InternalTooltip
 import org.polyfrost.oneconfig.internal.ui.components.Chip as InternalChip
 import org.polyfrost.oneconfig.internal.ui.components.Icon as InternalIcon
 import org.polyfrost.oneconfig.internal.ui.components.IconButton as InternalIconButton
-import org.polyfrost.oneconfig.internal.ui.components.Text as InternalText
+import org.polyfrost.oneconfig.internal.ui.components.StyledText
+import org.polyfrost.oneconfig.internal.ui.components.componentText
+import org.polyfrost.oneconfig.internal.ui.components.legacyText
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
 import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup as InternalColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
@@ -121,22 +128,53 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     override fun concentric(shape: Shape, inset: Dp, minRadius: Dp): Shape = shape.concentric(inset, minRadius)
 
     @Composable
-    override fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean) =
-        InternalIcon(iconName, color, modifier, fitAspectRatio)
+    override fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean, tint: (() -> Color)?) =
+        InternalIcon(iconName, color, modifier, fitAspectRatio, tint)
 
     @Composable
     override fun Text(
-        text: Any,
+        text: String,
         modifier: Modifier,
         color: Color,
-        fontSize: TextUnit,
-        lineHeight: TextUnit?,
-        shift: BaselineShift,
-        fontWeight: FontWeight,
-        textAlign: TextAlign,
+        style: TextStyle,
         maxLines: Int,
         overflow: TextOverflow,
-    ) = InternalText(text, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow)
+        softWrap: Boolean,
+        textAlign: TextAlign?,
+        colorProducer: ColorProducer?,
+        onTextLayout: ((TextLayoutResult) -> Unit)?,
+    ) = StyledText(legacyText(text), modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer, onTextLayout)
+
+    @Composable
+    override fun Text(
+        text: AnnotatedString,
+        modifier: Modifier,
+        color: Color,
+        style: TextStyle,
+        maxLines: Int,
+        overflow: TextOverflow,
+        softWrap: Boolean,
+        textAlign: TextAlign?,
+        colorProducer: ColorProducer?,
+        onTextLayout: ((TextLayoutResult) -> Unit)?,
+    ) = StyledText(text, modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer, onTextLayout)
+
+    @Composable
+    override fun Text(
+        text: Component,
+        modifier: Modifier,
+        color: Color,
+        style: TextStyle,
+        maxLines: Int,
+        overflow: TextOverflow,
+        softWrap: Boolean,
+        textAlign: TextAlign?,
+        colorProducer: ColorProducer?,
+        onTextLayout: ((TextLayoutResult) -> Unit)?,
+    ) {
+        val annotated = remember(text) { componentText(text) }
+        StyledText(annotated, modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer, onTextLayout)
+    }
 
     @Composable
     override fun Chip(label: String, selected: Boolean, icon: String?, onClick: () -> Unit) =
@@ -194,11 +232,43 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     override fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier =
         modifier.fadingEdges(scrollState, color, length)
 
-    override fun createColorPicker(initialColor: Color, hasAlpha: Boolean): Any = ColorPickerModel(initialColor, hasAlpha)
+    override fun createColorPicker(
+        initialColor: Color,
+        hasAlpha: Boolean,
+        chroma: Boolean,
+        chromaSpeed: Float,
+        gradient: Color?,
+    ): KitColorPickerModel = ColorPickerModel(initialColor, hasAlpha).also { configure(it, initialColor, chroma, chromaSpeed, gradient) }
+
+    override fun updateColorPicker(model: KitColorPickerModel, color: Color, chroma: Boolean, chromaSpeed: Float, gradient: Color?) {
+        if (model is ColorPickerModel) configure(model, color, chroma, chromaSpeed, gradient) else model.set(color)
+    }
+
+    private fun configure(model: ColorPickerModel, color: Color, chroma: Boolean, chromaSpeed: Float, gradient: Color?) {
+        model.chromaEnabled = false
+        model.set(color)
+        model.chromaSpeed = chromaSpeed
+        model.chromaEnabled = chroma
+        model.gradientEnabled = gradient != null
+        if (gradient != null) model.gradientColor = gradient
+    }
 
     @Composable
-    override fun ColorPickerPopup(model: Any, onColorChanged: (Color) -> Unit, onClose: () -> Unit, chromaCapable: Boolean) =
-        InternalColorPickerPopup(model as ColorPickerModel, onColorChanged, onClose, chromaCapable)
+    override fun ColorPickerPanel(
+        model: KitColorPickerModel,
+        onColorChanged: (Color) -> Unit,
+        onDismiss: () -> Unit,
+        modifier: Modifier,
+        chromaCapable: Boolean,
+        gradientCapable: Boolean,
+    ) {
+        val picker = model as? ColorPickerModel ?: remember(model) {
+            ColorPickerModel(model.color, true).also { configure(it, model.color, model.chroma, model.chromaSpeed, model.gradient) }
+        }
+        val changed: (Color) -> Unit = if (picker === model) onColorChanged else { color -> model.set(color); onColorChanged(color) }
+        ChromaColorAnimation(picker) {}
+        InternalColorPickerPopup(picker, changed, onDismiss, chromaCapable, gradientCapable, modifier)
+    }
 
     override fun colorToHex(color: Color): String = internalColorToHex(color)
 

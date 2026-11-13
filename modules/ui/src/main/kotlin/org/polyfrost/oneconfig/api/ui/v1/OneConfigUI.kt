@@ -1,7 +1,13 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.ui.v1
 
 import java.util.ServiceLoader
+import java.util.concurrent.ConcurrentHashMap
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
 
 /**
  * Utility for opening the OneConfig UI
@@ -38,6 +44,32 @@ public object OneConfigUI {
         }
     }
 
+    private val warnedRouteTypes = ConcurrentHashMap.newKeySet<Class<*>>()
+
+    @JvmStatic
+    public fun open() {
+        show(null)
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun open(destination: OneConfigDestination? = null) {
+        show(routeOf(destination))
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    @JvmOverloads
+    public fun open(page: OneConfigPage, @Suppress("UNUSED_PARAMETER") argument: Any? = null) {
+        open(OneConfigDestination.Custom(page))
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun open(pageId: String) {
+        open(OneConfigDestination.Page(pageId))
+    }
+
     /**
      * Opens the OneConfig UI on [route] or on the page set by the user's opening behavior when null
      *
@@ -47,15 +79,37 @@ public object OneConfigUI {
      *
      * If the UI is already open it navigates to [route] in place
      */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmStatic
-    @JvmOverloads
     public fun open(route: Any? = null) {
+        show(normalizeRoute(route))
+    }
+
+    private fun show(route: Any?) {
         val bridge = bridge
         if (bridge == null) {
             LOGGER.warn("Cannot open the OneConfig UI: no OneConfigUIBridge is available")
             return
         }
         bridge.open(route)
+    }
+
+    private fun routeOf(destination: OneConfigDestination?): Any? = when (destination) {
+        null -> null
+        is OneConfigDestination.Page -> destination.id
+        is OneConfigDestination.ModConfig -> destination.target
+        is OneConfigDestination.Custom -> destination.page
+    }
+
+    private fun normalizeRoute(route: Any?): Any? = when (route) {
+        null, is String, is OneConfigPage, is ModConfigTarget -> route
+        is OneConfigDestination -> routeOf(route)
+        else -> {
+            if (warnedRouteTypes.add(route.javaClass)) {
+                LOGGER.warn("Cannot open the OneConfig UI on {} because {} is not a OneConfigDestination; opening the default page instead", route, route.javaClass.name)
+            }
+            null
+        }
     }
 
     /**
@@ -72,7 +126,7 @@ public object OneConfigUI {
      */
     @JvmStatic
     @JvmOverloads
-    public fun createScreen(route: Any? = null): Any? = bridge?.createScreen(route)
+    public fun createScreen(route: Any? = null): Any? = bridge?.createScreen(normalizeRoute(route))
 
     @ExperimentalOneConfigUiApi
     @JvmStatic

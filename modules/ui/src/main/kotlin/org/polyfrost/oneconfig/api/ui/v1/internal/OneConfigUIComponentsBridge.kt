@@ -6,17 +6,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.window.PopupPositionProvider
+import net.kyori.adventure.text.Component
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel
 import org.polyfrost.oneconfig.api.ui.v1.components.UiSound
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeBuilder
@@ -67,20 +70,48 @@ public interface OneConfigUIComponentsBridge {
     public fun concentric(shape: Shape, inset: Dp, minRadius: Dp): Shape
 
     @Composable
-    public fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean)
+    public fun Icon(iconName: String, color: Color, modifier: Modifier, fitAspectRatio: Boolean, tint: (() -> Color)?)
 
     @Composable
     public fun Text(
-        text: Any,
+        text: String,
         modifier: Modifier,
         color: Color,
-        fontSize: TextUnit,
-        lineHeight: TextUnit?,
-        shift: BaselineShift,
-        fontWeight: FontWeight,
-        textAlign: TextAlign,
+        style: TextStyle,
         maxLines: Int,
         overflow: TextOverflow,
+        softWrap: Boolean,
+        textAlign: TextAlign?,
+        colorProducer: ColorProducer?,
+        onTextLayout: ((TextLayoutResult) -> Unit)?,
+    )
+
+    @Composable
+    public fun Text(
+        text: AnnotatedString,
+        modifier: Modifier,
+        color: Color,
+        style: TextStyle,
+        maxLines: Int,
+        overflow: TextOverflow,
+        softWrap: Boolean,
+        textAlign: TextAlign?,
+        colorProducer: ColorProducer?,
+        onTextLayout: ((TextLayoutResult) -> Unit)?,
+    )
+
+    @Composable
+    public fun Text(
+        text: Component,
+        modifier: Modifier,
+        color: Color,
+        style: TextStyle,
+        maxLines: Int,
+        overflow: TextOverflow,
+        softWrap: Boolean,
+        textAlign: TextAlign?,
+        colorProducer: ColorProducer?,
+        onTextLayout: ((TextLayoutResult) -> Unit)?,
     )
 
     @Composable
@@ -125,10 +156,19 @@ public interface OneConfigUIComponentsBridge {
     @Composable
     public fun fadingEdges(modifier: Modifier, scrollState: ScrollState, color: Color, length: Dp): Modifier
 
-    public fun createColorPicker(initialColor: Color, hasAlpha: Boolean): Any
+    public fun createColorPicker(initialColor: Color, hasAlpha: Boolean, chroma: Boolean, chromaSpeed: Float, gradient: Color?): ColorPickerModel
+
+    public fun updateColorPicker(model: ColorPickerModel, color: Color, chroma: Boolean, chromaSpeed: Float, gradient: Color?)
 
     @Composable
-    public fun ColorPickerPopup(model: Any, onColorChanged: (Color) -> Unit, onClose: () -> Unit, chromaCapable: Boolean)
+    public fun ColorPickerPanel(
+        model: ColorPickerModel,
+        onColorChanged: (Color) -> Unit,
+        onDismiss: () -> Unit,
+        modifier: Modifier,
+        chromaCapable: Boolean,
+        gradientCapable: Boolean,
+    )
 
     public fun colorToHex(color: Color): String
 

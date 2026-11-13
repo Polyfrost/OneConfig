@@ -60,6 +60,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColorPickerModel
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -145,7 +146,7 @@ private fun hexToColor(hex: String): Color? {
     }
 }
 
-internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
+internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) : KitColorPickerModel {
     private val hsb = colorToHsb(initialColor)
     var hue by mutableFloatStateOf(hsb[0])
     var saturation by mutableFloatStateOf(hsb[1])
@@ -162,9 +163,20 @@ internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) {
             chromaState = value
         }
     val alphaEnabled = hasAlpha
-    var chromaSpeed by mutableFloatStateOf(1f)
+    override var chromaSpeed by mutableFloatStateOf(1f)
     var gradientEnabled by mutableStateOf(false)
     var gradientColor by mutableStateOf(initialColor)
+
+    override val color: Color get() = savedColor()
+
+    override val chroma: Boolean get() = chromaEnabled
+
+    override val gradient: Color? get() = if (gradientEnabled) gradientColor else null
+
+    override fun set(color: Color) {
+        chromaTurn = 0f
+        applyFrom(color)
+    }
 
     /** How far [hue] is turned past the saved hue, so the picker matches every other chroma colour right now */
     private var chromaTurn = 0f
@@ -381,6 +393,7 @@ internal fun ColorPickerPopup(
     onClose: () -> Unit,
     chromaCapable: Boolean = true,
     gradientCapable: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     val theme = LocalTheme.current
     val currentOnColorChanged by rememberUpdatedState(onColorChanged)
@@ -400,7 +413,7 @@ internal fun ColorPickerPopup(
     val currentColor = model.currentColor()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .width(280.dp)
             .shellTransition()
             .liquidGlass(PickerShape, frosted = true)
