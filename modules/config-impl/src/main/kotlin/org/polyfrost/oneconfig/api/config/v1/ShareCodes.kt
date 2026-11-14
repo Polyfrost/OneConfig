@@ -16,6 +16,10 @@ import java.util.zip.GZIPOutputStream
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.OptionWidgets
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
 import java.lang.reflect.Array as JArray
 
@@ -130,6 +134,7 @@ private fun readCapped(input: InputStream): ByteArray {
     return out.toByteArray()
 }
 
+@OptIn(ExperimentalOneConfigUiApi::class)
 private fun applyTree(
     target: Tree,
     data: UnmodifiableConfig,
@@ -144,7 +149,10 @@ private fun applyTree(
         val full = if (path.isEmpty()) key else "$path.$key"
         when (val node = target.get(key)) {
             is Tree -> if (raw is UnmodifiableConfig) applyTree(node, raw, full, include, applied, skipped) else skipped.add(full)
-            is Property<*> -> if (!isButton(node) && include(node) && applyValue(node, raw)) applied.add(full) else skipped.add(full)
+            is Property<*> -> if (!isButton(node) && include(node) && applyValue(node, raw)) {
+                applied.add(full)
+                OptionWidgets.refresh(node)
+            } else skipped.add(full)
             else -> skipped.add(full)
         }
     }
@@ -152,15 +160,31 @@ private fun applyTree(
 
 @Suppress("UNCHECKED_CAST")
 private fun applyValue(prop: Property<*>, raw: Any?): Boolean = try {
-    val value = decodeAs(WrappingUtils.getWrapped(prop.type), toPlain(raw), prop.get())
-    value != null && !(prop as Property<Any?>).set(value)
+    val current = prop.get()
+    val value = decodeAs(WrappingUtils.getWrapped(prop.type), toPlain(raw), current)
+    when {
+        value == null -> false
+        value is OneConfigKeybind && current is OneConfigKeybind -> applyKeybind(prop as Property<Any?>, current, value)
+        else -> !(prop as Property<Any?>).set(value)
+    }
 } catch (e: Exception) {
     false
 }
 
+private fun applyKeybind(prop: Property<Any?>, current: OneConfigKeybind, imported: OneConfigKeybind): Boolean {
+    val next = current.copyWith(imported.keyCodes, imported.mouseBtns, imported.mods)
+    next.durationNanos = imported.durationNanos
+    if (prop.set(next)) return false
+    val applied = prop.get() as? OneConfigKeybind ?: next
+    applied.mergeOverwrite(imported)
+    KeybindManager.replace(current, applied)
+    return true
+}
+
 private fun decodeAs(target: Class<*>, plain: Any?, current: Any?): Any? {
     if (plain == null) return null
-    classTagged(plain)?.let { return deserializeTagged(target, it) }
+    if (plain is Map<*, *> && Map::class.java.isAssignableFrom(target)) return decodeMap(target, plain, current)
+    classTagged(plain)?.let { return deserializeTagged(target, it, taggedClass(it)) }
     if (Enum::class.java.isAssignableFrom(target)) return enumConstant(target, plain)
     if (plain is List<*> && (target.isArray || Collection::class.java.isAssignableFrom(target))) {
         val element = target.componentType?.let(WrappingUtils::getWrapped) ?: elementClass(current)
@@ -178,9 +202,24 @@ private fun decodeAs(target: Class<*>, plain: Any?, current: Any?): Any? {
         ?: throw IllegalArgumentException("cannot read ${plain.javaClass.name} as ${target.name}")
 }
 
+private fun decodeMap(target: Class<*>, plain: Map<*, *>, current: Any?): Map<Any?, Any?> {
+    val existing = current as? Map<*, *>
+    val keyType = elementClass(existing?.keys)
+    require(keyType == String::class.java || keyType == Any::class.java) { "cannot read the keys of a ${target.name} from a share code" }
+    val valueType = elementClass(existing?.values)
+    val out = LinkedHashMap<Any?, Any?>()
+    for ((key, item) in plain) out[key] = decodeElement(valueType, item)
+    require(target.isInstance(out)) { "cannot build a ${target.name} from a share code" }
+    return out
+}
+
 private fun decodeElement(element: Class<*>, item: Any?): Any? {
     if (item == null) return null
-    classTagged(item)?.let { return deserializeTagged(element, it) }
+    if (item is Map<*, *> && Map::class.java.isAssignableFrom(element)) return decodeMap(element, item, null)
+    classTagged(item)?.let { tagged ->
+        val cls = if (element == Any::class.java) runCatching { taggedClass(tagged) }.getOrNull() else taggedClass(tagged)
+        if (cls != null) return deserializeTagged(element, tagged, cls)
+    }
     if (Enum::class.java.isAssignableFrom(element)) return enumConstant(element, item)
     if (element.isInstance(item) || element == Any::class.java) return item
     adapterFor(element)?.let { return it.deserialize(WrappingUtils.richCast(item, it.outputClass)) }
@@ -195,9 +234,12 @@ private fun adapterFor(type: Class<*>): Adapter<Any?, Any?>? =
 private fun classTagged(plain: Any): Map<String, Any?>? =
     (plain as? Map<String, Any?>)?.takeIf { it["class"] is String }
 
-private fun deserializeTagged(target: Class<*>, map: Map<String, Any?>): Any {
-    val cls = Class.forName(map["class"] as String, false, ObjectSerializer::class.java.classLoader)
-    require(target != Any::class.java && target.isAssignableFrom(cls)) { "${cls.name} is not a ${target.name}" }
+private fun taggedClass(map: Map<String, Any?>): Class<*> =
+    Class.forName(map["class"] as String, false, ObjectSerializer::class.java.classLoader)
+
+private fun deserializeTagged(target: Class<*>, map: Map<String, Any?>, cls: Class<*>): Any {
+    val allowed = if (target == Any::class.java) cls.isEnum || adapterFor(cls)?.targetClass == cls else target.isAssignableFrom(cls)
+    require(allowed) { "${cls.name} is not a ${target.name}" }
     return ObjectSerializer.INSTANCE.deserialize(map)
 }
 
