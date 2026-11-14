@@ -70,18 +70,27 @@ private val nestedConfigClass = object : ClassValue<Boolean>() {
 }
 
 internal fun deepCopyHudOptions(hud: Hud) {
+    val seen = java.util.IdentityHashMap<Any, Any>()
     for (cf in cloneFields.get(hud.javaClass)) {
         try {
             val value = cf.field.get(hud) ?: continue
-            val copy = deepCopyValue(value, cf.option, 0)
+            val copy = deepCopyValue(value, cf.option, 0, seen)
             if (copy !== value) cf.field.set(hud, copy)
         } catch (_: Exception) {
         }
     }
 }
 
+private fun deepCopyValue(value: Any, nested: Boolean, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any {
+    seen[value]?.let { return it }
+    seen[value] = value
+    val result = deepCopyUncached(value, nested, depth, seen)
+    seen[value] = result
+    return result
+}
+
 @Suppress("UNCHECKED_CAST")
-private fun deepCopyValue(value: Any, nested: Boolean, depth: Int): Any = when (value) {
+private fun deepCopyUncached(value: Any, nested: Boolean, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any = when (value) {
     is String, is Number, is Boolean, is Char, is Enum<*> -> value
     is PolyColor -> value.copy()
     is OneConfigKeybind ->
@@ -92,50 +101,64 @@ private fun deepCopyValue(value: Any, nested: Boolean, depth: Int): Any = when (
     is MutableFloatState -> mutableFloatStateOf(value.floatValue)
     is MutableDoubleState -> mutableDoubleStateOf(value.doubleValue)
     is SnapshotMutableState<*> ->
-        mutableStateOf(value.value?.let { deepCopyValue(it, nested, depth) }, value.policy as SnapshotMutationPolicy<Any?>)
+        mutableStateOf(value.value?.let { deepCopyValue(it, nested, depth, seen) }, value.policy as SnapshotMutationPolicy<Any?>)
     is SnapshotStateList<*> -> mutableStateListOf<Any?>().also { out ->
-        for (e in value) out.add(e?.let { deepCopyValue(it, nested, depth) })
+        seen[value] = out
+        for (e in value) out.add(e?.let { deepCopyValue(it, nested, depth, seen) })
     }
     is SnapshotStateMap<*, *> -> mutableStateMapOf<Any?, Any?>().also { out ->
-        for ((k, v) in value) out[k] = v?.let { deepCopyValue(it, nested, depth) }
+        seen[value] = out
+        for ((k, v) in value) out[k] = v?.let { deepCopyValue(it, nested, depth, seen) }
     }
-    else -> copyContainer(value, nested, depth) ?: if (nested) copyNested(value, depth) else value
+    else -> copyContainer(value, nested, depth, seen) ?: if (nested) copyNested(value, depth, seen) else value
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun copyContainer(value: Any, nested: Boolean, depth: Int): Any? {
+private fun copyContainer(value: Any, nested: Boolean, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any? {
     val cls = value.javaClass
     if (cls.isArray) {
         val length = java.lang.reflect.Array.getLength(value)
         val out = java.lang.reflect.Array.newInstance(cls.componentType, length)
         System.arraycopy(value, 0, out, 0, length)
+        seen[value] = out
         if (!cls.componentType.isPrimitive) {
             for (i in 0 until length) {
                 val e = java.lang.reflect.Array.get(out, i) ?: continue
                 try {
-                    java.lang.reflect.Array.set(out, i, deepCopyValue(e, nested, depth))
+                    java.lang.reflect.Array.set(out, i, deepCopyValue(e, nested, depth, seen))
                 } catch (_: IllegalArgumentException) {
                 }
             }
         }
         return out
     }
-    fun copy(e: Any?): Any? = e?.let { deepCopyValue(it, nested, depth) }
+    fun copy(e: Any?): Any? = e?.let { deepCopyValue(it, nested, depth, seen) }
+    fun <C : MutableCollection<Any?>> fill(out: C, src: Collection<Any?>): C {
+        seen[value] = out
+        for (e in src) out.add(copy(e))
+        return out
+    }
+    fun <M : MutableMap<Any?, Any?>> fillMap(out: M, src: Map<Any?, Any?>): M {
+        seen[value] = out
+        for ((k, v) in src) out[k] = copy(v)
+        return out
+    }
     return when (cls) {
-        ArrayList::class.java -> (value as List<Any?>).mapTo(ArrayList(value.size), ::copy)
-        java.util.LinkedList::class.java -> (value as List<Any?>).mapTo(java.util.LinkedList(), ::copy)
-        java.util.ArrayDeque::class.java -> (value as Collection<Any?>).mapTo(java.util.ArrayDeque(value.size), ::copy)
-        HashSet::class.java -> (value as Set<Any?>).mapTo(HashSet(value.size), ::copy)
-        LinkedHashSet::class.java -> (value as Set<Any?>).mapTo(LinkedHashSet(value.size), ::copy)
-        HashMap::class.java -> (value as Map<Any?, Any?>).mapValuesTo(HashMap(value.size)) { copy(it.value) }
-        LinkedHashMap::class.java -> (value as Map<Any?, Any?>).mapValuesTo(LinkedHashMap(value.size)) { copy(it.value) }
+        ArrayList::class.java -> fill(ArrayList<Any?>((value as List<Any?>).size), value)
+        java.util.LinkedList::class.java -> fill(java.util.LinkedList<Any?>(), value as List<Any?>)
+        java.util.ArrayDeque::class.java -> fill(java.util.ArrayDeque<Any?>((value as Collection<Any?>).size), value)
+        HashSet::class.java -> fill(HashSet<Any?>((value as Set<Any?>).size), value)
+        LinkedHashSet::class.java -> fill(LinkedHashSet<Any?>((value as Set<Any?>).size), value)
+        HashMap::class.java -> fillMap(HashMap<Any?, Any?>((value as Map<Any?, Any?>).size), value)
+        LinkedHashMap::class.java -> fillMap(LinkedHashMap<Any?, Any?>((value as Map<Any?, Any?>).size), value)
         else -> null
     }
 }
 
-private fun copyNested(value: Any, depth: Int): Any {
+private fun copyNested(value: Any, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any {
     if (depth >= MAX_NESTED_DEPTH || !nestedConfigClass.get(value.javaClass)) return value
     val copy = MHUtils.instantiate(value.javaClass, true).getOrNull() ?: return value
+    seen[value] = copy
     try {
         var cls: Class<*>? = value.javaClass
         while (cls != null && cls != Any::class.java) {
@@ -145,7 +168,7 @@ private fun copyNested(value: Any, depth: Int): Any {
                 f.setAccessible(true)
                 val v = f.get(value)
                 val keep = f.type.isPrimitive || f.isSynthetic || Modifier.isTransient(mods)
-                f.set(copy, if (keep || v == null) v else deepCopyValue(v, true, depth + 1))
+                f.set(copy, if (keep || v == null) v else deepCopyValue(v, true, depth + 1, seen))
             }
             cls = cls.superclass
         }

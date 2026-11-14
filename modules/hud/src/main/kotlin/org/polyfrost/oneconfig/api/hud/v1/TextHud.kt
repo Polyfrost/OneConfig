@@ -177,6 +177,7 @@ public abstract class TextHud(
     @Transient private var lastPrefix: String? = null
     @Transient private var lastSuffix: String? = null
     @Transient private var lastBrackets = false
+    @Transient private var lastSeparator: String? = null
     @Transient private var lastRuns: List<TextRun>? = null
 
     @ExperimentalOneConfigUiApi
@@ -185,11 +186,12 @@ public abstract class TextHud(
     private fun updateRuns(runs: List<TextRun>): Boolean {
         val p = prefix
         val sfx = suffix
-        if (displayRuns != null && lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && runs == lastRuns) return true
+        if (displayRuns != null && lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && lastSeparator == concatString && runs == lastRuns) return true
         lastRuns = runs.toList()
         lastPrefix = p
         lastSuffix = sfx
         lastBrackets = brackets
+        lastSeparator = concatString
         lastValue = null
 
         val separator = concatString

@@ -707,7 +707,10 @@ public object HudManager {
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
         !isEditing && hud.frameHidden && !isSuppressed(hud) && hud.keepsHiddenBackground && isShown(hud)
 
-    private class Suppression(val owner: Hud, val target: String, val reason: String) : AutoCloseable {
+    private class Suppression(owner: Hud, val target: String, val reason: String) : AutoCloseable {
+        private val ownerRef = java.lang.ref.WeakReference(owner)
+        val owner: Hud? get() = ownerRef.get()
+
         override fun close() {
             if (suppressions.remove(this)) invalidate()
         }
@@ -738,15 +741,41 @@ public object HudManager {
 
     private fun isOwnerShown(hud: Hud): Boolean = !hud.frameHidden && isShown(hud) && hud !in notShowing
 
+    private val declaresReplacements = object : ClassValue<Boolean>() {
+        override fun computeValue(type: Class<*>): Boolean = try {
+            type.getMethod("getReplacesIds").declaringClass != Hud::class.java
+        } catch (_: ReflectiveOperationException) {
+            true
+        }
+    }
+
     private fun refreshSuppressed() {
+        if (suppressions.isEmpty()) {
+            var any = false
+            for (hud in activeInstances) {
+                if (declaresReplacements.get(hud.javaClass)) {
+                    any = true
+                    break
+                }
+            }
+            if (!any) {
+                if (suppressed.isNotEmpty()) {
+                    suppressed = emptyMap()
+                    invalidate()
+                }
+                return
+            }
+        }
         val claims = frameClaims
         claims.clear()
+        suppressions.removeIf { it.owner == null }
         for (s in suppressions) {
-            if (!isActive(s.owner) || !isOwnerShown(s.owner)) continue
+            val owner = s.owner ?: continue
+            if (!isActive(owner) || !isOwnerShown(owner)) continue
             claims.add(s)
         }
         for (hud in activeInstances) {
-            if (hud.hidden) continue
+            if (!declaresReplacements.get(hud.javaClass) || hud.hidden || !isOwnerShown(hud)) continue
             val ids = try {
                 hud.replacesIds
             } catch (e: Throwable) {
@@ -759,21 +788,48 @@ public object HudManager {
         val next: Map<Hud, List<String>> = if (claims.isEmpty()) {
             emptyMap()
         } else {
-            val map = IdentityHashMap<Hud, MutableList<String>>()
+            val incoming = IdentityHashMap<Hud, MutableList<Suppression>>()
             for (hud in activeInstances) {
                 for (claim in claims) {
                     if (claim.owner !== hud && hasHudId(hud, claim.target)) {
-                        map.getOrPut(hud) { ArrayList(1) }.add(claim.reason)
+                        incoming.getOrPut(hud) { ArrayList(1) }.add(claim)
                     }
                 }
             }
             claims.clear()
+            val effective = IdentityHashMap<Hud, Boolean>()
+            val resolving = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
+            fun isEffective(hud: Hud): Boolean {
+                effective[hud]?.let { return it }
+                if (!resolving.add(hud)) return true
+                val shown = incoming[hud]?.none { claim -> claim.owner?.let(::isEffective) == true } != false
+                resolving.remove(hud)
+                effective[hud] = shown
+                return shown
+            }
+            val map = IdentityHashMap<Hud, MutableList<String>>()
+            for (hud in activeInstances) {
+                if (isEffective(hud)) continue
+                val reasons = ArrayList<String>(1)
+                for (claim in incoming[hud] ?: continue) {
+                    if (claim.owner?.let(::isEffective) == true) reasons.add(claim.reason)
+                }
+                map[hud] = reasons
+            }
             map
         }
-        if (next != suppressed) {
+        if (!sameSuppressions(next, suppressed)) {
             suppressed = next
             invalidate()
         }
+    }
+
+    private fun sameSuppressions(a: Map<Hud, List<String>>, b: Map<Hud, List<String>>): Boolean {
+        if (a.size != b.size) return false
+        for ((hud, reasons) in a) {
+            if (b[hud] != reasons) return false
+        }
+        return true
     }
 
     private fun dropSuppressionsOf(hud: Hud) {

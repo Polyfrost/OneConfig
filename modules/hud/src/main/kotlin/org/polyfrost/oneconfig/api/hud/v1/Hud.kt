@@ -440,6 +440,8 @@ public abstract class Hud(
                 bind.mouseBtns = v.mouseBtns?.copyOf()
                 bind.mods = v.mods
                 bind.durationNanos = v.durationNanos
+                bind.unresolvedKeyInputs = v.unresolvedKeyInputs
+                bind.unresolvedMouseInputs = v.unresolvedMouseInputs
             }
             toggleBind = bind
             if (isReal) syncToggleKeybind()
@@ -1300,6 +1302,11 @@ public abstract class Hud(
     private var _shadowOffsetY: MutableState<Float> = mutableStateOf(2f)
     public var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.value = v }
 
+    @get:ApiStatus.Internal
+    @set:ApiStatus.Internal
+    @Transient
+    public var hasBuiltInBorderOptions: Boolean = false
+
     private var _borderEnabled: MutableState<Boolean> = mutableStateOf(false)
 
     @ExperimentalOneConfigUiApi
@@ -1759,7 +1766,8 @@ public abstract class Hud(
             tree["shadowChromaSpeed"] = ktProperty(out::shadowChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
-            if (BORDER_OPTIONS.none { tree[it] != null }) {
+            out.hasBuiltInBorderOptions = BORDER_OPTIONS.none { tree[it] != null }
+            if (out.hasBuiltInBorderOptions) {
                 tree["borderEnabled"] = ktProperty(out::borderEnabled).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["borderColor"] = ktProperty(out::borderColor).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["borderChroma"] = ktProperty(out::borderChroma).apply { addDisplayCondition(hideFromConfigUi) }
@@ -1912,7 +1920,12 @@ public abstract class Hud(
         geomValid = false
         showKey = -1
         toggleKey = -1
-        toggleBind = null
+        toggleBind = this@Hud.toggleBind?.let { src ->
+            OneConfigKeybind(src.keyCodes?.copyOf(), src.mouseBtns?.copyOf(), src.mods, src.durationNanos, ::onToggleKeybind).also {
+                it.unresolvedKeyInputs = src.unresolvedKeyInputs
+                it.unresolvedMouseInputs = src.unresolvedMouseInputs
+            }
+        }
         positionKeep = 0
         positionBatch = 0
         positionMovePending = false

@@ -298,6 +298,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor$Companion {
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudClickRegions {
 	public static final fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function0;)Z
+	public static final fun removeClickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;)Z
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudColors {

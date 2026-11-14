@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration
 import org.polyfrost.compose.composables.PolyBox
@@ -115,10 +116,40 @@ private fun poppinsVariant(base: String, bold: Boolean, italic: Boolean): String
 
 private fun appendRuns(component: Component, inherited: Style, out: MutableList<TextRun>) {
     val style = component.style().merge(inherited, Style.Merge.Strategy.IF_ABSENT_ON_TARGET)
-    val text = if (component is TextComponent) component.content()
-    else runCatching { Platform.compatibility().resolveComponent(component.children(emptyList())) }.getOrNull().orEmpty()
-    if (text.isNotEmpty()) appendLegacy(text, style, out)
+    if (component is TextComponent) {
+        if (component.content().isNotEmpty()) appendLegacy(component.content(), style, out)
+    } else if (component is TranslatableComponent && component.arguments().isNotEmpty()) {
+        appendTranslated(component, style, out)
+    } else {
+        val text = runCatching { Platform.compatibility().resolveComponent(component.children(emptyList())) }.getOrNull().orEmpty()
+        if (text.isNotEmpty()) appendLegacy(text, style, out)
+    }
     for (child in component.children()) appendRuns(child, style, out)
+}
+
+private const val ARG_OPEN = ''
+private const val ARG_CLOSE = ''
+
+private fun appendTranslated(component: TranslatableComponent, style: Style, out: MutableList<TextRun>) {
+    val args = component.arguments()
+    val markers = args.indices.map { Component.text("$ARG_OPEN$it$ARG_CLOSE") }
+    val template = runCatching {
+        Platform.compatibility().resolveComponent(component.arguments(markers).children(emptyList()))
+    }.getOrNull().orEmpty()
+    var pos = 0
+    while (pos < template.length) {
+        val open = template.indexOf(ARG_OPEN, pos)
+        val close = if (open < 0) -1 else template.indexOf(ARG_CLOSE, open)
+        val index = if (close < 0) null else template.substring(open + 1, close).toIntOrNull()?.takeIf { it in args.indices }
+        if (index == null) {
+            if (pos < template.length) appendLegacy(template.substring(pos), style, out)
+            return
+        }
+        if (open > pos) appendLegacy(template.substring(pos, open), style, out)
+        val value = args[index].value()
+        appendRuns(if (value is Component) value else Component.text(value.toString()), style, out)
+        pos = close + 1
+    }
 }
 
 private fun appendLegacy(text: String, style: Style, out: MutableList<TextRun>) {

@@ -14,6 +14,9 @@ import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 public fun Hud.clickRegion(id: String, x: Float, y: Float, w: Float, h: Float, onClick: () -> Unit): Boolean =
     HudClickInput.region(this, id, x, y, w, h, onClick)
 
+@ExperimentalOneConfigUiApi
+public fun Hud.removeClickRegion(id: String): Boolean = HudClickInput.remove(this, id)
+
 @InternalOneConfigUiApi
 @ExperimentalOneConfigUiApi
 @ApiStatus.Internal
@@ -41,6 +44,17 @@ public object HudClickInput {
         region.h = h
         region.onClick = onClick
         return region.hovered.value
+    }
+
+    internal fun remove(hud: Hud, id: String): Boolean {
+        val removed = synchronized(regions) {
+            val byId = regions[hud] ?: return false
+            val region = byId.remove(id) ?: return false
+            if (byId.isEmpty()) regions.remove(hud)
+            region
+        }
+        if (removed.hovered.value) Snapshot.withMutableSnapshot { removed.hovered.value = false }
+        return true
     }
 
     public fun updatePointer(guiX: Float, guiY: Float, active: Boolean) {
