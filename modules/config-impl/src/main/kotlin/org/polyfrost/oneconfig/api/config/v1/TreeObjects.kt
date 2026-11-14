@@ -30,6 +30,7 @@ public fun Property<*>.setOptions(options: List<String>, labels: Map<String, Str
     if (getMetadata<Any?>(MetaKeys.OPTIONS.name) is Array<*>) addMetadata(MetaKeys.OPTIONS.name, options.toTypedArray())
     else this[MetaKeys.OPTIONS] = options.toList()
     removeMetadata("optionsKey")
+    if (type == String::class.java) addMetadata("optionValues", options.toList())
     this[MetaKeys.LABELS] = if (labels.isEmpty()) null else options.map { labels[it] ?: it }
     OptionWidgets.refresh(this)
 }
