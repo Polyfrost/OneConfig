@@ -81,7 +81,7 @@ public object Notifications {
         actions: List<NotificationAction> = emptyList(),
         onClick: Runnable? = null,
         onDismiss: Runnable? = null,
-    ): NotificationHandle =
+    ): Notification =
         push(Notification(title, message, type, icon, iconName, durationMillis, persistent, progress, actions, onClick, onDismiss))
 
     @ApiStatus.Experimental
@@ -100,14 +100,13 @@ public object Notifications {
         actions: List<NotificationAction> = emptyList(),
         onClick: Runnable? = null,
         onDismiss: Runnable? = null,
-    ): NotificationHandle? {
+    ): Notification? {
         if (!sentOnce.add(key)) return null
         return send(title, message, type, icon, iconName, durationMillis, persistent, progress, actions, onClick, onDismiss)
     }
 
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmStatic
-    @JvmOverloads
     @JvmName("send")
     public fun sendLegacy(
         title: String,
@@ -119,6 +118,21 @@ public object Notifications {
         onClick: Runnable? = null,
         actions: List<NotificationAction> = emptyList(),
     ): Notification = push(legacyNotification(title, message, type, icon, duration, progress, actions, onClick))
+
+    @Deprecated("Use the overload taking durationMillis: Long and persistent")
+    @JvmStatic
+    public fun send(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float): Notification =
+        push(legacyNotification(title, message, type, icon, duration, null, emptyList(), null))
+
+    @Deprecated("Use the overload taking durationMillis: Long and persistent")
+    @JvmStatic
+    public fun send(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?): Notification =
+        push(legacyNotification(title, message, type, icon, duration, progress, emptyList(), null))
+
+    @Deprecated("Use the overload taking durationMillis: Long and persistent")
+    @JvmStatic
+    public fun send(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?, onClick: Runnable?): Notification =
+        push(legacyNotification(title, message, type, icon, duration, progress, emptyList(), onClick))
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @JvmStatic
@@ -261,9 +275,8 @@ public object Notifications {
         @ApiStatus.Experimental
         public fun duration(durationMillis: Long): Builder = apply { this.durationMillis = durationMillis }
 
-        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-        @JvmName("duration")
-        public fun durationLegacy(duration: Float): Builder = apply {
+        @Deprecated("Use duration(durationMillis: Long) and persistent()")
+        public fun duration(duration: Float): Builder = apply {
             this.durationMillis = if (duration > 0f) duration.toLong() else Notification.DEFAULT_DURATION_MILLIS
             this.persistent = duration <= 0f
         }

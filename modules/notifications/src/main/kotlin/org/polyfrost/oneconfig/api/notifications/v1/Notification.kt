@@ -71,7 +71,6 @@ public class NotificationAction @JvmOverloads constructor(
     public val enabled: Boolean = true,
     public val onClick: Runnable = Runnable {},
 ) {
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     public constructor(label: String, primary: Boolean = false, onClick: Runnable = Runnable {}) : this(label, primary, true, true, onClick)
 }
 
@@ -121,15 +120,15 @@ public class Notification @JvmOverloads constructor(
         onClick: Runnable? = null,
     ) : this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, onClick, null)
 
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the constructor taking durationMillis: Long and persistent")
     public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float) :
         this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, null), null, emptyList(), null, null)
 
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the constructor taking durationMillis: Long and persistent")
     public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?) :
         this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, emptyList(), null, null)
 
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the constructor taking durationMillis: Long and persistent")
     public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
         this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, null, null)
 
@@ -174,7 +173,7 @@ public class Notification @JvmOverloads constructor(
     public var type: NotificationType by mutableStateOf(type)
         private set
 
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use durationMillis and persistent")
     public val duration: Float get() = if (persistent) -1f else durationMillis.toFloat()
 
     public val id: Long = COUNTER.incrementAndGet()
