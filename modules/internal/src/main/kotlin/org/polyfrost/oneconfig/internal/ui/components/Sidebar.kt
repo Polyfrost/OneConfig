@@ -38,13 +38,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -55,14 +52,13 @@ import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.AnchoredPopupButton
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.NotificationsCenterPanel
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
-import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
-import org.polyfrost.oneconfig.api.ui.v1.components.rememberHoverState
 import org.polyfrost.oneconfig.internal.ui.navigation.inAboutMenu
 import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.pageRoute
@@ -350,7 +346,7 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
 @Composable
 private fun NotificationBell() {
-    Box(Modifier.size(BellGlyph).outset(BellOutset)) {
+    Box {
         AnchoredPopupButton(
             "bell",
             translated("oneconfig.sidebar.notifications", "Notifications"),
@@ -376,12 +372,6 @@ private fun UnreadDot(modifier: Modifier) {
         Box(Modifier.size(8.dp).background(Accent, circle).blur(7.dp))
         Box(Modifier.size(6.dp).background(Accent, circle))
     }
-}
-
-private fun Modifier.outset(by: Dp): Modifier = layout { measurable, constraints ->
-    val px = by.roundToPx()
-    val placeable = measurable.measure(Constraints.fixed(constraints.maxWidth + px * 2, constraints.maxHeight + px * 2))
-    layout(constraints.maxWidth, constraints.maxHeight) { placeable.place(-px, -px) }
 }
 
 @Composable
@@ -417,8 +407,8 @@ private fun Account() {
                 }
             }
             Row(
-                modifier = Modifier.padding(start = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.padding(start = 12.dp).offset(x = BellOutset),
+                horizontalArrangement = Arrangement.spacedBy(FooterButtonGap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AboutButton()
@@ -431,42 +421,46 @@ private fun Account() {
 @Composable
 private fun AboutButton() {
     var expanded by remember { mutableStateOf(false) }
-    val hover = rememberHoverState()
-    val theme = LocalTheme.current
     val controller = LocalShellNavController.current
     val shell = LocalShell.current
     val entry by controller.currentBackStackEntryAsState()
     val pages = registeredPages().filter { it.inAboutMenu && it.showInSidebar }
-    val active = pages.any { entry.isOn(pageRoute(it)) }
     val label = translated("oneconfig.sidebar.about", "Changelog and credits")
 
-    TooltipBox(if (expanded) null else label, placement = TooltipPlacement.AboveCenter) {
-        Box(Modifier.oneConfigClickable(label, { expanded = !expanded }, indication = false, interactionSource = hover.interactionSource)) {
-            Icon("info", modifier = Modifier.size(18.dp), color = if (hover.hovered || expanded || active) theme.textColor else theme.textColor.copy(0.8f))
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismiss = { expanded = false },
-                entries = pages.map { page ->
-                    val route = pageRoute(page)
-                    MenuAction(
-                        page.title.resolve(),
-                        {
-                            expanded = false
-                            val nav = shell.navigation
-                            if (nav.currentRoute == route) shell.search.clear() else nav.navigate(route)
-                        },
-                        icon = page.icon,
-                        checked = entry.isOn(route),
-                    )
-                },
-                placement = Placement.AboveStart,
-            )
-        }
+    Box {
+        IconButton(
+            "info",
+            label,
+            { expanded = !expanded },
+            size = ControlSize.Large,
+            selected = expanded,
+            tooltip = if (expanded) null else label,
+            tooltipPlacement = TooltipPlacement.AboveCenter,
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismiss = { expanded = false },
+            entries = pages.map { page ->
+                val route = pageRoute(page)
+                MenuAction(
+                    page.title.resolve(),
+                    {
+                        expanded = false
+                        val nav = shell.navigation
+                        if (nav.currentRoute == route) shell.search.clear() else nav.navigate(route)
+                    },
+                    icon = page.icon,
+                    checked = entry.isOn(route),
+                )
+            },
+            placement = Placement.AboveStart,
+        )
     }
 }
 
 private val PopupGap = 12.dp
+
+private val FooterButtonGap = 4.dp
 
 private val BellGlyph = 18.dp
 
