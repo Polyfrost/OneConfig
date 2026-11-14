@@ -977,6 +977,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ScrollingKt {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SearchFieldKt {
+	public static final fun SearchField (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SearchField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
 

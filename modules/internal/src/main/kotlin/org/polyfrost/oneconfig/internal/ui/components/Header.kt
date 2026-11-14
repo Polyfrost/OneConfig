@@ -31,7 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavBackStackEntry
@@ -301,16 +303,16 @@ fun GlobalSearchBar() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val placeholder by remember(backStackEntry) { derivedStateOf { searchPlaceholder(backStackEntry) } }
 
-    var searchText by remember { mutableStateOf(search.query) }
+    var searchText by remember { mutableStateOf(TextFieldValue(search.query, TextRange(search.query.length))) }
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val focusRequester = remember { FocusRequester() }
     val searchFocused = LocalSearchFieldFocused.current
 
-    LaunchedEffect(searchText) { search.update(searchText) }
+    LaunchedEffect(searchText.text) { search.update(searchText.text) }
     LaunchedEffect(search.query) {
-        if (search.query != searchText) searchText = search.query
+        if (search.query != searchText.text) searchText = TextFieldValue(search.query, TextRange(search.query.length))
     }
     LaunchedEffect(isFocused) { search.updateFieldFocused(isFocused) }
 
@@ -321,18 +323,23 @@ fun GlobalSearchBar() {
         withFrameNanos { }
         if (request == SearchFocus.Unfocus) {
             if (isFocused) focusManager.clearFocus()
-        } else if (!isFocused) {
-            try {
-                focusRequester.requestFocus()
-            } catch (_: IllegalStateException) {
+        } else {
+            if (request == SearchFocus.SelectAll) {
+                searchText = searchText.copy(selection = TextRange(0, searchText.text.length))
+            }
+            if (!isFocused) {
+                try {
+                    focusRequester.requestFocus()
+                } catch (_: IllegalStateException) {
+                }
             }
         }
         search.consumeFocusRequest()
     }
 
     SearchField(
-        query = searchText,
-        onQueryChange = { searchText = it },
+        value = searchText,
+        onValueChange = { searchText = it },
         modifier = Modifier.width(256.dp)
             .trackTextInputFocus()
             .onFocusChanged { searchFocused?.value = it.hasFocus },
