@@ -13,13 +13,15 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileListOptionData
-import org.polyfrost.oneconfig.internal.ui.components.IconButton
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -69,10 +71,12 @@ fun FileListOption(data: FileListOptionData) {
         )
         IconButton(
             "folder",
-            modifier = Modifier.size(16.dp).pointerHoverIcon(PointerIcon.Hand),
-            foreground = ctx.contentColor,
-            hoveredForeground = LocalTheme.current.textColor,
-            onClick = { openDialog(entry.id, entry.value) },
+            iconButtonLabel("folder"),
+            { openDialog(entry.id, entry.value) },
+            Modifier.size(16.dp).pointerHoverIcon(PointerIcon.Hand),
+            size = ControlSize.Compact,
+            tooltip = null,
+            tint = ctx.contentColor,
         )
     }
 }
@@ -92,5 +96,6 @@ private fun RowScope.PathField(
         framed = false,
         fontSize = 13.sp,
         interactionSource = ctx.fieldInteraction,
+        visualTransformation = rememberPathTransformation(),
     )
 }

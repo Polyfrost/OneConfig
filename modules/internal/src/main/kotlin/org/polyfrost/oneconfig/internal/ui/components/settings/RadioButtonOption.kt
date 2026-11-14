@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -22,15 +23,18 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.RadioGroup
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -57,12 +61,15 @@ fun RadioButtonOption(data: RadioButtonOptionData, enabled: Boolean) {
         enumClass != null -> enumClass.enumConstants.toList()
         else -> emptyList()
     }
-    val options: List<Any> = when {
-        enumClass != null -> values.mapIndexed { index, value ->
-            data.options?.getOrNull(index) ?: (value as Enum<*>).name
+    val languageStamp = languageStamp()
+    val options: List<Any> = remember(data.prop, languageStamp) {
+        when {
+            enumClass != null -> values.mapIndexed { index, value ->
+                data.options?.getOrNull(index) ?: (value as Enum<*>).name
+            }
+            data.options != null -> data.options!!
+            else -> emptyList()
         }
-        data.options != null -> data.options!!
-        else -> emptyList()
     }
 
     val initialValue = data.prop.shown()
@@ -70,23 +77,26 @@ fun RadioButtonOption(data: RadioButtonOptionData, enabled: Boolean) {
         mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
     }
 
-    val labels = options.map { it.asRenderText() }
+    val select: (Int) -> Unit = { index ->
+        selectedIdx = index
+        @Suppress("UNCHECKED_CAST")
+        if (enumClass != null) {
+            (data.prop as Property<Any>).set(values[index])
+        } else {
+            (data.prop as Property<Any>).set(index)
+        }
+    }
+    val labels = remember(options, languageStamp) { options.map { it.asPlainLabel() } }
+    val styled = remember(options, languageStamp) { options.styledLabelsOrNull() }
     RadioGroup(
         selected = selectedIdx,
         options = labels.indices.toList(),
-        onSelect = { index ->
-            selectedIdx = index
-            @Suppress("UNCHECKED_CAST")
-            if (enumClass != null) {
-                (data.prop as Property<Any>).set(values[index])
-            } else {
-                (data.prop as Property<Any>).set(index)
-            }
-        },
+        onSelect = select,
         modifier = Modifier.widthIn(max = LocalOptionWidth.current).liquidGlass(RadioShape),
         label = { labels[it] },
         orientation = Orientation.Horizontal,
         enabled = enabled,
+        styledLabel = styled?.let { list -> { list[it] } },
     )
 }
 
@@ -156,7 +166,14 @@ fun Radio(
                         modifier = Modifier
                             .weight(1f, fill = fillWidth)
                             .onSizeChanged { itemWidths[index].intValue = it.width }
-                            .onClick(interactionSource) { onSelect(index) }
+                            .oneConfigClickable(
+                                option?.asRenderText() ?: icons?.getOrNull(index),
+                                { onSelect(index) },
+                                role = A11yRole.RadioButton,
+                                selected = isSelected,
+                                indication = false,
+                                interactionSource = interactionSource,
+                            )
                             .hoverable(interactionSource)
                             .pointerHoverIcon(PointerIcon.Hand)
                             .heightIn(min = RadioItemMinHeight)

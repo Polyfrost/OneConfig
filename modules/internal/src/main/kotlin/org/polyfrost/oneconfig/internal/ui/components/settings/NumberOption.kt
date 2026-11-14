@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -22,6 +23,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
@@ -48,15 +54,18 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextFieldDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 fun Float.toNumberType(type: Class<*>): Number = when (type) {
@@ -205,13 +214,13 @@ fun formatSpinnerValue(v: Float, step: Float = 0f): String {
 }
 
 @Composable
-private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
+private fun SpinnerArrow(icon: String, label: String, enabled: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
     val hoverInteraction = rememberInteractionSource()
     val hovered by hoverInteraction.collectIsHoveredAsState()
     val color = Motion.animateColorAsState(
         when {
-            !enabled -> theme.textColorSecondary.copy(alpha = 0.4f)
+            !enabled -> theme.textColorSecondary.copy(alpha = theme.disabledAlpha)
             hovered -> theme.textColor
             else -> theme.textColorSecondary
         }
@@ -221,7 +230,7 @@ private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .size(18.dp, 13.dp)
             .hoverable(hoverInteraction)
-            .onClick(rememberInteractionSource(), enabled, onClick),
+            .oneConfigClickable(label, onClick, enabled = enabled, indication = false, interactionSource = rememberInteractionSource()),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, modifier = Modifier.size(14.dp), tint = { color.value })
@@ -230,9 +239,14 @@ private fun SpinnerArrow(icon: String, enabled: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun SpinnerArrows(value: Float, min: Float, max: Float, step: Float, onStep: (Float) -> Unit) {
+    SpinnerArrows(value, min, max, step, true, onStep)
+}
+
+@Composable
+fun SpinnerArrows(value: Float, min: Float, max: Float, step: Float, enabled: Boolean, onStep: (Float) -> Unit) {
     Column(modifier = Modifier.padding(end = 2.dp)) {
-        SpinnerArrow("up", value < max) { onStep((value + step).coerceIn(min, max)) }
-        SpinnerArrow("down", value > min) { onStep((value - step).coerceIn(min, max)) }
+        SpinnerArrow("up", translated("oneconfig.ui.number.increase", "Increase"), enabled && value < max) { onStep((value + step).coerceIn(min, max)) }
+        SpinnerArrow("down", translated("oneconfig.ui.number.decrease", "Decrease"), enabled && value > min) { onStep((value - step).coerceIn(min, max)) }
     }
 }
 
@@ -391,7 +405,7 @@ fun NumberSpinner(
                         },
                     framed = false,
                     fontSize = 13.sp,
-                    trailing = unit?.let { suffix -> @Composable { Text(suffix, color = theme.textColorSecondary, fontSize = 13.sp) } },
+                    visualTransformation = rememberUnitSuffix(unit),
                 )
                 if (formatted != null) {
                     Text(formatted, color = theme.textColor, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -399,27 +413,61 @@ fun NumberSpinner(
             }
         }
 
-        SpinnerArrows(value, arrowLo, arrowHi, step) { if (enabled) commit(it) }
+        SpinnerArrows(value, arrowLo, arrowHi, step, enabled) { commit(it) }
     }
 }
 
 @Composable
 fun NumberOption(data: NumberOptionData) {
+    NumberOption(data, true)
+}
+
+@Composable
+fun NumberOption(data: NumberOptionData, enabled: Boolean) {
+    val integral = isIntegralType(data.prop.type)
     val step = remember(data.step, data.min, data.max) {
-        spinnerStep(data.step, data.min, data.max, isIntegralType(data.prop.type))
+        spinnerStep(data.step, data.min, data.max, integral)
     }
     var value by remember(data.prop) {
         mutableStateOf(data.numProp.shown()?.toFloat()?.coerceIn(data.min, data.max) ?: data.min)
     }
 
-    NumberSpinner(
+    NumberField(
         value = value,
         onValueChange = { value = it; data.numProp.set(it.toNumberType(data.prop.type)) },
-        min = data.min,
-        max = data.max,
+        modifier = Modifier.height(OptionControlHeight),
+        range = data.min..data.max,
         step = step,
-        width = 87.dp,
-        format = data.format,
+        roundToDecimals = integral,
         unit = data.unit,
+        format = data.format,
+        enabled = enabled,
+        size = ControlSize.Compact,
     )
+}
+
+@Suppress("DEPRECATION")
+@Composable
+internal fun rememberUnitSuffix(unit: String?): VisualTransformation {
+    val color = LocalTheme.current.textColorSecondary
+    return remember(unit, color) {
+        if (unit == null) {
+            VisualTransformation.None
+        } else {
+            VisualTransformation { typed ->
+                val shown = AnnotatedString.Builder(typed).apply {
+                    pushStyle(SpanStyle(color = color))
+                    append(unit)
+                    pop()
+                }.toAnnotatedString()
+                TransformedText(
+                    shown,
+                    object : OffsetMapping {
+                        override fun originalToTransformed(offset: Int): Int = offset
+                        override fun transformedToOriginal(offset: Int): Int = offset.coerceAtMost(typed.length)
+                    },
+                )
+            }
+        }
+    }
 }

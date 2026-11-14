@@ -13,6 +13,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
@@ -73,6 +78,7 @@ fun FileOption(data: FileOptionData, enabled: Boolean) {
         placeholder = data.placeholder,
         enabled = enabled,
         fontSize = 14.sp,
+        visualTransformation = rememberPathTransformation(),
         trailing = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -84,6 +90,7 @@ fun FileOption(data: FileOptionData, enabled: Boolean) {
                         modifier = Modifier.size(16.dp),
                         foreground = theme.textColorSecondary,
                         hoveredForeground = theme.textColor,
+                        enabled = enabled,
                     ) { update("") }
                 }
                 IconButton(
@@ -91,9 +98,30 @@ fun FileOption(data: FileOptionData, enabled: Boolean) {
                     modifier = Modifier.size(18.dp),
                     foreground = theme.textColorSecondary,
                     hoveredForeground = theme.textColor,
+                    enabled = enabled,
                     onClick = ::openDialog,
                 )
             }
         },
     )
+}
+
+@Suppress("DEPRECATION")
+@Composable
+internal fun rememberPathTransformation(): VisualTransformation {
+    val theme = LocalTheme.current
+    return remember(theme.textColor, theme.textColorSecondary) {
+        VisualTransformation { annotated ->
+            val raw = annotated.text
+            val sep = raw.lastIndexOfAny(charArrayOf('/', '\\'))
+            val builder = AnnotatedString.Builder(raw)
+            if (sep >= 0) {
+                builder.addStyle(SpanStyle(color = theme.textColorSecondary), 0, sep + 1)
+                builder.addStyle(SpanStyle(color = theme.textColor), sep + 1, raw.length)
+            } else {
+                builder.addStyle(SpanStyle(color = theme.textColor), 0, raw.length)
+            }
+            TransformedText(builder.toAnnotatedString(), OffsetMapping.Identity)
+        }
+    }
 }

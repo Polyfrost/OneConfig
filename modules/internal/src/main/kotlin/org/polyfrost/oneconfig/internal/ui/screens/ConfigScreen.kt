@@ -94,6 +94,7 @@ import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorator
 import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorator
 import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorators
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
@@ -106,22 +107,21 @@ import org.polyfrost.oneconfig.internal.ui.components.CollapsibleHeader
 import org.polyfrost.oneconfig.internal.ui.components.ContentSlide
 import org.polyfrost.oneconfig.internal.ui.components.ContentSlide.tabSlide
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
-import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.collapsibleToggle
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionEnabled
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionControlHeight
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
@@ -313,12 +313,9 @@ private fun ConfigScreenContent(
                     items(entries) { entry ->
                         val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
                         val lock = locked && (option == null || option !== lockExempt)
-                        val alpha = when {
-                            lock -> 0.45f
-                            groupOff -> displayAlpha(Property.Display.DISABLED)
-                            else -> 1f
+                        CompositionLocalProvider(LocalOptionEnabled provides !(lock || groupOff)) {
+                            Box(slide) { ConfigListRow(entry) }
                         }
-                        Box(slide.alpha(alpha).blockInteraction(lock || groupOff, keyboard = true)) { ConfigListRow(entry) }
                     }
                 }
             }
@@ -479,9 +476,10 @@ private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop
  */
 @Composable
 internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boolean = { false }) {
+    val headerModifier = if (LocalOptionEnabled.current) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
     when (entry) {
-        is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
-        is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
+        is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title, headerModifier)
+        is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title, headerModifier)
         is ConfigListEntry.Item -> SettingEntryRow(entry.node, compact(entry.node))
     }
 }
@@ -500,24 +498,24 @@ internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
 }
 
 @Composable
-private fun CategoryHeader(title: String) {
+private fun CategoryHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         title,
         color = LocalTheme.current.textColorSecondary,
         fontSize = 11.sp,
         fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+        modifier = modifier.padding(top = 8.dp, bottom = 2.dp)
     )
 }
 
 @Composable
-private fun SubcategoryHeader(title: String) {
+private fun SubcategoryHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         title,
         color = LocalTheme.current.textColor,
         fontSize = 22.sp,
         fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+        modifier = modifier.padding(top = 8.dp, bottom = 2.dp)
     )
 }
 
@@ -569,11 +567,11 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
 
 private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
 
-private fun foldEnter() = ReducedMotion.enter(
+private fun foldEnter() = Motion.enter(
     expandVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
 )
 
-private fun foldExit() = ReducedMotion.exit(
+private fun foldExit() = Motion.exit(
     shrinkVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
 )
 
@@ -604,11 +602,9 @@ internal fun Accordion(
             description,
             icon,
             titleActions,
-            Modifier.alpha(if (headEnabled) 1f else displayAlpha(Property.Display.DISABLED)),
+            dimmed = !headEnabled,
         ) {
-            if (checked != null) {
-                Box(Modifier.blockInteraction(!headEnabled)) { SwitchControl(checked, onCheckedChange) }
-            }
+            if (checked != null) SwitchControl(checked, headEnabled, onCheckedChange)
         }
         AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
             Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body(checked != false && headEnabled) }
@@ -625,8 +621,10 @@ private fun CardHeader(
     icon: String? = null,
     titleActions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier,
+    dimmed: Boolean = false,
     trailing: @Composable () -> Unit = {},
 ) {
+    val labelAlpha = if (dimmed) LocalTheme.current.disabledAlpha else 1f
     CollapsibleHeader(
         label = title.asRenderText(),
         expanded = expanded,
@@ -636,7 +634,7 @@ private fun CardHeader(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        HeaderLabel(title, description, Modifier.weight(1f), titleActions) {
+        HeaderLabel(title, description, Modifier.weight(1f).alpha(labelAlpha), titleActions) {
             icon?.let { Icon(it, color = LocalTheme.current.textColor, modifier = Modifier.size(32.dp)) }
         }
         Row(
@@ -720,12 +718,12 @@ private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-                    .alpha(if (groupOff) displayAlpha(Property.Display.DISABLED) else 1f)
-                    .blockInteraction(groupOff, keyboard = true),
+                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP),
             ) {
-                entries.forEach { ConfigListRow(it) { compact } }
+                CompositionLocalProvider(LocalOptionEnabled provides (LocalOptionEnabled.current && !groupOff)) {
+                    entries.forEach { ConfigListRow(it) { compact } }
+                }
             }
         }
     }
@@ -796,7 +794,9 @@ private fun GroupHeaderContent(
     val titleStyle = rememberTitleStyle()
 
     val isHovered by interaction.collectIsHoveredAsState()
-    val headLocked = headDisplay == Property.Display.DISABLED
+    val groupEnabled = LocalOptionEnabled.current
+    val headLocked = headDisplay == Property.Display.DISABLED || !groupEnabled
+    val labelModifier = if (groupEnabled) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
     val showActionButton = OneConfigConfig.showOptionActionButtons && !headLocked
     val menu = head?.let { rememberOptionMenu(it) }
 
@@ -818,7 +818,7 @@ private fun GroupHeaderContent(
             if (control != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (showActionButton && menu != null) OptionMoreButton(menu, visible = isHovered)
-                    Box(Modifier.alpha(displayAlpha(headDisplay))) { HeadControl(control, headDisplay, switch, onHeadChange) }
+                    HeadControl(control, !headLocked, switch, onHeadChange)
                 }
             }
         }
@@ -835,7 +835,7 @@ private fun GroupHeaderContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    GroupLabel(tree, Modifier.weight(1f))
+                    GroupLabel(tree, Modifier.weight(1f).then(labelModifier))
                     CollapseChevron(expanded)
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { headControl() }
@@ -848,7 +848,7 @@ private fun GroupHeaderContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                GroupLabel(tree, Modifier.weight(1f))
+                GroupLabel(tree, Modifier.weight(1f).then(labelModifier))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -904,6 +904,7 @@ private object SpriteSheets {
 private fun SpriteIcon(spec: IconSpec, modifier: Modifier) {
     val loader = remember { Thread.currentThread().contextClassLoader ?: SpriteSheets::class.java.classLoader }
     val bitmap by produceState(SpriteSheets.peek(spec.path), spec.path) {
+        value = SpriteSheets.peek(spec.path)
         if (value == null) value = withContext(Dispatchers.IO) { SpriteSheets.load(spec.path, loader) }
     }
     Canvas(modifier) {
@@ -930,10 +931,10 @@ private fun SpriteIcon(spec: IconSpec, modifier: Modifier) {
 }
 
 @Composable
-private fun HeadControl(head: Property<*>, display: Property.Display, switch: Boolean, onHeadChange: (Boolean) -> Unit) {
-    Box(Modifier.blockInteraction(display == Property.Display.DISABLED)) {
+private fun HeadControl(head: Property<*>, enabled: Boolean, switch: Boolean, onHeadChange: (Boolean) -> Unit) {
+    CompositionLocalProvider(LocalOptionEnabled provides enabled) {
         when {
-            switch -> HeadSwitch(Property.recast(head), onHeadChange)
+            switch -> HeadSwitch(Property.recast(head), enabled, onHeadChange)
             isFullWidth(head) -> BoxWithConstraints(Modifier.fillMaxWidth()) {
                 CompositionLocalProvider(LocalOptionWidth provides maxWidth, LocalOptionWidthOrNull provides maxWidth) { Option(head) }
             }
@@ -943,14 +944,14 @@ private fun HeadControl(head: Property<*>, display: Property.Display, switch: Bo
 }
 
 @Composable
-private fun HeadSwitch(head: Property<Boolean>, onHeadChange: (Boolean) -> Unit) {
+private fun HeadSwitch(head: Property<Boolean>, enabled: Boolean, onHeadChange: (Boolean) -> Unit) {
     var checked by remember(head) { mutableStateOf(head.shown() == true) }
     DisposableEffect(head) {
         val listener = Predicate<Boolean> { value -> checked = value == true; false }
         head.addCallback(listener)
         onDispose { head.removeCallback(listener) }
     }
-    SwitchControl(checked) {
+    SwitchControl(checked, enabled) {
         checked = it
         head.set(it)
         onHeadChange(it)
@@ -976,9 +977,7 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
     }
 
     Box(Modifier.optionCard()) {
-        Box(Modifier.alpha(displayAlpha(display))) {
-            SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
-        }
+        SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
     }
 }
 
@@ -1003,9 +1002,8 @@ private fun AccordionSettingRow(
     modifier: Modifier,
     compact: Boolean = false,
 ) {
-    val effectiveDisplay = if (groupEnabled) display else Property.Display.DISABLED
-    Box(modifier.alpha(displayAlpha(effectiveDisplay))) {
-        SettingContent(prop, nested = true, compact = compact, enabled = effectiveDisplay != Property.Display.DISABLED)
+    Box(modifier) {
+        SettingContent(prop, nested = true, compact = compact, enabled = groupEnabled && display != Property.Display.DISABLED)
     }
 }
 
@@ -1145,17 +1143,27 @@ internal fun rememberDisplay(prop: Property<*>): Property.Display {
     }
 }
 
+@Composable
 internal fun displayAlpha(display: Property.Display): Float {
-    return if (display == Property.Display.DISABLED) 0.65f else 1f
+    return if (display == Property.Display.DISABLED) LocalTheme.current.disabledAlpha else 1f
 }
 
 @Composable
 private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false, enabled: Boolean = true) {
+    val active = enabled && LocalOptionEnabled.current
+    CompositionLocalProvider(LocalOptionEnabled provides active) {
+        SettingContentBody(prop, nested, compact, active)
+    }
+}
+
+@Composable
+private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Boolean, enabled: Boolean) {
     val verticalPadding = if (nested) 0.dp else 12.dp
+    val labelModifier = if (enabled) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
 
     val visualizer = prop[MetaKeys.VISUALIZER]
     if (visualizer == Visualizer.InfoVisualizer::class.java || visualizer is Visualizer.InfoVisualizer) {
-        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled, keyboard = true).padding(horizontal = 16.dp, vertical = verticalPadding)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }
         return
@@ -1187,7 +1195,6 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .blockInteraction(!enabled, keyboard = true)
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -1198,7 +1205,7 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                     }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
+                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f).then(labelModifier))
                         actionButton()
                     }
                     fullControl(Modifier.fillMaxWidth())
@@ -1215,8 +1222,8 @@ private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: 
                 stack = compact,
                 verticalPadding = verticalPadding,
                 bottomPadding = if (nested) 8.dp else verticalPadding,
-                modifier = Modifier.fillMaxWidth().blockInteraction(!enabled, keyboard = true),
-                label = { SettingLabel(prop, nested = nested) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { SettingLabel(prop, nested = nested, modifier = labelModifier) },
                 actionButton = actionButton,
                 control = { Option(prop) },
             )

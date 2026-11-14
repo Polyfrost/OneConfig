@@ -1,12 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +38,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
@@ -49,6 +47,9 @@ import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberReorderState
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderHandle
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderItem
 import org.polyfrost.oneconfig.internal.ui.api.settings.DraggableListOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -101,23 +102,14 @@ fun DraggableListOption(data: DraggableListOptionData) {
         mutableStateOf(items.filter { it.value in enabled }.map { it.id }.toSet())
     }
 
-    var draggingIndex by remember { mutableStateOf(-1) }
-    var dragAccum by remember { mutableStateOf(0f) }
     val itemHeight = if (data.checkable) CheckableListItemHeight else PlainListItemHeight
     val stridePx = with(density) { (itemHeight + ListItemSpacing).toPx() }
-    val dragTargetIndex = if (draggingIndex == -1) {
-        -1
-    } else {
-        (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, items.lastIndex)
-    }
     val contentHeight = itemHeight * items.size + ListItemSpacing * (items.size - 1).coerceAtLeast(0)
 
     fun save(list: List<ListEntry> = items) {
         val toSave = if (data.checkable) list.filter { it.id in enabledIds } else list
         (data.prop as Property<Any>).set(toSave.map { it.value }.toTypedArray())
     }
-
-    var lastTickIndex by remember { mutableStateOf(-1) }
 
     fun moveBy(id: Int, delta: Int): Boolean {
         val from = items.indexOfFirst { it.id == id }
@@ -151,18 +143,16 @@ fun DraggableListOption(data: DraggableListOptionData) {
         )
     }
 
-    val draggableState = rememberDraggableState { delta ->
-        if (draggingIndex == -1) return@rememberDraggableState
-        dragAccum = (dragAccum + delta).coerceIn(
-            -draggingIndex * stridePx,
-            (items.lastIndex - draggingIndex) * stridePx,
-        )
-        val target = (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, items.lastIndex)
-        if (target != lastTickIndex) {
-            lastTickIndex = target
-            UiSounds.play(UiSoundEvent.SLIDER_TICK)
-        }
-    }
+    val reorder = rememberReorderState(
+        Orientation.Vertical,
+        { from, to ->
+            if (from in items.indices && to in items.indices) {
+                items = items.toMutableList().also { it.add(to, it.removeAt(from)) }
+                UiSounds.play(UiSoundEvent.SLIDER_TICK)
+            }
+        },
+        { save() },
+    )
 
     Box(
         modifier = Modifier
@@ -188,18 +178,11 @@ fun DraggableListOption(data: DraggableListOptionData) {
           ) {
             items.forEachIndexed { index, item ->
                 key(item.id) {
-                    val isDragging = draggingIndex == index
+                    val isDragging = reorder.draggingKey == item.id
                     val rowInteraction = rememberInteractionSource()
                     val isHovered by rowInteraction.collectIsHoveredAsState()
                     val baseOffset = index * stridePx
-                    val targetOffset = when {
-                        isDragging -> baseOffset + dragAccum
-                        draggingIndex == -1 -> baseOffset
-                        dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stridePx
-                        dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
-                        else -> baseOffset
-                    }
-                    val animatedOffset = Motion.animateFloatAsState(targetOffset, spring(), label = "listEntryOffset")
+                    val animatedOffset = Motion.animateFloatAsState(baseOffset, if (isDragging) snap() else spring(), label = "listEntryOffset")
 
                     val bgColor = animateAccentColorAsState(
                         isDragging,
@@ -212,9 +195,10 @@ fun DraggableListOption(data: DraggableListOptionData) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset { IntOffset(0, (if (isDragging) targetOffset else animatedOffset.value).roundToInt()) }
+                            .offset { IntOffset(0, baseOffset.roundToInt()) }
                             .height(itemHeight)
-                            .zIndex(if (isDragging) 1f else 0f)
+                            .reorderItem(reorder, item.id, index, false)
+                            .graphicsLayer { translationY = animatedOffset.value - baseOffset }
                             .clip(ListItemShape)
                             .graphicsLayer {}
                             .animatedFrame(ListItemShape, fill = { bgColor.value }, border = { theme.borderColor })
@@ -237,24 +221,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
                             modifier = Modifier
                                 .size(16.dp)
                                 .pointerHoverIcon(PointerIcon.Hand)
-                                .draggable(
-                                    orientation = Orientation.Vertical,
-                                    state = draggableState,
-                                    onDragStarted = { draggingIndex = index; dragAccum = 0f; lastTickIndex = index },
-                                    onDragStopped = {
-                                        if (dragTargetIndex != draggingIndex) {
-                                            val list = items.toMutableList()
-                                            val moved = list.removeAt(draggingIndex)
-                                            list.add(dragTargetIndex, moved)
-                                            items = list
-                                            save(list)
-                                        } else {
-                                            save()
-                                        }
-                                        draggingIndex = -1
-                                        dragAccum = 0f
-                                    },
-                                ),
+                                .reorderHandle(reorder, item.id),
                             tint = { contentColor.value },
                         )
 

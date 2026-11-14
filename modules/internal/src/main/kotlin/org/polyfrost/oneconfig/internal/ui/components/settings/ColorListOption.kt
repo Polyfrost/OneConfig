@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerPopup as KitColorPickerPopup
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
@@ -50,10 +51,15 @@ fun ColorListOption(data: ColorListOptionData) {
         maxEntries = data.maxEntries,
         addText = data.addText,
         onAdd = { state.add(DefaultEntryColor.toArgb()) },
-    ) { entry, _ ->
+    ) { entry, ctx ->
         ColorSwatch(
             argb = entry.value,
             hasAlpha = data.alpha,
+            resetColor = {
+                val index = state.indexOf(entry.id)
+                if (data.hasDefaultList()) data.defaultArgbAt(index) else DefaultEntryColor.toArgb()
+            },
+            rowEntries = ctx.rowEntries,
             expanded = openEntry == entry.id,
             onExpandedChange = { openEntry = if (it) entry.id else -1 },
             onColorChange = { state.update(entry.id, it.toArgb()) },
@@ -65,6 +71,8 @@ fun ColorListOption(data: ColorListOptionData) {
 private fun RowScope.ColorSwatch(
     argb: Int,
     hasAlpha: Boolean,
+    resetColor: () -> Int?,
+    rowEntries: () -> List<MenuEntry>,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onColorChange: (Color) -> Unit,
@@ -92,10 +100,14 @@ private fun RowScope.ColorSwatch(
                         model.set(next)
                         latestOnColorChange(next)
                     },
-                    reset = {
-                        model.set(DefaultEntryColor)
-                        latestOnColorChange(DefaultEntryColor)
+                    reset = resetColor()?.let { argbValue ->
+                        {
+                            val target = Color(argbValue).let { if (hasAlpha) it else it.copy(alpha = 1f) }
+                            model.set(target)
+                            latestOnColorChange(target)
+                        }
                     },
+                    extra = rowEntries(),
                 )
             },
     ) {

@@ -1,75 +1,19 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.key.utf16CodePoint
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.KeybindField
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
-import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-
-private val KeybindShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-
-/** Human-readable name for a platform key code */
-private fun keyCodeToName(code: Int): String = OneConfigKeybind.keyName(code)
-
-/** Human-readable name for a mouse button */
-private fun mouseButtonToName(button: Int): String = Platform.compatibility().keys().mouseName(button)
-
-private fun splitModifiers(codes: List<Int>): Pair<Byte, IntArray> {
-    var mods = KeyModifiers.NONE
-    val keys = ArrayList<Int>(codes.size)
-    for (code in codes) {
-        val bit = KeyModifiers.of(code)
-        if (bit != KeyModifiers.NONE) mods = (mods.toInt() or bit.toInt()).toByte()
-        else keys += code
-    }
-    return mods to keys.toIntArray()
-}
-
-private fun keybindDisplayName(keybind: OneConfigKeybind?): String = keybind?.displayName() ?: translated("oneconfig.keybind.none", "None")
 
 @Suppress("UNCHECKED_CAST")
 private fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, mods: Byte): OneConfigKeybind {
@@ -86,9 +30,15 @@ private fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, m
     return applied
 }
 
+@Suppress("UNCHECKED_CAST")
 fun resetKeybindOption(prop: Property<*>) {
     val def = prop.getMetadata<Any?>("default") as? OneConfigKeybind
-    if (def == null) {
+    if (def == null && prop.getMetadata<Boolean>("defaultNull") == true) {
+        val old = prop.get() as? OneConfigKeybind
+        (prop as Property<Any?>).setAsReferential(null)
+        if (old != null) KeybindManager.unregister(old)
+        KeybindConflicts.revision.intValue++
+    } else if (def == null) {
         writeKeybind(prop, null, null, KeyModifiers.NONE)
     } else {
         writeKeybind(prop, def.keyCodes?.clone(), def.mouseBtns?.clone(), def.mods)
@@ -101,193 +51,27 @@ fun unbindKeybindOption(prop: Property<*>) {
     bumpResetEpoch(prop)
 }
 
-private fun KeyEvent.awtKeyEventId(): Int? = runCatching {
-    val internal = nativeKeyEvent
-    val field = internal.javaClass.getDeclaredField("nativeEvent").apply { isAccessible = true }
-    (field.get(internal) as? java.awt.event.KeyEvent)?.id
-}.getOrNull()
-
 @Composable
 fun KeybindOption(data: KeybindOptionData) {
-    val theme = LocalTheme.current
+    KeybindOption(data, true)
+}
+
+@Composable
+fun KeybindOption(data: KeybindOptionData, enabled: Boolean) {
     val singleKey = data.prop.getMetadata<Boolean>("singleKey") == true
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    var recording by remember(data.prop) { mutableStateOf(false) }
-    val focusRequester = remember(data.prop) { FocusRequester() }
-
     var currentKeybind by remember(data.prop) {
-        mutableStateOf(data.prop.get() as? OneConfigKeybind)
+        mutableStateOf(data.prop.get() as? OneConfigKeybind, neverEqualPolicy())
     }
-    var displayName by remember(data.prop) { mutableStateOf(keybindDisplayName(currentKeybind)) }
+    val conflict = data.prop in KeybindConflicts.conflictingProps()
 
-    val recordedKeys = remember(data.prop) { mutableStateListOf<Int>() }
-    val heldKeys = remember(data.prop) { HashSet<Int>() }
-    val recordedMouse = remember(data.prop) { mutableStateListOf<Int>() }
-    val heldMouse = remember(data.prop) { HashSet<Int>() }
-
-    val hasConflict = !recording && data.prop in KeybindConflicts.conflictingProps()
-
-    // setting the property may mutate the keybind in place or swap in a fresh instance and
-    // KeybindManager.replace handles both so the bind keeps firing without a mod change callback
-    fun applyKeybind(keys: IntArray?, mouse: IntArray?, mods: Byte = KeyModifiers.NONE) {
-        val applied = writeKeybind(data.prop, keys, mouse, mods)
-        currentKeybind = applied
-        displayName = keybindDisplayName(applied)
-    }
-
-    fun commitRecording() {
-        val mouse = if (recordedMouse.isEmpty()) null else recordedMouse.toIntArray()
-        val (mods, keys) = splitModifiers(recordedKeys.toList())
-        if (keys.isEmpty() && mouse == null && recordedKeys.isNotEmpty()) {
-            // a combo of only modifier keys binds them as literal keys
-            applyKeybind(recordedKeys.toIntArray(), null)
-        } else {
-            applyKeybind(keys.takeIf { it.isNotEmpty() }, mouse, mods)
-        }
-        recording = false
-    }
-
-    val bgColor = animateAccentColorAsState(
-        recording to isHovered,
-        when {
-            recording -> Accent.copy(alpha = 0.2f)
-            isHovered -> theme.componentBackground.copy(alpha = 0.8f)
-            else -> theme.componentBackground
-        }
+    KeybindField(
+        keybind = currentKeybind,
+        onChange = { next ->
+            currentKeybind = writeKeybind(data.prop, next?.keyCodes, next?.mouseBtns, next?.mods ?: KeyModifiers.NONE)
+        },
+        modifier = Modifier.widthIn(max = LocalOptionWidth.current),
+        enabled = enabled,
+        conflict = conflict,
+        singleKey = singleKey,
     )
-    val borderColor = animateAccentColorAsState(
-        listOf(recording, hasConflict, isHovered),
-        when {
-            recording -> Accent
-            hasConflict -> theme.error
-            isHovered -> theme.textColor.copy(0.2f)
-            else -> theme.borderColor
-        }
-    )
-    val textColor = animateAccentColorAsState(
-        recording to hasConflict,
-        when {
-            recording -> Accent
-            hasConflict -> theme.error
-            else -> theme.textColor
-        }
-    )
-
-    LaunchedEffect(recording) {
-        if (recording) {
-            recordedKeys.clear()
-            heldKeys.clear()
-            recordedMouse.clear()
-            heldMouse.clear()
-            focusRequester.requestFocus()
-        }
-    }
-
-    DisposableEffect(recording) {
-        if (recording) {
-            val handler = {
-                applyKeybind(null, null)
-                recording = false
-            }
-            val mouseHandler: (Int, Boolean) -> Unit = { button, pressed ->
-                if (pressed) {
-                    if (singleKey) {
-                        applyKeybind(null, intArrayOf(button))
-                        recording = false
-                    } else {
-                        if (button !in recordedMouse) recordedMouse.add(button)
-                        heldMouse.add(button)
-                    }
-                } else {
-                    heldMouse.remove(button)
-                    if (heldKeys.isEmpty() && heldMouse.isEmpty() && (recordedKeys.isNotEmpty() || recordedMouse.isNotEmpty())) {
-                        commitRecording()
-                    }
-                }
-            }
-            KeybindRecordingBus.setEscapeHandler(handler)
-            KeybindRecordingBus.setMouseHandler(mouseHandler)
-            onDispose {
-                KeybindRecordingBus.clearEscapeHandler(handler)
-                KeybindRecordingBus.clearMouseHandler(mouseHandler)
-            }
-        } else {
-            onDispose { }
-        }
-    }
-
-    Row(
-        modifier = Modifier
-            // long key combos wrap instead of squeezing the setting's label
-            .widthIn(max = LocalOptionWidth.current)
-            .heightIn(min = OptionControlHeight)
-            .onKeyEvent { event ->
-                if (!recording) return@onKeyEvent false
-                if (event.awtKeyEventId() == java.awt.event.KeyEvent.KEY_TYPED) return@onKeyEvent true
-                when (event.type) {
-                    KeyEventType.KeyDown -> {
-                        if (event.key == Key.Escape) {
-                            applyKeybind(null, null)
-                            recording = false
-                            return@onKeyEvent true
-                        }
-                        if (event.key == Key.Backspace || event.key == Key.Delete) {
-                            if (recordedKeys.isEmpty()) {
-                                applyKeybind(null, null)
-                                recording = false
-                                return@onKeyEvent true
-                            }
-                        }
-                        // ComposeScreen carries the raw platform key code in the event's codePoint which avoids a
-                        // lossy AWT round-trip
-                        // a code <= 0 is an unknown key or a character event and would match nothing or everything
-                        val keyCode = event.utf16CodePoint
-                        if (keyCode <= 0) return@onKeyEvent true
-                        if (singleKey) {
-                            applyKeybind(intArrayOf(keyCode), null)
-                            recording = false
-                            return@onKeyEvent true
-                        }
-                        if (keyCode !in recordedKeys) recordedKeys.add(keyCode)
-                        heldKeys.add(keyCode)
-                        return@onKeyEvent true
-                    }
-                    KeyEventType.KeyUp -> {
-                        heldKeys.remove(event.utf16CodePoint)
-                        if (heldKeys.isEmpty() && heldMouse.isEmpty() && (recordedKeys.isNotEmpty() || recordedMouse.isNotEmpty())) {
-                            commitRecording()
-                        }
-                        return@onKeyEvent true
-                    }
-                    else -> return@onKeyEvent false
-                }
-            }
-            .focusRequester(focusRequester)
-            .focusable()
-            .graphicsLayer {}
-            .animatedFrame(KeybindShape, fill = { bgColor.value }, border = { borderColor.value })
-            .onClick(interactionSource) { if (!recording) recording = true }
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            "keyboard",
-            tint = { textColor.value },
-            modifier = Modifier.size(16.dp)
-        )
-        Text(
-            when {
-                recording && recordedKeys.isEmpty() && recordedMouse.isEmpty() -> translated("oneconfig.keybind.recording", "Press keys...")
-                recording -> (recordedKeys.map { keyCodeToName(it) } + recordedMouse.map { mouseButtonToName(it) })
-                    .joinToString(" + ")
-                else -> displayName
-            },
-            color = Color.Unspecified,
-            fontSize = 13.sp,
-            colorProducer = { textColor.value },
-        )
-    }
 }

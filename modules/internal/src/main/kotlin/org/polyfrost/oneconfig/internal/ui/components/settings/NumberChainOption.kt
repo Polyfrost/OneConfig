@@ -267,7 +267,6 @@ private fun ChainValueEditor(
     modifier: Modifier,
     onCommit: (Float) -> Unit,
 ) {
-    val theme = LocalTheme.current
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf(formatSpinnerValue(initial)) }
     var focused by remember { mutableStateOf(false) }
@@ -282,7 +281,7 @@ private fun ChainValueEditor(
         },
         framed = false,
         fontSize = 13.sp,
-        trailing = unit?.let { suffix -> @Composable { Text(suffix, color = theme.textColorSecondary, fontSize = 13.sp) } },
+        visualTransformation = rememberUnitSuffix(unit),
         focusRequester = focusRequester,
         onSubmit = { commit() },
     )

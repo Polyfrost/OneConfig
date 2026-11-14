@@ -53,12 +53,15 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColor
 import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerPopup as KitColorPickerPopup
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.OptionMenuContributors
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextFieldDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.components.transparencyCheckerboard
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.ColorOptionData
@@ -66,7 +69,6 @@ import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -146,7 +148,7 @@ private fun hexToColor(hex: String): Color? {
     }
 }
 
-internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) : KitColorPickerModel {
+internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) : KitColorPickerModel() {
     private val hsb = colorToHsb(initialColor)
     var hue by mutableFloatStateOf(hsb[0])
     var saturation by mutableFloatStateOf(hsb[1])
@@ -163,7 +165,7 @@ internal class ColorPickerModel(initialColor: Color, hasAlpha: Boolean = true) :
             chromaState = value
         }
     val alphaEnabled = hasAlpha
-    override var chromaSpeed by mutableFloatStateOf(1f)
+    override var chromaSpeed: Float by mutableFloatStateOf(1f)
     var gradientEnabled by mutableStateOf(false)
     var gradientColor by mutableStateOf(initialColor)
 
@@ -297,6 +299,7 @@ fun ColorOption(data: ColorOptionData, enabled: Boolean) {
         gradientCapable = data.gradient && data.prop.type == PolyColor::class.java,
         enabled = enabled,
         onReset = if (optionHasDefault(data.prop)) ({ resetOption(data.prop) }) else null,
+        extraEntries = { OptionMenuContributors.entriesFor(data.prop) },
     )
 }
 
@@ -310,7 +313,7 @@ internal fun ColorPicker(
     chromaCapable: Boolean = true,
     gradientCapable: Boolean = false,
 ) {
-    ColorPicker(model, color, onColorChanged, swatch, chromaCapable, gradientCapable, true, null)
+    ColorPicker(model, color, onColorChanged, swatch, chromaCapable, gradientCapable, true, null, { emptyList() })
 }
 
 @Composable
@@ -323,6 +326,7 @@ internal fun ColorPicker(
     gradientCapable: Boolean,
     enabled: Boolean,
     onReset: (() -> Unit)?,
+    extraEntries: () -> List<MenuEntry>,
 ) {
     val theme = LocalTheme.current
     val interactionSource = rememberInteractionSource()
@@ -355,6 +359,7 @@ internal fun ColorPicker(
                         latestOnColorChanged(model.savedColor())
                     },
                     reset = latestOnReset,
+                    extra = extraEntries(),
                 )
             },
     ) {
@@ -423,6 +428,7 @@ internal fun swatchMenu(
     copy: () -> Unit,
     paste: (Color) -> Unit,
     reset: (() -> Unit)?,
+    extra: List<MenuEntry> = emptyList(),
 ): List<MenuEntry> {
     val pasted = ClipboardHelper.getString()?.trim()?.let(::hexToColor)
     return buildList<MenuEntry> {
@@ -438,6 +444,10 @@ internal fun swatchMenu(
         if (reset != null) {
             add(MenuSeparator)
             add(MenuAction(translated("oneconfig.menu.option.reset", "Reset to default"), reset, icon = "refresh"))
+        }
+        if (extra.isNotEmpty()) {
+            add(MenuSeparator)
+            addAll(extra)
         }
     }
 }
@@ -472,9 +482,7 @@ internal fun ColorPickerPopup(
         modifier = modifier
             .width(280.dp)
             .shellTransition()
-            .liquidGlass(PickerShape, frosted = true)
-            .background(theme.popupBackground, PickerShape)
-            .border(1.dp, theme.borderColor, PickerShape)
+            .themedSurface(SurfaceKind.Popup, PickerShape)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {

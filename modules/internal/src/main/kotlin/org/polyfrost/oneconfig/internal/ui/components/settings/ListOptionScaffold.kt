@@ -1,11 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -48,7 +47,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import java.util.ArrayDeque
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
@@ -60,9 +58,11 @@ import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberReorderState
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderHandle
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderItem
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -106,6 +106,8 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
 
     private var insertAt = -1
 
+    private var pending = false
+
     fun add(value: T) {
         val at = insertAt
         if (at in 0..entries.size) {
@@ -130,6 +132,21 @@ internal class ListEntriesState<T>(initial: List<T>, private val onCommit: (List
         val list = entries.toMutableList()
         list.add(to, list.removeAt(from))
         apply(list)
+    }
+
+    fun reorder(from: Int, to: Int) {
+        if (from !in entries.indices || to !in entries.indices) return
+        insertAt = -1
+        val list = entries.toMutableList()
+        list.add(to, list.removeAt(from))
+        entries = list
+        pending = true
+    }
+
+    fun commitReorder() {
+        if (!pending) return
+        pending = false
+        apply(entries)
     }
 
     fun indexOf(id: Int): Int = entries.indexOfFirst { it.id == id }
@@ -186,6 +203,7 @@ internal class ListRowContext(
     private val color: State<Color>,
     val fieldInteraction: MutableInteractionSource,
     val focused: Boolean,
+    val rowEntries: () -> List<MenuEntry> = { emptyList() },
 ) {
     val contentColor: Color get() = color.value
 }
@@ -202,6 +220,7 @@ internal fun <T> ListOptionContainer(
     addText: Any,
     onAdd: () -> Unit,
     showAddWhenFull: Boolean = false,
+    rowInsertActions: Boolean = true,
     entryHeight: Dp = ListEntryHeight,
     maxHeight: Dp = 280.dp,
     containScroll: Boolean = false,
@@ -212,29 +231,17 @@ internal fun <T> ListOptionContainer(
     val density = LocalDensity.current
     val entries = state.entries
 
-    var draggingIndex by remember { mutableStateOf(-1) }
-    var dragAccum by remember { mutableStateOf(0f) }
-    var lastTickIndex by remember { mutableStateOf(-1) }
     val stridePx = with(density) { (entryHeight + ListEntrySpacing).toPx() }
-    val dragTargetIndex = if (draggingIndex == -1) {
-        -1
-    } else {
-        (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, entries.lastIndex)
-    }
     val contentHeight = entryHeight * entries.size + ListEntrySpacing * (entries.size - 1).coerceAtLeast(0)
 
-    val draggableState = rememberDraggableState { delta ->
-        if (draggingIndex == -1) return@rememberDraggableState
-        dragAccum = (dragAccum + delta).coerceIn(
-            -draggingIndex * stridePx,
-            (entries.lastIndex - draggingIndex) * stridePx,
-        )
-        val target = (draggingIndex + (dragAccum / stridePx).roundToInt()).coerceIn(0, entries.lastIndex)
-        if (target != lastTickIndex) {
-            lastTickIndex = target
+    val reorder = rememberReorderState(
+        Orientation.Vertical,
+        { from, to ->
+            state.reorder(from, to)
             UiSounds.play(UiSoundEvent.SLIDER_TICK)
-        }
-    }
+        },
+        { state.commitReorder() },
+    )
 
     val full = maxEntries > 0 && entries.size >= maxEntries
 
@@ -264,9 +271,11 @@ internal fun <T> ListOptionContainer(
                 )
                 add(MenuSeparator)
             }
-            add(MenuAction(translated("oneconfig.list.duplicate", "Duplicate"), { state.duplicate(entry.id) }, icon = "copy-plus", enabled = canAdd))
-            add(MenuAction(translated("oneconfig.list.insert_above", "Insert above"), { state.insertAbove(entry.id, onAdd) }, icon = "plus", enabled = canAdd))
-            add(MenuSeparator)
+            if (rowInsertActions) {
+                add(MenuAction(translated("oneconfig.list.duplicate", "Duplicate"), { state.duplicate(entry.id) }, icon = "copy-plus", enabled = canAdd))
+                add(MenuAction(translated("oneconfig.list.insert_above", "Insert above"), { state.insertAbove(entry.id, onAdd) }, icon = "plus", enabled = canAdd))
+                add(MenuSeparator)
+            }
             add(MenuAction(translated("oneconfig.list.remove", "Remove"), { state.remove(entry.id) }, icon = "trash", danger = true))
         }
     }
@@ -305,16 +314,9 @@ internal fun <T> ListOptionContainer(
                 ) {
                     entries.forEachIndexed { index, entry ->
                         key(entry.id) {
-                            val isDragging = draggingIndex == index
+                            val isDragging = reorder.draggingKey == entry.id
                             val baseOffset = index * stridePx
-                            val targetOffset = when {
-                                isDragging -> baseOffset + dragAccum
-                                draggingIndex == -1 -> baseOffset
-                                dragTargetIndex > draggingIndex && index in (draggingIndex + 1)..dragTargetIndex -> baseOffset - stridePx
-                                dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
-                                else -> baseOffset
-                            }
-                            val animatedOffset = Motion.animateFloatAsState(targetOffset, spring(), label = "listEntryOffset")
+                            val animatedOffset = Motion.animateFloatAsState(baseOffset, if (isDragging) snap() else spring(), label = "listEntryOffset")
 
                             EntryRow(
                                 valid = !invalid(entry.value),
@@ -322,8 +324,9 @@ internal fun <T> ListOptionContainer(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(entryHeight)
-                                    .offset { IntOffset(0, (if (isDragging) targetOffset else animatedOffset.value).roundToInt()) }
-                                    .zIndex(if (isDragging) 1f else 0f)
+                                    .offset { IntOffset(0, baseOffset.roundToInt()) }
+                                    .reorderItem(reorder, entry.id, index, false)
+                                    .graphicsLayer { translationY = animatedOffset.value - baseOffset }
                                     .contextMenu { rowMenu(entry) }
                                     .onPreviewKeyEvent { event ->
                                         val delta = event.reorderDelta()
@@ -332,18 +335,10 @@ internal fun <T> ListOptionContainer(
                                         }
                                     },
                                 dragHandle = if (!reorderable) null else { handleModifier ->
-                                    handleModifier.draggable(
-                                        orientation = Orientation.Vertical,
-                                        state = draggableState,
-                                        onDragStarted = { draggingIndex = index; dragAccum = 0f; lastTickIndex = index },
-                                        onDragStopped = {
-                                            if (dragTargetIndex != draggingIndex) state.move(draggingIndex, dragTargetIndex)
-                                            draggingIndex = -1
-                                            dragAccum = 0f
-                                        },
-                                    )
+                                    handleModifier.reorderHandle(reorder, entry.id)
                                 },
                                 onRemove = { state.remove(entry.id) },
+                                rowEntries = { rowMenu(entry) },
                                 content = { ctx -> row(entry, ctx) },
                             )
                         }
@@ -374,6 +369,7 @@ private fun EntryRow(
     modifier: Modifier,
     dragHandle: ((Modifier) -> Modifier)?,
     onRemove: () -> Unit,
+    rowEntries: () -> List<MenuEntry>,
     content: @Composable RowScope.(ListRowContext) -> Unit,
 ) {
     val theme = LocalTheme.current
@@ -409,7 +405,7 @@ private fun EntryRow(
             )
         }
 
-        content(ListRowContext(contentColor, fieldInteraction, isFocused))
+        content(ListRowContext(contentColor, fieldInteraction, isFocused, rowEntries))
 
         IconButton(
             "trash",
@@ -424,7 +420,7 @@ private fun EntryRow(
 @Composable
 private fun AddEntryButton(label: Any, entryHeight: Dp, onClick: () -> Unit) {
     TextButton(
-        label.asRenderText(),
+        label.asStyledLabel(),
         "plus",
         onClick,
         Modifier.height(entryHeight),

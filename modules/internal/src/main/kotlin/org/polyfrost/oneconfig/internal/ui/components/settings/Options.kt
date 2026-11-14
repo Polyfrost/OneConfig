@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
@@ -9,24 +10,29 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Collections
 import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
+import androidx.compose.ui.text.AnnotatedString
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.ComponentLike
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.get
-import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenu
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuCustomItem
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
@@ -36,9 +42,14 @@ import org.polyfrost.oneconfig.api.ui.v1.components.OptionMenuContributors
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.asRenderText
+import org.polyfrost.oneconfig.internal.ui.components.componentText
+import org.polyfrost.oneconfig.internal.ui.components.legacyText
+import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
@@ -47,6 +58,35 @@ val LocalOptionWidth = compositionLocalOf { 300.dp }
 
 val LocalOptionWidthOrNull = compositionLocalOf<Dp?> { null }
 internal val OptionControlHeight = 32.dp
+
+internal val LocalOptionEnabled = compositionLocalOf { true }
+
+private val LegacyCodePattern = Regex("§[0-9a-fk-orA-FK-OR]")
+
+internal fun Any.asPlainLabel(): String = asRenderText().replace(LegacyCodePattern, "")
+
+internal fun Any.hasStyledText(): Boolean = when (val wrapped = Platform.compatibility().wrapPlatformComponent(this)) {
+    is String -> wrapped.indexOf('§') >= 0
+    is Component -> wrapped.hasStyle()
+    is ComponentLike -> wrapped.asComponent().hasStyle()
+    else -> false
+}
+
+private fun Component.hasStyle(): Boolean = !style().isEmpty || children().any { it.hasStyle() }
+
+internal fun Any.asStyledLabel(): AnnotatedString = when (val wrapped = Platform.compatibility().wrapPlatformComponent(this)) {
+    is String -> legacyText(wrapped)
+    is Component -> componentText(wrapped)
+    is ComponentLike -> componentText(wrapped.asComponent())
+    else -> legacyText(wrapped.toString())
+}
+
+internal fun List<Any>.styledLabelsOrNull(): List<AnnotatedString>? =
+    if (any { it.hasStyledText() }) map { it.asStyledLabel() } else null
+
+internal fun languageStamp(): String = Platform.i18n().translateString("language.code")
+
+internal val enabledAwareVisualizers: MutableSet<Visualizer> = ConcurrentHashMap.newKeySet()
 
 /**
  * Per-property reset counters
@@ -58,7 +98,7 @@ private val resetEpochs = mutableStateMapOf<Int, Int>()
 
 /** True if [prop] has a captured default value that can be restored */
 fun optionHasDefault(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()): Boolean =
-    seen.add(prop) && (prop.getMetadata<Any?>("default") != null ||
+    seen.add(prop) && (prop.getMetadata<Any?>("default") != null || prop.getMetadata<Boolean>("defaultNull") == true ||
         prop.getMetadata<Collection<Property<*>>>("resetWith")?.any { optionHasDefault(it, seen) } == true)
 
 internal fun identitySet(): MutableSet<Property<*>> = Collections.newSetFromMap(IdentityHashMap())
@@ -76,13 +116,16 @@ fun bumpResetEpoch(prop: Property<*>) {
 fun resetOption(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()) {
     if (!seen.add(prop)) return
     val def = prop.getMetadata<Any?>("default")
+    val nullDefault = def == null && prop.getMetadata<Boolean>("defaultNull") == true
     if (def != null) {
         (prop as Property<Any?>).setAsReferential(Config.copyDefault(prop.type, def))
         if (prop.type == PolyColor::class.java) updateAccent()
+    } else if (nullDefault) {
+        (prop as Property<Any?>).setAsReferential(null)
     }
     val linked = prop.getMetadata<Collection<Property<*>>>("resetWith")
     linked?.forEach { resetOption(it, seen) }
-    if (def != null || linked != null) bumpResetEpoch(prop)
+    if (def != null || nullDefault || linked != null) bumpResetEpoch(prop)
 }
 
 @Composable
@@ -96,8 +139,21 @@ fun Option(prop: Property<*>) {
     }
     if (vis != null) {
         val epoch = resetEpochs[System.identityHashCode(prop)] ?: 0
+        val aware = remember(vis) { vis in enabledAwareVisualizers || Visualizer[vis.javaClass]?.let { it in enabledAwareVisualizers } == true }
         key(System.identityHashCode(prop), epoch) {
-            vis.visualize(prop)
+            if (aware) {
+                vis.visualize(prop)
+            } else {
+                val enabled = LocalOptionEnabled.current
+                val disabledAlpha = OneConfigTheme.current.disabledAlpha
+                Box(
+                    (if (enabled) Modifier else Modifier.graphicsLayer { alpha = disabledAlpha })
+                        .blockInteraction(!enabled, keyboard = true),
+                    propagateMinConstraints = true,
+                ) {
+                    vis.visualize(prop)
+                }
+            }
         }
         return
     }
@@ -115,6 +171,11 @@ fun Option(prop: Property<*>) {
 
 @Composable
 fun BooleanOption(data: BooleanOptionData) {
+    BooleanOption(data, true)
+}
+
+@Composable
+fun BooleanOption(data: BooleanOptionData, enabled: Boolean) {
     var checked by remember(data.prop) { mutableStateOf(data.boolProp.shown() == true) }
     // the same option can be flipped from elsewhere on screen, a mod's card for its master switch for one
     DisposableEffect(data.prop) {
@@ -129,8 +190,8 @@ fun BooleanOption(data: BooleanOptionData) {
         }
     }
     when (data.style) {
-        BooleanOptionData.Style.Switch -> SwitchControl(checked) { checked = it; data.boolProp.set(it) }
-        BooleanOptionData.Style.Checkbox -> CheckboxControl(checked) { checked = it; data.boolProp.set(it) }
+        BooleanOptionData.Style.Switch -> SwitchControl(checked, enabled) { checked = it; data.boolProp.set(it) }
+        BooleanOptionData.Style.Checkbox -> CheckboxControl(checked, enabled) { checked = it; data.boolProp.set(it) }
     }
 }
 
@@ -190,7 +251,7 @@ class OptionMenuState internal constructor(private val prop: Property<*>) {
 
     private val tracker = MenuCustomItem { TrackOpen() }
 
-    internal var buttonEntries: List<MenuEntry> by mutableStateOf(deferredEntries())
+    internal var buttonEntries: List<MenuEntry> by mutableStateOf(deferredEntries(), neverEqualPolicy())
         private set
 
     val isOpen: Boolean get() = openCount > 0
@@ -217,6 +278,10 @@ private class DeferredMenuEntries(compute: () -> List<MenuEntry>) : AbstractList
     override val size: Int get() = entries.size
 
     override fun get(index: Int): MenuEntry = entries[index]
+
+    override fun equals(other: Any?): Boolean = other === this
+
+    override fun hashCode(): Int = System.identityHashCode(this)
 }
 
 @Composable
@@ -238,23 +303,3 @@ fun OptionMoreButton(menu: OptionMenuState, visible: Boolean, modifier: Modifier
         contentDescription = translated("oneconfig.option.more_actions", "More actions. Right-click option as shortcut."),
     )
 }
-
-/**
- * Right-click context menu for a single option anchored at [offset] in pixels relative to the anchoring
- * layout
- */
-@Composable
-fun OptionContextMenu(
-    prop: Property<*>,
-    expanded: Boolean,
-    offset: IntOffset,
-    onDismiss: () -> Unit,
-    resetEnabled: Boolean = optionHasDefault(prop),
-    onReset: (() -> Unit)? = null,
-    onUnbind: (() -> Unit)? = null,
-) {
-    if (!expanded) return
-    val entries = remember(System.identityHashCode(prop)) { optionMenuEntries(prop, onReset, resetEnabled, onUnbind) }
-    ContextMenu(expanded, offset, onDismiss, entries)
-}
-
