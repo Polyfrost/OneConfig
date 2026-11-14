@@ -17,6 +17,8 @@ public interface Keys {
     public val keyY: Int
     public val keyZ: Int
     public val keyDelete: Int
+    public val keyF1: Int
+    public val keySlash: Int
     public val keyLeftShift: Int
     public val keyRightShift: Int
     public val keyLeftControl: Int

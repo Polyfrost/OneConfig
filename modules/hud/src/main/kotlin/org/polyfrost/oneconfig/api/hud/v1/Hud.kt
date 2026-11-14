@@ -1246,6 +1246,10 @@ public abstract class Hud(
 
     public var mergeDiagonally: Boolean get() = _mergeDiagonally.value; set(v) { _mergeDiagonally.put(v) }
 
+    private var _mergeAcrossColours: MutableState<Boolean> = mutableStateOf(false)
+
+    public var mergeAcrossColours: Boolean get() = _mergeAcrossColours.value; set(v) { _mergeAcrossColours.put(v) }
+
     private var _keepBgWhenHidden: MutableState<Boolean> = mutableStateOf(false)
 
     public var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.put(v) }
@@ -1751,6 +1755,10 @@ public abstract class Hud(
                     description = "Also fuses backgrounds with HUDs sitting diagonally from this one, which meet it at a corner or only partly along an edge."
                     addDisplayCondition(hideFromConfigUi)
                 }
+                tree["mergeAcrossColours"] = ktProperty(out::mergeAcrossColours).apply {
+                    description = "Also fuses backgrounds with touching HUDs of a different colour, blending the colours where they meet."
+                    addDisplayCondition(hideFromConfigUi)
+                }
                 tree["keepBgWhenHidden"] = ktProperty(out::keepBgWhenHidden).apply {
                     description = "Keeps this HUD's background in the fused shape while the HUD is hidden, so the shape stays whole instead of losing a piece."
                     addDisplayCondition(hideFromConfigUi)
@@ -1969,6 +1977,7 @@ public abstract class Hud(
         _bgRadius = mutableStateOf(this@Hud.bgRadius)
         _mergeBackground = mutableStateOf(this@Hud.mergeBackground)
         _mergeDiagonally = mutableStateOf(this@Hud.mergeDiagonally)
+        _mergeAcrossColours = mutableStateOf(this@Hud.mergeAcrossColours)
         _keepBgWhenHidden = mutableStateOf(this@Hud.keepBgWhenHidden)
         _bgMerged = mutableStateOf(false)
         _textColor = mutableStateOf(this@Hud.textColor)

@@ -11,7 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mod cards and list entries can be moved with the keyboard: focus one and press Alt+Up or Alt+Down
 - Multi-select options have a Select all row
 - Deleting a profile now asks you to confirm first
-- API: The UI kit has enough controls to build a whole mod screen, including select fields, split buttons, dialogs, toasts, grid reordering and progress bars
+- The Keybinds page opens with a map of your keyboard and mouse. Hover a key to see what it does, or click it to bind something to it. Keybinds that allow it can also take Ctrl, Shift or Alt
+- The keyboard map picks up your layout by itself, and you can switch between US, UK, AZERTY, QWERTZ, Dvorak and Colemak
+- A list of keyboard shortcuts in the HUD editor. Open it with F1, Ctrl+/ or the button at the bottom of the editor
+- Merged HUD backgrounds can blend between different colours with the new Merge with different colours option
+- The HUD editor shows where the boss bar, scoreboard, action bar and titles sit, on every version including 1.8.9
+- API: The UI kit has enough controls to build a whole mod screen, including select fields, split buttons, dialogs, toasts, grid reordering, progress bars and keycaps
 - API: `OneConfigComposeScreen`, HUD layers, inline canvases, offscreen rendering and entity previews for drawing with Compose in your own screens and HUDs
 - API: Theme tokens for state colours, typography, spacing, shapes and surfaces, and read-only player preferences such as Reduced Motion
 - API: Typed config metadata keys, a tree builder with group enable toggles, self-updating dependencies, share codes and per-profile config migrations
@@ -30,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Number fields drop trailing zeros, so 0.50 shows as 0.5
 - Scrolling glides in lists added by mods
 - The HUD editor's selection box follows your theme's accent colour
+- The HUD editor tells you why two HUDs won't merge. To pull a HUD out of a merged group, hold Ctrl (Cmd on Mac) while dragging it or use its right-click menu
+- Measurements and spacing guides in the HUD editor use your accent colour
 - Reduced Motion now also applies to page slides, scrolling and the HUD editor
 - API: The `Notifications` calls that take a float duration are deprecated in favour of `durationMillis`. Mods built against older versions keep working
 

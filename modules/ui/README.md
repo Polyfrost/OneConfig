@@ -116,7 +116,7 @@ as `ButtonDefaults` and `TextFieldDefaults`.
 | Buttons | `TextButton`, `IconButton`, `SplitButton`, `MoreButton`, `AnchoredPopupButton`, `ArmedConfirmButton`, `LinkText`, `Chip` |
 | Fields | `TextField`, `SearchField`, `NumberField`, `KeybindField` |
 | Selection | `Switch`, `SwitchRow`, `Checkbox`, `ToggleRow`, `Slider`, `Select`, `MultiSelect`, `RadioGroup`, `TabRow`, `SegmentedChips`, `ColorSwatchButton`, `ColorPickerPopup` |
-| Text and icons | `Text`, `Icon`, `TooltipBox`, `Badge` |
+| Text and icons | `Text`, `Icon`, `TooltipBox`, `Badge`, `KeyCap`, `ArrowKeys`, `MouseGlyph` |
 | Layout | `PageScaffold`, `CenteredPanel`, `SectionHeader`, `Divider`, `KeyValueRow`, `CodeBlock`, `CardGrid`, `SelectionBar`, `ScrollContainer`, `Scrollbar` |
 | Feedback | `ProgressBar`, `StatusText`, `EmptyState`, `NotificationsCenterPanel` |
 | Images | `rememberImageBitmap`, `PolyBitmap.fromFile`, `ImageViewer` |
@@ -150,6 +150,9 @@ Text and icons:
 ```kotlin
 TooltipBox("Copies the code") { Icon("copy", contentDescription = "Copy") }
 ```
+
+To show a shortcut, use `KeyCap("Ctrl")` for a key, `ArrowKeys()` for the arrow cluster and
+`MouseGlyph(MouseGesture.Drag)` for a mouse action. All three follow the theme, including the pixel style.
 
 `Text` also accepts an `AnnotatedString`, an Adventure `Component` and a list of lines. Text you write for players
 can be a `PageText` (`PageText.translatable(key, fallback)`), turned into a string with `PageText.resolve()`.

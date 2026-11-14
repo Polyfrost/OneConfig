@@ -193,8 +193,24 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         mixins.add("blaze3d.GpuDeviceAccessor");
         mixins.add("blaze3d.GlDeviceAccessor");
         //? }
+        //? if > 1.8.9 {
+        mixins.add("render.HudSampleAccessor");
+        mixins.add("render.BossHealthOverlayAccessor");
+        //?}
+        //? if > 1.8.9 && < 1.21.8
+        //mixins.add("render.Mixin_VanillaHudFootprintImmediate");
+        //? if = 1.8.9 {
+        /*mixins.add("render.LegacyHudSampleAccessor");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyGuiElement");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyTextRenderer");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyItemRenderer");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyGameGui");
+        *///?}
         //? if >= 1.21.8 {
+        mixins.add("render.Mixin_VanillaHudFootprint");
+
         mixins.add("skia.Mixin_GuiRendererLegacyTarget");
+
         mixins.add("render.GameRendererAccessor");
         mixins.add("render.GuiRendererAccessor");
         //? }

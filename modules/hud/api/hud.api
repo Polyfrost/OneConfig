@@ -86,6 +86,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getHidden ()Z
 	public final fun getKeepBgWhenHidden ()Z
 	public fun getLocked ()Z
+	public final fun getMergeAcrossColours ()Z
 	public final fun getMergeBackground ()Z
 	public final fun getMergeDiagonally ()Z
 	public final fun getPadBottom ()F
@@ -189,6 +190,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setLayoutRefH (F)V
 	public final fun setLayoutRefW (F)V
 	public fun setLocked (Z)V
+	public final fun setMergeAcrossColours (Z)V
 	public final fun setMergeBackground (Z)V
 	public final fun setMergeDiagonally (Z)V
 	public final fun setPadBottom (F)V

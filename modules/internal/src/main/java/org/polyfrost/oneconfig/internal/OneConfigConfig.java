@@ -151,6 +151,22 @@ public class OneConfigConfig extends Config {
     public static OneConfigKeybind hudRedoAltKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyY()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
+    @Keybind(
+        title = "oneconfig.preferences.hud_shortcuts_keybind.title",
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        description = "oneconfig.preferences.hud_shortcuts_keybind.description"
+    )
+    public static OneConfigKeybind hudShortcutsKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyF1()}, null, KeyModifiers.NONE, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_shortcuts_alt_keybind.title",
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        description = "oneconfig.preferences.hud_shortcuts_alt_keybind.description"
+    )
+    public static OneConfigKeybind hudShortcutsAltKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeySlash()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
     @Switch(
         title = "oneconfig.preferences.hud_show_keybind_hints.title",
         subcategory = "oneconfig.preferences.category.hud_editor",
@@ -393,6 +409,10 @@ public class OneConfigConfig extends Config {
         registeredHudRedoKeybind = new AtomicReference<>();
     private static final AtomicReference<OneConfigKeybind>
         registeredHudRedoAltKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudShortcutsKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudShortcutsAltKeybind = new AtomicReference<>();
 
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
@@ -530,6 +550,18 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudRedoAltKeybind();
+        addCallback(
+            "hudShortcutsKeybind", (OneConfigKeybind kb) -> {
+                refreshHudShortcutsKeybind();
+                return false;
+            });
+        refreshHudShortcutsKeybind();
+        addCallback(
+            "hudShortcutsAltKeybind", (OneConfigKeybind kb) -> {
+                refreshHudShortcutsAltKeybind();
+                return false;
+            });
+        refreshHudShortcutsAltKeybind();
     }
 
     private static final String[] SOUND_OPTIONS = {"enableUIMenuSounds", "enableUIClickSounds", "enableUISliderSounds", "enableHudEditorSounds", "uiSoundVolume"};
@@ -537,7 +569,7 @@ public class OneConfigConfig extends Config {
     private static final String[] KEYBINDS_PAGE_ONLY = {
         "searchKeybind", "hudSettingsKeybind", "hudVisibilityKeybind", "hudLockKeybind", "hudCopyKeybind", "hudCutKeybind",
         "hudPasteKeybind", "hudDuplicateKeybind", "hudResetKeybind", "hudDeleteKeybind", "hudSelectAllKeybind",
-        "hudUndoKeybind", "hudRedoKeybind", "hudRedoAltKeybind"
+        "hudUndoKeybind", "hudRedoKeybind", "hudRedoAltKeybind", "hudShortcutsKeybind", "hudShortcutsAltKeybind"
     };
 
     private void migrateToPercent(boolean hadPreferences) {
@@ -841,6 +873,20 @@ public class OneConfigConfig extends Config {
             HudDesignSession::handleRedo);
     }
 
+    private static void refreshHudShortcutsKeybind() {
+        refreshHudEditorKeybind(
+            hudShortcutsKeybind,
+            registeredHudShortcutsKeybind,
+            HudDesignSession::handleShortcuts);
+    }
+
+    private static void refreshHudShortcutsAltKeybind() {
+        refreshHudEditorKeybind(
+            hudShortcutsAltKeybind,
+            registeredHudShortcutsAltKeybind,
+            HudDesignSession::handleShortcuts);
+    }
+
     /**
      * Called once after the first-launch message has been shown
      * <p>
@@ -861,6 +907,7 @@ public class OneConfigConfig extends Config {
     }
 
     public static void markHudEditorTourSeen() {
+
         if (hudEditorTourSeen) {
             return;
         }

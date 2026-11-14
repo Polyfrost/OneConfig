@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -84,21 +85,6 @@ fun Keybinds() {
 
     val listState = rememberRestorableLazyListState("keybinds", localSearchQuery, search.query)
 
-    if (visibleGroups.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            when {
-                localSearchQuery.isBlank() ->
-                    EmptyState(translated("oneconfig.search.no_keybinds", "No keybinds available."), icon = "keyboard")
-                // nothing to say until the first search comes back
-                searchResults == null ->
-                    EmptyState(translated("oneconfig.search.searching", "Searching..."), state = LoadState.Loading)
-                else ->
-                    EmptyState(translated("oneconfig.search.no_keybinds_match", "No keybinds match \"%s\"", localSearchQuery), icon = "search")
-            }
-        }
-        return
-    }
-
     val conflicts = KeybindConflicts.conflictMap()
 
     val searching = localSearchQuery.isNotBlank()
@@ -110,6 +96,33 @@ fun Keybinds() {
             contentPadding = PaddingValues(horizontal = PageGutter),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item(key = "keymap") {
+                KeybindKeymap(visibleGroups, groups)
+            }
+            item(key = "keymap-separator") {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                        .height(1.dp)
+                        .background(LocalTheme.current.borderColor),
+                )
+            }
+            if (visibleGroups.isEmpty()) {
+                item(key = "empty") {
+                    Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+                        when {
+                            localSearchQuery.isBlank() ->
+                                EmptyState(translated("oneconfig.search.no_keybinds", "No keybinds available."), icon = "keyboard")
+                            // nothing to say until the first search comes back
+                            searchResults == null ->
+                                EmptyState(translated("oneconfig.search.searching", "Searching..."), state = LoadState.Loading)
+                            else ->
+                                EmptyState(translated("oneconfig.search.no_keybinds_match", "No keybinds match \"%s\"", localSearchQuery), icon = "search")
+                        }
+                    }
+                }
+            }
             visibleGroups.forEach { group ->
                 val storedCollapsed = KeybindGroupCollapseStore.isCollapsed(group.modId)
                 val expanded = searching || !storedCollapsed

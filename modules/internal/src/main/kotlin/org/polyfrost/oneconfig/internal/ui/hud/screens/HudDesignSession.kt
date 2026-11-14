@@ -32,6 +32,8 @@ internal sealed interface StudioCommand {
     data object Redo : StudioCommand
 
     data object Search : StudioCommand
+
+    data object Shortcuts : StudioCommand
 }
 
 object HudDesignSession {
@@ -180,6 +182,14 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         post(StudioCommand.Redo)
+        return true
+    }
+
+    @JvmStatic
+    fun handleShortcuts(pressed: Boolean): Boolean {
+        if (!pressed) return false
+        if (!HudManager.isEditorOpen) return false
+        post(StudioCommand.Shortcuts)
         return true
     }
 

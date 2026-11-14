@@ -413,6 +413,16 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/AnchoringKt {
 	public static final fun rememberAnchoredPosition-uFdPcIQ (Lorg/polyfrost/oneconfig/api/ui/v1/components/Placement;FZLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/window/PopupPositionProvider;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection : java/lang/Enum {
+	public static final field Down Lorg/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection;
+	public static final field Left Lorg/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection;
+	public static final field Right Lorg/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection;
+	public static final field Up Lorg/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection;
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/components/BadgeTone : java/lang/Enum {
 	public static final field Accent Lorg/polyfrost/oneconfig/api/ui/v1/components/BadgeTone;
 	public static final field Danger Lorg/polyfrost/oneconfig/api/ui/v1/components/BadgeTone;
@@ -742,6 +752,14 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/InteractionKt {
 	public static final fun rememberHoverState (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/components/HoverState;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/components/KeyCapsKt {
+	public static final fun ArrowKey-T-dY9a0 (Lorg/polyfrost/oneconfig/api/ui/v1/components/ArrowDirection;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/unit/Dp;Landroidx/compose/ui/graphics/Color;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ArrowKeys (Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun KeyCap-Gp2LGjY (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/unit/Dp;Landroidx/compose/ui/unit/Dp;Landroidx/compose/ui/graphics/Color;Landroidx/compose/runtime/Composer;II)V
+	public static final fun KeyCap-caajnnI (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/unit/Dp;Landroidx/compose/ui/unit/Dp;Landroidx/compose/ui/graphics/Color;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun MouseGlyph (Lorg/polyfrost/oneconfig/api/ui/v1/components/MouseGesture;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/components/KeybindFieldKt {
 	public static final fun KeybindField (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLjava/lang/Boolean;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
@@ -921,6 +939,15 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/MoreButtonDefaul
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/MoreButtonKt {
 	public static final fun MoreButton (Ljava/util/List;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/IconButtonStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/MouseGesture : java/lang/Enum {
+	public static final field Click Lorg/polyfrost/oneconfig/api/ui/v1/components/MouseGesture;
+	public static final field Drag Lorg/polyfrost/oneconfig/api/ui/v1/components/MouseGesture;
+	public static final field Hover Lorg/polyfrost/oneconfig/api/ui/v1/components/MouseGesture;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/MouseGesture;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/components/MouseGesture;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/NotificationsCenterPanelKt {

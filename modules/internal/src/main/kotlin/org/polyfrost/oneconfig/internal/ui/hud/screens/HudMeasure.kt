@@ -7,6 +7,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
@@ -17,7 +18,10 @@ import kotlin.math.roundToInt
 import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedDark
+import org.polyfrost.oneconfig.internal.ui.themes.accentTextOn
+
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
@@ -29,9 +33,10 @@ private const val SIDE_GAP_BADGE_ALPHA = 0.9f
 private const val GRID_LINE_ALPHA = 0.07f
 
 private const val MEASURE_EPSILON = 0.05f
-private const val MEASURE_TICK_PX = 3f
-private const val MEASURE_BADGE_HEIGHT = 14f
-private const val MEASURE_BADGE_PADDING = 4f
+private const val MEASURE_END_DOT_PX = 2f
+internal const val HUD_BADGE_HEIGHT = 16f
+private const val HUD_BADGE_PADDING = 5f
+private const val HUD_BADGE_FONT_SIZE = 10f
 
 internal class HudMeasureLine(val from: Offset, val to: Offset, val value: Float)
 
@@ -128,22 +133,22 @@ private val measureTheme: UITheme
 @Composable
 internal fun hudBadgeRadius(): Dp = OneConfigTheme.shape(MEASURE_BADGE_RADIUS).cornerRadiusOrNull() ?: 0.dp
 
-private fun DrawScope.drawHudPxBadge(label: String, center: Offset, color: Color, textColor: Color, badgeRadius: Dp) {
-    val font = PolyFont.default(9f)
+internal fun DrawScope.drawHudBadge(label: String, center: Offset, color: Color, textColor: Color, badgeRadius: Dp) {
+    val font = PolyFont.default(HUD_BADGE_FONT_SIZE)
     val metrics = font.metrics
     val textWidth = font.measureTextWidth(label)
     val textHeight = metrics.descent - metrics.ascent
-    val width = textWidth + MEASURE_BADGE_PADDING * 2f
+    val width = textWidth + HUD_BADGE_PADDING * 2f
     val left = (center.x - width / 2f).coerceIn(0f, (size.width - width).coerceAtLeast(0f))
-    val top = (center.y - MEASURE_BADGE_HEIGHT / 2f).coerceIn(0f, (size.height - MEASURE_BADGE_HEIGHT).coerceAtLeast(0f))
+    val top = (center.y - HUD_BADGE_HEIGHT / 2f).coerceIn(0f, (size.height - HUD_BADGE_HEIGHT).coerceAtLeast(0f))
     drawRoundRect(
         color = color,
         topLeft = Offset(left, top),
-        size = Size(width, MEASURE_BADGE_HEIGHT),
+        size = Size(width, HUD_BADGE_HEIGHT),
         cornerRadius = CornerRadius(badgeRadius.toPx()),
     )
-    val textX = left + MEASURE_BADGE_PADDING
-    val textY = top + (MEASURE_BADGE_HEIGHT - textHeight) / 2f - metrics.ascent
+    val textX = left + HUD_BADGE_PADDING
+    val textY = top + (HUD_BADGE_HEIGHT - textHeight) / 2f - metrics.ascent
     val argb = textColor.toArgb()
     drawPoly { it.renderer.text(label, textX, textY, argb, font) }
 }
@@ -160,18 +165,20 @@ private fun DrawScope.drawHudDimension(
 ) {
     val start = from * mcToScreen
     val end = to * mcToScreen
-    drawLine(lineColor, start, end, strokeWidth = 1f)
-    val horizontal = abs(end.y - start.y) < abs(end.x - start.x)
-    val tick = if (horizontal) Offset(0f, MEASURE_TICK_PX) else Offset(MEASURE_TICK_PX, 0f)
-    drawLine(lineColor, start - tick, start + tick, strokeWidth = 1f)
-    drawLine(lineColor, end - tick, end + tick, strokeWidth = 1f)
-    drawHudPxBadge(formatHudPx(value), (start + end) / 2f, badgeColor, badgeTextColor, badgeRadius)
+    drawLine(lineColor, start, end, strokeWidth = 1f, cap = StrokeCap.Round)
+    drawCircle(lineColor, radius = MEASURE_END_DOT_PX, center = start)
+    drawCircle(lineColor, radius = MEASURE_END_DOT_PX, center = end)
+    drawHudBadge(formatHudPx(value), (start + end) / 2f, badgeColor, badgeTextColor, badgeRadius)
+}
+
+private fun guideColors(theme: UITheme): Pair<Color, Color> {
+    val accent = Accent
+    return accent to theme.accentTextOn(accent)
 }
 
 internal fun DrawScope.drawHudMeasurement(measurement: HudMeasurement, mcToScreen: Float, badgeRadius: Dp) {
     val theme = measureTheme
-    val measureColor = theme.error
-    val measureTextColor = theme.onError
+    val (measureColor, measureTextColor) = guideColors(theme)
     val t = measurement.target
     drawRect(
         color = measureColor,
@@ -189,9 +196,7 @@ internal fun DrawScope.drawHudMeasurement(measurement: HudMeasurement, mcToScree
 
 internal fun DrawScope.drawHudDragFeedback(result: HudSnapResult, mcToScreen: Float, badgeRadius: Dp) {
     val theme = measureTheme
-    val measureColor = theme.error
-    val spacingColor = theme.success
-    val spacingTextColor = theme.onSuccess
+    val (measureColor, measureTextColor) = guideColors(theme)
     val sideGapLineColor = theme.onMedia.copy(alpha = SIDE_GAP_LINE_ALPHA)
     val sideGapBadgeColor = theme.pageSurface.copy(alpha = SIDE_GAP_BADGE_ALPHA)
     val sideGapTextColor = theme.textColor
@@ -206,10 +211,11 @@ internal fun DrawScope.drawHudDragFeedback(result: HudSnapResult, mcToScreen: Fl
         val start = line.from * mcToScreen
         val end = line.to * mcToScreen
         drawLine(sideGapLineColor, start, end, strokeWidth = 1f, pathEffect = hudMeasureDashEffect)
-        drawHudPxBadge(formatHudPx(line.value), (start + end) / 2f, sideGapBadgeColor, sideGapTextColor, badgeRadius)
+        drawHudBadge(formatHudPx(line.value), (start + end) / 2f, sideGapBadgeColor, sideGapTextColor, badgeRadius)
     }
     for (gap in result.gaps) {
-        drawHudDimension(gap.from, gap.to, gap.size, spacingColor, spacingColor, spacingTextColor, mcToScreen, badgeRadius)
+        drawHudDimension(gap.from, gap.to, gap.size, measureColor, measureColor, measureTextColor, mcToScreen, badgeRadius)
+
     }
 }
 
