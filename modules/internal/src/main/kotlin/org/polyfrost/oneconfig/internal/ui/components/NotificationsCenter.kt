@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,30 +42,28 @@ import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.components.ProgressBar
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.oneconfig.utils.v1.Formatters
 
 private val PanelWidth = 368.dp
-private val PanelShape @Composable get() = LocalTheme.current.popupShape
 private val ButtonShape @Composable get() = LocalTheme.current.buttonShape
 
 @Composable
 fun NotificationsCenter() {
     val theme = LocalTheme.current
     val history = NotificationsManager.history
-    val panelBg = theme.popupBackground
 
     Column(
         modifier = Modifier
             .width(PanelWidth)
-            .clip(PanelShape)
-            .liquidGlass(PanelShape, frosted = true)
-            .background(panelBg, PanelShape)
-            .border(1.dp, theme.borderColor, PanelShape)
+            .themedSurface(SurfaceKind.Popup)
             .padding(horizontal = 14.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -207,6 +204,7 @@ private fun Footer() {
     val source = rememberInteractionSource()
     val isHovered by source.collectIsHoveredAsState()
     val color by Motion.animateColorAsState(if (isHovered) theme.textColor else theme.textColor.copy(0.85f))
+    val label = translated("oneconfig.notifications.clear_all", "Clear all notifications")
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -216,13 +214,13 @@ private fun Footer() {
         Row(
             modifier = Modifier
                 .clip(ButtonShape)
-                .onClick(source) { NotificationsManager.clearHistory() }
+                .oneConfigClickable(label, { NotificationsManager.clearHistory() }, indication = false, interactionSource = source)
                 .pointerHoverIcon(PointerIcon.Hand),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon("trash", color = color, modifier = Modifier.size(18.dp))
-            Text(translated("oneconfig.notifications.clear_all", "Clear all notifications"), color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text(label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

@@ -11,7 +11,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
 import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
 import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
-import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -53,18 +52,14 @@ fun ModSortControl(modifier: Modifier = Modifier) {
         )
     }
 
-    TooltipBox(
-        translated("oneconfig.mods.sort.tooltip", "Sorted by: %s", selected.label()),
-        modifier.padding(end = PageGutter),
-        placement = TooltipPlacement.BelowCenter,
-    ) {
-        TabRow(
-            tabs = modes.map { TabItem(it, "", icon = it.icon) },
-            selected = selected,
-            onSelect = ::pick,
-            style = TabStyle.Segmented,
-            size = ControlSize.Large,
-            fill = false,
-        )
-    }
+    TabRow(
+        tabs = modes.map { TabItem(it, "", icon = it.icon, tooltip = it.label()) },
+        selected = selected,
+        onSelect = ::pick,
+        modifier = modifier.padding(end = PageGutter),
+        style = TabStyle.Segmented,
+        size = ControlSize.Large,
+        fill = false,
+        tooltipPlacement = TooltipPlacement.BelowCenter,
+    )
 }

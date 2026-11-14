@@ -43,6 +43,8 @@ import androidx.navigation.toRoute
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
@@ -87,15 +89,31 @@ fun Header(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton("left-arrow", Modifier.size(32.dp), enabled = canGoBack, hoverBorder = true) { controller.back() }
-                IconButton("right-arrow", Modifier.size(32.dp), enabled = canGoForward, hoverBorder = true) { controller.forward() }
+                IconButton(
+                    "left-arrow",
+                    iconButtonLabel("left-arrow"),
+                    { controller.back() },
+                    Modifier.size(32.dp),
+                    enabled = canGoBack,
+                    style = IconButtonStyle.Ghost,
+                    tint = LocalTheme.current.textColor,
+                )
+                IconButton(
+                    "right-arrow",
+                    iconButtonLabel("right-arrow"),
+                    { controller.forward() },
+                    Modifier.size(32.dp),
+                    enabled = canGoForward,
+                    style = IconButtonStyle.Ghost,
+                    tint = LocalTheme.current.textColor,
+                )
             }
             Spacer(Modifier.size(24.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedContent(
                     title,
                     transitionSpec = {
-                        if (ReducedMotion.enabled) fadeIn() togetherWith fadeOut() using null
+                        if (Motion.reduced) fadeIn() togetherWith fadeOut() using null
                         else fadeIn() togetherWith fadeOut()
                     }
                 ) { headerTitle ->
@@ -147,7 +165,7 @@ fun Header(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
             GlobalSearchBar()
-            IconButton("close", Modifier.size(32.dp), hoverBorder = true) { closeRequest() }
+            IconButton("close", iconButtonLabel("close"), { closeRequest() }, Modifier.size(32.dp))
         }
     }
 }
@@ -347,5 +365,6 @@ fun GlobalSearchBar() {
         size = ControlSize.Regular,
         focusRequester = focusRequester,
         interactionSource = interactionSource,
+        hidePlaceholderWhenFocused = true,
     )
 }

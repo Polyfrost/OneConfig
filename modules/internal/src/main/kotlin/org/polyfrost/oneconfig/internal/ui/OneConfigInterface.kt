@@ -11,8 +11,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
@@ -203,7 +205,9 @@ fun OneConfigInterface(
                                 Shell(windowWidth, windowHeight, shellBackdrop)
                             }
                         }
-                        if (shell.warming) shellContent() else FeedbackHosts(shellContent)
+                        val latestShellContent by rememberUpdatedState(shellContent)
+                        val movableShell = remember { movableContentOf { latestShellContent() } }
+                        if (shell.warming) movableShell() else FeedbackHosts(movableShell)
                     }
                 }
             }

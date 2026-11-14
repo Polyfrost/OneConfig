@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 import kotlin.math.min
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
 import org.polyfrost.oneconfig.internal.ui.themes.AccentSheen
 
@@ -130,8 +130,8 @@ fun Modifier.fadingEdges(
     color: Color,
     length: Dp = 32.dp,
 ): Modifier {
-    val topAlpha by animateFloatAsState(if (scrollState.canScrollBackward) 1f else 0f)
-    val bottomAlpha by animateFloatAsState(if (scrollState.canScrollForward) 1f else 0f)
+    val topAlpha by Motion.animateFloatAsState(if (scrollState.canScrollBackward) 1f else 0f)
+    val bottomAlpha by Motion.animateFloatAsState(if (scrollState.canScrollForward) 1f else 0f)
     return this.drawWithCache {
         val lengthPx = length.toPx().coerceAtMost(size.height / 2f)
         val top = Brush.verticalGradient(

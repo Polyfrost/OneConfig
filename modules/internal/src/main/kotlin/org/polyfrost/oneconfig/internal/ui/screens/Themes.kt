@@ -366,16 +366,15 @@ internal class IconSegment<T>(val value: T, val icon: String, val hint: String)
 
 @Composable
 internal fun <T> IconSegments(segments: List<IconSegment<T>>, selected: T, onSelect: (T) -> Unit) {
-    TooltipBox(segments.firstOrNull { it.value == selected }?.hint, placement = TooltipPlacement.AboveCenter) {
-        TabRow(
-            segments.map { TabItem(it.value, "", icon = it.icon) },
-            selected,
-            { if (it != selected) onSelect(it) },
-            style = TabStyle.Segmented,
-            size = ControlSize.Compact,
-            fill = false,
-        )
-    }
+    TabRow(
+        segments.map { TabItem(it.value, "", icon = it.icon, tooltip = it.hint) },
+        selected,
+        { if (it != selected) onSelect(it) },
+        style = TabStyle.Segmented,
+        size = ControlSize.Compact,
+        fill = false,
+        tooltipPlacement = TooltipPlacement.AboveCenter,
+    )
 }
 
 @Composable

@@ -4,14 +4,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import java.util.function.Predicate
+import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
@@ -74,7 +77,13 @@ fun ModConfig(id: String, initialCategory: String? = null, submenu: String? = nu
                 ownSwitch?.addCallback(listener)
                 onDispose { ownSwitch?.removeCallback(listener) }
             }
-            val locked = remember(toggle, ownSwitchFlips) { toggle?.isEnabled() == false }
+            var locked by remember(toggle, ownSwitchFlips) { mutableStateOf(toggle?.isEnabled() == false) }
+            LaunchedEffect(toggle, ownSwitchFlips) {
+                while (toggle != null) {
+                    locked = toggle.isEnabled() == false
+                    delay(250)
+                }
+            }
 
             // switching a mod can swap the values of its options so the page is rebuilt afterwards
             key(revision, tree) {

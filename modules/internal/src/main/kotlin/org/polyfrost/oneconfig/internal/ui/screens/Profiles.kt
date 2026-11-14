@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +55,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
@@ -114,6 +116,7 @@ private data class ProfileActionResult(
 
 private val ProfileCardHeight = 180.dp
 private const val BusyOverlayDelayMs = 400L
+private const val OverlayFrameTimeoutMs = 500L
 private enum class ProfileEditor { Rename, Clone, Icon }
 private val ProfileIconOptions = listOf(
     "profiles",
@@ -136,6 +139,7 @@ fun Profiles() {
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
+    var busyInstant by remember { mutableStateOf(false) }
     var createTick by remember { mutableIntStateOf(0) }
     var profileSpecificControls by remember { mutableStateOf(true) }
     var loadState by remember { mutableStateOf<LoadState>(LoadState.Loading) }
@@ -161,11 +165,13 @@ fun Profiles() {
         onSuccess: () -> Unit = {},
         onError: (String) -> Unit = { Notifications.error(actionFailedTitle(), it) },
         holdsBusy: Boolean = false,
+        instant: Boolean = false,
         action: () -> Unit,
     ) {
         Platform.screen().runOnUiThread {
             if (busy && !holdsBusy) return@runOnUiThread
             busy = true
+            busyInstant = instant
             // A profile operation must finish refreshing the global registry even if this page is
             // closed while its blocking IO is still running. Enter the non-cancellable section
             // before the first suspension so disposal of the composition cannot strand the UI on
@@ -173,6 +179,7 @@ fun Profiles() {
             val ownerJob = scope.coroutineContext[Job]!!
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 withContext(NonCancellable) {
+                    if (instant) awaitOverlayDrawn()
                     val result = withContext(Dispatchers.IO) {
                         try {
                             action()
@@ -209,6 +216,7 @@ fun Profiles() {
                             )
                         } finally {
                             busy = false
+                            busyInstant = false
                         }
                     }
                 }
@@ -341,7 +349,7 @@ fun Profiles() {
                 },
                 onOpen = { profile ->
                     if (!profile.active) {
-                        runProfileAction { ConfigManager.openProfile(profile.id) }
+                        runProfileAction(instant = true) { ConfigManager.openProfile(profile.id) }
                     }
                 },
                 onFavorite = { profile ->
@@ -365,7 +373,7 @@ fun Profiles() {
                         translated("oneconfig.profiles.delete.title", "Delete profile?"),
                         translated("oneconfig.profiles.delete.text", "The profile \"%s\" and all its settings will be deleted.", profile.name),
                         translated("oneconfig.profiles.delete.confirm", "Delete profile"),
-                        onConfirm = { runProfileAction { ConfigManager.deleteProfile(profile.id) } },
+                        onConfirm = { runProfileAction(instant = profile.active) { ConfigManager.deleteProfile(profile.id) } },
                         icon = "trash",
                     )
                 },
@@ -392,14 +400,22 @@ fun Profiles() {
                 }
             )
         }
-        if (busy) ProfileBusyOverlay()
+        if (busy) ProfileBusyOverlay(busyInstant)
+    }
+}
+
+private suspend fun awaitOverlayDrawn() {
+    withTimeoutOrNull(OverlayFrameTimeoutMs) {
+        withFrameNanos { }
+        withFrameNanos { }
     }
 }
 
 @Composable
-private fun ProfileBusyOverlay() {
-    var shown by remember { mutableStateOf(false) }
+private fun ProfileBusyOverlay(instant: Boolean) {
+    var shown by remember { mutableStateOf(instant) }
     LaunchedEffect(Unit) {
+        if (shown) return@LaunchedEffect
         delay(BusyOverlayDelayMs)
         shown = true
     }
@@ -1038,20 +1054,12 @@ private fun ProfileTextField(
             value,
             onValueChange,
             Modifier.fillMaxWidth(),
-            placeholder,
-            null,
-            Int.MAX_VALUE,
-            error != null,
-            enabled,
-            true,
-            true,
-            14.sp,
-            null,
-            false,
-            focusRequester,
-            null,
-            null,
-            onSubmit,
+            placeholder = placeholder,
+            enabled = enabled,
+            invalid = error != null,
+            fontSize = 14.sp,
+            focusRequester = focusRequester,
+            onSubmit = onSubmit,
         )
         if (error != null) ProfileError(error, width)
     }

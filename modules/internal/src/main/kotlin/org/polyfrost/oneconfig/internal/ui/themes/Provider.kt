@@ -204,7 +204,7 @@ fun ThemeWith(
     val shown = target.withAccentText(target.accentTextOn(accent)).let { if (opaque) it.withOpaqueSurfaces() else it }
     val animated = animateTheme(shown)
 
-    LaunchedEffect(target, accent, opaque) { syncNotificationTheme(target) }
+    LaunchedEffect(target, accent, opaque) { if (theme == null) syncNotificationTheme(target) }
     if (animated.liquidGlass) GlassTintColor.Drive()
 
     CompositionLocalProvider(
@@ -270,4 +270,5 @@ internal fun syncNotificationTheme(source: UITheme) {
         onInfo = poly(onFill(theme.info)),
     )
     NotificationTheme.useIconFolder(if (pixel) "minecraft" else null)
+    NotificationTheme.useDisabledAlpha(theme.disabledAlpha)
 }

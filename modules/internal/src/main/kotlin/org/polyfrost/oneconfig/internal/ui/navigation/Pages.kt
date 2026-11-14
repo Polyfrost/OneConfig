@@ -16,6 +16,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
@@ -135,8 +136,9 @@ object PageArguments {
     @Volatile
     private var pending: Delivery? = null
 
-    @Volatile
-    private var current: Delivery? = null
+    private val retained = ConcurrentHashMap<String, Delivery>()
+    private val live = ConcurrentHashMap<String, Int>()
+    private val scope = ThreadLocal<String?>()
 
     fun offer(pageId: String, argument: Any) {
         pending = Delivery(pageId, argument)
@@ -144,15 +146,14 @@ object PageArguments {
     }
 
     fun take(): Any? {
-        val delivery = current ?: return null
-        current = null
-        return delivery.argument
+        val pageId = scope.get() ?: live.keys.singleOrNull() ?: return null
+        return retained[pageId]?.argument
     }
 
     private fun claim(pageId: String): Delivery? {
         val delivery = pending?.takeIf { it.pageId == pageId } ?: return null
         pending = null
-        current = delivery
+        retained[pageId] = delivery
         return delivery
     }
 
@@ -165,9 +166,15 @@ object PageArguments {
         val latest = remember(pageId) { Latest(null) }
         if (delivered != null) latest.delivery = delivered
         DisposableEffect(pageId) {
-            onDispose { if (current?.pageId == pageId) current = null }
+            live.merge(pageId, 1, Int::plus)
+            onDispose { live.compute(pageId) { _, count -> if (count == null || count <= 1) null else count - 1 } }
         }
-        key(latest.delivery) { content() }
+        key(latest.delivery) {
+            val previous = scope.get()
+            scope.set(pageId)
+            content()
+            scope.set(previous)
+        }
     }
 }
 

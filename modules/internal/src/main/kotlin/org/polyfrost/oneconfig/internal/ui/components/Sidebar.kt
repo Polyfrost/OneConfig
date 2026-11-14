@@ -4,8 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.LocalScrollbarStyle
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -37,34 +33,36 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.coerceAtLeast
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.launch
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.AnchoredPopupButton
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
-import org.polyfrost.oneconfig.api.ui.v1.components.EscapeCloses
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.NotificationsCenterPanel
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
-import org.polyfrost.oneconfig.api.ui.v1.components.rememberAnchoredPosition
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberHoverState
-import org.polyfrost.oneconfig.api.ui.v1.components.smoothWheelScroll
 import org.polyfrost.oneconfig.internal.ui.navigation.inAboutMenu
 import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.pageRoute
@@ -72,6 +70,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.registeredPages
 import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_SIDEBAR_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.surfaceOpacity
@@ -122,25 +121,13 @@ private fun Navigation(modifier: Modifier) {
     ) {
         Branding()
         Column(Modifier.fillMaxWidth().weight(1f, fill = false)) {
-            Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
-                Box(
-                    Modifier.fillMaxWidth()
-                        .onGloballyPositioned { overflow.viewportBottom = it.positionInRoot().y + it.size.height }
-                        .smoothWheelScroll(scroll)
-                        .verticalScroll(scroll),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    CompositionLocalProvider(LocalNavOverflow provides overflow) {
-                        Box(Modifier.padding(vertical = 4.dp)) { NavigationEntries() }
-                    }
-                }
-                val thickness = LocalScrollbarStyle.current.thickness
-                Box(Modifier.matchParentSize()) {
-                    VerticalScrollbar(
-                        rememberScrollbarAdapter(scroll),
-                        Modifier.align(Alignment.CenterEnd).fillMaxHeight()
-                            .padding(end = (((SidebarWidth - SidebarEntryWidth) / 2 - thickness) / 2).coerceAtLeast(0.dp)),
-                    )
+            ScrollContainer(
+                scroll,
+                Modifier.fillMaxWidth().weight(1f, fill = false)
+                    .onGloballyPositioned { overflow.viewportBottom = it.positionInRoot().y + it.size.height },
+            ) {
+                CompositionLocalProvider(LocalNavOverflow provides overflow) {
+                    Box(Modifier.padding(start = (SidebarWidth - SidebarEntryWidth) / 2, top = 4.dp, bottom = 4.dp)) { NavigationEntries() }
                 }
             }
             Box(Modifier.fillMaxWidth().height(EditHudGap)) {
@@ -148,14 +135,20 @@ private fun Navigation(modifier: Modifier) {
                 if (hidden > 0) {
                     val source = rememberInteractionSource()
                     val hovered by source.collectIsHoveredAsState()
+                    val label = translated("oneconfig.sidebar.more", "+%s more", hidden)
                     Text(
-                        translated("oneconfig.sidebar.more", "+%s more", hidden),
+                        label,
                         modifier = Modifier.padding(start = 26.dp, top = 6.dp)
-                            .onClick(source) {
-                                scope.launch {
-                                    if (Motion.reduced) scroll.scrollTo(scroll.maxValue) else scroll.animateScrollTo(scroll.maxValue)
-                                }
-                            }
+                            .oneConfigClickable(
+                                label,
+                                {
+                                    scope.launch {
+                                        if (Motion.reduced) scroll.scrollTo(scroll.maxValue) else scroll.animateScrollTo(scroll.maxValue)
+                                    }
+                                },
+                                indication = false,
+                                interactionSource = source,
+                            )
                             .pointerHoverIcon(PointerIcon.Hand),
                         color = LocalTheme.current.textColorSecondary.copy(alpha = if (hovered) 1f else 0.7f),
                         fontSize = 11.sp,
@@ -345,7 +338,7 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
                 border = { borderColor.value },
             )
             .then(if (translucent) Modifier.liquidGlass(theme.sideBarNavigationEntryShape) { selectedAlpha.value } else Modifier)
-            .onClick(interactionSource) { onSelect(route) }
+            .oneConfigClickable(title, { onSelect(route) }, selected = isSelected, indication = false, interactionSource = interactionSource)
             .pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -357,41 +350,38 @@ private fun NavigationEntry(icon: String, title: String, route: Any? = null, isS
 
 @Composable
 private fun NotificationBell() {
-    var expanded by remember { mutableStateOf(false) }
-    val theme = LocalTheme.current
-    val close: () -> Unit = {
-        expanded = false
-        NotificationsManager.markAllRead()
-    }
-
-    Box(
-        modifier = Modifier.oneConfigClickable(
+    Box(Modifier.size(BellGlyph).outset(BellOutset)) {
+        AnchoredPopupButton(
+            "bell",
             translated("oneconfig.sidebar.notifications", "Notifications"),
-            {
-                expanded = !expanded
-                if (!expanded) NotificationsManager.markAllRead()
-            },
-            indication = false,
-        ),
-    ) {
-        IconWithIndicator(
-            iconName = "bell",
-            color = theme.textColor,
-            modifier = Modifier.size(18.dp),
-            showIndicator = NotificationsManager.unreadCount > 0,
-        )
-
-        if (expanded) {
-            EscapeCloses(close)
-            ShellPopup(
-                popupPositionProvider = rememberAnchoredPosition(Placement.AboveStart, gap = PopupGap),
-                onDismissRequest = close,
-                properties = PopupProperties(focusable = true),
-            ) {
-                NotificationsCenterPanel(Modifier.shellTransition())
+            placement = Placement.AboveStart,
+            gap = PopupGap - BellOutset,
+            size = ControlSize.Large,
+        ) {
+            DisposableEffect(Unit) { onDispose { NotificationsManager.markAllRead() } }
+            NotificationsCenterPanel(Modifier.shellTransition())
+        }
+        if (NotificationsManager.unreadCount > 0) {
+            Box(Modifier.align(Alignment.Center).size(BellGlyph)) {
+                UnreadDot(Modifier.align(Alignment.TopEnd).offset(2.dp, (-2).dp))
             }
         }
     }
+}
+
+@Composable
+private fun UnreadDot(modifier: Modifier) {
+    val circle = LocalTheme.current.shapes.circle
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(8.dp).background(Accent, circle).blur(7.dp))
+        Box(Modifier.size(6.dp).background(Accent, circle))
+    }
+}
+
+private fun Modifier.outset(by: Dp): Modifier = layout { measurable, constraints ->
+    val px = by.roundToPx()
+    val placeable = measurable.measure(Constraints.fixed(constraints.maxWidth + px * 2, constraints.maxHeight + px * 2))
+    layout(constraints.maxWidth, constraints.maxHeight) { placeable.place(-px, -px) }
 }
 
 @Composable
@@ -467,6 +457,7 @@ private fun AboutButton() {
                             if (nav.currentRoute == route) shell.search.clear() else nav.navigate(route)
                         },
                         icon = page.icon,
+                        checked = entry.isOn(route),
                     )
                 },
                 placement = Placement.AboveStart,
@@ -476,3 +467,7 @@ private fun AboutButton() {
 }
 
 private val PopupGap = 12.dp
+
+private val BellGlyph = 18.dp
+
+private val BellOutset = (ControlSize.Large.height - BellGlyph) / 2

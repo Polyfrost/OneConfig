@@ -21,6 +21,7 @@ import kotlin.math.abs
 import kotlin.math.exp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 
 /** Hands each mouse wheel notch to the innermost [wheelScroll] list under the pointer that can still scroll its way */
 class WheelRouter {
@@ -59,7 +60,7 @@ class WheelRouter {
     }
 
     fun defersWheelScroll(): Boolean {
-        if (!isRouting || ReducedMotion.enabled) return false
+        if (!isRouting || Motion.reduced) return false
         reachedScrollable = true
         return true
     }
@@ -167,7 +168,7 @@ internal class WheelScrollNode(
     override fun onCancelPointerInput() {}
 
     fun push(delta: Offset) {
-        if (ReducedMotion.enabled) {
+        if (Motion.reduced) {
             val step = amountOf(delta) * currentValueOf(LocalDensity).density
             coroutineScope.launch { state.scrollBy(step) }
             return

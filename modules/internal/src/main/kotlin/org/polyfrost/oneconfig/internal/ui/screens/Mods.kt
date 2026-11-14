@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -32,7 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -91,6 +91,12 @@ import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberGridReorderState
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderAutoScroll
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderOverlay
+import org.polyfrost.oneconfig.api.ui.v1.components.reorderableItem
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -118,13 +124,11 @@ import org.polyfrost.oneconfig.internal.ui.components.glassHover
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
-import org.polyfrost.oneconfig.internal.ui.components.rememberGridReorderState
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.ModToggleFlips
 import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
-import org.polyfrost.oneconfig.internal.ui.components.reorderContainer
-import org.polyfrost.oneconfig.internal.ui.components.reorderOverlay
-import org.polyfrost.oneconfig.internal.ui.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
+import org.polyfrost.oneconfig.internal.ui.components.settings.resetKeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
@@ -272,13 +276,21 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val windowSize = LocalWindowInfo.current.containerSize
     // Only enable placement animations after the grid has been laid out for the current size
     var animateItems by remember(windowSize, density) { mutableStateOf(false) }
+    val movedKey = remember { arrayOfNulls<Any>(1) }
     val reorderState = rememberGridReorderState(
-        gridState = gridState,
-        onMove = { from, to -> entries.add(to, entries.removeAt(from)) },
-        onDrop = { index -> commitDrop(entries, index) },
-        dragBounds = { index -> modGroupBounds(entries, index) },
+        lazyState = gridState,
+        onMove = { from, to ->
+            movedKey[0] = entries[from].key
+            entries.add(to, entries.removeAt(from))
+        },
+        onDragEnd = {
+            val index = entries.indexOfFirst { it.key == movedKey[0] }
+            movedKey[0] = null
+            if (index >= 0) commitDrop(entries, index)
+        },
+        dropRange = { index -> modGroupBounds(entries, index) },
         onClick = { key -> entries.cardData(key)?.let { openModCard(it, navigation) } },
-        horizontalPadding = PageGutter,
+        crossAxisPadding = PageGutter,
     )
     val dropFavorite = reorderState.draggingKey
         ?.let { key -> entries.indexOfFirst { it.key == key } }
@@ -286,7 +298,10 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         ?.let { index -> modFavoriteAt(entries, index, ModFavorites::isFavorite) }
     // the dragged card's index no longer applies once the list is rebuilt
     DisposableEffect(entries) {
-        onDispose { reorderState.cancel() }
+        onDispose {
+            movedKey[0] = null
+            reorderState.cancel()
+        }
     }
 
     // The overlay card is drawn as a sibling of the grid, but the page pane that wraps the nav host
@@ -320,7 +335,8 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                     if (waitForUpOrCancellation() != null) focusManager.clearFocus()
                 }
             }
-            .reorderContainer(reorderState),
+            .reorderContainer(reorderState)
+            .reorderAutoScroll(reorderState),
     ) {
         LazyVerticalGrid(
             state = gridState,
@@ -332,12 +348,12 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 animateItems = true
             },
         ) {
-            items(
+            itemsIndexed(
                 entries,
-                key = { it.key },
-                contentType = { if (it is ModGridEntry.Header) HEADER_CONTENT_TYPE else CARD_CONTENT_TYPE },
-                span = { if (it is ModGridEntry.Header) GridItemSpan(maxLineSpan) else GridItemSpan(1) },
-            ) { entry ->
+                key = { _, entry -> entry.key },
+                contentType = { _, entry -> if (entry is ModGridEntry.Header) HEADER_CONTENT_TYPE else CARD_CONTENT_TYPE },
+                span = { _, entry -> if (entry is ModGridEntry.Header) GridItemSpan(maxLineSpan) else GridItemSpan(1) },
+            ) { index, entry ->
                 when (entry) {
                     is ModGridEntry.Header -> ModTypeHeader(
                         entry,
@@ -363,7 +379,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                                     },
                                 )
                                 .dropSlotOutline(favoriteSlot) { outlineAlpha.value }
-                                .reorderableItem(reorderState, mod.id),
+                                .reorderableItem(reorderState, mod.id, index),
                             hoverHint = reorderState.overlayKey == null,
                         )
                     }
@@ -466,7 +482,12 @@ private fun modCardMenu(mod: ConfigData, navigation: ShellNavigation): List<Menu
                 MenuAction(
                     if (on) translated("oneconfig.mods.menu.disable", "Disable") else translated("oneconfig.mods.menu.enable", "Enable"),
                     {
-                        if (!on && toggle.needsSetup()) openModCard(mod, navigation) else toggle.setEnabled(!on)
+                        if (!on && toggle.needsSetup()) {
+                            openModCard(mod, navigation)
+                        } else {
+                            toggle.setEnabled(!on)
+                            ModToggleFlips.count++
+                        }
                     },
                     icon = if (on) "x-circle" else "check-circle",
                     enabled = toggle !is ReadOnlyModToggle,
@@ -512,7 +533,11 @@ private fun confirmReset(mod: ConfigData, tree: Tree) {
 private fun resetTree(tree: Tree, seen: MutableSet<Property<*>>) {
     for (node in tree.map.values) {
         when (node) {
-            is Property<*> -> resetOption(node, seen)
+            is Property<*> -> if (node.get() is OneConfigKeybind) {
+                if (seen.add(node)) resetKeybindOption(node)
+            } else {
+                resetOption(node, seen)
+            }
             is Tree -> resetTree(node, seen)
         }
     }
@@ -567,6 +592,8 @@ private val ModCardToggleGlow = 5.dp
 private const val ModCardToggleRingDarken = 0.42f
 private val ModCardToggleRingShade = Color(0xFF181600)
 
+private const val ReadOnlyTogglePollMs = 250L
+
 /**
  * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
  * pass through
@@ -590,7 +617,8 @@ fun ModCard(
     if (toggle is ReadOnlyModToggle) {
         LaunchedEffect(toggle) {
             while (true) {
-                withFrameMillis { enabled = toggle.isEnabled() }
+                enabled = toggle.isEnabled()
+                delay(ReadOnlyTogglePollMs)
             }
         }
     }
@@ -777,7 +805,7 @@ fun ModCard(
                     )
                 } else Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
                     val shade = ModCardToggleRingShade
-                    val unavailable = theme.controlTrackColor
+                    val unavailable = theme.mutedText
                     val ringStart = if (toggle != null) lerp(Accent, shade, ModCardToggleRingDarken) else unavailable.copy(alpha = 0.5f)
                     val ringEnd = if (toggle != null) lerp(AccentEnd, shade, ModCardToggleRingDarken) else ringStart
                     val ring = lerp(ringStart, ringEnd, 0.5f)

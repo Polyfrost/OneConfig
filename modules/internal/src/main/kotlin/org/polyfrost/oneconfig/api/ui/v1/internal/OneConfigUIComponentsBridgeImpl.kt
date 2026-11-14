@@ -37,7 +37,7 @@ import org.polyfrost.oneconfig.internal.ui.components.StyledText
 import org.polyfrost.oneconfig.internal.ui.components.componentText
 import org.polyfrost.oneconfig.internal.ui.components.legacyText
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
-import org.polyfrost.oneconfig.internal.ui.components.onClick
+import androidx.compose.foundation.clickable
 import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup as InternalColorPickerPopup
@@ -122,7 +122,7 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
 
     override fun ensureThemeLoaded() {
         ThemeRegistry.init()
-        ThemeRegistry.loadFromConfig()
+        if (ThemeRegistry.activeTheme == null) ThemeRegistry.loadFromConfig()
     }
 
     @Composable
@@ -207,7 +207,15 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
         interactionSource: MutableInteractionSource,
         enabled: Boolean,
         onClick: () -> Unit,
-    ): Modifier = modifier.onClick(interactionSource, enabled, onClick)
+    ): Modifier = (if (enabled) modifier.keepSearchFocus() else modifier).clickable(
+        interactionSource = interactionSource,
+        indication = null,
+        enabled = enabled,
+        onClick = {
+            UiSounds.play(UiSoundEvent.CLICK)
+            onClick()
+        },
+    )
 
     override fun reducedMotion(): Boolean = ReducedMotion.enabled
 
@@ -243,7 +251,8 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     ): KitColorPickerModel = ColorPickerModel(initialColor, hasAlpha).also { configure(it, initialColor, chroma, chromaSpeed, gradient) }
 
     override fun updateColorPicker(model: KitColorPickerModel, color: Color, chroma: Boolean, chromaSpeed: Float, gradient: Color?) {
-        if (model is ColorPickerModel) configure(model, color, chroma, chromaSpeed, gradient) else model.set(color)
+        val real = model.implementation
+        if (real is ColorPickerModel) configure(real, color, chroma, chromaSpeed, gradient) else model.set(color)
     }
 
     private fun configure(model: ColorPickerModel, color: Color, chroma: Boolean, chromaSpeed: Float, gradient: Color?) {
@@ -264,10 +273,11 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
         chromaCapable: Boolean,
         gradientCapable: Boolean,
     ) {
-        val picker = model as? ColorPickerModel ?: remember(model) {
-            ColorPickerModel(model.color, true).also { configure(it, model.color, model.chroma, model.chromaSpeed, model.gradient) }
+        val real = model.implementation
+        val picker = real as? ColorPickerModel ?: remember(real) {
+            ColorPickerModel(real.color, true).also { configure(it, real.color, real.chroma, real.chromaSpeed, real.gradient) }
         }
-        val changed: (Color) -> Unit = if (picker === model) onColorChanged else { color -> model.set(color); onColorChanged(color) }
+        val changed: (Color) -> Unit = if (picker === real) onColorChanged else { color -> real.set(color); onColorChanged(color) }
         ChromaColorAnimation(picker) {}
         InternalColorPickerPopup(picker, changed, onDismiss, chromaCapable, gradientCapable, modifier)
     }

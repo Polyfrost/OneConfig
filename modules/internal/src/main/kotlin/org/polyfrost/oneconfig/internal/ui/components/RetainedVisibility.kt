@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 
 class ShellTransition internal constructor(
     private val progressProvider: () -> Float,
@@ -143,7 +144,7 @@ fun RetainedVisibility(
     openKey: Any? = null,
     content: @Composable (alpha: Float) -> Unit,
 ) {
-    val hiddenScale = if (ReducedMotion.enabled) 1f else hiddenScale
+    val hiddenScale = if (Motion.reduced) 1f else hiddenScale
     val progress = remember(openKey) { Animatable(0f) }
     LaunchedEffect(openKey, visible) {
         progress.animateTo(if (visible) 1f else 0f, if (visible) enter else exit)

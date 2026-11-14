@@ -48,11 +48,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.IconButton
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
@@ -346,7 +347,7 @@ fun <T : PickerEntry> TilePicker(
                         }
                     }
                     if (onClose != null) {
-                        IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
+                        IconButton("close", iconButtonLabel("close"), onClose, Modifier.size(18.dp), size = ControlSize.Compact, tooltip = null)
                     }
                 }
             }
