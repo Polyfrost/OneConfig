@@ -83,6 +83,16 @@ public class KeysImpl implements Keys {
     }
 
     @Override
+    public int getKeyF1() {
+        return InputConstants.KEY_F1;
+    }
+
+    @Override
+    public int getKeySlash() {
+        return InputConstants.KEY_SLASH;
+    }
+
+    @Override
     public int getMouseButtonLeft() {
         return InputConstants.MOUSE_BUTTON_LEFT;
     }

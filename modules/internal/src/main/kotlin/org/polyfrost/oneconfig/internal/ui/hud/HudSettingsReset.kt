@@ -22,6 +22,7 @@ import kotlin.math.abs
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Icon
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
@@ -435,8 +436,23 @@ private fun buildHudCanvasMenuEntries(
             icon = "x-circle",
         )
     }
+    val mergeable = actionTargets.filter { it !is LegacyHudMarker && it.canMergeBackground() }
+    if (mergeable.any { it.mergeBackground && it.bgMerged }) {
+        entries += MenuAction(
+            translated("oneconfig.hud.menu.detach", "Detach from group"),
+            { Snapshot.withMutableSnapshot { mergeable.forEach { it.mergeBackground = false } } },
+            icon = "layers",
+        )
+    } else if (mergeable.any { !it.mergeBackground }) {
+        entries += MenuAction(
+            translated("oneconfig.hud.menu.allow_merging", "Allow merging"),
+            { Snapshot.withMutableSnapshot { mergeable.forEach { it.mergeBackground = true } } },
+            icon = "layers",
+        )
+    }
 
     entries += MenuSeparator
+
     entries += MenuAction(
         translated("oneconfig.menu.text.copy", "Copy"),
         { onCopy(hud) },
@@ -499,8 +515,9 @@ internal fun hudCanvasPasteMenuEntries(
     onRedo: () -> Unit,
     redoEnabled: Boolean,
     onTour: (() -> Unit)?,
+    onShortcuts: () -> Unit,
 ): List<MenuEntry> {
-    val entries = ArrayList<MenuEntry>(8)
+    val entries = ArrayList<MenuEntry>(9)
     entries += undoAction(onUndo, undoEnabled)
     entries += redoAction(onRedo, redoEnabled)
     entries += MenuSeparator
@@ -511,10 +528,14 @@ internal fun hudCanvasPasteMenuEntries(
         icon = "select-all",
         shortcutHint = keybindHint(OneConfigConfig.hudSelectAllKeybind),
     )
-    if (onTour != null) {
-        entries += MenuSeparator
-        entries += MenuAction(tourString("menu"), onTour, icon = "info")
-    }
+    entries += MenuSeparator
+    if (onTour != null) entries += MenuAction(tourString("menu"), onTour, icon = "info")
+    entries += MenuAction(
+        translated("oneconfig.hud.shortcuts.title", "Keyboard shortcuts"),
+        onShortcuts,
+        icon = "keyboard",
+        shortcutHint = keybindHint(OneConfigConfig.hudShortcutsKeybind),
+    )
     return entries
 }
 
