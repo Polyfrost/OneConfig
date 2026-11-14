@@ -519,6 +519,7 @@ internal object HudBackgroundMerge {
         pb.close()
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     fun layoutKey(huds: List<Hud>): Int {
         var key = huds.size
         for (hud in huds) {
@@ -533,6 +534,7 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
             key = key * 31 + (if (hud.hidden) 1 else 0)
             key = key * 31 + (if (hud.keepBgWhenHidden) 1 else 0)
+            key = key * 31 + (if (hud.borderEnabled) 1 else 0)
         }
         return key
     }
