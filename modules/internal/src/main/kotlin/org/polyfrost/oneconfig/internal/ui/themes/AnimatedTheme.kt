@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 
 private const val THEME_ANIM_MS = 350
 
@@ -28,8 +29,8 @@ fun animateTheme(target: UITheme): UITheme {
     val last = remember { arrayOf(target) }
     val editing = target.isCustom && last[0].previewImage == target.previewImage && last[0] != target
     SideEffect { last[0] = target }
-    val spec: AnimationSpec<Float> = if (editing) snap() else tween(THEME_ANIM_MS)
-    val colorSpec: AnimationSpec<Color> = if (editing) snap() else tween(THEME_ANIM_MS)
+    val spec: AnimationSpec<Float> = if (editing) snap() else Motion.spec(tween<Float>(THEME_ANIM_MS))
+    val colorSpec: AnimationSpec<Color> = if (editing) snap() else Motion.spec(tween<Color>(THEME_ANIM_MS))
 
     val pageBackground by animateColorAsState(target.pageBackground, colorSpec, label = "pageBackground")
     val sidebarBackground by animateColorAsState(target.sidebarBackground, colorSpec, label = "sidebarBackground")

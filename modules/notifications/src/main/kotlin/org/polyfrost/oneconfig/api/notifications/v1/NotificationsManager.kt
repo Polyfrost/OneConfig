@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.notifications.v1
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.Snapshot
+import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 public object NotificationsManager {
     private const val MAX_HISTORY = 50
+
+    private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
 
     private val _active = mutableStateListOf<Notification>()
     private val _history = mutableStateListOf<Notification>()
@@ -44,9 +47,17 @@ public object NotificationsManager {
         if (_active.size < 0 || _history.size < 0) error("unreachable")
     }
 
-    private fun mutate(block: () -> Unit) {
+    internal fun mutate(block: () -> Unit) {
         if (Snapshot.current.readOnly) Snapshot.global { Snapshot.withMutableSnapshot(block) }
         else Snapshot.withMutableSnapshot(block)
+    }
+
+    private fun fireDismissed(removed: List<Notification>) {
+        for (notification in removed) {
+            val callback = notification.fireDismissed() ?: continue
+            runCatching { callback.run() }
+                .onFailure { LOGGER.error("Notification #${notification.id} onDismiss threw", it) }
+        }
     }
 
     /**
@@ -107,21 +118,29 @@ public object NotificationsManager {
      * Removes [notification] immediately and skips any exit animation
      */
     public fun dismiss(notification: Notification) {
+        var removed = false
         mutate {
-            _active.remove(notification)
+            removed = _active.remove(notification)
         }
+        if (removed) fireDismissed(listOf(notification))
     }
 
     public fun dismiss(id: Long) {
+        val removed = ArrayList<Notification>()
         mutate {
-            _active.removeAll { it.id == id }
+            removed += _active.filter { it.id == id }
+            _active.removeAll(removed)
         }
+        fireDismissed(removed)
     }
 
     public fun clearAll() {
+        val removed = ArrayList<Notification>()
         mutate {
+            removed += _active
             _active.clear()
         }
+        fireDismissed(removed)
     }
 
     public val count: Int get() = _active.size

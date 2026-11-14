@@ -27,10 +27,13 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyBitmap
 import org.jetbrains.skia.Image
@@ -38,11 +41,16 @@ import org.jetbrains.skia.Image
 /**
  * The visual category of a [Notification]
  */
-public enum class NotificationType(public val accent: PolyColor, public val iconName: String) {
-    INFO(PolyColor.hex("#DFEAFF"), "info"),
-    SUCCESS(PolyColor.hex("#3CAF77"), "check-circle"),
-    ERROR(PolyColor.hex("#F2545A"), "alert-circle"),
-    PROGRESS(PolyColor.hex("#2B4BFF"), "refresh"),
+public enum class NotificationType(public val iconName: String) {
+    INFO("info"),
+    SUCCESS("check-circle"),
+    ERROR("alert-circle"),
+    PROGRESS("refresh"),
+
+    @ApiStatus.Experimental
+    WARNING("alert-circle");
+
+    public val accent: PolyColor get() = NotificationTheme.accentFor(this)
 }
 
 /**
@@ -57,8 +65,14 @@ public enum class NotificationType(public val accent: PolyColor, public val icon
 public class NotificationAction @JvmOverloads constructor(
     public val label: String,
     public val primary: Boolean = false,
+    @get:ApiStatus.Experimental
+    public val dismissOnClick: Boolean = true,
+    @get:ApiStatus.Experimental
+    public val enabled: Boolean = true,
     public val onClick: Runnable = Runnable {},
-)
+) {
+    public constructor(label: String, primary: Boolean = false, onClick: Runnable = Runnable {}) : this(label, primary, true, true, onClick)
+}
 
 /**
  * A single notification
@@ -79,26 +93,66 @@ public class NotificationAction @JvmOverloads constructor(
  * @param onClick     optional callback run when the body of the notification is clicked
  */
 public class Notification @JvmOverloads constructor(
-    public val title: String,
-    public val message: String,
-    public val type: NotificationType = NotificationType.INFO,
+    title: String,
+    message: String,
+    type: NotificationType = NotificationType.INFO,
     public val icon: PolyBitmap? = null,
-    public val duration: Float = DEFAULT_DURATION,
+    @get:ApiStatus.Experimental
+    public val iconName: String? = null,
+    @get:ApiStatus.Experimental
+    public val durationMillis: Long = DEFAULT_DURATION_MILLIS,
+    public val persistent: Boolean = false,
     public val progress: Callable<Float>? = null,
     public val actions: List<NotificationAction> = emptyList(),
     public val onClick: Runnable? = null,
-) {
+    @get:ApiStatus.Experimental
+    public val onDismiss: Runnable? = null,
+) : NotificationHandle {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        title: String,
+        message: String,
+        type: NotificationType = NotificationType.INFO,
+        icon: PolyBitmap? = null,
+        duration: Float = LEGACY_DURATION,
+        progress: Callable<Float>? = null,
+        actions: List<NotificationAction> = emptyList(),
+        onClick: Runnable? = null,
+    ) : this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, onClick, null) {
+        legacyDuration = duration
+    }
+
+    @Deprecated("Use the constructor taking durationMillis: Long and persistent")
+    public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float) :
+        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, null), null, emptyList(), null, null) {
+        legacyDuration = duration
+    }
+
+    @Deprecated("Use the constructor taking durationMillis: Long and persistent")
+    public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?) :
+        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, emptyList(), null, null) {
+        legacyDuration = duration
+    }
+
+    @Deprecated("Use the constructor taking durationMillis: Long and persistent")
+    public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
+        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, null, null) {
+        legacyDuration = duration
+    }
+
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(
         title: String,
         message: String,
         type: NotificationType = NotificationType.INFO,
         icon: Image? = null,
-        duration: Float = DEFAULT_DURATION,
+        duration: Float = LEGACY_DURATION,
         progress: Callable<Float>? = null,
         actions: List<NotificationAction> = emptyList(),
         onClick: Runnable? = null,
-    ) : this(title, message, type, null as PolyBitmap?, duration, progress, actions, onClick)
+    ) : this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, onClick, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?) :
@@ -106,19 +160,39 @@ public class Notification @JvmOverloads constructor(
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float) :
-        this(title, message, type, null as PolyBitmap?, duration)
+        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, null), null, emptyList(), null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?) :
-        this(title, message, type, null as PolyBitmap?, duration, progress)
+        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, emptyList(), null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
-        this(title, message, type, null as PolyBitmap?, duration, progress, actions)
+        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @get:JvmName("getIcon")
     public val skiaIcon: Image? get() = null
+
+    public var title: String by mutableStateOf(title)
+        private set
+
+    public var message: String by mutableStateOf(message)
+        private set
+
+    public var type: NotificationType by mutableStateOf(type)
+        private set
+
+    @Deprecated("Use durationMillis and persistent")
+    public val duration: Float get() = legacyDuration ?: if (persistent) -1f else durationMillis.toFloat()
+
+    internal var legacyDuration: Float? = null
 
     public val id: Long = COUNTER.incrementAndGet()
 
@@ -128,22 +202,87 @@ public class Notification @JvmOverloads constructor(
 
     internal var dismissRequested by mutableStateOf(false)
 
+    internal var revision by mutableIntStateOf(0)
+
+    private var progressValue by mutableStateOf<Float?>(null)
+
+    private var progressEnded by mutableStateOf(false)
+
+    private val dismissFired = AtomicBoolean(false)
+
     /**
      * Whether this notification has been seen in the notifications center
      */
     public var read: Boolean by mutableStateOf(false)
         internal set
 
-    public val persistent: Boolean get() = duration <= 0f && progress == null
+    internal val tracksProgress: Boolean get() = !progressEnded && (progressValue != null || progress != null)
 
     public fun progressOrNull(): Float? {
+        if (progressEnded) return null
+        progressValue?.let { return it.coerceIn(0f, 1f) }
         val p = progress ?: return null
         return runCatching { p.call() }.getOrNull()?.coerceIn(0f, 1f)
     }
 
+    @ApiStatus.Experimental
+    override fun update(title: String?, message: String?, type: NotificationType?, progress: Float?) {
+        NotificationsManager.mutate {
+            if (title != null) this.title = title
+            if (message != null) this.message = message
+            if (type != null) {
+                if (progress == null && type != NotificationType.PROGRESS && type != this.type) progressEnded = true
+                this.type = type
+            }
+            if (progress != null) {
+                progressValue = progress.coerceIn(0f, 1f)
+                progressEnded = false
+            }
+            if (title != null || message != null || type != null) read = false
+            revision++
+        }
+    }
+
+    @ApiStatus.Experimental
+    override fun dismiss() {
+        NotificationsManager.mutate { dismissRequested = true }
+    }
+
+    internal fun startProgress() {
+        progressValue = 0f
+    }
+
+    internal fun fireDismissed(): Runnable? = if (dismissFired.compareAndSet(false, true)) onDismiss else null
+
     public companion object {
+        @Deprecated("Use DEFAULT_DURATION_MILLIS", ReplaceWith("Notification.DEFAULT_DURATION_MILLIS"))
         public const val DEFAULT_DURATION: Float = 4000f
 
+        @ApiStatus.Experimental
+        public const val DEFAULT_DURATION_MILLIS: Long = 4000L
+
+        private const val LEGACY_DURATION = 4000f
+
         private val COUNTER = AtomicLong()
+
+        private fun legacyMillis(duration: Float): Long = if (duration > 0f) duration.toLong() else DEFAULT_DURATION_MILLIS
+
+        private fun legacyPersistent(duration: Float, progress: Callable<Float>?): Boolean = duration <= 0f && progress == null
     }
 }
+
+internal fun legacyNotification(
+    title: String,
+    message: String,
+    type: NotificationType,
+    icon: PolyBitmap?,
+    duration: Float,
+    progress: Callable<Float>?,
+    actions: List<NotificationAction>,
+    onClick: Runnable?,
+): Notification = Notification(
+    title, message, type, icon, null,
+    if (duration > 0f) duration.toLong() else Notification.DEFAULT_DURATION_MILLIS,
+    duration <= 0f && progress == null,
+    progress, actions, onClick, null,
+).also { it.legacyDuration = duration }

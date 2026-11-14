@@ -44,6 +44,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun clearAnchor ()V
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	protected final fun cloneOptions ()V
 	protected final fun contentChanged ()V
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
@@ -58,11 +59,19 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getBgChromaSpeed ()F
 	public final fun getBgColor ()I
 	public final fun getBgMerged ()Z
+	public final fun getBgPolyColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getBgRadius ()F
+	public fun getBorderChroma ()Z
+	public fun getBorderChromaSpeed ()F
+	public fun getBorderColor ()I
+	public fun getBorderEnabled ()Z
+	public final fun getBorderPolyColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public fun getBorderSize ()F
 	public final fun getCaseType ()I
 	public final fun getCategory ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getConfigId ()Ljava/lang/String;
 	public fun getCustomScale ()F
+	public fun getDefaultStaticWidth ()Z
 	public fun getDescription ()Ljava/lang/String;
 	public final fun getEffectiveAnchorParent ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getEffectiveAnchorPoint ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
@@ -73,6 +82,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getFullShadow ()Z
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
+	public final fun getHasBeenMoved ()Z
 	public fun getHidden ()Z
 	public final fun getKeepBgWhenHidden ()Z
 	public fun getLocked ()Z
@@ -90,6 +100,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getRelativeY ()F
 	public fun getRenderedH ()F
 	public fun getRenderedW ()F
+	public fun getReplacesIds ()Ljava/util/Set;
 	public fun getResizeAxes ()Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	protected fun getResizePin ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getRuntime ()Lorg/polyfrost/compose/runtime/PolyComposeRuntime;
@@ -104,6 +115,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getShadowColor ()I
 	public final fun getShadowOffsetX ()F
 	public final fun getShadowOffsetY ()F
+	public final fun getShadowPolyColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getShowBackground ()Z
 	public final fun getShowInChat ()Z
 	public final fun getShowInF3 ()Z
@@ -120,10 +132,12 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getTextChromaSpeed ()F
 	public final fun getTextColor ()I
 	public final fun getTextItalic ()Z
+	public final fun getTextPolyColor ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getTextScale ()F
 	public final fun getTextUnderline ()Z
 	public final fun getTextWeight ()Lorg/polyfrost/oneconfig/api/hud/v1/Weight;
 	public final fun getToggleKey ()I
+	public final fun getToggleKeybind ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;
 	public final fun getUseGuiScale ()Z
 	public fun getX ()F
 	public fun getY ()F
@@ -132,13 +146,16 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun hudBackground (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/composables/PolyModifier;ILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public final fun isAnchored ()Z
+	public final fun isAtDefaultPosition ()Z
 	public final fun isMergeAnchored ()Z
 	public final fun isReal ()Z
 	protected final fun measureNaturalContentSize ()Lkotlin/Pair;
 	public fun minimumSize ()Lkotlin/Pair;
 	public fun multipleInstancesAllowed ()Z
+	public fun onCloned ()V
 	public fun onEditorDragEnd ()V
 	public fun onEditorDragStart ()V
+	public fun onUserMoved ()V
 	public fun remove ()V
 	public final fun reseedStaticHeight ()V
 	public final fun reseedStaticSizeIfNeeded ()V
@@ -152,7 +169,14 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setBgChroma (Z)V
 	public final fun setBgChromaSpeed (F)V
 	public final fun setBgColor (I)V
+	public final fun setBgPolyColor (Lorg/polyfrost/compose/render/PolyColor;)V
 	public final fun setBgRadius (F)V
+	public fun setBorderChroma (Z)V
+	public fun setBorderChromaSpeed (F)V
+	public fun setBorderColor (I)V
+	public fun setBorderEnabled (Z)V
+	public final fun setBorderPolyColor (Lorg/polyfrost/compose/render/PolyColor;)V
+	public fun setBorderSize (F)V
 	public final fun setCaseType (I)V
 	public final fun setConfigId (Ljava/lang/String;)V
 	public fun setCustomScale (F)V
@@ -183,6 +207,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setShadowColor (I)V
 	public final fun setShadowOffsetX (F)V
 	public final fun setShadowOffsetY (F)V
+	public final fun setShadowPolyColor (Lorg/polyfrost/compose/render/PolyColor;)V
 	public final fun setShowBackground (Z)V
 	public final fun setShowInChat (Z)V
 	public final fun setShowInF3 (Z)V
@@ -199,10 +224,12 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setTextChromaSpeed (F)V
 	public final fun setTextColor (I)V
 	public final fun setTextItalic (Z)V
+	public final fun setTextPolyColor (Lorg/polyfrost/compose/render/PolyColor;)V
 	public final fun setTextScale (F)V
 	public final fun setTextUnderline (Z)V
 	public final fun setTextWeight (Lorg/polyfrost/oneconfig/api/hud/v1/Weight;)V
 	public final fun setToggleKey (I)V
+	public final fun setToggleKeybind (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;)V
 	public final fun setUseGuiScale (Z)V
 	public fun setX (F)V
 	public fun setY (F)V
@@ -215,6 +242,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected fun updateRelativeX (F)V
 	protected fun updateRelativeY (F)V
 	protected final fun updateWhenChanged (Ljava/lang/String;)V
+	public final fun withSystemPosition (Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun xForWidth (F)F
 	public fun yForHeight (F)F
 }
@@ -223,17 +251,22 @@ public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
 	public static final field $stable I
 	public static final field Companion Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion;
 	public fun <init> (Ljava/lang/String;B)V
+	public static final fun create (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public fun equals (Ljava/lang/Object;)Z
 	public static final fun getCOMBAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public static final fun getCOMPAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getCategoryId ()Ljava/lang/String;
 	public static final fun getINFO ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getId ()B
 	public final fun getName ()Ljava/lang/String;
 	public static final fun getPLAYER ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getTitle ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion {
+	public final fun create (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getCOMBAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getCOMPAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public final fun getINFO ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
@@ -263,6 +296,23 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor$Companion {
 	public final fun of (Lorg/polyfrost/compose/layout/PolyAlign;)Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 }
 
+public final class org/polyfrost/oneconfig/api/hud/v1/HudClickRegions {
+	public static final fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function0;)Z
+	public static final fun removeClickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;)Z
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudColors {
+	public static final fun argbToColor (I)J
+	public static final fun toComposeColor (Lorg/polyfrost/compose/render/PolyColor;)J
+	public static final fun toPolyColor-8_81llA (J)Lorg/polyfrost/compose/render/PolyColor;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudIcons {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudIcons;
+	public final fun bitmap (Ljava/lang/String;IZLandroidx/compose/runtime/Composer;II)Lorg/polyfrost/compose/render/PolyBitmap;
+}
+
 public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;
@@ -277,6 +327,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field layoutRefHeight F
 	public static field layoutRefWidth F
 	public static field overrideShowInScreens Z
+	public static field partialTick F
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public static final fun getLayoutReferenceHeight ()F
@@ -290,17 +341,26 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final fun invalidate ()V
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z
+	public static final fun isSuppressed (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
 	public static final fun markProviderKnown (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public final fun providers ()Ljava/util/Collection;
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;Ljava/lang/String;)V
+	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
 	public static final fun register ([Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
+	public static synthetic fun register$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static final fun registerLater (Lkotlin/jvm/functions/Function0;)V
 	public final fun removeHud (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public static synthetic fun removeHud$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
+	public static final fun suppressionReasons (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Ljava/util/List;
 	public final fun toggleAllHuds (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public final fun unregister (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZ)Ljava/util/ArrayList;
 	public static synthetic fun unregister$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZILjava/lang/Object;)Ljava/util/ArrayList;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudPreview {
+	public static final fun previewValue (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudResize : java/lang/Enum {
@@ -310,6 +370,61 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudResize : java/lang/Enum
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudStyle {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lorg/polyfrost/oneconfig/api/hud/v1/Font;Lorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;FFFF)V
+	public synthetic fun <init> (Lorg/polyfrost/oneconfig/api/hud/v1/Font;Lorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
+	public final fun component10 ()F
+	public final fun component11 ()F
+	public final fun component12 ()F
+	public final fun component2 ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun component3 ()Z
+	public final fun component4 ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun component5 ()Z
+	public final fun component6 ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun component7 ()Z
+	public final fun component8 ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun component9 ()F
+	public final fun copy (Lorg/polyfrost/oneconfig/api/hud/v1/Font;Lorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;FFFF)Lorg/polyfrost/oneconfig/api/hud/v1/HudStyle;
+	public static synthetic fun copy$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudStyle;Lorg/polyfrost/oneconfig/api/hud/v1/Font;Lorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;ZLorg/polyfrost/compose/render/PolyColor;FFFFILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/HudStyle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackground ()Z
+	public final fun getBackgroundColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getBorder ()Z
+	public final fun getBorderColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getBorderSize ()F
+	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
+	public final fun getPadding ()F
+	public final fun getRadius ()F
+	public final fun getScale ()F
+	public final fun getShadow ()Z
+	public final fun getShadowColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getTextColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudStyles {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudStyles;
+	public static final fun applyToAll (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static final fun getBuiltIn ()Lorg/polyfrost/oneconfig/api/hud/v1/HudStyle;
+	public static final fun getDefault (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudStyle;
+	public static final fun setDefault (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudStyle;)V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudSuppression {
+	public static final fun suppress (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/AutoCloseable;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudTextKt {
+	public static final fun HudText (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/util/List;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun plainText (Ljava/util/List;)Ljava/lang/String;
+	public static final fun toTextRuns (Lnet/kyori/adventure/text/Component;)Ljava/util/List;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper {
@@ -390,6 +505,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost
 	public final fun getPrefix ()Ljava/lang/String;
 	public final fun getSuffix ()Ljava/lang/String;
 	protected abstract fun getText ()Ljava/lang/String;
+	protected fun getTextRuns ()Ljava/util/List;
 	public fun minimumSize ()Lkotlin/Pair;
 	public final fun setBrackets (Z)V
 	public final fun setPrefix (Ljava/lang/String;)V
@@ -399,6 +515,27 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Companion {
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/TextRun {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZZZ)V
+	public synthetic fun <init> (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZZZ)Lorg/polyfrost/oneconfig/api/hud/v1/TextRun;
+	public static synthetic fun copy$default (Lorg/polyfrost/oneconfig/api/hud/v1/TextRun;Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZZZILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/TextRun;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBold ()Z
+	public final fun getColor ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getItalic ()Z
+	public final fun getText ()Ljava/lang/String;
+	public final fun getUnderline ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Weight : java/lang/Enum {

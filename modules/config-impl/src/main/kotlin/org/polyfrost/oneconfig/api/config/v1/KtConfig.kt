@@ -87,7 +87,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         category: String? = null,
         subcategory: String? = null
     ): Provider<Boolean> =
-        Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer())
+        Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer(), { t, id ->
+            t.switch(id, name ?: id, def, description.orEmpty(), category, subcategory)
+        }, null)
 
     /**
      * The switch that turns the whole mod on and off, shown on the mod's card and never on the config page
@@ -114,7 +116,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         subcategory: String? = "General",
         subcategoryKey: String? = null,
         swatch: Boolean = false,
-    ): Provider<PolyColor> = Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer()) {
+    ): Provider<PolyColor> = Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer(), { t, id ->
+        t.color(id, name, def, alpha, swatch, description.orEmpty(), category, subcategory)
+    }) {
         addMetadata(
             name,
             nameKey,
@@ -126,8 +130,6 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
             subcategory,
             subcategoryKey
         )
-        if (!alpha) this.addMetadata("noAlpha", Unit)
-        if (swatch) this.addMetadata("swatch", true)
     }
 
     @Deprecated(message = "Binary compatibility for mods compiled before swatch was added", level = DeprecationLevel.HIDDEN)
@@ -153,7 +155,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         category: String? = null,
         subcategory: String? = null
     ): Provider<PolyColor> =
-        Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer())
+        Provider(def, name, description, category, subcategory, PolyColor::class.java, Visualizer.ColorVisualizer(), { t, id ->
+            t.color(id, name ?: id, def, description = description.orEmpty(), category = category, subcategory = subcategory)
+        }, null)
 
     @JvmSynthetic
     protected fun slider(
@@ -165,10 +169,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         category: String? = null,
         subcategory: String? = null
     ): Provider<Float> =
-        Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
-            addMetadata("min", min)
-            addMetadata("max", max)
-        }
+        Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer(), { t, id ->
+            t.slider(id, name ?: id, def, min, max, description = description.orEmpty(), category = category, subcategory = subcategory)
+        }, null)
 
     @JvmSynthetic
     @Deprecated(message = "Use other text method.", level = DeprecationLevel.HIDDEN)
@@ -219,7 +222,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         placeholder: String? = null,
         placeholderKey: String? = "oneconfig.textinput.placeholder",
         regex: String? = null
-    ): Provider<String> = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer()) {
+    ): Provider<String> = Provider(def, name, description, category, subcategory, String::class.java, Visualizer.TextVisualizer(), { t, id ->
+        t.text(id, name, def, placeholder, multiline, regex, description.orEmpty(), category, subcategory)
+    }) {
         addMetadata(
             name,
             nameKey,
@@ -231,10 +236,8 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
             subcategory,
             subcategoryKey
         )
-        this.addMetadata("placeholder", placeholder)
-        this.addMetadata("multiline", multiline)
-        this.addMetadata("placeholderKey", placeholderKey)
-        this.addMetadata("regex", regex)
+        if (placeholderKey.isNullOrEmpty()) this.removeMetadata("placeholderKey")
+        else this.addMetadata("placeholderKey", placeholderKey)
     }
 
     @JvmSynthetic
@@ -293,7 +296,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         categoryKey: String? = null,
         subcategory: String? = "General",
         subcategoryKey: String? = null,
-    ): Provider<Boolean> = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer()) {
+    ): Provider<Boolean> = Provider(def, name, description, category, subcategory, Boolean::class.java, Visualizer.SwitchVisualizer(), { t, id ->
+        t.switch(id, name, def, description.orEmpty(), category, subcategory)
+    }) {
         addMetadata(
             name,
             nameKey,
@@ -389,8 +394,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         max: Float = 100f,
         step: Float = 1f,
         formatter: ValueFormatter? = null,
-    ): Provider<Float> = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer()) {
-        requireStep(name, min, max, step)
+    ): Provider<Float> = Provider(def, name, description, category, subcategory, Float::class.java, Visualizer.SliderVisualizer(), { t, id ->
+        t.slider(id, name, def, min, max, step, unit, description.orEmpty(), category, subcategory)
+    }) {
         addMetadata(
             name,
             nameKey,
@@ -402,10 +408,7 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
             subcategory,
             subcategoryKey
         )
-        this.addMetadata("unit", unit)
         this.addMetadata("unitKey", unitKey)
-        this.addMetadata("min", min)
-        this.addMetadata("max", max)
         this.addMetadata("step", step)
         this.addMetadata("formatter", formatter)
     }
@@ -451,7 +454,8 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
             category,
             subcategory,
             OneConfigKeybind::class.java,
-            Visualizer.KeybindVisualizer()
+            Visualizer.KeybindVisualizer(),
+            { t, id -> t.keybind(id, name, def, description.orEmpty(), category, subcategory) },
         ) {
             addMetadata(
                 name,
@@ -488,7 +492,9 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         category: String? = null,
         subcategory: String? = null
     ): Provider<Int> =
-        Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.DropdownVisualizer()) {
+        Provider(def, name, description, category, subcategory, Int::class.java, Visualizer.DropdownVisualizer(), { t, id ->
+            t.dropdown(id, name ?: id, def, options.toList(), description = description.orEmpty(), category = category, subcategory = subcategory)
+        }) {
             addMetadata("options", options)
         }
 
@@ -516,7 +522,10 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
             category,
             subcategory,
             Int::class.java,
-            Visualizer.DropdownVisualizer()
+            Visualizer.DropdownVisualizer(),
+            { t, id ->
+                t.dropdown(id, name, selectedIndex, options.map { stringTransformer(it) }, description = description.orEmpty(), category = category, subcategory = subcategory)
+            },
         ) {
             addMetadata(
                 name,
@@ -529,7 +538,6 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
                 subcategory,
                 subcategoryKey
             )
-            addMetadata("options", options.map { stringTransformer(it) })
             addMetadata("optionsKey", optionKeys)
         }
         return CachedTransformedProvider(property, options::get, options::indexOf)
@@ -597,12 +605,10 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         text: String? = null,
         textKey: String? = null,
         action: () -> Unit,
-    ): DummyProvider = DummyProvider(name, description, category, subcategory, Visualizer.ButtonVisualizer()) {
+    ): DummyProvider = DummyProvider(name, description, category, subcategory, Visualizer.ButtonVisualizer(), { t, id ->
+        t.button(id, name, text.orEmpty(), description.orEmpty(), category, subcategory, action)
+    }) {
         addMetadata(name, nameKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
-        this.addMetadata("runnable", Runnable {
-            runCatching(action).onFailure { ConfigManager.LOGGER.error("Failed to run button {}", name, it) }
-        })
-        this.addMetadata("text", text)
         this.addMetadata("textKey", textKey)
     }
 
@@ -1132,16 +1138,33 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         private val visualizer: Visualizer,
         private val extra: (Property<T>.() -> Unit)? = null
     ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, T>> {
+        private var build: ((Tree, String) -> Property<T>)? = null
+
+        internal constructor(
+            def: T?,
+            name: String?,
+            description: String?,
+            category: String?,
+            subcategory: String?,
+            type: Class<T>,
+            visualizer: Visualizer,
+            build: (Tree, String) -> Property<T>,
+            extra: (Property<T>.() -> Unit)?,
+        ) : this(def, name, description, category, subcategory, type, visualizer, extra) {
+            this.build = build
+        }
+
         override operator fun provideDelegate(
             thisRef: KtConfig,
             property: KProperty<*>
         ): ReadWriteProperty<KtConfig, T> {
-            val p = Properties.simple(property.name, name ?: property.name, description, def, type)
+            val tree = thisRef.tree ?: thisRef.pendingTree()
+            val p = build?.invoke(tree, property.name) ?: Properties.simple(property.name, name ?: property.name, description, def, type)
             extra?.invoke(p)
             p.addMetadata("visualizer", visualizer)
             p.addMetadata("category", category)
             p.addMetadata("subcategory", subcategory)
-            (thisRef.tree ?: thisRef.pendingTree()).put(p)
+            tree.put(p)
             return PropertyDelegate(p)
         }
     }
@@ -1155,13 +1178,28 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         private val visualizer: Visualizer,
         private val extra: Property<Void>.() -> Unit
     ) : PropertyDelegateProvider<KtConfig, ReadOnlyProperty<KtConfig, Unit>> {
+        private var build: ((Tree, String) -> Property<Void>)? = null
+
+        internal constructor(
+            name: String?,
+            description: String?,
+            category: String?,
+            subcategory: String?,
+            visualizer: Visualizer,
+            build: (Tree, String) -> Property<Void>,
+            extra: Property<Void>.() -> Unit,
+        ) : this(name, description, category, subcategory, visualizer, extra) {
+            this.build = build
+        }
+
         override operator fun provideDelegate(thisRef: KtConfig, property: KProperty<*>): ReadOnlyProperty<KtConfig, Unit> {
-            val p = Properties.dummy(property.name, name, description)
+            val tree = thisRef.tree ?: thisRef.pendingTree()
+            val p = build?.invoke(tree, property.name) ?: Properties.dummy(property.name, name, description)
             p.extra()
             p.addMetadata("visualizer", visualizer)
             p.addMetadata("category", category)
             p.addMetadata("subcategory", subcategory)
-            (thisRef.tree ?: thisRef.pendingTree()).put(p)
+            tree.put(p)
             return ReadOnlyProperty { _, _ -> }
         }
     }

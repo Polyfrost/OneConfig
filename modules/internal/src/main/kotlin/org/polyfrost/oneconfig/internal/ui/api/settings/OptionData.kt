@@ -6,10 +6,12 @@ import java.util.function.Function
 import java.util.function.Supplier
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.api.config.v1.SliderBounds
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
+import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.effect.normalizeEffectIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
@@ -22,7 +24,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
 sealed class OptionData(val prop: Property<*>) {
     val title: Any get() = localizedText(prop.getMetadata("titleKey"), prop.title ?: prop.id ?: "")
     val description: Any? get() = prop.localizedDescription()
-    val icon: String? get() = prop.getMetadata("icon")
+    val icon: String? get() = prop.getMetadata<Any?>(MetaKeys.ICON.name) as? String
 }
 
 class BooleanOptionData(prop: Property<*>, val style: Style) : OptionData(prop) {
@@ -33,9 +35,9 @@ class BooleanOptionData(prop: Property<*>, val style: Style) : OptionData(prop) 
 }
 
 class SliderOptionData(prop: Property<*>) : OptionData(prop) {
-    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
-    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
-    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val min: Float get() = prop.boundedMin(prop[MetaKeys.MIN]?.toFloat() ?: 0f)
+    val max: Float get() = prop.boundedMax(prop[MetaKeys.MAX]?.toFloat() ?: 100f)
+    val step: Float get() = prop[MetaKeys.STEP]?.toFloat() ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
 
     @Suppress("UNCHECKED_CAST")
@@ -53,9 +55,9 @@ class SliderOptionData(prop: Property<*>) : OptionData(prop) {
 class RangeOptionData(prop: Property<*>, val style: Style) : OptionData(prop) {
     enum class Style { Slider, Spinner }
 
-    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
-    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
-    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val min: Float get() = prop.boundedMin(prop[MetaKeys.MIN]?.toFloat() ?: 0f)
+    val max: Float get() = prop.boundedMax(prop[MetaKeys.MAX]?.toFloat() ?: 100f)
+    val step: Float get() = prop[MetaKeys.STEP]?.toFloat() ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type.componentType ?: Float::class.java)
 
     /**
@@ -79,13 +81,13 @@ class RangeOptionData(prop: Property<*>, val style: Style) : OptionData(prop) {
  * Writes go through the property's setter so a backing config is free to normalize further
  */
 class NumberChainOptionData(prop: Property<*>) : OptionData(prop) {
-    val min: Float get() = prop.getMetadata("min") ?: 0f
-    val max: Float get() = prop.getMetadata("max") ?: 100f
+    val min: Float get() = prop[MetaKeys.MIN]?.toFloat() ?: 0f
+    val max: Float get() = prop[MetaKeys.MAX]?.toFloat() ?: 100f
     val maxEntries: Int get() = prop.getMetadata("maxEntries") ?: Int.MAX_VALUE
     val lockedLeading: Int get() = prop.getMetadata("lockedLeading") ?: 0
 
     /** Drawn after the number while an entry is being edited and expected to already be part of [label] */
-    val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
+    val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop[MetaKeys.UNIT]).takeIf { it.isNotBlank() }
 
     /** Renders one entry as a chip label falling back to the bare number */
     fun label(value: Float): String {
@@ -157,9 +159,9 @@ private fun Property<*>.writeNumbers(values: List<Float>) {
  * [inheritedValue] may be given as a `Supplier` so it tracks whatever it inherits from
  */
 class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
-    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
-    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
-    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val min: Float get() = prop.boundedMin(prop[MetaKeys.MIN]?.toFloat() ?: 0f)
+    val max: Float get() = prop.boundedMax(prop[MetaKeys.MAX]?.toFloat() ?: 100f)
+    val step: Float get() = prop[MetaKeys.STEP]?.toFloat() ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
     val inheritLabel: String
         get() = localizedString(prop.getMetadata("inheritLabelKey"), prop.getMetadata<String>("inheritLabel"))
@@ -192,11 +194,11 @@ class InheritableSliderOptionData(prop: Property<*>) : OptionData(prop) {
 }
 
 class NumberOptionData(prop: Property<*>) : OptionData(prop) {
-    val min: Float get() = prop.getMetadata("min") ?: -10f
-    val max: Float get() = prop.getMetadata("max") ?: 100f
-    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val min: Float get() = prop[MetaKeys.MIN]?.toFloat() ?: -10f
+    val max: Float get() = prop[MetaKeys.MAX]?.toFloat() ?: 100f
+    val step: Float get() = prop[MetaKeys.STEP]?.toFloat() ?: 0f
     val format: ((Float) -> String)? get() = prop.valueFormat(prop.type)
-    val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop.getMetadata<String>("unit")).takeIf { it.isNotBlank() }
+    val unit: String? get() = localizedString(prop.getMetadata("unitKey"), prop[MetaKeys.UNIT]).takeIf { it.isNotBlank() }
     val placeholder: String? get() = localizedString(prop.getMetadata("placeholderKey"), prop.getMetadata<String>("placeholder")).takeIf { it.isNotBlank() }
 
     @Suppress("UNCHECKED_CAST")
@@ -285,6 +287,22 @@ class ColorListOptionData(prop: Property<*>) : ListOptionData(prop) {
         }
     }
 
+    fun hasDefaultList(): Boolean = prop.getMetadata<Any?>("default") != null
+
+    fun defaultArgbAt(index: Int): Int? {
+        val element = when (val def = prop.getMetadata<Any?>("default")) {
+            is List<*> -> def.getOrNull(index)
+            is Array<*> -> def.getOrNull(index)
+            is IntArray -> def.getOrNull(index)
+            else -> null
+        }
+        return when (element) {
+            is Number -> element.toInt()
+            is Color -> element.rgb
+            else -> null
+        }
+    }
+
     fun setArgb(values: List<Int>) {
         val component = if (prop.type.isArray) prop.type.componentType else Int::class.javaObjectType
         setElements(
@@ -296,9 +314,9 @@ class ColorListOptionData(prop: Property<*>) : ListOptionData(prop) {
 class NumberListOptionData(prop: Property<*>, val style: Style) : ListOptionData(prop) {
     enum class Style { Slider, Spinner }
 
-    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
-    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
-    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val min: Float get() = prop.boundedMin(prop[MetaKeys.MIN]?.toFloat() ?: 0f)
+    val max: Float get() = prop.boundedMax(prop[MetaKeys.MAX]?.toFloat() ?: 100f)
+    val step: Float get() = prop[MetaKeys.STEP]?.toFloat() ?: 0f
 
     val elementType: Class<*> get() = numericElementType(min, max, step)
 
@@ -313,9 +331,9 @@ class NumberListOptionData(prop: Property<*>, val style: Style) : ListOptionData
  * Each range takes two consecutive values so `[0, 10, 20, 30]` reads as 0-10 and 20-30
  */
 class RangeListOptionData(prop: Property<*>, val style: RangeOptionData.Style) : ListOptionData(prop) {
-    val min: Float get() = prop.boundedMin(prop.getMetadata("min") ?: 0f)
-    val max: Float get() = prop.boundedMax(prop.getMetadata("max") ?: 100f)
-    val step: Float get() = prop.getMetadata("step") ?: 0f
+    val min: Float get() = prop.boundedMin(prop[MetaKeys.MIN]?.toFloat() ?: 0f)
+    val max: Float get() = prop.boundedMax(prop[MetaKeys.MAX]?.toFloat() ?: 100f)
+    val step: Float get() = prop[MetaKeys.STEP]?.toFloat() ?: 0f
 
     val elementType: Class<*> get() = numericElementType(min, max, step)
 
@@ -518,9 +536,9 @@ private fun Number.toComponentType(component: Class<*>): Any = when (component) 
 private fun Property<*>.optionLabels(): List<Any>? {
     // explicit display labels win over ones derived from raw option values and are positionally aligned
     // with "options"
-    getMetadata<Any>("optionLabels").optionList().takeIf { it.isNotEmpty() }?.let { return it }
+    getMetadata<Any>(MetaKeys.LABELS.name).optionList().takeIf { it.isNotEmpty() }?.let { return it }
 
-    val raw = getMetadata<Any>("options") ?: return null
+    val raw = getMetadata<Any>(MetaKeys.OPTIONS.name) ?: return null
     val keys = getMetadata<Any>("optionsKey").optionList().map { it.toString() }
     val labels = when {
         raw is Iterable<*> -> raw.map { it ?: "" }
@@ -536,7 +554,7 @@ private fun Property<*>.optionLabels(): List<Any>? {
 private fun Property<*>.optionValues(): List<Any>? = getMetadata<Any>("optionValues").optionList().takeIf { it.isNotEmpty() }
 
 private fun Property<*>.optionLabelMap(): Map<String, Any> {
-    val options = getMetadata<Any>("options").optionList().map { it.toString() }
+    val options = getMetadata<Any>(MetaKeys.OPTIONS.name).optionList().map { it.toString() }
     val labels = optionLabels() ?: return emptyMap()
     return options.zip(labels).toMap()
 }

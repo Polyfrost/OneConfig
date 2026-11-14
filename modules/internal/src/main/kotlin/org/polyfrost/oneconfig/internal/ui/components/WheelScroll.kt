@@ -21,6 +21,7 @@ import kotlin.math.abs
 import kotlin.math.exp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 
 /** Hands each mouse wheel notch to the innermost [wheelScroll] list under the pointer that can still scroll its way */
 class WheelRouter {
@@ -28,11 +29,20 @@ class WheelRouter {
         private set
 
     private var claimant: WheelScrollNode? = null
+    private var blocked = false
+    private var reachedScrollable = false
+
+    private val fallbackX = WheelSpring()
+    private val fallbackY = WheelSpring()
+    private var fallbackPushNanos = 0L
+    private var fallbackFrameNanos = -1L
 
     /** Glides the list that claims this [delta] dp notch while [dispatch] delivers it */
     fun route(delta: Offset, dispatch: () -> Unit) {
         isRouting = true
         claimant = null
+        blocked = false
+        reachedScrollable = false
         try {
             dispatch()
         } finally {
@@ -40,16 +50,55 @@ class WheelRouter {
         }
         val node = claimant
         claimant = null
-        node?.push(delta)
+        when {
+            node != null -> {
+                stopFallback()
+                node.push(delta)
+            }
+            reachedScrollable && !blocked -> pushFallback(delta)
+        }
+    }
+
+    fun defersWheelScroll(): Boolean {
+        if (!isRouting || Motion.reduced) return false
+        reachedScrollable = true
+        return true
+    }
+
+    fun glideFrame(scroll: (Offset) -> Unit) {
+        if (!fallbackX.active && !fallbackY.active) {
+            fallbackFrameNanos = -1L
+            return
+        }
+        val now = System.nanoTime()
+        val nanos = if (fallbackFrameNanos < 0) now - fallbackPushNanos else now - fallbackFrameNanos
+        fallbackFrameNanos = now
+        val seconds = nanos / 1_000_000_000f
+        val step = Offset(fallbackX.advance(seconds), fallbackY.advance(seconds))
+        if (step != Offset.Zero) scroll(step)
+    }
+
+    fun stopFallback() {
+        fallbackX.reset()
+        fallbackY.reset()
+        fallbackFrameNanos = -1L
+    }
+
+    private fun pushFallback(delta: Offset) {
+        if (delta.x != 0f) fallbackX.push(delta.x)
+        if (delta.y != 0f) fallbackY.push(delta.y)
+        fallbackPushNanos = System.nanoTime()
     }
 
     internal fun claim(node: WheelScrollNode) {
         claimant = node
+        blocked = false
     }
 
     /** Makes the notch scroll nothing, for a contained list that's already at its end */
     internal fun block() {
         claimant = null
+        blocked = true
     }
 }
 
@@ -119,7 +168,7 @@ internal class WheelScrollNode(
     override fun onCancelPointerInput() {}
 
     fun push(delta: Offset) {
-        if (ReducedMotion.enabled) {
+        if (Motion.reduced) {
             val step = amountOf(delta) * currentValueOf(LocalDensity).density
             coroutineScope.launch { state.scrollBy(step) }
             return

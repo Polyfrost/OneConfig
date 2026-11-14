@@ -24,6 +24,7 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.GlassTint;
 import org.polyfrost.oneconfig.internal.ui.themes.PaletteAccent;
+import org.polyfrost.oneconfig.internal.ui.themes.PrefsSync;
 import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency;
 import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
 
@@ -266,11 +267,13 @@ public class ThemeConfig extends Config {
             "animations", (Boolean v) -> {
                 AnimationsMotionScale.setAnimations(v);
                 ReducedMotion.setEnabled(reducedMotion || !v);
+                PrefsSync.animations(v);
                 return false;
             });
         addCallback(
             "uiScale", (Number v) -> {
                 ProviderKt.setUiScalePercent(v.floatValue());
+                PrefsSync.uiScale(v.floatValue());
                 return false;
             });
         addCallback(
@@ -281,6 +284,17 @@ public class ThemeConfig extends Config {
         addCallback(
             "reducedMotion", (Boolean v) -> {
                 ReducedMotion.setEnabled(v || !animations);
+                PrefsSync.reducedMotion(v);
+                return false;
+            });
+        addCallback(
+            "enableBackgroundBlur", (Boolean v) -> {
+                PrefsSync.backgroundBlur(v);
+                return false;
+            });
+        addCallback(
+            "guiOpenAnimation", (Boolean v) -> {
+                PrefsSync.guiOpenAnimation(v);
                 return false;
             });
         addCallback(
@@ -313,6 +327,7 @@ public class ThemeConfig extends Config {
         PaletteAccent.load(paletteAccents);
         AnimationsMotionScale.setAnimations(animations);
         ReducedMotion.setEnabled(reducedMotion || !animations);
+        PrefsSync.sync();
     }
 
     private static void updateAppearance() {

@@ -24,6 +24,8 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.background
+import org.polyfrost.compose.composables.border
 import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.runtime.PolyComposeRuntime
@@ -54,6 +57,12 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.page.PageText
+import kotlin.math.abs
 
 @ApiStatus.Internal
 public val LocalHud: ProvidableCompositionLocal<Hud?> = compositionLocalOf<Hud?> { null }
@@ -119,6 +128,8 @@ private const val MAX_ANCHOR_DEPTH = 16
 
 private const val MIN_VISIBLE = 12f
 
+private val BORDER_OPTIONS = arrayOf("border", "borderEnabled", "borderColor", "borderChroma", "borderChromaSpeed", "borderSize")
+
 internal const val POS_SCHEMA = 1
 
 // every open getter the cached frame geometry or the background merge key reads
@@ -179,6 +190,12 @@ public abstract class Hud(
      */
     @get:ApiStatus.Experimental
     public open val externalPlacement: ExternalPlacement? get() = null
+
+    @ExperimentalOneConfigUiApi
+    public open val replacesIds: Set<String> get() = emptySet()
+
+    @ExperimentalOneConfigUiApi
+    public open val defaultStaticWidth: Boolean get() = false
 
     private var _staticWidth: MutableState<Boolean> = mutableStateOf(false)
     public var staticWidth: Boolean
@@ -307,15 +324,11 @@ public abstract class Hud(
         val curOffY = anchorOffsetY
         val curLinkX = mergeLinkX
         val curLinkY = mergeLinkY
-        val wasSystem = HudManager.systemReposition
-        HudManager.systemReposition = true
-        try {
+        withSystemPosition {
             setAbsolutePosition(dx, dy)
             t.getProp("section")?.addMetadata("default", section)
             t.getProp("relativeX")?.addMetadata("default", relativeX)
             t.getProp("relativeY")?.addMetadata("default", relativeY)
-        } finally {
-            HudManager.systemReposition = wasSystem
         }
         section = curSection
         relativeX = curX
@@ -325,6 +338,72 @@ public abstract class Hud(
         anchorOffsetY = curOffY
         mergeLinkX = curLinkX
         mergeLinkY = curLinkY
+    }
+
+    @ExperimentalOneConfigUiApi
+    public fun <T> withSystemPosition(block: () -> T): T {
+        val wasSystem = HudManager.systemReposition
+        HudManager.systemReposition = true
+        try {
+            return block()
+        } finally {
+            HudManager.systemReposition = wasSystem
+        }
+    }
+
+    @ExperimentalOneConfigUiApi
+    public open fun onUserMoved() {}
+
+    private var _movedByPlayer: MutableState<Boolean> = mutableStateOf(false)
+    private var movedByPlayer: Boolean get() = _movedByPlayer.value; set(v) { _movedByPlayer.put(v) }
+
+    @ExperimentalOneConfigUiApi
+    public val hasBeenMoved: Boolean get() {
+        if (!movedByPlayer) return false
+        val defaults = storedPositionDefaults() ?: return true
+        return isAnchored || !matchesPosition(defaults)
+    }
+
+    @ExperimentalOneConfigUiApi
+    public val isAtDefaultPosition: Boolean get() {
+        val defaults = storedPositionDefaults() ?: return !movedByPlayer
+        return !isAnchored && matchesPosition(defaults)
+    }
+
+    private class PositionDefaults(val section: Any, val x: Float, val y: Float)
+
+    private fun storedPositionDefaults(): PositionDefaults? {
+        val t = tree ?: return null
+        val sec = t.getProp("section")?.getMetadata<Any?>("default") ?: return null
+        val x = (t.getProp("relativeX")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return null
+        val y = (t.getProp("relativeY")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return null
+        return PositionDefaults(sec, x, y)
+    }
+
+    private fun matchesPosition(d: PositionDefaults): Boolean =
+        d.section == section && abs(d.x - relativeX) < 1e-4f && abs(d.y - relativeY) < 1e-4f
+
+    @Transient private var positionKeep = 0
+    @Transient private var positionBatch = 0
+    @Transient private var positionMovePending = false
+
+    private inline fun <T> keepingPosition(block: () -> T): T {
+        positionKeep++
+        try {
+            return block()
+        } finally {
+            positionKeep--
+        }
+    }
+
+    private fun notePositionWrite() {
+        if (positionKeep > 0 || HudManager.systemReposition || !HudManager.isEditing || tree == null) return
+        if (positionBatch > 0) positionMovePending = true else markMovedByPlayer()
+    }
+
+    private fun markMovedByPlayer() {
+        movedByPlayer = true
+        onUserMoved()
     }
 
     @Switch(title = "Show in F3")
@@ -341,6 +420,42 @@ public abstract class Hud(
 
     public var toggleKey: Int = -1
     public var showKey: Int = -1
+
+    @Transient
+    private var toggleBind: OneConfigKeybind? = null
+
+    @ExperimentalOneConfigUiApi
+    public var toggleKeybind: OneConfigKeybind?
+        get() = toggleBind
+        set(v) {
+            val current = toggleBind
+            if (v == null) {
+                if (current != null) KeybindManager.unregister(current)
+                toggleBind = null
+                return
+            }
+            val bind = current ?: OneConfigKeybind(null, null, KeyModifiers.NONE, 0L, ::onToggleKeybind)
+            if (v !== bind) {
+                bind.keyCodes = v.keyCodes?.copyOf()
+                bind.mouseBtns = v.mouseBtns?.copyOf()
+                bind.mods = v.mods
+                bind.durationNanos = v.durationNanos
+                bind.unresolvedKeyInputs = v.unresolvedKeyInputs
+                bind.unresolvedMouseInputs = v.unresolvedMouseInputs
+            }
+            toggleBind = bind
+            if (isReal) syncToggleKeybind()
+        }
+
+    private fun onToggleKeybind(down: Boolean): Boolean {
+        if (down) hidden = !hidden
+        return true
+    }
+
+    private fun syncToggleKeybind() {
+        val bind = toggleBind ?: return
+        if (KeybindManager.isRegistered(bind)) KeybindManager.replace(bind, bind) else KeybindManager.register(bind)
+    }
 
     private var _section: MutableState<Section> = mutableStateOf(Section.TopLeft)
     public var section: Section get() = _section.value; set(v) { _section.put(v) }
@@ -571,6 +686,7 @@ public abstract class Hud(
         }.let { if (HudManager.systemReposition) it else it.coerceIn(-sw, sw * 2f) }
         posSchema = POS_SCHEMA
         HudManager.noteLayoutArranged()
+        notePositionWrite()
     }
 
     protected open fun updateRelativeY(absY: Float) {
@@ -595,9 +711,23 @@ public abstract class Hud(
         }.let { if (HudManager.systemReposition) it else it.coerceIn(-sh, sh * 2f) }
         posSchema = POS_SCHEMA
         HudManager.noteLayoutArranged()
+        notePositionWrite()
     }
 
     public fun setAbsolutePosition(absX: Float, absY: Float) {
+        positionBatch++
+        try {
+            placeAbsolute(absX, absY)
+        } finally {
+            positionBatch--
+            if (positionBatch == 0 && positionMovePending) {
+                positionMovePending = false
+                markMovedByPlayer()
+            }
+        }
+    }
+
+    private fun placeAbsolute(absX: Float, absY: Float) {
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
         val gridW = sw / GRID_SIZE
@@ -667,8 +797,10 @@ public abstract class Hud(
         val absY = y
         pinnedCorner = pin
         unpinPending = false
-        updateRelativeX(absX)
-        updateRelativeY(absY)
+        keepingPosition {
+            updateRelativeX(absX)
+            updateRelativeY(absY)
+        }
     }
 
     /** Only takes effect on the next [settlePin] because the final size is not laid out yet */
@@ -684,7 +816,7 @@ public abstract class Hud(
         val absY = rawY
         pinnedCorner = null
         unpinPending = false
-        Snapshot.withMutableSnapshot { setAbsolutePosition(absX, absY) }
+        keepingPosition { Snapshot.withMutableSnapshot { setAbsolutePosition(absX, absY) } }
     }
 
     private var _alignment: MutableState<PolyAlign> = mutableStateOf(PolyAlign.Center)
@@ -707,8 +839,10 @@ public abstract class Hud(
         val absX = rawX
         val absY = rawY
         growthAnchor = anchor
-        updateRelativeX(absX)
-        updateRelativeY(absY)
+        keepingPosition {
+            updateRelativeX(absX)
+            updateRelativeY(absY)
+        }
     }
 
     private var _anchorTargetId: MutableState<String> = mutableStateOf("")
@@ -817,8 +951,10 @@ public abstract class Hud(
         val absX = rawX
         val absY = rawY
         selfAnchorPoint = point
-        updateRelativeX(absX)
-        updateRelativeY(absY)
+        keepingPosition {
+            updateRelativeX(absX)
+            updateRelativeY(absY)
+        }
     }
 
     private var _anchorOffsetX: MutableState<Float> = mutableStateOf(0f)
@@ -959,12 +1095,9 @@ public abstract class Hud(
         val absY = layoutY(HudManager.guiScreenHeight)
         if (dropX) mergeLinkX = null
         if (dropY) mergeLinkY = null
-        HudManager.systemReposition = true
-        try {
+        withSystemPosition {
             updateRelativeX(absX)
             updateRelativeY(absY)
-        } finally {
-            HudManager.systemReposition = false
         }
     }
 
@@ -1169,8 +1302,74 @@ public abstract class Hud(
     private var _shadowOffsetY: MutableState<Float> = mutableStateOf(2f)
     public var shadowOffsetY: Float get() = _shadowOffsetY.value; set(v) { _shadowOffsetY.value = v }
 
+    @get:ApiStatus.Internal
+    @set:ApiStatus.Internal
+    @Transient
+    public var hasBuiltInBorderOptions: Boolean = false
+
+    private var _borderEnabled: MutableState<Boolean> = mutableStateOf(false)
+
+    @ExperimentalOneConfigUiApi
+    public open var borderEnabled: Boolean get() = _borderEnabled.value; set(v) { _borderEnabled.put(v) }
+
+    private var _borderColor: MutableState<Int> = mutableStateOf(0xFF000000.toInt())
+
+    @ExperimentalOneConfigUiApi
+    public open var borderColor: Int get() = _borderColor.value; set(v) { _borderColor.put(v) }
+
+    private var _borderChroma: MutableState<Boolean> = mutableStateOf(false)
+
+    @ExperimentalOneConfigUiApi
+    public open var borderChroma: Boolean get() = _borderChroma.value; set(v) { _borderChroma.put(v) }
+
+    private var _borderChromaSpeed: MutableState<Float> = mutableStateOf(1f)
+
+    @ExperimentalOneConfigUiApi
+    public open var borderChromaSpeed: Float get() = _borderChromaSpeed.value; set(v) { _borderChromaSpeed.put(v) }
+
+    private var _borderSize: MutableState<Float> = mutableStateOf(1f)
+
+    @ExperimentalOneConfigUiApi
+    public open var borderSize: Float get() = _borderSize.value; set(v) { _borderSize.put(v) }
+
+    @ExperimentalOneConfigUiApi
+    public var textPolyColor: PolyColor
+        get() = PolyColor(textColor, textChroma, textChromaSpeed)
+        set(v) {
+            textColor = v.rawArgb
+            textChroma = v.chroma
+            textChromaSpeed = v.chromaSpeed
+        }
+
+    @ExperimentalOneConfigUiApi
+    public var shadowPolyColor: PolyColor
+        get() = PolyColor(shadowColor, shadowChroma, shadowChromaSpeed)
+        set(v) {
+            shadowColor = v.rawArgb
+            shadowChroma = v.chroma
+            shadowChromaSpeed = v.chromaSpeed
+        }
+
+    @ExperimentalOneConfigUiApi
+    public var bgPolyColor: PolyColor
+        get() = PolyColor(bgColor, bgChroma, bgChromaSpeed)
+        set(v) {
+            bgColor = v.rawArgb
+            bgChroma = v.chroma
+            bgChromaSpeed = v.chromaSpeed
+        }
+
+    @ExperimentalOneConfigUiApi
+    public var borderPolyColor: PolyColor
+        get() = PolyColor(borderColor, borderChroma, borderChromaSpeed)
+        set(v) {
+            borderColor = v.rawArgb
+            borderChroma = v.chroma
+            borderChromaSpeed = v.chromaSpeed
+        }
+
     public open val alwaysRedraw: Boolean
-        get() = bgChroma || textChroma || shadowChroma
+        get() = bgChroma || textChroma || shadowChroma || (borderEnabled && borderChroma)
 
     @ApiStatus.Internal
     @JvmField
@@ -1472,6 +1671,8 @@ public abstract class Hud(
         if (tree != null) throw IllegalArgumentException("HUD is already made, it cannot be made again")
         val out = if (multipleInstancesAllowed()) clone() else this
         val treeId = with?.id ?: if (multipleInstancesAllowed()) "huds/${(1000..9999).random()}-$id" else "huds/$id"
+        if (out.defaultStaticWidth) out.staticWidth = true
+        HudStyles.applyDefaultTo(out)
         val tree = ConfigManager.collect(out, treeId)
         out.apply {
             tree.title = title
@@ -1494,9 +1695,13 @@ public abstract class Hud(
                 tree["selfAnchorPoint"] = ktProperty(out::selfAnchorPoint).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorOffsetX"] = ktProperty(out::anchorOffsetX).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["anchorOffsetY"] = ktProperty(out::anchorOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["movedByPlayer"] = ktProperty(out::movedByPlayer).apply { addDisplayCondition(hideFromConfigUi) }
             }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
+            if (tree["toggleKeybind"] == null) {
+                tree["toggleKeybind"] = ktProperty(out::toggleKeybind).apply { addDisplayCondition(hideFromConfigUi) }
+            }
             tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
             tree["growthAnchor"] = ktProperty(out::growthAnchor).apply {
                 description = "The point this HUD stays pinned to when its size changes, so it only ever grows away from that point."
@@ -1561,6 +1766,14 @@ public abstract class Hud(
             tree["shadowChromaSpeed"] = ktProperty(out::shadowChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
+            out.hasBuiltInBorderOptions = BORDER_OPTIONS.none { tree[it] != null }
+            if (out.hasBuiltInBorderOptions) {
+                tree["borderEnabled"] = ktProperty(out::borderEnabled).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["borderColor"] = ktProperty(out::borderColor).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["borderChroma"] = ktProperty(out::borderChroma).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["borderChromaSpeed"] = ktProperty(out::borderChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["borderSize"] = ktProperty(out::borderSize).apply { addDisplayCondition(hideFromConfigUi) }
+            }
             (tree["showInF3"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             (tree["showInTab"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             (tree["showInScreens"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
@@ -1576,6 +1789,7 @@ public abstract class Hud(
             ConfigManager.active().register(tree)
             sanitizeHudCapturedDefaults(tree)
             this.tree = tree
+            syncToggleKeybind()
         }
         return out
     }
@@ -1633,19 +1847,13 @@ public abstract class Hud(
      */
     public open fun canMergeBackground(): Boolean = this is TextHud
 
-    /**
-     * Applies this HUD's background to [modifier]
-     *
-     * Skipped when the background is turned off or is currently being drawn as part of a fused
-     * neighbour shape (see [bgMerged])
-     */
     @JvmOverloads
-    public fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier =
-        if (showBackground && hasBackground() && !bgMerged) {
-            modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
-        } else {
-            modifier
-        }
+    public fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier {
+        if (!showBackground || !hasBackground() || bgMerged) return modifier
+        val filled = modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
+        val size = borderSize
+        return if (borderEnabled && size > 0f) filled.border(borderPolyColor, size, bgRadius) else filled
+    }
 
     public open fun backgroundColor(): PolyColor? = null
     public open fun multipleInstancesAllowed(): Boolean = true
@@ -1678,6 +1886,7 @@ public abstract class Hud(
      */
     @ApiStatus.Internal
     internal fun detachTree() {
+        toggleBind?.let(KeybindManager::unregister)
         tree = null
     }
 
@@ -1687,6 +1896,14 @@ public abstract class Hud(
     }
 
     public open fun remove() {}
+
+    @ExperimentalOneConfigUiApi
+    protected fun cloneOptions() {
+        deepCopyHudOptions(this)
+    }
+
+    @ExperimentalOneConfigUiApi
+    public open fun onCloned() {}
 
     @MustBeInvokedByOverriders
     @Suppress("UNCHECKED_CAST")
@@ -1703,6 +1920,16 @@ public abstract class Hud(
         geomValid = false
         showKey = -1
         toggleKey = -1
+        toggleBind = this@Hud.toggleBind?.let { src ->
+            OneConfigKeybind(src.keyCodes?.copyOf(), src.mouseBtns?.copyOf(), src.mods, src.durationNanos, ::onToggleKeybind).also {
+                it.unresolvedKeyInputs = src.unresolvedKeyInputs
+                it.unresolvedMouseInputs = src.unresolvedMouseInputs
+            }
+        }
+        positionKeep = 0
+        positionBatch = 0
+        positionMovePending = false
+        _movedByPlayer = mutableStateOf(this@Hud.movedByPlayer)
         _staticWidth = mutableStateOf(this@Hud.staticWidth)
         _section = mutableStateOf(this@Hud.section)
         _relativeX = mutableStateOf(this@Hud.relativeX)
@@ -1754,8 +1981,15 @@ public abstract class Hud(
         _shadowChromaSpeed = mutableStateOf(this@Hud.shadowChromaSpeed)
         _shadowOffsetX = mutableStateOf(this@Hud.shadowOffsetX)
         _shadowOffsetY = mutableStateOf(this@Hud.shadowOffsetY)
+        _borderEnabled = mutableStateOf(this@Hud._borderEnabled.value)
+        _borderColor = mutableStateOf(this@Hud._borderColor.value)
+        _borderChroma = mutableStateOf(this@Hud._borderChroma.value)
+        _borderChromaSpeed = mutableStateOf(this@Hud._borderChromaSpeed.value)
+        _borderSize = mutableStateOf(this@Hud._borderSize.value)
         _hidden = mutableStateOf(this@Hud.hidden)
         _locked = mutableStateOf(this@Hud.locked)
+        cloneOptions()
+        onCloned()
     }
 
     private companion object {
@@ -1802,16 +2036,47 @@ public abstract class Hud(
         }
     }
 
-    public class Category(public val name: String, public val id: Byte) {
-        public companion object {
-            @JvmStatic public val COMBAT: Category = Category("oneconfig.combat", 1)
-            @JvmStatic public val INFO: Category = Category("oneconfig.info", 2)
-            @JvmStatic public val PLAYER: Category = Category("oneconfig.player", 3)
-            @JvmStatic public val COMPAT: Category = Category("oneconfig.compat", 4)
-        }
+    public class Category private constructor(
+        private val rawName: String,
+        public val id: Byte,
+        categoryId: String,
+        private val pageTitle: PageText?,
+    ) {
+        @Deprecated("Use Category.create(id, title), which compares categories by their id")
+        public constructor(name: String, id: Byte) : this(name, id, name, null)
 
+        @ExperimentalOneConfigUiApi
+        public val categoryId: String = categoryId
+
+        public val name: String
+            get() {
+                val title = pageTitle ?: return rawName
+                val key = title.key ?: return title.fallback
+                val translated = runCatching { Platform.i18n().hasTranslation(key) }.getOrDefault(false)
+                return if (translated) key else title.fallback
+            }
+
+        @ExperimentalOneConfigUiApi
+        public val title: PageText
+            get() = pageTitle ?: if (rawName.isBlank()) PageText.literal(rawName) else PageText.translatable(rawName, rawName)
+
+        override fun equals(other: Any?): Boolean = this === other || (other is Category && other.categoryId == categoryId)
+        override fun hashCode(): Int = categoryId.hashCode()
         override fun toString(): String = name
-        override fun hashCode(): Int = id.toInt()
+
+        public companion object {
+            @JvmStatic public val COMBAT: Category = Category("oneconfig.combat", 1, "oneconfig.combat", null)
+            @JvmStatic public val INFO: Category = Category("oneconfig.info", 2, "oneconfig.info", null)
+            @JvmStatic public val PLAYER: Category = Category("oneconfig.player", 3, "oneconfig.player", null)
+            @JvmStatic public val COMPAT: Category = Category("oneconfig.compat", 4, "oneconfig.compat", null)
+
+            @ExperimentalOneConfigUiApi
+            @JvmStatic
+            public fun create(id: String, title: PageText): Category {
+                require(id.isNotBlank()) { "Category id must not be blank" }
+                return Category(id, 0, id, title)
+            }
+        }
     }
 }
 

@@ -1,15 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTypography
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 
 /** Sets a panel background color's alpha from an opacity percentage between 0 and 100 */
 fun Color.withOpacityPercent(percent: Float): Color =
@@ -65,15 +67,27 @@ data class UITheme(
     override val circleShape: Shape,
 
     val branding: UIBranding,
-    val typography: UITypography,
+    override val typography: UITypography,
     val iconOverrides: Map<String, String> = emptyMap(),
 ) : OneConfigUITheme() {
     override val fontFamily: FontFamily get() = typography.family
 
     override val logoPath: String get() = brandedLogoPath(this)
 
-    var controlTrackColor: Color = DefaultControlTrackColor
+    override var controlTrackColor: Color = DefaultControlTrackColor
         private set
+
+    override val style: ThemeStyle
+        get() = when {
+            isMinecraftStyle -> ThemeStyle.Pixel
+            liquidGlass -> ThemeStyle.Glass
+            else -> ThemeStyle.Flat
+        }
+
+    override val focusRingColor: Color
+        get() = if (isMinecraftStyle) (if (isLight) Color.Black else Color.White) else Accent
+
+    override val accentBrush: Brush get() = AccentBrush
 
     fun withControlTrackColor(color: Color): UITheme =
         copy().also { it.controlTrackColor = color }
@@ -183,8 +197,6 @@ data class UIBranding(
 
 data class UITypography(
     val family: FontFamily,
-)
-
-val UITheme.isLight: Boolean get() = textColor.luminance() < 0.5f
+) : OneConfigTypography(family)
 
 private fun brandedLogoPath(theme: UITheme): String = OneConfigTheme.logoOverride ?: theme.branding.logoPath

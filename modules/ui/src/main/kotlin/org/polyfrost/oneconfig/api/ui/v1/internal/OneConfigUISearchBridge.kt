@@ -1,12 +1,14 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchDocument
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchMetadata
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchProvider
 import org.polyfrost.oneconfig.api.ui.v1.search.SearchScope
 
 @ExperimentalOneConfigUiApi
+@InternalOneConfigUiApi
 public interface OneConfigUISearchBridge {
     public fun register(provider: SearchProvider)
 
@@ -18,6 +20,7 @@ public interface OneConfigUISearchBridge {
 }
 
 @ExperimentalOneConfigUiApi
+@InternalOneConfigUiApi
 public object SearchInterop {
     @JvmStatic
     public fun scope(key: String): SearchScope = SearchScope(key)

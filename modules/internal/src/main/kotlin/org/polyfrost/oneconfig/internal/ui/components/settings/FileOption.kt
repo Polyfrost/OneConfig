@@ -1,16 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,54 +13,37 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.IconButton
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun FileOption(data: FileOptionData) {
+    FileOption(data, true)
+}
+
+@Composable
+fun FileOption(data: FileOptionData, enabled: Boolean) {
     val theme = LocalTheme.current
     val scope = rememberCoroutineScope()
 
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val isFocused by interactionSource.collectIsFocusedAsState()
+    var text by remember(data.prop) { mutableStateOf(data.strProp.shown() ?: "") }
 
-    val borderColor = animateColorAsState(if (isHovered || isFocused) theme.textColorSecondary else theme.borderColor)
-
-    var value by remember(data.prop) {
-        val initial = data.strProp.shown() ?: ""
-        mutableStateOf(TextFieldValue(initial, selection = TextRange(initial.length)))
-    }
-    val text = value.text
-
-    val pathTransformation = rememberPathTransformation()
-
-    fun setValue(newText: String) {
-        value = TextFieldValue(newText, selection = TextRange(newText.length))
+    fun update(newText: String) {
+        text = newText
         data.strProp.set(newText)
     }
 
@@ -74,7 +51,7 @@ fun FileOption(data: FileOptionData) {
     var dialogOpen by remember { mutableStateOf(false) }
 
     fun openDialog() {
-        if (dialogOpen) return
+        if (dialogOpen || !enabled) return
         dialogOpen = true
         scope.launch {
             try {
@@ -87,57 +64,41 @@ fun FileOption(data: FileOptionData) {
                         tinyFd.openFileSelector(data.dialogTitle, current, data.filterPatterns, data.filterName)
                     }
                 } ?: return@launch // cancelled so leave the existing value untouched
-                setValue(selected.toString())
+                update(selected.toString())
             } finally {
                 dialogOpen = false
             }
         }
     }
 
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
-        value = value,
-        onValueChange = { value = it; data.strProp.set(it.text) },
-        singleLine = true,
-        textStyle = TextStyle(
-            color = theme.textColor,
-            fontSize = 14.sp,
-            fontFamily = theme.typography.family,
-        ),
-        interactionSource = interactionSource,
-        cursorBrush = SolidColor(theme.textColor),
-        visualTransformation = pathTransformation,
-        modifier = Modifier.trackTextInputFocus()
-            .width(LocalOptionWidth.current)
-            .heightIn(min = OptionControlHeight)
-            .graphicsLayer {}
-            .animatedFrame(theme.sideBarNavigationEntryShape, fill = { theme.modCardBackground }, border = { borderColor.value })
-            .padding(start = 12.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
-        decorationBox = { innerTextField ->
+    TextField(
+        text,
+        ::update,
+        Modifier.width(LocalOptionWidth.current).heightIn(min = OptionControlHeight),
+        placeholder = data.placeholder,
+        enabled = enabled,
+        fontSize = 14.sp,
+        visualTransformation = rememberPathTransformation(),
+        trailing = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                EditableValue(
-                    modifier = Modifier.weight(1f),
-                    showPlaceholder = text.isEmpty() && data.placeholder != null && !isFocused,
-                    placeholder = data.placeholder,
-                    inner = innerTextField,
-                )
                 if (text.isNotEmpty()) {
                     IconButton(
                         "close",
                         modifier = Modifier.size(16.dp),
                         foreground = theme.textColorSecondary,
                         hoveredForeground = theme.textColor,
-                    ) { setValue("") }
+                        enabled = enabled,
+                    ) { update("") }
                 }
                 IconButton(
                     "folder",
-                    modifier = Modifier.size(18.dp).pointerHoverIcon(PointerIcon.Hand),
+                    modifier = Modifier.size(18.dp),
                     foreground = theme.textColorSecondary,
                     hoveredForeground = theme.textColor,
+                    enabled = enabled,
                     onClick = ::openDialog,
                 )
             }
@@ -145,7 +106,6 @@ fun FileOption(data: FileOptionData) {
     )
 }
 
-// only consumed by a value-based BasicTextField, see the note on its call site
 @Suppress("DEPRECATION")
 @Composable
 internal fun rememberPathTransformation(): VisualTransformation {
@@ -163,21 +123,5 @@ internal fun rememberPathTransformation(): VisualTransformation {
             }
             TransformedText(builder.toAnnotatedString(), OffsetMapping.Identity)
         }
-    }
-}
-
-@Composable
-private fun EditableValue(
-    modifier: Modifier,
-    showPlaceholder: Boolean,
-    placeholder: String?,
-    inner: @Composable () -> Unit,
-) {
-    val theme = LocalTheme.current
-    Box(modifier) {
-        if (showPlaceholder && placeholder != null) {
-            Text(placeholder, color = theme.textColorSecondary, fontSize = 14.sp)
-        }
-        inner()
     }
 }

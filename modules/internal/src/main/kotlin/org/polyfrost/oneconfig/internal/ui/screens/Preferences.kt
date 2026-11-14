@@ -6,9 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.components.translated
 
 const val PREFERENCES_ID = "oneconfig.json"
 
@@ -19,7 +19,7 @@ fun Preferences() {
 
     if (tree == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No preferences available.", color = LocalTheme.current.textColorSecondary)
+            EmptyState(translated("oneconfig.preferences.empty", "No preferences available"), icon = "settings")
         }
         return
     }

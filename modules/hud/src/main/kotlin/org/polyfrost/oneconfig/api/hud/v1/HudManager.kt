@@ -24,6 +24,8 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.MutableIntState
@@ -32,8 +34,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
+import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -53,6 +57,8 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
@@ -61,6 +67,7 @@ public object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
+    private val unsupportedHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
 
@@ -103,6 +110,9 @@ public object HudManager {
 
     /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
     @Volatile @JvmField public var isConfigUiOpen: Boolean = false
+
+    @ExperimentalOneConfigUiApi
+    @Volatile @JvmField public var partialTick: Float = 1f
 
     @Volatile @JvmField public var guiScreenWidth: Float = 960f
     @Volatile @JvmField public var guiScreenHeight: Float = 540f
@@ -345,6 +355,8 @@ public object HudManager {
 
     @JvmStatic
     public fun register(hud: Hud) {
+        unsupportedHuds.remove(hud::class.java.name)
+        HudStyles.captureBuiltIn(hud)
         hudProviders[hud::class.java] = hud
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
@@ -389,6 +401,76 @@ public object HudManager {
     public fun register(hud: Hud, configId: String, icon: String) {
         hudIcons[configId] = icon
         register(hud, configId)
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun register(hud: Hud, configId: String? = null, icon: String? = null, supported: () -> Boolean = { true }) {
+        afterInit {
+            val ok = try {
+                supported()
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                LOGGER.error("Failed to check whether HUD ${hud.title} is supported, it will not be registered", e)
+                false
+            }
+            if (!ok) {
+                if (hud::class.java !in hudProviders) unsupportedHuds.add(hud::class.java.name)
+                LOGGER.info("HUD ${hud.title} is not supported here and was not registered")
+                return@afterInit
+            }
+            when {
+                configId != null && icon != null -> register(hud, configId, icon)
+                configId != null -> register(hud, configId)
+                else -> register(hud)
+            }
+        }
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun registerLater(factory: () -> Hud) {
+        afterInit {
+            val hud = try {
+                factory()
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                LOGGER.error("Failed to create a HUD registered with registerLater", e)
+                return@afterInit
+            }
+            register(hud)
+        }
+    }
+
+    private val pendingRegistrations = ArrayList<() -> Unit>()
+    private var registrationsOpen = false
+
+    private fun afterInit(action: () -> Unit) {
+        synchronized(pendingRegistrations) {
+            if (!registrationsOpen) {
+                pendingRegistrations.add(action)
+                return
+            }
+        }
+        action()
+    }
+
+    private fun runPendingRegistrations() {
+        while (true) {
+            val batch = synchronized(pendingRegistrations) {
+                registrationsOpen = true
+                if (pendingRegistrations.isEmpty()) return
+                ArrayList(pendingRegistrations).also { pendingRegistrations.clear() }
+            }
+            for (action in batch) {
+                try {
+                    action()
+                } catch (e: Throwable) {
+                    if (e.isFatalHudFailure()) throw e
+                    LOGGER.error("Failed to run a deferred HUD registration", e)
+                }
+            }
+        }
     }
 
     /** The menu icon associated with [configId] via [register] or `null` if none was set */
@@ -493,6 +575,8 @@ public object HudManager {
             if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) cleanup { it.clearMergeLink() }
         }
         lastMergeKey = null
+        notShowing.remove(hud)
+        if (delete) cleanup { dropSuppressionsOf(hud) }
         cleanup { invalidate() }
         try { hud.remove() } catch (_: Throwable) {}
         // a HUD the user cannot delete must never lose its config because an errant
@@ -591,6 +675,7 @@ public object HudManager {
     }
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     public fun updateIfDue(hud: Hud) {
         val frequency = hud.updateFrequency()
         if (frequency >= 0L) {
@@ -616,12 +701,153 @@ public object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
-        if (!isEditing && hud.frameHidden) return false
+        if (!isEditing && (hud.frameHidden || isSuppressed(hud))) return false
         return isShown(hud)
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
-        !isEditing && hud.frameHidden && hud.keepsHiddenBackground && isShown(hud)
+        !isEditing && hud.frameHidden && !isSuppressed(hud) && hud.keepsHiddenBackground && isShown(hud)
+
+    private class Suppression(owner: Hud, val target: String, val reason: String) : AutoCloseable {
+        private val ownerRef = WeakReference(owner)
+        val owner: Hud? get() = ownerRef.get()
+
+        override fun close() {
+            if (suppressions.remove(this)) invalidate()
+        }
+    }
+
+    private val suppressions = CopyOnWriteArrayList<Suppression>()
+
+    @Volatile private var suppressed: Map<Hud, List<String>> = emptyMap()
+
+    internal fun addSuppression(owner: Hud, otherHudId: String, reason: String): AutoCloseable {
+        val suppression = Suppression(owner, normaliseHudId(otherHudId), reason)
+        suppressions.add(suppression)
+        invalidate()
+        return suppression
+    }
+
+    private fun normaliseHudId(id: String): String = id.trim().removeSuffix(".json").removePrefix("huds/")
+
+    private fun hasHudId(hud: Hud, id: String): Boolean =
+        normaliseHudId(hud.id) == id || hud.tree?.id?.let(::normaliseHudId) == id ||
+            hud.configId?.let(::normaliseHudId) == id
+
+    private fun isActive(hud: Hud): Boolean = activeInstances.any { it === hud }
+
+    private val frameClaims = ArrayList<Suppression>()
+
+    private val notShowing: MutableSet<Hud> = Collections.newSetFromMap(IdentityHashMap())
+
+    private fun isOwnerShown(hud: Hud): Boolean = !hud.frameHidden && isShown(hud) && hud !in notShowing
+
+    private val declaresReplacements = object : ClassValue<Boolean>() {
+        override fun computeValue(type: Class<*>): Boolean = try {
+            type.getMethod("getReplacesIds").declaringClass != Hud::class.java
+        } catch (_: ReflectiveOperationException) {
+            true
+        }
+    }
+
+    private fun refreshSuppressed() {
+        if (suppressions.isEmpty()) {
+            var any = false
+            for (hud in activeInstances) {
+                if (declaresReplacements.get(hud.javaClass)) {
+                    any = true
+                    break
+                }
+            }
+            if (!any) {
+                if (suppressed.isNotEmpty()) {
+                    suppressed = emptyMap()
+                    invalidate()
+                }
+                return
+            }
+        }
+        val claims = frameClaims
+        claims.clear()
+        suppressions.removeIf { it.owner == null }
+        for (s in suppressions) {
+            val owner = s.owner ?: continue
+            if (!isActive(owner) || !isOwnerShown(owner)) continue
+            claims.add(s)
+        }
+        for (hud in activeInstances) {
+            if (!declaresReplacements.get(hud.javaClass) || hud.hidden || !isOwnerShown(hud)) continue
+            val ids = try {
+                hud.replacesIds
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                LOGGER.error("Failed to read the HUDs that ${hud.title} replaces", e)
+                continue
+            }
+            for (id in ids) claims.add(Suppression(hud, normaliseHudId(id), hud.title))
+        }
+        val next: Map<Hud, List<String>> = if (claims.isEmpty()) {
+            emptyMap()
+        } else {
+            val incoming = IdentityHashMap<Hud, MutableList<Suppression>>()
+            for (hud in activeInstances) {
+                for (claim in claims) {
+                    if (claim.owner !== hud && hasHudId(hud, claim.target)) {
+                        incoming.getOrPut(hud) { ArrayList(1) }.add(claim)
+                    }
+                }
+            }
+            claims.clear()
+            val effective = IdentityHashMap<Hud, Boolean>()
+            val resolving = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
+            fun isEffective(hud: Hud): Boolean {
+                effective[hud]?.let { return it }
+                if (!resolving.add(hud)) return true
+                val shown = incoming[hud]?.none { claim -> claim.owner?.let(::isEffective) == true } != false
+                resolving.remove(hud)
+                effective[hud] = shown
+                return shown
+            }
+            val map = IdentityHashMap<Hud, MutableList<String>>()
+            for (hud in activeInstances) {
+                if (isEffective(hud)) continue
+                val reasons = ArrayList<String>(1)
+                for (claim in incoming[hud] ?: continue) {
+                    if (claim.owner?.let(::isEffective) == true) reasons.add(claim.reason)
+                }
+                map[hud] = reasons
+            }
+            map
+        }
+        if (!sameSuppressions(next, suppressed)) {
+            suppressed = next
+            invalidate()
+        }
+    }
+
+    private fun sameSuppressions(a: Map<Hud, List<String>>, b: Map<Hud, List<String>>): Boolean {
+        if (a.size != b.size) return false
+        for ((hud, reasons) in a) {
+            if (b[hud] != reasons) return false
+        }
+        return true
+    }
+
+    private fun dropSuppressionsOf(hud: Hud) {
+        if (suppressions.removeIf { it.owner === hud }) invalidate()
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun isSuppressed(hud: Hud): Boolean = suppressed.containsKey(hud)
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun suppressionReasons(hud: Hud): List<String> = suppressed[hud]?.toList() ?: emptyList()
+
+    @Volatile private var previewSessionId = 0
+
+    internal val previewSession: Int get() = previewSessionId
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
@@ -667,6 +893,9 @@ public object HudManager {
                 } catch (e: Throwable) {
                     LOGGER.error("Failed to check whether HUD ${hud.title} should show", e)
                     true
+                }
+                if (!isEditing) {
+                    if (show) notShowing.remove(hud) else notShowing.add(hud)
                 }
                 if (!show) {
                     hud.setVisible(false)
@@ -718,8 +947,10 @@ public object HudManager {
         // one immediate update on the edge instead of waiting out its remaining interval
         if (wasEditing != isEditing) {
             wasEditing = isEditing
+            previewSessionId++
             for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
         }
+        refreshSuppressed()
 
         geometrySkip = false
         val huds = selectHuds()
@@ -739,6 +970,7 @@ public object HudManager {
     }
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     @JvmOverloads
     public fun beginFrame(screenWidth: Float, screenHeight: Float, beforeDirtyCheck: Runnable? = null, alwaysRender: Boolean = false, liveChroma: Boolean = false): Boolean {
         var volatileContent = false
@@ -933,6 +1165,7 @@ public object HudManager {
      * so without this they would show up bare
      */
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     public fun drawMergedBackgrounds(ctx: RenderContext) {
         for (group in frameGroups) {
             try {
@@ -1031,6 +1264,7 @@ public object HudManager {
         this == other || (this.isNaN() && other.isNaN())
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     public fun prepare(screenWidth: Float, screenHeight: Float) {
         prepareFrame(screenWidth, screenHeight, {
             prepareOrder.clear()
@@ -1045,6 +1279,7 @@ public object HudManager {
     }
 
     @ApiStatus.Internal
+    @InternalOneConfigUiApi
     @JvmOverloads
     public fun render(ctx: RenderContext, screenWidth: Float, screenHeight: Float, volatileCtx: RenderContext? = null) {
         val prepared = preparedFrameValid
@@ -1193,7 +1428,7 @@ public object HudManager {
     }
 
     private fun drawHud(hud: Hud, root: RootNode, ctx: RenderContext) {
-        if (isEditing && hud.hidden) {
+        if (isEditing && (hud.hidden || isSuppressed(hud))) {
             ctx.saveLayerAlpha(HIDDEN_HUD_ALPHA)
             root.render(ctx)
             ctx.restore()
@@ -1250,6 +1485,7 @@ public object HudManager {
     public fun initialize() {
         if (init) throw IllegalStateException("HudManager.initialize() called twice!")
         ConfigManager.active()
+        runPendingRegistrations()
         init = true
         ConfigManager.addProfileChangeListener(profileChangeListener)
         LOGGER.info("Initializing HUD...")
@@ -1410,6 +1646,7 @@ public object HudManager {
                 val clsName = data.getProp("hudClass").get() as? String
                     ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name")
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
+                if (clsName in unsupportedHuds) return@forEach
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 providerClass = cls

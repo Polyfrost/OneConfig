@@ -112,7 +112,7 @@ public final class MinecraftKeybindBridgeImpl implements MinecraftKeybindBridge 
 
     @Override
     public synchronized void register(OneConfigKeybind bind) {
-        if (bind.getName() == null) return;
+        if (bind.getName() == null || !bind.getMirrorToVanilla()) return;
         KeyMapping existing = mappings.get(bind);
         if (existing != null) {
             applyKeyTo(existing, bind);

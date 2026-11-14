@@ -109,6 +109,10 @@ public class OneConfig implements ClientModInitializer {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     private boolean initialized = false;
 
+    public static boolean isInitialized() {
+        return INSTANCE.initialized;
+    }
+
     private static void registerCommands() {
         Command<FabricClientCommandSource> executor = (c) -> {
             OneConfigUIScreen.openLastSession();

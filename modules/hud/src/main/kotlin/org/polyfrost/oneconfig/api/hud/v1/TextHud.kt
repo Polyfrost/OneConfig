@@ -24,10 +24,13 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
 import java.time.LocalDateTime
@@ -49,6 +52,7 @@ import org.polyfrost.compose.runtime.PolyApplier
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
 public abstract class TextHud(
@@ -77,6 +81,8 @@ public abstract class TextHud(
     }
 
     @Volatile private var displayText: String = ""
+    @Volatile @Transient private var displayRuns: List<List<TextRun>>? = null
+    @Transient private var runMode = mutableStateOf(false)
 
     private fun casedText(case: Int): String = when (case) {
         1 -> displayText.uppercase()
@@ -86,6 +92,10 @@ public abstract class TextHud(
 
     @Composable
     override fun Content() {
+        if (runMode.value) {
+            HudRunText({ displayRuns.orEmpty() }, alignColumns = false)
+            return
+        }
         val case = caseType
 
         val contentAlign = alignment
@@ -167,8 +177,71 @@ public abstract class TextHud(
     @Transient private var lastPrefix: String? = null
     @Transient private var lastSuffix: String? = null
     @Transient private var lastBrackets = false
+    @Transient private var lastSeparator: String? = null
+    @Transient private var lastRuns: List<TextRun>? = null
+
+    @ExperimentalOneConfigUiApi
+    protected open fun getTextRuns(): List<TextRun>? = null
+
+    private fun updateRuns(runs: List<TextRun>): Boolean {
+        val p = prefix
+        val sfx = suffix
+        if (displayRuns != null && lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && lastSeparator == concatString && runs == lastRuns) return true
+        lastRuns = runs.toList()
+        lastPrefix = p
+        lastSuffix = sfx
+        lastBrackets = brackets
+        lastSeparator = concatString
+        lastValue = null
+
+        val separator = concatString
+        val joined = ArrayList<TextRun>()
+        for (part in listOf(listOf(TextRun(p)), runs, listOf(TextRun(sfx)))) {
+            if (part.all { it.text.isEmpty() }) continue
+            if (joined.isNotEmpty() && separator.isNotEmpty()) joined.add(TextRun(separator))
+            joined.addAll(part)
+        }
+        if (brackets && joined.isNotEmpty()) {
+            joined.add(0, TextRun("["))
+            joined.add(TextRun("]"))
+        }
+
+        val lines = splitLines(joined)
+        if (lines != displayRuns) {
+            displayRuns = lines
+            displayText = joined.plainText()
+            contentChanged()
+        }
+        if (!runMode.value) runMode.value = true
+        return true
+    }
+
+    private fun splitLines(runs: List<TextRun>): List<List<TextRun>> {
+        val lines = ArrayList<List<TextRun>>()
+        var current = ArrayList<TextRun>()
+        for (run in runs) {
+            val parts = run.text.split('\n')
+            for ((i, part) in parts.withIndex()) {
+                if (i > 0) {
+                    lines.add(current)
+                    current = ArrayList()
+                }
+                if (part.isNotEmpty()) current.add(if (parts.size == 1) run else run.copy(text = part))
+            }
+        }
+        lines.add(current)
+        return lines
+    }
 
     override fun update(): Boolean {
+        val runs = getTextRuns()
+        if (runs != null) return updateRuns(runs)
+        if (runMode.value) {
+            runMode.value = false
+            displayRuns = null
+            lastRuns = null
+            lastPrefix = null
+        }
         val value = getText()
         val p = prefix
         val sfx = suffix
@@ -205,6 +278,9 @@ public abstract class TextHud(
     override fun clone(): Hud = (super.clone() as TextHud).also {
         it.displayText = ""
         it.lastPrefix = null
+        it.displayRuns = null
+        it.lastRuns = null
+        it.runMode = mutableStateOf(false)
     }
 
     @ApiStatus.Internal

@@ -13,6 +13,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ThemeConfig
 
 /**
@@ -26,13 +27,13 @@ object ContentSlide {
 
     fun enter(forward: Boolean): EnterTransition {
         val fade = fadeIn(tween(millis()))
-        return if (ReducedMotion.enabled) fade
+        return if (Motion.reduced) fade
         else slideInHorizontally(tween(millis())) { if (forward) it / SHIFT_DIVISOR else -it / SHIFT_DIVISOR } + fade
     }
 
     fun exit(forward: Boolean): ExitTransition {
         val fade = fadeOut(tween(millis()))
-        return if (ReducedMotion.enabled) fade
+        return if (Motion.reduced) fade
         else slideOutHorizontally(tween(millis())) { if (forward) -it / SHIFT_DIVISOR else it / SHIFT_DIVISOR } + fade
     }
 
@@ -54,7 +55,7 @@ object ContentSlide {
     fun Modifier.tabSlide(progress: () -> Float, leaving: Boolean, direction: Int, fade: Boolean = true): Modifier = graphicsLayer {
         val p = progress()
         if (fade) alpha = p
-        if (!ReducedMotion.enabled && direction != 0) {
+        if (!Motion.reduced && direction != 0) {
             val shift = size.width / SHIFT_DIVISOR * (1f - p) * direction
             translationX = if (leaving) -shift else shift
         }

@@ -61,6 +61,7 @@ import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
 import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.v1.migrate.MigrationRunner;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
@@ -482,6 +483,7 @@ public final class ConfigManager {
             LOGGER.info("opening profile {}", profile);
             active = new ConfigManager(PROFILES_DIR.resolve(profile), serializers).withWatcher();
         }
+        MigrationRunner.profileOpened(active.getFolder());
         boolean wasRebinding = REBINDING_PROFILES.get();
         REBINDING_PROFILES.set(Boolean.TRUE);
         try {
@@ -1388,19 +1390,23 @@ public final class ConfigManager {
     }
 
     public @Nullable Tree load(String id) {
+        runPendingMigrations();
         return backend.load(id);
     }
 
     public Tree get(String id) {
+        runPendingMigrations();
         return backend.get(id);
     }
 
     public boolean exists(String id) {
+        runPendingMigrations();
         return backend.exists(id);
     }
 
     @ApiStatus.Internal
     public Tree getNoRegister(Path p) throws Exception {
+        runPendingMigrations();
         return backend.load0(p, p.getFileName().toString());
     }
 
@@ -1420,7 +1426,23 @@ public final class ConfigManager {
         return backend.folder;
     }
 
+    private void runPendingMigrations() {
+        if (this == active && MigrationRunner.beforeLoad(getFolder())) reloadLoadedTrees();
+    }
+
+    private void reloadLoadedTrees() {
+        for (Tree tree : new ArrayList<>(backend.getTrees())) {
+            if (tree.getID() == null) continue;
+            try {
+                backend.load(tree);
+            } catch (Throwable t) {
+                LOGGER.error("Failed to reload tree {} after config migrations", tree.getID(), t);
+            }
+        }
+    }
+
     public Backend.RegistrationResult register(Tree t) {
+        runPendingMigrations();
         if (this == active && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))) {
             Config.captureDefaults(t);
         }
@@ -1458,6 +1480,7 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public Collection<Tree> gatherAll(String sub) {
+        runPendingMigrations();
         return backend.gatherAll(sub);
     }
 

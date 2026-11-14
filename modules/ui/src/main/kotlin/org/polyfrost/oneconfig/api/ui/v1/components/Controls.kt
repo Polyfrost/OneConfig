@@ -4,36 +4,41 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import org.polyfrost.oneconfig.api.ui.v1.a11y.isKeyboardMode
+import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.hoverable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
@@ -42,20 +47,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
-import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
-import org.polyfrost.oneconfig.api.ui.v1.a11y.isKeyboardMode
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
-private val ICON_BUTTON_SIZE = 34.dp
-private val TOGGLE_HEIGHT = 38.dp
 private val CHECK_SIZE = 20.dp
+private val LEGACY_ICON_BUTTON_SIZE = 34.dp
+private const val FADE_MILLIS = 150
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun IconButton(iconName: String, tooltip: String?, modifier: Modifier, onClick: () -> Unit) {
-    IconButton(iconName, tooltip, null, modifier, null, OneConfigTheme.current.textColor, TooltipPlacement.BelowStart, onClick)
+    LegacyIconButton(iconName, tooltip, modifier, TooltipPlacement.BelowStart, onClick, null, OneConfigTheme.current.textColor, null)
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun IconButton(
@@ -68,14 +74,42 @@ public fun IconButton(
     placement: TooltipPlacement,
     onClick: () -> Unit,
 ) {
-    IconButton(tooltip, label, modifier, background, placement, onClick) {
-        Icon(iconName, tint, Modifier.size(16.dp))
-    }
+    LegacyIconButton(iconName, tooltip, modifier, placement, onClick, label, tint, background)
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun IconButton(
+    tooltip: String?,
+    label: String?,
+    modifier: Modifier,
+    background: Color?,
+    placement: TooltipPlacement,
+    onClick: () -> Unit,
+    glyph: @Composable () -> Unit,
+) {
+    LegacyIconButtonFrame(tooltip, label, modifier, background, placement, onClick, glyph)
+}
+
+@Composable
+private fun LegacyIconButton(
+    iconName: String,
+    tooltip: String?,
+    modifier: Modifier,
+    placement: TooltipPlacement,
+    onClick: () -> Unit,
+    label: String?,
+    tint: Color,
+    background: Color?,
+) {
+    LegacyIconButtonFrame(tooltip, label, modifier, background, placement, onClick) {
+        Icon(iconName, null, Modifier.size(16.dp), tint)
+    }
+}
+
+@Composable
+private fun LegacyIconButtonFrame(
     tooltip: String?,
     label: String?,
     modifier: Modifier,
@@ -94,7 +128,7 @@ public fun IconButton(
     val shape = theme.buttonShape
     Box(
         modifier = modifier
-            .size(ICON_BUTTON_SIZE)
+            .size(LEGACY_ICON_BUTTON_SIZE)
             .clip(shape)
             .background(fill, shape)
             .border(1.dp, hairline, shape)
@@ -106,110 +140,71 @@ public fun IconButton(
         contentAlignment = Alignment.Center,
     ) {
         glyph()
-        if (tooltip != null && (hovered || focused && keyboard)) TooltipPopup(tooltip, placement)
+        if (tooltip != null && (hovered || focused && keyboard)) TooltipPopup(tooltip, Modifier, placement)
     }
 }
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun ToggleRow(label: String, checked: Boolean, modifier: Modifier, onToggle: () -> Unit) {
+public fun ToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    enabled: Boolean = true,
+    size: ControlSize = ControlSize.Large,
+    interactionSource: MutableInteractionSource? = null,
+) {
     val theme = OneConfigTheme.current
-    val accent = OneConfigTheme.accent
-    val source = remember { MutableInteractionSource() }
+    val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
-    val rowBorder by animateColorAsState(if (hovered) theme.textColorSecondary else theme.borderColor)
+    val active = hovered && enabled
+    val spec = Motion.spec(tween<Color>(FADE_MILLIS))
+    val rowBorder by animateColorAsState(if (active) theme.textColorSecondary else theme.borderColor, spec)
     val shape = theme.buttonShape
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = TOGGLE_HEIGHT)
+            .heightIn(min = size.height)
+            .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
             .clip(shape)
             .background(theme.componentBackground, shape)
             .border(1.dp, rowBorder, shape)
-            .hoverable(source)
-            .a11y(label, A11yRole.Checkbox, null, checked, shape, true)
-            .onClick(source, onToggle)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp),
+            .oneConfigClickable(
+                label,
+                { onCheckedChange(!checked) },
+                role = A11yRole.Checkbox,
+                enabled = enabled,
+                checked = checked,
+                shape = shape,
+                indication = false,
+                interactionSource = source,
+            )
+            .padding(horizontal = 12.dp, vertical = if (description != null) 6.dp else 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, Modifier.weight(1f), theme.textColor, 14.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, Int.MAX_VALUE, TextOverflow.Clip)
-        val boxColor by animateColorAsState(if (checked) accent else theme.componentBackground)
-        val boxBorder by animateColorAsState(
-            when {
-                checked -> accent
-                hovered -> theme.textColorSecondary
-                else -> theme.borderColor
-            },
-        )
-        Box(
-            modifier = Modifier
-                .size(CHECK_SIZE)
-                .clip(theme.checkBoxShape)
-                .background(boxColor, theme.checkBoxShape)
-                .border(1.5.dp, boxBorder, theme.checkBoxShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            this@Row.AnimatedVisibility(visible = checked, enter = fadeIn(), exit = fadeOut()) {
-                val tick = theme.accentTextColor
-                Canvas(Modifier.size(12.dp)) {
-                    val w = size.width
-                    val h = size.height
-                    val path = Path().apply {
-                        moveTo(w * 0.2f, h * 0.52f)
-                        lineTo(w * 0.42f, h * 0.72f)
-                        lineTo(w * 0.8f, h * 0.3f)
-                    }
-                    drawPath(path, color = tick, style = Stroke(width = w * 0.16f, cap = StrokeCap.Round))
-                }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, Modifier, theme.textColor, OneConfigTheme.typography.body.copy(fontSize = if (size == ControlSize.Compact) 13.sp else 14.sp, fontWeight = FontWeight.Normal))
+            if (description != null) {
+                Text(description, Modifier, theme.textColorSecondary, OneConfigTheme.typography.body.copy(fontSize = 12.sp, fontWeight = FontWeight.Normal))
             }
         }
+        CheckboxBox(checked, active, Modifier)
     }
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
-public class TabItem<T>(public val value: T, public val label: String)
+@Composable
+public fun ToggleRow(label: String, checked: Boolean, modifier: Modifier, onToggle: () -> Unit) {
+    ToggleRow(label, checked, { onToggle() }, modifier)
+}
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun <T> TabRow(tabs: List<TabItem<T>>, selected: T, modifier: Modifier, onSelect: (T) -> Unit) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        tabs.forEach { tab ->
-            val isSelected = tab.value == selected
-            TabButton(tab.label, isSelected, Modifier.weight(1f)) { onSelect(tab.value) }
-        }
-    }
-}
-
-@Composable
-private fun TabButton(label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val theme = OneConfigTheme.current
-    val accent = OneConfigTheme.accent
-    val source = remember { MutableInteractionSource() }
-    val hovered by source.collectIsHoveredAsState()
-    val fill by animateColorAsState(if (selected) accent else theme.componentBackground)
-    val border by animateColorAsState(
-        when {
-            selected -> accent
-            hovered -> theme.textColorSecondary
-            else -> theme.borderColor
-        },
-    )
-    val shape = theme.buttonShape
-    Box(
-        modifier = modifier
-            .heightIn(min = TOGGLE_HEIGHT)
-            .clip(shape)
-            .background(fill, shape)
-            .border(1.dp, border, shape)
-            .hoverable(source)
-            .a11y(label, A11yRole.Tab, selected, null, shape, true)
-            .onClick(source, onClick)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 14.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        val content = if (selected) theme.accentTextColor else theme.textColor
-        Text(label, Modifier, content, 14.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Center, 1, TextOverflow.Ellipsis)
-    }
+    TabRow(tabs, selected, onSelect, modifier, size = ControlSize.Large)
 }

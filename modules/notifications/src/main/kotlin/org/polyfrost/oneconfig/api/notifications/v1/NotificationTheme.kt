@@ -45,7 +45,31 @@ public object NotificationTheme {
         private set
     public var success: PolyColor by mutableStateOf(PolyColor.hex("#3CAF77"))
         private set
-    public var error: PolyColor by mutableStateOf(PolyColor.hex("#F2545A"))
+    public var error: PolyColor by mutableStateOf(PolyColor.hex("#E35B5B"))
+        private set
+
+    @get:ApiStatus.Experimental
+    public var warning: PolyColor by mutableStateOf(PolyColor.hex("#FFAB1D"))
+        private set
+
+    @get:ApiStatus.Experimental
+    public var info: PolyColor by mutableStateOf(PolyColor.hex("#5B9BE3"))
+        private set
+
+    @get:ApiStatus.Experimental
+    public var onSuccess: PolyColor by mutableStateOf(PolyColor.hex("#FFFFFF"))
+        private set
+
+    @get:ApiStatus.Experimental
+    public var onError: PolyColor by mutableStateOf(PolyColor.hex("#FFFFFF"))
+        private set
+
+    @get:ApiStatus.Experimental
+    public var onWarning: PolyColor by mutableStateOf(PolyColor.hex("#000000"))
+        private set
+
+    @get:ApiStatus.Experimental
+    public var onInfo: PolyColor by mutableStateOf(PolyColor.hex("#000000"))
         private set
 
     public var subtleButton: PolyColor by mutableStateOf(PolyColor.hex("#FFFFFF").withAlpha(0.08f))
@@ -80,6 +104,23 @@ public object NotificationTheme {
         NotificationType.SUCCESS -> success
         NotificationType.ERROR -> error
         NotificationType.PROGRESS -> accent
+        NotificationType.WARNING -> warning
+    }
+
+    @ApiStatus.Experimental
+    public fun actionFillFor(type: NotificationType): PolyColor = when (type) {
+        NotificationType.SUCCESS -> success
+        NotificationType.ERROR -> error
+        NotificationType.WARNING -> warning
+        else -> accent
+    }
+
+    @ApiStatus.Experimental
+    public fun onActionFillFor(type: NotificationType): PolyColor = when (type) {
+        NotificationType.SUCCESS -> onSuccess
+        NotificationType.ERROR -> onError
+        NotificationType.WARNING -> onWarning
+        else -> actionPrimaryText
     }
 
     @ApiStatus.Internal
@@ -97,6 +138,14 @@ public object NotificationTheme {
         radiusCard: Float = this.radiusCard,
         radiusButton: Float = this.radiusButton,
         radiusProgress: Float = this.radiusProgress,
+        success: PolyColor = this.success,
+        error: PolyColor = this.error,
+        warning: PolyColor = this.warning,
+        info: PolyColor = this.info,
+        onSuccess: PolyColor = this.onSuccess,
+        onError: PolyColor = this.onError,
+        onWarning: PolyColor = this.onWarning,
+        onInfo: PolyColor = this.onInfo,
     ) {
         this.background = background
         this.border = border
@@ -111,10 +160,27 @@ public object NotificationTheme {
         this.radiusCard = radiusCard
         this.radiusButton = radiusButton
         this.radiusProgress = radiusProgress
+        this.success = success
+        this.error = error
+        this.warning = warning
+        this.info = info
+        this.onSuccess = onSuccess
+        this.onError = onError
+        this.onWarning = onWarning
+        this.onInfo = onInfo
     }
 
     @ApiStatus.Internal
     public fun useIconFolder(iconFolder: String?) {
         this.iconFolder = iconFolder
+    }
+
+    @get:ApiStatus.Experimental
+    public var disabledAlpha: Float by mutableStateOf(0.5f)
+        private set
+
+    @ApiStatus.Internal
+    public fun useDisabledAlpha(alpha: Float) {
+        disabledAlpha = alpha
     }
 }

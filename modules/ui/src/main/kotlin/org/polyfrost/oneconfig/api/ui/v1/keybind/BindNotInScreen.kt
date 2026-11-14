@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 public class BindNotInScreen(
     keyCodes: IntArray?,
@@ -13,11 +14,13 @@ public class BindNotInScreen(
         return super.test(downKeys, downMouse, currentMods) && Platform.screen().current<Any?>() == null
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     override fun copyWith(keyCodes: IntArray?, mouseBtns: IntArray?, mods: Byte): OneConfigKeybind =
         BindNotInScreen(keyCodes, mouseBtns, mods, durationNanos, action).also {
             it.name = name
             it.category = category
             it.defaultKeybind = defaultKeybind
             it.firesWhileTyping = firesWhileTyping
+            it.mirrorToVanilla = mirrorToVanilla
         }
 }

@@ -1,11 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
@@ -18,13 +17,13 @@ import androidx.compose.ui.text.style.*
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.internal.ui.components.parseLegacyFormatting
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
@@ -82,7 +81,7 @@ private fun spanStyle(style: Style) = SpanStyle(
 )
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
+@Suppress("UNUSED_PARAMETER")
 fun Tooltip(
     text: @Composable () -> Unit,
     modifier: Modifier,
@@ -91,21 +90,22 @@ fun Tooltip(
     offset: DpOffset = DpOffset.Zero,
     content: @Composable () -> Unit
 ) {
-    val placement = TooltipPlacement.ComponentRect(
-        anchor = anchor, alignment = alignment, offset = offset
+    TooltipBox(
+        tooltip = { Box(modifier) { text() } },
+        placement = tooltipPlacement(anchor, alignment),
+        content = content,
     )
+}
 
-    val theme = LocalTheme.current
-    TooltipArea(
-        content = content, delayMillis = 200, tooltip = @Composable {
-            Box(
-                modifier = modifier.liquidGlass(theme.popupShape, frosted = true)
-                    .background(theme.popupBackground, shape = theme.popupShape)
-                    .border(1.dp, theme.borderColor, shape = theme.popupShape)
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                text()
-            }
-        }, tooltipPlacement = placement
-    )
+private fun tooltipPlacement(anchor: Alignment, alignment: Alignment): TooltipPlacement {
+    val above = ((anchor as? BiasAlignment)?.verticalBias ?: 1f) < 0f
+    val horizontal = (alignment as? BiasAlignment)?.horizontalBias ?: 0f
+    return when {
+        above && horizontal < 0f -> TooltipPlacement.AboveStart
+        above && horizontal > 0f -> TooltipPlacement.AboveEnd
+        above -> TooltipPlacement.AboveCenter
+        horizontal < 0f -> TooltipPlacement.BelowStart
+        horizontal > 0f -> TooltipPlacement.BelowEnd
+        else -> TooltipPlacement.BelowCenter
+    }
 }

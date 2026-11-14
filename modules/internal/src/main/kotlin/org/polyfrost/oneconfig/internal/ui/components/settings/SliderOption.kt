@@ -16,6 +16,11 @@ import org.polyfrost.oneconfig.internal.ui.api.shown
 
 @Composable
 fun SliderOption(data: SliderOptionData) {
+    SliderOption(data, true)
+}
+
+@Composable
+fun SliderOption(data: SliderOptionData, enabled: Boolean) {
     var value by remember(data.prop) { mutableStateOf(data.numProp.shown()?.toFloat() ?: data.min) }
 
     fun update(newValue: Float) {
@@ -35,6 +40,7 @@ fun SliderOption(data: SliderOptionData) {
             min = data.min,
             max = data.max,
             step = data.step,
+            enabled = enabled,
             modifier = Modifier.width(LocalOptionWidth.current),
         )
         NumberSpinner(
@@ -44,6 +50,7 @@ fun SliderOption(data: SliderOptionData) {
             max = data.max,
             step = if (data.step > 0f) data.step else 1f,
             format = data.format,
+            enabled = enabled,
         )
     }
 }
