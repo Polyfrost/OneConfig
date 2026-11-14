@@ -243,8 +243,9 @@ public object KeybindManager {
     @JvmStatic
     public fun builder(): KeybindHelper = KeybindHelper()
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun checkBinds() {
-        val typing = TextInputFocus.isTyping
+        val typing = TextInputFocus.isTyping || isInputCaptured()
         for (bind in binds) {
             @Suppress("SENSELESS_COMPARISON")
             if (bind.action == null) continue
