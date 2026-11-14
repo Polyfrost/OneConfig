@@ -88,6 +88,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.scrollFade
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds
@@ -519,7 +520,7 @@ private fun ColumnScope.ProfilesGrid(
     ScrollContainer(gridState, Modifier.weight(1f), gutter = 0.dp) {
         LazyVerticalGrid(
             state = gridState,
-            modifier = Modifier.fillMaxSize().padding(end = gutter),
+            modifier = Modifier.fillMaxSize().padding(end = gutter).scrollFade(gridState),
             columns = GridCells.Fixed(5),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),

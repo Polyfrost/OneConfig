@@ -131,6 +131,7 @@ import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
+import org.polyfrost.oneconfig.internal.ui.components.scrollFade
 import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetKeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
@@ -339,7 +340,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
             contentPadding = PaddingValues(horizontal = PageGutter),
-            modifier = Modifier.fillMaxSize().onGloballyPositioned {
+            modifier = Modifier.fillMaxSize().scrollFade(gridState).onGloballyPositioned {
                 animateItems = true
             },
         ) {

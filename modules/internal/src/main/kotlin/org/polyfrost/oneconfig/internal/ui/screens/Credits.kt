@@ -134,7 +134,7 @@ fun Credits() {
     val shownThankedPeople = remember(query) { if (query.isEmpty()) thankedPeople else thankedPeople.filter { searchMatches("${it.name} ${it.role}", query) } }
     val shownThanks = remember(query) { if (query.isEmpty()) thanks else thanks.filter { searchMatches("${it.title} ${it.detail}", query) } }
 
-    ScrollContainer(scrollState, Modifier.fillMaxSize(), gutter = PageGutter) {
+    ScrollContainer(scrollState, Modifier.fillMaxSize(), gutter = PageGutter, fadingEdges = true) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(start = PageGutter, bottom = PageGutter),
         ) {

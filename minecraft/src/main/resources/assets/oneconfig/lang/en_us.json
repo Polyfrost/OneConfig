@@ -6,6 +6,11 @@
 
   "oneconfig.preferences.keybind.title": "OneConfig Keybind",
   "oneconfig.preferences.keybind.description": "The keybind used to open the OneConfig menu.",
+  "oneconfig.search.anything": "Search for anything",
+  "oneconfig.search.jump_to_option": "Jump to option",
+  "oneconfig.minimal.settings": "Settings",
+  "oneconfig.preferences.minimal_keybind.title": "Quick Search Keybind",
+  "oneconfig.preferences.minimal_keybind.description": "Opens a minimal OneConfig menu with just a search bar. Opening a result expands it into the full menu.",
   "oneconfig.preferences.keybind_closes_gui.title": "Keybind Closes Menu",
   "oneconfig.preferences.keybind_closes_gui.description": "Pressing the OneConfig keybind while the menu or HUD editor is open closes it, instead of switching between the two.",
 
@@ -91,6 +96,8 @@
 
   "oneconfig.preferences.instant_search.title": "Instant Search",
   "oneconfig.preferences.instant_search.description": "Focuses the search bar when the OneConfig menu opens or you change pages.",
+  "oneconfig.preferences.animate_search_results.title": "Animate Search Results",
+  "oneconfig.preferences.animate_search_results.description": "Fades, scales and slides search results into place as they appear. Experimental.",
 
   "oneconfig.preferences.search_keybind.title": "Search Keybind",
   "oneconfig.preferences.search_keybind.description": "Focuses the search bar in the OneConfig menu and HUD editor.",

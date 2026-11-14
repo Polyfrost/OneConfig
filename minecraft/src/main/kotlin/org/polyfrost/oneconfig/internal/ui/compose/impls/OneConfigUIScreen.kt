@@ -121,20 +121,19 @@ class OneConfigUIScreen @JvmOverloads constructor(
         fun forRoute(route: Any?): OneConfigUIScreen = shared().also {
             it.initialRoute = route
             it.resumeNext = false
+            it.minimalNext = false
         }
 
+        /** Opens as a search bar only, which expands into the full menu once a result navigates */
         @JvmStatic
-        fun open(): OneConfigUIScreen = shared().also {
-            it.initialRoute = null
-            it.resumeNext = false
-        }
+        fun minimal(): OneConfigUIScreen = forRoute(ModsGraph).also { it.minimalNext = true }
+
+        @JvmStatic
+        fun open(): OneConfigUIScreen = forRoute(null)
 
         /** For returning from a HUD editor opened from the OneConfig menu */
         @JvmStatic
-        fun resume(): OneConfigUIScreen = shared().also {
-            it.initialRoute = null
-            it.resumeNext = true
-        }
+        fun resume(): OneConfigUIScreen = forRoute(null).also { it.resumeNext = true }
 
         private const val OPEN_ANIMATION_MS = 250L
 
@@ -278,6 +277,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     private var resumeNext = false
 
+    private var minimalNext = false
+
     private var openRevision by mutableIntStateOf(0)
 
     @Volatile private var everOpened = false
@@ -295,6 +296,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         val isResume = resumeNext
         resumeNext = false
+        shell.layout.updateMinimal(minimalNext)
+        minimalNext = false
         val (target, targetRestoring) = when {
             isResume -> (shell.navigation.lastRoute?.takeIf { it !== HudEditorRoute } ?: ModsGraph) to true
             initialRoute != null -> initialRoute to false
@@ -318,6 +321,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         }
         val keepFocus = if (shell.search.fieldFocused) SearchFocus.Focus else SearchFocus.Unfocus
         shell.search.requestFocus(when {
+            shell.layout.minimal -> SearchFocus.SelectAll
             isResume -> keepFocus
             OneConfigConfig.instantSearch -> SearchFocus.SelectAll
             targetRestoring -> keepFocus
@@ -377,6 +381,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     private fun handleOneConfigKeybind(onRelease: Boolean = false): Boolean {
         if (closeRequested) return cancelClose()
+        // the minimal menu's footer advertises this keybind as opening the HUD editor
+        if (shell.layout.minimal) {
+            HudManager.openEditor()
+            return true
+        }
         if (OneConfigConfig.keybindClosesGui) {
             if (!onRelease) OneConfigConfig.notifyKeybindClosedGui()
             beginClose()
@@ -418,7 +427,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ) {
             return handleOneConfigKeybind()
         }
-        if (!closeRequested && shell.navigation.isReady) {
+        if (!closeRequested && shell.navigation.isReady && !shell.layout.minimal) {
             when (button) {
                 //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
                 InputConstants.MOUSE_BUTTON_4 -> {

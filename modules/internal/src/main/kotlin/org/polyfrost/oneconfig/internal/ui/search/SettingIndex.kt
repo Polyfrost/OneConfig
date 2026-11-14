@@ -41,6 +41,13 @@ internal data class SubcategoryGroup(
     val nodes: List<SettingNode>
 )
 
+/** The option or group a node stands for, which stays the same object when a page rebuilds its rows */
+internal fun SettingNode.anchor(): Any = when (this) {
+    is SettingNode.Leaf -> prop
+    is SettingNode.Accordion -> tree
+    is SettingNode.Submenu -> tree
+}
+
 internal sealed interface ConfigListEntry {
     data class CategoryHeader(val title: String) : ConfigListEntry
     data class SubcategoryHeader(val title: String) : ConfigListEntry
@@ -211,6 +218,8 @@ internal class SearchRow(
     val groupLabel: String?,
     val node: SettingNode,
     val mod: ConfigData? = null,
+    /** Path of the submenu page this row is on, or null when it is on its config's own page */
+    val submenu: String? = null,
 )
 
 /**
@@ -223,6 +232,7 @@ internal fun buildSearchIndex(
     modTitle: String? = null,
     mod: ConfigData? = null,
     trail: String? = null,
+    submenu: String? = null,
 ): Map<Node, SearchRow> {
     val owners = IdentityHashMap<Node, SearchRow>()
     val singleCategory = categories.size == 1
@@ -240,7 +250,7 @@ internal fun buildSearchIndex(
                 else -> "$trail / ${subcategory.name}"
             }
             subcategory.nodes.forEach { node ->
-                val row = SearchRow(modTitle, category.name, subcategoryLabel, groupLabel, node, mod)
+                val row = SearchRow(modTitle, category.name, subcategoryLabel, groupLabel, node, mod, submenu)
                 when (node) {
                     is SettingNode.Leaf -> owners[node.prop] = row
                     is SettingNode.Accordion -> {
@@ -254,7 +264,7 @@ internal fun buildSearchIndex(
                         // the options inside are listed under the category of the row opening them
                         val inside = node.content.map { it.copy(name = category.name) }
                         val insideTrail = listOfNotNull(trail, node.tree.localizedTitle().asRenderText()).joinToString(" / ")
-                        owners.putAll(buildSearchIndex(inside, modTitle, mod, insideTrail))
+                        owners.putAll(buildSearchIndex(inside, modTitle, mod, insideTrail, node.path))
                     }
                 }
             }
