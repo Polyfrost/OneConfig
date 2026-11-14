@@ -32,7 +32,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 //? if >= 26.2 {
 @Mixin(Hud.class)
@@ -92,6 +94,26 @@ public abstract class Mixin_VanillaHudElements {
         *///?}
 
     @Unique
+    private static final int BLIT_X =
+        //? if >= 1.21.4 {
+        2;
+        //?} else {
+        /*1;
+        *///?}
+
+    @Unique
+    private static final int BLIT_Y = BLIT_X + 1;
+
+    @Unique
+    private boolean oneconfig$crosshairReached;
+
+    @Unique
+    private boolean oneconfig$attackIndicatorReached;
+
+    @Unique
+    private boolean oneconfig$attackIndicatorVanilla;
+
+    @Unique
     private static final String EFFECTS_DRAW_START =
         //? if >= 1.21.4 {
         "Lcom/google/common/collect/Ordering;natural()Lcom/google/common/collect/Ordering;";
@@ -122,6 +144,7 @@ public abstract class Mixin_VanillaHudElements {
         *///?}
         int x, int y, int width, int height
     ) {
+        oneconfig$crosshairReached = true;
         return !VanillaHudHooks.intercept(VanillaHudElement.CROSSHAIR, graphics);
     }
 
@@ -143,7 +166,9 @@ public abstract class Mixin_VanillaHudElements {
         *///?}
         int x, int y, int width, int height
     ) {
-        return !VanillaHudHooks.intercept(VanillaHudElement.ATTACK_INDICATOR, graphics);
+        oneconfig$attackIndicatorReached = true;
+        oneconfig$attackIndicatorVanilla = !VanillaHudHooks.intercept(VanillaHudElement.ATTACK_INDICATOR, graphics);
+        return oneconfig$attackIndicatorVanilla;
     }
 
     @WrapWithCondition(method = CROSSHAIR, at = @At(value = "INVOKE", target = BLIT_SPRITE_REGION))
@@ -161,7 +186,40 @@ public abstract class Mixin_VanillaHudElements {
         *///?}
         int spriteWidth, int spriteHeight, int u, int v, int x, int y, int width, int height
     ) {
-        return VanillaHudHooks.vanillaDraws(VanillaHudElement.ATTACK_INDICATOR);
+        return oneconfig$attackIndicatorVanilla;
+    }
+
+    @ModifyArgs(method = CROSSHAIR, at = {
+        @At(value = "INVOKE", target = BLIT_SPRITE, ordinal = 1),
+        @At(value = "INVOKE", target = BLIT_SPRITE, ordinal = 2),
+    })
+    private void oneconfig$moveAttackIndicator(Args args) {
+        oneconfig$move(args, BLIT_X, BLIT_Y);
+    }
+
+    @ModifyArgs(method = CROSSHAIR, at = @At(value = "INVOKE", target = BLIT_SPRITE_REGION))
+    private void oneconfig$moveAttackIndicatorProgress(Args args) {
+        oneconfig$move(args, BLIT_X + 4, BLIT_Y + 4);
+    }
+
+    @Unique
+    private static void oneconfig$move(Args args, int xIndex, int yIndex) {
+        int x = args.get(xIndex);
+        int y = args.get(yIndex);
+        args.set(xIndex, VanillaHudHooks.moveX(x, y));
+        args.set(yIndex, VanillaHudHooks.moveY(x, y));
+    }
+
+    @Inject(method = CROSSHAIR, at = @At("RETURN"))
+    private void oneconfig$crosshairHidden(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (!oneconfig$crosshairReached) {
+            VanillaHudHooks.interceptHidden(VanillaHudElement.CROSSHAIR, graphics);
+        }
+        if (!oneconfig$attackIndicatorReached) {
+            VanillaHudHooks.interceptHidden(VanillaHudElement.ATTACK_INDICATOR, graphics);
+        }
+        oneconfig$crosshairReached = false;
+        oneconfig$attackIndicatorReached = false;
     }
 
     //~ if >= 26.1 'renderEffects' -> 'extractEffects'
@@ -215,7 +273,10 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class Mixin_VanillaHudElements {
     @ModifyExpressionValue(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GameGui;hasCrosshair()Z"))
     private boolean oneconfig$crosshair(boolean original) {
-        if (!original) return false;
+        if (!original) {
+            VanillaHudHooks.interceptHidden(VanillaHudElement.CROSSHAIR, null);
+            return false;
+        }
         return !VanillaHudHooks.intercept(VanillaHudElement.CROSSHAIR, null);
     }
 }
