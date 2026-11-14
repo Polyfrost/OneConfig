@@ -29,6 +29,7 @@ public data class HudStyle(
 @ExperimentalOneConfigUiApi
 public object HudStyles {
     private val defaults = ConcurrentHashMap<String, HudStyle>()
+    private val builtInPadding = ConcurrentHashMap<Class<out Hud>, FloatArray>()
 
     @JvmStatic
     public val builtIn: HudStyle get() = HudStyle()
@@ -39,7 +40,7 @@ public object HudStyles {
     @JvmStatic
     public fun setDefault(modId: String, style: HudStyle) {
         val next = style.deepCopy()
-        val previous = defaults.put(modId, next) ?: HudStyle()
+        val previous = defaults.put(modId, next)
         if (previous == next) return
         Snapshot.withMutableSnapshot { forEachHud(modId) { applyStyle(it, previous, next) } }
     }
@@ -52,7 +53,11 @@ public object HudStyles {
     internal fun applyDefaultTo(hud: Hud) {
         val modId = hud.configId ?: return
         val style = defaults[modId] ?: return
-        applyStyle(hud, HudStyle(), style)
+        applyStyle(hud, null, style)
+    }
+
+    internal fun captureBuiltIn(hud: Hud) {
+        builtInPadding.putIfAbsent(hud.javaClass, floatArrayOf(hud.padTop, hud.padBottom, hud.padLeft, hud.padRight))
     }
 
     private inline fun forEachHud(modId: String, block: (Hud) -> Unit) {
@@ -61,7 +66,9 @@ public object HudStyles {
         for (hud in HudManager.activeInstances.toList()) if (hud.configId == modId && seen.add(hud)) block(hud)
     }
 
-    private fun applyStyle(hud: Hud, from: HudStyle, to: HudStyle) {
+    private fun applyStyle(hud: Hud, previous: HudStyle?, to: HudStyle) {
+        val from = previous ?: HudStyle()
+        val pad = if (previous == null) builtInPadding[hud.javaClass] else null
         if (hud.font == from.font) hud.font = to.font
         if (hud.textPolyColor.sameAs(from.textColor)) hud.textPolyColor = to.textColor
         if (hud.showShadow == from.shadow) hud.showShadow = to.shadow
@@ -74,10 +81,10 @@ public object HudStyles {
             if (hud.borderSize == from.borderSize) hud.borderSize = to.borderSize
             if (hud.bgRadius == from.radius) hud.bgRadius = to.radius
         }
-        if (hud.padTop == from.padding) hud.padTop = to.padding
-        if (hud.padBottom == from.padding) hud.padBottom = to.padding
-        if (hud.padLeft == from.padding) hud.padLeft = to.padding
-        if (hud.padRight == from.padding) hud.padRight = to.padding
+        if (hud.padTop == (pad?.get(0) ?: from.padding)) hud.padTop = to.padding
+        if (hud.padBottom == (pad?.get(1) ?: from.padding)) hud.padBottom = to.padding
+        if (hud.padLeft == (pad?.get(2) ?: from.padding)) hud.padLeft = to.padding
+        if (hud.padRight == (pad?.get(3) ?: from.padding)) hud.padRight = to.padding
         if (hud.customScale == from.scale) hud.customScale = to.scale
     }
 

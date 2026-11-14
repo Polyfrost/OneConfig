@@ -36,6 +36,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
 import java.util.Collections
 import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -65,6 +66,7 @@ public object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
+    private val unsupportedHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
 
@@ -352,6 +354,8 @@ public object HudManager {
 
     @JvmStatic
     public fun register(hud: Hud) {
+        unsupportedHuds.remove(hud::class.java.name)
+        HudStyles.captureBuiltIn(hud)
         hudProviders[hud::class.java] = hud
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
@@ -410,6 +414,7 @@ public object HudManager {
                 false
             }
             if (!ok) {
+                if (hud::class.java !in hudProviders) unsupportedHuds.add(hud::class.java.name)
                 LOGGER.info("HUD ${hud.title} is not supported here and was not registered")
                 return@afterInit
             }
@@ -569,6 +574,7 @@ public object HudManager {
             if (it.mergeLinkX?.parent === hud || it.mergeLinkY?.parent === hud) cleanup { it.clearMergeLink() }
         }
         lastMergeKey = null
+        notShowing.remove(hud)
         if (delete) cleanup { dropSuppressionsOf(hud) }
         cleanup { invalidate() }
         try { hud.remove() } catch (_: Throwable) {}
@@ -721,17 +727,22 @@ public object HudManager {
     private fun normaliseHudId(id: String): String = id.trim().removeSuffix(".json").removePrefix("huds/")
 
     private fun hasHudId(hud: Hud, id: String): Boolean =
-        normaliseHudId(hud.id) == id || hud.tree?.id?.let(::normaliseHudId) == id
+        normaliseHudId(hud.id) == id || hud.tree?.id?.let(::normaliseHudId) == id ||
+            hud.configId?.let(::normaliseHudId) == id
 
     private fun isActive(hud: Hud): Boolean = activeInstances.any { it === hud }
 
     private val frameClaims = ArrayList<Suppression>()
 
+    private val notShowing: MutableSet<Hud> = Collections.newSetFromMap(IdentityHashMap())
+
+    private fun isOwnerShown(hud: Hud): Boolean = !hud.frameHidden && isShown(hud) && hud !in notShowing
+
     private fun refreshSuppressed() {
         val claims = frameClaims
         claims.clear()
         for (s in suppressions) {
-            if (s.owner.hidden || !isActive(s.owner)) continue
+            if (!isActive(s.owner) || !isOwnerShown(s.owner)) continue
             claims.add(s)
         }
         for (hud in activeInstances) {
@@ -825,6 +836,9 @@ public object HudManager {
                 } catch (e: Throwable) {
                     LOGGER.error("Failed to check whether HUD ${hud.title} should show", e)
                     true
+                }
+                if (!isEditing) {
+                    if (show) notShowing.remove(hud) else notShowing.add(hud)
                 }
                 if (!show) {
                     hud.setVisible(false)
@@ -1575,6 +1589,7 @@ public object HudManager {
                 val clsName = data.getProp("hudClass").get() as? String
                     ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name")
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
+                if (clsName in unsupportedHuds) return@forEach
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 providerClass = cls
