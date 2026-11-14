@@ -412,6 +412,10 @@ class OneConfigSetupPlugin : Plugin<Project> {
             jvmToolchain(javaVersion)
         }
 
+        tasks.named<JavaCompile>("compileJava") {
+            finalizedBy("checkstyleMain")
+        }
+
         tasks.withType<KotlinCompile>().configureEach {
             // FixedScrollConfig relies on Compose internals, for which there is no public alternative
             compilerOptions.freeCompilerArgs.add("-Xdont-warn-on-error-suppression")

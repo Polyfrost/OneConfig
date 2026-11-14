@@ -15,6 +15,7 @@ public class Mixin_ComposeSvgResources {
      * @author Polyfrost
      * @reason The original body calls Skia, which is not shipped. An inject would leave that bytecode for the verifier to resolve
      */
+    @SuppressWarnings("checkstyle:NoOverwrite")
     @Overwrite
     public static Painter loadSvgPainter(InputStream inputStream, Density density) throws IOException {
         return new OversampledSvgPainter(inputStream.readAllBytes(), 1f, null, density.getDensity());
