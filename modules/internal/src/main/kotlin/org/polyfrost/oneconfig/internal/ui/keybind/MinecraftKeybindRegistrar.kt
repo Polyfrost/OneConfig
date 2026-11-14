@@ -4,6 +4,7 @@ import java.util.WeakHashMap
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindMetadata
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -15,7 +16,9 @@ object MinecraftKeybindRegistrar {
      * Use it when the property is a view onto a [net.minecraft.client.KeyMapping] the owning mod already
      * registered since mirroring it would splice in a duplicate mapping
      */
-    const val NO_MIRROR_METADATA = "oc_no_mc_mirror"
+    const val NO_MIRROR_METADATA = KeybindMetadata.NO_MIRROR
+
+    private const val MIRROR_TO_VANILLA_METADATA = "mirrorToVanilla"
 
     private val propByBind = WeakHashMap<OneConfigKeybind, Property<*>>()
     private val wiredProps = WeakHashMap<Property<*>, Boolean>()
@@ -64,6 +67,7 @@ object MinecraftKeybindRegistrar {
         bind.name = resolveName(prop)
         bind.category = category
         bind.defaultKeybind = prop.getMetadata<Any?>("default") as? OneConfigKeybind
+        if (prop.getMetadata<Any?>(MIRROR_TO_VANILLA_METADATA) == false) bind.mirrorToVanilla = false
         if (KeybindManager.isRegistered(bind)) KeybindManager.refreshMinecraftBinding(bind)
         else KeybindManager.register(bind)
         propByBind[bind] = prop

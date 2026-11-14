@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -377,7 +376,7 @@ fun IconWithIndicator(
                     .size(8.dp)
                     .background(
                         Accent,
-                        shape = LocalTheme.current.circleShape
+                        shape = LocalTheme.current.shapes.circle
                     )
                     .blur(7.dp)
             )
@@ -387,7 +386,7 @@ fun IconWithIndicator(
                     .size(6.dp)
                     .background(
                         Accent,
-                        shape = LocalTheme.current.circleShape
+                        shape = LocalTheme.current.shapes.circle
                     )
             )
         }

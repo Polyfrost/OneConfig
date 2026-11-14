@@ -51,7 +51,9 @@ import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
-import org.polyfrost.oneconfig.api.ui.v1.components.EscapeAwareTextMenus
+import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenuRoot
+import org.polyfrost.oneconfig.api.ui.v1.components.FeedbackHosts
+import org.polyfrost.oneconfig.api.ui.v1.components.ProvideOneConfigTextContextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
@@ -382,10 +384,10 @@ abstract class ComposeScreen(
                 LocalClipboardManager provides SystemClipboardManager,
                 LocalClipboard provides SystemClipboard,
                 LocalUiOversample provides surfaceScale(),
-                FixedScrollConfig.provided(),
+                scrollConfig.provided(),
                 LocalWheelRouter provides wheelRouter,
             ) {
-                EscapeAwareTextMenus { compose() }
+                ProvideOneConfigTextContextMenu { ContextMenuRoot { FeedbackHosts { compose() } } }
             }
         }
     }
@@ -496,6 +498,7 @@ abstract class ComposeScreen(
         showing = false
         sceneContextOrNull?.sync()
         ComposeSceneContextImpl.resetPointerIcon()
+        wheelRouter.stopFallback()
         releaseHeldButtons()
         consumedButtons.clear()
         lightInside = false
@@ -579,11 +582,25 @@ abstract class ComposeScreen(
             withScene { it.invalidatePositionInWindow() }
         }
 
+        wheelRouter.glideFrame { step ->
+            glideCarry += step
+            val density = sceneDensity()
+            if (abs(glideCarry.x * density) >= 1f || abs(glideCarry.y * density) >= 1f) {
+                val carried = glideCarry
+                glideCarry = Offset.Zero
+                val pointer = pointerPosition()
+                withScene {
+                    it.sendPointerEvent(PointerEventType.Scroll, glideAnchor, scrollDelta = carried)
+                    if (pointer != glideAnchor) it.sendPointerEvent(PointerEventType.Move, pointer)
+                }
+            }
+        }
+
         // Recompose and lay out before rendering so icons revealed by scrolling or filtering draw on the same frame.
         val nanos = System.nanoTime()
         withScene { scene ->
             recomposerOrNull?.performFrame(nanos)
-            scene.measureAndLayout()
+            retryingDisposedLayers { scene.measureAndLayout() }
         }
         if (ItemCatalog.renderIcons()) sceneDirty = true
 
@@ -623,7 +640,7 @@ abstract class ComposeScreen(
             val scope = renderScopeOrNull
             val canvas = PolyCanvas(ctx.renderer)
             val rendered = if (recomposer == null || scope == null) null else withScene {
-                with(scope) { it.render(recomposer, canvas, nanos) }
+                retryingDisposedLayers { with(scope) { it.render(recomposer, canvas, nanos) } }
             }
             if (rendered != null) sceneRebuilds = 0
         } catch (t: Throwable) {
@@ -784,10 +801,14 @@ abstract class ComposeScreen(
             // side buttons are handled before this, and Compose ignores other clicks while one is held
             else -> return
         }
+        if (type == PointerEventType.Press) wheelRouter.stopFallback()
         withScene { it.sendPointerEvent(type, button = pointerButton, position = pointerPosition()) }
     }
 
     private val wheelRouter = WheelRouter()
+    private val scrollConfig = FixedScrollConfig(wheelRouter)
+    private var glideAnchor = Offset.Zero
+    private var glideCarry = Offset.Zero
 
     private var lastPreciseScrollNanos = 0L
 
@@ -817,7 +838,14 @@ abstract class ComposeScreen(
                 it.sendPointerEvent(PointerEventType.Scroll, position, scrollDelta = delta)
             }
         }
-        if (precise) dispatch() else wheelRouter.route(delta, dispatch)
+        if (precise) {
+            wheelRouter.stopFallback()
+            dispatch()
+        } else {
+            glideAnchor = position
+            glideCarry = Offset.Zero
+            wheelRouter.route(delta, dispatch)
+        }
     }
 
     /** Whether a scroll came from a trackpad, which is applied directly instead of gliding */
@@ -1176,6 +1204,21 @@ abstract class ComposeScreen(
         fun isWheelStep(value: Double) = abs(value * 120 - round(value * 120)) < 1e-3
 
         const val MAX_SCENE_REBUILDS = 3
+    }
+}
+
+private const val DISPOSED_LAYER_RETRIES = 3
+
+private const val DISPOSED_OWNER_MESSAGE = "RootNodeOwner is already disposed"
+
+private inline fun <T> retryingDisposedLayers(block: () -> T): T {
+    var attempt = 0
+    while (true) {
+        try {
+            return block()
+        } catch (e: IllegalArgumentException) {
+            if (e.message != DISPOSED_OWNER_MESSAGE || ++attempt > DISPOSED_LAYER_RETRIES) throw e
+        }
     }
 }
 

@@ -8,6 +8,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.hud.cardsSupersededByHudCards
@@ -142,7 +143,7 @@ object ConfigRegistry {
     ): Boolean {
         MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
         if (tree.id == null || tree.title == null) return false
-        if (tree.getMetadata<Any?>("hidden") != null) return false
+        if (tree.getMetadata<Any?>("hidden").let { it != null && it != false }) return false
         return upsert(TreeConfigData(tree, source, onOpen), bumpRevision)
     }
 

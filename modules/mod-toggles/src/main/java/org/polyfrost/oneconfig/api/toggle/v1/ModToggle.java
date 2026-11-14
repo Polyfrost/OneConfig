@@ -1,5 +1,9 @@
 package org.polyfrost.oneconfig.api.toggle.v1;
 
+import java.util.Objects;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+
 /**
  * The master switch shown on a mod's card in OneConfig
  * <br>
@@ -21,5 +25,26 @@ public interface ModToggle {
      */
     default boolean needsSetup() {
         return false;
+    }
+
+    static ModToggle of(BooleanSupplier get, Consumer<Boolean> set) {
+        Objects.requireNonNull(get, "get");
+        Objects.requireNonNull(set, "set");
+        return new ModToggle() {
+            @Override
+            public boolean isEnabled() {
+                return get.getAsBoolean();
+            }
+
+            @Override
+            public void setEnabled(boolean enabled) {
+                set.accept(enabled);
+            }
+        };
+    }
+
+    static ModToggle of(BooleanSupplier get) {
+        return of(get, enabled -> {
+        });
     }
 }

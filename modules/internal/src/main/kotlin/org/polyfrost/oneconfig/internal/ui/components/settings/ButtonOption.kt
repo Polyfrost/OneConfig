@@ -1,84 +1,35 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.AnnotatedString
+import org.polyfrost.oneconfig.api.ui.v1.components.ArmedConfirmButton
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.internal.ui.api.settings.ButtonOptionData
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.glassHover
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-
-private val DangerColor = Color(0xFFE35B5B)
-
-/** Ignores a confirm click this soon after the first click so double clicks don't confirm */
-private const val ConfirmClickDelayNs = 400_000_000L
+import org.polyfrost.oneconfig.internal.ui.components.translated
 
 @Composable
 fun ButtonOption(data: ButtonOptionData) {
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val confirmText = data.confirmText
-    var firstClickAt by remember { mutableStateOf<Long?>(null) }
-    val confirming = firstClickAt != null
-    val bgColor = animateColorAsState(
-        when {
-            !confirming -> Color.Transparent
-            isHovered -> DangerColor.copy(alpha = 0.75f)
-            else -> DangerColor
-        }
-    )
-    val accentAlpha = animateFloatAsState(if (confirming) 0f else if (isHovered) 0.75f else 1f)
-    val textColor = LocalTheme.current.accentTextColor
+    ButtonOption(data, true)
+}
 
-    Box(
-        modifier = Modifier
-            .widthIn(max = LocalOptionWidth.current)
-            .heightIn(min = OptionControlHeight)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .glassHover(LocalTheme.current.buttonShape)
-            .graphicsLayer {}
-            .liquidGlass(LocalTheme.current.buttonShape)
-            .animatedFrame(LocalTheme.current.buttonShape, fill = { bgColor.value }, accentAlpha = { accentAlpha.value }, border = { Color.Transparent })
-            .onClick(interactionSource) {
-                val clickedAt = firstClickAt
-                when {
-                    confirmText == null -> data.runnable?.run()
-                    clickedAt == null -> firstClickAt = System.nanoTime()
-                    System.nanoTime() - clickedAt >= ConfirmClickDelayNs -> {
-                        firstClickAt = null
-                        data.runnable?.run()
-                    }
-                }
-            }
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        // hidden label keeps the button width fixed
-        Text(data.buttonText ?: "Click", modifier = Modifier.alpha(if (confirming) 0f else 1f), color = textColor, fontSize = 13.sp)
-        if (confirmText != null) {
-            Text(confirmText, modifier = Modifier.alpha(if (confirming) 1f else 0f), color = textColor, fontSize = 13.sp)
-        }
+@Composable
+fun ButtonOption(data: ButtonOptionData, enabled: Boolean) {
+    val text = data.buttonText?.asStyledLabel() ?: AnnotatedString(translated("oneconfig.option.button.default", "Click"))
+    val confirmText = data.confirmText?.asStyledLabel()
+    val modifier = Modifier.widthIn(max = LocalOptionWidth.current)
+    if (confirmText == null) {
+        TextButton(text, { data.runnable?.run() }, modifier, style = ControlStyle.Primary, enabled = enabled)
+    } else {
+        ArmedConfirmButton(
+            text,
+            { data.runnable?.run() },
+            modifier,
+            armedText = confirmText,
+            style = ControlStyle.Primary,
+            enabled = enabled,
+        )
     }
 }

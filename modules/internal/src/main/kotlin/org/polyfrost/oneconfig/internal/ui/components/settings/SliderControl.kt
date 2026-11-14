@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -19,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
@@ -26,7 +26,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.Slider
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -49,19 +51,38 @@ fun SliderControl(
     thumbSize: Dp = 19.dp,
     trackHeight: Dp = 5.dp,
 ) {
+    SliderControl(value, onValueChange, min, max, step, true, modifier, thumbSize, trackHeight)
+}
+
+@Composable
+fun SliderControl(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    min: Float,
+    max: Float,
+    step: Float,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    thumbSize: Dp = 19.dp,
+    trackHeight: Dp = 5.dp,
+) {
+    if (thumbSize == 19.dp && trackHeight == 5.dp) {
+        Slider(value, onValueChange, modifier, min..max, step, enabled)
+        return
+    }
     val theme = LocalTheme.current
+    val disabledAlpha = OneConfigTheme.current.disabledAlpha
     var trackWidthPx by remember { mutableStateOf(0f) }
     val currentOnValueChange by rememberUpdatedState(onValueChange)
-    val fraction = animateFloatAsState(
-        ((value - min) / (max - min)).coerceIn(0f, 1f),
-        animationSpec = ReducedMotion.spec(spring()),
-    )
+    val fraction = Motion.animateFloatAsState(((value - min) / (max - min)).coerceIn(0f, 1f), spring())
 
     Box(
         modifier = modifier
+            .graphicsLayer { alpha = if (enabled) 1f else disabledAlpha }
             .height(thumbSize)
             .onSizeChanged { trackWidthPx = it.width.toFloat() }
-            .pointerInput(min, max, step) {
+            .pointerInput(enabled, min, max, step) {
+                if (!enabled) return@pointerInput
                 val thumbPx = thumbSize.toPx()
                 var lastTickValue = Float.NaN
                 var lastTickAt = 0L

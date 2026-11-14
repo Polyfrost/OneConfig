@@ -1,31 +1,16 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.api.ui.v1.components.Checkbox
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -34,43 +19,27 @@ fun CheckboxIndicator(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    val accentAlpha = animateFloatAsState(if (checked) 1f else 0f)
-    val borderColor = animateAccentColorAsState(
-        checked to isHovered,
-        when {
-            checked -> Accent
-            isHovered -> theme.textColorSecondary
-            else -> theme.borderColor
-        }
-    )
-
-    Box(
-        modifier = modifier
-            .size(24.dp)
-            .graphicsLayer {}
-            .clip(theme.checkBoxShape)
-            .animatedFrame(theme.checkBoxShape, fill = { theme.componentBackground }, accentAlpha = { accentAlpha.value }, borderWidth = 1.5.dp, border = { borderColor.value })
-            .onClick(interactionSource, onToggle)
-            .pointerHoverIcon(PointerIcon.Hand),
-        contentAlignment = Alignment.Center,
-    ) {
-        AnimatedVisibility(checked, enter = fadeIn(), exit = fadeOut()) {
-            Icon("tick", modifier = Modifier.size(26.dp), color = theme.textColor)
-        }
-    }
+    Checkbox(checked, { onToggle() }, modifier)
 }
 
 @Composable
 fun CheckboxControl(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    CheckboxControl(checked, true, onCheckedChange)
+}
+
+@Composable
+fun CheckboxControl(checked: Boolean, enabled: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val theme = LocalTheme.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(if (checked) "On" else "Off", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
-        CheckboxIndicator(checked, onToggle = { onCheckedChange(!checked) })
+        Text(
+            if (checked) translated("oneconfig.control.on", "On") else translated("oneconfig.control.off", "Off"),
+            modifier = Modifier.graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha },
+            color = theme.textColorSecondary,
+            fontSize = 12.sp,
+        )
+        Checkbox(checked, onCheckedChange, enabled = enabled)
     }
 }

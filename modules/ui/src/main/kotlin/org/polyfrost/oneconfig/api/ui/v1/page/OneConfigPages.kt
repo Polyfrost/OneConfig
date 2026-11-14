@@ -21,6 +21,13 @@ public object OneConfigPages {
     }
 
     @JvmStatic
+    public fun registerIfAbsent(page: OneConfigPage): Boolean = synchronized(lock) {
+        if (pages.any { it.id == page.id }) return@synchronized false
+        Snapshot.withMutableSnapshot { pages.add(page) }
+        true
+    }
+
+    @JvmStatic
     public fun unregister(id: String): Boolean = synchronized(lock) { Snapshot.withMutableSnapshot { pages.removeAll { it.id == id } } }
 
     @JvmStatic

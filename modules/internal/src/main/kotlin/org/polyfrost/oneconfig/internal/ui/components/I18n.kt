@@ -10,6 +10,9 @@ internal fun translationKeyOrNull(value: Any?): String? {
     return if (Platform.i18n().hasTranslation(text)) text else null
 }
 
+fun translated(key: String, fallback: String): String =
+    if (Platform.i18n().hasTranslation(key)) Platform.i18n().translateString(key) else fallback
+
 fun localizedText(key: String?, fallback: Any?): Any {
     val translationKey = key?.trim()?.takeIf { it.isNotEmpty() }
         ?: return translationKeyOrNull(fallback)?.let { Platform.i18n().translate(it) } ?: fallback ?: ""

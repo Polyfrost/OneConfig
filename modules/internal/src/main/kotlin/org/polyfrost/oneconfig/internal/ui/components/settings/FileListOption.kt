@@ -1,9 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,20 +9,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileListOptionData
-import org.polyfrost.oneconfig.internal.ui.components.IconButton
-import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -74,10 +71,12 @@ fun FileListOption(data: FileListOptionData) {
         )
         IconButton(
             "folder",
-            modifier = Modifier.size(16.dp).pointerHoverIcon(PointerIcon.Hand),
-            foreground = ctx.contentColor,
-            hoveredForeground = LocalTheme.current.textColor,
-            onClick = { openDialog(entry.id, entry.value) },
+            iconButtonLabel("folder"),
+            { openDialog(entry.id, entry.value) },
+            Modifier.size(16.dp).pointerHoverIcon(PointerIcon.Hand),
+            size = ControlSize.Compact,
+            tooltip = null,
+            tint = ctx.contentColor,
         )
     }
 }
@@ -89,29 +88,14 @@ private fun RowScope.PathField(
     ctx: ListRowContext,
     onValueChange: (String) -> Unit,
 ) {
-    val theme = LocalTheme.current
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        textStyle = TextStyle(
-            color = theme.textColor,
-            fontSize = 13.sp,
-            fontFamily = theme.typography.family,
-        ),
+    TextField(
+        value,
+        onValueChange,
+        Modifier.weight(1f),
+        placeholder = placeholder,
+        framed = false,
+        fontSize = 13.sp,
         interactionSource = ctx.fieldInteraction,
-        cursorBrush = SolidColor(theme.textColor),
         visualTransformation = rememberPathTransformation(),
-        modifier = Modifier.trackTextInputFocus().weight(1f),
-        decorationBox = { innerTextField ->
-            Box {
-                if (value.isEmpty() && placeholder != null && !ctx.focused) {
-                    Text(placeholder, color = theme.textColorSecondary, fontSize = 13.sp)
-                }
-                innerTextField()
-            }
-        },
     )
 }

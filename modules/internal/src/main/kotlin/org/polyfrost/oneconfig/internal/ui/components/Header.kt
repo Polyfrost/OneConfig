@@ -2,14 +2,10 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -21,8 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -33,32 +28,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
-import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
@@ -94,15 +89,31 @@ fun Header(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton("left-arrow", Modifier.size(32.dp), enabled = canGoBack, hoverBorder = true) { controller.back() }
-                IconButton("right-arrow", Modifier.size(32.dp), enabled = canGoForward, hoverBorder = true) { controller.forward() }
+                IconButton(
+                    "left-arrow",
+                    iconButtonLabel("left-arrow"),
+                    { controller.back() },
+                    Modifier.size(32.dp),
+                    enabled = canGoBack,
+                    style = IconButtonStyle.Ghost,
+                    tint = LocalTheme.current.textColor,
+                )
+                IconButton(
+                    "right-arrow",
+                    iconButtonLabel("right-arrow"),
+                    { controller.forward() },
+                    Modifier.size(32.dp),
+                    enabled = canGoForward,
+                    style = IconButtonStyle.Ghost,
+                    tint = LocalTheme.current.textColor,
+                )
             }
             Spacer(Modifier.size(24.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedContent(
                     title,
                     transitionSpec = {
-                        if (ReducedMotion.enabled) fadeIn() togetherWith fadeOut() using null
+                        if (Motion.reduced) fadeIn() togetherWith fadeOut() using null
                         else fadeIn() togetherWith fadeOut()
                     }
                 ) { headerTitle ->
@@ -154,7 +165,7 @@ fun Header(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
             GlobalSearchBar()
-            IconButton("close", Modifier.size(32.dp), hoverBorder = true) { closeRequest() }
+            IconButton("close", iconButtonLabel("close"), { closeRequest() }, Modifier.size(32.dp))
         }
     }
 }
@@ -212,10 +223,16 @@ private fun TitleBreadcrumb(segments: List<TitleSegment>, controller: ShellNavig
             } else {
                 val interactionSource = rememberInteractionSource()
                 val isHovered by interactionSource.collectIsHoveredAsState()
-                val color by animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
+                val color by Motion.animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
                 Text(
                     segment.text,
-                    Modifier.pointerHoverIcon(PointerIcon.Hand).onClick(interactionSource) { controller.navigate(route) },
+                    Modifier.oneConfigClickable(
+                        segment.text.asRenderText(),
+                        { controller.navigate(route) },
+                        role = A11yRole.Link,
+                        indication = false,
+                        interactionSource = interactionSource,
+                    ),
                     color = color,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Medium,
@@ -227,41 +244,17 @@ private fun TitleBreadcrumb(segments: List<TitleSegment>, controller: ShellNavig
 
 @Composable
 private fun OpenOriginalScreenButton(runnable: Runnable) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val accentAlpha = animateFloatAsState(if (isHovered) 0.75f else 1f)
-
-    Tooltip(
-        text = {
-            Text(
-                translated("oneconfig.header.original_menu.tooltip", "Opening the original screen may show options that OneConfig doesn't."),
-                color = theme.textColor,
-                fontSize = 13.sp,
-            )
-        },
-        modifier = Modifier.widthIn(max = 260.dp),
-        anchor = Alignment.BottomCenter,
+    TooltipBox(
+        translated("oneconfig.header.original_menu.tooltip", "Opening the original screen may show options that OneConfig doesn't."),
+        placement = TooltipPlacement.BelowCenter,
     ) {
-        Box(
-            modifier = Modifier
-                .pointerHoverIcon(PointerIcon.Hand)
-                .glassHover(theme.buttonShape)
-                .graphicsLayer {}
-                .liquidGlass(theme.buttonShape)
-                .animatedFrame(theme.buttonShape, accentAlpha = { accentAlpha.value }, border = { theme.borderColor })
-                .onClick(interactionSource) { runnable.run() }
-                .padding(horizontal = 16.dp, vertical = 6.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon("external-link", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
-                Text(translated("oneconfig.header.original_menu", "Original menu"), color = theme.accentTextColor, fontSize = 13.sp)
-            }
-        }
+        TextButton(
+            translated("oneconfig.header.original_menu", "Original menu"),
+            "external-link",
+            { runnable.run() },
+            style = ControlStyle.Primary,
+            size = ControlSize.Compact,
+        )
     }
 }
 
@@ -294,48 +287,32 @@ private fun TitleInfoTooltip(title: HeaderTitle) {
     val authors = title.authors
     val credits = title.credits
     if (version == null && authors == null && credits == null) return
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val density = LocalDensity.current
+    val theme = LocalTheme.current
 
-    Box(
-        modifier = Modifier.size(22.dp).hoverable(interactionSource),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon("info", color = LocalTheme.current.textColorSecondary, modifier = Modifier.size(14.dp))
-
-        if (isHovered) {
-            // popup so the tooltip takes no layout space in the header Row and is not clipped by its
-            // fixed height
-            Popup(
-                popupPositionProvider = DropdownPositionProvider(DpOffset(0.dp, 6.dp), density),
-                properties = PopupProperties(focusable = false)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .widthIn(max = 260.dp)
-                        .liquidGlass(LocalTheme.current.popupShape, frosted = true)
-                        .background(LocalTheme.current.popupBackground, shape = LocalTheme.current.popupShape)
-                        .border(1.dp, LocalTheme.current.borderColor, shape = LocalTheme.current.popupShape)
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    if (authors != null) {
-                        Text(translated("oneconfig.header.author", "Author: %s", authors), color = LocalTheme.current.textColor, fontSize = 12.sp)
-                    }
-                    if (credits != null) {
-                        Text(translated("oneconfig.header.credits", "Credits: %s", credits), color = LocalTheme.current.textColor, fontSize = 12.sp)
-                    }
-                    if (version != null) {
-                        Text(translated("oneconfig.header.version", "Version: %s", version), color = LocalTheme.current.textColor, fontSize = 12.sp)
-                    }
+    TooltipBox(
+        tooltip = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (authors != null) {
+                    Text(translated("oneconfig.header.author", "Author: %s", authors), color = theme.textColor, fontSize = 12.sp)
+                }
+                if (credits != null) {
+                    Text(translated("oneconfig.header.credits", "Credits: %s", credits), color = theme.textColor, fontSize = 12.sp)
+                }
+                if (version != null) {
+                    Text(translated("oneconfig.header.version", "Version: %s", version), color = theme.textColor, fontSize = 12.sp)
                 }
             }
+        },
+        placement = TooltipPlacement.BelowStart,
+    ) {
+        Box(
+            modifier = Modifier.size(22.dp).focusable(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon("info", color = theme.textColorSecondary, modifier = Modifier.size(14.dp))
         }
     }
 }
-
-private fun searchFieldValue(text: String) = TextFieldValue(text, TextRange(text.length))
 
 @Composable
 fun GlobalSearchBar() {
@@ -344,7 +321,7 @@ fun GlobalSearchBar() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val placeholder by remember(backStackEntry) { derivedStateOf { searchPlaceholder(backStackEntry) } }
 
-    var searchText by remember { mutableStateOf(searchFieldValue(search.query)) }
+    var searchText by remember { mutableStateOf(TextFieldValue(search.query, TextRange(search.query.length))) }
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
 
@@ -353,7 +330,7 @@ fun GlobalSearchBar() {
 
     LaunchedEffect(searchText.text) { search.update(searchText.text) }
     LaunchedEffect(search.query) {
-        if (search.query != searchText.text) searchText = searchFieldValue(search.query)
+        if (search.query != searchText.text) searchText = TextFieldValue(search.query, TextRange(search.query.length))
     }
     LaunchedEffect(isFocused) { search.updateFieldFocused(isFocused) }
 
@@ -366,7 +343,6 @@ fun GlobalSearchBar() {
             if (isFocused) focusManager.clearFocus()
         } else {
             if (request == SearchFocus.SelectAll) {
-                // a kept query is selected so typing starts a new search while leaving it alone keeps it
                 searchText = searchText.copy(selection = TextRange(0, searchText.text.length))
             }
             if (!isFocused) {
@@ -379,25 +355,16 @@ fun GlobalSearchBar() {
         search.consumeFocusRequest()
     }
 
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
+    SearchField(
         value = searchText,
         onValueChange = { searchText = it },
-        singleLine = true,
-        cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
-        textStyle = searchFieldTextStyle(),
+        modifier = Modifier.width(256.dp)
+            .trackTextInputFocus()
+            .onFocusChanged { searchFocused?.value = it.hasFocus },
+        placeholder = placeholder,
+        size = ControlSize.Regular,
+        focusRequester = focusRequester,
         interactionSource = interactionSource,
-        modifier = Modifier.trackTextInputFocus()
-            .focusRequester(focusRequester)
-            .onFocusChanged { searchFocused?.value = it.isFocused }
-    ) { innerTextField ->
-        SearchFieldFrame(
-            placeholder,
-            showPlaceholder = searchText.text.isEmpty() && !isFocused,
-            onClear = if (searchText.text.isNotEmpty()) ({ searchText = TextFieldValue() }) else null,
-            modifier = Modifier.size(256.dp, 32.dp),
-            innerTextField = innerTextField,
-        )
-    }
+        hidePlaceholderWhenFocused = true,
+    )
 }

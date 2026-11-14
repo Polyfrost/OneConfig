@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 
 private class ColorChange(val from: Color, val progress: Animatable<Float, AnimationVector1D>)
 
@@ -29,7 +30,7 @@ fun animateAccentColorAsState(key: Any?, targetValue: Color, animationSpec: Anim
         if (before == null) ColorChange(targetValue, Animatable(1f)) else ColorChange(before, Animatable(0f))
     }
     target.value = targetValue
-    LaunchedEffect(change) { change.progress.animateTo(1f, animationSpec) }
+    LaunchedEffect(change) { change.progress.animateTo(1f, Motion.spec(animationSpec)) }
     return remember(change) {
         derivedStateOf { lerp(change.from, target.value, change.progress.value) }
     }.also { shown[0] = it }

@@ -16,6 +16,11 @@ import org.polyfrost.oneconfig.internal.ui.api.shown
 
 @Composable
 fun TextOption(data: TextOptionData) {
+    TextOption(data, true)
+}
+
+@Composable
+fun TextOption(data: TextOptionData, enabled: Boolean) {
     var text by remember(data.prop) { mutableStateOf(data.strProp.shown() ?: "") }
     val regex = remember(data.regex) { data.regex?.takeIf { it.isNotBlank() }?.let { runCatching { Regex(it) }.getOrNull() } }
     val valid = regex == null || text.isEmpty() || regex.matches(text)
@@ -24,19 +29,11 @@ fun TextOption(data: TextOptionData) {
         text,
         { text = it; if (regex == null || it.isEmpty() || regex.matches(it)) data.strProp.set(it) },
         Modifier.width(LocalOptionWidth.current).heightIn(min = if (data.multiline) 96.dp else OptionControlHeight),
-        data.placeholder,
-        "text-input",
-        Int.MAX_VALUE,
-        !valid,
-        true,
-        !data.multiline,
-        true,
-        14.sp,
-        null,
-        false,
-        null,
-        null,
-        null,
-        null,
+        placeholder = data.placeholder,
+        enabled = enabled,
+        invalid = !valid,
+        singleLine = !data.multiline,
+        leadingIcon = "text-input",
+        fontSize = 14.sp,
     )
 }

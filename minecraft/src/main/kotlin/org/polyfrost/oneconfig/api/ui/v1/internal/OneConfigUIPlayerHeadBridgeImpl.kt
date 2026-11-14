@@ -34,7 +34,9 @@ import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
 *///?}
 
 class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
-    private class Face(val bitmap: ImageBitmap?, val isDefault: Boolean)
+    private class FaceImage(val pixels: PolyBitmap, val image: ImageBitmap)
+
+    private class Face(val face: FaceImage?, val isDefault: Boolean)
 
     private val faces = object : LinkedHashMap<UUID, Face>(16, 0.75f, true) {
         override fun removeEldestEntry(eldest: Map.Entry<UUID, Face>) = size > MAX_ENTRIES
@@ -42,7 +44,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
 
     private val observers = HashMap<UUID, MutableList<WeakReference<MutableState<ImageBitmap?>>>>()
 
-    private val defaults = HashMap<String, ImageBitmap?>()
+    private val defaults = HashMap<String, FaceImage?>()
 
     private val fetching = HashMap<UUID, Int>()
 
@@ -56,8 +58,12 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         EventManager.register(ResourceFinishedLoading::class.java, Runnable(::clearDefaults))
     }
 
-    override fun face(id: UUID): ImageBitmap? {
-        synchronized(faces) { faces[id]?.let { return it.bitmap } }
+    override fun face(id: UUID): ImageBitmap? = cachedFace(id)?.image
+
+    override fun bitmap(id: UUID): PolyBitmap? = cachedFace(id)?.pixels
+
+    private fun cachedFace(id: UUID): FaceImage? {
+        synchronized(faces) { faces[id]?.let { return it.face } }
         ensureFetch(id)
         return null
     }
@@ -69,13 +75,15 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
             val list = observers.getOrPut(id) { ArrayList() }
             list.removeAll { it.get() == null }
             list += WeakReference(state)
-            faces[id]?.also { state.value = it.bitmap }
+            faces[id]?.also { state.value = it.face?.image }
         }
         if (known == null) ensureFetch(id)
         return state
     }
 
-    override fun defaultFace(id: UUID): ImageBitmap? {
+    override fun defaultFace(id: UUID): ImageBitmap? = defaultFaceImage(id)?.image
+
+    private fun defaultFaceImage(id: UUID): FaceImage? {
         val texture = defaultTexture(id) ?: return null
         return synchronized(defaults) {
             defaults.getOrPut(texture.key) { runCatching { texture.load() }.getOrNull() }
@@ -94,7 +102,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         loaders.execute {
             for (id in shown) {
                 synchronized(faces) { fetchedDefault += id }
-                publish(id, defaultFace(id), true)
+                publish(id, defaultFaceImage(id), true)
             }
         }
     }
@@ -108,10 +116,11 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         if (start) loaders.execute { fetch(id) }
     }
 
-    private fun publish(id: UUID, bitmap: ImageBitmap?, settle: Boolean) {
+    private fun publish(id: UUID, face: FaceImage?, settle: Boolean) {
+        val bitmap = face?.image
         val listeners = synchronized(faces) {
             if (settle) {
-                faces[id] = Face(bitmap, isDefault = bitmap == null || fetchedDefault.remove(id))
+                faces[id] = Face(face, isDefault = face == null || fetchedDefault.remove(id))
                 fetching.remove(id)
             }
             observers[id]?.also { list -> list.removeAll { it.get() == null } }?.toList()
@@ -131,7 +140,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
             publish(id, face, true)
             return
         }
-        val fallback = defaultFace(id)
+        val fallback = defaultFaceImage(id)
         if (missing) {
             synchronized(faces) { fetchedDefault += id }
             publish(id, fallback, true)
@@ -155,7 +164,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         loaders.schedule({ fetch(id) }, retryIn, TimeUnit.MILLISECONDS)
     }
 
-    private fun loadFace(id: UUID): ImageBitmap? {
+    private fun loadFace(id: UUID): FaceImage? {
         val url = skinUrl(id) ?: return null
         val connection = URI(url).toURL().openConnection(proxy()) as HttpURLConnection
         val skin = try {
@@ -190,7 +199,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         }
     }
 
-    private class DefaultTexture(val key: String, val load: () -> ImageBitmap?)
+    private class DefaultTexture(val key: String, val load: () -> FaceImage?)
 
     private fun defaultTexture(id: UUID): DefaultTexture? {
         //? if > 1.8.9 {
@@ -222,7 +231,7 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
         *///?}
     }.getOrNull() ?: Proxy.NO_PROXY
 
-    private fun buildFace(skin: BufferedImage): ImageBitmap {
+    private fun buildFace(skin: BufferedImage): FaceImage {
         val legacy = skin.height <= 32
         val showHat = !legacy || !isOpaque(skin, 32, 0, 64, 32)
         val out = ByteArray(FACE_SIZE * FACE_SIZE * 4)
@@ -240,7 +249,8 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
                 out[i + 3] = 0xFF.toByte()
             }
         }
-        return PolyBitmap(FACE_SIZE, FACE_SIZE, out).asComposeImageBitmap()
+        val pixels = PolyBitmap(FACE_SIZE, FACE_SIZE, out)
+        return FaceImage(pixels, pixels.asComposeImageBitmap())
     }
 
     private fun blend(base: Int, top: Int): Int {

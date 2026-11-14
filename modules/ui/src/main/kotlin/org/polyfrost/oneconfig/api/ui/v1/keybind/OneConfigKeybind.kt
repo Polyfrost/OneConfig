@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind
 
 import kotlin.experimental.and
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable
 
 public open class OneConfigKeybind(
@@ -47,6 +48,15 @@ public open class OneConfigKeybind(
     @Transient
     public var firesWhileTyping: Boolean = false
 
+    @ExperimentalOneConfigUiApi
+    @Transient
+    public var mirrorToVanilla: Boolean = true
+        set(value) {
+            if (field == value) return
+            field = value
+            KeybindManager.refreshMinecraftBinding(this)
+        }
+
     /**
      * Serialized key inputs that could not be resolved on this Minecraft version.
      *
@@ -84,12 +94,14 @@ public open class OneConfigKeybind(
      *
      * Preserves the action and duration and subtype and Controls-menu metadata
      */
+    @OptIn(ExperimentalOneConfigUiApi::class)
     public open fun copyWith(keyCodes: IntArray?, mouseBtns: IntArray?, mods: Byte): OneConfigKeybind =
         OneConfigKeybind(keyCodes, mouseBtns, mods, durationNanos, action).also {
             it.name = name
             it.category = category
             it.defaultKeybind = defaultKeybind
             it.firesWhileTyping = firesWhileTyping
+            it.mirrorToVanilla = mirrorToVanilla
         }
 
     /**

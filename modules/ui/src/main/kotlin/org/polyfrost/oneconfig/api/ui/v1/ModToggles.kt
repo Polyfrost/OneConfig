@@ -70,6 +70,13 @@ public object ModToggles {
     public fun register(modId: String, toggle: org.polyfrost.oneconfig.api.ui.v1.ModToggle): Unit =
         register(modId, toggle as ModToggle)
 
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    @JvmOverloads
+    public fun registerReadOnly(modId: String, isEnabled: () -> Boolean, lockedReason: () -> String? = { null }) {
+        register(modId, LambdaReadOnlyModToggle(isEnabled, lockedReason))
+    }
+
     /**
      * Shows a switch on the cards of [modIds] whose state is stored by OneConfig
      *

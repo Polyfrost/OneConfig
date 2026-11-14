@@ -4,33 +4,31 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.MotionDurationScale
+import org.polyfrost.oneconfig.api.ui.v1.OneConfigPrefs
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.internal.ui.themes.PrefsSync
 
 object AnimationsMotionScale : MotionDurationScale {
     @JvmStatic
-    var animations by mutableStateOf(true)
+    var animations: Boolean
+        get() = OneConfigPrefs.animationsEnabled
+        set(value) = PrefsSync.animations(value)
 
-    override val scaleFactor: Float get() = if (animations) 1f else 0f
+    override val scaleFactor: Float get() = if (OneConfigPrefs.animationsEnabled) 1f else 0f
 }
 
 object ReducedMotion {
-    private const val FADE_MILLIS = 150
-
     @JvmStatic
-    var enabled by mutableStateOf(false)
+    var enabled: Boolean
+        get() = Motion.reduced
+        set(value) = PrefsSync.reducedMotion(value)
 
-    fun <T> spec(spec: AnimationSpec<T>): AnimationSpec<T> = if (enabled) snap() else spec
+    fun <T> spec(spec: AnimationSpec<T>): AnimationSpec<T> = Motion.spec(spec)
 
-    fun <T> finiteSpec(spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> = if (enabled) snap() else spec
+    fun <T> finiteSpec(spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> = Motion.finiteSpec(spec)
 
-    fun enter(enter: EnterTransition): EnterTransition = if (enabled) fadeIn(tween(FADE_MILLIS)) else enter
+    fun enter(enter: EnterTransition): EnterTransition = Motion.enter(enter)
 
-    fun exit(exit: ExitTransition): ExitTransition = if (enabled) fadeOut(tween(FADE_MILLIS)) else exit
+    fun exit(exit: ExitTransition): ExitTransition = Motion.exit(exit)
 }

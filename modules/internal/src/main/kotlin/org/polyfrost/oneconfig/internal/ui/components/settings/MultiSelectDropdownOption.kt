@@ -1,105 +1,89 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.AnnotatedString
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.components.MultiSelect
+import org.polyfrost.oneconfig.api.ui.v1.components.Select
 import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.components.translated
+
+private const val ToggleAll = -1
+
+@Composable
+fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
+    MultiSelectDropdownOption(data, true)
+}
 
 @Suppress("UNCHECKED_CAST")
 @Composable
-fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
-    val theme = LocalTheme.current
-
-    val options: List<Any> = remember(data.prop) {
+fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData, enabled: Boolean) {
+    val stamp = languageStamp()
+    val rawLabels: List<Any> = remember(data.prop, stamp) {
         data.optionLabels ?: data.options?.toList() ?: emptyList()
     }
+    val labels: List<String> = remember(rawLabels) { rawLabels.map { it.asPlainLabel() } }
+    val styled = remember(rawLabels) { rawLabels.styledLabelsOrNull() }
+    val fieldModifier = Modifier.width(LocalOptionWidth.current).heightIn(min = OptionControlHeight)
 
-    // checkable means the property is an Array<Boolean> indexed by option
-    // otherwise it is an Int holding the selected index where -1 is none
+    if (!data.checkable) {
+        var selectedIdx by remember(data.prop) { mutableStateOf(data.prop.shown() as? Int ?: -1) }
+        Select(
+            selected = selectedIdx,
+            options = labels.indices.toList(),
+            onSelect = { index ->
+                selectedIdx = index
+                (data.prop as Property<Any>).set(index)
+            },
+            modifier = fieldModifier,
+            label = { labels[it] },
+            enabled = enabled,
+            placeholder = "—",
+            styledLabel = styled?.let { list -> { list[it] } },
+        )
+        return
+    }
+
     var selectedFlags by remember(data.prop) {
-        if (data.checkable) {
-            val v = data.prop.shown()
-            val arr: BooleanArray = when (v) {
-                is BooleanArray -> v
-                is Array<*> -> BooleanArray(options.size) { i -> v.getOrNull(i) == true }
-                else -> BooleanArray(options.size)
-            }
-            mutableStateOf(arr.copyOf())
-        } else {
-            mutableStateOf(BooleanArray(0))
+        val arr: BooleanArray = when (val v = data.prop.shown()) {
+            is BooleanArray -> v
+            is Array<*> -> BooleanArray(labels.size) { i -> v.getOrNull(i) == true }
+            else -> BooleanArray(labels.size)
         }
+        mutableStateOf(arr.copyOf())
+    }
+    val allSelected = labels.isNotEmpty() && selectedFlags.count { it } == labels.size
+    val selected = labels.indices.filterTo(mutableSetOf()) { selectedFlags.getOrElse(it) { false } }
+    val options = if (labels.size > 1) listOf(ToggleAll) + labels.indices else labels.indices.toList()
+    val toggleAllLabel = if (allSelected) {
+        translated("oneconfig.option.multi_select.deselect_all", "Deselect all")
+    } else {
+        translated("oneconfig.menu.text.select_all", "Select all")
     }
 
-    var selectedIdx by remember(data.prop) {
-        if (!data.checkable) {
-            val v = data.prop.shown()
-            mutableStateOf(if (v is Int) v else -1)
-        } else {
-            mutableStateOf(-1)
-        }
-    }
-
-    var expanded by remember { mutableStateOf(false) }
-
-    val triggerLabel = when {
-        !data.checkable -> options.getOrElse(selectedIdx) { "—" }
-        else -> {
-            val count = selectedFlags.count { it }
-            when {
-                count == 0 -> "None selected"
-                count == options.size -> "All selected"
-                else -> "$count / ${options.size} selected"
-            }
-        }
-    }
-
-    DropdownFrame(triggerLabel, expanded, { expanded = it }) {
-        if (data.checkable && options.size > 1) {
-            val allSelected = selectedFlags.count { it } == options.size
-            val toggleAll: () -> Unit = {
-                val updated = BooleanArray(options.size) { !allSelected }
-                selectedFlags = updated
-                (data.prop as Property<Any>).set(updated)
-            }
-            DropdownItem(
-                if (allSelected) "Deselect all" else "Select all",
-                leading = { CheckboxIndicator(checked = allSelected, onToggle = toggleAll) },
-                onClick = toggleAll,
-            )
-            Box(Modifier.fillMaxWidth().height(1.dp).background(theme.borderColor))
-        }
-        options.forEachIndexed { index, option ->
-            if (data.checkable) {
-                val toggle: () -> Unit = {
-                    val updated = selectedFlags.copyOf()
-                    updated[index] = !updated[index]
-                    selectedFlags = updated
-                    (data.prop as Property<Any>).set(updated)
-                }
-                DropdownItem(
-                    option,
-                    icon = data.icon,
-                    leading = { CheckboxIndicator(checked = selectedFlags.getOrElse(index) { false }, onToggle = toggle) },
-                    onClick = toggle,
-                )
+    MultiSelect(
+        selected = selected,
+        options = options,
+        onChange = { next ->
+            val updated = if (ToggleAll in next) {
+                BooleanArray(labels.size) { !allSelected }
             } else {
-                DropdownItem(option, selected = selectedIdx == index, icon = data.icon) {
-                    selectedIdx = index
-                    (data.prop as Property<Any>).set(index)
-                    expanded = false
-                }
+                BooleanArray(labels.size) { it in next }
             }
-        }
-    }
+            selectedFlags = updated
+            (data.prop as Property<Any>).set(updated)
+        },
+        modifier = fieldModifier,
+        label = { if (it == ToggleAll) toggleAllLabel else labels[it] },
+        enabled = enabled,
+        styledLabel = styled?.let { list -> { if (it == ToggleAll) AnnotatedString(toggleAllLabel) else list[it] } },
+    )
 }

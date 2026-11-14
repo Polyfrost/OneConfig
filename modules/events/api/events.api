@@ -52,6 +52,18 @@ public final synthetic class org/polyfrost/oneconfig/api/event/v1/ExtensionsKt {
 	public static final synthetic fun eventHandlerWorldZ (Lkotlin/jvm/functions/Function1;)Ljava/lang/Void;
 }
 
+public class org/polyfrost/oneconfig/api/event/v1/events/AttackEntityEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;)V
+	public fun getPlayer ()Ljava/lang/Object;
+	public fun getTarget ()Ljava/lang/Object;
+}
+
+public class org/polyfrost/oneconfig/api/event/v1/events/BlockUpdateEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;)V
+	public fun getPos ()Ljava/lang/Object;
+	public fun getState ()Ljava/lang/Object;
+}
+
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
 	public fun <init> ()V
 }
@@ -170,6 +182,14 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/PacketEvent$Send 
 	public fun <init> (Ljava/lang/Object;)V
 }
 
+public class org/polyfrost/oneconfig/api/event/v1/events/PlaceBlockEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public fun getLevel ()Ljava/lang/Object;
+	public fun getPlayer ()Ljava/lang/Object;
+	public fun getPos ()Ljava/lang/Object;
+	public fun getState ()Ljava/lang/Object;
+}
+
 public class org/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
 	public fun <init> (Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Action;Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Type;)V
 	public fun getAction ()Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Action;
@@ -190,6 +210,14 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEve
 	public static final field ENTITY Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Type;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Type;
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEvent$Type;
+}
+
+public class org/polyfrost/oneconfig/api/event/v1/events/PlayerTurnEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
+	public fun <init> (DD)V
+	public fun component1 ()D
+	public fun component2 ()D
+	public fun getPitchDelta ()D
+	public fun getYawDelta ()D
 }
 
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/RenderLivingEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {

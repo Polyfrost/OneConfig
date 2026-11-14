@@ -10,12 +10,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import org.polyfrost.oneconfig.internal.ui.components.WheelRouter
 
 /** Override Compose's scrolling behaviour to get the same scrolling on every OS */
-internal object FixedScrollConfig : ScrollConfig {
+internal class FixedScrollConfig(private val router: WheelRouter) : ScrollConfig {
     override val isSmoothScrollingEnabled: Boolean get() = false
 
     override fun Density.calculateMouseWheelScroll(event: PointerEvent, bounds: IntSize): Offset {
+        if (router.defersWheelScroll()) return Offset.Zero
         var delta = Offset.Zero
         event.changes.forEach { delta += it.scrollDelta }
         return delta * -density

@@ -40,6 +40,7 @@ internal object MinecraftKeyboardAdapter {
         SDLK_HOME -> KeyEvent.VK_HOME
         SDLK_END -> KeyEvent.VK_END
         SDLK_INSERT -> KeyEvent.VK_INSERT
+        SDLK_APPLICATION -> KeyEvent.VK_CONTEXT_MENU
         SDLK_CAPSLOCK -> KeyEvent.VK_CAPS_LOCK
         SDLK_LSHIFT, SDLK_RSHIFT -> KeyEvent.VK_SHIFT
         SDLK_LCTRL, SDLK_RCTRL -> KeyEvent.VK_CONTROL

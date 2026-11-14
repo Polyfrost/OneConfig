@@ -1,66 +1,74 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.time.Instant
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.Divider
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.ProgressBar
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
+import org.polyfrost.oneconfig.utils.v1.Formatters
 
 private val PanelWidth = 368.dp
-private val PanelShape @Composable get() = LocalTheme.current.popupShape
 private val ButtonShape @Composable get() = LocalTheme.current.buttonShape
-
-private val SuccessColor = Color(0xFF3CAF77)
-private val ErrorColor = Color(0xFFF2545A)
 
 @Composable
 fun NotificationsCenter() {
     val theme = LocalTheme.current
     val history = NotificationsManager.history
-    val panelBg = theme.popupBackground
 
     Column(
         modifier = Modifier
             .width(PanelWidth)
-            .clip(PanelShape)
-            .liquidGlass(PanelShape, frosted = true)
-            .background(panelBg, PanelShape)
-            .border(1.dp, theme.borderColor, PanelShape)
+            .themedSurface(SurfaceKind.Popup)
             .padding(horizontal = 14.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            "Notifications",
+            translated("oneconfig.sidebar.notifications", "Notifications"),
             color = theme.textColor,
             fontSize = 18.sp,
             lineHeight = 28.sp,
@@ -69,36 +77,23 @@ fun NotificationsCenter() {
 
         if (history.isEmpty()) {
             Text(
-                "You're all caught up.",
+                translated("oneconfig.notifications.empty", "You're all caught up."),
                 color = theme.textColorSecondary,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(vertical = 8.dp),
             )
         } else {
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .heightIn(max = 420.dp)
-                    .fadingEdges(scrollState, panelBg)
-                    .wheelScroll(scrollState)
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                history.forEachIndexed { index, notification ->
-                    NotificationRow(notification)
-                    if (index != history.lastIndex) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(theme.borderColor),
-                        )
+            ScrollContainer(rememberScrollState(), Modifier.heightIn(max = 420.dp), fadingEdges = true) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    history.forEachIndexed { index, notification ->
+                        NotificationRow(notification)
+                        if (index != history.lastIndex) Divider()
                     }
                 }
             }
         }
 
-        Box(Modifier.fillMaxWidth().height(1.dp).background(theme.borderColor))
+        Divider()
 
         Footer()
     }
@@ -109,9 +104,12 @@ private fun NotificationRow(notification: Notification) {
     val theme = LocalTheme.current
     val accent = accentFor(notification.type)
 
-    Row(horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+    Row(
+        modifier = Modifier.contextMenu { notificationMenu(notification) },
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
         Box(Modifier.size(32.dp).padding(4.dp), contentAlignment = Alignment.Center) {
-            Icon(notification.type.iconName, color = accent, modifier = Modifier.size(24.dp))
+            Icon(notification.iconName ?: notification.type.iconName, color = accent, modifier = Modifier.size(24.dp))
         }
         Column(
             modifier = Modifier.weight(1f),
@@ -127,7 +125,7 @@ private fun NotificationRow(notification: Notification) {
                     modifier = Modifier.weight(1f).padding(end = 8.dp),
                 )
                 Text(
-                    relativeTime(notification.createdAt),
+                    Formatters.relativeTime(Instant.ofEpochMilli(notification.createdAt)),
                     color = theme.textColorSecondary,
                     fontSize = 10.sp,
                 )
@@ -149,24 +147,9 @@ private fun NotificationRow(notification: Notification) {
                 )
             }
 
-            val progress = notification.progressOrNull()
+            val progress = liveProgress(notification)
             if (progress != null) {
-                Box(
-                    Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(theme.circleShape)
-                        .background(Accent.copy(0.5f)),
-                ) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth(progress)
-                            .height(6.dp)
-                            .clip(theme.circleShape)
-                            .background(Accent),
-                    )
-                }
+                ProgressBar(progress, Modifier.padding(top = 8.dp), ControlSize.Regular)
             }
 
             if (notification.actions.isNotEmpty()) {
@@ -183,40 +166,45 @@ private fun NotificationRow(notification: Notification) {
 
 @Composable
 private fun ActionButton(notification: Notification, action: NotificationAction) {
-    val theme = LocalTheme.current
-    val source = rememberInteractionSource()
-    val isHovered by source.collectIsHoveredAsState()
-
-    val base = if (action.primary) Accent else theme.textColor.copy(0.08f)
-    val background by animateAccentColorAsState(isHovered to action.primary, if (isHovered) theme.textColor.copy(0.12f).compositeOver(base) else base)
-
-    Box(
-        modifier = Modifier
-            .clip(ButtonShape)
-            .background(background, ButtonShape)
-            .onClick(source) {
-                action.onClick.run()
-                NotificationsManager.remove(notification)
-            }
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    ) {
-        Text(
-            action.label,
-            color = if (action.primary) theme.accentTextColor else theme.textColor,
-            fontSize = 12.sp,
-            lineHeight = 18.sp,
-            fontWeight = FontWeight.Medium,
-        )
-    }
+    TextButton(
+        action.label,
+        {
+            action.onClick.run()
+            if (action.dismissOnClick) NotificationsManager.remove(notification)
+        },
+        style = when {
+            !action.primary -> ControlStyle.Secondary
+            notification.type == NotificationType.ERROR -> ControlStyle.DangerFilled
+            else -> ControlStyle.Primary
+        },
+        size = ControlSize.Compact,
+        enabled = action.enabled,
+    )
 }
+
+private fun notificationMenu(notification: Notification): List<MenuEntry> = listOf(
+    MenuAction(translated("oneconfig.notifications.dismiss", "Dismiss"), { NotificationsManager.remove(notification) }, icon = "close"),
+    MenuAction(
+        translated("oneconfig.notifications.copy", "Copy text"),
+        { ClipboardHelper.setString(listOf(notification.title, notification.message).filter { it.isNotEmpty() }.joinToString("\n")) },
+        icon = "copy",
+    ),
+    MenuSeparator,
+    MenuAction(
+        translated("oneconfig.notifications.clear_all", "Clear all notifications"),
+        { NotificationsManager.clearHistory() },
+        icon = "trash",
+        danger = true,
+    ),
+)
 
 @Composable
 private fun Footer() {
     val theme = LocalTheme.current
     val source = rememberInteractionSource()
     val isHovered by source.collectIsHoveredAsState()
-    val color by animateColorAsState(if (isHovered) theme.textColor else theme.textColor.copy(0.85f))
+    val color by Motion.animateColorAsState(if (isHovered) theme.textColor else theme.textColor.copy(0.85f))
+    val label = translated("oneconfig.notifications.clear_all", "Clear all notifications")
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -226,13 +214,13 @@ private fun Footer() {
         Row(
             modifier = Modifier
                 .clip(ButtonShape)
-                .onClick(source) { NotificationsManager.clearHistory() }
+                .oneConfigClickable(label, { NotificationsManager.clearHistory() }, indication = false, interactionSource = source)
                 .pointerHoverIcon(PointerIcon.Hand),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon("trash", color = color, modifier = Modifier.size(18.dp))
-            Text("Clear all notifications", color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text(label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -240,18 +228,20 @@ private fun Footer() {
 @Composable
 private fun accentFor(type: NotificationType): Color = when (type) {
     NotificationType.INFO -> LocalTheme.current.textColor
-    NotificationType.SUCCESS -> SuccessColor
-    NotificationType.ERROR -> ErrorColor
+    NotificationType.SUCCESS -> LocalTheme.current.success
+    NotificationType.ERROR -> LocalTheme.current.error
+    NotificationType.WARNING -> LocalTheme.current.warning
     NotificationType.PROGRESS -> Accent
 }
 
-private fun relativeTime(createdAt: Long, now: Long = System.currentTimeMillis()): String {
-    val seconds = ((now - createdAt) / 1000L).coerceAtLeast(0L)
-    return when {
-        seconds < 5 -> "Just now"
-        seconds < 60 -> "${seconds}s ago"
-        seconds < 3600 -> "${seconds / 60}m ago"
-        seconds < 86400 -> "${seconds / 3600}h ago"
-        else -> "${seconds / 86400}d ago"
+@Composable
+private fun liveProgress(notification: Notification): Float? {
+    var frame by remember(notification.id) { mutableLongStateOf(0L) }
+    val progress = frame.let { notification.progressOrNull() }
+    if (progress != null && progress < 1f && notification.progress != null) {
+        LaunchedEffect(notification.id) {
+            while (true) withFrameNanos { frame = it }
+        }
     }
+    return progress
 }

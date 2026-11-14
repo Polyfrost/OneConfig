@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -10,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,10 +21,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,32 +36,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.window.PopupPositionProvider
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import java.nio.file.Files
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -68,21 +61,32 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
-import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
-import org.polyfrost.oneconfig.api.ui.v1.components.MenuItemSize
-import org.polyfrost.oneconfig.api.ui.v1.components.MenuSurface
+import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
+import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.ModalDialog
+import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.ProgressBar
+import org.polyfrost.oneconfig.api.ui.v1.components.Scrollbar
+import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.TextPromptDialog
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.smoothWheelScroll
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
-import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.ProfileKeybinds
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -112,9 +116,10 @@ private data class ProfileActionResult(
 )
 
 private val ProfileCardHeight = 180.dp
+private val ProfileKeybindClearance = 12.dp
+private const val BusyOverlayDelayMs = 400L
 private const val OverlayFrameTimeoutMs = 500L
-private val DangerColor = Color(0xFFE35B5B)
-private enum class ProfileEditor { Rename, Clone, Icon, Delete }
+private enum class ProfileEditor { Rename, Clone, Icon }
 private val ProfileIconOptions = listOf(
     "profiles",
     "star",
@@ -136,26 +141,39 @@ fun Profiles() {
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
+    var busyInstant by remember { mutableStateOf(false) }
     var createTick by remember { mutableIntStateOf(0) }
     var profileSpecificControls by remember { mutableStateOf(true) }
+    var loadState by remember { mutableStateOf<LoadState>(LoadState.Loading) }
+    var loadAttempt by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(Unit) {
-        val loaded = withContext(Dispatchers.IO) {
-            loadProfiles() to ConfigManager.profileSpecificControls()
+    LaunchedEffect(loadAttempt) {
+        loadState = LoadState.Loading
+        try {
+            val loaded = withContext(Dispatchers.IO) {
+                loadProfiles() to ConfigManager.profileSpecificControls()
+            }
+            profiles = loaded.first
+            profileSpecificControls = loaded.second
+            loadState = LoadState.Idle
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Throwable) {
+            loadState = LoadState.Error(failure.messageOrType())
         }
-        profiles = loaded.first
-        profileSpecificControls = loaded.second
     }
 
     fun runProfileAction(
         onSuccess: () -> Unit = {},
-        onError: (String) -> Unit = { Notifications.error("Profile action failed", it) },
+        onError: (String) -> Unit = { Notifications.error(actionFailedTitle(), it) },
         holdsBusy: Boolean = false,
+        instant: Boolean = false,
         action: () -> Unit,
     ) {
         Platform.screen().runOnUiThread {
             if (busy && !holdsBusy) return@runOnUiThread
             busy = true
+            busyInstant = instant
             // A profile operation must finish refreshing the global registry even if this page is
             // closed while its blocking IO is still running. Enter the non-cancellable section
             // before the first suspension so disposal of the composition cannot strand the UI on
@@ -163,7 +181,7 @@ fun Profiles() {
             val ownerJob = scope.coroutineContext[Job]!!
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 withContext(NonCancellable) {
-                    awaitOverlayDrawn()
+                    if (instant) awaitOverlayDrawn()
                     val result = withContext(Dispatchers.IO) {
                         try {
                             action()
@@ -182,7 +200,7 @@ fun Profiles() {
                         if (ownerJob.isCancelled) {
                             result.failure?.let { failure ->
                                 Notifications.error(
-                                    "Profile action failed",
+                                    actionFailedTitle(),
                                     failure.messageOrType(),
                                 )
                             }
@@ -195,11 +213,12 @@ fun Profiles() {
                             else onError(failure.messageOrType())
                         } catch (failure: Throwable) {
                             Notifications.error(
-                                "Profile action failed",
+                                actionFailedTitle(),
                                 failure.messageOrType(),
                             )
                         } finally {
                             busy = false
+                            busyInstant = false
                         }
                     }
                 }
@@ -213,13 +232,12 @@ fun Profiles() {
             busy = true
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 withContext(NonCancellable) {
-                    awaitOverlayDrawn()
                     val choice = try {
                         withContext(Dispatchers.IO) { prompt() }
                     } catch (failure: Throwable) {
                         Platform.screen().runOnUiThread {
                             busy = false
-                            Notifications.error("Profile action failed", failure.messageOrType())
+                            Notifications.error(actionFailedTitle(), failure.messageOrType())
                         }
                         return@withContext
                     }
@@ -256,7 +274,7 @@ fun Profiles() {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProfileCategory.entries.forEach {
                         Chip(
-                            label = it.title,
+                            label = translated("oneconfig.profiles.category.${it.name.lowercase()}", it.title),
                             selected = activeCategory == it,
                             icon = it.icon,
                             onClick = { activeCategory = it }
@@ -265,7 +283,7 @@ fun Profiles() {
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Chip(
-                        label = "Separate controls",
+                        label = translated("oneconfig.profiles.separate_controls", "Separate controls"),
                         selected = profileSpecificControls,
                         icon = "keyboard",
                         onClick = {
@@ -276,7 +294,7 @@ fun Profiles() {
                         },
                     )
                     Chip(
-                        label = "Open folder",
+                        label = translated("oneconfig.profiles.open_folder", "Open folder"),
                         selected = false,
                         icon = "folder",
                         onClick = {
@@ -285,7 +303,10 @@ fun Profiles() {
                                     Files.createDirectories(ConfigManager.PROFILES_DIR)
                                     DesktopHelper.open(ConfigManager.PROFILES_DIR.toFile())
                                 }.onFailure {
-                                    Notifications.error("Could not open the profiles folder", it.messageOrType())
+                                    Notifications.error(
+                                        translated("oneconfig.profiles.open_folder.failed", "Could not open the profiles folder"),
+                                        it.messageOrType(),
+                                    )
                                 }
                             }
                         },
@@ -293,12 +314,23 @@ fun Profiles() {
                 }
             }
 
-            ProfilesGrid(
+            val state = loadState
+            if (state != LoadState.Idle) {
+                Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
+                    EmptyState(
+                        if (state is LoadState.Error) translated("oneconfig.profiles.load_failed", "Couldn't load profiles")
+                        else translated("oneconfig.profiles.loading", "Loading profiles"),
+                        state = state,
+                        onRetry = { loadAttempt++ },
+                    )
+                }
+            } else ProfilesGrid(
                 profiles = visibleProfiles,
                 existingProfileIds = existingProfileIds,
                 showCreateProfile = activeCategory == ProfileCategory.All && localSearchQuery.isBlank(),
-                emptyMessage = if (localSearchQuery.isBlank()) "No favorite profiles."
-                    else "No profiles match \"$localSearchQuery\"",
+                emptyMessage = if (localSearchQuery.isBlank()) translated("oneconfig.profiles.no_favorites", "No favorite profiles.")
+                    else translated("oneconfig.profiles.nomatch", "No profiles match \"%s\"", localSearchQuery),
+                emptyIcon = if (localSearchQuery.isBlank()) "star" else "search",
                 newProfileName = newProfileName,
                 createError = createError,
                 busy = busy,
@@ -319,7 +351,7 @@ fun Profiles() {
                 },
                 onOpen = { profile ->
                     if (!profile.active) {
-                        runProfileAction { ConfigManager.openProfile(profile.id) }
+                        runProfileAction(instant = true) { ConfigManager.openProfile(profile.id) }
                     }
                 },
                 onFavorite = { profile ->
@@ -339,17 +371,23 @@ fun Profiles() {
                     runProfileAction(onSuccess, onError) { ConfigManager.setProfileIcon(profile.id, icon) }
                 },
                 onDelete = { profile ->
-                    runProfileAction { ConfigManager.deleteProfile(profile.id) }
+                    Confirm.ask(
+                        translated("oneconfig.profiles.delete.title", "Delete profile?"),
+                        translated("oneconfig.profiles.delete.text", "The profile \"%s\" and all its settings will be deleted.", profile.name),
+                        translated("oneconfig.profiles.delete.confirm", "Delete profile"),
+                        onConfirm = { runProfileAction(instant = profile.active) { ConfigManager.deleteProfile(profile.id) } },
+                        icon = "trash",
+                    )
                 },
                 onExport = { profile ->
                     runProfileDialog(
                         prompt = {
                             val defaultName = profile.name.replace(Regex("[^a-zA-Z0-9._-]"), "_") + ".zip"
                             TinyFdApi.getInstance().openSaveSelector(
-                                "Export profile",
+                                translated("oneconfig.profiles.export.title", "Export profile"),
                                 defaultName,
                                 arrayOf("*.zip"),
-                                "Zip archive",
+                                translated("oneconfig.profiles.export.filter", "Zip archive"),
                             )
                         },
                         action = { destination ->
@@ -364,7 +402,7 @@ fun Profiles() {
                 }
             )
         }
-        if (busy) ProfileBusyOverlay()
+        if (busy) ProfileBusyOverlay(busyInstant)
     }
 }
 
@@ -376,48 +414,35 @@ private suspend fun awaitOverlayDrawn() {
 }
 
 @Composable
-private fun ProfileBusyOverlay() {
+private fun ProfileBusyOverlay(instant: Boolean) {
+    var shown by remember { mutableStateOf(instant) }
+    LaunchedEffect(Unit) {
+        if (shown) return@LaunchedEffect
+        delay(BusyOverlayDelayMs)
+        shown = true
+    }
+    if (!shown) return
     val theme = LocalTheme.current
-    ShellPopup(
-        popupPositionProvider = WindowOriginPositionProvider,
-        properties = PopupProperties(focusable = true, dismissOnBackPress = false, dismissOnClickOutside = false),
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize().background(theme.shadowColor.copy(alpha = 0.55f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                modifier = Modifier
-                    .liquidGlass(theme.modCardShape, frosted = true)
-                    .background(theme.modCardBackground, theme.modCardShape)
-                    .padding(horizontal = 32.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    "Applying profile changes\u2026",
-                    color = theme.textColor,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(
-                    "The game will stop responding until it finishes.",
-                    color = theme.textColorSecondary,
-                    fontSize = 14.sp,
-                )
-            }
-        }
+    ModalDialog(onDismiss = {}, dismissOnScrim = false, dismissOnEscape = false) {
+        Text(
+            translated("oneconfig.profiles.busy.title", "Applying profile changes\u2026"),
+            Modifier.fillMaxWidth(),
+            theme.textColor,
+            theme.typography.title,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            translated("oneconfig.profiles.busy.text", "The game will stop responding until it finishes."),
+            Modifier.fillMaxWidth(),
+            theme.textColorSecondary,
+            theme.typography.body,
+            textAlign = TextAlign.Center,
+        )
+        ProgressBar(null, Modifier.fillMaxWidth().padding(top = theme.spacing.xs))
     }
 }
 
-private object WindowOriginPositionProvider : PopupPositionProvider {
-    override fun calculatePosition(
-        anchorBounds: IntRect,
-        windowSize: IntSize,
-        layoutDirection: LayoutDirection,
-        popupContentSize: IntSize,
-    ): IntOffset = IntOffset.Zero
-}
+private fun actionFailedTitle(): String = translated("oneconfig.profiles.action_failed", "Profile action failed")
 
 private fun Throwable.messageOrType(): String = message ?: this::class.java.simpleName
 
@@ -434,7 +459,7 @@ private fun loadProfiles(): List<UiProfile> {
     return ConfigManager.profiles().map { id ->
         UiProfile(
             id = id,
-            name = if (id.isEmpty()) "Default" else id,
+            name = if (id.isEmpty()) translated("oneconfig.profiles.default", "Default") else id,
             icon = icons[id] ?: "profiles",
             active = id == active,
             favorite = id in favorites,
@@ -448,6 +473,7 @@ private fun ColumnScope.ProfilesGrid(
     existingProfileIds: Set<String>,
     showCreateProfile: Boolean,
     emptyMessage: String,
+    emptyIcon: String,
     newProfileName: String,
     createError: String?,
     busy: Boolean,
@@ -479,85 +505,88 @@ private fun ColumnScope.ProfilesGrid(
 
     if (profiles.isEmpty() && !showCreateProfile) {
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+            EmptyState(emptyMessage, icon = emptyIcon)
         }
         return
     }
 
     val gridState = rememberLazyGridState()
-    LazyVerticalGrid(
-        state = gridState,
-        modifier = Modifier.weight(1f).wheelScroll(gridState),
-        columns = GridCells.Fixed(5),
-        verticalArrangement = Arrangement.spacedBy(19.dp),
-        horizontalArrangement = Arrangement.spacedBy(19.dp),
-    ) {
-        if (showCreateProfile) {
-            item(key = "create-profile") {
-                CreateProfileCard(
-                    value = newProfileName,
-                    error = createError,
+    Box(Modifier.weight(1f)) {
+        LazyVerticalGrid(
+            state = gridState,
+            modifier = Modifier.fillMaxSize().padding(end = LocalTheme.current.spacing.l).smoothWheelScroll(gridState),
+            columns = GridCells.Fixed(5),
+            verticalArrangement = Arrangement.spacedBy(19.dp),
+            horizontalArrangement = Arrangement.spacedBy(19.dp),
+        ) {
+            if (showCreateProfile) {
+                item(key = "create-profile") {
+                    CreateProfileCard(
+                        value = newProfileName,
+                        error = createError,
+                        busy = busy,
+                        creating = creatingProfile,
+                        createTick = createTick,
+                        onValueChange = onNewProfileNameChange,
+                        onCreate = onCreateProfile,
+                        onCreatingChange = { creating ->
+                            creatingProfile = creating
+                            if (creating) {
+                                editingProfileId = null
+                                activeEditor = null
+                                menuProfileId = null
+                            }
+                        },
+                    )
+                }
+            }
+            items(profiles, key = { "profile:${it.id}" }) { profile ->
+                ProfileCard(
+                    profile = profile,
                     busy = busy,
-                    creating = creatingProfile,
-                    createTick = createTick,
-                    onValueChange = onNewProfileNameChange,
-                    onCreate = onCreateProfile,
-                    onCreatingChange = { creating ->
-                        creatingProfile = creating
-                        if (creating) {
-                            editingProfileId = null
-                            activeEditor = null
+                    editor = activeEditor.takeIf { editingProfileId == profile.id },
+                    menuOpen = menuProfileId == profile.id,
+                    suggestedCloneName = nextCloneName(profile.name, existingProfileIds),
+                    onEditorChange = { editor ->
+                        if (editor == null) {
+                            if (editingProfileId == profile.id) {
+                                editingProfileId = null
+                                activeEditor = null
+                            }
+                        } else {
+                            creatingProfile = false
+                            editingProfileId = profile.id
+                            activeEditor = editor
                             menuProfileId = null
                         }
                     },
+                    onMenuOpenChange = { open ->
+                        if (open) {
+                            creatingProfile = false
+                            menuProfileId = profile.id
+                            editingProfileId = null
+                            activeEditor = null
+                        } else if (menuProfileId == profile.id) {
+                            menuProfileId = null
+                        }
+                    },
+                    onOpen = { onOpen(profile) },
+                    onFavorite = { onFavorite(profile) },
+                    onRename = { newName, onSuccess, onError ->
+                        onRename(profile, newName, onSuccess, onError)
+                    },
+                    onClone = { newName, onSuccess, onError ->
+                        onClone(profile, newName, onSuccess, onError)
+                    },
+                    onIconChange = { icon, onSuccess, onError ->
+                        onIconChange(profile, icon, onSuccess, onError)
+                    },
+                    onDelete = { onDelete(profile) },
+                    onExport = { onExport(profile) },
                 )
             }
         }
-        items(profiles, key = { "profile:${it.id}" }) { profile ->
-            ProfileCard(
-                profile = profile,
-                busy = busy,
-                editor = activeEditor.takeIf { editingProfileId == profile.id },
-                menuOpen = menuProfileId == profile.id,
-                suggestedCloneName = nextCloneName(profile.name, existingProfileIds),
-                onEditorChange = { editor ->
-                    if (editor == null) {
-                        if (editingProfileId == profile.id) {
-                            editingProfileId = null
-                            activeEditor = null
-                        }
-                    } else {
-                        creatingProfile = false
-                        editingProfileId = profile.id
-                        activeEditor = editor
-                        menuProfileId = null
-                    }
-                },
-                onMenuOpenChange = { open ->
-                    if (open) {
-                        creatingProfile = false
-                        menuProfileId = profile.id
-                        editingProfileId = null
-                        activeEditor = null
-                    } else if (menuProfileId == profile.id) {
-                        menuProfileId = null
-                    }
-                },
-                onOpen = { onOpen(profile) },
-                onFavorite = { onFavorite(profile) },
-                onRename = { newName, onSuccess, onError ->
-                    onRename(profile, newName, onSuccess, onError)
-                },
-                onClone = { newName, onSuccess, onError ->
-                    onClone(profile, newName, onSuccess, onError)
-                },
-                onIconChange = { icon, onSuccess, onError ->
-                    onIconChange(profile, icon, onSuccess, onError)
-                },
-                onDelete = { onDelete(profile) },
-                onExport = { onExport(profile) },
-            )
-        }
+        Scrollbar(gridState, Modifier.align(Alignment.CenterEnd).fillMaxHeight())
     }
 }
 
@@ -677,7 +706,7 @@ private fun CreateProfileCard(
             if (creating) {
                 ProfileTextField(
                     value = value,
-                    placeholder = "Profile name",
+                    placeholder = translated("oneconfig.profiles.name_placeholder", "Profile name"),
                     error = error,
                     enabled = !busy,
                     width = 150.dp,
@@ -686,10 +715,9 @@ private fun CreateProfileCard(
                 )
             } else {
                 Text(
-                    "New profile",
+                    translated("oneconfig.profiles.new", "New profile"),
                     color = theme.textColor.copy(alpha = 0.86f),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = theme.typography.title.copy(fontWeight = FontWeight.Medium),
                 )
             }
         }
@@ -717,28 +745,44 @@ private fun ProfileCard(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
     val shape = theme.modCardShape
-    var editName by remember(profile.id) { mutableStateOf(profile.name) }
-    var editError by remember(profile.id) { mutableStateOf<String?>(null) }
+    var iconError by remember(profile.id) { mutableStateOf<String?>(null) }
+    var nameError by remember(profile.id) { mutableStateOf<Pair<String, String>?>(null) }
     val keybindProp = remember(profile.id) { ProfileKeybinds.property(profile.id) }
+
+    fun openEditor(next: ProfileEditor) {
+        iconError = null
+        nameError = null
+        onEditorChange(next)
+    }
 
     fun closeEditor() {
         onEditorChange(null)
-        editName = profile.name
-        editError = null
+        iconError = null
+        nameError = null
     }
 
-    fun submitName() {
-        if (busy) return
-        editError = null
-        val onSuccess = {
-            onEditorChange(null)
-            editError = null
+    fun menuEntries(): List<MenuEntry> = buildList<MenuEntry> {
+        add(MenuAction(translated("oneconfig.profiles.menu.apply", "Apply"), onOpen, icon = "tick", enabled = !busy && !profile.active))
+        if (profile.editable) {
+            add(MenuAction(translated("oneconfig.profiles.menu.rename", "Rename"), { openEditor(ProfileEditor.Rename) }, icon = "text-input", enabled = !busy))
         }
-        val onError = { message: String -> editError = message }
-        when (editor) {
-            ProfileEditor.Rename -> onRename(editName, onSuccess, onError)
-            ProfileEditor.Clone -> onClone(editName, onSuccess, onError)
-            else -> Unit
+        add(MenuAction(translated("oneconfig.profiles.menu.clone", "Clone"), { openEditor(ProfileEditor.Clone) }, icon = "copy", enabled = !busy))
+        if (profile.editable) {
+            add(MenuAction(translated("oneconfig.profiles.menu.icon", "Change icon"), { openEditor(ProfileEditor.Icon) }, icon = "paintbrush", enabled = !busy))
+        }
+        add(
+            MenuAction(
+                if (profile.favorite) translated("oneconfig.profiles.menu.unfavorite", "Remove favorite")
+                else translated("oneconfig.profiles.menu.favorite", "Favorite"),
+                onFavorite,
+                icon = if (profile.favorite) "star-filled" else "star",
+                enabled = !busy,
+            ),
+        )
+        add(MenuAction(translated("oneconfig.profiles.menu.export", "Export / share"), onExport, icon = "down", enabled = !busy))
+        if (profile.editable) {
+            add(MenuSeparator)
+            add(MenuAction(translated("oneconfig.profiles.menu.delete", "Delete"), onDelete, icon = "trash", enabled = !busy, danger = true))
         }
     }
 
@@ -759,6 +803,7 @@ private fun ProfileCard(
                     listOf(theme.borderColor, theme.borderColor.copy(0f))
                 ), shape
             )
+            .contextMenu(enabled = editor == null) { menuEntries() }
             .onClick(interactionSource) {
                 if (editor == null && !menuOpen) onOpen()
             }
@@ -792,114 +837,59 @@ private fun ProfileCard(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (editor != null) {
-                when (editor) {
-                    ProfileEditor.Rename, ProfileEditor.Clone ->
-                        ActionIcon("tick", enabled = !busy, tint = Accent, onClick = ::submitName)
-                    ProfileEditor.Delete -> ActionIcon("tick", enabled = !busy, tint = DangerColor) {
-                        onEditorChange(null)
-                        onDelete()
-                    }
-                    ProfileEditor.Icon -> Unit
-                }
+            if (editor == ProfileEditor.Icon) {
                 ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary, onClick = ::closeEditor)
             } else {
                 if (profile.favorite) {
                     ActionIcon("star-filled", enabled = !busy, tint = theme.favoriteColor) { onFavorite() }
                 }
                 if (profile.active || isHovered || menuOpen) {
-                    ActionIcon("settings", enabled = !busy, tint = theme.textColorSecondary, hoveredTint = Accent) {
-                        onMenuOpenChange(true)
+                    Box {
+                        ActionIcon("settings", enabled = !busy, tint = theme.textColorSecondary, hoveredTint = Accent) {
+                            onMenuOpenChange(true)
+                        }
+                        DropdownMenu(menuOpen, { onMenuOpenChange(false) }, menuEntries(), placement = Placement.BelowEnd)
                     }
                 }
             }
         }
 
-        ProfileActionsMenu(
-            profile = profile,
-            expanded = menuOpen,
-            enabled = !busy,
-            onDismiss = { onMenuOpenChange(false) },
-            onClone = {
-                editName = suggestedCloneName
-                editError = null
-                onEditorChange(ProfileEditor.Clone)
-            },
-            onRename = {
-                editName = profile.name
-                editError = null
-                onEditorChange(ProfileEditor.Rename)
-            },
-            onIconChange = {
-                editError = null
-                onEditorChange(ProfileEditor.Icon)
-            },
-            onFavorite = onFavorite,
-            onExport = onExport,
-            onDelete = {
-                editError = null
-                onEditorChange(ProfileEditor.Delete)
-            },
-        )
-
         Column(
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier.align(Alignment.Center).offset(y = if (editor == null) -ProfileKeybindClearance else 0.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val compact = editor != null && editor != ProfileEditor.Delete
+            val compact = editor == ProfileEditor.Icon
             Icon(profile.icon, modifier = Modifier.size(if (compact) 42.dp else 64.dp), color = theme.textColor)
             Spacer(Modifier.height(if (compact) 14.dp else 24.dp))
-            when (editor) {
-                ProfileEditor.Rename, ProfileEditor.Clone -> ProfileTextField(
-                    value = editName,
-                    placeholder = "Profile name",
-                    width = 150.dp,
-                    error = editError,
-                    enabled = !busy,
-                    onValueChange = {
-                        editName = it
-                        editError = null
-                    },
-                    onSubmit = ::submitName,
-                )
-                ProfileEditor.Icon -> ProfileIconPicker(
+            if (editor == ProfileEditor.Icon) {
+                ProfileIconPicker(
                     selectedIcon = profile.icon,
                     enabled = !busy,
                     onIconChange = {
-                        editError = null
+                        iconError = null
                         onIconChange(
                             it,
                             {
                                 onEditorChange(null)
-                                editError = null
+                                iconError = null
                             },
-                            { message -> editError = message },
+                            { message -> iconError = message },
                         )
                     },
                 )
-                ProfileEditor.Delete, null -> {
-                    BasicText(
-                        profile.name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 18.dp),
-                        style = TextStyle(
-                            color = theme.textColor,
-                            fontSize = 18.sp,
-                            fontFamily = theme.typography.family,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-            if (editor == ProfileEditor.Icon && editError != null) {
-                ProfileError(editError!!, 150.dp)
-            }
-            if (editor == ProfileEditor.Delete) {
-                Text("Delete this profile?", modifier = Modifier.padding(top = 4.dp), color = DangerColor, fontSize = 13.sp)
+                iconError?.let { ProfileError(it, 150.dp) }
+            } else {
+                Text(
+                    profile.name,
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp),
+                    theme.textColor,
+                    theme.typography.title.copy(fontWeight = FontWeight.Medium),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                )
             }
         }
 
@@ -909,74 +899,46 @@ private fun ProfileCard(
             }
         }
     }
-}
 
-@Composable
-private fun ProfileActionsMenu(
-    profile: UiProfile,
-    expanded: Boolean,
-    enabled: Boolean,
-    onDismiss: () -> Unit,
-    onClone: () -> Unit,
-    onRename: () -> Unit,
-    onIconChange: () -> Unit,
-    onFavorite: () -> Unit,
-    onExport: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    if (!expanded) return
-    ShellPopup(
-        alignment = Alignment.TopEnd,
-        onDismissRequest = onDismiss,
-        properties = PopupProperties(focusable = true),
-    ) {
-        MenuSurface(Modifier) {
-            ProfileMenuItem("copy", "Clone", enabled = enabled) {
-                onDismiss()
-                onClone()
-            }
-            if (profile.editable) {
-                ProfileMenuItem("text-input", "Rename", enabled = enabled) {
-                    onDismiss()
-                    onRename()
-                }
-                ProfileMenuItem("paintbrush", "Change icon", enabled = enabled) {
-                    onDismiss()
-                    onIconChange()
-                }
-            }
-            ProfileMenuItem(
-                if (profile.favorite) "star-filled" else "star",
-                if (profile.favorite) "Remove favorite" else "Favorite",
-                enabled = enabled,
-            ) {
-                onDismiss()
-                onFavorite()
-            }
-            ProfileMenuItem("down", "Export / share", enabled = enabled) {
-                onDismiss()
-                onExport()
-            }
-            if (profile.editable) {
-                Spacer(Modifier.height(4.dp))
-                ProfileMenuItem("trash", "Delete", danger = true, enabled = enabled) {
-                    onDismiss()
-                    onDelete()
-                }
-            }
+    if (editor == ProfileEditor.Rename || editor == ProfileEditor.Clone) {
+        val renaming = editor == ProfileEditor.Rename
+        val initial = if (renaming) profile.name else suggestedCloneName
+        val title = if (renaming) translated("oneconfig.profiles.rename.title", "Rename profile")
+            else translated("oneconfig.profiles.clone.title", "Clone profile")
+        key(editor) {
+            TextPromptDialog(
+                title = title,
+                initial = initial,
+                onConfirm = { name ->
+                    if (!busy) {
+                        val submit = if (renaming) onRename else onClone
+                        submit(
+                            name,
+                            {
+                                nameError = null
+                                onEditorChange(null)
+                            },
+                            { message ->
+                                nameError = name to message
+                                if (name == initial) Notifications.error(title, message)
+                            },
+                        )
+                    }
+                },
+                onDismiss = { if (!busy) closeEditor() },
+                confirmLabel = if (renaming) translated("oneconfig.profiles.menu.rename", "Rename")
+                    else translated("oneconfig.profiles.menu.clone", "Clone"),
+                validate = { value ->
+                    val failed = nameError
+                    when {
+                        value.isBlank() -> translated("oneconfig.profiles.name_required", "Enter a name")
+                        failed != null && failed.first == value -> failed.second
+                        else -> null
+                    }
+                },
+            )
         }
     }
-}
-
-@Composable
-private fun ProfileMenuItem(
-    icon: String,
-    label: String,
-    danger: Boolean = false,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    MenuItem(label, icon, null, MenuItemSize.Compact, danger, false, enabled, null, Modifier, null, onClick)
 }
 
 @Composable
@@ -1024,7 +986,7 @@ private fun ProfileIconChoice(
         selected && enabled,
         if (selected && enabled) Accent else theme.borderColor.copy(alpha = 0f)
     )
-    val iconColor by animateColorAsState(
+    val iconColor by Motion.animateColorAsState(
         if (enabled && (selected || isHovered)) theme.textColor else theme.textColorSecondary
     )
 
@@ -1055,7 +1017,7 @@ private fun ActionIcon(
 ) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val iconColor by animateColorAsState(
+    val iconColor by Motion.animateColorAsState(
         if (enabled && isHovered) hoveredTint else tint
     )
 
@@ -1094,20 +1056,12 @@ private fun ProfileTextField(
             value,
             onValueChange,
             Modifier.fillMaxWidth(),
-            placeholder,
-            null,
-            Int.MAX_VALUE,
-            error != null,
-            enabled,
-            true,
-            true,
-            14.sp,
-            null,
-            false,
-            focusRequester,
-            null,
-            null,
-            onSubmit,
+            placeholder = placeholder,
+            enabled = enabled,
+            invalid = error != null,
+            fontSize = 14.sp,
+            focusRequester = focusRequester,
+            onSubmit = onSubmit,
         )
         if (error != null) ProfileError(error, width)
     }
@@ -1119,16 +1073,14 @@ private fun ProfileTextField(
 
 @Composable
 private fun ProfileError(message: String, width: Dp) {
-    BasicText(
-        text = message,
-        modifier = Modifier.width(width).padding(top = 4.dp),
-        style = TextStyle(
-            color = DangerColor,
-            fontSize = 10.sp,
-            fontFamily = LocalTheme.current.typography.family,
-            textAlign = TextAlign.Center,
-        ),
+    val theme = LocalTheme.current
+    Text(
+        message,
+        Modifier.width(width).padding(top = 4.dp),
+        theme.error,
+        theme.typography.caption,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
     )
 }

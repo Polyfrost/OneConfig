@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -241,7 +240,11 @@ public abstract class Config {
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
                 Object value = p.get();
-                if (value == null) continue;
+                if (value == null) {
+                    if (p.getMetadata("default") == null) p.addMetadata("defaultNull", true);
+                    if (out != null) out.put(prefix + entry.getKey(), null);
+                    continue;
+                }
                 Object def = p.getOrPutMetadata("default", () -> copyDefault(p.type, value));
                 if (out != null) out.put(prefix + entry.getKey(), def);
             } else if (node instanceof Tree) {
@@ -255,8 +258,12 @@ public abstract class Config {
             Node node = entry.getValue();
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
-                Object def = snapshot.get(prefix + entry.getKey());
-                if (def == null) continue;
+                String key = prefix + entry.getKey();
+                Object def = snapshot.get(key);
+                if (def == null) {
+                    if (snapshot.containsKey(key)) p.addMetadata("defaultNull", true);
+                    continue;
+                }
                 p.addMetadata("default", copyDefault(p.type, def));
             } else if (node instanceof Tree) {
                 applyDefaultSnapshot((Tree) node, prefix + entry.getKey() + ".", snapshot);
@@ -363,15 +370,14 @@ public abstract class Config {
         whenInitialized(() -> {
             Property<?> opt = getProperty(option).addDisplayCondition(condition);
             if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
-            WeakReference<Property<?>> ref = new WeakReference<>(opt);
-            tree.onAllProps((s, p) -> {
-                if (p == opt) return;
-                p.addCallback(t -> {
-                    Property<?> self = ref.get();
-                    if (self != null) self.revaluateDisplay();
-                    return false;
-                });
-            });
+            watchAll(tree, opt);
+        });
+    }
+
+    private static void watchAll(Tree tree, Property<?> dependent) {
+        tree.onAll((id, node) -> {
+            if (node instanceof Tree) watchAll((Tree) node, dependent);
+            else if (node instanceof Property && node != dependent) ((Property<?>) node).addDependent(dependent);
         });
     }
 

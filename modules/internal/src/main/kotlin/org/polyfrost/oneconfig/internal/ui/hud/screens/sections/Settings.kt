@@ -38,28 +38,28 @@ fun Settings(hud: Hud?, query: String) {
                     hudOptionsCanReset(hud, VISIBILITY_OPTIONS)
                 }
                 CardSection(
-                    "Visibility", query, "Show in F3 Screen", "Show in Tab List", "Show in GUIs", "Show in Chat",
+                    hudPanelText("visibility", "Visibility"), query, hudPanelText("show_in_f3", "Show in F3 Screen"), hudPanelText("show_in_tab", "Show in Tab List"), hudPanelText("show_in_screens", "Show in GUIs"), hudPanelText("show_in_chat", "Show in Chat"),
                     onReset = { resetHudOptions(hud, VISIBILITY_OPTIONS) },
                     canReset = canReset,
                     collapsedByDefault = !canReset,
                 ) {
                     HudSettingTarget(hud, "showInF3") {
-                        SwitchRow("Show in F3 Screen", showInF3) {
+                        SwitchRow(hudPanelText("show_in_f3", "Show in F3 Screen"), showInF3) {
                             Snapshot.withMutableSnapshot { showInF3 = it; hud.showInF3 = it }
                         }
                     }
                     HudSettingTarget(hud, "showInTab") {
-                        SwitchRow("Show in Tab List", showInTab) {
+                        SwitchRow(hudPanelText("show_in_tab", "Show in Tab List"), showInTab) {
                             Snapshot.withMutableSnapshot { showInTab = it; hud.showInTab = it }
                         }
                     }
                     HudSettingTarget(hud, "showInScreens") {
-                        SwitchRow("Show in GUIs", showInScreens) {
+                        SwitchRow(hudPanelText("show_in_screens", "Show in GUIs"), showInScreens) {
                             Snapshot.withMutableSnapshot { showInScreens = it; hud.showInScreens = it }
                         }
                     }
                     HudSettingTarget(hud, "showInChat") {
-                        SwitchRow("Show in Chat", showInChat) {
+                        SwitchRow(hudPanelText("show_in_chat", "Show in Chat"), showInChat) {
                             Snapshot.withMutableSnapshot { showInChat = it; hud.showInChat = it }
                         }
                     }

@@ -220,6 +220,20 @@ public final class org/polyfrost/oneconfig/utils/v1/Deprecator {
 	public static fun markDeprecated ()V
 }
 
+public final class org/polyfrost/oneconfig/utils/v1/Formatters {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/v1/Formatters;
+	public static final fun count (I)Ljava/lang/String;
+	public static final fun count (J)Ljava/lang/String;
+	public static final fun relativeTime (Ljava/time/Instant;)Ljava/lang/String;
+	public static final fun relativeTime (Ljava/time/Instant;Ljava/time/Instant;)Ljava/lang/String;
+	public static synthetic fun relativeTime$default (Ljava/time/Instant;Ljava/time/Instant;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun size (J)Ljava/lang/String;
+	public static final fun time (Ljava/time/Instant;)Ljava/lang/String;
+	public static final fun time (Ljava/time/Instant;Ljava/time/ZoneId;)Ljava/lang/String;
+	public static final fun time (Ljava/time/Instant;Ljava/time/ZoneId;Ljava/time/Instant;)Ljava/lang/String;
+	public static synthetic fun time$default (Ljava/time/Instant;Ljava/time/ZoneId;Ljava/time/Instant;ILjava/lang/Object;)Ljava/lang/String;
+}
+
 public final class org/polyfrost/oneconfig/utils/v1/IOUtils {
 	public static fun getFileChecksum (Ljava/nio/file/Path;)Ljava/lang/String;
 }
@@ -281,6 +295,15 @@ public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 	public static fun downloadFile (Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;IZ)Z
 	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
+	public static fun post (Ljava/lang/String;[BLjava/lang/String;)Ljava/lang/String;
+	public static fun post (Ljava/lang/String;[BLjava/lang/String;Ljava/util/Map;)Ljava/lang/String;
+	public static fun post (Ljava/lang/String;[BLjava/lang/String;Ljava/util/Map;I)Ljava/lang/String;
+	public static fun postAsync (Ljava/lang/String;[BLjava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public static fun postAsync (Ljava/lang/String;[BLjava/lang/String;Ljava/util/Map;)Ljava/util/concurrent/CompletableFuture;
+	public static fun postAsync (Ljava/lang/String;[BLjava/lang/String;Ljava/util/Map;I)Ljava/util/concurrent/CompletableFuture;
+	public static fun postJson (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static fun postJson (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
+	public static fun postJson (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;I)Ljava/lang/String;
 	public static fun setupConnection (Ljava/lang/String;)Ljava/io/InputStream;
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
 }

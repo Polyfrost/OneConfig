@@ -5,10 +5,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 
 /**
  * The corner radius scale
@@ -69,4 +71,14 @@ fun Shape.concentric(inset: Dp, minRadius: Dp = 0.dp): Shape {
     val outer = cornerRadiusOrNull() ?: return this
     val inner = (outer - inset).coerceAtLeast(minRadius)
     return RoundedCornerShape(inner)
+}
+
+private val ReferenceButtonRadius = Radii.SM
+
+@Composable
+fun themedShape(radius: Dp): Shape {
+    val theme = LocalTheme.current
+    if (theme.style == ThemeStyle.Pixel) return RectangleShape
+    val scale = theme.buttonShape.cornerRadiusOrNull()?.let { it / ReferenceButtonRadius } ?: 1f
+    return remember(radius, scale) { if (scale <= 0f) RectangleShape else RoundedCornerShape(radius * scale) }
 }

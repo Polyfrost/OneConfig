@@ -6,13 +6,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import java.util.concurrent.ConcurrentHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
+import net.kyori.adventure.text.format.Style
+import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.TextComponent
@@ -32,6 +36,8 @@ fun Any.asRenderText(): String {
 fun Any.isEmptyText() = this.asRenderText().isEmpty()
 
 private val LOGGER = LogManager.getLogger("OneConfig/Text-Renderer")
+
+private val warnedTextTypes = ConcurrentHashMap.newKeySet<Class<*>>()
 
 private const val LEGACY_CHAR = '§'
 
@@ -143,6 +149,7 @@ fun Text(
                 color = color,
                 lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
                 textAlign = textAlign,
+                baselineShift = shift,
             ),
             maxLines = maxLines,
             overflow = overflow,
@@ -150,25 +157,82 @@ fun Text(
             color = colorProducer,
         )
         is Iterable<*> -> {
-            Column {
-                comp.forEach { Text(it ?: return@forEach, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow) }
+            Column(modifier) {
+                comp.forEach { Text(it ?: return@forEach, Modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, colorProducer) }
             }
         }
 
         else -> {
-            LOGGER.warn("Unsupported text type " + comp.javaClass.simpleName)
-            BasicText(
-                buildAnnotatedString { withStyle(SpanStyle(color = Color.Red)) { append("Error") } }, style = TextStyle(
-                    fontSize = fontSize, fontWeight = fontWeight,
-                    fontFamily = LocalTheme.current.typography.family,
-                    color = color,
-                    lineHeight = lineHeight ?: TextStyle.Default.lineHeight,
-                    textAlign = textAlign,
-                ),
-                modifier = modifier
-            )
+            if (warnedTextTypes.add(comp.javaClass)) LOGGER.warn("Unsupported text type {}; drawing its toString() instead", comp.javaClass.name)
+            Text(comp.toString(), modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, colorProducer)
         }
     }
 
 
+}
+
+@Composable
+fun StyledText(
+    text: AnnotatedString,
+    modifier: Modifier,
+    color: Color,
+    style: TextStyle,
+    maxLines: Int,
+    overflow: TextOverflow,
+    softWrap: Boolean,
+    textAlign: TextAlign?,
+    colorProducer: ColorProducer?,
+    onTextLayout: ((TextLayoutResult) -> Unit)?,
+) {
+    val theme = LocalTheme.current
+    val resolved = when {
+        color.isSpecified -> color
+        style.color.isSpecified -> style.color
+        else -> theme.textColor
+    }
+    BasicText(
+        text = text,
+        modifier = modifier,
+        style = style.merge(
+            TextStyle(
+                color = resolved,
+                fontFamily = style.fontFamily ?: theme.typography.family,
+                textAlign = textAlign ?: style.textAlign,
+            ),
+        ),
+        onTextLayout = onTextLayout,
+        overflow = overflow,
+        softWrap = softWrap,
+        maxLines = maxLines,
+        color = colorProducer,
+    )
+}
+
+fun legacyText(text: String): AnnotatedString =
+    if (text.indexOf(LEGACY_CHAR) >= 0) parseLegacyFormatting(text, Color.Unspecified) else AnnotatedString(text)
+
+fun componentText(component: Component): AnnotatedString = buildAnnotatedString { appendComponent(component, Style.empty()) }
+
+private fun AnnotatedString.Builder.appendComponent(component: Component, inherited: Style) {
+    val style = component.style().merge(inherited, Style.Merge.Strategy.IF_ABSENT_ON_TARGET)
+    withStyle(componentSpanStyle(style)) {
+        append(parseLegacyFormatting(Platform.compatibility().resolveComponent(component.children(emptyList())), Color.Unspecified))
+    }
+    component.children().forEach { appendComponent(it, style) }
+}
+
+private fun componentSpanStyle(style: Style): SpanStyle {
+    val strikethrough = style.hasDecoration(KyoriDecoration.STRIKETHROUGH)
+    val underlined = style.hasDecoration(KyoriDecoration.UNDERLINED)
+    return SpanStyle(
+        color = style.color()?.let { Color(it.value()).copy(alpha = 1f) } ?: Color.Unspecified,
+        fontWeight = if (style.hasDecoration(KyoriDecoration.BOLD)) FontWeight.Bold else null,
+        textGeometricTransform = if (style.hasDecoration(KyoriDecoration.ITALIC)) TextGeometricTransform(1f, 0.5f) else null,
+        textDecoration = when {
+            strikethrough && underlined -> TextDecoration.combine(listOf(TextDecoration.LineThrough, TextDecoration.Underline))
+            strikethrough -> TextDecoration.LineThrough
+            underlined -> TextDecoration.Underline
+            else -> null
+        },
+    )
 }

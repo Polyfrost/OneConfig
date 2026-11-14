@@ -1,7 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -9,6 +16,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
@@ -120,12 +128,62 @@ fun resolveOpenTarget(target: Any?): Any? = when (target) {
     else -> target
 }
 
+object PageArguments {
+    private class Delivery(val pageId: String, val argument: Any)
+
+    private var revision by mutableIntStateOf(0)
+
+    @Volatile
+    private var pending: Delivery? = null
+
+    private val retained = ConcurrentHashMap<String, Delivery>()
+    private val live = ConcurrentHashMap<String, Int>()
+    private val scope = ThreadLocal<String?>()
+
+    fun offer(pageId: String, argument: Any) {
+        pending = Delivery(pageId, argument)
+        Snapshot.withMutableSnapshot { revision++ }
+    }
+
+    fun take(): Any? {
+        val pageId = scope.get() ?: live.keys.singleOrNull() ?: return null
+        return retained[pageId]?.argument
+    }
+
+    private fun claim(pageId: String): Delivery? {
+        val delivery = pending?.takeIf { it.pageId == pageId } ?: return null
+        pending = null
+        retained[pageId] = delivery
+        return delivery
+    }
+
+    private class Latest(var delivery: Delivery?)
+
+    @Composable
+    fun Deliver(pageId: String, content: @Composable () -> Unit) {
+        val round = revision
+        val delivered = remember(pageId, round) { claim(pageId) }
+        val latest = remember(pageId) { Latest(null) }
+        if (delivered != null) latest.delivery = delivered
+        DisposableEffect(pageId) {
+            live.merge(pageId, 1, Int::plus)
+            onDispose { live.compute(pageId) { _, count -> if (count == null || count <= 1) null else count - 1 } }
+        }
+        key(latest.delivery) {
+            val previous = scope.get()
+            scope.set(pageId)
+            content()
+            scope.set(previous)
+        }
+    }
+}
+
 fun NavGraphBuilder.pageDestinations() {
     composable<PageRoute> { entry ->
         val id = entry.toRoute<PageRoute>().pageId
         val page = OneConfigPages.byId(id)
         if (page != null) {
-            page.Content()
+            PageArguments.Deliver(id) { page.Content() }
             return@composable
         }
         val shell = LocalShell.current

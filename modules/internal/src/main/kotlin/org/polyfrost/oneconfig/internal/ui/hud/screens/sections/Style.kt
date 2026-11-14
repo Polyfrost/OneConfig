@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
 import androidx.compose.foundation.background
@@ -25,12 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.hud.v1.Weight
-import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
-import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPicker
-import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorSwatchButton
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.Dropdown
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.components.settings.Radio
@@ -48,7 +50,7 @@ private val TEXT_OPTIONS = listOf(
 )
 private val BACKGROUND_OPTIONS = listOf(
     "showBackground", "bgRadius", "bgColor", "bgChroma", "bgChromaSpeed", "mergeBackground", "mergeDiagonally",
-    "keepBgWhenHidden",
+    "keepBgWhenHidden", "borderEnabled", "borderColor", "borderChroma", "borderChromaSpeed", "borderSize",
 )
 
 enum class CaseType(val icon: String) {
@@ -110,11 +112,17 @@ fun Style(hud: Hud?, query: String) {
     var mergeBackground by remember { mutableStateOf(hud.mergeBackground) }
     var mergeDiagonally by remember { mutableStateOf(hud.mergeDiagonally) }
     var keepBgWhenHidden by remember { mutableStateOf(hud.keepBgWhenHidden) }
+    var borderEnabled by remember { mutableStateOf(hud.borderEnabled) }
+    var borderSize by remember { mutableStateOf(hud.borderSize) }
+    var borderColor by remember { mutableStateOf(Color(hud.borderColor)) }
+    var borderChroma by remember { mutableStateOf(hud.borderChroma) }
+    var borderChromaSpeed by remember { mutableStateOf(hud.borderChromaSpeed) }
+    val hasBorderOptions = hud.hasBuiltInBorderOptions && hud.tree?.getProp("borderEnabled") != null
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         CardSection(
-            "Text", query, "Font", "Size", "Font size", "Modifiers", "Bold", "Italic", "Underline", "Weight", "Case", "Case Type",
-            "Color", "Text Color", "Shadow", "Normal", "Full", "Shadow color",
+            hudPanelText("text", "Text"), query, hudPanelText("font", "Font"), hudPanelText("size", "Size"), "Font size", hudPanelText("modifiers", "Modifiers"), "Bold", "Italic", "Underline", hudPanelText("weight", "Weight"), hudPanelText("case", "Case"), "Case Type",
+            hudPanelText("color", "Color"), "Text Color", hudPanelText("shadow", "Shadow"), hudPanelText("mode.normal", "Normal"), hudPanelText("mode.full", "Full"), hudPanelText("shadow_color", "Shadow color"),
             onReset = { resetHudOptions(hud, TEXT_OPTIONS) },
             canReset = hudOptionsCanReset(hud, TEXT_OPTIONS),
         ) { col1 ->
@@ -122,7 +130,7 @@ fun Style(hud: Hud?, query: String) {
                 col1,
                 first = {
                     HudSettingTarget(hud, "font") {
-                        LabeledControl("Font") {
+                        LabeledControl(hudPanelText("font", "Font")) {
                             Dropdown(Font.entries.map { it.name }, font.ordinal, onSelect = {
                                 Snapshot.withMutableSnapshot { font = Font.entries[it]; hud.font = font }
                             }, width = col1)
@@ -131,7 +139,7 @@ fun Style(hud: Hud?, query: String) {
                 },
                 second = {
                     HudSettingTarget(hud, "textScale") {
-                        LabeledControl("Size") {
+                        LabeledControl(hudPanelText("size", "Size")) {
                             NumberSpinner(
                                 hud.textScale * 100f, { Snapshot.withMutableSnapshot { hud.textScale = it / 100f } },
                                 25f, 500f, 5f, width = GridCol2, unit = "%"
@@ -141,7 +149,7 @@ fun Style(hud: Hud?, query: String) {
                 },
                 third = {
                     HudSettingTarget(hud, "textBold") {
-                        LabeledControl("Modifiers") {
+                        LabeledControl(hudPanelText("modifiers", "Modifiers")) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -149,34 +157,40 @@ fun Style(hud: Hud?, query: String) {
                                     .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                                     horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    SelectableIconButton(
+                                    IconButton(
                                         Modifiers.Bold.icon,
+                                        hudPanelText("bold", "Bold"),
+                                        modifier = Modifier.size(28.dp),
+                                        size = ControlSize.Large,
                                         selected = textBold,
-                                        modifier = Modifier.size(18.dp),
                                         onClick = {
                                             Snapshot.withMutableSnapshot {
                                                 textBold = !textBold; hud.textBold = textBold
                                             }
                                         }
                                     )
-                                    SelectableIconButton(
+                                    IconButton(
                                         Modifiers.Italic.icon,
+                                        hudPanelText("italic", "Italic"),
+                                        modifier = Modifier.size(28.dp),
+                                        size = ControlSize.Large,
                                         selected = textItalic,
-                                        modifier = Modifier.size(18.dp),
                                         onClick = {
                                             Snapshot.withMutableSnapshot {
                                                 textItalic = !textItalic; hud.textItalic = textItalic
                                             }
                                         }
                                     )
-                                    SelectableIconButton(
+                                    IconButton(
                                         Modifiers.Underline.icon,
+                                        hudPanelText("underline", "Underline"),
+                                        modifier = Modifier.size(28.dp),
+                                        size = ControlSize.Large,
                                         selected = textUnderline,
-                                        modifier = Modifier.size(18.dp),
                                         onClick = {
                                             Snapshot.withMutableSnapshot {
                                                 textUnderline = !textUnderline; hud.textUnderline = textUnderline
@@ -193,7 +207,7 @@ fun Style(hud: Hud?, query: String) {
                 col1,
                 first = {
                     HudSettingTarget(hud, "textWeight") {
-                        LabeledControl("Weight") {
+                        LabeledControl(hudPanelText("weight", "Weight")) {
                             Dropdown(Weight.entries.map { it.name }, textWeight.ordinal, onSelect = {
                                 Snapshot.withMutableSnapshot { textWeight = Weight.entries[it]; hud.textWeight = textWeight }
                             }, width = col1)
@@ -202,7 +216,7 @@ fun Style(hud: Hud?, query: String) {
                 },
                 second = {
                     HudSettingTarget(hud, "caseType") {
-                        LabeledControl("Case") {
+                        LabeledControl(hudPanelText("case", "Case")) {
                             Radio(
                                 CaseType.entries.map { null }, caseType.ordinal,
                                 fillWidth = true, icons = CaseType.entries.map { it.icon },
@@ -214,7 +228,7 @@ fun Style(hud: Hud?, query: String) {
                 },
                 third = {
                     HudSettingTarget(hud, "textColor") {
-                        LabeledControl("Text color") {
+                        LabeledControl(hudPanelText("text_color", "Text color")) {
                             ColorSwatch(
                                 textColor,
                                 chroma = textChroma, chromaSpeed = textChromaSpeed,
@@ -235,14 +249,14 @@ fun Style(hud: Hud?, query: String) {
             GridRow(
                 col1,
                 wide = {
-                    LabeledControl("Shadow") {
+                    LabeledControl(hudPanelText("shadow", "Shadow")) {
                         val shadowMode = when {
                             !showShadow -> ShadowMode.Off
                             fullShadow -> ShadowMode.Full
                             else -> ShadowMode.Normal
                         }
                         HudSettingTarget(hud, "showShadow", "fullShadow") {
-                            Radio(ShadowMode.entries.map { it.title }, shadowMode.ordinal, fillWidth = true) {
+                            Radio(ShadowMode.entries.map { hudPanelText("mode.${it.name.lowercase()}", it.title) }, shadowMode.ordinal, fillWidth = true) {
                                 val mode = ShadowMode.entries[it]
                                 Snapshot.withMutableSnapshot {
                                     showShadow = mode != ShadowMode.Off
@@ -259,7 +273,7 @@ fun Style(hud: Hud?, query: String) {
                 third = {
                     FadingCell(showShadow) {
                         HudSettingTarget(hud, "shadowColor") {
-                            LabeledControl("Shadow color") {
+                            LabeledControl(hudPanelText("shadow_color", "Shadow color")) {
                                 ColorSwatch(
                                     shadowColor,
                                     chroma = shadowChroma, chromaSpeed = shadowChromaSpeed,
@@ -281,8 +295,9 @@ fun Style(hud: Hud?, query: String) {
         }
 
         CardSection(
-            "Background", query, "Show Background", "Radius", "Color", "Background Color", "Merge",
-            "Merge with neighbours", "Diagonal", "Keep hidden", "Keep Background When Hidden",
+            hudPanelText("background", "Background"), query, "Show Background", hudPanelText("radius", "Radius"), hudPanelText("color", "Color"), "Background Color", "Merge",
+            hudPanelText("merge", "Merge with neighbours"), hudPanelText("mode.diagonal", "Diagonal"), hudPanelText("keep_hidden", "Keep hidden"), "Keep Background When Hidden", hudPanelText("border", "Border"), hudPanelText("border_size", "Border size"),
+            hudPanelText("border_color", "Border color"),
             checked = showBackground,
             onCheckedChange = { Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it } },
             onReset = { resetHudOptions(hud, BACKGROUND_OPTIONS) },
@@ -292,7 +307,7 @@ fun Style(hud: Hud?, query: String) {
                 col1,
                 first = {
                     HudSettingTarget(hud, "bgRadius") {
-                        LabeledControl("Radius") {
+                        LabeledControl(hudPanelText("radius", "Radius")) {
                             NumberSpinner(
                                 bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
                                 0f, 32f, 1f, width = col1, unit = "px"
@@ -302,7 +317,7 @@ fun Style(hud: Hud?, query: String) {
                 },
                 third = {
                     HudSettingTarget(hud, "bgColor") {
-                        LabeledControl("Color") {
+                        LabeledControl(hudPanelText("color", "Color")) {
                             ColorSwatch(
                                 bgColor,
                                 chroma = bgChroma, chromaSpeed = bgChromaSpeed,
@@ -320,18 +335,65 @@ fun Style(hud: Hud?, query: String) {
                     }
                 },
             )
+            if (hasBorderOptions) {
+                GridRow(
+                    col1,
+                    first = {
+                        HudSettingTarget(hud, "borderEnabled") {
+                            LabeledControl(hudPanelText("border", "Border")) {
+                                SwitchControl(borderEnabled) {
+                                    Snapshot.withMutableSnapshot { borderEnabled = it; hud.borderEnabled = it }
+                                }
+                            }
+                        }
+                    },
+                    second = {
+                        FadingCell(borderEnabled) {
+                            HudSettingTarget(hud, "borderSize") {
+                                LabeledControl(hudPanelText("border_size", "Border size")) {
+                                    NumberSpinner(
+                                        borderSize, { Snapshot.withMutableSnapshot { borderSize = it; hud.borderSize = it } },
+                                        0f, 10f, 0.5f, width = GridCol2, unit = "px"
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    third = {
+                        FadingCell(borderEnabled) {
+                            HudSettingTarget(hud, "borderColor", "borderChroma", "borderChromaSpeed") {
+                                LabeledControl(hudPanelText("border_color", "Border color")) {
+                                    ColorSwatch(
+                                        borderColor,
+                                        chroma = borderChroma, chromaSpeed = borderChromaSpeed,
+                                        onColorChanged = {
+                                            Snapshot.withMutableSnapshot { borderColor = it; hud.borderColor = it.toArgb() }
+                                        },
+                                        onChromaChanged = { en, sp ->
+                                            Snapshot.withMutableSnapshot {
+                                                borderChroma = en; hud.borderChroma = en
+                                                borderChromaSpeed = sp; hud.borderChromaSpeed = sp
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    },
+                )
+            }
             if (hud.canMergeBackground()) {
                 GridRow(
                     col1,
                     wide = {
-                        LabeledControl("Merge with neighbours") {
+                        LabeledControl(hudPanelText("merge", "Merge with neighbours")) {
                             val mergeMode = when {
                                 !mergeBackground -> MergeMode.Off
                                 mergeDiagonally -> MergeMode.Diagonal
                                 else -> MergeMode.Normal
                             }
                             HudSettingTarget(hud, "mergeBackground", "mergeDiagonally") {
-                                Radio(MergeMode.entries.map { it.title }, mergeMode.ordinal, fillWidth = true) {
+                                Radio(MergeMode.entries.map { hudPanelText("mode.${it.name.lowercase()}", it.title) }, mergeMode.ordinal, fillWidth = true) {
                                     val mode = MergeMode.entries[it]
                                     Snapshot.withMutableSnapshot {
                                         mergeBackground = mode != MergeMode.Off
@@ -348,7 +410,7 @@ fun Style(hud: Hud?, query: String) {
                     third = {
                         FadingCell(mergeBackground) {
                             HudSettingTarget(hud, "keepBgWhenHidden") {
-                                LabeledControl("Keep hidden") {
+                                LabeledControl(hudPanelText("keep_hidden", "Keep hidden")) {
                                     SwitchControl(keepBgWhenHidden) {
                                         Snapshot.withMutableSnapshot { keepBgWhenHidden = it; hud.keepBgWhenHidden = it }
                                     }
@@ -372,23 +434,12 @@ private fun ColorSwatch(
     onColorChanged: (Color) -> Unit,
     onChromaChanged: (Boolean, Float) -> Unit = { _, _ -> },
 ) {
-    val pickerModel = remember {
-        ColorPickerModel(color).apply {
-            chromaEnabled = chroma
-            this.chromaSpeed = chromaSpeed
-        }
-    }
-
-    var chromaColor by remember { mutableStateOf(color) }
-    ChromaColorAnimation(pickerModel) { chromaColor = it }
-
-    ColorPicker(
-        pickerModel,
-        if (pickerModel.chromaEnabled) chromaColor else color,
-        onColorChanged = { c ->
-            onColorChanged(c)
-            onChromaChanged(pickerModel.chromaEnabled, pickerModel.chromaSpeed)
+    ColorSwatchButton(
+        PolyColor(color.toArgb(), chroma, chromaSpeed),
+        onColorChanged = { picked ->
+            onColorChanged(Color(picked.rawArgb))
+            onChromaChanged(picked.chroma, picked.chromaSpeed)
         },
-        swatch = true,
+        chromaCapable = true,
     )
 }

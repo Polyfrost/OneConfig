@@ -29,11 +29,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
-import org.polyfrost.oneconfig.internal.ui.components.IconButton
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.screens.Accordion
 import org.polyfrost.oneconfig.internal.ui.screens.displayAlpha
@@ -46,6 +48,8 @@ internal val GridCol2 = 112.dp
 internal val GridCol3 = 96.dp
 
 private val CardRowGap = 12.dp
+
+internal fun hudPanelText(key: String, fallback: String): String = translated("oneconfig.hud.panel.$key", fallback)
 
 /** Whether a HUD panel block described by [labels] is kept by the panel's search [query] */
 internal fun hudSearchMatches(query: String, vararg labels: String) =
@@ -88,20 +92,15 @@ internal fun CardSection(
         },
         titleActions = {
             if (onReset != null && canReset) {
-                val theme = LocalTheme.current
-                Tooltip(
-                    text = { Text("Reset $title", color = theme.textColor, fontSize = 12.sp) },
-                    modifier = Modifier,
-                    anchor = Alignment.TopCenter,
-                ) {
-                    IconButton(
-                        "refresh",
-                        Modifier.size(24.dp, 20.dp).padding(horizontal = 4.dp, vertical = 2.dp),
-                        foreground = theme.textColorSecondary,
-                        hoveredForeground = theme.textColor,
-                        onClick = onReset,
-                    )
-                }
+                val label = translated("oneconfig.hud.panel.reset_card", "Reset %s", title)
+                IconButton(
+                    "refresh",
+                    label,
+                    onReset,
+                    Modifier.size(24.dp, 20.dp),
+                    size = ControlSize.Compact,
+                    tooltipPlacement = TooltipPlacement.AboveCenter,
+                )
             }
         },
     ) { enabled ->
@@ -175,8 +174,8 @@ internal fun RowWithFold(unfolded: Boolean, row: @Composable () -> Unit, folded:
         row()
         AnimatedVisibility(
             visible = unfolded,
-            enter = ReducedMotion.enter(expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn()),
-            exit = ReducedMotion.exit(shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut()),
+            enter = Motion.enter(expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn()),
+            exit = Motion.exit(shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut()),
         ) {
             Column(Modifier.padding(top = CardRowGap), verticalArrangement = Arrangement.spacedBy(CardRowGap)) { folded() }
         }
@@ -186,5 +185,5 @@ internal fun RowWithFold(unfolded: Boolean, row: @Composable () -> Unit, folded:
 /** A grid cell whose [content] fades in and out with [visible] while the cell keeps its place */
 @Composable
 internal fun FadingCell(visible: Boolean, content: @Composable () -> Unit) {
-    AnimatedVisibility(visible, enter = ReducedMotion.enter(fadeIn()), exit = ReducedMotion.exit(fadeOut())) { content() }
+    AnimatedVisibility(visible, enter = Motion.enter(fadeIn()), exit = Motion.exit(fadeOut())) { content() }
 }

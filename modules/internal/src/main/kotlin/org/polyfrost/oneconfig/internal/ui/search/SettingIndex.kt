@@ -1,9 +1,12 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
 import java.util.IdentityHashMap
+import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.enableToggle
+import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -54,8 +57,8 @@ internal fun buildCategories(tree: Tree, path: String? = null, include: (Node) -
     tree.map.values.forEach { node ->
         if (!include(node)) return@forEach
 
-        val category = nodeGroup(node, "category", ConfigVisualizer.DEFAULT_CATEGORY)
-        val subcategory = nodeGroup(node, "subcategory", ConfigVisualizer.DEFAULT_SUBCATEGORY)
+        val category = nodeGroup(node, MetaKeys.CATEGORY.name, ConfigVisualizer.DEFAULT_CATEGORY)
+        val subcategory = nodeGroup(node, MetaKeys.SUBCATEGORY.name, ConfigVisualizer.DEFAULT_SUBCATEGORY)
         val bucket = grouped.getOrPut(category) { LinkedHashMap() }.getOrPut(subcategory) { ArrayList() }
 
         when (node) {
@@ -106,6 +109,7 @@ private fun buildSubmenuNode(tree: Tree, parentPath: String?): SettingNode.Subme
 
 /** The option shown on the header of [tree] which is the marked primary or else the toggle of an old style accordion */
 internal fun groupHead(tree: Tree): Property<*>? {
+    tree.enableToggle?.let { return it }
     val properties = tree.map.values.filterIsInstance<Property<*>>()
     return properties.firstOrNull { it.getMetadata<Boolean>(PRIMARY) == true }
         ?: properties.firstOrNull(::isAccordionToggle)
@@ -117,7 +121,7 @@ private fun isAccordionToggle(prop: Property<*>): Boolean {
 
 internal fun Property<*>.isBooleanHead(): Boolean = type == Boolean::class.java || type == Boolean::class.javaPrimitiveType
 
-internal fun Property<*>.hasVisualizer(): Boolean = getMetadata<Any?>("visualizer") != null
+internal fun Property<*>.hasVisualizer(): Boolean = this[MetaKeys.VISUALIZER] != null
 
 internal fun Tree.isSubmenu(): Boolean = getMetadata<Boolean>(SUBMENU) == true
 
@@ -139,7 +143,7 @@ internal fun submenuContent(tree: Tree, path: String?): List<CategoryGroup> {
 }
 
 internal fun isRenderableProperty(prop: Property<*>): Boolean {
-    if (prop.getMetadata<Any?>("hidden") != null) return false
+    if (prop.getMetadata<Any?>(MetaKeys.HIDDEN.name).let { it != null && it != false }) return false
     return prop.hasVisualizer()
 }
 

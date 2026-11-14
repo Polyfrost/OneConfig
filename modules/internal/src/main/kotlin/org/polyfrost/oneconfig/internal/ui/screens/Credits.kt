@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import java.util.UUID
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.PlayerHead
 import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -49,37 +50,43 @@ private val oneConfigVersion: String? by lazy {
     }.getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
 }
 
-private class Person(val name: String, val role: String, uuid: String?) {
+private class Person(val name: String, private val roleText: RoleText, uuid: String?) {
+    val role: String get() = translated(roleText.key, roleText.fallback)
+
     val id: UUID = uuid?.let { UUID(java.lang.Long.parseUnsignedLong(it.substring(0, 16), 16), java.lang.Long.parseUnsignedLong(it.substring(16), 16)) }
         ?: UUID.nameUUIDFromBytes("OfflinePlayer:$name".toByteArray(Charsets.UTF_8))
 }
 
+private class RoleText(val key: String, val fallback: String)
+
+private fun role(id: String, fallback: String) = RoleText("oneconfig.credits.role.$id", fallback)
+
 private class Thanks(val icon: String, val title: String, val detail: String)
 
 private val people = listOf(
-    Person("Wyvest", "CEO", "a53314040e77440e8bef24c071dac1ae"),
-    Person("Lynith", "CTO", "f247be7c5b8241c69148793ded77e71f"),
-    Person("nextdaydelivery", "OneConfig founding engineer", "0dee60d49ff840a9a79fbb415bbaa909"),
-    Person("Deftu", "OneConfig major engineer", "63677969c51746fbb60fa130b3d9beb9"),
-    Person("Lunasa", "PolyCompose founding engineer", "4614dcc468244d1c9a352e2844c6c9b2"),
-    Person("Mona", "CompatEngine founding engineer", "e90ea9ec080a401b8d106a53c407ac53"),
-    Person("DeDiamondPro", "Config backend, GUI frontend, HUD", "0b4d470ff2fb487493341eaef8ba4804"),
-    Person("rachel", "Lead cosmetics designer, OneClient", "22e98637ba974b6ba84ffb57a461ce43"),
-    Person("Qewer", "Designer", "9d139c40d3494916ba4b3d348a284e32"),
-    Person("Caledonian", "Designer", "e5de6a33a9e04a4e8a493201d74875a6"),
-    Person("Mo2men", "Designer", "bdad0d588e35422d938ae1a4c0d5d026"),
-    Person("Zetvue", "Sound design", "9a23f6435e334101a5f2d63f248b49c2"),
-    Person("Pauline", "OneConfig utilities", "56e2a469477c41f7b0bdcb94dad100f6"),
-    Person("xtrm", "OneConfig utilities", "7740d6e39f204381a56a060991a1c41c"),
-    Person("MoonTidez", "Designer, v0", "acbfaeb2bcfe49bcb605ac1ebe16c2d1"),
-    Person("ThinkSeal", "Major tester", "94418374e58a497cbcba29d34727eca4"),
+    Person("Wyvest", role("ceo", "CEO"), "a53314040e77440e8bef24c071dac1ae"),
+    Person("Lynith", role("cto", "CTO"), "f247be7c5b8241c69148793ded77e71f"),
+    Person("nextdaydelivery", role("oneconfig_founding", "OneConfig founding engineer"), "0dee60d49ff840a9a79fbb415bbaa909"),
+    Person("Deftu", role("oneconfig_major", "OneConfig major engineer"), "63677969c51746fbb60fa130b3d9beb9"),
+    Person("Lunasa", role("polycompose_founding", "PolyCompose founding engineer"), "4614dcc468244d1c9a352e2844c6c9b2"),
+    Person("Mona", role("compatengine_founding", "CompatEngine founding engineer"), "e90ea9ec080a401b8d106a53c407ac53"),
+    Person("DeDiamondPro", role("config_gui_hud", "Config backend, GUI frontend, HUD"), "0b4d470ff2fb487493341eaef8ba4804"),
+    Person("rachel", role("cosmetics_lead", "Lead cosmetics designer, OneClient"), "22e98637ba974b6ba84ffb57a461ce43"),
+    Person("Qewer", role("designer", "Designer"), "9d139c40d3494916ba4b3d348a284e32"),
+    Person("Caledonian", role("designer", "Designer"), "e5de6a33a9e04a4e8a493201d74875a6"),
+    Person("Mo2men", role("designer", "Designer"), "bdad0d588e35422d938ae1a4c0d5d026"),
+    Person("Zetvue", role("sound", "Sound design"), "9a23f6435e334101a5f2d63f248b49c2"),
+    Person("Pauline", role("utilities", "OneConfig utilities"), "56e2a469477c41f7b0bdcb94dad100f6"),
+    Person("xtrm", role("utilities", "OneConfig utilities"), "7740d6e39f204381a56a060991a1c41c"),
+    Person("MoonTidez", role("designer_v0", "Designer, v0"), "acbfaeb2bcfe49bcb605ac1ebe16c2d1"),
+    Person("ThinkSeal", role("tester", "Major tester"), "94418374e58a497cbcba29d34727eca4"),
 )
 
 private val thankedPeople = listOf(
-    Person("Scherso", "For saving us", "466d70e6fe944960ac17597948f437b3"),
-    Person("FireStorm", "For saving us", "37f1d5edb9a14b99accb0c6b23493a62"),
-    Person("ImToggle", "Contributions to OneConfig and Polyfrost mods", "c8bf4768af4448cba25901e42fb7bc79"),
-    Person("Sk1er", "Lasting impact on Minecraft modding", "1a5c41c8a9524ddfa19c66f6bb3707a1"),
+    Person("Scherso", role("saving", "For saving us"), "466d70e6fe944960ac17597948f437b3"),
+    Person("FireStorm", role("saving", "For saving us"), "37f1d5edb9a14b99accb0c6b23493a62"),
+    Person("ImToggle", role("contributions", "Contributions to OneConfig and Polyfrost mods"), "c8bf4768af4448cba25901e42fb7bc79"),
+    Person("Sk1er", role("modding_impact", "Lasting impact on Minecraft modding"), "1a5c41c8a9524ddfa19c66f6bb3707a1"),
 )
 
 private fun translationCredit(): String {
@@ -102,9 +109,17 @@ private fun translationCredit(): String {
 }
 
 private fun specialThanks() = listOf(
-    Thanks("profiles", "The Polyfrost team", "For their support and contributions"),
-    Thanks("text", "Translators", translationCredit()),
-    Thanks("star", "Contributors and testers", "For helping make modding accessible to everyone"),
+    Thanks(
+        "profiles",
+        translated("oneconfig.credits.thanks.team", "The Polyfrost team"),
+        translated("oneconfig.credits.thanks.team.detail", "For their support and contributions"),
+    ),
+    Thanks("text", translated("oneconfig.credits.thanks.translators", "Translators"), translationCredit()),
+    Thanks(
+        "star",
+        translated("oneconfig.credits.thanks.contributors", "Contributors and testers"),
+        translated("oneconfig.credits.thanks.contributors.detail", "For helping make modding accessible to everyone"),
+    ),
 )
 
 @Composable
@@ -138,8 +153,8 @@ fun Credits() {
                 }
             }
             if (shownPeople.isEmpty() && shownThankedPeople.isEmpty() && shownThanks.isEmpty()) {
-                Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                    Text(translated("oneconfig.credits.nomatch", "No credits match \"%s\"", query), color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+                Box(Modifier.fillMaxWidth().padding(top = 16.dp), contentAlignment = Alignment.Center) {
+                    EmptyState(translated("oneconfig.credits.nomatch", "No credits match \"%s\"", query), icon = "search")
                 }
             }
             if (query.isEmpty()) Legal()
@@ -160,7 +175,7 @@ private fun Masthead() {
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("by", color = theme.textColorSecondary, fontSize = 12.sp)
+            Text(translated("oneconfig.credits.by", "by"), color = theme.textColorSecondary, fontSize = 12.sp)
             rememberSvgResourcePainter("assets/oneconfig/brand/by-polyfrost.svg")?.let { poly ->
                 Image(painter = poly, contentDescription = "Polyfrost", modifier = Modifier.size(104.dp, 18.dp))
             }
@@ -219,7 +234,7 @@ private fun PersonCard(person: Person, modifier: Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PlayerHead(person.id, 40.dp, Modifier, theme.buttonShape)
+        PlayerHead(person.id, 40.dp, Modifier, shape = theme.buttonShape)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(person.name, color = theme.textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(person.role, color = theme.textColorSecondary, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)

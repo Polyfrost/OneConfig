@@ -201,33 +201,39 @@ public fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabl
             state.place(key, it)
         }
         .then(
-            if (!enabled) {
-                Modifier
-            } else {
-                Modifier.pointerInput(state, key) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
-                        if (down.isConsumed) return@awaitEachGesture
-                        val crossed = awaitSlop(down.id, down.position) ?: return@awaitEachGesture
-                        val coordinates = holder.coordinates?.takeIf { it.isAttached } ?: return@awaitEachGesture
-                        if (!state.start(key, state.main(coordinates.localToRoot(down.position)))) return@awaitEachGesture
-                        try {
-                            state.moveTo(state.main(coordinates.localToRoot(crossed)))
-                            follow(down.id) { at ->
-                                holder.coordinates?.takeIf { it.isAttached }?.let { state.moveTo(state.main(it.localToRoot(at))) }
-                            }
-                        } finally {
-                            state.end()
-                        }
-                    }
-                }
-            },
+            if (!enabled) Modifier else Modifier.reorderDrag(state, key, holder),
         )
         .zIndex(if (dragging) 1f else 0f)
         .graphicsLayer {
             val offset = state.offsetOf(key)
             if (state.isVertical) translationY = offset else translationX = offset
         }
+}
+
+@ExperimentalOneConfigUiApi
+public fun Modifier.reorderHandle(state: ReorderState, key: Any, enabled: Boolean = true): Modifier = if (!enabled) this else composed {
+    val holder = remember { ReorderCoordinates() }
+    this
+        .onGloballyPositioned { holder.coordinates = it }
+        .reorderDrag(state, key, holder)
+}
+
+private fun Modifier.reorderDrag(state: ReorderState, key: Any, holder: ReorderCoordinates): Modifier = pointerInput(state, key) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
+        if (down.isConsumed) return@awaitEachGesture
+        val crossed = awaitSlop(down.id, down.position) ?: return@awaitEachGesture
+        val coordinates = holder.coordinates?.takeIf { it.isAttached } ?: return@awaitEachGesture
+        if (!state.start(key, state.main(coordinates.localToRoot(down.position)))) return@awaitEachGesture
+        try {
+            state.moveTo(state.main(coordinates.localToRoot(crossed)))
+            follow(down.id) { at ->
+                holder.coordinates?.takeIf { it.isAttached }?.let { state.moveTo(state.main(it.localToRoot(at))) }
+            }
+        } finally {
+            state.end()
+        }
+    }
 }
 
 private class ReorderCoordinates {

@@ -5,6 +5,39 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-11-14
+
+### Added
+- Mod cards and list entries can be moved with the keyboard: focus one and press Alt+Up or Alt+Down
+- Multi-select options have a Select all row
+- Deleting a profile now asks you to confirm first
+- API: The UI kit has enough controls to build a whole mod screen, including select fields, split buttons, dialogs, toasts, grid reordering and progress bars
+- API: `OneConfigComposeScreen`, HUD layers, inline canvases, offscreen rendering and entity previews for drawing with Compose in your own screens and HUDs
+- API: Theme tokens for state colours, typography, spacing, shapes and surfaces, and read-only player preferences such as Reduced Motion
+- API: Typed config metadata keys, a tree builder with group enable toggles, self-updating dependencies, share codes and per-profile config migrations
+- API: Custom pages that take an argument, typed destinations for `OneConfigUI.open` and read-only mod toggles
+- API: HUD styles, borders, cloning, click regions, styled text runs and icons
+- API: HUDs can hide or replace vanilla HUD elements, including the crosshair and attack indicator
+- API: Attack, place block, player turn and block update events
+- API: Keybinds can stay out of Minecraft's controls screen
+- API: Notification handles, a warning type and theme colours for notifications
+
+### Changed
+- Every OneConfig screen now uses the same controls, so buttons, menus, fields and tooltips look and behave the same everywhere
+- Menus open from the control you clicked, follow the theme's shape and panels, and give keyboard focus back when they close
+- Tooltips wait 300 ms before they show
+- A disabled option now dims its label and control instead of greying out the whole card
+- Number fields drop trailing zeros, so 0.50 shows as 0.5
+- Scrolling glides in lists added by mods
+- The HUD editor's selection box follows your theme's accent colour
+- Reduced Motion now also applies to page slides, scrolling and the HUD editor
+- API: The `Notifications` calls that take a float duration are deprecated in favour of `durationMillis`. Mods built against older versions keep working
+
+### Fixed
+- Fixed the keyboard focus ring never showing in the Minecraft themes
+- Colours stored inside a config object now load their saved value instead of the default
+- The resource reload event no longer fires a second time for server datapack reloads
+
 ## [1.7.1] - 2026-11-12
 
 ### Fixed

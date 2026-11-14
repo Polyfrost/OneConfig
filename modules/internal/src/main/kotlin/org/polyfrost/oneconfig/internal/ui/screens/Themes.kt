@@ -1,12 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,16 +13,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,31 +30,37 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.Select
+import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
+import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
+import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.dropdown.SimpleDropdownMenu
-import org.polyfrost.oneconfig.internal.ui.components.glassHover
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
-import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
 import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
@@ -76,13 +78,11 @@ import org.polyfrost.oneconfig.internal.ui.themes.PaletteAccent
 import org.polyfrost.oneconfig.internal.ui.themes.PaletteInfo
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
-import org.polyfrost.oneconfig.internal.ui.themes.concentric
 import org.polyfrost.oneconfig.internal.ui.themes.customSpec
 import org.polyfrost.oneconfig.internal.ui.themes.isCustom
 import org.polyfrost.oneconfig.internal.ui.themes.palette
 import org.polyfrost.oneconfig.internal.ui.themes.syncNotificationTheme
 import org.polyfrost.oneconfig.internal.ui.themes.previewAsset
-import org.polyfrost.oneconfig.internal.ui.themes.isLight
 
 const val THEMES_ID = "themes.json"
 
@@ -90,11 +90,9 @@ private val ThemeCardGap = 20.dp
 
 private const val ThemeColumns = 3
 
-private val VariantToggleHeight = 30.dp
-
 private val CardActionSize = 22.dp
 
-private val ToggleSegmentWidth = 28.dp
+private val ThemeSelectMaxWidth = 150.dp
 
 internal val ThemePreviewWidth = 112.dp
 
@@ -124,7 +122,7 @@ fun Themes() {
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             ThemesHeader()
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No preferences available.", color = LocalTheme.current.textColorSecondary)
+                EmptyState(translated("oneconfig.themes.empty", "No theme settings available"), icon = "paintbrush")
             }
         }
         return
@@ -150,7 +148,7 @@ private fun ThemesHeader() {
             cards.chunked(ThemeColumns).forEach { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ThemeCardGap)) {
                     row.forEach { card ->
-                        if (card == null) CustomThemeCard(Modifier.weight(1f)) { codeNotice.value = pastedThemeNotice() } else ThemeCard(card.first, card.second, Modifier.weight(1f))
+                        if (card == null) CustomThemeCard(Modifier.weight(1f)) { codeNotice.value = it } else ThemeCard(card.first, card.second, Modifier.weight(1f))
                     }
                     repeat(ThemeColumns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
@@ -166,7 +164,10 @@ private fun ThemesHeader() {
         }
         if (!Platform.screen().supportsBackdropGlass()) {
             Text(
-                "PolyGlass shows without frosted glass while VulkanMod is installed on this Minecraft version.",
+                translated(
+                    "oneconfig.themes.no_backdrop_glass",
+                    "PolyGlass shows without frosted glass while VulkanMod is installed on this Minecraft version.",
+                ),
                 color = LocalTheme.current.textColorSecondary,
                 modifier = Modifier.padding(horizontal = PageGutter),
             )
@@ -189,7 +190,7 @@ private fun ThemeCard(family: String, variants: List<UITheme>, modifier: Modifie
     val isSelected = active != null
     val onVariant: (UITheme) -> Unit = { variant ->
         pickedName = variant.name
-        if (isSelected) ThemeRegistry.activate(variant) else UiSounds.play(UiSoundEvent.CLICK)
+        if (isSelected) ThemeRegistry.activate(variant)
     }
     val palette = shown.palette
     ThemeCardShell(
@@ -208,7 +209,7 @@ private fun ThemeCard(family: String, variants: List<UITheme>, modifier: Modifie
         },
         controls = {
             if (palette != null && variants.size > 2) {
-                ThemeDropdown(variants, shown, { it.palette?.label ?: it.name }, onVariant)
+                ThemeSelect(variants, shown, { it.palette?.label ?: it.name }, onVariant)
             } else {
                 if (shown.liquidGlass) TintToggle()
                 if (variants.size > 1) VariantToggle(variants, shown, onVariant)
@@ -221,38 +222,37 @@ private fun ThemeCard(family: String, variants: List<UITheme>, modifier: Modifie
                 ThemeCaption(familyCaption(family))
             }
         },
-        action = {
+        action = { actionModifier ->
             val full = CustomThemes.specs.size >= CustomThemeSpec.MAX
-            CardActionButton(
+            IconButton(
                 "copy-plus",
                 if (full) fullMessage() else translated("oneconfig.themes.tooltip.make_copy", "Make a custom copy"),
-            ) {
-                if (!createCustomFrom(shown)) UiSounds.play(UiSoundEvent.CLICK)
-            }
+                { createCustomFrom(shown) },
+                actionModifier.size(CardActionSize),
+                style = IconButtonStyle.Framed,
+                size = ControlSize.Compact,
+                tooltipPlacement = TooltipPlacement.AboveCenter,
+            )
+        },
+        menu = {
+            val full = CustomThemes.specs.size >= CustomThemeSpec.MAX
+            listOf(
+                MenuAction(
+                    translated("oneconfig.themes.menu.activate", "Activate"),
+                    { ThemeRegistry.activate(shown) },
+                    icon = "check-circle",
+                    enabled = !isSelected,
+                ),
+                MenuAction(
+                    translated("oneconfig.themes.tooltip.make_copy", "Make a custom copy"),
+                    { createCustomFrom(shown) },
+                    icon = "copy-plus",
+                    enabled = !full,
+                    disabledReason = if (full) fullMessage() else null,
+                ),
+            )
         },
     )
-}
-
-@Composable
-private fun CardActionButton(icon: String, hint: String, onClick: () -> Unit) {
-    ThemeHint(hint) {
-        val theme = LocalTheme.current
-        val source = rememberInteractionSource()
-        Box(
-            Modifier
-                .size(CardActionSize)
-                .liquidGlass(theme.buttonShape)
-                .background(theme.componentBackground, theme.buttonShape)
-                .border(1.dp, theme.borderColor, theme.buttonShape)
-                .glassHover(theme.buttonShape, pull = 0.5.dp)
-                .keepSearchFocus()
-                .clickable(source, indication = null, onClick = onClick)
-                .pointerHoverIcon(PointerIcon.Hand),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(12.dp))
-        }
-    }
 }
 
 private val FamilyCaptions = mapOf(
@@ -287,18 +287,20 @@ internal fun ThemeCardShell(
     preview: @Composable () -> Unit,
     controls: @Composable () -> Unit,
     footer: @Composable () -> Unit,
-    action: (@Composable () -> Unit)? = null,
+    action: (@Composable (Modifier) -> Unit)? = null,
+    menu: (() -> List<MenuEntry>)? = null,
 ) {
     val interactionSource = rememberInteractionSource()
     val theme = LocalTheme.current
     val hovered by interactionSource.collectIsHoveredAsState()
+    val focused by interactionSource.collectIsFocusedAsState()
     var actionFocused by remember { mutableStateOf(false) }
-    val actionAlpha by animateFloatAsState(if (hovered || actionFocused) 1f else 0f)
     val borderColor by animateAccentColorAsState(
         selected,
-        if (selected) Accent else theme.borderColor
+        if (selected) Accent else theme.borderColor,
+        Motion.spec(spring<Float>()),
     )
-    val borderWidth by animateDpAsState(
+    val borderWidth by Motion.animateDpAsState(
         if (selected) 3.dp else 1.dp
     )
     Column(
@@ -306,13 +308,20 @@ internal fun ThemeCardShell(
             .hoverGlow(theme.backgroundShape)
             .background(theme.modCardBackground, theme.backgroundShape)
             .border(borderWidth, borderColor, theme.backgroundShape)
-            .keepSearchFocus()
+            .then(if (menu != null) Modifier.contextMenu(entries = menu) else Modifier)
             .hoverable(interactionSource)
-            .clickable(interactionSource, indication = null) {
-                // Use clickable because onClick always plays CLICK. ThemeRegistry.activate chooses CLICK or OPEN
-                onClick()
-            }
-            .pointerHoverIcon(PointerIcon.Hand)
+            .oneConfigClickable(
+                title,
+                {
+                    // Use clickable because onClick always plays CLICK. ThemeRegistry.activate chooses CLICK or OPEN
+                    onClick()
+                },
+                selected = selected,
+                shape = theme.backgroundShape,
+                indication = false,
+                sound = null,
+                interactionSource = interactionSource,
+            )
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(ThemeFooterGap),
     ) {
@@ -337,12 +346,8 @@ internal fun ThemeCardShell(
                         modifier = Modifier.weight(1f),
                     )
                     if (action != null) {
-                        Box(
-                            Modifier
-                                .graphicsLayer { alpha = actionAlpha }
-                                .onFocusChanged { actionFocused = it.hasFocus }
-                        ) {
-                            action()
+                        Box(Modifier.onFocusChanged { actionFocused = it.hasFocus }) {
+                            action(Modifier.hiddenUntilHover(hovered || focused || actionFocused))
                         }
                     }
                 }
@@ -357,29 +362,28 @@ internal fun ThemeCardShell(
     }
 }
 
+internal class IconSegment<T>(val value: T, val icon: String, val hint: String)
+
 @Composable
-private fun VariantToggle(variants: List<UITheme>, shown: UITheme, onPick: (UITheme) -> Unit) {
-    SegmentGroup {
-        variants.forEach { variant ->
-            ToggleSegment(if (variant.isLight) "sun" else "moon", lightHint(variant.isLight), variant == shown) { onPick(variant) }
-        }
-    }
+internal fun <T> IconSegments(segments: List<IconSegment<T>>, selected: T, onSelect: (T) -> Unit) {
+    TabRow(
+        segments.map { TabItem(it.value, "", icon = it.icon, tooltip = it.hint) },
+        selected,
+        { if (it != selected) onSelect(it) },
+        style = TabStyle.Segmented,
+        size = ControlSize.Compact,
+        fill = false,
+        tooltipPlacement = TooltipPlacement.AboveCenter,
+    )
 }
 
 @Composable
-internal fun SegmentGroup(content: @Composable () -> Unit) {
-    val theme = LocalTheme.current
-    Row(
-        Modifier
-            .height(VariantToggleHeight)
-            .liquidGlass(theme.buttonShape)
-            .background(theme.componentBackground, theme.buttonShape)
-            .border(1.dp, theme.borderColor, theme.buttonShape)
-            .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        content()
-    }
+private fun VariantToggle(variants: List<UITheme>, shown: UITheme, onPick: (UITheme) -> Unit) {
+    IconSegments(
+        variants.map { IconSegment(it, if (it.isLight) "sun" else "moon", lightHint(it.isLight)) },
+        shown,
+        onPick,
+    )
 }
 
 private val TintIcons = listOf("layers", "paintbrush", "cloud")
@@ -391,135 +395,26 @@ internal fun lightHint(light: Boolean): String =
 
 @Composable
 private fun TintToggle() {
-    val selected = GlassTint.mode
-    SegmentGroup {
-        TintIcons.forEachIndexed { index, icon ->
-            val (key, fallback) = TintHints[index]
-            ToggleSegment(icon, translated("oneconfig.themes.tooltip.tint.$key", fallback), index == selected) {
-                GlassTint.mode = index
-                ThemeConfig.selectGlassTint(index)
-                UiSounds.play(UiSoundEvent.CLICK)
-            }
-        }
+    val segments = TintIcons.mapIndexed { index, icon ->
+        val (key, fallback) = TintHints[index]
+        IconSegment(index, icon, translated("oneconfig.themes.tooltip.tint.$key", fallback))
+    }
+    IconSegments(segments, GlassTint.mode) { index ->
+        GlassTint.mode = index
+        ThemeConfig.selectGlassTint(index)
     }
 }
 
 @Composable
-internal fun SquareControlButton(icon: String, hint: String, onClick: () -> Unit) {
-    ThemeHint(hint) { SquareControlButtonBody(icon, onClick) }
-}
-
-@Composable
-private fun SquareControlButtonBody(icon: String, onClick: () -> Unit) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    Box(
-        Modifier
-            .size(VariantToggleHeight)
-            .liquidGlass(theme.buttonShape)
-            .background(theme.componentBackground, theme.buttonShape)
-            .border(1.dp, theme.borderColor, theme.buttonShape)
-            .glassHover(theme.buttonShape, pull = 0.75.dp)
-            .keepSearchFocus()
-            .clickable(interactionSource, indication = null, onClick = onClick)
-            .pointerHoverIcon(PointerIcon.Hand),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(14.dp))
-    }
-}
-
-@Composable
-internal fun ThemeHint(text: String, content: @Composable () -> Unit) {
-    Tooltip(
-        text = { Text(text, color = LocalTheme.current.textColor, fontSize = 12.sp) },
-        modifier = Modifier.widthIn(max = 220.dp),
-        anchor = Alignment.TopCenter,
-        content = content,
+internal fun <T> ThemeSelect(items: List<T>, shown: T, label: (T) -> String, onPick: (T) -> Unit) {
+    Select(
+        shown,
+        items,
+        { if (it != shown) onPick(it) },
+        Modifier.widthIn(max = ThemeSelectMaxWidth),
+        label = label,
+        size = ControlSize.Compact,
     )
-}
-
-@Composable
-internal fun <T> ThemeDropdown(items: List<T>, shown: T, label: (T) -> String, onPick: (T) -> Unit) {
-    val theme = LocalTheme.current
-    var expanded by remember { mutableStateOf(false) }
-    val interactionSource = rememberInteractionSource()
-    Box {
-        Row(
-            Modifier
-                .height(VariantToggleHeight)
-                .widthIn(max = 150.dp)
-                .liquidGlass(theme.buttonShape)
-                .background(theme.componentBackground, theme.buttonShape)
-                .border(1.dp, theme.borderColor, theme.buttonShape)
-                .padding(horizontal = 10.dp)
-                .keepSearchFocus()
-                .clickable(interactionSource, indication = null) { expanded = !expanded }
-                .pointerHoverIcon(PointerIcon.Hand),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                label(shown),
-                color = theme.textColor,
-                fontSize = 13.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            Icon(
-                "down",
-                color = theme.textColorSecondary,
-                modifier = Modifier.size(14.dp).graphicsLayer { rotationZ = if (expanded) 180f else 0f },
-            )
-        }
-        SimpleDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            offset = DpOffset(0.dp, 8.dp),
-        ) {
-            Column(
-                Modifier
-                    .width(200.dp)
-                    .clip(theme.popupShape)
-                    .background(theme.popupBackground, theme.popupShape)
-                    .border(1.dp, theme.borderColor, theme.popupShape)
-                    .padding(6.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                items.forEach { item ->
-                    val itemSource = rememberInteractionSource()
-                    val hovered by itemSource.collectIsHoveredAsState()
-                    val selected = item == shown
-                    val shape = theme.buttonShape
-                    Text(
-                        label(item),
-                        color = if (selected) theme.accentTextColor else theme.textColor,
-                        fontSize = 13.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                when {
-                                    selected -> Accent
-                                    hovered -> theme.modCardBackground
-                                    else -> Color.Transparent
-                                },
-                                shape,
-                            )
-                            .hoverable(itemSource)
-                            .clickable(itemSource, indication = null) {
-                                expanded = false
-                                if (!selected) onPick(item)
-                            }
-                            .pointerHoverIcon(PointerIcon.Hand)
-                            .padding(horizontal = 10.dp, vertical = 7.dp),
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -529,18 +424,18 @@ private fun PaletteAccentRow(palette: PaletteInfo) {
         PaletteAccent.set(palette.group, value)
         ThemeConfig.savePaletteAccents()
         ThemeRegistry.activeTheme?.let(::syncNotificationTheme)
-        UiSounds.play(UiSoundEvent.CLICK)
     }
+    val circle = LocalTheme.current.shapes.circle
     FlexibleLayout(horizontalSpacing = AccentSwatchGap, verticalSpacing = AccentSwatchGap) {
         palette.accents.forEachIndexed { index, accent ->
             val selected = choice == index || (choice == PaletteAccent.RECOMMENDED && index == palette.defaultAccent)
             AccentSwatch(accent.name, selected, { pick(index) }) {
-                Box(Modifier.fillMaxSize().background(accent.color, CircleShape))
+                Box(Modifier.fillMaxSize().background(accent.color, circle))
             }
         }
         AccentSwatch(translated("oneconfig.themes.tooltip.player_accent", "Use my accent"), choice == PaletteAccent.PLAYER, { pick(PaletteAccent.PLAYER) }) {
             Box(
-                Modifier.fillMaxSize().background(LocalTheme.current.componentBackground, CircleShape),
+                Modifier.fillMaxSize().background(LocalTheme.current.componentBackground, circle),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon("profiles", color = LocalTheme.current.textColor, modifier = Modifier.size(8.dp))
@@ -551,52 +446,26 @@ private fun PaletteAccentRow(palette: PaletteInfo) {
 
 @Composable
 private fun AccentSwatch(hint: String, selected: Boolean, onPick: () -> Unit, fill: @Composable () -> Unit) {
-    ThemeHint(hint) { AccentSwatchBody(selected, onPick, fill) }
-}
-
-@Composable
-private fun AccentSwatchBody(selected: Boolean, onPick: () -> Unit, fill: @Composable () -> Unit) {
     val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    Box(
-        Modifier
-            .size(AccentSwatchSize)
-            .border(if (selected) 2.dp else 1.dp, if (selected) theme.textColor else Color.Transparent, CircleShape)
-            .padding(if (selected) 3.dp else 2.dp)
-            .then(if (selected) Modifier else Modifier.keepSearchFocus())
-            .clickable(interactionSource, indication = null, enabled = !selected, onClick = onPick)
-            .pointerHoverIcon(PointerIcon.Hand),
-    ) {
-        fill()
-    }
-}
-
-@Composable
-internal fun ToggleSegment(icon: String, hint: String, selected: Boolean, onPick: () -> Unit) {
-    ThemeHint(hint) { ToggleSegmentBody(icon, selected, onPick) }
-}
-
-@Composable
-private fun ToggleSegmentBody(icon: String, selected: Boolean, onPick: () -> Unit) {
-    val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val shape = theme.buttonShape.concentric(3.dp)
-    Box(
-        Modifier
-            .fillMaxHeight()
-            .width(ToggleSegmentWidth)
-            .glassHover(shape, pull = 0.75.dp)
-            .background(if (selected) theme.textColor.copy(alpha = 0.1f) else Color.Transparent, shape)
-            .then(if (selected) Modifier else Modifier.keepSearchFocus())
-            .clickable(interactionSource, indication = null, enabled = !selected, onClick = onPick)
-            .pointerHoverIcon(PointerIcon.Hand),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            icon,
-            color = if (selected) theme.textColor else theme.textColorSecondary,
-            modifier = Modifier.size(14.dp),
-        )
+    val circle = theme.shapes.circle
+    TooltipBox(hint, placement = TooltipPlacement.AboveCenter) {
+        Box(
+            Modifier
+                .size(AccentSwatchSize)
+                .border(if (selected) 2.dp else 1.dp, if (selected) theme.textColor else Color.Transparent, circle)
+                .padding(if (selected) 3.dp else 2.dp)
+                .oneConfigClickable(
+                    hint,
+                    onPick,
+                    role = A11yRole.RadioButton,
+                    enabled = !selected,
+                    selected = selected,
+                    shape = circle,
+                    indication = false,
+                ),
+        ) {
+            fill()
+        }
     }
 }
 
@@ -653,7 +522,6 @@ private fun SoundThemePicker() {
 
 @Composable
 private fun SoundThemeCard(option: SoundThemeOption, isSelected: Boolean, modifier: Modifier, onPick: () -> Unit) {
-    val interactionSource = rememberInteractionSource()
     val theme = LocalTheme.current
     val matched = UiSoundTheme.of(theme)
     val preview = when (option.value) {
@@ -669,12 +537,14 @@ private fun SoundThemeCard(option: SoundThemeOption, isSelected: Boolean, modifi
     } else {
         translated("oneconfig.themes.sound_theme.${option.key}.caption", option.caption)
     }
+    val title = translated("oneconfig.themes.sound_theme.${option.key}", option.title)
 
     val borderColor by animateAccentColorAsState(
         isSelected,
-        if (isSelected) Accent else theme.borderColor
+        if (isSelected) Accent else theme.borderColor,
+        Motion.spec(spring<Float>()),
     )
-    val borderWidth by animateDpAsState(
+    val borderWidth by Motion.animateDpAsState(
         if (isSelected) 3.dp else 1.dp
     )
 
@@ -683,9 +553,15 @@ private fun SoundThemeCard(option: SoundThemeOption, isSelected: Boolean, modifi
             .hoverGlow(theme.backgroundShape)
             .background(theme.modCardBackground, theme.backgroundShape)
             .border(borderWidth, borderColor, theme.backgroundShape)
-            .keepSearchFocus()
-            .clickable(interactionSource, indication = null, onClick = onPick)
-            .pointerHoverIcon(PointerIcon.Hand)
+            .oneConfigClickable(
+                title,
+                onPick,
+                role = A11yRole.RadioButton,
+                selected = isSelected,
+                shape = theme.backgroundShape,
+                indication = false,
+                sound = null,
+            )
             .padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -714,7 +590,7 @@ private fun SoundThemeCard(option: SoundThemeOption, isSelected: Boolean, modifi
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                translated("oneconfig.themes.sound_theme.${option.key}", option.title),
+                title,
                 color = theme.textColor,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,

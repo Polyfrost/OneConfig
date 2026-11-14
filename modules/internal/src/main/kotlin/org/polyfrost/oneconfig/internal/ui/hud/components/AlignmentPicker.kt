@@ -29,7 +29,8 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.layout.PolyAlign
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
@@ -48,6 +49,9 @@ private val alignmentGrid: Map<PolyAlign, Pair<Int, Int>> = mapOf(
 
 private val gridAlignment: Map<Pair<Int, Int>, PolyAlign> =
     alignmentGrid.entries.associate { (k, v) -> v to k }
+
+private val CENTER_INDICATOR_RADIUS = 6.dp
+private const val CELL_FADE_MILLIS = 150
 
 @Composable
 fun AlignmentPicker(
@@ -120,21 +124,22 @@ private fun AlignmentCell(
 
     val animatedAlpha = remember { Animatable(0f) }
     val animatedScale = remember { Animatable(1f) }
+    val hoverAlpha = LocalTheme.current.hoverOverlayAlpha
 
     LaunchedEffect(isSelected) {
-        if (isSelected && !ReducedMotion.enabled) {
+        if (isSelected && !Motion.reduced) {
             animatedScale.animateTo(
                 1.15f,
                 spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
             )
-            animatedScale.animateTo(1f, tween(150))
+            animatedScale.animateTo(1f, tween(CELL_FADE_MILLIS))
         }
     }
 
-    LaunchedEffect(isHovered) {
+    LaunchedEffect(isHovered, hoverAlpha) {
         animatedAlpha.animateTo(
-            if (isHovered && !isSelected) 0.08f else 0f,
-            tween(150)
+            if (isHovered && !isSelected) hoverAlpha else 0f,
+            Motion.spec(tween(CELL_FADE_MILLIS))
         )
     }
 
@@ -180,7 +185,7 @@ private fun CellIndicator(
     color: Color,
     cellSize: Dp
 ) {
-    val indicatorRadius = LocalTheme.current.buttonShape.cornerRadiusOrNull() ?: 0.dp
+    val indicatorRadius = OneConfigTheme.shape(CENTER_INDICATOR_RADIUS).cornerRadiusOrNull() ?: 0.dp
     val isCenter = col == 1 && row == 1
     val isCorner = (col == 0 || col == 2) && (row == 0 || row == 2)
 
@@ -193,7 +198,7 @@ private fun CellIndicator(
                 val len = (8f * scale).dp.toPx()
 
                 when {
-                    isCenter -> drawCenterPlus(color, s, strokeWidth * 1.2f, len * 1.6f, minOf(6f, indicatorRadius.toPx()))
+                    isCenter -> drawCenterPlus(color, s, strokeWidth * 1.2f, len * 1.6f, indicatorRadius.toPx())
                     isCorner -> drawCornerBracket(col, row, color, s, strokeWidth, len)
                     else -> drawEdgeTick(col, row, color, s, strokeWidth, len)
                 }

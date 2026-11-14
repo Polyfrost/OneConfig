@@ -22,8 +22,8 @@ import kotlin.math.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 
 object GlassTintColor {
     private const val FILL_DARK = 0.30f
@@ -148,7 +148,7 @@ object GlassTintColor {
         abs(a.red - b.red) < SETTLED && abs(a.green - b.green) < SETTLED && abs(a.blue - b.blue) < SETTLED
 
     private fun step(t: Target, dt: Float) {
-        val snap = ReducedMotion.enabled || !AnimationsMotionScale.animations
+        val snap = Motion.reduced || !AnimationsMotionScale.animations
         if (snap) {
             shownAmount = t.amount
             if (t.amount > 0f) shownColor = t.color

@@ -459,3 +459,9 @@ fun pageSearchQuery(): String {
     val entry = LocalLifecycleOwner.current as? NavBackStackEntry
     return LocalShell.current.search.queryFor(entry?.id)
 }
+
+@Composable
+fun pageSearchQueryOrNull(): String? {
+    val entry = LocalLifecycleOwner.current as? NavBackStackEntry ?: return null
+    return LocalShell.current.search.queryFor(entry.id)
+}

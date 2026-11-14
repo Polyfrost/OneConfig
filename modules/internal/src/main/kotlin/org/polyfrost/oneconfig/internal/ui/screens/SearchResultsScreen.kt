@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
@@ -69,7 +71,7 @@ fun SearchResultsScreen(query: String) {
         results.forEach { (row, documents) ->
             if (row == null || documents.isEmpty()) return@forEach
             val node = searchNode(row.node, documents) ?: return@forEach
-            val mod = row.modTitle ?: "Other"
+            val mod = row.modTitle ?: translated("oneconfig.search.other", "Other")
             byGroup.getOrPut(row.groupLabel?.let { "$mod / $it" } ?: mod) { ArrayList() } += (node to row.mod)
         }
         byGroup
@@ -82,9 +84,12 @@ fun SearchResultsScreen(query: String) {
     if (matchingMods.isEmpty() && groupedOptions.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // nothing to say until the first search comes back
-            searchedQuery?.also {
-                Text(translated("oneconfig.search.no_results", "No results for \"%s\"", it), color = theme.textColorSecondary, fontSize = 15.sp)
-            } ?: Text(translated("oneconfig.search.searching", "Searching..."), color = theme.textColorSecondary, fontSize = 15.sp)
+            val searched = searchedQuery
+            if (searched != null) {
+                EmptyState(translated("oneconfig.search.no_results", "No results for \"%s\"", searched), icon = "search")
+            } else {
+                EmptyState(translated("oneconfig.search.searching", "Searching..."), state = LoadState.Loading)
+            }
         }
         return
     }

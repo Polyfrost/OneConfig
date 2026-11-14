@@ -34,6 +34,7 @@ import kotlin.math.roundToInt
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 internal enum class MergeAxis { X, Y }
 
@@ -151,9 +152,10 @@ internal object HudBackgroundMerge {
         return out
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     fun canMerge(hud: Hud): Boolean =
         hud !is LegacyHudMarker && hud.canMergeBackground() &&
-            hud.showBackground && hud.mergeBackground && hud.hasBackground() &&
+            hud.showBackground && hud.mergeBackground && hud.hasBackground() && !hud.borderEnabled &&
             (!hud.hidden || hud.keepBgWhenHidden) &&
             hud.renderedW > 0f && hud.renderedH > 0f
 
@@ -517,6 +519,7 @@ internal object HudBackgroundMerge {
         pb.close()
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     fun layoutKey(huds: List<Hud>): Int {
         var key = huds.size
         for (hud in huds) {
@@ -531,6 +534,7 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
             key = key * 31 + (if (hud.hidden) 1 else 0)
             key = key * 31 + (if (hud.keepBgWhenHidden) 1 else 0)
+            key = key * 31 + (if (hud.borderEnabled) 1 else 0)
         }
         return key
     }

@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1
 
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
+
 /**
  * Platform bridge that builds and shows the OneConfig UI screen
  */
@@ -11,4 +13,15 @@ public interface OneConfigUIBridge {
     public fun open(route: Any?)
 
     public fun isOneConfigScreen(screen: Any?): Boolean = false
+
+    @ExperimentalOneConfigUiApi
+    public fun openPage(page: OneConfigPage, argument: Any?) {
+        open(page)
+    }
+
+    @ExperimentalOneConfigUiApi
+    public fun takePageArgument(): Any? = null
+
+    @ExperimentalOneConfigUiApi
+    public fun ensureInitialized() {}
 }

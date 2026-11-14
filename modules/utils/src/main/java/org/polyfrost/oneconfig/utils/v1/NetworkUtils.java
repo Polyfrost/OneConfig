@@ -28,9 +28,11 @@ package org.polyfrost.oneconfig.utils.v1;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -38,9 +40,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper;
 
@@ -88,6 +94,102 @@ public final class NetworkUtils {
     @Nullable
     public static String getString(String url) {
         return getString(url, DEF_AGENT, 5000, false);
+    }
+
+    @Nullable
+    @ApiStatus.Experimental
+    @SuppressWarnings("deprecation")
+    public static String post(String url, byte[] body, String contentType, Map<String, String> headers, int timeoutMillis) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("POST");
+            connection.setUseCaches(false);
+            connection.setDoOutput(true);
+            connection.setReadTimeout(timeoutMillis);
+            connection.setConnectTimeout(timeoutMillis);
+            connection.setRequestProperty("User-Agent", DEF_AGENT);
+            connection.setRequestProperty("Content-Type", contentType);
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                connection.setRequestProperty(header.getKey(), header.getValue());
+            }
+            connection.setFixedLengthStreamingMode(body.length);
+            try (OutputStream out = connection.getOutputStream()) {
+                out.write(body);
+            }
+            int status = connection.getResponseCode();
+            if (status < 200 || status >= 300) {
+                InputStream error = connection.getErrorStream();
+                String message = error == null ? "" : readBody(connection, error);
+                LOGGER.error("POST to {} failed with HTTP {}: {}", url, status, message);
+                return null;
+            }
+            return readBody(connection, connection.getInputStream());
+        } catch (Exception e) {
+            LOGGER.error("Failed to POST to {}", url, e);
+            return null;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Nullable
+    @ApiStatus.Experimental
+    public static String post(String url, byte[] body, String contentType, Map<String, String> headers) {
+        return post(url, body, contentType, headers, 10000);
+    }
+
+    @Nullable
+    @ApiStatus.Experimental
+    public static String post(String url, byte[] body, String contentType) {
+        return post(url, body, contentType, Collections.emptyMap(), 10000);
+    }
+
+    @Nullable
+    @ApiStatus.Experimental
+    public static String postJson(String url, String json, Map<String, String> headers, int timeoutMillis) {
+        return post(url, json.getBytes(StandardCharsets.UTF_8), "application/json; charset=utf-8", headers, timeoutMillis);
+    }
+
+    @Nullable
+    @ApiStatus.Experimental
+    public static String postJson(String url, String json, Map<String, String> headers) {
+        return postJson(url, json, headers, 10000);
+    }
+
+    @Nullable
+    @ApiStatus.Experimental
+    public static String postJson(String url, String json) {
+        return postJson(url, json, Collections.emptyMap(), 10000);
+    }
+
+    @ApiStatus.Experimental
+    public static CompletableFuture<@Nullable String> postAsync(String url, byte[] body, String contentType, Map<String, String> headers, int timeoutMillis) {
+        return CompletableFuture.supplyAsync(() -> post(url, body, contentType, headers, timeoutMillis), Multithreading.getExecutor());
+    }
+
+    @ApiStatus.Experimental
+    public static CompletableFuture<@Nullable String> postAsync(String url, byte[] body, String contentType, Map<String, String> headers) {
+        return postAsync(url, body, contentType, headers, 10000);
+    }
+
+    @ApiStatus.Experimental
+    public static CompletableFuture<@Nullable String> postAsync(String url, byte[] body, String contentType) {
+        return postAsync(url, body, contentType, Collections.emptyMap(), 10000);
+    }
+
+    private static String readBody(HttpURLConnection connection, InputStream raw) throws IOException {
+        try (InputStream stream = "gzip".equalsIgnoreCase(connection.getContentEncoding()) ? new GZIPInputStream(raw) : raw) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = stream.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            return new String(out.toByteArray(), StandardCharsets.UTF_8);
+        }
     }
 
     /**

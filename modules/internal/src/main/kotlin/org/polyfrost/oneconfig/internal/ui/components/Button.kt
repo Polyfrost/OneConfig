@@ -1,20 +1,30 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton as KitIconButton
 
 enum class IconButtonType {
     Ghost,
     Filled;
+}
+
+internal fun iconButtonLabel(iconName: String): String = when (iconName) {
+    "left-arrow" -> translated("oneconfig.button.back", "Back")
+    "right-arrow" -> translated("oneconfig.button.forward", "Forward")
+    "close" -> translated("oneconfig.button.close", "Close")
+    "folder" -> translated("oneconfig.button.browse", "Browse")
+    "trash" -> translated("oneconfig.list.remove", "Remove")
+    else -> iconName.replace('-', ' ').replaceFirstChar { it.uppercase() }
 }
 
 @Composable
@@ -28,33 +38,21 @@ fun IconButton(
     hoverBorder: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val interactionSource = rememberInteractionSource()
-
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    val iconColor = animateColorAsState(
-        if (!enabled) {
-            LocalTheme.current.textColorSecondary.copy(alpha = 0.35f)
-        } else {
-            if (isHovered) hoveredForeground else foreground
-        }
-    )
-    val borderColor = animateColorAsState(
-        if (hoverBorder && enabled && isHovered) LocalTheme.current.borderColor
-        else LocalTheme.current.borderColor.copy(0f)
-    )
-
-    Icon(
+    val source = remember { MutableInteractionSource() }
+    val hovered by source.collectIsHoveredAsState()
+    val tint = Motion.animateColorAsState(if (hovered) hoveredForeground else foreground)
+    val label = iconButtonLabel(iconName)
+    KitIconButton(
         iconName,
-        tint = { iconColor.value },
-        modifier = Modifier.onClick(interactionSource, enabled, onClick)
-            .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-            .then(modifier)
-            // inset the glyph so the outline doesn't hug it; size bordered buttons 8dp larger to keep the icon size
-            .then(
-                if (hoverBorder) Modifier.animatedFrame(LocalTheme.current.buttonShape, border = { borderColor.value }).padding(4.dp)
-                else Modifier
-            )
+        label,
+        onClick,
+        modifier,
+        enabled = enabled,
+        style = IconButtonStyle.Ghost,
+        size = if (hoverBorder) ControlSize.Regular else ControlSize.Compact,
+        tooltip = if (hoverBorder) label else null,
+        tint = tint.value,
+        interactionSource = source,
     )
 }
 
@@ -67,16 +65,20 @@ fun SelectableIconButton(
     hoveredForeground: Color = LocalTheme.current.textColor,
     onClick: () -> Unit,
 ) {
-    val interactionSource = rememberInteractionSource()
-
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    val iconColor = animateColorAsState(
-        if (isHovered || selected) hoveredForeground else foreground
-    )
-
-    Icon(
+    val source = remember { MutableInteractionSource() }
+    val hovered by source.collectIsHoveredAsState()
+    val tint = Motion.animateColorAsState(if (hovered || selected) hoveredForeground else foreground)
+    val label = iconButtonLabel(iconName)
+    KitIconButton(
         iconName,
-        tint = { iconColor.value }, modifier = Modifier.onClick(interactionSource, onClick).then(modifier)
+        label,
+        onClick,
+        modifier,
+        style = IconButtonStyle.Ghost,
+        size = ControlSize.Compact,
+        selected = selected,
+        tooltip = null,
+        tint = if (selected) Color.Unspecified else tint.value,
+        interactionSource = source,
     )
 }

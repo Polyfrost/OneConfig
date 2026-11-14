@@ -4,8 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import java.util.function.Predicate
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
@@ -17,7 +20,8 @@ import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 @Composable
 internal fun rememberModEnabled(toggle: ModToggle?): MutableState<Boolean> {
     val revision = ModToggles.revision
-    val state = remember(toggle, revision) { mutableStateOf(toggle?.isEnabled() ?: true) }
+    val flips = ModToggleFlips.count
+    val state = remember(toggle, revision, flips) { mutableStateOf(toggle?.isEnabled() ?: true) }
     // a switch that is one of the mod's own options changes without ModToggles hearing of it
     val property = if (LocalShell.current.warming) null else (toggle as? PropertyModToggle)?.property
     DisposableEffect(System.identityHashCode(property), state) {
@@ -29,4 +33,8 @@ internal fun rememberModEnabled(toggle: ModToggle?): MutableState<Boolean> {
         snapshotFlow { toggle?.isEnabled() ?: true }.collect { state.value = it }
     }
     return state
+}
+
+internal object ModToggleFlips {
+    var count by mutableIntStateOf(0)
 }
