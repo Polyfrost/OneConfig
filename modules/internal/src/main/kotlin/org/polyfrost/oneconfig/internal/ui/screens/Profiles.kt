@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -115,6 +116,7 @@ private data class ProfileActionResult(
 )
 
 private val ProfileCardHeight = 180.dp
+private val ProfileKeybindClearance = 12.dp
 private const val BusyOverlayDelayMs = 400L
 private const val OverlayFrameTimeoutMs = 500L
 private enum class ProfileEditor { Rename, Clone, Icon }
@@ -853,7 +855,7 @@ private fun ProfileCard(
         }
 
         Column(
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier.align(Alignment.Center).offset(y = if (editor == null) -ProfileKeybindClearance else 0.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val compact = editor == ProfileEditor.Icon
