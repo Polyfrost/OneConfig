@@ -186,7 +186,7 @@ public abstract class TextHud(
         val p = prefix
         val sfx = suffix
         if (displayRuns != null && lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && runs == lastRuns) return true
-        lastRuns = runs
+        lastRuns = runs.toList()
         lastPrefix = p
         lastSuffix = sfx
         lastBrackets = brackets
