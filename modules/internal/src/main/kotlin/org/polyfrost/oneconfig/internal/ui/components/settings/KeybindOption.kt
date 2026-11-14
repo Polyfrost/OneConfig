@@ -16,7 +16,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 
 @Suppress("UNCHECKED_CAST")
-private fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, mods: Byte): OneConfigKeybind {
+internal fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, mods: Byte): OneConfigKeybind {
     val old = prop.get() as? OneConfigKeybind
     // copyWith keeps the runtime subtype so a rebound BindNotInScreen is not demoted to the base class
     val newKeybind = old?.copyWith(keys, mouse, mods) ?: OneConfigKeybind(keys, mouse, mods, 0L) { true }
