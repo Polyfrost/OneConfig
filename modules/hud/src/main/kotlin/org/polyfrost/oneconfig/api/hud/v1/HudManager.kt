@@ -1129,7 +1129,7 @@ public object HudManager {
 
     @ApiStatus.Internal
     @JvmStatic
-    public fun backgroundStylesMatch(a: Hud, b: Hud): Boolean = HudBackgroundMerge.sameStyle(a, b)
+    public fun backgroundStylesMatch(a: Hud, b: Hud): Boolean = HudBackgroundMerge.canFuse(a, b)
 
     /**
      * Holds every HUD in a fused shape against the neighbour it touches at the point where the two meet

@@ -49,7 +49,7 @@ private val TEXT_OPTIONS = listOf(
     "textChromaSpeed", "showShadow", "fullShadow", "shadowColor", "shadowChroma", "shadowChromaSpeed",
 )
 private val BACKGROUND_OPTIONS = listOf(
-    "showBackground", "bgRadius", "bgColor", "bgChroma", "bgChromaSpeed", "mergeBackground", "mergeDiagonally",
+    "showBackground", "bgRadius", "bgColor", "bgChroma", "bgChromaSpeed", "mergeBackground", "mergeDiagonally", "mergeAcrossColours",
     "keepBgWhenHidden", "borderEnabled", "borderColor", "borderChroma", "borderChromaSpeed", "borderSize",
 )
 
@@ -111,6 +111,7 @@ fun Style(hud: Hud?, query: String) {
     var bgRadius by remember { mutableStateOf(hud.bgRadius) }
     var mergeBackground by remember { mutableStateOf(hud.mergeBackground) }
     var mergeDiagonally by remember { mutableStateOf(hud.mergeDiagonally) }
+    var mergeAcrossColours by remember { mutableStateOf(hud.mergeAcrossColours) }
     var keepBgWhenHidden by remember { mutableStateOf(hud.keepBgWhenHidden) }
     var borderEnabled by remember { mutableStateOf(hud.borderEnabled) }
     var borderSize by remember { mutableStateOf(hud.borderSize) }
@@ -296,7 +297,7 @@ fun Style(hud: Hud?, query: String) {
 
         CardSection(
             hudPanelText("background", "Background"), query, "Show Background", hudPanelText("radius", "Radius"), hudPanelText("color", "Color"), "Background Color", "Merge",
-            hudPanelText("merge", "Merge with neighbours"), hudPanelText("mode.diagonal", "Diagonal"), hudPanelText("keep_hidden", "Keep hidden"), "Keep Background When Hidden", hudPanelText("border", "Border"), hudPanelText("border_size", "Border size"),
+            hudPanelText("merge", "Merge with neighbours"), hudPanelText("mode.diagonal", "Diagonal"), hudPanelText("merge_colours", "Merge with different colours"), hudPanelText("keep_hidden", "Keep hidden"), "Keep Background When Hidden", hudPanelText("border", "Border"), hudPanelText("border_size", "Border size"),
             hudPanelText("border_color", "Border color"),
             checked = showBackground,
             onCheckedChange = { Snapshot.withMutableSnapshot { showBackground = it; hud.showBackground = it } },
@@ -413,6 +414,20 @@ fun Style(hud: Hud?, query: String) {
                                 LabeledControl(hudPanelText("keep_hidden", "Keep hidden")) {
                                     SwitchControl(keepBgWhenHidden) {
                                         Snapshot.withMutableSnapshot { keepBgWhenHidden = it; hud.keepBgWhenHidden = it }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                )
+                GridRow(
+                    col1,
+                    wide = {
+                        FadingCell(mergeBackground) {
+                            HudSettingTarget(hud, "mergeAcrossColours") {
+                                LabeledControl(hudPanelText("merge_colours", "Merge with different colours")) {
+                                    SwitchControl(mergeAcrossColours) {
+                                        Snapshot.withMutableSnapshot { mergeAcrossColours = it; hud.mergeAcrossColours = it }
                                     }
                                 }
                             }

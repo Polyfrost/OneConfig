@@ -818,6 +818,7 @@
   "oneconfig.hud.menu.redo": "Redo",
   "oneconfig.hud.menu.reset_position": "Reset position",
   "oneconfig.hud.menu.reset_settings": "Reset HUD settings",
+  "oneconfig.hud.panel.merge_colours": "Merge with different colours",
   "oneconfig.hud.align.left": "Align left",
   "oneconfig.hud.align.centerx": "Align centre",
   "oneconfig.hud.align.right": "Align right",

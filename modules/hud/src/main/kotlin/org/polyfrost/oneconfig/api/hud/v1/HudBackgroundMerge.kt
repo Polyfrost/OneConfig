@@ -28,10 +28,12 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import java.util.IdentityHashMap
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.roundToInt
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyGradient
 import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -70,6 +72,12 @@ internal object HudBackgroundMerge {
 
     private const val PIN_Y = 2
 
+    private const val BLEND = 8f
+
+    private const val MAX_BLEND_STEPS = 8
+
+    private const val CLIP_MARGIN = 4f
+
     /**
      * A HUD in a fused shape held against the neighbour it touches on one [axis]
      *
@@ -92,13 +100,56 @@ internal object HudBackgroundMerge {
         val chroma: Boolean,
         private val chromaSpeed: Float,
         private val loops: List<Loop>,
+        private val shading: Shading? = null,
     ) {
         private val path by lazy(LazyThreadSafetyMode.NONE) {
             PolyPath().also { pb -> for (loop in loops) emitLoop(pb, loop) }
         }
 
         fun draw(ctx: RenderContext) {
-            ctx.fillPath(path, PolyColor(bgColor, chroma, chromaSpeed))
+            val shading = shading
+            if (shading == null) ctx.fillPath(path, PolyColor(bgColor, chroma, chromaSpeed)) else shading.draw(ctx, path)
+        }
+    }
+
+    class Shading(
+        private val alongY: Boolean,
+        private val left: Float,
+        private val top: Float,
+        private val right: Float,
+        private val bottom: Float,
+        private val cuts: FloatArray,
+        private val gradients: List<PolyGradient>,
+    ) {
+        fun draw(ctx: RenderContext, path: PolyPath) {
+            val w = right - left
+            val h = bottom - top
+            if (gradients.size == 1) {
+                ctx.renderer.fillPathGradient(path, left, top, w, h, gradients[0])
+                return
+            }
+            val m = ctx.deviceTransform()
+            val scale = if (m == null) 0f else if (alongY) m[0] else m[1]
+            val offset = if (m == null) 0f else if (alongY) m[2] else m[3]
+            val nudge = if (scale > 0f) 0.01f / scale else 0f
+            fun snap(v: Float) = if (scale > 0f) ((v * scale + offset).roundToInt() - offset) / scale else v
+            var start = (if (alongY) left else top) - CLIP_MARGIN
+            for (k in gradients.indices) {
+                val last = k == cuts.size
+                val end = if (last) (if (alongY) right else bottom) + CLIP_MARGIN else snap(cuts[k])
+                if (end <= start) continue
+                val lo = if (k == 0) start else start + nudge
+                val hi = if (last) end else end - nudge
+                ctx.save()
+                if (alongY) {
+                    ctx.clipRect(lo, top - CLIP_MARGIN, hi - lo, h + CLIP_MARGIN * 2f)
+                } else {
+                    ctx.clipRect(left - CLIP_MARGIN, lo, w + CLIP_MARGIN * 2f, hi - lo)
+                }
+                ctx.renderer.fillPathGradient(path, left, top, w, h, gradients[k])
+                ctx.restore()
+                start = end
+            }
         }
     }
 
@@ -121,7 +172,7 @@ internal object HudBackgroundMerge {
             for (j in i + 1 until items.size) {
                 val a = items[i]
                 val b = items[j]
-                if (!a.sameStyle(b)) continue
+                if (!a.canFuse(b)) continue
                 val pins = contactPins(a, b)
                 if (pins == 0) continue
                 union(parent, i, j)
@@ -137,7 +188,8 @@ internal object HudBackgroundMerge {
         for (component in components.values) {
             if (component.size < 2) continue
             val members = component.map { items[it] }
-            val loops = outlines(members.map { floatArrayOf(it.x, it.y, it.w, it.h) }, FloatArray(members.size) { members[it].radius })
+            val rects = snapEdges(members.map { floatArrayOf(it.x, it.y, it.w, it.h) })
+            val loops = trace(rects, FloatArray(members.size) { members[it].radius })
             if (loops.isEmpty()) continue
             val first = members[0]
             out.add(
@@ -146,6 +198,7 @@ internal object HudBackgroundMerge {
                     axisLinks(items, component, neighbours, MergeAxis.X) +
                         axisLinks(items, component, neighbours, MergeAxis.Y),
                     first.hud.bgColor, first.hud.bgChroma, first.hud.bgChromaSpeed, loops,
+                    shading(rects, IntArray(members.size) { members[it].hud.bgColor }),
                 )
             )
         }
@@ -162,6 +215,9 @@ internal object HudBackgroundMerge {
     fun sameStyle(a: Hud, b: Hud): Boolean =
         a.bgColor == b.bgColor && a.bgChroma == b.bgChroma &&
             (!a.bgChroma || abs(a.bgChromaSpeed - b.bgChromaSpeed) <= EPS)
+
+    fun canFuse(a: Hud, b: Hud): Boolean =
+        sameStyle(a, b) || (a.mergeAcrossColours && b.mergeAcrossColours && !a.bgChroma && !b.bgChroma)
 
     private class Contact(val other: Int, val pins: Int)
 
@@ -307,7 +363,7 @@ internal object HudBackgroundMerge {
         val layoutRight get() = layoutX + w
         val layoutBottom get() = layoutY + h
 
-        fun sameStyle(other: Item): Boolean = sameStyle(hud, other.hud)
+        fun canFuse(other: Item): Boolean = canFuse(hud, other.hud)
     }
 
     private fun contactPins(a: Item, b: Item): Int {
@@ -493,6 +549,151 @@ internal object HudBackgroundMerge {
         return loops
     }
 
+    private class Profile(val stops: FloatArray, val colors: IntArray) {
+        fun sample(t: Float): Int {
+            if (t <= stops[0]) return colors[0]
+            for (i in 1 until stops.size) {
+                if (t > stops[i]) continue
+                val a = stops[i - 1]
+                val b = stops[i]
+                return if (b > a) PolyGradient.lerpArgb(colors[i - 1], colors[i], (t - a) / (b - a)) else colors[i]
+            }
+            return colors[colors.size - 1]
+        }
+
+        override fun equals(other: Any?): Boolean =
+            other is Profile && stops.contentEquals(other.stops) && colors.contentEquals(other.colors)
+
+        override fun hashCode(): Int = stops.contentHashCode() * 31 + colors.contentHashCode()
+    }
+
+    private fun shading(rects: List<FloatArray>, colors: IntArray): Shading? {
+        if (colors.all { it == colors[0] }) return null
+        val xs = rects.flatMap { listOf(it[0], it[0] + it[2]) }.distinct().sorted()
+        val ys = rects.flatMap { listOf(it[1], it[1] + it[3]) }.distinct().sorted()
+        val nx = xs.size - 1
+        val ny = ys.size - 1
+        if (nx <= 0 || ny <= 0) return null
+        val owner = Array(nx) { i ->
+            val cx = (xs[i] + xs[i + 1]) / 2f
+            IntArray(ny) { j ->
+                val cy = (ys[j] + ys[j + 1]) / 2f
+                rects.indexOfFirst { cx > it[0] && cx < it[0] + it[2] && cy > it[1] && cy < it[1] + it[3] }
+            }
+        }
+        val transposed = Array(ny) { j -> IntArray(nx) { i -> owner[i][j] } }
+        val byColumns = plan(xs, ys, owner, colors)
+        val byRows = plan(ys, xs, transposed, colors)
+        val alongY = byRows.size >= byColumns.size
+        val best = if (alongY) byColumns else byRows
+        val left = xs[0]
+        val top = ys[0]
+        val right = xs[nx]
+        val bottom = ys[ny]
+        val cuts = FloatArray(best.size - 1) { best[it].first }
+        val gradients = best.map { (_, profile) ->
+            PolyGradient.Points(
+                profile.colors.map { PolyColor(it) }, profile.stops.asList(),
+                left, top, if (alongY) left else right, if (alongY) bottom else top,
+            )
+        }
+        return Shading(alongY, left, top, right, bottom, cuts, gradients)
+    }
+
+    private fun plan(split: List<Float>, along: List<Float>, owner: Array<IntArray>, colors: IntArray): List<Pair<Float, Profile>> {
+        val ns = split.size - 1
+        val na = along.size - 1
+        val grid = Array(ns) { IntArray(na) { colors[0] } }
+        for (b in 0 until na) {
+            for (a in 0 until ns) {
+                var best = -1
+                var dist = Int.MAX_VALUE
+                for (o in 0 until ns) {
+                    val k = owner[o][b]
+                    if (k >= 0 && abs(o - a) < dist) {
+                        dist = abs(o - a)
+                        best = k
+                    }
+                }
+                if (best >= 0) grid[a][b] = colors[best]
+            }
+        }
+
+        val lo = along[0]
+        val span = along[na] - lo
+        val stripEnd = ArrayList<Float>(ns)
+        val stripProfile = ArrayList<Profile>(ns)
+        for (a in 0 until ns) {
+            val profile = profile(along, grid[a], lo, span)
+            if (stripProfile.isNotEmpty() && stripProfile[stripProfile.size - 1] == profile) {
+                stripEnd[stripEnd.size - 1] = split[a + 1]
+            } else {
+                stripProfile.add(profile)
+                stripEnd.add(split[a + 1])
+            }
+        }
+
+        val out = ArrayList<Pair<Float, Profile>>()
+        var prevEnd = split[0]
+        for (s in stripProfile.indices) {
+            val p = stripProfile[s]
+            if (s == stripProfile.size - 1) {
+                out.add(Float.NaN to p)
+                break
+            }
+            val q = stripProfile[s + 1]
+            val seam = stripEnd[s]
+            val before = min(BLEND, (seam - (if (s == 0) split[0] else stripEnd[s - 1])) / 2f)
+            val after = min(BLEND, (stripEnd[s + 1] - seam) / 2f)
+            if (seam - before - prevEnd > EPS) out.add(seam - before to p)
+            val steps = ceil((before + after) / 2f).toInt().coerceIn(2, MAX_BLEND_STEPS)
+            val step = (before + after) / steps
+            for (m in 0 until steps) {
+                var end = seam - before + step * (m + 1)
+                if (m < steps - 1 && step >= 2f && abs(end - seam) < 1f) end = if (end < seam) seam - 1f else seam + 1f
+                out.add(end to mix(p, q, (m + 0.5f) / steps))
+            }
+            prevEnd = seam + after
+        }
+        return out
+    }
+
+    private fun profile(edges: List<Float>, cells: IntArray, lo: Float, span: Float): Profile {
+        val runStart = ArrayList<Float>()
+        val runColor = ArrayList<Int>()
+        for (b in cells.indices) {
+            if (b == 0 || cells[b] != cells[b - 1]) {
+                runStart.add(edges[b])
+                runColor.add(cells[b])
+            }
+        }
+        val stops = ArrayList<Float>(runStart.size * 2 + 2)
+        val out = ArrayList<Int>(runStart.size * 2 + 2)
+        stops.add(0f)
+        out.add(runColor[0])
+        for (r in 1 until runStart.size) {
+            val seam = runStart[r]
+            val next = if (r + 1 < runStart.size) runStart[r + 1] else edges[edges.size - 1]
+            val before = min(BLEND, (seam - runStart[r - 1]) / 2f)
+            val after = min(BLEND, (next - seam) / 2f)
+            stops.add((seam - before - lo) / span)
+            out.add(runColor[r - 1])
+            stops.add((seam + after - lo) / span)
+            out.add(runColor[r])
+        }
+        stops.add(1f)
+        out.add(runColor[runColor.size - 1])
+        return Profile(stops.toFloatArray(), out.toIntArray())
+    }
+
+    private fun mix(p: Profile, q: Profile, t: Float): Profile {
+        val stops = (p.stops.asList() + q.stops.asList()).distinct().sorted()
+        return Profile(
+            stops.toFloatArray(),
+            IntArray(stops.size) { PolyGradient.lerpArgb(p.sample(stops[it]), q.sample(stops[it]), t) },
+        )
+    }
+
     private fun emitLoop(pb: PolyPath, loop: Loop) {
         val points = loop.points
         val n = points.size / 2
@@ -532,6 +733,8 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.showBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeBackground) 1 else 0)
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
+            key = key * 31 + (if (hud.mergeAcrossColours) 1 else 0)
+            key = key * 31 + (if (hud.bgChroma) 1 else 0)
             key = key * 31 + (if (hud.hidden) 1 else 0)
             key = key * 31 + (if (hud.keepBgWhenHidden) 1 else 0)
             key = key * 31 + (if (hud.borderEnabled) 1 else 0)
