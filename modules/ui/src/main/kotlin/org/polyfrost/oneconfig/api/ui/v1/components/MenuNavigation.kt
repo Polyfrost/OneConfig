@@ -2,11 +2,14 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -14,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEventOrNull
+import androidx.compose.ui.composed
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -41,6 +45,7 @@ internal class MenuNavItem {
     var top: Int = UNPLACED
     var left: Int = 0
     var seq: Int = 0
+    var revealRequest by mutableIntStateOf(0)
 }
 
 internal class MenuNavLevel(val controller: MenuNavController, val parent: MenuNavLevel?) {
@@ -119,8 +124,10 @@ internal class MenuNavLevel(val controller: MenuNavController, val parent: MenuN
     }
 
     fun highlightFirst() {
-        highlighted = ordered().firstOrNull()
+        val first = ordered().firstOrNull()
+        highlighted = first
         controller.active = this
+        first?.let { it.revealRequest++ }
     }
 
     fun select(item: MenuNavItem?) {
@@ -129,6 +136,7 @@ internal class MenuNavLevel(val controller: MenuNavController, val parent: MenuN
         highlighted = item
         hoverIntent = null
         if (openChild != null && openChild !== item) openChild = null
+        item.revealRequest++
     }
 }
 
@@ -297,8 +305,17 @@ internal fun MenuHoverIntentEffect(level: MenuNavLevel) {
 
 internal fun Modifier.menuNavPosition(item: MenuNavItem?): Modifier =
     if (item == null) this
-    else onGloballyPositioned {
-        val at = it.positionInWindow()
-        item.top = at.y.roundToInt()
-        item.left = at.x.roundToInt()
+    else composed {
+        val requester = remember { BringIntoViewRequester() }
+        val reveal = item.revealRequest
+        LaunchedEffect(item, reveal) {
+            if (reveal != 0) requester.bringIntoView()
+        }
+        Modifier
+            .bringIntoViewRequester(requester)
+            .onGloballyPositioned {
+                val at = it.positionInWindow()
+                item.top = at.y.roundToInt()
+                item.left = at.x.roundToInt()
+            }
     }
