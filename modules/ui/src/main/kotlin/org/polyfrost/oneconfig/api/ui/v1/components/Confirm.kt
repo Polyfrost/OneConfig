@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
@@ -100,6 +101,25 @@ public fun ArmedConfirmButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
 ) {
+    ArmedConfirmButton(
+        AnnotatedString(text), onConfirm, modifier, AnnotatedString(armedText),
+        timeoutMillis, style, size, enabled, interactionSource,
+    )
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun ArmedConfirmButton(
+    text: AnnotatedString,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+    armedText: AnnotatedString = AnnotatedString(ConfirmDefaults.armedText(text.text)),
+    timeoutMillis: Long = ConfirmDefaults.timeoutMillis,
+    style: ControlStyle = ControlStyle.Danger,
+    size: ControlSize = ControlSize.Regular,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+) {
     var armedAt by remember { mutableStateOf<Long?>(null) }
     val armed = armedAt != null
     var restWidth by remember { mutableIntStateOf(0) }
@@ -111,7 +131,7 @@ public fun ArmedConfirmButton(
         }
     }
     LaunchedEffect(enabled) { if (!enabled) armedAt = null }
-    if (armed) Announce(armedText)
+    if (armed) Announce(armedText.text)
     TextButton(
         if (armed) armedText else text,
         onClick = {

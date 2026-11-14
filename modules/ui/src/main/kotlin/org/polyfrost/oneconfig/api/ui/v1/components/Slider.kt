@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,6 +76,7 @@ public fun Slider(
     enabled: Boolean = true,
     label: String? = null,
     valueText: ((Float) -> String)? = null,
+    interactionSource: MutableInteractionSource? = null,
     onValueChangeFinished: (() -> Unit)? = null,
 ) {
     val theme = OneConfigTheme.current
@@ -84,7 +87,7 @@ public fun Slider(
     val latestChange by rememberUpdatedState(onValueChange)
     val latestFinished by rememberUpdatedState(onValueChangeFinished)
     val latestValue by rememberUpdatedState(value)
-    val source = remember { MutableInteractionSource() }
+    val source = interactionSource ?: remember { MutableInteractionSource() }
     var trackWidthPx by remember { mutableFloatStateOf(0f) }
     val fraction = animateFloatAsState(
         if (span > 0f) ((value - min) / span).coerceIn(0f, 1f) else 0f,
@@ -174,8 +177,9 @@ public fun Slider(
                     true
                 }
                 .focusable(enabled, source)
+                .hoverable(source, enabled)
                 .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-                .pointerInput(enabled, min, max, step) {
+                .pointerInput(enabled, min, max, step, source) {
                     if (!enabled) return@pointerInput
                     val thumbPx = THUMB_SIZE.toPx()
                     var lastTickValue = Float.NaN
@@ -195,16 +199,22 @@ public fun Slider(
                     }
                     awaitEachGesture {
                         val down = awaitFirstDown()
-                        emit(down.position.x)
-                        do {
-                            val event = awaitPointerEvent()
-                            event.changes.forEach { change ->
-                                if (change.pressed) {
-                                    emit(change.position.x)
-                                    change.consume()
+                        val drag = DragInteraction.Start()
+                        source.tryEmit(drag)
+                        try {
+                            emit(down.position.x)
+                            do {
+                                val event = awaitPointerEvent()
+                                event.changes.forEach { change ->
+                                    if (change.pressed) {
+                                        emit(change.position.x)
+                                        change.consume()
+                                    }
                                 }
-                            }
-                        } while (event.changes.any { it.pressed })
+                            } while (event.changes.any { it.pressed })
+                        } finally {
+                            source.tryEmit(DragInteraction.Stop(drag))
+                        }
                         latestFinished?.invoke()
                     }
                 },

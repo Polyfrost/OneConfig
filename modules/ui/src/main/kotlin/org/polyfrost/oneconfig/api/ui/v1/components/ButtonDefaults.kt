@@ -5,12 +5,15 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+
+private const val WHITE_MIN_CONTRAST = 3f
 
 @ExperimentalOneConfigUiApi
 public object ButtonDefaults {
@@ -40,7 +43,7 @@ public object ButtonDefaults {
         val theme = OneConfigTheme.current
         return when (style) {
             ControlStyle.Primary -> theme.accentTextColor
-            ControlStyle.DangerFilled -> theme.onError
+            ControlStyle.DangerFilled -> if (1.05f / (theme.error.luminance() + 0.05f) >= WHITE_MIN_CONTRAST) Color.White else theme.onError
             ControlStyle.Danger -> theme.error
             ControlStyle.Secondary, ControlStyle.Ghost -> theme.textColor
         }

@@ -21,6 +21,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import org.polyfrost.oneconfig.api.ui.v1.a11y.isKeyboardMode
+import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.hoverable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -43,13 +51,14 @@ import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 private val CHECK_SIZE = 20.dp
+private val LEGACY_ICON_BUTTON_SIZE = 34.dp
 private const val FADE_MILLIS = 150
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun IconButton(iconName: String, tooltip: String?, modifier: Modifier, onClick: () -> Unit) {
-    IconButton(iconName, tooltip ?: iconName, onClick, modifier, tooltip = tooltip, tooltipPlacement = TooltipPlacement.BelowStart)
+    LegacyIconButton(iconName, tooltip, modifier, TooltipPlacement.BelowStart, onClick, null, OneConfigTheme.current.textColor, null)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -65,16 +74,7 @@ public fun IconButton(
     placement: TooltipPlacement,
     onClick: () -> Unit,
 ) {
-    IconButton(
-        iconName,
-        label ?: tooltip ?: iconName,
-        onClick,
-        modifier,
-        style = if (background != null) IconButtonStyle.Framed else IconButtonStyle.Ghost,
-        tooltip = tooltip,
-        tooltipPlacement = placement,
-        tint = tint,
-    )
+    LegacyIconButton(iconName, tooltip, modifier, placement, onClick, label, tint, background)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -89,19 +89,59 @@ public fun IconButton(
     onClick: () -> Unit,
     glyph: @Composable () -> Unit,
 ) {
-    IconButtonFrame(
-        label ?: tooltip.orEmpty(),
-        onClick,
-        modifier,
-        true,
-        if (background != null) IconButtonStyle.Framed else IconButtonStyle.Ghost,
-        ControlSize.Regular,
-        false,
-        false,
-        tooltip,
-        placement,
-        null,
-    ) { glyph() }
+    LegacyIconButtonFrame(tooltip, label, modifier, background, placement, onClick, glyph)
+}
+
+@Composable
+private fun LegacyIconButton(
+    iconName: String,
+    tooltip: String?,
+    modifier: Modifier,
+    placement: TooltipPlacement,
+    onClick: () -> Unit,
+    label: String?,
+    tint: Color,
+    background: Color?,
+) {
+    LegacyIconButtonFrame(tooltip, label, modifier, background, placement, onClick) {
+        Icon(iconName, null, Modifier.size(16.dp), tint)
+    }
+}
+
+@Composable
+private fun LegacyIconButtonFrame(
+    tooltip: String?,
+    label: String?,
+    modifier: Modifier,
+    background: Color?,
+    placement: TooltipPlacement,
+    onClick: () -> Unit,
+    glyph: @Composable () -> Unit,
+) {
+    val theme = OneConfigTheme.current
+    val source = remember { MutableInteractionSource() }
+    val hovered by source.collectIsHoveredAsState()
+    var focused by remember { mutableStateOf(false) }
+    val keyboard = isKeyboardMode()
+    val fill by animateColorAsState(background ?: Color.Transparent)
+    val hairline by animateColorAsState(theme.borderColor.copy(alpha = if (hovered) theme.borderColor.alpha else 0f))
+    val shape = theme.buttonShape
+    Box(
+        modifier = modifier
+            .size(LEGACY_ICON_BUTTON_SIZE)
+            .clip(shape)
+            .background(fill, shape)
+            .border(1.dp, hairline, shape)
+            .hoverable(source)
+            .onFocusChanged { focused = it.isFocused }
+            .a11y(label ?: tooltip, A11yRole.Button, null, null, shape, true)
+            .onClick(source, onClick)
+            .pointerHoverIcon(PointerIcon.Hand),
+        contentAlignment = Alignment.Center,
+    ) {
+        glyph()
+        if (tooltip != null && (hovered || focused && keyboard)) TooltipPopup(tooltip, Modifier, placement)
+    }
 }
 
 @ExperimentalOneConfigUiApi

@@ -90,7 +90,7 @@ public object OneConfigUI {
      *
      * If the UI is already open it navigates to [route] in place
      */
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Open a OneConfigDestination, a OneConfigPage or a page id instead")
     @JvmStatic
     public fun open(route: Any? = null) {
         show(normalizeRoute(route))

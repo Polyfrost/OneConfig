@@ -45,7 +45,8 @@ internal fun Modifier.glassFrame(
             }
         }
     }
-    val hovered = if (hover) bridge.glassHover(this, shape, pull).graphicsLayer {} else this
+    val pulled = if (hover) bridge.glassHover(this, shape, pull) else this
+    val hovered = if (pulled === this) this else pulled.graphicsLayer {}
     val glassed = if (glass) bridge.liquidGlass(hovered, shape) else hovered
     return bridge.animatedFrame(glassed, shape, fill, accentAlpha, border)
 }

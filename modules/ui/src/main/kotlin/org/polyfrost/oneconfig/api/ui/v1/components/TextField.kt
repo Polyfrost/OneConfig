@@ -88,6 +88,7 @@ public object TextFieldDefaults {
     public fun iconSize(size: ControlSize): Dp = if (size == ControlSize.Compact) 14.dp else 16.dp
 }
 
+@Suppress("DEPRECATION")
 @ExperimentalOneConfigUiApi
 @Composable
 public fun TextField(
@@ -110,6 +111,8 @@ public fun TextField(
     focusRequester: FocusRequester? = null,
     onSubmit: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
+    visualTransformation: VisualTransformation? = null,
+    hidePlaceholderWhenFocused: Boolean = false,
 ) {
     var local by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
     val shown = if (local.text == value) {
@@ -125,9 +128,11 @@ public fun TextField(
         },
         modifier, placeholder, enabled, invalid, singleLine, size, label, leadingIcon, leading, trailing, masked, maxLength, framed,
         fontSize, focusRequester, onSubmit, interactionSource,
+        transformation = visualTransformation, hidePlaceholderWhenFocused = hidePlaceholderWhenFocused,
     )
 }
 
+@Suppress("DEPRECATION")
 @ExperimentalOneConfigUiApi
 @Composable
 public fun TextField(
@@ -150,10 +155,13 @@ public fun TextField(
     focusRequester: FocusRequester? = null,
     onSubmit: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
+    visualTransformation: VisualTransformation? = null,
+    hidePlaceholderWhenFocused: Boolean = false,
 ) {
     FieldCore(
         value, onValueChange, modifier, placeholder, enabled, invalid, singleLine, size, label, leadingIcon, leading, trailing, masked,
         maxLength, framed, fontSize, focusRequester, onSubmit, interactionSource,
+        transformation = visualTransformation, hidePlaceholderWhenFocused = hidePlaceholderWhenFocused,
     )
 }
 
@@ -164,6 +172,7 @@ public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: M
     TextField(value, onValueChange, modifier, placeholder = null)
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun TextField(value: String, onValueChange: (String) -> Unit, modifier: Modifier, placeholder: String?) {
@@ -185,6 +194,7 @@ public fun TextField(
     TextField(value, onValueChange, modifier, placeholder, invalid = invalid, leadingIcon = leadingIcon, maxLength = maxLength)
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun TextField(
@@ -278,6 +288,7 @@ internal fun FieldCore(
     glass: Boolean = false,
     transformation: VisualTransformation? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    hidePlaceholderWhenFocused: Boolean = false,
 ) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val textSize = if (fontSize.isSpecified) fontSize else TextFieldDefaults.fontSize(size)
@@ -305,7 +316,7 @@ internal fun FieldCore(
         keyboardOptions = keyboardOptions,
         interactionSource = source,
         decorationBox = { inner ->
-            FieldDecoration(value.text.isEmpty(), framed, placeholder, leadingIcon, leading, singleLine, size, textSize, source, trailing, inner)
+            FieldDecoration(value.text.isEmpty(), hidePlaceholderWhenFocused, framed, placeholder, leadingIcon, leading, singleLine, size, textSize, source, trailing, inner)
         },
     )
 }
@@ -454,6 +465,7 @@ private fun fieldModifier(
 @Composable
 private fun FieldDecoration(
     empty: Boolean,
+    hidePlaceholderWhenFocused: Boolean,
     framed: Boolean,
     placeholder: String?,
     leadingIcon: String?,
@@ -484,7 +496,7 @@ private fun FieldDecoration(
             leading != null -> leading()
             leadingIcon != null -> Icon(leadingIcon, null, Modifier.size(TextFieldDefaults.iconSize(size)), iconColor)
         }
-        FieldText(empty, placeholder, singleLine, fontSize, inner)
+        FieldText(empty && !(hidePlaceholderWhenFocused && focused), placeholder, singleLine, fontSize, inner)
         trailing?.invoke()
     }
 }

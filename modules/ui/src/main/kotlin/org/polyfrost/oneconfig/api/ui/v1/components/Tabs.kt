@@ -68,6 +68,9 @@ public class TabItem<T>(
     public val enabled: Boolean = true,
     public val badge: String? = null,
     public val iconPainter: Painter? = null,
+    public val size: ControlSize? = null,
+    public val interactionSource: MutableInteractionSource? = null,
+    public val tooltip: String? = null,
 ) {
     public constructor(
         value: T,
@@ -76,10 +79,13 @@ public class TabItem<T>(
         enabled: Boolean = true,
         badge: String? = null,
         iconPainter: Painter? = null,
-    ) : this(value, PageText.literal(label), icon, enabled, badge, iconPainter)
+        size: ControlSize? = null,
+        interactionSource: MutableInteractionSource? = null,
+        tooltip: String? = null,
+    ) : this(value, PageText.literal(label), icon, enabled, badge, iconPainter, size, interactionSource, tooltip)
 
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public constructor(value: T, label: String) : this(value, PageText.literal(label), null, true, null, null)
+    public constructor(value: T, label: String) : this(value, PageText.literal(label), null, true, null, null, null, null, null)
 
     public val labelText: PageText = label
 
@@ -97,12 +103,16 @@ public fun <T> TabRow(
     size: ControlSize = ControlSize.Regular,
     fill: Boolean = true,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    tooltipPlacement: TooltipPlacement = TooltipDefaults.placement,
 ) {
-    val rowModifier = modifier.then(if (fill) Modifier.fillMaxWidth() else Modifier)
+    val rowModifier = modifier.groupInteractions(interactionSource, enabled).then(if (fill) Modifier.fillMaxWidth() else Modifier)
     when (style) {
         TabStyle.Pill -> Row(rowModifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             tabs.forEach { tab ->
-                PillTab(tab, tab.value == selected, enabled && tab.enabled, size, tabWeight(fill)) { onSelect(tab.value) }
+                TabHost(tab, fill, false, tooltipPlacement) { host ->
+                    PillTab(tab, tab.value == selected, enabled && tab.enabled, tab.size ?: size, host) { onSelect(tab.value) }
+                }
             }
         }
         TabStyle.Underline -> {
@@ -115,7 +125,9 @@ public fun <T> TabRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 tabs.forEach { tab ->
-                    UnderlineTab(tab, tab.value == selected, enabled && tab.enabled, size, tabWeight(fill)) { onSelect(tab.value) }
+                    TabHost(tab, fill, false, tooltipPlacement) { host ->
+                        UnderlineTab(tab, tab.value == selected, enabled && tab.enabled, tab.size ?: size, host) { onSelect(tab.value) }
+                    }
                 }
             }
         }
@@ -131,7 +143,9 @@ public fun <T> TabRow(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 tabs.forEach { tab ->
-                    SegmentTab(tab, tab.value == selected, enabled && tab.enabled, size, tabWeight(fill)) { onSelect(tab.value) }
+                    TabHost(tab, fill, true, tooltipPlacement) { host ->
+                        SegmentTab(tab, tab.value == selected, enabled && tab.enabled, tab.size ?: size, host) { onSelect(tab.value) }
+                    }
                 }
             }
         }
@@ -159,15 +173,28 @@ public fun <T> SegmentedChips(
 private fun RowScope.tabWeight(fill: Boolean): Modifier = if (fill) Modifier.weight(1f) else Modifier
 
 @Composable
+private fun RowScope.TabHost(tab: TabItem<*>, fill: Boolean, tall: Boolean, placement: TooltipPlacement, content: @Composable (Modifier) -> Unit) {
+    val tooltip = tab.tooltip
+    if (tooltip.isNullOrEmpty()) {
+        content(tabWeight(fill))
+        return
+    }
+    val outer = tabWeight(fill).then(if (tall) Modifier.fillMaxHeight() else Modifier)
+    TooltipBox(tooltip, outer, placement) {
+        content(if (fill) Modifier.fillMaxWidth() else Modifier)
+    }
+}
+
+@Composable
 private fun tabLabel(tab: TabItem<*>): String {
-    val label = tab.labelText.resolve()
+    val label = tab.labelText.resolve().ifEmpty { tab.tooltip.orEmpty() }
     return if (tab.badge.isNullOrEmpty()) label else "$label, ${tab.badge}"
 }
 
 @Composable
 private fun PillTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, modifier: Modifier, onClick: () -> Unit) {
     val theme = OneConfigTheme.current
-    val source = remember { MutableInteractionSource() }
+    val source = tab.interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     val active = hovered && enabled
     val fill by animateColorAsState(if (selected) Color.Transparent else theme.componentBackground, Motion.spec(tween(TAB_FADE_MILLIS)))
@@ -198,7 +225,7 @@ private fun PillTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: 
 private fun UnderlineTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, modifier: Modifier, onClick: () -> Unit) {
     val theme = OneConfigTheme.current
     val accent = OneConfigTheme.accent
-    val source = remember { MutableInteractionSource() }
+    val source = tab.interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     val content by animateColorAsState(
         if (selected || hovered && enabled) theme.textColor else theme.textColorSecondary,
@@ -226,7 +253,7 @@ private fun UnderlineTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, s
 @Composable
 private fun SegmentTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, modifier: Modifier, onClick: () -> Unit) {
     val theme = OneConfigTheme.current
-    val source = remember { MutableInteractionSource() }
+    val source = tab.interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     val fill by animateColorAsState(
         if (selected) theme.textColor.copy(alpha = SEGMENT_SELECTED_ALPHA) else Color.Transparent,

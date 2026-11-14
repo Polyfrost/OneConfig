@@ -88,14 +88,41 @@ public object TooltipDefaults {
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun TooltipPopup(text: String, placement: TooltipPlacement) {
-    TooltipPopup(text, placement, TooltipDefaults.maxWidth)
+public fun TooltipPopup(
+    text: String,
+    modifier: Modifier = Modifier,
+    placement: TooltipPlacement = TooltipDefaults.placement,
+    maxWidth: Dp = TooltipDefaults.maxWidth,
+) {
+    TooltipSurface(placement, maxWidth, modifier) { TooltipText(text) }
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TooltipPopup(text: String, placement: TooltipPlacement) {
+    TooltipPopup(text, Modifier, placement, TooltipDefaults.maxWidth)
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp) {
-    TooltipSurface(placement, maxWidth) { TooltipText(text) }
+    TooltipPopup(text, Modifier, placement, maxWidth)
+}
+
+@Composable
+internal fun rememberTooltipShown(wanted: Boolean): Boolean {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(wanted) {
+        if (wanted) {
+            delay(TooltipDefaults.delayMillis)
+            shown = true
+        } else {
+            shown = false
+        }
+    }
+    return shown && wanted
 }
 
 @Composable
@@ -105,14 +132,14 @@ private fun TooltipText(text: String) {
 }
 
 @Composable
-private fun TooltipSurface(placement: TooltipPlacement, maxWidth: Dp, content: @Composable () -> Unit) {
+private fun TooltipSurface(placement: TooltipPlacement, maxWidth: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val density = LocalDensity.current
     val provider = remember(density, placement) {
         TooltipPosition(placement, with(density) { TOOLTIP_GAP.roundToPx() }, with(density) { TOOLTIP_EDGE.roundToPx() })
     }
     componentsBridge().Popup(provider, null, false) {
         Box(
-            modifier = componentsBridge().popupSurface(Modifier.widthIn(max = maxWidth), OneConfigTheme.current.popupShape)
+            modifier = componentsBridge().popupSurface(modifier.widthIn(max = maxWidth), OneConfigTheme.current.popupShape)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -161,19 +188,10 @@ private fun TooltipHost(
     val hovered by source.collectIsHoveredAsState()
     var focused by remember { mutableStateOf(false) }
     val keyboard = isKeyboardMode()
-    val wanted = tooltip != null && (hovered || showOnFocus && focused && keyboard)
-    var shown by remember { mutableStateOf(false) }
-    LaunchedEffect(wanted) {
-        if (wanted) {
-            delay(TooltipDefaults.delayMillis)
-            shown = true
-        } else {
-            shown = false
-        }
-    }
+    val shown = rememberTooltipShown(tooltip != null && (hovered || showOnFocus && focused && keyboard))
     Box(modifier.hoverable(source).onFocusChanged { focused = it.hasFocus }) {
         content()
-        if (shown && tooltip != null) TooltipSurface(placement, maxWidth, tooltip)
+        if (shown && tooltip != null) TooltipSurface(placement, maxWidth, content = tooltip)
     }
 }
 

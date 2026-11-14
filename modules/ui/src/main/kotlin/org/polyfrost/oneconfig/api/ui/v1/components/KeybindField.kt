@@ -61,12 +61,15 @@ public fun KeybindField(
     onChange: (OneConfigKeybind?) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    conflict: Boolean? = null,
+    singleKey: Boolean = false,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     val theme = OneConfigTheme.current
     val accent = OneConfigTheme.accent
     val latestKeybind by rememberUpdatedState(keybind)
     val latestOnChange by rememberUpdatedState(onChange)
-    val source = remember { MutableInteractionSource() }
+    val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     val focusRequester = remember { FocusRequester() }
     var recording by remember { mutableStateOf(false) }
@@ -116,7 +119,9 @@ public fun KeybindField(
         if (!recording) return@DisposableEffect onDispose { }
         val onEscape: () -> Unit = { clear() }
         val onMouse: (Int, Boolean) -> Unit = { button, pressed ->
-            if (pressed) {
+            if (pressed && singleKey) {
+                emit(null, intArrayOf(button), KeyModifiers.NONE)
+            } else if (pressed) {
                 if (button !in recordedMouse) recordedMouse.add(button)
                 heldMouse.add(button)
             } else {
@@ -133,7 +138,7 @@ public fun KeybindField(
         }
     }
 
-    val conflict = !recording && keybind != null && KeybindManager.findConflicts(keybind).any { it.action !== keybind.action }
+    val showConflict = !recording && (conflict ?: (keybind != null && KeybindManager.findConflicts(keybind).any { it.action !== keybind.action }))
     val fill by animateColorAsState(
         when {
             recording -> accent.copy(alpha = RECORDING_FILL_ALPHA)
@@ -146,7 +151,7 @@ public fun KeybindField(
     val border by animateColorAsState(
         when {
             recording -> accent
-            conflict -> theme.error
+            showConflict -> theme.error
             hovered && enabled -> theme.textColor.copy(alpha = HOVER_BORDER_ALPHA)
             else -> theme.borderColor
         },
@@ -156,7 +161,7 @@ public fun KeybindField(
     val content by animateColorAsState(
         when {
             recording -> accent
-            conflict -> theme.error
+            showConflict -> theme.error
             else -> theme.textColor
         },
         Motion.spec(tween(FADE_MILLIS)),
@@ -176,7 +181,7 @@ public fun KeybindField(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
             .heightIn(min = ControlSize.Regular.height)
-            .onPreviewKeyEvent { event -> recording && handleRecordingKey(event, recordedKeys, heldKeys, ::clear, ::commitIfReleased) }
+            .onPreviewKeyEvent { event -> recording && handleRecordingKey(event, recordedKeys, heldKeys, singleKey, ::clear, ::commitIfReleased) { code -> emit(intArrayOf(code), null, KeyModifiers.NONE) } }
             .focusRequester(focusRequester)
             .formFrame(shape, theme.accentBrush, fill = { fill }, border = { border })
             .oneConfigClickable(
@@ -209,8 +214,10 @@ private fun handleRecordingKey(
     event: KeyEvent,
     recordedKeys: MutableList<Int>,
     heldKeys: MutableSet<Int>,
+    singleKey: Boolean,
     clear: () -> Unit,
     commitIfReleased: () -> Unit,
+    commitSingle: (Int) -> Unit,
 ): Boolean {
     if (event.awtKeyEventId() == java.awt.event.KeyEvent.KEY_TYPED) return true
     return when (event.type) {
@@ -221,6 +228,10 @@ private fun handleRecordingKey(
             }
             val keyCode = event.utf16CodePoint
             if (keyCode <= 0) return true
+            if (singleKey) {
+                commitSingle(keyCode)
+                return true
+            }
             if (keyCode !in recordedKeys) recordedKeys.add(keyCode)
             heldKeys.add(keyCode)
             true

@@ -245,11 +245,12 @@ public object KeybindManager {
 
     @OptIn(ExperimentalOneConfigUiApi::class)
     private fun checkBinds() {
-        val typing = TextInputFocus.isTyping || isInputCaptured()
+        val typing = TextInputFocus.isTyping
+        val captured = isInputCaptured()
         for (bind in binds) {
             @Suppress("SENSELESS_COMPARISON")
             if (bind.action == null) continue
-            val triggered = (!typing || bind.firesWhileTyping) && bind.test(downKeys, downMouse, mods)
+            val triggered = !captured && (!typing || bind.firesWhileTyping) && bind.test(downKeys, downMouse, mods)
             val wasActive = bind in activeBinds
             try {
                 if (triggered && !wasActive) {

@@ -23,7 +23,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 @Composable
 public fun <T> Property<T>.collectAsState(): State<T?> {
     val property = this
-    val state = remember(property) { PropertyValueState(property, mutableIntStateOf(0)) }
+    val state = remember(System.identityHashCode(property)) { PropertyValueState(property, mutableIntStateOf(0)) }
     DisposableEffect(state) {
         if (property.get() !== state.lastRead) state.invalidate()
         val callback = Predicate<T> {

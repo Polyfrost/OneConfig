@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,17 +53,19 @@ public fun SplitButton(
     enabled: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    LaunchedEffect(enabled) { if (!enabled) expanded = false }
+    val trigger = rememberPopupTrigger()
     Box(modifier) {
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(SplitButtonDefaults.divider)) {
             TextButton(text, onClick, Modifier.fillMaxHeight(), style, size, enabled)
-            SplitChevron(expanded, { expanded = !expanded }, style, size, enabled)
+            SplitChevron(expanded, { expanded = !expanded }, style, size, enabled, Modifier.popupTrigger(trigger))
         }
-        DropdownMenu(expanded, { expanded = false }, menu, placement = Placement.BelowEnd)
+        TriggeredDropdownMenu(expanded, { expanded = false }, menu, trigger, placement = Placement.BelowEnd)
     }
 }
 
 @Composable
-private fun SplitChevron(expanded: Boolean, onToggle: () -> Unit, style: ControlStyle, size: ControlSize, enabled: Boolean) {
+private fun SplitChevron(expanded: Boolean, onToggle: () -> Unit, style: ControlStyle, size: ControlSize, enabled: Boolean, modifier: Modifier) {
     val theme = OneConfigTheme.current
     val source = remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
@@ -97,7 +100,7 @@ private fun SplitChevron(expanded: Boolean, onToggle: () -> Unit, style: Control
     val ghost = style == ControlStyle.Ghost
     val label = kitString("oneconfig.ui.splitbutton.more", "More options")
     Row(
-        modifier = Modifier
+        modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
             .heightIn(min = size.height)
             .fillMaxHeight()

@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.selectableGroup
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,6 +80,8 @@ public fun <T> RadioGroup(
     label: (T) -> String = { it.toString() },
     orientation: Orientation = Orientation.Vertical,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    styledLabel: ((T) -> AnnotatedString)? = null,
 ) {
     val theme = OneConfigTheme.current
     val groupShape = theme.shapes.field
@@ -101,6 +104,7 @@ public fun <T> RadioGroup(
     Box(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
+            .groupInteractions(interactionSource, enabled)
             .border(1.dp, theme.borderColor, groupShape)
             .clip(groupShape)
             .background(theme.componentBackground)
@@ -141,6 +145,7 @@ public fun <T> RadioGroup(
                 options.forEachIndexed { index, option ->
                     RadioItem(
                         text = label(option),
+                        styled = styledLabel?.invoke(option),
                         selected = index == selectedIndex,
                         enabled = enabled,
                         shape = itemShape,
@@ -165,6 +170,7 @@ public fun <T> RadioGroup(
 @Composable
 private fun RadioItem(
     text: String,
+    styled: AnnotatedString?,
     selected: Boolean,
     enabled: Boolean,
     shape: Shape,
@@ -203,14 +209,9 @@ private fun RadioItem(
             .padding(horizontal = theme.spacing.m, vertical = theme.spacing.xs),
         contentAlignment = if (vertical) Alignment.CenterStart else Alignment.Center,
     ) {
-        Text(
-            text,
-            Modifier,
-            color,
-            OneConfigTheme.typography.body.copy(fontSize = style.fontSize, fontWeight = style.fontWeight ?: FontWeight.Normal),
-            1,
-            TextOverflow.Ellipsis,
-            textAlign = if (vertical) TextAlign.Start else TextAlign.Center,
-        )
+        val textStyle = OneConfigTheme.typography.body.copy(fontSize = style.fontSize, fontWeight = style.fontWeight ?: FontWeight.Normal)
+        val align = if (vertical) TextAlign.Start else TextAlign.Center
+        if (styled != null) Text(styled, Modifier, color, textStyle, 1, TextOverflow.Ellipsis, textAlign = align)
+        else Text(text, Modifier, color, textStyle, 1, TextOverflow.Ellipsis, textAlign = align)
     }
 }

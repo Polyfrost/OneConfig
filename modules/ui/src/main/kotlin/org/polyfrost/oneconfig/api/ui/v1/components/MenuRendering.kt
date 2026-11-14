@@ -165,7 +165,7 @@ private fun MenuIconButton(action: MenuAction, onSelect: () -> Unit) {
                 enabled = action.enabled, leading = action.leading, interactionSource = source,
             )
         }
-        if (highlighted && keyboard) TooltipPopup(tooltip, TooltipPlacement.BelowCenter)
+        if (rememberTooltipShown(highlighted && keyboard)) TooltipPopup(tooltip, Modifier, TooltipPlacement.BelowCenter)
     }
 }
 

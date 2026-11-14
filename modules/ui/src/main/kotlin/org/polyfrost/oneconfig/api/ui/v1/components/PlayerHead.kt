@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -129,17 +130,18 @@ public fun PlayerHeadStack(ids: List<UUID>, size: Dp, modifier: Modifier = Modif
     }
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier, shape: Shape?) {
-    PlayerHead(playerId, size, modifier, null, shape ?: OneConfigTheme.shapes.small)
+    PlayerHead(playerId, size, modifier, null, shape ?: RoundedCornerShape(size / 4))
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier) {
-    PlayerHead(playerId = playerId, size = size, modifier = modifier, name = null)
+    PlayerHead(playerId = playerId, size = size, modifier = modifier, name = null, shape = RoundedCornerShape(size / 4))
 }
 
 private fun placeholderColor(id: UUID?, name: String?): Color =

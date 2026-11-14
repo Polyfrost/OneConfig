@@ -2,8 +2,15 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -55,6 +62,29 @@ internal fun Modifier.formFrame(
             rr != null && rr.isSimple && rr.topLeftCornerRadius.x >= half ->
                 drawRoundRect(b, Offset(half, half), inset, CornerRadius(rr.topLeftCornerRadius.x - half, rr.topLeftCornerRadius.y - half), stroke)
             else -> drawOutline(outline, b, style = stroke)
+        }
+    }
+}
+
+@Composable
+internal fun Modifier.groupInteractions(source: MutableInteractionSource?, enabled: Boolean): Modifier {
+    if (source == null) return this
+    val focus = remember(source) { arrayOfNulls<FocusInteraction.Focus>(1) }
+    DisposableEffect(source) {
+        onDispose {
+            focus[0]?.let { source.tryEmit(FocusInteraction.Unfocus(it)) }
+            focus[0] = null
+        }
+    }
+    return hoverable(source, enabled).onFocusChanged { state ->
+        val current = focus[0]
+        if (state.hasFocus && current == null) {
+            val next = FocusInteraction.Focus()
+            focus[0] = next
+            source.tryEmit(next)
+        } else if (!state.hasFocus && current != null) {
+            source.tryEmit(FocusInteraction.Unfocus(current))
+            focus[0] = null
         }
     }
 }

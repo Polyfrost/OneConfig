@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -50,13 +51,26 @@ import org.polyfrost.oneconfig.api.ui.v1.internal.keybindRecordingBridge
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+public fun ContextMenu(
+    expanded: Boolean,
+    offset: IntOffset,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     if (!expanded) return
     EscapeCloses(onDismiss)
     val provider = remember(offset) { PointPosition(offset, true) }
     componentsBridge().Popup(provider, onDismiss, true) {
-        MenuSurface(Modifier, content = content)
+        MenuSurface(modifier, content = content)
     }
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    ContextMenu(expanded, offset, onDismiss, Modifier, content)
 }
 
 @ExperimentalOneConfigUiApi
@@ -212,6 +226,7 @@ internal val LocalContextMenuHost = staticCompositionLocalOf<ContextMenuHostStat
 
 private class AnchorHolder {
     var coordinates: LayoutCoordinates? = null
+    var focused = false
 }
 
 @Composable
@@ -228,6 +243,7 @@ internal fun Modifier.contextMenuTrigger(
     return this
         .onGloballyPositioned { anchor.coordinates = it }
         .focusRequester(focus)
+        .onFocusChanged { anchor.focused = it.hasFocus }
         .onKeyEvent { event ->
             if (event.type != KeyEventType.KeyDown || !event.opensContextMenu() || isRecordingKeybind()) return@onKeyEvent false
             val coordinates = anchor.coordinates?.takeIf { it.isAttached } ?: return@onKeyEvent false
@@ -252,7 +268,8 @@ internal fun Modifier.contextMenuTrigger(
                     val list = latestEntries()
                     if (list.isEmpty()) continue
                     event.changes.forEach { it.consume() }
-                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, null, latestLocals), latestOpened)
+                    val restoreFocus = if (anchor.focused) ({ runCatching { focus.requestFocus() }; Unit }) else null
+                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, restoreFocus, latestLocals), latestOpened)
                     awaitPointerEvent(PointerEventPass.Final)
                     host.commit(key)
                 }

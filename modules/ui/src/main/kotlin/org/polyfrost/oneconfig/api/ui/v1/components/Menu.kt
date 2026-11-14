@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -165,6 +166,7 @@ public fun MenuItem(label: String, icon: String?, onClick: () -> Unit) {
     MenuItem(label, onClick, Modifier, icon = icon)
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun MenuItem(
@@ -218,6 +220,7 @@ internal fun MenuItemRow(
     reserveCheck: Boolean = false,
     reserveIcon: Boolean = false,
     submenu: (@Composable (MenuNavItem) -> Unit)? = null,
+    styledLabel: AnnotatedString? = null,
 ) {
     val theme = OneConfigTheme.current
     val accent = OneConfigTheme.accent
@@ -271,7 +274,7 @@ internal fun MenuItemRow(
         }
     }
     Box(modifier.menuNavPosition(navItem)) {
-        if (tooltipShown && tooltip != null) TooltipPopup(tooltip, TooltipPlacement.AboveCenter, MenuDefaults.tooltipMaxWidth)
+        if (tooltipShown && tooltip != null) TooltipPopup(tooltip, Modifier, TooltipPlacement.AboveCenter, MenuDefaults.tooltipMaxWidth)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -312,7 +315,9 @@ internal fun MenuItemRow(
                 reserveIcon -> Box(Modifier.size(size.iconSize))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(label, Modifier, color, theme.typography.body.copy(fontSize = size.textSize, fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis)
+                val labelStyle = theme.typography.body.copy(fontSize = size.textSize, fontWeight = FontWeight.Normal)
+                if (styledLabel != null) Text(styledLabel, Modifier, color, labelStyle, 1, TextOverflow.Ellipsis)
+                else Text(label, Modifier, color, labelStyle, 1, TextOverflow.Ellipsis)
                 if (detail != null) {
                     Text(detail, Modifier, theme.textColorSecondary, theme.typography.caption)
                 }

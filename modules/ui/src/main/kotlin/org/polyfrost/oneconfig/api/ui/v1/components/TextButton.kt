@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
@@ -61,6 +62,40 @@ public fun TextButton(
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
+) {
+    TextButtonContent(text, null, onClick, modifier, style, size, enabled, fillWidth, leading, trailing, interactionSource)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TextButton(
+    text: AnnotatedString,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    style: ControlStyle = ControlStyle.Secondary,
+    size: ControlSize = ControlSize.Regular,
+    enabled: Boolean = true,
+    fillWidth: Boolean = false,
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
+) {
+    TextButtonContent(text.text, text, onClick, modifier, style, size, enabled, fillWidth, leading, trailing, interactionSource)
+}
+
+@Composable
+private fun TextButtonContent(
+    text: String,
+    styled: AnnotatedString?,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    style: ControlStyle,
+    size: ControlSize,
+    enabled: Boolean,
+    fillWidth: Boolean,
+    leading: (@Composable () -> Unit)?,
+    trailing: (@Composable () -> Unit)?,
+    interactionSource: MutableInteractionSource?,
 ) {
     val theme = OneConfigTheme.current
     val source = interactionSource ?: remember { MutableInteractionSource() }
@@ -106,7 +141,9 @@ public fun TextButton(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         leading?.invoke()
-        Text(text, Modifier, content, OneConfigTheme.typography.body.copy(fontSize = ButtonDefaults.fontSize(size), fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        val labelStyle = OneConfigTheme.typography.body.copy(fontSize = ButtonDefaults.fontSize(size), fontWeight = FontWeight.Normal)
+        if (styled != null) Text(styled, Modifier, content, labelStyle, 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        else Text(text, Modifier, content, labelStyle, 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         trailing?.invoke()
     }
 }
@@ -115,6 +152,29 @@ public fun TextButton(
 @Composable
 public fun TextButton(
     text: String,
+    icon: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    style: ControlStyle = ControlStyle.Secondary,
+    size: ControlSize = ControlSize.Regular,
+    enabled: Boolean = true,
+    fillWidth: Boolean = false,
+    trailing: (@Composable () -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
+) {
+    val tint = ButtonDefaults.contentColor(style)
+    TextButton(
+        text, onClick, modifier, style, size, enabled, fillWidth,
+        leading = { Icon(icon, null, Modifier.size(ButtonDefaults.iconSize(size)), tint) },
+        trailing = trailing,
+        interactionSource = interactionSource,
+    )
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun TextButton(
+    text: AnnotatedString,
     icon: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,

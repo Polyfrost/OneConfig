@@ -88,11 +88,12 @@ public fun SwitchRow(
     modifier: Modifier = Modifier,
     description: String? = null,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     val theme = OneConfigTheme.current
     val typography = theme.typography
     val spacing = theme.spacing
-    val source = remember { MutableInteractionSource() }
+    val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     val shape = theme.buttonShape
     Row(

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, InternalOneConfigUiApi::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -45,16 +46,28 @@ private val SWATCH_SIZE = 24.dp
 private const val SWATCH_BORDER_MILLIS = 120
 
 @ExperimentalOneConfigUiApi
-public interface ColorPickerModel {
-    public val color: Color
+public open class ColorPickerModel private constructor(private val delegate: ColorPickerModel?, @Suppress("UNUSED_PARAMETER") marker: Unit) {
+    protected constructor() : this(null, Unit)
 
-    public val chroma: Boolean
+    public constructor(initialColor: Color, hasAlpha: Boolean) :
+        this(componentsBridge().createColorPicker(initialColor.opaqueUnless(hasAlpha), hasAlpha, false, 1f, null), Unit)
 
-    public val chromaSpeed: Float
+    public constructor(initialColor: Color) : this(initialColor, true)
 
-    public val gradient: Color?
+    public open val color: Color get() = requireNotNull(delegate).color
 
-    public fun set(color: Color)
+    public open val chroma: Boolean get() = requireNotNull(delegate).chroma
+
+    public open val chromaSpeed: Float get() = requireNotNull(delegate).chromaSpeed
+
+    public open val gradient: Color? get() = requireNotNull(delegate).gradient
+
+    public open fun set(color: Color) {
+        requireNotNull(delegate).set(color)
+    }
+
+    @InternalOneConfigUiApi
+    public val implementation: ColorPickerModel get() = delegate ?: this
 }
 
 @ExperimentalOneConfigUiApi
@@ -92,8 +105,21 @@ public fun ColorPickerPopup(
     chromaCapable: Boolean = false,
     gradientCapable: Boolean = false,
 ) {
-    EscapeCloses(onDismiss)
-    componentsBridge().Popup(rememberAnchoredPosition(placement), onDismiss, true) {
+    TriggeredColorPickerPopup(model, onColorChanged, onDismiss, null, modifier, placement, chromaCapable, gradientCapable)
+}
+
+@Composable
+private fun TriggeredColorPickerPopup(
+    model: ColorPickerModel,
+    onColorChanged: (Color) -> Unit,
+    onDismiss: () -> Unit,
+    trigger: PopupTrigger?,
+    modifier: Modifier = Modifier,
+    placement: Placement = Placement.BelowStart,
+    chromaCapable: Boolean = false,
+    gradientCapable: Boolean = false,
+) {
+    AnchoredPopup(true, onDismiss, placement, trigger = trigger) {
         componentsBridge().ColorPickerPanel(model, onColorChanged, onDismiss, modifier, chromaCapable, gradientCapable)
     }
 }
@@ -114,7 +140,7 @@ public fun ColorSwatchButton(
     LaunchedEffect(model, color) {
         if (model.color.toArgb() != color.toArgb()) model.set(color.opaqueUnless(hasAlpha))
     }
-    SwatchButton(model, onColorChanged, modifier, label, chromaCapable, false, enabled, interactionSource)
+    SwatchButton(model, onColorChanged, modifier, label, false, false, enabled, interactionSource)
 }
 
 @ExperimentalOneConfigUiApi
@@ -163,6 +189,8 @@ private fun SwatchButton(
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     var open by remember { mutableStateOf(false) }
+    LaunchedEffect(enabled) { if (!enabled) open = false }
+    val trigger = rememberPopupTrigger()
     val shape = theme.shapes.small
     val shown = rememberShownColor(model)
     val gradient = model.gradient
@@ -176,6 +204,7 @@ private fun SwatchButton(
     Box(modifier) {
         Row(
             Modifier
+                .popupTrigger(trigger)
                 .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
                 .oneConfigClickable(
                     label = spoken,
@@ -213,7 +242,7 @@ private fun SwatchButton(
             if (label != null) Text(label, color = theme.textColor, style = theme.typography.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (open) {
-            ColorPickerPopup(model, onColorChanged, { open = false }, chromaCapable = chromaCapable, gradientCapable = gradientCapable)
+            TriggeredColorPickerPopup(model, onColorChanged, { open = false }, trigger, chromaCapable = chromaCapable, gradientCapable = gradientCapable)
         }
     }
 }

@@ -12,11 +12,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
-import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 
 private val POPUP_GAP = 6.dp
 
@@ -34,14 +34,12 @@ public fun AnchoredPopupButton(
     interactionSource: MutableInteractionSource? = null,
     content: @Composable (close: () -> Unit) -> Unit,
 ) {
-    var open by remember { mutableStateOf(false) }
-    val provider = rememberAnchoredPosition(placement, gap)
-    LaunchedEffect(enabled) { if (!enabled) open = false }
-    Box(modifier) {
+    PopupButtonFrame(contentDescription, modifier, placement, gap, enabled, content) { open, toggle, triggerModifier ->
         IconButton(
             icon,
             contentDescription,
-            { open = !open },
+            toggle,
+            triggerModifier,
             enabled = enabled,
             style = style,
             size = size,
@@ -49,12 +47,57 @@ public fun AnchoredPopupButton(
             tooltip = if (open) null else contentDescription,
             interactionSource = interactionSource,
         )
-        if (open) {
-            EscapeCloses { open = false }
-            componentsBridge().Popup(provider, { open = false }, true) {
-                Announce(contentDescription)
-                content { open = false }
-            }
+    }
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun AnchoredPopupButton(
+    painter: Painter,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    placement: Placement = Placement.BelowEnd,
+    gap: Dp = POPUP_GAP,
+    enabled: Boolean = true,
+    style: IconButtonStyle = IconButtonStyle.Ghost,
+    size: ControlSize = ControlSize.Regular,
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable (close: () -> Unit) -> Unit,
+) {
+    PopupButtonFrame(contentDescription, modifier, placement, gap, enabled, content) { open, toggle, triggerModifier ->
+        IconButton(
+            painter,
+            contentDescription,
+            toggle,
+            triggerModifier,
+            enabled = enabled,
+            style = style,
+            size = size,
+            selected = open,
+            tooltip = if (open) null else contentDescription,
+            interactionSource = interactionSource,
+        )
+    }
+}
+
+@Composable
+private fun PopupButtonFrame(
+    contentDescription: String,
+    modifier: Modifier,
+    placement: Placement,
+    gap: Dp,
+    enabled: Boolean,
+    content: @Composable (close: () -> Unit) -> Unit,
+    button: @Composable (open: Boolean, toggle: () -> Unit, triggerModifier: Modifier) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    val trigger = rememberPopupTrigger()
+    LaunchedEffect(enabled) { if (!enabled) open = false }
+    Box(modifier) {
+        button(open, { open = !open }, Modifier.popupTrigger(trigger))
+        AnchoredPopup(open, { open = false }, placement, gap, trigger = trigger) {
+            Announce(contentDescription)
+            content { open = false }
         }
     }
 }

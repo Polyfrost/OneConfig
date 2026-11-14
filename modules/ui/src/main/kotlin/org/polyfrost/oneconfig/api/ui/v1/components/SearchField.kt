@@ -34,6 +34,8 @@ public fun SearchField(
     enabled: Boolean = true,
     focusRequester: FocusRequester? = null,
     interactionSource: MutableInteractionSource? = null,
+    onDismiss: (() -> Unit)? = null,
+    hidePlaceholderWhenFocused: Boolean = false,
 ) {
     var local by remember { mutableStateOf(TextFieldValue(query, TextRange(query.length))) }
     val shown = if (local.text == query) {
@@ -56,6 +58,8 @@ public fun SearchField(
         enabled,
         focusRequester,
         interactionSource,
+        onDismiss,
+        hidePlaceholderWhenFocused,
     )
 }
 
@@ -72,6 +76,8 @@ public fun SearchField(
     enabled: Boolean = true,
     focusRequester: FocusRequester? = null,
     interactionSource: MutableInteractionSource? = null,
+    onDismiss: (() -> Unit)? = null,
+    hidePlaceholderWhenFocused: Boolean = false,
 ) {
     SearchFieldCore(
         value,
@@ -85,6 +91,8 @@ public fun SearchField(
         enabled,
         focusRequester,
         interactionSource,
+        onDismiss,
+        hidePlaceholderWhenFocused,
     )
 }
 
@@ -101,15 +109,20 @@ private fun SearchFieldCore(
     enabled: Boolean,
     focusRequester: FocusRequester?,
     interactionSource: MutableInteractionSource?,
+    onDismiss: (() -> Unit)?,
+    hidePlaceholderWhenFocused: Boolean,
 ) {
     val shownPlaceholder = placeholder ?: remember { searchString("oneconfig.header.search", "Search...") }
     val clearLabel = remember { searchString("oneconfig.ui.search.clear", "Clear search") }
-    val trailing: (@Composable () -> Unit)? = if (clearable && value.text.isNotEmpty()) {
+    val trailing: (@Composable () -> Unit)? = if (clearable && (value.text.isNotEmpty() || onDismiss != null)) {
         {
             IconButton(
                 "close",
                 clearLabel,
-                onClear,
+                {
+                    onClear()
+                    onDismiss?.invoke()
+                },
                 Modifier.size(CLEAR_BUTTON_SIZE),
                 enabled = enabled,
                 size = ControlSize.Compact,
@@ -141,6 +154,7 @@ private fun SearchFieldCore(
         interactionSource,
         fill = OneConfigTheme.current.chipBackground,
         glass = true,
+        hidePlaceholderWhenFocused = hidePlaceholderWhenFocused,
     )
 }
 

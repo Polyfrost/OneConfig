@@ -208,7 +208,8 @@ internal fun IconButtonFrame(
         contentAlignment = Alignment.Center,
     ) {
         glyph(content)
-        if (tooltip != null && (hovered || focused && keyboard)) TooltipPopup(tooltip, placement)
+        val tooltipShown = rememberTooltipShown(tooltip != null && (hovered || focused && keyboard))
+        if (tooltipShown && tooltip != null) TooltipPopup(tooltip, Modifier, placement)
     }
 }
 

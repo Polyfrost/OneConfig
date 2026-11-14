@@ -30,6 +30,12 @@ private val DEFAULT_ICON_SIZE = 18.dp
 
 private const val PIXEL_ICON_CELLS = 12
 
+private const val PIXEL_MIN_FRACTION_NUM = 9
+
+private const val PIXEL_MIN_FRACTION_DEN = 10
+
+private const val PIXEL_MAX_FRACTION_NUM = 11
+
 @ExperimentalOneConfigUiApi
 @Composable
 public fun Icon(
@@ -91,9 +97,13 @@ private fun Modifier.describedAs(contentDescription: String?): Modifier =
 private fun Modifier.snapToCells(cells: Int): Modifier = layout { measurable, constraints ->
     val limit = minOf(constraints.maxWidth, constraints.maxHeight)
     val requested = if (constraints.hasFixedWidth && constraints.hasFixedHeight) limit else DEFAULT_ICON_SIZE.roundToPx().coerceAtMost(limit)
-    var steps = (requested.toFloat() / cells).roundToInt()
-    while (steps > 0 && steps * cells > limit) steps--
-    val side = if (steps > 0) steps * cells else requested
+    val up = ((requested + cells - 1) / cells) * cells
+    val down = (requested / cells) * cells
+    val side = when {
+        up <= limit && up * PIXEL_MIN_FRACTION_DEN <= requested * PIXEL_MAX_FRACTION_NUM -> up
+        down * PIXEL_MIN_FRACTION_DEN >= requested * PIXEL_MIN_FRACTION_NUM -> down
+        else -> requested
+    }
     val placeable = measurable.measure(Constraints.fixed(side, side))
     val width = constraints.constrainWidth(side)
     val height = constraints.constrainHeight(side)

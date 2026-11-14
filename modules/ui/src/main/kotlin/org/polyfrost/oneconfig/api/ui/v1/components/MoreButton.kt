@@ -27,8 +27,9 @@ public fun MoreButton(
     size: ControlSize = ControlSize.Compact,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val trigger = rememberPopupTrigger()
     Box(modifier) {
-        IconButton("dots-vertical", contentDescription, { expanded = !expanded }, style = style, size = size, selected = expanded)
-        DropdownMenu(expanded, { expanded = false }, entries, placement = Placement.BelowEnd)
+        IconButton("dots-vertical", contentDescription, { expanded = !expanded }, Modifier.popupTrigger(trigger), style = style, size = size, selected = expanded)
+        TriggeredDropdownMenu(expanded, { expanded = false }, entries, trigger, placement = Placement.BelowEnd)
     }
 }

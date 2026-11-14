@@ -206,7 +206,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OneConfigUI {
 	public static final fun getCurrentPageArgument ()Ljava/lang/Object;
 	public static final fun isOneConfigScreen (Ljava/lang/Object;)Z
 	public static final fun open ()V
-	public static final synthetic fun open (Ljava/lang/Object;)V
+	public static final fun open (Ljava/lang/Object;)V
 	public static final fun open (Ljava/lang/String;)V
 	public static final fun open (Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigDestination;)V
 	public static final fun open (Lorg/polyfrost/oneconfig/api/ui/v1/page/OneConfigPage;)V
@@ -466,7 +466,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/CardGridKt {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/CheckboxKt {
-	public static final fun Checkbox (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun Checkbox (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/CheckerboardKt {
@@ -509,12 +509,16 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ColorPickerKt {
 	public static final fun toPolyColor (Lorg/polyfrost/oneconfig/api/ui/v1/components/ColorPickerModel;)Lorg/polyfrost/compose/render/PolyColor;
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/components/ColorPickerModel {
-	public abstract fun getChroma ()Z
-	public abstract fun getChromaSpeed ()F
-	public abstract fun getColor-0d7_KjU ()J
-	public abstract fun getGradient-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
-	public abstract fun set-8_81llA (J)V
+public class org/polyfrost/oneconfig/api/ui/v1/components/ColorPickerModel {
+	public static final field $stable I
+	protected fun <init> ()V
+	public synthetic fun <init> (JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getChroma ()Z
+	public fun getChromaSpeed ()F
+	public fun getColor-0d7_KjU ()J
+	public fun getGradient-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public fun set-8_81llA (J)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/CommonKt {
@@ -539,6 +543,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ConfirmDefaults 
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/ConfirmKt {
+	public static final fun ArmedConfirmButton (Landroidx/compose/ui/text/AnnotatedString;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/text/AnnotatedString;JLorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ArmedConfirmButton (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;JLorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -621,7 +626,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/DropdownKt {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/EmptyStateKt {
 	public static final fun EmptyState (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/LoadState;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun EmptyState (Ljava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/LoadState;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun EmptyState (Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Lorg/polyfrost/oneconfig/api/ui/v1/components/LoadState;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun EmptyState (Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Landroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Lorg/polyfrost/oneconfig/api/ui/v1/components/LoadState;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/EscapeClosesKt {
@@ -647,6 +654,25 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/FocusRegionsKt {
 	public static final fun focusRoot (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/components/GridReorderKt {
+	public static final fun rememberGridReorderState-HYR8e34 (Landroidx/compose/foundation/lazy/LazyListState;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;FLandroidx/compose/runtime/Composer;II)Lorg/polyfrost/oneconfig/api/ui/v1/components/GridReorderState;
+	public static final fun rememberGridReorderState-HYR8e34 (Landroidx/compose/foundation/lazy/grid/LazyGridState;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;FLandroidx/compose/runtime/Composer;II)Lorg/polyfrost/oneconfig/api/ui/v1/components/GridReorderState;
+	public static final fun reorderAutoScroll (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/GridReorderState;)Landroidx/compose/ui/Modifier;
+	public static final fun reorderContainer (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/GridReorderState;)Landroidx/compose/ui/Modifier;
+	public static final fun reorderOverlay (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/GridReorderState;)Landroidx/compose/ui/Modifier;
+	public static final fun reorderableItem (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/GridReorderState;Ljava/lang/Object;IZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun reorderableItem$default (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/GridReorderState;Ljava/lang/Object;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/components/GridReorderState {
+	public static final field $stable I
+	public final fun cancel ()V
+	public final fun getDraggingKey ()Ljava/lang/Object;
+	public final fun getOverlayKey ()Ljava/lang/Object;
+	public final fun isDragging ()Z
+	public final fun moveBy (Ljava/lang/Object;I)Z
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/components/HoverState {
 	public static final field $stable I
 	public fun <init> (Landroidx/compose/foundation/interaction/MutableInteractionSource;Z)V
@@ -659,8 +685,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/HoverTooltipKt {
 	public static final synthetic fun TooltipBox--jt2gSs (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun TooltipBox-jIwJxvA (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;FZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun TooltipBox-jIwJxvA (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;FZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun TooltipPopup (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;Landroidx/compose/runtime/Composer;I)V
-	public static final fun TooltipPopup-TDGSqEk (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;FLandroidx/compose/runtime/Composer;I)V
+	public static final synthetic fun TooltipPopup (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;Landroidx/compose/runtime/Composer;I)V
+	public static final fun TooltipPopup--jt2gSs (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;FLandroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun TooltipPopup-TDGSqEk (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;FLandroidx/compose/runtime/Composer;I)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/IconButtonDefaults {
@@ -716,7 +743,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/InteractionKt {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/KeybindFieldKt {
-	public static final fun KeybindField (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun KeybindField (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OneConfigKeybind;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLjava/lang/Boolean;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/LayoutPiecesKt {
@@ -730,7 +757,9 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/LayoutPiecesKt {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/LinkTextKt {
 	public static final fun LinkText (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun LinkText (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 	public static final fun LinkText (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun LinkText (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
 
 public abstract class org/polyfrost/oneconfig/api/ui/v1/components/LoadState {
@@ -839,11 +868,12 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize : j
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/MenuKt {
+	public static final fun ContextMenu-K5zGePQ (ZJLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ContextMenu-K5zGePQ (ZJLkotlin/jvm/functions/Function0;Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 	public static final synthetic fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Ljava/util/List;Landroidx/compose/runtime/Composer;I)V
-	public static final fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+	public static final synthetic fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun ContextMenuHost (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
-	public static final fun MenuItem (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZZLjava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun MenuItem (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZZLjava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
 	public static final synthetic fun MenuItem (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun MenuItem (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final fun MenuItem (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZLjava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
@@ -898,7 +928,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/NotificationsCen
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/NumberFieldKt {
-	public static final fun NumberField (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/ranges/ClosedFloatingPointRange;FILjava/lang/String;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Ljava/lang/String;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final fun NumberField (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/ranges/ClosedFloatingPointRange;FIZLjava/lang/String;Lkotlin/jvm/functions/Function1;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Ljava/lang/String;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/OptionMenuContributors {
@@ -934,7 +964,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/Placement : java
 public final class org/polyfrost/oneconfig/api/ui/v1/components/PlayerHeadKt {
 	public static final fun PlayerHead-RfXq3Jk (Ljava/util/UUID;FLandroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/Shape;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)V
 	public static final synthetic fun PlayerHead-rAjV9yQ (Ljava/util/UUID;FLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
-	public static final fun PlayerHead-uFdPcIQ (Ljava/util/UUID;FLandroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;Landroidx/compose/runtime/Composer;I)V
+	public static final synthetic fun PlayerHead-uFdPcIQ (Ljava/util/UUID;FLandroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;Landroidx/compose/runtime/Composer;I)V
 	public static final fun PlayerHeadStack-DzVHIIc (Ljava/util/List;FLandroidx/compose/ui/Modifier;ILandroidx/compose/runtime/Composer;II)V
 }
 
@@ -949,6 +979,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/PlayerHeads {
 public final class org/polyfrost/oneconfig/api/ui/v1/components/PopupButtonKt {
 	public static final synthetic fun AnchoredPopupButton (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun AnchoredPopupButton-FJfuzF0 (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment$Horizontal;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+	public static final fun AnchoredPopupButton-Fsagccs (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/Placement;FZLorg/polyfrost/oneconfig/api/ui/v1/components/IconButtonStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun AnchoredPopupButton-Fsagccs (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/Placement;FZLorg/polyfrost/oneconfig/api/ui/v1/components/IconButtonStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -964,12 +995,14 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ProgressBarKt {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/RadioGroupKt {
-	public static final fun RadioGroup (Ljava/lang/Object;Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Landroidx/compose/foundation/gestures/Orientation;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun RadioGroup (Ljava/lang/Object;Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Landroidx/compose/foundation/gestures/Orientation;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/ReorderKt {
 	public static final fun rememberReorderState (Landroidx/compose/foundation/gestures/Orientation;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/components/ReorderState;
 	public static final fun rememberReorderState (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/components/ReorderState;
+	public static final fun reorderHandle (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ReorderState;Ljava/lang/Object;Z)Landroidx/compose/ui/Modifier;
+	public static synthetic fun reorderHandle$default (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ReorderState;Ljava/lang/Object;ZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
 	public static final fun reorderItem (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ReorderState;Ljava/lang/Object;I)Landroidx/compose/ui/Modifier;
 	public static final fun reorderItem (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ReorderState;Ljava/lang/Object;IZ)Landroidx/compose/ui/Modifier;
 	public static final fun withItemMoved (Ljava/util/List;II)Ljava/util/List;
@@ -992,8 +1025,8 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ScrollingKt {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SearchFieldKt {
-	public static final fun SearchField (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
-	public static final fun SearchField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SearchField (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function0;ZLandroidx/compose/runtime/Composer;III)V
+	public static final fun SearchField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function0;ZLandroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SelectDefaults {
@@ -1005,8 +1038,8 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/SelectDefaults {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SelectKt {
-	public static final fun MultiSelect (Ljava/util/Set;Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ZLandroidx/compose/runtime/Composer;II)V
-	public static final fun Select (Ljava/lang/Object;Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ZLjava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/runtime/Composer;II)V
+	public static final fun MultiSelect (Ljava/util/Set;Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Select (Ljava/lang/Object;Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ZLjava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SelectionKt {
@@ -1018,7 +1051,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/SelectionKt {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SliderKt {
-	public static final fun Slider (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/ranges/ClosedFloatingPointRange;FZLjava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Slider (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/ranges/ClosedFloatingPointRange;FZLjava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SplitButtonDefaults {
@@ -1064,22 +1097,25 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/SurfacesKt {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SwitchKt {
 	public static final fun Switch (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
-	public static final fun SwitchRow (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun SwitchRow (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TabItem {
 	public static final field $stable I
 	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
-	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;)V
-	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;)V
-	public synthetic fun <init> (Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBadge ()Ljava/lang/String;
 	public final fun getEnabled ()Z
 	public final fun getIcon ()Ljava/lang/String;
 	public final fun getIconPainter ()Landroidx/compose/ui/graphics/painter/Painter;
+	public final fun getInteractionSource ()Landroidx/compose/foundation/interaction/MutableInteractionSource;
 	public final fun getLabel ()Ljava/lang/String;
 	public final fun getLabelText ()Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;
+	public final fun getSize ()Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;
+	public final fun getTooltip ()Ljava/lang/String;
 	public final fun getValue ()Ljava/lang/Object;
 }
 
@@ -1094,10 +1130,12 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/TabStyle : java/
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TabsKt {
 	public static final fun SegmentedChips (Ljava/util/List;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/runtime/Composer;II)V
-	public static final fun TabRow (Ljava/util/List;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/TabStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZZLandroidx/compose/runtime/Composer;II)V
+	public static final fun TabRow (Ljava/util/List;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/TabStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TextButtonKt {
+	public static final fun TextButton (Landroidx/compose/ui/text/AnnotatedString;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZZLkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TextButton (Landroidx/compose/ui/text/AnnotatedString;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;ZZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 	public static final synthetic fun TextButton (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun TextButton (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ButtonStyle;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun TextButton (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/ButtonStyle;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
@@ -1127,12 +1165,12 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/TextFieldDefault
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TextFieldKt {
 	public static final synthetic fun TextField (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun TextField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
-	public static final fun TextField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/runtime/Composer;I)V
+	public static final synthetic fun TextField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun TextField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;IZLandroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun TextField-OrAvtKI (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;IZZZZJLjava/lang/String;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
-	public static final fun TextField-OrAvtKI (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;IZZZZJLjava/lang/String;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
-	public static final fun TextField-k7Cdqw0 (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZZZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZIZJLandroidx/compose/ui/focus/FocusRequester;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
-	public static final fun TextField-k7Cdqw0 (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZZZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZIZJLandroidx/compose/ui/focus/FocusRequester;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun TextField-OrAvtKI (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;IZZZZJLjava/lang/String;ZLandroidx/compose/ui/focus/FocusRequester;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TextField-Tu70ims (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZZZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZIZJLandroidx/compose/ui/focus/FocusRequester;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/text/input/VisualTransformation;ZLandroidx/compose/runtime/Composer;IIII)V
+	public static final fun TextField-Tu70ims (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZZZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZIZJLandroidx/compose/ui/focus/FocusRequester;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/text/input/VisualTransformation;ZLandroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TextKt {
