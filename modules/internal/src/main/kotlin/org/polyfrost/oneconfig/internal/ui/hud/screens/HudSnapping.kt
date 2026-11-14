@@ -10,6 +10,7 @@ import kotlin.math.roundToInt
 
 internal const val HUD_SNAP_SCREEN_PADDING = 4f
 internal const val HUD_GRID_SIZE = 8f
+internal const val HUD_MERGE_TOUCH = 2f
 
 private const val ALIGN_EPSILON = 0.01f
 private const val GAP_EPSILON = 0.05f
@@ -75,6 +76,7 @@ private fun gapMarker(before: Rect, after: Rect, h: Boolean): HudGapMarker {
 internal class HudSnapContext(
     val screen: Rect,
     val obstacles: List<Rect>,
+    private val alignRects: List<Rect> = obstacles,
 ) {
     private val xLines = buildLines(true)
     private val yLines = buildLines(false)
@@ -87,13 +89,13 @@ internal class HudSnapContext(
     private fun buildLines(h: Boolean): List<HudSnapLine> {
         val extent = screen.hi(h)
         val crossExtent = screen.crossHi(h)
-        val lines = ArrayList<HudSnapLine>(obstacles.size * 3 + 5)
+        val lines = ArrayList<HudSnapLine>(alignRects.size * 3 + 5)
         lines.add(HudSnapLine(0f, 0f, crossExtent))
         lines.add(HudSnapLine(extent / 2f, 0f, crossExtent))
         lines.add(HudSnapLine(extent, 0f, crossExtent))
         lines.add(HudSnapLine(HUD_SNAP_SCREEN_PADDING, 0f, crossExtent, center = false, end = false))
         lines.add(HudSnapLine(extent - HUD_SNAP_SCREEN_PADDING, 0f, crossExtent, start = false, center = false))
-        for (o in obstacles) {
+        for (o in alignRects) {
             val lo = o.crossLo(h)
             val hi = o.crossHi(h)
             lines.add(HudSnapLine(o.lo(h), lo, hi))
@@ -122,7 +124,7 @@ internal class HudSnapContext(
             }
             if (b == null) continue
             val size = bStart - edge
-            if (size > GAP_EPSILON) gaps.add(HudGapRef(size, a, b))
+            if (size > HUD_MERGE_TOUCH) gaps.add(HudGapRef(size, a, b))
         }
         return gaps
     }
@@ -209,8 +211,8 @@ internal class HudSnapContext(
         val crossHi = rect.crossHi(h)
         val before = nearestBefore(obstacles, h, rect.lo(h) + ALIGN_EPSILON, crossLo, crossHi)
         val after = nearestAfter(obstacles, h, rect.hi(h) - ALIGN_EPSILON, crossLo, crossHi)
-        val gapBefore = before?.let { rect.lo(h) - it.hi(h) }?.takeIf { it > GAP_EPSILON }
-        val gapAfter = after?.let { it.lo(h) - rect.hi(h) }?.takeIf { it > GAP_EPSILON }
+        val gapBefore = before?.let { rect.lo(h) - it.hi(h) }?.takeIf { it > HUD_MERGE_TOUCH }
+        val gapAfter = after?.let { it.lo(h) - rect.hi(h) }?.takeIf { it > HUD_MERGE_TOUCH }
         val start = out.size
         var showBefore = false
         var showAfter = false
@@ -245,11 +247,20 @@ internal class HudDragSnapper {
 
     fun startsWith(dragged: List<Rect>): Boolean = context != null && union(dragged) == startRect
 
-    fun begin(dragged: List<Rect>, grabbed: Rect?, others: List<Rect>, screenWidth: Float, screenHeight: Float) {
+    fun begin(
+        dragged: List<Rect>,
+        grabbed: Rect?,
+        shapes: List<List<Rect>>,
+        screenWidth: Float,
+        screenHeight: Float,
+    ) {
         val group = union(dragged)
         startRect = group
         grabbedRect = grabbed?.takeIf { group != null && it != group }
-        context = HudSnapContext(Rect(0f, 0f, screenWidth, screenHeight), others)
+        val outlines = shapes.mapNotNull(::union)
+        val members = shapes.flatMap { if (it.size > 1) it else emptyList() }
+        context = HudSnapContext(Rect(0f, 0f, screenWidth, screenHeight), outlines, outlines + members)
+
         result = HudSnapResult.NONE
     }
 
