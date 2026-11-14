@@ -1390,19 +1390,23 @@ public final class ConfigManager {
     }
 
     public @Nullable Tree load(String id) {
+        runPendingMigrations();
         return backend.load(id);
     }
 
     public Tree get(String id) {
+        runPendingMigrations();
         return backend.get(id);
     }
 
     public boolean exists(String id) {
+        runPendingMigrations();
         return backend.exists(id);
     }
 
     @ApiStatus.Internal
     public Tree getNoRegister(Path p) throws Exception {
+        runPendingMigrations();
         return backend.load0(p, p.getFileName().toString());
     }
 
@@ -1422,8 +1426,12 @@ public final class ConfigManager {
         return backend.folder;
     }
 
-    public Backend.RegistrationResult register(Tree t) {
+    private void runPendingMigrations() {
         if (this == active) MigrationRunner.beforeLoad(getFolder());
+    }
+
+    public Backend.RegistrationResult register(Tree t) {
+        runPendingMigrations();
         if (this == active && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))) {
             Config.captureDefaults(t);
         }
@@ -1461,7 +1469,7 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public Collection<Tree> gatherAll(String sub) {
-        if (this == active) MigrationRunner.beforeLoad(getFolder());
+        runPendingMigrations();
         return backend.gatherAll(sub);
     }
 
