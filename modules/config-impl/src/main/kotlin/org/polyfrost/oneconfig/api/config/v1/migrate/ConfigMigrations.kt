@@ -36,6 +36,12 @@ public object ConfigMigrations {
             checked[root] = generation
             if (steps.isEmpty()) return
             val store = readStore(root) ?: return
+            val pending = steps.any { (modId, forMod) -> forMod.higherKey(store[modId] ?: 0) != null }
+            if (!pending) return
+            if (!writeStore(root, store)) {
+                LOGGER.error("Skipping config migrations in {} because their versions cannot be saved", root)
+                return
+            }
             for ((modId, forMod) in steps.entries.toList()) {
                 val stored = store[modId] ?: 0
                 for ((version, step) in forMod.tailMap(stored, false).entries.toList()) {
@@ -46,7 +52,10 @@ public object ConfigMigrations {
                         break
                     }
                     store[modId] = version
-                    writeStore(root, store)
+                    if (!writeStore(root, store)) {
+                        LOGGER.error("Stopping config migrations in {} because version {} of {} could not be saved", root, version, modId)
+                        return
+                    }
                     LOGGER.info("Migrated {} to config version {} in {}", modId, version, root)
                 }
             }
@@ -69,11 +78,13 @@ public object ConfigMigrations {
         }
     }
 
-    private fun writeStore(root: Path, store: Map<String, Int>) {
-        try {
+    private fun writeStore(root: Path, store: Map<String, Int>): Boolean {
+        return try {
             MigrationFiles.write(root.resolve(STORE_FILE), MigrationJson.write(store))
+            true
         } catch (t: Throwable) {
             LOGGER.error("Could not save config versions to {}", root.resolve(STORE_FILE), t)
+            false
         }
     }
 }
