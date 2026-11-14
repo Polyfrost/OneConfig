@@ -133,10 +133,10 @@ private fun Toast(notification: Notification) {
                 remaining = durationNanos(notification)
                 completedAt = -1L
             }
-            val progress = notification.progressOrNull()
-            if (progress != null) {
-                progressValue.value = quantize(progress)
-                if (progress < 1f) {
+            if (notification.tracksProgress) {
+                val progress = notification.progressOrNull()
+                if (progress != null) progressValue.value = quantize(progress)
+                if (progress == null || progress < 1f) {
                     completedAt = -1L
                 } else {
                     if (completedAt < 0L) completedAt = now
