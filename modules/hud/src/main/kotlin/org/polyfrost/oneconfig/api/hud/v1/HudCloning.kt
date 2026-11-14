@@ -15,8 +15,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotMutableState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import java.lang.reflect.Array as ReflectArray
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import java.util.ArrayDeque
+import java.util.IdentityHashMap
+import java.util.LinkedList
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion
@@ -70,7 +74,7 @@ private val nestedConfigClass = object : ClassValue<Boolean>() {
 }
 
 internal fun deepCopyHudOptions(hud: Hud) {
-    val seen = java.util.IdentityHashMap<Any, Any>()
+    val seen = IdentityHashMap<Any, Any>()
     for (cf in cloneFields.get(hud.javaClass)) {
         try {
             val value = cf.field.get(hud) ?: continue
@@ -81,7 +85,7 @@ internal fun deepCopyHudOptions(hud: Hud) {
     }
 }
 
-private fun deepCopyValue(value: Any, nested: Boolean, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any {
+private fun deepCopyValue(value: Any, nested: Boolean, depth: Int, seen: IdentityHashMap<Any, Any>): Any {
     seen[value]?.let { return it }
     seen[value] = value
     val result = deepCopyUncached(value, nested, depth, seen)
@@ -90,7 +94,7 @@ private fun deepCopyValue(value: Any, nested: Boolean, depth: Int, seen: java.ut
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun deepCopyUncached(value: Any, nested: Boolean, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any = when (value) {
+private fun deepCopyUncached(value: Any, nested: Boolean, depth: Int, seen: IdentityHashMap<Any, Any>): Any = when (value) {
     is String, is Number, is Boolean, is Char, is Enum<*> -> value
     is PolyColor -> value.copy()
     is OneConfigKeybind ->
@@ -114,18 +118,18 @@ private fun deepCopyUncached(value: Any, nested: Boolean, depth: Int, seen: java
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun copyContainer(value: Any, nested: Boolean, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any? {
+private fun copyContainer(value: Any, nested: Boolean, depth: Int, seen: IdentityHashMap<Any, Any>): Any? {
     val cls = value.javaClass
     if (cls.isArray) {
-        val length = java.lang.reflect.Array.getLength(value)
-        val out = java.lang.reflect.Array.newInstance(cls.componentType, length)
+        val length = ReflectArray.getLength(value)
+        val out = ReflectArray.newInstance(cls.componentType, length)
         System.arraycopy(value, 0, out, 0, length)
         seen[value] = out
         if (!cls.componentType.isPrimitive) {
             for (i in 0 until length) {
-                val e = java.lang.reflect.Array.get(out, i) ?: continue
+                val e = ReflectArray.get(out, i) ?: continue
                 try {
-                    java.lang.reflect.Array.set(out, i, deepCopyValue(e, nested, depth, seen))
+                    ReflectArray.set(out, i, deepCopyValue(e, nested, depth, seen))
                 } catch (_: IllegalArgumentException) {
                 }
             }
@@ -145,8 +149,8 @@ private fun copyContainer(value: Any, nested: Boolean, depth: Int, seen: java.ut
     }
     return when (cls) {
         ArrayList::class.java -> fill(ArrayList<Any?>((value as List<Any?>).size), value)
-        java.util.LinkedList::class.java -> fill(java.util.LinkedList<Any?>(), value as List<Any?>)
-        java.util.ArrayDeque::class.java -> fill(java.util.ArrayDeque<Any?>((value as Collection<Any?>).size), value)
+        LinkedList::class.java -> fill(LinkedList<Any?>(), value as List<Any?>)
+        ArrayDeque::class.java -> fill(ArrayDeque<Any?>((value as Collection<Any?>).size), value)
         HashSet::class.java -> fill(HashSet<Any?>((value as Set<Any?>).size), value)
         LinkedHashSet::class.java -> fill(LinkedHashSet<Any?>((value as Set<Any?>).size), value)
         HashMap::class.java -> fillMap(HashMap<Any?, Any?>((value as Map<Any?, Any?>).size), value)
@@ -155,7 +159,7 @@ private fun copyContainer(value: Any, nested: Boolean, depth: Int, seen: java.ut
     }
 }
 
-private fun copyNested(value: Any, depth: Int, seen: java.util.IdentityHashMap<Any, Any>): Any {
+private fun copyNested(value: Any, depth: Int, seen: IdentityHashMap<Any, Any>): Any {
     if (depth >= MAX_NESTED_DEPTH || !nestedConfigClass.get(value.javaClass)) return value
     val copy = MHUtils.instantiate(value.javaClass, true).getOrNull() ?: return value
     seen[value] = copy

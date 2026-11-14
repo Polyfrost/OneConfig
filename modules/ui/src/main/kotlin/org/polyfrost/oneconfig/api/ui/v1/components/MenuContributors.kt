@@ -2,6 +2,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
+import java.lang.reflect.Array as ReflectArray
 import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 import org.apache.logging.log4j.LogManager
@@ -180,8 +181,8 @@ private fun copyOf(value: Any): Any = when {
         it.gradientEnabled = value.gradientEnabled
         it.gradientArgb = value.gradientArgb
     }
-    value.javaClass.isArray -> java.lang.reflect.Array.newInstance(value.javaClass.componentType, java.lang.reflect.Array.getLength(value)).also {
-        System.arraycopy(value, 0, it, 0, java.lang.reflect.Array.getLength(value))
+    value.javaClass.isArray -> ReflectArray.newInstance(value.javaClass.componentType, ReflectArray.getLength(value)).also {
+        System.arraycopy(value, 0, it, 0, ReflectArray.getLength(value))
     }
     value is List<*> -> ArrayList(value)
     value is Set<*> -> LinkedHashSet(value)

@@ -280,14 +280,14 @@ private fun asChar(target: Class<*>, value: Any): Char? =
 
 private fun hasElements(current: Any?): Boolean = when (current) {
     is Iterable<*> -> current.any { it != null }
-    is kotlin.Array<*> -> current.any { it != null }
+    is Array<*> -> current.any { it != null }
     else -> false
 }
 
 private fun elementClass(current: Any?): Class<*> {
     val items: Iterable<*> = when (current) {
         is Iterable<*> -> current
-        is kotlin.Array<*> -> current.asIterable()
+        is Array<*> -> current.asIterable()
         else -> return Any::class.java
     }
     val classes = items.mapNotNull { it?.javaClass }.distinct()

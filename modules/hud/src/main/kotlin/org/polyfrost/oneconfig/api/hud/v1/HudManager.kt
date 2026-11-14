@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
+import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -708,7 +709,7 @@ public object HudManager {
         !isEditing && hud.frameHidden && !isSuppressed(hud) && hud.keepsHiddenBackground && isShown(hud)
 
     private class Suppression(owner: Hud, val target: String, val reason: String) : AutoCloseable {
-        private val ownerRef = java.lang.ref.WeakReference(owner)
+        private val ownerRef = WeakReference(owner)
         val owner: Hud? get() = ownerRef.get()
 
         override fun close() {

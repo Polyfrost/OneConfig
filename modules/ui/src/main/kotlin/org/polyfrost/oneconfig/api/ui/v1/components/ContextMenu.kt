@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
@@ -321,7 +322,7 @@ private fun logMissingHost() {
 
 private fun isRecordingKeybind(): Boolean = runCatching { keybindRecordingBridge()?.isRecording }.getOrNull() == true
 
-private fun androidx.compose.ui.input.key.KeyEvent.opensContextMenu(): Boolean =
+private fun KeyEvent.opensContextMenu(): Boolean =
     key == Key.Menu || key.nativeKeyCode == AwtKeyEvent.VK_CONTEXT_MENU || (key == Key.F10 && isShiftPressed)
 
 private fun PointerEvent.secondaryPress(): Boolean = buttons.isSecondaryPressed && !buttons.isPrimaryPressed
