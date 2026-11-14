@@ -1,5 +1,5 @@
 public final class org/polyfrost/oneconfig/api/config/v1/MetaKey {
-	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Class;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getName ()Ljava/lang/String;
 	public fun hashCode ()I

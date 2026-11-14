@@ -102,6 +102,10 @@ public abstract class Node {
         this.title = title;
     }
 
+    final void replaceTitle(@Nullable Object title) {
+        this.title = strv(title);
+    }
+
     public final void addMetadata(String key, Object value) {
         if (value == null || value.equals("")) return;
         if (key.equals("title")) {
