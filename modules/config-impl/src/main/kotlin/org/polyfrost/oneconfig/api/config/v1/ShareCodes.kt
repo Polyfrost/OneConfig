@@ -61,13 +61,14 @@ public fun Tree.applyShareCode(code: String, prefix: String, include: (Property<
 }
 
 private const val MAX_PAYLOAD_BYTES = 4 shl 20
+private const val MAX_CODE_CHARS = 8 shl 20
 
 private fun encodeTree(tree: Tree, include: (Property<*>) -> Boolean): Config? {
     val out = Config.inMemoryUniversal()
     tree.onAll { key, node ->
         val value = when (node) {
             is Tree -> encodeTree(node, include)
-            is Property<*> -> if (isButton(node) || !include(node)) null else node.get()?.let { encodeValue(node, it) }
+            is Property<*> -> if (isButton(node) || !include(node)) null else exportValue(node)
             else -> null
         }
         if (value != null) out.add(listOf(key), value)
@@ -76,6 +77,11 @@ private fun encodeTree(tree: Tree, include: (Property<*>) -> Boolean): Config? {
 }
 
 private fun isButton(prop: Property<*>): Boolean = prop.type == Void.TYPE || prop.type == Void::class.java
+
+private fun exportValue(prop: Property<*>): Any? {
+    val value = prop.get() ?: return if (prop.type.isPrimitive) null else NullObject.NULL_OBJECT
+    return encodeValue(prop, value)
+}
 
 private fun encodeValue(prop: Property<*>, value: Any): Any? = runCatching {
     when {
@@ -98,7 +104,7 @@ private fun encodeValue(prop: Property<*>, value: Any): Any? = runCatching {
 internal fun toJsonValue(value: Any?): Any? = when (value) {
     null -> null
     is Map<*, *> -> Config.inMemoryUniversal().also { config ->
-        for ((key, item) in value) toJsonValue(item)?.let { config.add(listOf(key.toString()), it) }
+        for ((key, item) in value) config.add(listOf(key.toString()), toJsonValue(item) ?: NullObject.NULL_OBJECT)
     }
     is Collection<*> -> value.map(::toJsonValue)
     is Enum<*> -> value.name
@@ -117,6 +123,7 @@ internal fun toPlain(raw: Any?): Any? = when {
 }
 
 private fun readPayload(body: String): UnmodifiableConfig {
+    if (body.length > MAX_CODE_CHARS) throw IOException("share code is longer than $MAX_CODE_CHARS characters")
     val bytes = Base64.getDecoder().decode(body.filterNot(Char::isWhitespace))
     val text = GZIPInputStream(ByteArrayInputStream(bytes)).use { readCapped(it) }.toString(Charsets.UTF_8)
     return JsonFormat.minimalInstance().createParser().parse(text)
@@ -161,14 +168,23 @@ private fun applyTree(
 @Suppress("UNCHECKED_CAST")
 private fun applyValue(prop: Property<*>, raw: Any?): Boolean = try {
     val current = prop.get()
-    val value = decodeAs(WrappingUtils.getWrapped(prop.type), toPlain(raw), current)
+    val plain = toPlain(raw)
+    val value = decodeAs(WrappingUtils.getWrapped(prop.type), plain, current)
     when {
+        plain == null -> applyNull(prop as Property<Any?>, current)
         value == null -> false
         value is OneConfigKeybind && current is OneConfigKeybind -> applyKeybind(prop as Property<Any?>, current, value)
         else -> !(prop as Property<Any?>).set(value)
     }
 } catch (e: Exception) {
     false
+}
+
+private fun applyNull(prop: Property<Any?>, current: Any?): Boolean {
+    if (prop.type.isPrimitive) return false
+    if (prop.set(null)) return false
+    if (current is OneConfigKeybind) KeybindManager.unregister(current)
+    return true
 }
 
 private fun applyKeybind(prop: Property<Any?>, current: OneConfigKeybind, imported: OneConfigKeybind): Boolean {
@@ -188,6 +204,9 @@ private fun decodeAs(target: Class<*>, plain: Any?, current: Any?): Any? {
     if (Enum::class.java.isAssignableFrom(target)) return enumConstant(target, plain)
     if (plain is List<*> && (target.isArray || Collection::class.java.isAssignableFrom(target))) {
         val element = target.componentType?.let(WrappingUtils::getWrapped) ?: elementClass(current)
+        require(element != Any::class.java || plain.none { it is Number } || hasElements(current)) {
+            "cannot tell the number type of an empty ${target.name}"
+        }
         val items = plain.map { decodeElement(element, it) }
         return when {
             target.isArray -> WrappingUtils.richCast(items, target)
@@ -197,6 +216,7 @@ private fun decodeAs(target: Class<*>, plain: Any?, current: Any?): Any? {
         }
     }
     if (target.isInstance(plain)) return plain
+    asChar(target, plain)?.let { return it }
     adapterFor(target)?.let { return it.deserialize(WrappingUtils.richCast(plain, it.outputClass)) }
     return WrappingUtils.richCast(plain, target).takeIf { target.isInstance(it) }
         ?: throw IllegalArgumentException("cannot read ${plain.javaClass.name} as ${target.name}")
@@ -222,6 +242,7 @@ private fun decodeElement(element: Class<*>, item: Any?): Any? {
     }
     if (Enum::class.java.isAssignableFrom(element)) return enumConstant(element, item)
     if (element.isInstance(item) || element == Any::class.java) return item
+    asChar(element, item)?.let { return it }
     adapterFor(element)?.let { return it.deserialize(WrappingUtils.richCast(item, it.outputClass)) }
     return WrappingUtils.richCast(item, element)
 }
@@ -252,6 +273,15 @@ private fun enumConstant(type: Class<*>, value: Any): Any {
             ?: constants.firstOrNull { (it as Enum<*>).name.equals(value, ignoreCase = true) }
         else -> null
     } ?: throw IllegalArgumentException("$value is not a constant of ${type.name}")
+}
+
+private fun asChar(target: Class<*>, value: Any): Char? =
+    if (WrappingUtils.getWrapped(target) == Char::class.javaObjectType && value is String && value.length == 1) value[0] else null
+
+private fun hasElements(current: Any?): Boolean = when (current) {
+    is Iterable<*> -> current.any { it != null }
+    is kotlin.Array<*> -> current.any { it != null }
+    else -> false
 }
 
 private fun elementClass(current: Any?): Class<*> {

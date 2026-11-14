@@ -1427,7 +1427,18 @@ public final class ConfigManager {
     }
 
     private void runPendingMigrations() {
-        if (this == active) MigrationRunner.beforeLoad(getFolder());
+        if (this == active && MigrationRunner.beforeLoad(getFolder())) reloadLoadedTrees();
+    }
+
+    private void reloadLoadedTrees() {
+        for (Tree tree : new ArrayList<>(backend.getTrees())) {
+            if (tree.getID() == null) continue;
+            try {
+                backend.load(tree);
+            } catch (Throwable t) {
+                LOGGER.error("Failed to reload tree {} after config migrations", tree.getID(), t);
+            }
+        }
     }
 
     public Backend.RegistrationResult register(Tree t) {

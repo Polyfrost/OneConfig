@@ -240,7 +240,11 @@ public abstract class Config {
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
                 Object value = p.get();
-                if (value == null) continue;
+                if (value == null) {
+                    if (p.getMetadata("default") == null) p.addMetadata("defaultNull", true);
+                    if (out != null) out.put(prefix + entry.getKey(), null);
+                    continue;
+                }
                 Object def = p.getOrPutMetadata("default", () -> copyDefault(p.type, value));
                 if (out != null) out.put(prefix + entry.getKey(), def);
             } else if (node instanceof Tree) {
@@ -254,8 +258,12 @@ public abstract class Config {
             Node node = entry.getValue();
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
-                Object def = snapshot.get(prefix + entry.getKey());
-                if (def == null) continue;
+                String key = prefix + entry.getKey();
+                Object def = snapshot.get(key);
+                if (def == null) {
+                    if (snapshot.containsKey(key)) p.addMetadata("defaultNull", true);
+                    continue;
+                }
                 p.addMetadata("default", copyDefault(p.type, def));
             } else if (node instanceof Tree) {
                 applyDefaultSnapshot((Tree) node, prefix + entry.getKey() + ".", snapshot);

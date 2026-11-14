@@ -48,12 +48,17 @@ public class MigrationScope internal constructor(
         }
     }
 
+    private fun readJsonOrNew(path: String): MutableMap<String, Any?>? {
+        if (!Files.exists(resolve(path))) return LinkedHashMap()
+        return readJson(path)
+    }
+
     public fun writeJson(path: String, json: Map<String, Any?>) {
         writeText(path, MigrationJson.write(json))
     }
 
     public fun editJson(path: String, create: Boolean = false, edit: MutableMap<String, Any?>.() -> Unit): Boolean {
-        val json = readJson(path) ?: if (create) LinkedHashMap<String, Any?>() else return false
+        val json = (if (create) readJsonOrNew(path) else readJson(path)) ?: return false
         json.edit()
         writeJson(path, json)
         return true
@@ -72,7 +77,7 @@ public class MigrationScope internal constructor(
         val source = readJson(fromPath) ?: return false
         if (key !in source) return false
         val value = source.remove(key)
-        val target = readJson(toPath) ?: LinkedHashMap<String, Any?>()
+        val target = readJsonOrNew(toPath) ?: return false
         target[toKey] = value
         writeJson(toPath, target)
         writeJson(fromPath, source)

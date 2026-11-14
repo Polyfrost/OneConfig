@@ -182,7 +182,13 @@ public fun Tree.group(
         }
     } else null
     group.block()
-    if (toggle != null) group.disableUnless(toggle)
+    group.onAll { childId, node ->
+        check(node !is Tree) { "Group $id contains the nested group $childId, but groups cannot be nested; put the options in the outer group or use a submenu" }
+    }
+    if (toggle != null) {
+        check(group.get(GROUP_TOGGLE_ID) === toggle) { "Group $id uses an enable toggle, so its options cannot use the id $GROUP_TOGGLE_ID" }
+        group.disableUnless(toggle)
+    }
     put(group)
     return group
 }
