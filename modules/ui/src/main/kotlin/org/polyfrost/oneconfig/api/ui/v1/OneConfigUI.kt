@@ -3,10 +3,8 @@
 package org.polyfrost.oneconfig.api.ui.v1
 
 import java.util.ServiceLoader
-import java.util.concurrent.ConcurrentHashMap
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
-import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
 
@@ -44,8 +42,6 @@ public object OneConfigUI {
             null
         }
     }
-
-    private val warnedRouteTypes = ConcurrentHashMap.newKeySet<Class<*>>()
 
     @JvmStatic
     public fun open() {
@@ -117,14 +113,8 @@ public object OneConfigUI {
     }
 
     private fun normalizeRoute(route: Any?): Any? = when (route) {
-        null, is String, is OneConfigPage, is ModConfigTarget -> route
         is OneConfigDestination -> routeOf(route)
-        else -> {
-            if (warnedRouteTypes.add(route.javaClass)) {
-                LOGGER.warn("Cannot open the OneConfig UI on {} because {} is not a OneConfigDestination; opening the default page instead", route, route.javaClass.name)
-            }
-            null
-        }
+        else -> route
     }
 
     /**
