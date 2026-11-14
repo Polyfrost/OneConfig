@@ -5,7 +5,9 @@ package org.polyfrost.oneconfig.internal.mixin.render;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 //? if >= 26.2 {
 import net.minecraft.client.gui.Hud;
 //?} else {
@@ -26,6 +28,7 @@ import net.minecraft.resources.Identifier;
 import org.polyfrost.oneconfig.api.ui.v1.platform.VanillaHudElement;
 import org.polyfrost.oneconfig.api.ui.v1.platform.VanillaHudHooks;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -37,6 +40,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /*@Mixin(Gui.class)
 *///?}
 public abstract class Mixin_VanillaHudElements {
+    @Shadow
+    private Component overlayMessageString;
+
+    @Shadow
+    private int overlayMessageTime;
+
+    @Shadow
+    private Component title;
+
+    @Shadow
+    private int titleTime;
+
+    @Shadow
+    private int toolHighlightTimer;
+
+    @Shadow
+    private ItemStack lastToolHighlight;
+
     @Unique
     private static final String CROSSHAIR =
         //~ if >= 26.1 'renderCrosshair' -> 'extractCrosshair'
@@ -68,6 +89,22 @@ public abstract class Mixin_VanillaHudElements {
         /*"Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Ljava/util/function/Function;Lnet/minecraft/resources/ResourceLocation;IIIIIIII)V";
         *///?} else {
         /*"Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lnet/minecraft/resources/ResourceLocation;IIIIIIII)V";
+        *///?}
+
+    @Unique
+    private static final String EFFECTS_DRAW_START =
+        //? if >= 1.21.4 {
+        "Lcom/google/common/collect/Ordering;natural()Lcom/google/common/collect/Ordering;";
+        //?} else {
+        /*"Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V";
+        *///?}
+
+    @Unique
+    private static final String DISPLAY_SCOREBOARD_SIDEBAR =
+        //? if >= 26.2 {
+        "Lnet/minecraft/client/gui/Hud;displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V";
+        //?} else {
+        /*"Lnet/minecraft/client/gui/Gui;displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V";
         *///?}
 
     @WrapWithCondition(method = CROSSHAIR, at = @At(value = "INVOKE", target = BLIT_SPRITE, ordinal = 0))
@@ -128,13 +165,13 @@ public abstract class Mixin_VanillaHudElements {
     }
 
     //~ if >= 26.1 'renderEffects' -> 'extractEffects'
-    @Inject(method = "extractEffects", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "extractEffects", at = @At(value = "INVOKE", target = EFFECTS_DRAW_START, ordinal = 0), cancellable = true)
     private void oneconfig$statusEffects(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         if (VanillaHudHooks.intercept(VanillaHudElement.STATUS_EFFECTS, graphics)) ci.cancel();
     }
 
     //~ if >= 26.1 'renderScoreboardSidebar' -> 'extractScoreboardSidebar'
-    @Inject(method = "extractScoreboardSidebar", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "extractScoreboardSidebar", at = @At(value = "INVOKE", target = DISPLAY_SCOREBOARD_SIDEBAR), cancellable = true)
     private void oneconfig$scoreboard(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         if (VanillaHudHooks.intercept(VanillaHudElement.SCOREBOARD, graphics)) ci.cancel();
     }
@@ -142,18 +179,21 @@ public abstract class Mixin_VanillaHudElements {
     //~ if >= 26.1 'renderOverlayMessage' -> 'extractOverlayMessage'
     @Inject(method = "extractOverlayMessage", at = @At("HEAD"), cancellable = true)
     private void oneconfig$actionBar(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (overlayMessageString == null || overlayMessageTime <= 0) return;
         if (VanillaHudHooks.intercept(VanillaHudElement.ACTION_BAR, graphics)) ci.cancel();
     }
 
     //~ if >= 26.1 'renderTitle' -> 'extractTitle'
     @Inject(method = "extractTitle", at = @At("HEAD"), cancellable = true)
     private void oneconfig$title(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (title == null || titleTime <= 0) return;
         if (VanillaHudHooks.intercept(VanillaHudElement.TITLE, graphics)) ci.cancel();
     }
 
     //~ if >= 26.1 'renderSelectedItemName' -> 'extractSelectedItemName'
     @Inject(method = "extractSelectedItemName", at = @At("HEAD"), cancellable = true)
     private void oneconfig$heldItemName(GuiGraphicsExtractor graphics, CallbackInfo ci) {
+        if (toolHighlightTimer <= 0 || lastToolHighlight.isEmpty()) return;
         if (VanillaHudHooks.intercept(VanillaHudElement.HELD_ITEM_NAME, graphics)) ci.cancel();
     }
 
