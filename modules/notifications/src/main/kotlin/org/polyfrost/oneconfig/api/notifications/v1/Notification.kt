@@ -118,19 +118,27 @@ public class Notification @JvmOverloads constructor(
         progress: Callable<Float>? = null,
         actions: List<NotificationAction> = emptyList(),
         onClick: Runnable? = null,
-    ) : this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, onClick, null)
+    ) : this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, onClick, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Use the constructor taking durationMillis: Long and persistent")
     public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float) :
-        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, null), null, emptyList(), null, null)
+        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, null), null, emptyList(), null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Use the constructor taking durationMillis: Long and persistent")
     public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?) :
-        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, emptyList(), null, null)
+        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, emptyList(), null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Use the constructor taking durationMillis: Long and persistent")
     public constructor(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
-        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, null, null)
+        this(title, message, type, icon, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(
@@ -142,7 +150,9 @@ public class Notification @JvmOverloads constructor(
         progress: Callable<Float>? = null,
         actions: List<NotificationAction> = emptyList(),
         onClick: Runnable? = null,
-    ) : this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, onClick, null)
+    ) : this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, onClick, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?) :
@@ -150,15 +160,21 @@ public class Notification @JvmOverloads constructor(
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float) :
-        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, null), null, emptyList(), null, null)
+        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, null), null, emptyList(), null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?) :
-        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, emptyList(), null, null)
+        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, emptyList(), null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     public constructor(title: String, message: String, type: NotificationType, icon: Image?, duration: Float, progress: Callable<Float>?, actions: List<NotificationAction>) :
-        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, null, null)
+        this(title, message, type, null, null, legacyMillis(duration), legacyPersistent(duration, progress), progress, actions, null, null) {
+        legacyDuration = duration
+    }
 
     @Deprecated("Skia images are no longer supported", level = DeprecationLevel.HIDDEN)
     @get:JvmName("getIcon")
@@ -174,7 +190,9 @@ public class Notification @JvmOverloads constructor(
         private set
 
     @Deprecated("Use durationMillis and persistent")
-    public val duration: Float get() = if (persistent) -1f else durationMillis.toFloat()
+    public val duration: Float get() = legacyDuration ?: if (persistent) -1f else durationMillis.toFloat()
+
+    internal var legacyDuration: Float? = null
 
     public val id: Long = COUNTER.incrementAndGet()
 
@@ -267,4 +285,4 @@ internal fun legacyNotification(
     if (duration > 0f) duration.toLong() else Notification.DEFAULT_DURATION_MILLIS,
     duration <= 0f && progress == null,
     progress, actions, onClick, null,
-)
+).also { it.legacyDuration = duration }

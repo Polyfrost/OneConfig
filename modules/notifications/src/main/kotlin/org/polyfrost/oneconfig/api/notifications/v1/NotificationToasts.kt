@@ -240,11 +240,11 @@ private fun ActionButton(notification: Notification, action: NotificationAction)
     val textColor = if (action.primary) NotificationTheme.onActionFillFor(type) else NotificationTheme.actionSubtleText
     PolyBox(
         modifier = PolyModifier
-            .background(if (action.enabled) fill else fill.multiplyAlpha(DISABLED_ALPHA), NotificationTheme.radiusButton)
+            .background(if (action.enabled) fill else fill.multiplyAlpha(NotificationTheme.disabledAlpha), NotificationTheme.radiusButton)
             .padding(horizontal = 12f, vertical = 6f)
             .tag(ToastHit.Action(notification, action)),
     ) {
-        PolyText(action.label, color = if (action.enabled) textColor else textColor.multiplyAlpha(DISABLED_ALPHA), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
+        PolyText(action.label, color = if (action.enabled) textColor else textColor.multiplyAlpha(NotificationTheme.disabledAlpha), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
     }
 }
 
@@ -276,7 +276,6 @@ private fun ToastIcon(notification: Notification) {
 
 private const val TEXT_WIDTH = CONTENT_WIDTH - ICON_SIZE - ICON_GAP
 private const val WHITE = -1
-private const val DISABLED_ALPHA = 0.5f
 
 private fun messageFont(): PolyFont = NotificationTheme.fontBody?.let { PolyFont(it, MESSAGE_SIZE) } ?: PolyFont.default(MESSAGE_SIZE)
 

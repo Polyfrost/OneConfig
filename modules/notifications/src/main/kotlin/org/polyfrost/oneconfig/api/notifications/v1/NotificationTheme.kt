@@ -174,4 +174,13 @@ public object NotificationTheme {
     public fun useIconFolder(iconFolder: String?) {
         this.iconFolder = iconFolder
     }
+
+    @get:ApiStatus.Experimental
+    public var disabledAlpha: Float by mutableStateOf(0.5f)
+        private set
+
+    @ApiStatus.Internal
+    public fun useDisabledAlpha(alpha: Float) {
+        disabledAlpha = alpha
+    }
 }

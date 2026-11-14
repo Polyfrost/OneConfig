@@ -121,6 +121,20 @@ public object Notifications {
 
     @Deprecated("Use the overload taking durationMillis: Long and persistent")
     @JvmStatic
+    @JvmName("sendWithFloatDuration")
+    public fun send(
+        title: String,
+        message: String,
+        type: NotificationType = NotificationType.INFO,
+        icon: PolyBitmap? = null,
+        duration: Float,
+        progress: Callable<Float>? = null,
+        onClick: Runnable? = null,
+        actions: List<NotificationAction> = emptyList(),
+    ): Notification = push(legacyNotification(title, message, type, icon, duration, progress, actions, onClick))
+
+    @Deprecated("Use the overload taking durationMillis: Long and persistent")
+    @JvmStatic
     public fun send(title: String, message: String, type: NotificationType, icon: PolyBitmap?, duration: Float): Notification =
         push(legacyNotification(title, message, type, icon, duration, null, emptyList(), null))
 
@@ -199,23 +213,38 @@ public object Notifications {
     public fun warning(title: String, message: String, durationMillis: Long = Notification.DEFAULT_DURATION_MILLIS): Notification =
         push(Notification(title, message, NotificationType.WARNING, durationMillis = durationMillis))
 
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the overload taking durationMillis: Long")
     @JvmStatic
-    @JvmName("info")
-    public fun infoLegacy(title: String, message: String, duration: Float = LEGACY_DURATION): Notification =
+    public fun info(title: String, message: String, duration: Float): Notification =
         push(legacyNotification(title, message, NotificationType.INFO, null, duration, null, emptyList(), null))
 
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmStatic
-    @JvmName("success")
-    public fun successLegacy(title: String, message: String, duration: Float = LEGACY_DURATION): Notification =
+    @JvmName("info\$default")
+    public fun infoLegacyDefault(title: String, message: String, duration: Float, mask: Int, marker: Any?): Notification =
+        push(legacyNotification(title, message, NotificationType.INFO, null, if (mask and 4 != 0) LEGACY_DURATION else duration, null, emptyList(), null))
+
+    @Deprecated("Use the overload taking durationMillis: Long")
+    @JvmStatic
+    public fun success(title: String, message: String, duration: Float): Notification =
         push(legacyNotification(title, message, NotificationType.SUCCESS, null, duration, null, emptyList(), null))
 
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmStatic
-    @JvmName("error")
-    public fun errorLegacy(title: String, message: String, duration: Float = LEGACY_DURATION): Notification =
+    @JvmName("success\$default")
+    public fun successLegacyDefault(title: String, message: String, duration: Float, mask: Int, marker: Any?): Notification =
+        push(legacyNotification(title, message, NotificationType.SUCCESS, null, if (mask and 4 != 0) LEGACY_DURATION else duration, null, emptyList(), null))
+
+    @Deprecated("Use the overload taking durationMillis: Long")
+    @JvmStatic
+    public fun error(title: String, message: String, duration: Float): Notification =
         push(legacyNotification(title, message, NotificationType.ERROR, null, duration, null, emptyList(), null))
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @JvmStatic
+    @JvmName("error\$default")
+    public fun errorLegacyDefault(title: String, message: String, duration: Float, mask: Int, marker: Any?): Notification =
+        push(legacyNotification(title, message, NotificationType.ERROR, null, if (mask and 4 != 0) LEGACY_DURATION else duration, null, emptyList(), null))
 
     /**
      * Sends a [NotificationType.PROGRESS] notification driven by [progress]
