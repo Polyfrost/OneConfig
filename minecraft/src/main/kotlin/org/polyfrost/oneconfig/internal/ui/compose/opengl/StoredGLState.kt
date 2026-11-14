@@ -244,13 +244,28 @@ class StoredGLState(private val glVersion: Int) {
     private var alphaTestEnabled = false
     private var depthTestEnabled = false
     private var activeTextureUnit = 0
+    private var cachedTextureUnit = 0
+    private val unitBindings = IntArray(GlStateManager.TEXTURES.size)
+    private val unitEnabled = BooleanArray(GlStateManager.TEXTURES.size)
 
     fun capture() {
         alphaTestEnabled = GlStateManager.ALPHA_TEST.state.enabled
         depthTestEnabled = GlStateManager.DEPTH.state.enabled
-        activeTextureUnit = GlStateManager.texture
+        activeTextureUnit = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE) - GL13.GL_TEXTURE0
+        cachedTextureUnit = GlStateManager.texture
         GL11.glPushClientAttrib(GL11.GL_CLIENT_ALL_ATTRIB_BITS)
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
+        GL11.glPushAttrib(SAVED_ATTRIB_BITS)
+        for (i in unitBindings.indices) {
+            GL13.glActiveTexture(GL13.GL_TEXTURE0 + i)
+            unitBindings[i] = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
+            unitEnabled[i] = GL11.glIsEnabled(GL11.GL_TEXTURE_2D)
+            GlStateManager.TEXTURES[i].texture = unitBindings[i]
+            GlStateManager.TEXTURES[i].state.enabled = unitEnabled[i]
+        }
+        GL13.glActiveTexture(GL13.GL_TEXTURE0)
+        GlStateManager.texture = 0
+        props.lastShadeModel[0] = GL11.glGetInteger(GL11.GL_SHADE_MODEL)
+        GlStateManager.shadeModel = props.lastShadeModel[0]
 
         with(props) {
             lastDrawFramebuffer[0] = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
@@ -263,7 +278,6 @@ class StoredGLState(private val glVersion: Int) {
             lastBlendDstRgb[0] = blend.dfactorRGB
             lastBlendSrcAlpha[0] = blend.sfactorAlpha
             lastBlendDstAlpha[0] = blend.dfactorAlpha
-            lastShadeModel[0] = GlStateManager.shadeModel
         }
     }
 
@@ -285,7 +299,14 @@ class StoredGLState(private val glVersion: Int) {
             if (lastEnableBlend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
 
             GL20.glUseProgram(lastProgram[0])
-            GlStateManager.activeTexture(GL13.GL_TEXTURE0 + activeTextureUnit)
+            for (i in unitBindings.indices) {
+                GL13.glActiveTexture(GL13.GL_TEXTURE0 + i)
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, unitBindings[i])
+                GlStateManager.TEXTURES[i].texture = unitBindings[i]
+                GlStateManager.TEXTURES[i].state.enabled = unitEnabled[i]
+            }
+            GL13.glActiveTexture(GL13.GL_TEXTURE0 + activeTextureUnit)
+            GlStateManager.texture = if (activeTextureUnit in unitBindings.indices) activeTextureUnit else cachedTextureUnit
 
             GlStateManager.blendFuncSeparate(
                 lastBlendSrcRgb[0],
@@ -293,8 +314,15 @@ class StoredGLState(private val glVersion: Int) {
                 lastBlendSrcAlpha[0],
                 lastBlendDstAlpha[0],
             )
-            GlStateManager.shadeModel(lastShadeModel[0])
+            GL11.glShadeModel(lastShadeModel[0])
+            GlStateManager.shadeModel = lastShadeModel[0]
         }
+    }
+
+    private companion object {
+        const val SAVED_ATTRIB_BITS = GL11.GL_CURRENT_BIT or GL11.GL_ENABLE_BIT or GL11.GL_COLOR_BUFFER_BIT or
+            GL11.GL_DEPTH_BUFFER_BIT or GL11.GL_STENCIL_BUFFER_BIT or GL11.GL_VIEWPORT_BIT or GL11.GL_SCISSOR_BIT or
+            GL11.GL_TRANSFORM_BIT or GL11.GL_POLYGON_BIT
     }
     *///?}
 }
