@@ -45,7 +45,9 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,6 +92,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUI
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
@@ -102,6 +105,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
 import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberContextMenuState
 import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
@@ -111,7 +115,6 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils
 import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -228,7 +231,6 @@ private enum class ResizeCorner {
     val isTop get() = this == TopLeft || this == TopRight
 }
 
-private const val SELECTION_BLUE_ARGB = 0xFF0D99FF.toInt()
 private const val HUD_SIZE_BADGE_HEIGHT = 16f
 private const val HUD_SIZE_BADGE_GAP = 9f
 /** How far the resize handles reach past a HUD's box */
@@ -236,8 +238,8 @@ private const val SELECTION_HANDLE_REACH = 4f
 private const val NUDGE_SETTLE_MS = 300L
 /** How stiffly the settings panel resizes to a new tab, which a dodge alongside it shares */
 private const val PANEL_RESIZE_STIFFNESS = Spring.StiffnessMediumLow
-private val selectionBlue = Color(SELECTION_BLUE_ARGB)
-private val marqueeFillColor = Color(SELECTION_BLUE_ARGB).copy(alpha = 0.15f)
+private const val DRAGGED_HUD_FILL_ALPHA = 0.10f
+private const val MARQUEE_FILL_ALPHA = 0.15f
 
 private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
 
@@ -258,12 +260,15 @@ private class StudioCanvasColors(
     val anchorLine: Color,
     val anchorPickScrim: Color,
     val handleFill: Color,
+    val selection: Color,
+    val onSelection: Color,
 )
 
 @Composable
 private fun rememberStudioCanvasColors(): StudioCanvasColors {
     val theme = LocalTheme.current
-    return remember(theme) {
+    val accent = Accent
+    return remember(theme, accent) {
         StudioCanvasColors(
             idleBox = theme.onMedia.copy(alpha = IDLE_HUD_BOX_ALPHA),
             hoveredBox = theme.onMedia.copy(alpha = HOVERED_HUD_BOX_ALPHA),
@@ -274,6 +279,8 @@ private fun rememberStudioCanvasColors(): StudioCanvasColors {
             anchorLine = theme.info,
             anchorPickScrim = theme.scrimColor.copy(alpha = theme.scrimColor.alpha / 2f),
             handleFill = theme.onMedia,
+            selection = accent,
+            onSelection = theme.accentTextOn(accent),
         )
     }
 }
@@ -793,7 +800,7 @@ private fun DrawScope.drawSelectedHudBounds(
     mcToScreen: Float,
     showHandles: Boolean,
     badgeRadius: Dp,
-    handleFill: Color,
+    colors: StudioCanvasColors,
     showBadge: Boolean = true,
 ) {
     val sx = bounds.x * mcToScreen
@@ -802,7 +809,7 @@ private fun DrawScope.drawSelectedHudBounds(
     val sh = bounds.height * mcToScreen
 
     drawRect(
-        color = selectionBlue,
+        color = colors.selection,
         topLeft = Offset(sx, sy),
         size = Size(sw, sh),
         style = Stroke(width = 1f)
@@ -817,14 +824,14 @@ private fun DrawScope.drawSelectedHudBounds(
             Offset(sx + sw, sy + sh),
         ).forEach { corner ->
             val topLeft = Offset(corner.x - handleSize / 2, corner.y - handleSize / 2)
-            drawRect(color = handleFill, topLeft = topLeft, size = Size(handleSize, handleSize))
-            drawRect(color = selectionBlue, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
+            drawRect(color = colors.handleFill, topLeft = topLeft, size = Size(handleSize, handleSize))
+            drawRect(color = colors.selection, topLeft = topLeft, size = Size(handleSize, handleSize), style = Stroke(width = 1f))
         }
     }
 
     if (showBadge) {
         val badgeTopY = (sy - HUD_SIZE_BADGE_GAP - HUD_SIZE_BADGE_HEIGHT).coerceAtLeast(0f)
-        drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, badgeTopY, badgeRadius)
+        drawHudSizeBadge("${bounds.width.roundToInt()} x ${bounds.height.roundToInt()}", sx + sw / 2, badgeTopY, badgeRadius, colors)
     }
 }
 
@@ -866,7 +873,7 @@ private fun DrawScope.drawHudPlacementBadge(
     drawPoly { it.renderer.text(label, textX, textY, textColor.toArgb(), font) }
 }
 
-private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float, badgeRadius: Dp) {
+private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Float, badgeRadius: Dp, colors: StudioCanvasColors) {
     val font = PolyFont.default(10f)
     val metrics = font.metrics
     val textWidth = font.measureTextWidth(label)
@@ -877,14 +884,14 @@ private fun DrawScope.drawHudSizeBadge(label: String, centerX: Float, topY: Floa
     val badgeX = centerX - badgeWidth / 2
 
     drawRoundRect(
-        color = selectionBlue,
+        color = colors.selection,
         topLeft = Offset(badgeX, topY),
         size = Size(badgeWidth, badgeHeight),
         cornerRadius = CornerRadius(badgeRadius.toPx())
     )
     val textX = badgeX + horizontalPadding
     val textY = topY + (badgeHeight - textHeight) / 2f - metrics.ascent
-    drawPoly { it.renderer.text(label, textX, textY, Color.White.toArgb(), font) }
+    drawPoly { it.renderer.text(label, textX, textY, colors.onSelection.toArgb(), font) }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -2023,18 +2030,18 @@ fun HudDesignStudio(visible: Boolean = true) {
         }
     }
 
-    val chromeAlpha by animateFloatAsState(
-        targetValue = if (isDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
-        animationSpec = tween(150),
-        label = "hudDragChromeAlpha"
+    val chromeAlpha by Motion.animateFloatAsState(
+        if (isDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
+        tween(150),
+        label = "hudDragChromeAlpha",
     )
 
     val marqueeAnimEnabled = OneConfigConfig.marqueeSelectionAnim
     val marqueeAnimDuration = OneConfigConfig.marqueeSelectionAnimDuration.toInt().coerceAtLeast(1)
-    val marqueeAlpha by animateFloatAsState(
-        targetValue = if (marqueeActive) 1f else 0f,
-        animationSpec = tween(if (marqueeAnimEnabled) marqueeAnimDuration else 0),
-        label = "marqueeAlpha"
+    val marqueeAlpha by Motion.animateFloatAsState(
+        if (marqueeActive) 1f else 0f,
+        tween(if (marqueeAnimEnabled) marqueeAnimDuration else 0),
+        label = "marqueeAlpha",
     )
 
     var lastMarqueeStart by remember { mutableStateOf<Offset?>(null) }
@@ -2052,10 +2059,10 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     // the library and return chip stay on screen while a HUD is selected but dimmed so the settings
     // panel reads as the focus
-    val sideChromeAlpha by animateFloatAsState(
-        targetValue = if (selectedHuds.isNotEmpty()) SIDE_CHROME_DIM_ALPHA else 1f,
-        animationSpec = tween(150),
-        label = "sideChromeAlpha"
+    val sideChromeAlpha by Motion.animateFloatAsState(
+        if (selectedHuds.isNotEmpty()) SIDE_CHROME_DIM_ALPHA else 1f,
+        tween(150),
+        label = "sideChromeAlpha",
     )
 
     fun hudScreenBox(hud: Hud): Rect? {
@@ -2157,7 +2164,7 @@ fun HudDesignStudio(visible: Boolean = true) {
         if (target != null) {
             // moves with the tab resize's spring, settling to about a pixel since x is a fraction
             val spec = if (panelTargetHeight != null) spring(stiffness = PANEL_RESIZE_STIFFNESS, visibilityThreshold = 0.001f) else tween<Float>(200)
-            animate(panelPos.x, target.x, animationSpec = ReducedMotion.spec(spec)) { value, _ -> panelPos = panelPos.copy(x = value) }
+            animate(panelPos.x, target.x, animationSpec = Motion.spec(spec)) { value, _ -> panelPos = panelPos.copy(x = value) }
         }
         panelDropPending[0] = false
     }
@@ -2283,18 +2290,18 @@ fun HudDesignStudio(visible: Boolean = true) {
 
                         if (isBeingDragged) {
                             drawRect(
-                                color = selectionBlue.copy(alpha = 0.10f),
+                                color = canvasColors.selection.copy(alpha = DRAGGED_HUD_FILL_ALPHA),
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                             )
-                            drawSelectedHudBounds(bounds, mcToScreen, resizable && singleSelection, badgeRadius, canvasColors.handleFill, showBadge = singleSelection)
+                            drawSelectedHudBounds(bounds, mcToScreen, resizable && singleSelection, badgeRadius, canvasColors, showBadge = singleSelection)
                         } else if (isSelected) {
                             drawSelectedHudBounds(
                                 bounds,
                                 mcToScreen,
                                 showHandles = isPrimary && singleSelection,
                                 badgeRadius = badgeRadius,
-                                handleFill = canvasColors.handleFill,
+                                colors = canvasColors,
                                 showBadge = singleSelection,
                             )
                         } else if (hud.hidden) {
@@ -2410,11 +2417,11 @@ fun HudDesignStudio(visible: Boolean = true) {
                             translate(left, top) {
                                 drawOutline(
                                     outline,
-                                    color = marqueeFillColor.copy(alpha = marqueeFillColor.alpha * marqueeAlpha),
+                                    color = canvasColors.selection.copy(alpha = canvasColors.selection.alpha * MARQUEE_FILL_ALPHA * marqueeAlpha),
                                 )
                                 drawOutline(
                                     outline,
-                                    color = selectionBlue.copy(alpha = selectionBlue.alpha * marqueeAlpha),
+                                    color = canvasColors.selection.copy(alpha = canvasColors.selection.alpha * marqueeAlpha),
                                     style = Stroke(width = 1.dp.toPx()),
                                 )
                             }
@@ -2479,15 +2486,15 @@ fun HudDesignStudio(visible: Boolean = true) {
             obstacles.addAll(chromeRects.values)
             hintSlot = pickHintSlot(rootSize, hintSize, hintMargin, obstacles)
         }
-        val hintSpec = tween<Float>(durationMillis = if (hintPlaced && !ReducedMotion.enabled) 160 else 0)
-        val hintX by animateFloatAsState(hintSlot.x, hintSpec, label = "hintX")
-        val hintY by animateFloatAsState(hintSlot.y, hintSpec, label = "hintY")
+        val hintSpec = tween<Float>(durationMillis = if (hintPlaced) 160 else 0)
+        val hintX by Motion.animateFloatAsState(hintSlot.x, hintSpec, label = "hintX")
+        val hintY by Motion.animateFloatAsState(hintSlot.y, hintSpec, label = "hintY")
         AnimatedVisibility(
             visible = hintText != null,
             modifier = Modifier.align(Alignment.TopStart)
                 .offset { IntOffset(hintX.roundToInt(), hintY.roundToInt()) },
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = Motion.enter(fadeIn()),
+            exit = Motion.exit(fadeOut()),
         ) {
             Box(
                 modifier = Modifier
@@ -2520,8 +2527,8 @@ fun HudDesignStudio(visible: Boolean = true) {
         val panelSlidePx = (if (panelPos.x < 0.5f) -1 else 1) * with(densityObj) { 24.dp.roundToPx() }
         AnimatedVisibility(
             visible = panelHud != null,
-            enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { panelSlidePx }) + fadeIn()),
-            exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { panelSlidePx }) + fadeOut()),
+            enter = Motion.enter(slideInHorizontally(initialOffsetX = { panelSlidePx }) + fadeIn()),
+            exit = Motion.exit(slideOutHorizontally(targetOffsetX = { panelSlidePx }) + fadeOut()),
         ) {
             DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_SETTINGS_PANEL) } }
             // inside the slide so it never clips, and hidden until first placed so it never flashes at the top left
@@ -2561,8 +2568,8 @@ fun HudDesignStudio(visible: Boolean = true) {
         AnimatedVisibility(
             visible = libraryChromeVisible,
             modifier = Modifier.align(Alignment.CenterEnd),
-            enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { it })),
-            exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { it })),
+            enter = Motion.enter(slideInHorizontally(initialOffsetX = { it })),
+            exit = Motion.exit(slideOutHorizontally(targetOffsetX = { it })),
         ) {
             DisposableEffect(Unit) {
                 onDispose {
@@ -2577,8 +2584,8 @@ fun HudDesignStudio(visible: Boolean = true) {
             ) {
                 AnimatedVisibility(
                     visible = libraryVisible,
-                    enter = ReducedMotion.enter(slideInHorizontally(initialOffsetX = { it }) + fadeIn()),
-                    exit = ReducedMotion.exit(slideOutHorizontally(targetOffsetX = { it }) + fadeOut()),
+                    enter = Motion.enter(slideInHorizontally(initialOffsetX = { it }) + fadeIn()),
+                    exit = Motion.exit(slideOutHorizontally(targetOffsetX = { it }) + fadeOut()),
                 ) {
                     DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
                     HudLibraryPanel(
@@ -2678,8 +2685,8 @@ fun HudDesignStudio(visible: Boolean = true) {
         AnimatedVisibility(
             visible = tourStep != null,
             modifier = Modifier.fillMaxSize(),
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = Motion.enter(fadeIn()),
+            exit = Motion.exit(fadeOut()),
         ) {
             DisposableEffect(Unit) {
                 onDispose {
@@ -3039,11 +3046,11 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     }
                     if (isBeingDragged) {
                         drawRect(
-                            color = selectionBlue.copy(alpha = 0.10f),
+                            color = canvasColors.selection.copy(alpha = DRAGGED_HUD_FILL_ALPHA),
                             topLeft = Offset(sx, sy),
                             size = Size(sw, sh),
                         )
-                        drawSelectedHudBounds(bounds, mcToScreen, showHandles = false, badgeRadius = badgeRadius, handleFill = canvasColors.handleFill)
+                        drawSelectedHudBounds(bounds, mcToScreen, showHandles = false, badgeRadius = badgeRadius, colors = canvasColors)
                     } else if (hud.hidden) {
                         if (hud is LegacyHud) {
                             drawRect(
@@ -3153,7 +3160,7 @@ private fun DesignStudioPanel(
             val titleInteraction = remember { MutableInteractionSource() }
             val titleHovered by titleInteraction.collectIsHoveredAsState()
             var titleDragging by remember { mutableStateOf(false) }
-            val handleAlpha by animateFloatAsState(if (titleHovered || titleDragging) 1f else 0.65f, tween(150))
+            val handleAlpha by Motion.animateFloatAsState(if (titleHovered || titleDragging) 1f else 0.65f, tween(150), label = "panelHandleAlpha")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -3197,7 +3204,7 @@ private fun DesignStudioPanel(
                         Text(it, color = theme.textColorSecondary, fontSize = 12.sp)
                     }
                 }
-                IconButton("close", modifier = Modifier.size(32.dp), hoverBorder = true) { onBack() }
+                KitIconButton("close", translated("oneconfig.button.close", "Close"), onBack, Modifier.size(32.dp))
             }
             var searchOpen by remember { mutableStateOf(false) }
             var focusSearch by remember { mutableStateOf(false) }
@@ -3207,7 +3214,7 @@ private fun DesignStudioPanel(
             // 0 shows the tabs and 1 the whole field, which grows out of the search button in between
             val searchProgress by animateFloatAsState(
                 if (searchOpen) 1f else 0f,
-                tween(if (ReducedMotion.enabled) 150 else 220, easing = FastOutSlowInEasing),
+                tween(if (Motion.reduced) 150 else 220, easing = FastOutSlowInEasing),
             )
             Box(modifier = Modifier.fillMaxWidth().padding(start = StudioPanelGutter, end = StudioPanelGutter, bottom = 16.dp)) {
                 Row(
@@ -3216,7 +3223,7 @@ private fun DesignStudioPanel(
                         .height(IntrinsicSize.Min)
                         // gone before the growing field reaches them and back once the shrinking one has passed
                         .graphicsLayer {
-                            alpha = if (ReducedMotion.enabled) 1f - searchProgress
+                            alpha = if (Motion.reduced) 1f - searchProgress
                             else ((0.3f - searchProgress) / 0.25f).coerceIn(0f, 1f)
                         },
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -3241,10 +3248,10 @@ private fun DesignStudioPanel(
                             onSearchFocused()
                         },
                         modifier = Modifier
-                            .width(if (ReducedMotion.enabled) maxWidth else lerp(maxHeight, maxWidth, searchProgress))
+                            .width(if (Motion.reduced) maxWidth else lerp(maxHeight, maxWidth, searchProgress))
                             .fillMaxHeight()
                             .clip(theme.sideBarNavigationEntryShape)
-                            .graphicsLayer { if (ReducedMotion.enabled) alpha = searchProgress },
+                            .graphicsLayer { if (Motion.reduced) alpha = searchProgress },
                         onDismiss = {
                             onSearchChange("")
                             searchOpen = false
@@ -3261,7 +3268,7 @@ private fun DesignStudioPanel(
                     transitionSpec = {
                         ContentSlide.tabSwitch(forward = targetState.ordinal > initialState.ordinal) using SizeTransform { from, to ->
                             onTabResize(from, to)
-                            spring(stiffness = PANEL_RESIZE_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold)
+                            Motion.finiteSpec(spring(stiffness = PANEL_RESIZE_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
                         }
                     },
                 ) { category ->
@@ -3425,9 +3432,10 @@ private class HudLibraryScrollbarAdapter(
 @Composable
 private fun HudLibraryHeader(section: HudLibrarySection, active: Boolean) {
     val theme = LocalTheme.current
-    val textColor by animateColorAsState(
+    val textColor by Motion.animateColorAsState(
         if (active) theme.textColor else theme.textColorSecondary,
-        animationSpec = tween(150),
+        tween(150),
+        label = "libraryHeaderText",
     )
     Row(
         modifier = Modifier.fillMaxWidth().height(LIBRARY_HEADER_HEIGHT),
@@ -3571,7 +3579,7 @@ private fun HudLibraryPanel(
             Text(translated("oneconfig.hud.library.title", "HUDs"), color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
             if (!suggestEvergreenHud) {
                 SearchBar(searchText, onSearchChange, translated("oneconfig.hud.library.search", "Search HUDs..."), searchFocusRequested, onSearchFocused)
-                IconButton("close", modifier = Modifier.size(32.dp), hoverBorder = true, onClick = onClose)
+                KitIconButton("close", translated("oneconfig.button.close", "Close"), onClose, Modifier.size(32.dp))
             }
         }
         if (suggestEvergreenHud) {
@@ -3612,7 +3620,7 @@ private fun HudLibraryPanel(
                         val maxOffset = (metrics.contentHeight - constraints.maxHeight).coerceAtLeast(0)
                         val targetOffset = metrics.itemOffsets[index].coerceAtMost(maxOffset)
                         val distance = targetOffset - scrollbarAdapter.scrollOffset
-                        if (ReducedMotion.enabled) scrollbarAdapter.scrollTo(targetOffset.toDouble())
+                        if (Motion.reduced) scrollbarAdapter.scrollTo(targetOffset.toDouble())
                         else scrollState.animateScrollBy(distance.toFloat())
                     } catch (cancelled: CancellationException) {
                         if (currentCoroutineContext().isActive) completeScroll(target, true)
@@ -3710,6 +3718,7 @@ private fun ModIconColumn(
         modIds.forEach { modId ->
             ModFilterIcon(
                 iconName = libraryIconFor(modId),
+                label = remember(modId) { modNameFor(modId) ?: modId },
                 selected = activeModId == modId && libraryVisible,
             ) { onModClick(modId) }
         }
@@ -3739,8 +3748,8 @@ private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
     AnimatedVisibility(
         visible = visible,
         modifier = Modifier.matchParentSize(),
-        enter = fadeIn(tween(150)),
-        exit = fadeOut(tween(150)),
+        enter = Motion.enter(fadeIn(tween(150))),
+        exit = Motion.exit(fadeOut(tween(150))),
     ) {
         Box(
             modifier = Modifier.fillMaxSize().background(theme.scrimColor),
@@ -3958,13 +3967,14 @@ private fun ComposeHudPreviewCard(
 }
 
 @Composable
-private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Unit) {
+private fun ModFilterIcon(iconName: String, label: String, selected: Boolean, onClick: () -> Unit) {
     val interactionSource = rememberInteractionSource()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val theme = LocalTheme.current
     val barShape = OneConfigTheme.shape(FILTER_BAR_RADIUS)
-    val iconAlpha by animateFloatAsState(
-        if (selected) 1f else if (isHovered) 0.8f else 0.7f
+    val iconAlpha by Motion.animateFloatAsState(
+        if (selected) 1f else if (isHovered) 0.8f else 0.7f,
+        label = "modFilterIconAlpha",
     )
 
     Box(
@@ -3980,7 +3990,13 @@ private fun ModFilterIcon(iconName: String, selected: Boolean, onClick: () -> Un
                     }
                 }
             }
-            .onClick(interactionSource) { onClick() },
+            .oneConfigClickable(
+                label = label,
+                onClick = onClick,
+                selected = selected,
+                indication = false,
+                interactionSource = interactionSource,
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -4011,8 +4027,11 @@ private fun SearchBar(
         else if (hadFocus && value.isEmpty()) onDismiss?.invoke()
     }
     val focusRequester = remember { FocusRequester() }
+    var field by remember { mutableStateOf(TextFieldValue(value)) }
+    val current = field.copy(text = value)
     LaunchedEffect(focusRequested) {
         if (!focusRequested) return@LaunchedEffect
+        field = current.copy(selection = TextRange(0, value.length))
         try {
             focusRequester.requestFocus()
         } catch (_: IllegalStateException) {
@@ -4020,8 +4039,11 @@ private fun SearchBar(
         onFocused()
     }
     SearchField(
-        query = value,
-        onQueryChange = onValueChange,
+        value = current,
+        onValueChange = {
+            field = it
+            if (it.text != value) onValueChange(it.text)
+        },
         // clears the text first then dismisses the field so escape only closes the studio after both
         modifier = modifier.onPreviewKeyEvent { event ->
             if (event.type != KeyEventType.KeyDown || event.key != Key.Escape) return@onPreviewKeyEvent false
@@ -4037,5 +4059,6 @@ private fun SearchBar(
         size = ControlSize.Regular,
         focusRequester = focusRequester,
         interactionSource = interactionSource,
+        onDismiss = onDismiss,
     )
 }

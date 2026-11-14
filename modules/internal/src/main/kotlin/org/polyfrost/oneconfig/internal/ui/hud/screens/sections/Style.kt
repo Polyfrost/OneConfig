@@ -31,7 +31,8 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.hud.v1.Weight
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.ColorSwatchButton
-import org.polyfrost.oneconfig.internal.ui.components.SelectableIconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.Dropdown
 import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
 import org.polyfrost.oneconfig.internal.ui.components.settings.Radio
@@ -116,7 +117,7 @@ fun Style(hud: Hud?, query: String) {
     var borderColor by remember { mutableStateOf(Color(hud.borderColor)) }
     var borderChroma by remember { mutableStateOf(hud.borderChroma) }
     var borderChromaSpeed by remember { mutableStateOf(hud.borderChromaSpeed) }
-    val hasBorderOptions = hud.tree?.getProp("borderEnabled") != null
+    val hasBorderOptions = hud.hasBuiltInBorderOptions && hud.tree?.getProp("borderEnabled") != null
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         CardSection(
@@ -156,34 +157,40 @@ fun Style(hud: Hud?, query: String) {
                                     .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                                     horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    SelectableIconButton(
+                                    IconButton(
                                         Modifiers.Bold.icon,
+                                        hudPanelText("bold", "Bold"),
+                                        modifier = Modifier.size(28.dp),
+                                        size = ControlSize.Large,
                                         selected = textBold,
-                                        modifier = Modifier.size(18.dp),
                                         onClick = {
                                             Snapshot.withMutableSnapshot {
                                                 textBold = !textBold; hud.textBold = textBold
                                             }
                                         }
                                     )
-                                    SelectableIconButton(
+                                    IconButton(
                                         Modifiers.Italic.icon,
+                                        hudPanelText("italic", "Italic"),
+                                        modifier = Modifier.size(28.dp),
+                                        size = ControlSize.Large,
                                         selected = textItalic,
-                                        modifier = Modifier.size(18.dp),
                                         onClick = {
                                             Snapshot.withMutableSnapshot {
                                                 textItalic = !textItalic; hud.textItalic = textItalic
                                             }
                                         }
                                     )
-                                    SelectableIconButton(
+                                    IconButton(
                                         Modifiers.Underline.icon,
+                                        hudPanelText("underline", "Underline"),
+                                        modifier = Modifier.size(28.dp),
+                                        size = ControlSize.Large,
                                         selected = textUnderline,
-                                        modifier = Modifier.size(18.dp),
                                         onClick = {
                                             Snapshot.withMutableSnapshot {
                                                 textUnderline = !textUnderline; hud.textUnderline = textUnderline
