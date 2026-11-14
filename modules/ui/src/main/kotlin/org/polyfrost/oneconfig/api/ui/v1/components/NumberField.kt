@@ -84,25 +84,26 @@ public fun NumberField(
         field = TextFieldValue(text, TextRange(text.length))
     }
 
-    fun commitTyped() {
-        if (!edited) return
+    fun commitTyped(): Float {
+        if (!edited) return value
         edited = false
         val result = NumberExpression(field.text).evaluate()?.toFloat()?.takeIf { it.isFinite() }
         if (result == null) {
             show(value)
-            return
+            return value
         }
         val next = normalise(result)
         show(next)
         if (next != value) latestChange(next)
+        return next
     }
 
-    fun stepBy(delta: Float) {
+    fun stepBy(delta: Float, from: Float) {
         if (!enabled) return
         edited = false
-        val next = normalise(value + delta)
+        val next = normalise(from + delta)
         show(next)
-        if (next != value) latestChange(next)
+        if (next != from) latestChange(next)
     }
 
     val external = formatNumber(value, decimals)
@@ -132,13 +133,11 @@ public fun NumberField(
                 val multiplier = if (event.isShiftPressed) SHIFT_STEP_MULTIPLIER else 1f
                 when (event.key) {
                     Key.DirectionUp -> {
-                        commitTyped()
-                        stepBy(step * multiplier)
+                        stepBy(step * multiplier, commitTyped())
                         true
                     }
                     Key.DirectionDown -> {
-                        commitTyped()
-                        stepBy(-step * multiplier)
+                        stepBy(-step * multiplier, commitTyped())
                         true
                     }
                     Key.Enter, Key.NumPadEnter -> {
@@ -160,12 +159,10 @@ public fun NumberField(
         {
             Column {
                 StepArrow("up", numberString("oneconfig.ui.number.increase", "Increase"), enabled && canIncrease) {
-                    commitTyped()
-                    stepBy(step)
+                    stepBy(step, commitTyped())
                 }
                 StepArrow("down", numberString("oneconfig.ui.number.decrease", "Decrease"), enabled && canDecrease) {
-                    commitTyped()
-                    stepBy(-step)
+                    stepBy(-step, commitTyped())
                 }
             }
         },
