@@ -382,8 +382,11 @@ public final class org/polyfrost/compose/composables/PolyModifierKt {
 	public static final fun fill (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun fillHeight (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun fillWidth (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static final fun fitContent (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun height (Lorg/polyfrost/compose/composables/PolyModifier;F)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun height (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/layout/PolySize;)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static final fun heightIn (Lorg/polyfrost/compose/composables/PolyModifier;FF)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static synthetic fun heightIn$default (Lorg/polyfrost/compose/composables/PolyModifier;FFILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun margin (Lorg/polyfrost/compose/composables/PolyModifier;F)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun margin (Lorg/polyfrost/compose/composables/PolyModifier;FF)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun margin (Lorg/polyfrost/compose/composables/PolyModifier;FFFF)Lorg/polyfrost/compose/composables/PolyModifier;
@@ -402,6 +405,8 @@ public final class org/polyfrost/compose/composables/PolyModifierKt {
 	public static final fun tag (Lorg/polyfrost/compose/composables/PolyModifier;Ljava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun width (Lorg/polyfrost/compose/composables/PolyModifier;F)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun width (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/layout/PolySize;)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static final fun widthIn (Lorg/polyfrost/compose/composables/PolyModifier;FF)Lorg/polyfrost/compose/composables/PolyModifier;
+	public static synthetic fun widthIn$default (Lorg/polyfrost/compose/composables/PolyModifier;FFILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun wrapHeight (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public static final fun wrapWidth (Lorg/polyfrost/compose/composables/PolyModifier;)Lorg/polyfrost/compose/composables/PolyModifier;
 }
@@ -485,10 +490,15 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun getBorderWidth ()F
 	public final fun getClipToBounds ()Z
 	public final fun getFade ()Lkotlin/jvm/functions/Function0;
+	public final fun getFitContent ()Z
 	public final fun getGap ()F
 	public final fun getHeight ()Lorg/polyfrost/compose/layout/PolySize;
 	public final fun getLayoutType ()Lorg/polyfrost/compose/layout/LayoutType;
 	public final fun getMargin ()Lorg/polyfrost/compose/layout/PolyInsets;
+	public final fun getMaxHeight ()F
+	public final fun getMaxWidth ()F
+	public final fun getMinHeight ()F
+	public final fun getMinWidth ()F
 	public final fun getPadding ()Lorg/polyfrost/compose/layout/PolyInsets;
 	public final fun getPositionMode ()Lorg/polyfrost/compose/layout/PolyPositionMode;
 	public final fun getRadius ()F
@@ -503,10 +513,15 @@ public final class org/polyfrost/compose/layout/PolyLayoutStyle {
 	public final fun setBorderWidth (F)V
 	public final fun setClipToBounds (Z)V
 	public final fun setFade (Lkotlin/jvm/functions/Function0;)V
+	public final fun setFitContent (Z)V
 	public final fun setGap (F)V
 	public final fun setHeight (Lorg/polyfrost/compose/layout/PolySize;)V
 	public final fun setLayoutType (Lorg/polyfrost/compose/layout/LayoutType;)V
 	public final fun setMargin (Lorg/polyfrost/compose/layout/PolyInsets;)V
+	public final fun setMaxHeight (F)V
+	public final fun setMaxWidth (F)V
+	public final fun setMinHeight (F)V
+	public final fun setMinWidth (F)V
 	public final fun setPadding (Lorg/polyfrost/compose/layout/PolyInsets;)V
 	public final fun setPositionMode (Lorg/polyfrost/compose/layout/PolyPositionMode;)V
 	public final fun setRadius (F)V
@@ -660,6 +675,7 @@ public class org/polyfrost/compose/node/PolyNode {
 	public static final field $stable I
 	public fun <init> ()V
 	public final fun getChildren ()Ljava/util/List;
+	public final fun getContentScale ()F
 	public final fun getHeight ()F
 	public final fun getParent ()Lorg/polyfrost/compose/node/PolyNode;
 	public final fun getStyle ()Lorg/polyfrost/compose/layout/PolyLayoutStyle;
@@ -668,6 +684,7 @@ public class org/polyfrost/compose/node/PolyNode {
 	public final fun getY ()F
 	public fun measureContent ()V
 	public fun render (Lorg/polyfrost/compose/render/RenderContext;)V
+	public final fun setContentScale (F)V
 	public final fun setHeight (F)V
 	public final fun setParent (Lorg/polyfrost/compose/node/PolyNode;)V
 	public final fun setWidth (F)V
