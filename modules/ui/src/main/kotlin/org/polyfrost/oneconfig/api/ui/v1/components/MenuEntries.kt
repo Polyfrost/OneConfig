@@ -5,13 +5,15 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.page.PageText
+import org.polyfrost.oneconfig.api.ui.v1.page.translate
 
 @ExperimentalOneConfigUiApi
 public sealed interface MenuEntry
 
 @ExperimentalOneConfigUiApi
 public class MenuAction(
-    public val label: String,
+    label: PageText,
     public val onClick: () -> Unit,
     public val icon: String? = null,
     public val painter: Painter? = null,
@@ -27,6 +29,31 @@ public class MenuAction(
     public val children: List<MenuEntry> = emptyList(),
     danger: Boolean = false,
 ) : MenuEntry {
+    public constructor(
+        label: String,
+        onClick: () -> Unit,
+        icon: String? = null,
+        painter: Painter? = null,
+        detail: String? = null,
+        style: ControlStyle = ControlStyle.Ghost,
+        enabled: Boolean = true,
+        disabledReason: String? = null,
+        checked: Boolean? = null,
+        shortcutHint: String? = null,
+        badge: String? = null,
+        size: MenuItemSize = MenuItemSize.Compact,
+        leading: (@Composable () -> Unit)? = null,
+        children: List<MenuEntry> = emptyList(),
+        danger: Boolean = false,
+    ) : this(
+        PageText.literal(label), onClick, icon, painter, detail, style, enabled, disabledReason, checked,
+        shortcutHint, badge, size, leading, children, danger,
+    )
+
+    public val labelText: PageText = label
+
+    public val label: String get() = labelText.translate()
+
     public val style: ControlStyle = if (danger) ControlStyle.Danger else style
 
     public val danger: Boolean get() = style == ControlStyle.Danger || style == ControlStyle.DangerFilled

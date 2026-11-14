@@ -41,6 +41,9 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
+import org.polyfrost.oneconfig.api.ui.v1.page.PageText
+import org.polyfrost.oneconfig.api.ui.v1.page.resolve
+import org.polyfrost.oneconfig.api.ui.v1.page.translate
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 private const val TAB_FADE_MILLIS = 150
@@ -60,14 +63,27 @@ public enum class TabStyle {
 @ExperimentalOneConfigUiApi
 public class TabItem<T>(
     public val value: T,
-    public val label: String,
+    label: PageText,
     public val icon: String? = null,
     public val enabled: Boolean = true,
     public val badge: String? = null,
     public val iconPainter: Painter? = null,
 ) {
+    public constructor(
+        value: T,
+        label: String,
+        icon: String? = null,
+        enabled: Boolean = true,
+        badge: String? = null,
+        iconPainter: Painter? = null,
+    ) : this(value, PageText.literal(label), icon, enabled, badge, iconPainter)
+
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public constructor(value: T, label: String) : this(value, label, null, true, null, null)
+    public constructor(value: T, label: String) : this(value, PageText.literal(label), null, true, null, null)
+
+    public val labelText: PageText = label
+
+    public val label: String get() = labelText.translate()
 }
 
 @ExperimentalOneConfigUiApi
@@ -142,7 +158,11 @@ public fun <T> SegmentedChips(
 
 private fun RowScope.tabWeight(fill: Boolean): Modifier = if (fill) Modifier.weight(1f) else Modifier
 
-private fun tabLabel(tab: TabItem<*>): String = if (tab.badge.isNullOrEmpty()) tab.label else "${tab.label}, ${tab.badge}"
+@Composable
+private fun tabLabel(tab: TabItem<*>): String {
+    val label = tab.labelText.resolve()
+    return if (tab.badge.isNullOrEmpty()) label else "$label, ${tab.badge}"
+}
 
 @Composable
 private fun PillTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, modifier: Modifier, onClick: () -> Unit) {
@@ -239,8 +259,9 @@ private fun TabContent(tab: TabItem<*>, color: Color, size: ControlSize) {
             painter != null -> Image(painter, null, Modifier.size(iconSize), colorFilter = ColorFilter.tint(color))
             tab.icon != null -> Icon(tab.icon, null, Modifier.size(iconSize), tint = color)
         }
-        if (tab.label.isNotEmpty()) {
-            Text(tab.label, Modifier, color, OneConfigTheme.typography.body.copy(fontSize = if (size == ControlSize.Compact) 13.sp else 14.sp, fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        val label = tab.labelText.resolve()
+        if (label.isNotEmpty()) {
+            Text(label, Modifier, color, OneConfigTheme.typography.body.copy(fontSize = if (size == ControlSize.Compact) 13.sp else 14.sp, fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         }
         tab.badge?.let { TabBadge(it) }
     }

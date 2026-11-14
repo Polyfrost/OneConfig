@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.page.PageText
+import org.polyfrost.oneconfig.api.ui.v1.page.resolve
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 @ExperimentalOneConfigUiApi
@@ -83,4 +85,18 @@ public fun EmptyState(
             state != LoadState.Loading && action != null -> Column(Modifier.padding(top = spacing.xs)) { action() }
         }
     }
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun EmptyState(
+    title: PageText,
+    modifier: Modifier = Modifier,
+    icon: String? = null,
+    text: PageText? = null,
+    state: LoadState = LoadState.Idle,
+    onRetry: (() -> Unit)? = null,
+    action: (@Composable () -> Unit)? = null,
+) {
+    EmptyState(title.resolve(), modifier, icon, text?.resolve(), state, onRetry, action)
 }
