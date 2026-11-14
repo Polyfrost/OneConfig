@@ -11,10 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "dev.tr7zw.skinlayers.SkinUtil", remap = false)
 public class Mixin_Toggle_SkinLayers {
     @Inject(
-        method = {
-            "setup3dLayers()Z",
-            "setup3dLayers(Lcom/mojang/authlib/GameProfile;Ldev/tr7zw/skinlayers/accessor/SkullSettings;)Z"
-        },
+        method = "setup3dLayers*",
         at = @At("HEAD"),
         cancellable = true,
         require = 0
