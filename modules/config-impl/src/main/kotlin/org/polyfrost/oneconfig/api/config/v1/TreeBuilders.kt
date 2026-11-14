@@ -2,6 +2,7 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
+import java.util.function.Supplier
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyColor
@@ -190,7 +191,10 @@ private fun Tree.disableUnless(toggle: Property<Boolean>) {
     onAll { _, node ->
         when (node) {
             is Tree -> node.disableUnless(toggle)
-            is Property<*> -> if (node !== toggle) node.addDisplayCondition(toggle, false)
+            is Property<*> -> if (node !== toggle) {
+                node.addDisplayCondition(Supplier { if (toggle.get() == false) Property.Display.DISABLED else Property.Display.SHOWN })
+                toggle.addDependent(node)
+            }
         }
     }
 }
