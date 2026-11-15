@@ -15,15 +15,15 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
-import kotlin.math.abs
-import kotlin.math.exp
-import kotlin.math.max
-import kotlin.math.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
+import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.max
+import kotlin.math.min
 
 object GlassTintColor {
     private const val FILL_DARK = 0.30f

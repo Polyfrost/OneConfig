@@ -5,14 +5,13 @@ package org.polyfrost.oneconfig.api.ui.v1.internal
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.Shape
@@ -23,29 +22,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
-import net.kyori.adventure.text.Component
-import org.polyfrost.oneconfig.api.ui.v1.components.Chip as KitChip
-import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColorPickerModel
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import net.kyori.adventure.text.Component
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
+import org.polyfrost.oneconfig.api.ui.v1.components.UiSound
+import org.polyfrost.oneconfig.api.ui.v1.components.surfaceLayers
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeBuilder
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import org.polyfrost.oneconfig.internal.ui.components.shellTransition
-import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip as InternalTooltip
-import org.polyfrost.oneconfig.internal.ui.components.Icon as InternalIcon
-import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.components.StyledText
 import org.polyfrost.oneconfig.internal.ui.components.componentText
-import org.polyfrost.oneconfig.internal.ui.components.legacyText
 import org.polyfrost.oneconfig.internal.ui.components.fadingEdges
-import androidx.compose.foundation.clickable
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
+import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
+import org.polyfrost.oneconfig.internal.ui.components.legacyText
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.settings.ChromaColorAnimation
 import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerModel
-import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup as InternalColorPickerPopup
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
-import org.polyfrost.oneconfig.internal.ui.components.settings.colorToHex as internalColorToHex
-import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery as shellPageSearchQuery
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
+import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
+import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.MinecraftDark
@@ -55,23 +58,20 @@ import org.polyfrost.oneconfig.internal.ui.themes.PolyGlassLight
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedDark
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedLight
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
+import org.polyfrost.oneconfig.internal.ui.themes.ThemeWith
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
-import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
-import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
-import org.polyfrost.oneconfig.api.ui.v1.components.IconButton as KitIconButton
-import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
-import org.polyfrost.oneconfig.api.ui.v1.components.UiSound
-import org.polyfrost.oneconfig.api.ui.v1.components.surfaceLayers
-import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeBuilder
-import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
-import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
-import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQueryOrNull as shellPageSearchQueryOrNull
-import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
-import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
-import org.polyfrost.oneconfig.internal.ui.themes.ThemeWith
 import org.polyfrost.oneconfig.internal.ui.themes.modTheme
 import org.polyfrost.oneconfig.internal.ui.themes.themedShape
+import org.polyfrost.oneconfig.api.ui.v1.components.Chip as KitChip
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColorPickerModel
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton as KitIconButton
+import org.polyfrost.oneconfig.internal.ui.api.Tooltip as InternalTooltip
+import org.polyfrost.oneconfig.internal.ui.components.Icon as InternalIcon
+import org.polyfrost.oneconfig.internal.ui.components.settings.ColorPickerPopup as InternalColorPickerPopup
+import org.polyfrost.oneconfig.internal.ui.components.settings.colorToHex as internalColorToHex
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery as shellPageSearchQuery
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQueryOrNull as shellPageSearchQueryOrNull
 
 class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
     @Composable

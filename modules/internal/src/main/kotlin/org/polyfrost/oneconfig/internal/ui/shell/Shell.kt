@@ -37,11 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
-import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.exp
-import kotlin.math.hypot
-import kotlin.math.roundToInt
 import org.polyfrost.compose.backend.PolyImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.components.ContentSlide
@@ -61,6 +56,11 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.glassOpacity
 import org.polyfrost.oneconfig.internal.ui.themes.surfaceOpacity
 import org.polyfrost.oneconfig.internal.ui.util.cachedDropShadow
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.exp
+import kotlin.math.hypot
+import kotlin.math.roundToInt
 
 private const val GLOW_RADIUS = 500f
 private const val GLOW_EXTENT = 1400f

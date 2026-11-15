@@ -8,9 +8,9 @@ import javax.lang.model.SourceVersion
 import javax.lang.model.element.TypeElement
 import javax.tools.Diagnostic
 import javax.tools.JavaFileObject
+import org.polyfrost.oneconfig.relocator.SourceFileHelper.replacePatterns
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.toPath
-import org.polyfrost.oneconfig.relocator.SourceFileHelper.replacePatterns
 
 /**
  * The relocator for java source files

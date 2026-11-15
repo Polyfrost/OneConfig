@@ -20,12 +20,12 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
-import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.internal.ui.components.parseLegacyFormatting
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 
 @Composable
 @Suppress("FunctionName")

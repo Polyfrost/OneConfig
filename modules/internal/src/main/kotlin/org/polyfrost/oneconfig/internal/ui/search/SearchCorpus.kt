@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.internal.displayName
+import kotlin.time.Duration.Companion.milliseconds
 
 /** How long to wait for further config registrations before rebuilding */
 private const val REBUILD_DEBOUNCE_MS = 250L

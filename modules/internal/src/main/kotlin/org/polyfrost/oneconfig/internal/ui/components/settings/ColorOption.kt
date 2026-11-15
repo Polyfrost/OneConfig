@@ -40,26 +40,22 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
-import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColorPickerModel
-import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerPopup as KitColorPickerPopup
-import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
-import org.polyfrost.oneconfig.api.ui.v1.components.OptionMenuContributors
-import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
-import org.polyfrost.oneconfig.api.ui.v1.components.Placement
-import org.polyfrost.oneconfig.api.ui.v1.components.colorSwatchMenu
-import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.ColorSwatchButton
 import org.polyfrost.oneconfig.api.ui.v1.components.FieldState
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.OptionMenuContributors
+import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.colorSwatchMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.fieldFrame
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
@@ -79,6 +75,10 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.readableOn
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColorPickerModel
+import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerPopup as KitColorPickerPopup
 
 private val PickerShape @Composable get() = LocalTheme.current.popupShape
 

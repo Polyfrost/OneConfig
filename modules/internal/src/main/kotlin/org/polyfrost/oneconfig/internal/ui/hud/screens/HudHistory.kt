@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.runtime.snapshots.Snapshot
-import kotlin.math.abs
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -13,6 +12,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.components.settings.bumpResetEpoch
 import org.polyfrost.oneconfig.internal.ui.hud.bumpHudUiEpoch
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
+import kotlin.math.abs
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudHistory")
 

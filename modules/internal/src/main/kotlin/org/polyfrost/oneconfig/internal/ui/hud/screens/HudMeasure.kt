@@ -13,18 +13,17 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedDark
-import org.polyfrost.oneconfig.internal.ui.themes.accentTextOn
-
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
+import org.polyfrost.oneconfig.internal.ui.themes.accentTextOn
 import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val hudMeasureDashEffect = PathEffect.dashPathEffect(floatArrayOf(3f, 3f), 0f)
 private val MEASURE_BADGE_RADIUS = 3.dp

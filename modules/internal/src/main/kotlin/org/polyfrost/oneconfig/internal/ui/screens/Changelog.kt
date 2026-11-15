@@ -43,6 +43,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.net.URI
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import org.commonmark.node.Code
 import org.commonmark.node.Emphasis
 import org.commonmark.node.HardLineBreak
@@ -51,7 +55,6 @@ import org.commonmark.node.Link
 import org.commonmark.node.Node
 import org.commonmark.node.SoftLineBreak
 import org.commonmark.node.StrongEmphasis
-import org.commonmark.node.Text as CmText
 import org.polyfrost.oneconfig.api.ui.v1.ChangelogSource
 import org.polyfrost.oneconfig.api.ui.v1.ChangelogSources
 import org.polyfrost.oneconfig.api.ui.v1.components.Badge
@@ -62,9 +65,9 @@ import org.polyfrost.oneconfig.api.ui.v1.components.MasterDetailLayout
 import org.polyfrost.oneconfig.api.ui.v1.components.NavItem
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
-import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.StatusDot
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.ChangeKind
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogEntry
@@ -80,10 +83,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
-import java.net.URI
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import org.commonmark.node.Text as CmText
 
 private val LocalInstalledVersion = compositionLocalOf<String?> { null }
 

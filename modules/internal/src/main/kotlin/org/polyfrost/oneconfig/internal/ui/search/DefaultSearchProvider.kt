@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
-import kotlin.math.abs
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import kotlin.math.abs
 
 internal object DefaultSearchProvider : SearchProvider {
     override val priority: Int = 0

@@ -15,10 +15,10 @@ import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -28,6 +28,14 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import org.polyfrost.compose.backend.PolyCanvas
+import org.polyfrost.compose.backend.PolyDrawCanvas
+import org.polyfrost.compose.backend.drawBackdropGlass
+import org.polyfrost.compose.backend.drawPoly
+import org.polyfrost.compose.render.PolyRenderer
+import org.polyfrost.oneconfig.internal.ui.themes.GlassTintColor
+import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency
 import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -39,14 +47,6 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
-import org.polyfrost.compose.backend.PolyCanvas
-import org.polyfrost.compose.backend.PolyDrawCanvas
-import org.polyfrost.compose.backend.drawBackdropGlass
-import org.polyfrost.compose.backend.drawPoly
-import org.polyfrost.compose.render.PolyRenderer
-import org.polyfrost.oneconfig.internal.ui.themes.GlassTintColor
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency
 
 private const val PANEL_REFRACTION = 0.85f
 private val PanelBand = 22.dp

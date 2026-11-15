@@ -15,10 +15,6 @@ import androidx.compose.ui.unit.dp
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.utils.v1.JsonUtils
-import org.polyfrost.oneconfig.utils.v1.Multithreading
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -32,6 +28,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.Deflater
 import java.util.zip.Inflater
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.utils.v1.JsonUtils
+import org.polyfrost.oneconfig.utils.v1.Multithreading
+import org.slf4j.LoggerFactory
 
 enum class CustomBase { POLYFROSTED, POLYGLASS, MINECRAFT }
 

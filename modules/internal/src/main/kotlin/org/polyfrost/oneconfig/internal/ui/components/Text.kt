@@ -17,11 +17,11 @@ import java.util.concurrent.ConcurrentHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.format.Style
-import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.TextComponent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 
 fun Any.asRenderText(): String {
     val comp: Any = Platform.compatibility().wrapPlatformComponent(this)

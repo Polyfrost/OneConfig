@@ -69,7 +69,6 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundTheme
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.CustomThemeSpec
 import org.polyfrost.oneconfig.internal.ui.themes.CustomThemes
 import org.polyfrost.oneconfig.internal.ui.themes.GlassTint
@@ -78,11 +77,12 @@ import org.polyfrost.oneconfig.internal.ui.themes.PaletteAccent
 import org.polyfrost.oneconfig.internal.ui.themes.PaletteInfo
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.customSpec
 import org.polyfrost.oneconfig.internal.ui.themes.isCustom
 import org.polyfrost.oneconfig.internal.ui.themes.palette
-import org.polyfrost.oneconfig.internal.ui.themes.syncNotificationTheme
 import org.polyfrost.oneconfig.internal.ui.themes.previewAsset
+import org.polyfrost.oneconfig.internal.ui.themes.syncNotificationTheme
 
 const val THEMES_ID = "themes.json"
 

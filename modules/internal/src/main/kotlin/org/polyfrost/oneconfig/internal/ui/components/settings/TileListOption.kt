@@ -31,13 +31,13 @@ import org.polyfrost.oneconfig.internal.ui.api.settings.TileListOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
-import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerLabel
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerStrings
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
 import org.polyfrost.oneconfig.internal.ui.components.picker.TilePicker
 import org.polyfrost.oneconfig.internal.ui.components.picker.toggleEntry
+import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val TileRowHeight = 44.dp

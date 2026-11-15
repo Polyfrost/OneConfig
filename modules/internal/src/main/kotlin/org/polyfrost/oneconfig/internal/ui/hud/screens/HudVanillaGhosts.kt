@@ -9,9 +9,9 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
-import kotlin.math.abs
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.hud.VanillaHudFootprint
+import kotlin.math.abs
 
 private const val GHOST_FILL_ALPHA = 0.05f
 private const val GHOST_LINE_ALPHA = 0.3f

@@ -13,13 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.dp
-import kotlin.math.ceil
 import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import kotlin.math.ceil
 
 val ItemIconShape @Composable get() = LocalTheme.current.checkBoxShape
 

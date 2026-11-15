@@ -34,13 +34,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
-import kotlin.math.max
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
 import kotlinx.coroutines.launch
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import kotlin.math.max
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 private const val PRESS_SCALE = 1.03f
 

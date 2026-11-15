@@ -39,10 +39,10 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.ceil
-import kotlin.math.max
 import org.polyfrost.compose.backend.asComposeImageBitmap
 import org.polyfrost.oneconfig.api.notifications.v1.SvgMask
+import kotlin.math.ceil
+import kotlin.math.max
 
 val LocalUiOversample = staticCompositionLocalOf { 1f }
 

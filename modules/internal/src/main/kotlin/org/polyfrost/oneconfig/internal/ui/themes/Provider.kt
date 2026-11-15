@@ -28,9 +28,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.io.File
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.round
 import kotlinx.coroutines.delay
 import org.polyfrost.compose.backend.PolyFontSource
 import org.polyfrost.compose.render.FontManager
@@ -44,6 +41,9 @@ import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
 import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
 import org.polyfrost.oneconfig.internal.ui.EDGE_MARGIN_FRACTION
+import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 

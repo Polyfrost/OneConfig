@@ -17,11 +17,11 @@ import androidx.compose.ui.node.PointerInputModifierNode
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
-import kotlin.math.abs
-import kotlin.math.exp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import kotlin.math.abs
+import kotlin.math.exp
 
 /** Hands each mouse wheel notch to the innermost [wheelScroll] list under the pointer that can still scroll its way */
 class WheelRouter {

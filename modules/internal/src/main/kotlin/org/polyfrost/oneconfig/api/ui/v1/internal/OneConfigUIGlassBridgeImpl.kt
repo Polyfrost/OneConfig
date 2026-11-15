@@ -12,8 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import org.polyfrost.oneconfig.api.ui.v1.components.themedScrollbarStyle
-import org.polyfrost.oneconfig.internal.ui.components.backdropBlur as internalBackdropBlur
-import org.polyfrost.oneconfig.internal.ui.components.wheelScroll as internalWheelScroll
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.CustomBase
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -28,9 +26,11 @@ import org.polyfrost.oneconfig.internal.ui.themes.customSpec
 import org.polyfrost.oneconfig.internal.ui.themes.isCustom
 import org.polyfrost.oneconfig.internal.ui.themes.palette
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame as internalAnimatedFrame
+import org.polyfrost.oneconfig.internal.ui.components.backdropBlur as internalBackdropBlur
 import org.polyfrost.oneconfig.internal.ui.components.glassHover as internalGlassHover
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow as internalHoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass as internalLiquidGlass
+import org.polyfrost.oneconfig.internal.ui.components.wheelScroll as internalWheelScroll
 
 private val LocalVariantBase = compositionLocalOf<UITheme?> { null }
 

@@ -1,17 +1,14 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings
 
 import java.awt.Color
-import java.lang.reflect.Array as ReflectArray
 import java.util.function.Function
 import java.util.function.Supplier
-import kotlin.math.floor
-import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.api.config.v1.SliderBounds
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.api.config.v1.get
+import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.effect.normalizeEffectIds
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
@@ -20,6 +17,9 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedText
 import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
 import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
 import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
+import kotlin.math.floor
+import kotlin.math.roundToInt
+import java.lang.reflect.Array as ReflectArray
 
 sealed class OptionData(val prop: Property<*>) {
     val title: Any get() = localizedText(prop.getMetadata("titleKey"), prop.title ?: prop.id ?: "")
