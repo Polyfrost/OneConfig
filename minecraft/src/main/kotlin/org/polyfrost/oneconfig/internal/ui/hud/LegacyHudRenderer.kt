@@ -129,7 +129,8 @@ object LegacyHudRenderer {
 
     private fun passesFilters(hud: LegacyHud): Boolean {
         if (HudManager.isPreviewing(hud)) return true
-        if (hud.hidden || HudManager.isGuiHidden) return false
+        if (hud.effectivelyHidden && !hud.drawsWhileHidden()) return false
+        if (HudManager.isGuiHidden || HudManager.allHudsHiddenByKey) return false
         if (HudManager.isDebugScreenVisible && !hud.showInF3) return false
         if (HudManager.isTabListVisible && !hud.showInTab) return false
         if (!HudManager.overrideShowInScreens && !HudManager.isConfigUiOpen) {

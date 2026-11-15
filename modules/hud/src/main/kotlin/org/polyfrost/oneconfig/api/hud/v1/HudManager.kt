@@ -51,6 +51,8 @@ import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressMode
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressState
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 import java.lang.ref.WeakReference
 import java.util.Collections
@@ -59,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 
 private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
@@ -167,6 +170,53 @@ public object HudManager {
      */
     @Volatile @JvmField public var isGuiHidden: Boolean = false
 
+    /**
+     * Set while the global HUD visibility keybind is hiding every HUD
+     *
+     * Like [isGuiHidden] this never applies while the editor is open
+     */
+    @Volatile
+    @get:JvmStatic
+    public var allHudsHiddenByKey: Boolean = false
+        private set
+
+    private val allHudsKeyState = KeyPressState()
+
+    /**
+     * Feeds the global HUD visibility keybind
+     *
+     * Ignored while the editor is open
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun allHudsKeyInput(down: Boolean, mode: KeyPressMode, holdThresholdMs: Long) {
+        if (isEditing) return
+        allHudsKeyState.input(down, mode, holdThresholdMs)
+        allHudsHiddenByKey = allHudsKeyState.active
+    }
+
+    /** Shows every HUD the global HUD visibility keybind hid, leaving the per-HUD keybinds alone */
+    @JvmStatic
+    public fun resetAllHudsKey() {
+        allHudsKeyState.reset()
+        allHudsHiddenByKey = false
+    }
+
+    /** Puts every HUD back to its configured visibility, undoing both the global and the per-HUD keybinds */
+    @JvmStatic
+    public fun resetVisibilityKeys() {
+        resetAllHudsKey()
+        for (hud in activeInstances) hud.resetVisibilityKey()
+    }
+
+    /**
+     * Overrides how OneConfig decides whether the tab list is open, for mods which change when it opens
+     *
+     * `null` falls back to whether the player list key is held
+     */
+    @Volatile @JvmField public var tabListVisibility: BooleanSupplier? = null
+
+    
     @Volatile @JvmField public var overrideShowInScreens: Boolean = false
 
     /**
@@ -937,8 +987,15 @@ public object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
-        if (!isPreviewing(hud) && (hud.frameHidden || isSuppressed(hud))) return false
+        if (!isPreviewing(hud) && ((hud.frameHidden && !drawsWhileHidden(hud)) || isSuppressed(hud))) return false
         return isShown(hud)
+    }
+
+    private fun drawsWhileHidden(hud: Hud): Boolean = try {
+        hud.drawsWhileHidden()
+    } catch (e: Throwable) {
+        LOGGER.error("Failed to check whether HUD ${hud.title} draws while hidden", e)
+        false
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
@@ -1082,6 +1139,7 @@ public object HudManager {
     private fun isShown(hud: Hud): Boolean {
         if (isPreviewing(hud)) return true
         if (isGuiHidden) return false
+        if (allHudsHiddenByKey) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
         if (!overrideShowInScreens && !isConfigUiOpen) {
@@ -1511,6 +1569,7 @@ public object HudManager {
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
         key = key * 31L + (if (isChatScreenOpen) 1 else 0)
         key = key * 31L + (if (isGuiHidden) 1 else 0)
+        key = key * 31L + (if (allHudsHiddenByKey) 1 else 0)
         key = key * 31L + (if (overrideShowInScreens) 1 else 0)
         key = key * 31L + (if (isEditing) 1 else 0)
         key = key * 31L + (if (inWorld) 1 else 0)
@@ -1813,7 +1872,7 @@ public object HudManager {
     }
 
     private fun drawHud(hud: Hud, root: RootNode, ctx: RenderContext) {
-        if (isPreviewing(hud) && (hud.hidden || isSuppressed(hud))) {
+        if (isPreviewing(hud) && (hud.effectivelyHidden || isSuppressed(hud))) {
             ctx.saveLayerAlpha(HIDDEN_HUD_ALPHA)
             root.render(ctx)
             ctx.restore()
