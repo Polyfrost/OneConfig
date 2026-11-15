@@ -1068,9 +1068,12 @@ private fun rememberTitleStyle(): TextStyle = LocalTheme.current.typography.head
 @Composable
 private fun descriptionStyle(): TextStyle = LocalTheme.current.typography.labelRegular
 
+private fun Node.rowTitle(): Any =
+    if (title == null && getMetadata<String>("titleKey").isNullOrBlank()) "" else localizedTitle()
+
 private fun TextMeasurer.titleWidth(node: Node, style: TextStyle, density: Density): Dp {
     return with(density) {
-        measure(node.localizedTitle().asStyledLabel(), style = style, softWrap = false, maxLines = 1).size.width.toDp()
+        measure(node.rowTitle().asStyledLabel(), style = style, softWrap = false, maxLines = 1).size.width.toDp()
     }
 }
 
@@ -1230,7 +1233,7 @@ private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Bool
                 }
             }
         } else {
-            val title = prop.localizedTitle().asStyledLabel()
+            val title = prop.rowTitle().asStyledLabel()
             val titleWidth = remember(title, titleStyle, measurer) {
                 measurer.measure(title, style = titleStyle, softWrap = false, maxLines = 1).size.width
             }
@@ -1321,7 +1324,7 @@ private fun SettingLabel(
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             val titleStyle = rememberTitleStyle()
             val title = @Composable {
-                Text(prop.localizedTitle().asStyledLabel(), color = theme.textColor, style = titleStyle)
+                Text(prop.rowTitle().asStyledLabel(), color = theme.textColor, style = titleStyle)
             }
             val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
 
