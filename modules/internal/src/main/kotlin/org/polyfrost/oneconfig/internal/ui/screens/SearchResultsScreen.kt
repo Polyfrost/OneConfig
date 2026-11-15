@@ -2,19 +2,17 @@ package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -112,19 +110,19 @@ fun SearchResultsScreen(query: String) {
                     )
                 }
                 items(modRows.size, key = { "mods-row:$it" }) { index ->
-                    BoxWithConstraints(
+                    val row = modRows[index]
+                    Row(
                         Modifier
                             .fillMaxWidth()
-                            .padding(bottom = if (index == modRows.lastIndex) 0.dp else MOD_ROW_EXTRA_GAP)
+                            .padding(bottom = if (index == modRows.lastIndex) 0.dp else MOD_ROW_EXTRA_GAP),
+                        horizontalArrangement = Arrangement.spacedBy(MOD_GRID_GAP),
                     ) {
-                        val cellWidth = with(LocalDensity.current) {
-                            val gap = MOD_GRID_GAP.roundToPx()
-                            ((maxWidth.roundToPx() - gap * (MOD_GRID_COLUMNS - 1)) / MOD_GRID_COLUMNS).toDp()
+                        row.forEach { mod ->
+                            Box(Modifier.weight(1f)) { ModCard(mod) }
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(MOD_GRID_GAP)) {
-                            modRows[index].forEach { mod ->
-                                Box(Modifier.width(cellWidth)) { ModCard(mod) }
-                            }
+                        // fill partial rows with invisible slots so results keep the grid's 4-column rhythm
+                        repeat(MOD_GRID_COLUMNS - row.size) {
+                            Spacer(Modifier.weight(1f))
                         }
                     }
                 }
