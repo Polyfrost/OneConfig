@@ -166,7 +166,7 @@ internal class InlineCanvasSurface(val name: String) {
     *///?}
 
     //? if < 1.21.11 {
-    /*private val glState = StoredGLState(330)
+    /*private val glState = StoredGLState(exact = true)
 
     private fun drawGl(fbo: Int, w: Int, h: Int, topDown: Boolean, clear: Boolean, block: (PolyCanvas) -> Unit): Boolean {
         if (fbo <= 0 || w <= 0 || h <= 0) return false

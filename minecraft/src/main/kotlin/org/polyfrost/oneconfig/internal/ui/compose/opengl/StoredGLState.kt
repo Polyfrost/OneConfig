@@ -5,7 +5,6 @@ import com.mojang.renderpearl.backend.opengl.GlStateManager
 //?}
 
 //? if > 1.8.9 {
-import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL45.*
 //?}
 
@@ -13,10 +12,20 @@ import org.lwjgl.opengl.GL45.*
 /*import com.mojang.blaze3d.platform.GlStateManager
 *///?}
 
+//? if < 1.21.5 && > 1.8.9
+//import com.mojang.blaze3d.platform.GlStateManager.Viewport
+
+//? if < 1.21.5 && > 1.8.9
+//import com.mojang.blaze3d.vertex.BufferUploader
+//? if >= 1.21.5 && < 1.21.11
+//import net.minecraft.client.Minecraft
+
 //? if = 1.8.9 {
 /*import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13
+import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL21
 import org.lwjgl.opengl.GL30
 *///?}
 
@@ -36,257 +45,214 @@ fun resyncTextureBindCache() {
     *///?}
 }
 
-class StoredGLState(private val glVersion: Int) {
-    private val props = StoredGLStateProps()
-
-    //? if > 1.8.9 {
-    fun capture(): StoredGLState {
-        with(props) {
-            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, lastDrawFramebuffer)
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, lastReadFramebuffer)
-            glGetIntegerv(GL_ACTIVE_TEXTURE, lastActiveTexture)
-            glActiveTexture(GL_TEXTURE0)
-            glGetIntegerv(GL_CURRENT_PROGRAM, lastProgram)
-            glGetIntegerv(GL_TEXTURE_BINDING_2D, lastTexture)
-            if (glVersion >= 330 || GL.getCapabilities().GL_ARB_sampler_objects) {
-                glGetIntegerv(GL_SAMPLER_BINDING, lastSampler)
-            }
-            glGetIntegerv(GL_ARRAY_BUFFER_BINDING, lastArrayBuffer)
-            glGetIntegerv(GL_VERTEX_ARRAY_BINDING, lastVertexArrayObject)
-            if (glVersion >= 200) {
-                glGetIntegerv(GL_POLYGON_MODE, lastPolygonMode)
-            }
-            glGetIntegerv(GL_DEPTH_FUNC, lastDepthFunc)
-            glGetIntegerv(GL_VIEWPORT, lastViewport)
-            glGetIntegerv(GL_SCISSOR_BOX, lastScissorBox)
-            glGetIntegerv(GL_BLEND_SRC_RGB, lastBlendSrcRgb)
-            glGetIntegerv(GL_BLEND_DST_RGB, lastBlendDstRgb)
-            glGetIntegerv(GL_BLEND_SRC_ALPHA, lastBlendSrcAlpha)
-            glGetIntegerv(GL_BLEND_DST_ALPHA, lastBlendDstAlpha)
-            glGetIntegerv(GL_BLEND_EQUATION_RGB, lastBlendEquationRgb)
-            glGetIntegerv(GL_BLEND_EQUATION_ALPHA, lastBlendEquationAlpha)
-            lastColorMask.clear()
-            glGetBooleanv(GL_COLOR_WRITEMASK, lastColorMask)
-            lastColorMask.rewind()
-
-            glGetIntegerv(GL_STENCIL_FUNC, lastStencilFunc)
-            glGetIntegerv(GL_STENCIL_REF, lastStencilRef)
-            glGetIntegerv(GL_STENCIL_VALUE_MASK, lastStencilValueMask)
-            glGetIntegerv(GL_STENCIL_WRITEMASK, lastStencilWriteMask)
-            glGetIntegerv(GL_STENCIL_FAIL, lastStencilFail)
-            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, lastStencilPassDepthFail)
-            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, lastStencilPassDepthPass)
-            lastFramebufferSrgb = glIsEnabled(GL_FRAMEBUFFER_SRGB)
-
-            lastEnableBlend = glIsEnabled(GL_BLEND)
-            lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
-            lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
-            lastEnableStencilTest = glIsEnabled(GL_STENCIL_TEST)
-            lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
-            if (glVersion >= 310) {
-                lastEnablePrimitiveRestart = glIsEnabled(GL_PRIMITIVE_RESTART)
-            }
-
-            lastDepthMask = glGetBoolean(GL_DEPTH_WRITEMASK)
-
-            glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, lastPixelUnpackBufferBinding)
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0)
-
-            glGetIntegerv(GL_PACK_SWAP_BYTES, lastPackSwapBytes)
-            glGetIntegerv(GL_PACK_LSB_FIRST, lastPackLsbFirst)
-            glGetIntegerv(GL_PACK_ROW_LENGTH, lastPackRowLength)
-            glGetIntegerv(GL_PACK_SKIP_PIXELS, lastPackSkipPixels)
-            glGetIntegerv(GL_PACK_SKIP_ROWS, lastPackSkipRows)
-            glGetIntegerv(GL_PACK_ALIGNMENT, lastPackAlignment)
-
-            glGetIntegerv(GL_UNPACK_SWAP_BYTES, lastUnpackSwapBytes)
-            glGetIntegerv(GL_UNPACK_LSB_FIRST, lastUnpackLsbFirst)
-            glGetIntegerv(GL_UNPACK_ALIGNMENT, lastUnpackAlignment)
-            glGetIntegerv(GL_UNPACK_ROW_LENGTH, lastUnpackRowLength)
-            glGetIntegerv(GL_UNPACK_SKIP_PIXELS, lastUnpackSkipPixels)
-            glGetIntegerv(GL_UNPACK_SKIP_ROWS, lastUnpackSkipRows)
-
-            if (glVersion >= 120) {
-                glGetIntegerv(GL_PACK_IMAGE_HEIGHT, lastPackImageHeight)
-                glGetIntegerv(GL_PACK_SKIP_IMAGES, lastPackSkipImages)
-                glGetIntegerv(GL_UNPACK_IMAGE_HEIGHT, lastUnpackImageHeight)
-                glGetIntegerv(GL_UNPACK_SKIP_IMAGES, lastUnpackSkipImages)
-            }
-
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-            glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
-            glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
-        }
-        return this
-    }
-
-    fun restore(): StoredGLState {
-        with(props) {
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, lastDrawFramebuffer[0])
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, lastReadFramebuffer[0])
-            glUseProgram(lastProgram[0])
-            glBindTexture(GL_TEXTURE_2D, lastTexture[0])
-            if (glVersion >= 330 || GL.getCapabilities().GL_ARB_sampler_objects) {
-                glBindSampler(0, lastSampler[0])
-            }
-            glActiveTexture(lastActiveTexture[0])
-
-            resyncTextureBindCache()
-
-            glBindVertexArray(lastVertexArrayObject[0])
-            glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer[0])
-            glBlendEquationSeparate(lastBlendEquationRgb[0], lastBlendEquationAlpha[0])
-            glBlendFuncSeparate(
-                lastBlendSrcRgb[0],
-                lastBlendDstRgb[0],
-                lastBlendSrcAlpha[0],
-                lastBlendDstAlpha[0]
-            )
-            glColorMask(
-                lastColorMask.get(0).toInt() != 0,
-                lastColorMask.get(1).toInt() != 0,
-                lastColorMask.get(2).toInt() != 0,
-                lastColorMask.get(3).toInt() != 0
-            )
-
-            // Skia's resetGLAll changes real GL without updating GlStateManager's cache and raw
-            // glEnable/glDisable leaves it stale so toggle through GlStateManager to resync both
-            // TODO: is this still relevant after Skia removal?
-            //? if >= 26.2 {
-            forceToggle(lastEnableBlend, { GlStateManager._enableBlend(0) }, { GlStateManager._disableBlend(0) })
-            //?} else {
-            /*forceToggle(lastEnableBlend, GlStateManager::_enableBlend, GlStateManager::_disableBlend)
-            *///?}
-            forceToggle(lastEnableCullFace, GlStateManager::_enableCull, GlStateManager::_disableCull)
-            forceToggle(
-                lastEnableDepthTest,
-                GlStateManager::_enableDepthTest,
-                GlStateManager::_disableDepthTest,
-            )
-            if (lastEnableStencilTest) glEnable(GL_STENCIL_TEST)
-            else glDisable(GL_STENCIL_TEST)
-            glStencilFunc(lastStencilFunc[0], lastStencilRef[0], lastStencilValueMask[0])
-            glStencilMask(lastStencilWriteMask[0])
-            glStencilOp(lastStencilFail[0], lastStencilPassDepthFail[0], lastStencilPassDepthPass[0])
-            if (lastFramebufferSrgb) glEnable(GL_FRAMEBUFFER_SRGB)
-            else glDisable(GL_FRAMEBUFFER_SRGB)
-            forceToggle(
-                lastEnableScissorTest,
-                GlStateManager::_enableScissorTest,
-                GlStateManager::_disableScissorTest,
-            )
-            if (glVersion >= 310) {
-                if (lastEnablePrimitiveRestart) glEnable(GL_PRIMITIVE_RESTART)
-                else glDisable(GL_PRIMITIVE_RESTART)
-            }
-            if (glVersion >= 200) {
-                glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode[0])
-            }
-            forceDepthFunc(lastDepthFunc[0])
-            forceDepthMask(lastDepthMask)
-            glViewport(lastViewport[0], lastViewport[1], lastViewport[2], lastViewport[3])
-            glScissor(
-                lastScissorBox[0],
-                lastScissorBox[1],
-                lastScissorBox[2],
-                lastScissorBox[3]
-            )
-
-            glPixelStorei(GL_PACK_SWAP_BYTES, lastPackSwapBytes[0])
-            glPixelStorei(GL_PACK_LSB_FIRST, lastPackLsbFirst[0])
-            glPixelStorei(GL_PACK_ROW_LENGTH, lastPackRowLength[0])
-            glPixelStorei(GL_PACK_SKIP_PIXELS, lastPackSkipPixels[0])
-            glPixelStorei(GL_PACK_SKIP_ROWS, lastPackSkipRows[0])
-            glPixelStorei(GL_PACK_ALIGNMENT, lastPackAlignment[0])
-
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, lastPixelUnpackBufferBinding[0])
-            glPixelStorei(GL_UNPACK_SWAP_BYTES, lastUnpackSwapBytes[0])
-            glPixelStorei(GL_UNPACK_LSB_FIRST, lastUnpackLsbFirst[0])
-            glPixelStorei(GL_UNPACK_ALIGNMENT, lastUnpackAlignment[0])
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, lastUnpackRowLength[0])
-            glPixelStorei(GL_UNPACK_SKIP_PIXELS, lastUnpackSkipPixels[0])
-            glPixelStorei(GL_UNPACK_SKIP_ROWS, lastUnpackSkipRows[0])
-
-            if (glVersion >= 120) {
-                glPixelStorei(GL_PACK_IMAGE_HEIGHT, lastPackImageHeight[0])
-                glPixelStorei(GL_PACK_SKIP_IMAGES, lastPackSkipImages[0])
-                glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, lastUnpackImageHeight[0])
-                glPixelStorei(GL_UNPACK_SKIP_IMAGES, lastUnpackSkipImages[0])
-            }
-        }
-        return this
-    }
-
-    private fun forceToggle(enabled: Boolean, enable: () -> Unit, disable: () -> Unit) {
-        if (enabled) {
-            disable()
-            enable()
-        } else {
-            enable()
-            disable()
-        }
-    }
-
-    private fun forceDepthFunc(func: Int) {
-        val bogus = if (func == GL_LEQUAL) GL_GREATER else GL_LEQUAL
-        GlStateManager._depthFunc(bogus)
-        GlStateManager._depthFunc(func)
-    }
-
-    private fun forceDepthMask(mask: Boolean) {
-        GlStateManager._depthMask(!mask)
-        GlStateManager._depthMask(mask)
-    }
-    //?} else {
-    /*private var alphaTestEnabled = false
-    private var depthTestEnabled = false
-    private var activeTextureUnit = 0
+class StoredGLState(val exact: Boolean = false) {
+    private var depth = 0
 
     fun capture() {
-        alphaTestEnabled = GlStateManager.ALPHA_TEST.state.enabled
-        depthTestEnabled = GlStateManager.DEPTH.state.enabled
-        activeTextureUnit = GlStateManager.texture
-        GL11.glPushClientAttrib(GL11.GL_CLIENT_ALL_ATTRIB_BITS)
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
-
-        with(props) {
-            lastDrawFramebuffer[0] = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
-            lastReadFramebuffer[0] = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING)
-            lastProgram[0] = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM)
-
-            val blend = GlStateManager.BLEND
-            lastEnableBlend = blend.state.enabled
-            lastBlendSrcRgb[0] = blend.sfactorRGB
-            lastBlendDstRgb[0] = blend.dfactorRGB
-            lastBlendSrcAlpha[0] = blend.sfactorAlpha
-            lastBlendDstAlpha[0] = blend.dfactorAlpha
-            lastShadeModel[0] = GlStateManager.shadeModel
-        }
+        if (depth++ == 0) save()
     }
 
     fun restore() {
-        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, props.lastDrawFramebuffer[0])
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, props.lastReadFramebuffer[0])
+        if (--depth == 0) load()
+    }
+
+    fun restored(block: () -> Unit) {
+        if (depth != 1) return block()
+        restore()
+        try {
+            block()
+        } finally {
+            capture()
+        }
+    }
+
+    //? if >= 1.21.11 {
+    private fun save() {}
+
+    private fun load() {}
+    //?} elif > 1.8.9 {
+    /*private var drawFramebuffer = 0
+    private var readFramebuffer = 0
+    private var program = 0
+    private var arrayBuffer = 0
+    private var activeTexture = 0
+    private var texture = 0
+    private var blend = false
+    private var blendSrcRgb = 0
+    private var blendDstRgb = 0
+    private var blendSrcAlpha = 0
+    private var blendDstAlpha = 0
+    private var depthTest = false
+    private var cull = false
+    private var scissor = false
+    private var red = true
+    private var green = true
+    private var blue = true
+    private var alpha = true
+    private var unpackBuffer = 0
+    private val viewport = IntArray(4)
+    private var vertexArray = 0
+    private var stencil = false
+    private var blendEquationRgb = GL_FUNC_ADD
+    private var blendEquationAlpha = GL_FUNC_ADD
+    private val colorMask = IntArray(4)
+
+    private fun save() {
+        drawFramebuffer = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING)
+        readFramebuffer = glGetInteger(GL_READ_FRAMEBUFFER_BINDING)
+        program = glGetInteger(GL_CURRENT_PROGRAM)
+        arrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
+        activeTexture = glGetInteger(GL_ACTIVE_TEXTURE) - GL_TEXTURE0
+        unpackBuffer = glGetInteger(GL_PIXEL_UNPACK_BUFFER_BINDING)
+        if (unpackBuffer != 0) glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0)
+        glActiveTexture(GL_TEXTURE0)
+        if (exact) saveFromGl() else saveFromCache()
+    }
+
+    private fun saveFromCache() {
+        texture = GlStateManager.TEXTURES[0].binding
+        val blendState = GlStateManager.BLEND
+        blend = blendState.mode.enabled
+        blendSrcRgb = blendState.srcRgb
+        blendDstRgb = blendState.dstRgb
+        blendSrcAlpha = blendState.srcAlpha
+        blendDstAlpha = blendState.dstAlpha
+        depthTest = GlStateManager.DEPTH.mode.enabled
+        cull = GlStateManager.CULL.enable.enabled
+        scissor = GlStateManager.SCISSOR.mode.enabled
+        val mask = GlStateManager.COLOR_MASK
+        red = mask.red
+        green = mask.green
+        blue = mask.blue
+        alpha = mask.alpha
+        //? if < 1.21.5
+        //viewport.let { it[0] = Viewport.x(); it[1] = Viewport.y(); it[2] = Viewport.width(); it[3] = Viewport.height() }
+        //? if >= 1.21.5
+        //Minecraft.getInstance().mainRenderTarget.let { viewport[0] = 0; viewport[1] = 0; viewport[2] = it.width; viewport[3] = it.height }
+    }
+
+    private fun saveFromGl() {
+        texture = glGetInteger(GL_TEXTURE_BINDING_2D)
+        blend = glIsEnabled(GL_BLEND)
+        blendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
+        blendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
+        blendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
+        blendDstAlpha = glGetInteger(GL_BLEND_DST_ALPHA)
+        depthTest = glIsEnabled(GL_DEPTH_TEST)
+        cull = glIsEnabled(GL_CULL_FACE)
+        scissor = glIsEnabled(GL_SCISSOR_TEST)
+        glGetIntegerv(GL_COLOR_WRITEMASK, colorMask)
+        red = colorMask[0] != 0
+        green = colorMask[1] != 0
+        blue = colorMask[2] != 0
+        alpha = colorMask[3] != 0
+        glGetIntegerv(GL_VIEWPORT, viewport)
+        vertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        stencil = glIsEnabled(GL_STENCIL_TEST)
+        blendEquationRgb = glGetInteger(GL_BLEND_EQUATION_RGB)
+        blendEquationAlpha = glGetInteger(GL_BLEND_EQUATION_ALPHA)
+    }
+
+    private fun load() {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFramebuffer)
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, readFramebuffer)
+        glUseProgram(program)
+        //? if < 1.21.5
+        //BufferUploader.invalidate()
+        glBindBuffer(GL_ARRAY_BUFFER, arrayBuffer)
+        if (unpackBuffer != 0) glBindBuffer(GL_PIXEL_UNPACK_BUFFER, unpackBuffer)
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, texture.coerceAtLeast(0))
+        glActiveTexture(GL_TEXTURE0 + activeTexture)
+        toggle(GL_BLEND, blend)
+        glBlendFuncSeparate(blendSrcRgb, blendDstRgb, blendSrcAlpha, blendDstAlpha)
+        toggle(GL_DEPTH_TEST, depthTest)
+        toggle(GL_CULL_FACE, cull)
+        toggle(GL_SCISSOR_TEST, scissor)
+        glColorMask(red, green, blue, alpha)
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3])
+        if (exact) {
+            glBindVertexArray(vertexArray)
+            toggle(GL_STENCIL_TEST, stencil)
+            glBlendEquationSeparate(blendEquationRgb, blendEquationAlpha)
+        }
+    }
+
+    private fun toggle(cap: Int, enabled: Boolean) {
+        if (enabled) glEnable(cap) else glDisable(cap)
+    }
+    *///?} else {
+    /*var drawFramebuffer = 0
+        private set
+    private var readFramebuffer = 0
+    private var program = 0
+    private var activeTexture = 0
+    private var unit = 0
+    private var texture = 0
+    private var boundTexture = 0
+    private var alphaTest = false
+    private var depthTest = false
+    private var blend = false
+    private var blendSrcRgb = 0
+    private var blendDstRgb = 0
+    private var blendSrcAlpha = 0
+    private var blendDstAlpha = 0
+    private var shadeModel = 0
+    private var depthMask = true
+    private var depthFunc = 0
+    private var unpackBuffer = 0
+
+    private fun save() {
+        drawFramebuffer = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
+        readFramebuffer = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING)
+        program = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM)
+        activeTexture = GlStateManager.texture
+        unit = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE) - GL13.GL_TEXTURE0
+        texture = GlStateManager.TEXTURES[0].texture
+        alphaTest = GlStateManager.ALPHA_TEST.state.enabled
+        val depthState = GlStateManager.DEPTH
+        depthTest = depthState.state.enabled
+        depthMask = depthState.mask
+        depthFunc = depthState.func
+        val blendState = GlStateManager.BLEND
+        blend = blendState.state.enabled
+        blendSrcRgb = blendState.sfactorRGB
+        blendDstRgb = blendState.dfactorRGB
+        blendSrcAlpha = blendState.sfactorAlpha
+        blendDstAlpha = blendState.dfactorAlpha
+        shadeModel = GlStateManager.shadeModel
+        GL11.glPushClientAttrib(GL11.GL_CLIENT_VERTEX_ARRAY_BIT)
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT or GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT or GL11.GL_VIEWPORT_BIT)
+        unpackBuffer = GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING)
+        if (unpackBuffer != 0) GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0)
+        activeTexture(GL13.GL_TEXTURE0)
+        boundTexture = if (exact) GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D) else texture
+    }
+
+    private fun load() {
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFramebuffer)
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFramebuffer)
         GL11.glPopAttrib()
         GL11.glPopClientAttrib()
-        if (alphaTestEnabled) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
-        if (depthTestEnabled) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
+        if (unpackBuffer != 0) GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, unpackBuffer)
+        GL20.glUseProgram(program)
+        activeTexture(GL13.GL_TEXTURE0)
+        GlStateManager.bindTexture(texture)
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, boundTexture)
+        GlStateManager.activeTexture(GL13.GL_TEXTURE0 + activeTexture)
+        GL13.glActiveTexture(GL13.GL_TEXTURE0 + unit)
+        if (alphaTest) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
+        if (depthTest) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
+        GlStateManager.depthMask(depthMask)
+        GlStateManager.depthFunc(depthFunc)
+        if (blend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
+        GlStateManager.blendFuncSeparate(blendSrcRgb, blendDstRgb, blendSrcAlpha, blendDstAlpha)
+        GlStateManager.shadeModel(shadeModel)
+    }
 
-        with(props) {
-            if (lastEnableBlend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
-
-            GL20.glUseProgram(lastProgram[0])
-            GlStateManager.activeTexture(GL13.GL_TEXTURE0 + activeTextureUnit)
-
-            GlStateManager.blendFuncSeparate(
-                lastBlendSrcRgb[0],
-                lastBlendDstRgb[0],
-                lastBlendSrcAlpha[0],
-                lastBlendDstAlpha[0],
-            )
-            GlStateManager.shadeModel(lastShadeModel[0])
-        }
+    private fun activeTexture(unit: Int) {
+        GlStateManager.activeTexture(unit)
+        GL13.glActiveTexture(unit)
     }
     *///?}
 }

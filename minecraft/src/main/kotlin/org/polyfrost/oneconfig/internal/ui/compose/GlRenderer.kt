@@ -1006,8 +1006,7 @@ internal object GlTextures {
             val px = (pagePixels ?: BufferUtils.createIntBuffer(page.pixels.size).also { pagePixels = it })
             px.clear()
             px.put(page.pixels, rows.first * size, h * size).flip()
-            unpackDefaults(size)
-            if (h == size) texImage(size, size, px) else texSubImage(rows.first, size, h, px)
+            unpacked(size) { if (h == size) texImage(size, size, px) else texSubImage(rows.first, size, h, px) }
         }
         return tex[0]
     }
@@ -1016,9 +1015,26 @@ internal object GlTextures {
         val id = newTexture()
         val px = BufferUtils.createByteBuffer(bitmap.pixels.size).put(bitmap.pixels)
         px.flip()
-        unpackDefaults(bitmap.width)
-        texImage(bitmap.width, bitmap.height, px.asIntBuffer())
+        unpacked(bitmap.width) { texImage(bitmap.width, bitmap.height, px.asIntBuffer()) }
         return id
+    }
+
+    private inline fun unpacked(rowLength: Int, upload: () -> Unit) {
+        //? if = 1.21.1
+        //if (GlHost.vanillaPipeline) return run { unpackDefaults(rowLength); upload() }
+        val alignment = GL11.glGetInteger(GL11.GL_UNPACK_ALIGNMENT)
+        val row = GL11.glGetInteger(GL11.GL_UNPACK_ROW_LENGTH)
+        val skipPixels = GL11.glGetInteger(GL11.GL_UNPACK_SKIP_PIXELS)
+        val skipRows = GL11.glGetInteger(GL11.GL_UNPACK_SKIP_ROWS)
+        unpackDefaults(rowLength)
+        try {
+            upload()
+        } finally {
+            pixelStore(GL11.GL_UNPACK_ALIGNMENT, alignment)
+            pixelStore(GL11.GL_UNPACK_ROW_LENGTH, row)
+            pixelStore(GL11.GL_UNPACK_SKIP_PIXELS, skipPixels)
+            pixelStore(GL11.GL_UNPACK_SKIP_ROWS, skipRows)
+        }
     }
 
     private fun unpackDefaults(rowLength: Int) {

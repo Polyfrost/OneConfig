@@ -43,10 +43,6 @@ import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.gui.GuiGraphicsExtractor
 //?}
 
-//? if < 26.1 {
-/*import org.lwjgl.opengl.GL30
-*///?}
-
 //? if = 1.21.5 {
 /*import com.mojang.blaze3d.pipeline.BlendFunction
 import com.mojang.blaze3d.pipeline.RenderPipeline
@@ -136,7 +132,7 @@ object GlHost {
         *///?}
     }
 
-    private val gl = StoredGLState(330)
+    private val gl = StoredGLState()
 
     private var hudTarget: RenderTarget? = null
     private var hudFrame: GlRenderer? = null
@@ -326,7 +322,7 @@ object GlHost {
         if (!hudLayersReady) return
         gl.capture()
         try {
-            val fbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
+            val fbo = gl.drawFramebuffer
             val w = Platform.screen().viewportWidth()
             val h = Platform.screen().viewportHeight()
             if (w > 0 && h > 0) GlRenderer.Layer.draw(fbo, w, h, topDown = false, clear = false, stableLayer, volatileLayer)
@@ -416,22 +412,24 @@ object GlHost {
             backdropFresh = false
             GlBlur.release()
             GlGlass.release()
-        } else {
-            glScreen = null
-            glBeneath?.let { beneath -> drawGl(fbo, null, draw = beneath) }
-            val fresh = (glBlurAlpha > 0f || glBackdrop) && !vanillaPipeline && drawBlur(fbo, glBlurAlpha)
-            // repaint when the blurred copy comes or goes, or the cached frame keeps showing the old state
-            if (fresh != backdropFresh) glScreenDirty = true
-            backdropFresh = fresh
-            //? if < 1.21.11
-            //if (drawsGuiOverScreen) glUnderlay?.let { drawGui(it) }
-            val reuse = screenFrame?.takeUnless { glScreenDirty }
-            glScreenDirty = false
-            screenFrame = drawGl(fbo, reuse, true, paint)
         }
-        if (NotificationsManager.count > 0) drawGl(fbo, null) {
-            NotificationsRenderer.prepare(Platform.screen().guiWidth().toFloat(), Platform.screen().guiHeight().toFloat())
-            NotificationsRenderer.draw(it)
+        if (paint != null || NotificationsManager.count > 0) isolated {
+            if (paint != null) {
+                glScreen = null
+                glBeneath?.let { beneath -> drawGl(fbo, null, draw = beneath) }
+                val fresh = (glBlurAlpha > 0f || glBackdrop) && !vanillaPipeline && drawBlur(fbo, glBlurAlpha)
+                if (fresh != backdropFresh) glScreenDirty = true
+                backdropFresh = fresh
+                //? if < 1.21.11
+                //if (drawsGuiOverScreen) glUnderlay?.let { gl.restored { drawGui(it) } }
+                val reuse = screenFrame?.takeUnless { glScreenDirty }
+                glScreenDirty = false
+                screenFrame = drawGl(fbo, reuse, true, paint)
+            }
+            if (NotificationsManager.count > 0) drawGl(fbo, null) {
+                NotificationsRenderer.prepare(Platform.screen().guiWidth().toFloat(), Platform.screen().guiHeight().toFloat())
+                NotificationsRenderer.draw(it)
+            }
         }
         //? if < 1.21.11 {
         /*deferredDebugScreen?.let { overlay ->
@@ -490,6 +488,16 @@ object GlHost {
         }
     }
     *///?}
+
+    private inline fun isolated(block: () -> Unit) {
+        if (vanillaPipeline) return block()
+        gl.capture()
+        try {
+            block()
+        } finally {
+            gl.restore()
+        }
+    }
 
     private fun drawBlur(fbo: Int, alpha: Float): Boolean {
         val w = Platform.screen().viewportWidth()

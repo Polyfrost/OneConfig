@@ -152,7 +152,7 @@ abstract class ComposeScreen(
 ) : Screen(CommonComponents.EMPTY) {
     //? if = 1.8.9 {
     /*private var panorama: TitleScreen? = null
-    private val panoramaGlState = StoredGLState(330)
+    private val panoramaGlState = StoredGLState()
     *///?}
 
     enum class RenderMode {

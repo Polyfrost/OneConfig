@@ -23,7 +23,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 @ExperimentalOneConfigUiApi
 object ScreenBlur {
     //? if < 1.21.11
-    //private val gl = StoredGLState(330)
+    //private val gl = StoredGLState(exact = true)
 
     //? if > 1.8.9 {
     @Suppress("UNUSED_PARAMETER")
