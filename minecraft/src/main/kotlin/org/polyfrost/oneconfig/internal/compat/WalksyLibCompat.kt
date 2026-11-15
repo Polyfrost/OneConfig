@@ -91,7 +91,8 @@ object WalksyLibCompat {
 
         val firstCategory = categories.firstNotNullOfOrNull { it?.let { c -> invoke(c, "name") as? String } }
         tree.map.values.firstOrNull {
-            it is Property<*> && it.type == Boolean::class.javaObjectType && it.category == firstCategory &&
+            it is Property<*> && (it.type == Boolean::class.javaPrimitiveType || it.type == Boolean::class.javaObjectType) &&
+                it.category == firstCategory &&
                 isMasterSwitchName(it.title as? String ?: "")
         }?.addMetadata(MASTER_TOGGLE, true)
 
