@@ -8,9 +8,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -20,27 +23,35 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 
 @ExperimentalOneConfigUiApi
 public object ProgressBarDefaults {
     public const val INDETERMINATE_MILLIS: Int = 1200
 
+    public fun trackColor(theme: OneConfigUITheme): Color = theme.controlTrackColor.let { it.copy(alpha = it.alpha * TRACK_ALPHA) }
+
     public fun thickness(size: ControlSize): Dp = when (size) {
         ControlSize.Compact -> 4.dp
         ControlSize.Regular -> 6.dp
         ControlSize.Large -> 8.dp
+        ControlSize.ExtraLarge -> 10.dp
     }
 }
 
@@ -51,14 +62,22 @@ private const val PROGRESS_MILLIS = 250
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun ProgressBar(progress: Float?, modifier: Modifier = Modifier, size: ControlSize = ControlSize.Compact) {
+public fun ProgressBar(
+    progress: Float?,
+    modifier: Modifier = Modifier,
+    size: ControlSize = ControlSize.Compact,
+    tint: Color = Color.Unspecified,
+    trackColor: Color = Color.Unspecified,
+    thickness: Dp = Dp.Unspecified,
+    orientation: Orientation = Orientation.Horizontal,
+) {
     val theme = OneConfigTheme.current
     val shape = theme.shapes.pill
     val rounded = theme.style != ThemeStyle.Pixel
-    val track = theme.controlTrackColor.let { it.copy(alpha = it.alpha * TRACK_ALPHA) }
-    val brush = theme.accentBrush
+    val track = if (trackColor.isSpecified) trackColor else ProgressBarDefaults.trackColor(theme)
+    val brush = if (tint.isSpecified) SolidColor(tint) else theme.accentBrush
     val value = progress?.coerceIn(0f, 1f)
-    val shown by animateFloatAsState(value ?: 0f, Motion.spec(tween(PROGRESS_MILLIS)), label = "progress")
+    val shown by animateFloatAsState(value ?: 0f, Motion.tweenSpec(PROGRESS_MILLIS), label = "progress")
     val reduced = Motion.reduced
     val sweep: State<Float>? = if (value == null && !reduced) {
         rememberInfiniteTransition(label = "progressSweep").animateFloat(
@@ -75,29 +94,35 @@ public fun ProgressBar(progress: Float?, modifier: Modifier = Modifier, size: Co
     } else {
         "${(value * 100f).roundToInt()}%"
     }
+    val bar = if (thickness.isSpecified) thickness else ProgressBarDefaults.thickness(size)
+    val vertical = orientation == Orientation.Vertical
     Box(
         Modifier
             .then(modifier)
-            .fillMaxWidth()
-            .height(ProgressBarDefaults.thickness(size))
+            .then(if (vertical) Modifier.fillMaxHeight().width(bar) else Modifier.fillMaxWidth().height(bar))
             .a11y(label, A11yRole.ProgressBar, null, null, shape, false)
             .semantics {
                 progressBarRangeInfo = if (value == null) ProgressBarRangeInfo.Indeterminate else ProgressBarRangeInfo(value, 0f..1f)
             }
             .clip(shape)
             .drawBehind {
-                val bar = this.size
-                val corner = if (rounded) CornerRadius(bar.height / 2f) else CornerRadius.Zero
+                val area = this.size
+                val length = if (vertical) area.height else area.width
+                val corner = if (rounded) CornerRadius(area.minDimension / 2f) else CornerRadius.Zero
+                fun segment(from: Float, extent: Float, alpha: Float = 1f) {
+                    if (vertical) {
+                        drawRoundRect(brush, Offset(0f, length - from - extent), Size(area.width, extent), corner, alpha)
+                    } else {
+                        drawRoundRect(brush, Offset(from, 0f), Size(extent, area.height), corner, alpha)
+                    }
+                }
                 drawRoundRect(track, cornerRadius = corner)
                 when {
-                    value != null -> if (shown > 0f) {
-                        drawRoundRect(brush, size = Size(bar.width * shown, bar.height), cornerRadius = corner)
-                    }
-                    sweep == null -> drawRoundRect(brush, cornerRadius = corner, alpha = REDUCED_FILL_ALPHA)
+                    value != null -> if (shown > 0f) segment(0f, length * shown)
+                    sweep == null -> segment(0f, length, REDUCED_FILL_ALPHA)
                     else -> {
-                        val segment = bar.width * SEGMENT_FRACTION
-                        val start = sweep.value * (bar.width + segment) - segment
-                        drawRoundRect(brush, Offset(start, 0f), Size(segment, bar.height), corner)
+                        val extent = length * SEGMENT_FRACTION
+                        segment(sweep.value * (length + extent) - extent, extent)
                     }
                 }
             },

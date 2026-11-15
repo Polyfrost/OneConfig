@@ -144,6 +144,17 @@ public fun Modifier.focusRing(): Modifier = focusRing(null)
 @ExperimentalOneConfigUiApi
 public fun Modifier.focusRing(shape: Shape?): Modifier = composed {
     var focused by remember { mutableStateOf(false) }
+    onFocusChanged { focused = it.isFocused }.then(ringDrawing(shape) { focused })
+}
+
+@ExperimentalOneConfigUiApi
+public fun Modifier.focusRing(shape: Shape?, visible: Boolean): Modifier = composed {
+    val shown by rememberUpdatedState(visible)
+    ringDrawing(shape) { shown }
+}
+
+@Composable
+private fun ringDrawing(shape: Shape?, visible: () -> Boolean): Modifier {
     val theme = OneConfigTheme.current
     val ring = theme.focusRingColor
     val halo = when {
@@ -152,9 +163,9 @@ public fun Modifier.focusRing(shape: Shape?): Modifier = composed {
         else -> Color.Black
     }.copy(alpha = HALO_ALPHA)
     val outline = shape ?: theme.buttonShape
-    onFocusChanged { focused = it.isFocused }.drawWithContent {
+    return Modifier.drawWithContent {
         drawContent()
-        if (focused && A11y.keyboardMode) drawFocusRing(outline, ring, halo)
+        if (visible() && A11y.keyboardMode) drawFocusRing(outline, ring, halo)
     }
 }
 

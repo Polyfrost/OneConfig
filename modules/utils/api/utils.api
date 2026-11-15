@@ -83,32 +83,87 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlat
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Keys {
+	public abstract fun getKey0 ()I
+	public abstract fun getKey1 ()I
+	public abstract fun getKey2 ()I
+	public abstract fun getKey3 ()I
+	public abstract fun getKey4 ()I
+	public abstract fun getKey5 ()I
+	public abstract fun getKey6 ()I
+	public abstract fun getKey7 ()I
+	public abstract fun getKey8 ()I
+	public abstract fun getKey9 ()I
 	public abstract fun getKeyA ()I
+	public abstract fun getKeyB ()I
+	public abstract fun getKeyBackspace ()I
 	public abstract fun getKeyC ()I
 	public abstract fun getKeyD ()I
 	public abstract fun getKeyDelete ()I
+	public abstract fun getKeyDown ()I
 	public abstract fun getKeyE ()I
+	public abstract fun getKeyEnd ()I
+	public abstract fun getKeyEnter ()I
+	public abstract fun getKeyEscape ()I
 	public abstract fun getKeyF ()I
 	public abstract fun getKeyF1 ()I
+	public abstract fun getKeyF10 ()I
+	public abstract fun getKeyF11 ()I
+	public abstract fun getKeyF12 ()I
+	public abstract fun getKeyF2 ()I
+	public abstract fun getKeyF3 ()I
+	public abstract fun getKeyF4 ()I
+	public abstract fun getKeyF5 ()I
+	public abstract fun getKeyF6 ()I
+	public abstract fun getKeyF7 ()I
+	public abstract fun getKeyF8 ()I
+	public abstract fun getKeyF9 ()I
+	public abstract fun getKeyG ()I
 	public abstract fun getKeyH ()I
+	public abstract fun getKeyHome ()I
+	public abstract fun getKeyI ()I
+	public abstract fun getKeyInsert ()I
+	public abstract fun getKeyJ ()I
+	public abstract fun getKeyK ()I
 	public abstract fun getKeyL ()I
+	public abstract fun getKeyLeft ()I
 	public abstract fun getKeyLeftAlt ()I
 	public abstract fun getKeyLeftControl ()I
 	public abstract fun getKeyLeftShift ()I
 	public abstract fun getKeyLeftSuper ()I
+	public abstract fun getKeyM ()I
+	public abstract fun getKeyN ()I
+	public abstract fun getKeyO ()I
+	public abstract fun getKeyP ()I
+	public abstract fun getKeyPageDown ()I
+	public abstract fun getKeyPageUp ()I
+	public abstract fun getKeyQ ()I
 	public abstract fun getKeyR ()I
+	public abstract fun getKeyRight ()I
 	public abstract fun getKeyRightAlt ()I
 	public abstract fun getKeyRightControl ()I
 	public abstract fun getKeyRightShift ()I
 	public abstract fun getKeyRightSuper ()I
+	public abstract fun getKeyS ()I
 	public abstract fun getKeySlash ()I
+	public abstract fun getKeySpace ()I
+	public abstract fun getKeyT ()I
+	public abstract fun getKeyTab ()I
+	public abstract fun getKeyU ()I
+	public abstract fun getKeyUp ()I
 	public abstract fun getKeyV ()I
+	public abstract fun getKeyW ()I
 	public abstract fun getKeyX ()I
 	public abstract fun getKeyY ()I
 	public abstract fun getKeyZ ()I
 	public abstract fun getMouseButtonLeft ()I
+	public abstract fun getMouseButtonMiddle ()I
+	public abstract fun getMouseButtonRight ()I
+	public abstract fun keyFromNative (I)I
 	public abstract fun keyName (I)Ljava/lang/String;
+	public abstract fun keyToNative (I)I
+	public abstract fun mouseFromNative (I)I
 	public abstract fun mouseName (I)Ljava/lang/String;
+	public abstract fun mouseToNative (I)I
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {

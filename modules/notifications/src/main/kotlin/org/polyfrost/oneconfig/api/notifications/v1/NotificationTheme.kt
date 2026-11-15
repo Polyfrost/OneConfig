@@ -179,6 +179,18 @@ public object NotificationTheme {
     public var disabledAlpha: Float by mutableStateOf(0.5f)
         private set
 
+    @get:ApiStatus.Experimental
+    public var progressTrack: PolyColor? by mutableStateOf<PolyColor?>(null)
+        private set
+
+    @ApiStatus.Experimental
+    public fun progressTrackColor(): PolyColor = progressTrack ?: accent.multiplyAlpha(0.5f)
+
+    @ApiStatus.Internal
+    public fun useProgressTrack(color: PolyColor?) {
+        progressTrack = color
+    }
+
     @ApiStatus.Internal
     public fun useDisabledAlpha(alpha: Float) {
         disabledAlpha = alpha

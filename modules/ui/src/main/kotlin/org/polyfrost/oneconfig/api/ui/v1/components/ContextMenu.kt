@@ -9,14 +9,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalContext
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusRequester
@@ -84,7 +88,7 @@ public fun ContextMenu(
     modifier: Modifier = Modifier,
 ) {
     if (!expanded) return
-    ContextMenuPopup(offset, true, entries, modifier, onDismiss)
+    ContextMenuPopup(offset, true, entries, modifier, null, onDismiss = onDismiss)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -97,6 +101,7 @@ public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Un
 @ExperimentalOneConfigUiApi
 public class ContextMenuState internal constructor(private val host: ContextMenuHostState?) {
     internal var locals: CompositionLocalContext? = null
+    internal var popupSounds: Boolean = false
 
     public val isOpen: Boolean
         get() = host?.open?.owner === this
@@ -107,7 +112,7 @@ public class ContextMenuState internal constructor(private val host: ContextMenu
             return
         }
         if (entries.isEmpty()) return
-        host.show(OpenContextMenu(at.round(), entries, this, null, locals))
+        host.show(OpenContextMenu(at.round(), entries, this, null, locals, popupSounds = popupSounds))
     }
 
     public fun close() {
@@ -118,10 +123,11 @@ public class ContextMenuState internal constructor(private val host: ContextMenu
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun rememberContextMenuState(): ContextMenuState {
+public fun rememberContextMenuState(popupSounds: Boolean = false): ContextMenuState {
     val host = LocalContextMenuHost.current
     val state = remember(host) { ContextMenuState(host) }
     state.locals = currentCompositionLocalContext
+    state.popupSounds = popupSounds
     DisposableEffect(state) {
         onDispose { state.close() }
     }
@@ -154,6 +160,7 @@ public fun ContextMenuHost(content: @Composable () -> Unit) {
 public fun Modifier.contextMenu(
     enabled: Boolean = true,
     onOpened: (() -> Unit)? = null,
+    popupSounds: Boolean = false,
     entries: () -> List<MenuEntry>,
 ): Modifier {
     if (!enabled) return this
@@ -163,7 +170,7 @@ public fun Modifier.contextMenu(
             logMissingHost()
             Modifier
         } else {
-            Modifier.contextMenuTrigger(host, onOpened, entries)
+            Modifier.contextMenuTrigger(host, onOpened, entries, popupSounds)
         }
     }
 }
@@ -171,7 +178,7 @@ public fun Modifier.contextMenu(
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
-public fun Modifier.contextMenu(items: () -> List<MenuAction>): Modifier = contextMenu(true, null, items)
+public fun Modifier.contextMenu(items: () -> List<MenuAction>): Modifier = contextMenu(true, null, entries = items)
 
 internal class OpenContextMenu(
     val at: IntOffset,
@@ -179,6 +186,8 @@ internal class OpenContextMenu(
     val owner: Any?,
     val onClosed: (() -> Unit)?,
     val locals: CompositionLocalContext? = null,
+    val source: State<() -> List<MenuEntry>>? = null,
+    val popupSounds: Boolean = false,
 )
 
 internal data class PressKey(val id: PointerId, val uptime: Long)
@@ -235,8 +244,11 @@ internal fun Modifier.contextMenuTrigger(
     host: ContextMenuHostState,
     onOpened: (() -> Unit)?,
     entries: () -> List<MenuEntry>,
+    popupSounds: Boolean = false,
 ): Modifier {
-    val latestEntries by rememberUpdatedState(entries)
+    val entriesState = rememberUpdatedState(entries)
+    val latestEntries by entriesState
+    val latestPopupSounds by rememberUpdatedState(popupSounds)
     val latestOpened by rememberUpdatedState(onOpened)
     val latestLocals by rememberUpdatedState(currentCompositionLocalContext)
     val anchor = remember { AnchorHolder() }
@@ -252,7 +264,7 @@ internal fun Modifier.contextMenuTrigger(
             if (list.isEmpty()) return@onKeyEvent false
             val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
             val restoreFocus = { runCatching { focus.requestFocus() }; Unit }
-            host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus, latestLocals))
+            host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus, latestLocals, entriesState, latestPopupSounds))
             latestOpened?.invoke()
             true
         }
@@ -270,7 +282,7 @@ internal fun Modifier.contextMenuTrigger(
                     if (list.isEmpty()) continue
                     event.changes.forEach { it.consume() }
                     val restoreFocus = if (anchor.focused) ({ runCatching { focus.requestFocus() }; Unit }) else null
-                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, restoreFocus, latestLocals), latestOpened)
+                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, restoreFocus, latestLocals, entriesState, latestPopupSounds), latestOpened)
                     awaitPointerEvent(PointerEventPass.Final)
                     host.commit(key)
                 }
@@ -282,12 +294,30 @@ internal fun Modifier.contextMenuTrigger(
 internal fun ContextMenuLayer(host: ContextMenuHostState) {
     val menu = host.open ?: return
     key(menu) {
+        var entries by remember { mutableStateOf(menu.entries) }
+        var refreshes by remember { mutableIntStateOf(0) }
+        val source = menu.source
+        val refresh: (() -> Unit)? = if (source == null) {
+            null
+        } else {
+            {
+                entries = source.value().ifEmpty { entries }
+                refreshes++
+            }
+        }
+        if (source != null && refreshes > 0) {
+            val latest = source.value
+            LaunchedEffect(refreshes, latest) {
+                withFrameNanos { }
+                entries = latest().ifEmpty { entries }
+            }
+        }
         val locals = menu.locals
         if (locals == null) {
-            ContextMenuPopup(menu.at, false, menu.entries, Modifier) { host.close(menu) }
+            ContextMenuPopup(menu.at, false, entries, Modifier, refresh, menu.popupSounds) { host.close(menu) }
         } else {
             CompositionLocalProvider(locals) {
-                ContextMenuPopup(menu.at, false, menu.entries, Modifier) { host.close(menu) }
+                ContextMenuPopup(menu.at, false, entries, Modifier, refresh, menu.popupSounds) { host.close(menu) }
             }
         }
     }
@@ -299,12 +329,17 @@ private fun ContextMenuPopup(
     relative: Boolean,
     entries: List<MenuEntry>,
     modifier: Modifier,
+    refresh: (() -> Unit)?,
+    popupSounds: Boolean = false,
     onDismiss: () -> Unit,
 ) {
     EscapeCloses(onDismiss)
+    PopupSounds(popupSounds)
     val provider = remember(at, relative) { PointPosition(at, relative) }
     componentsBridge().Popup(provider, onDismiss, true) {
-        MenuList(entries, onDismiss, modifier)
+        CompositionLocalProvider(LocalMenuRefresh provides refresh) {
+            MenuList(entries, onDismiss, modifier)
+        }
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
 import java.util.concurrent.ConcurrentHashMap
 import net.kyori.adventure.text.Component
@@ -108,6 +109,30 @@ internal fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedStr
     }
     flush()
 }
+
+@Composable
+fun Text(
+    text: Any,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+    color: Color,
+    lineHeight: TextUnit? = null,
+    textAlign: TextAlign = TextAlign.Start,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+) = Text(
+    text,
+    modifier,
+    color,
+    style.fontSize,
+    lineHeight ?: style.lineHeight.takeUnless { it.isUnspecified },
+    BaselineShift.None,
+    style.fontWeight ?: FontWeight.Normal,
+    textAlign,
+    maxLines,
+    overflow,
+    null,
+)
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @Composable

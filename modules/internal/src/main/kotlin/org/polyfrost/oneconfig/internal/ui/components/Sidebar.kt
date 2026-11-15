@@ -34,16 +34,14 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.launch
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -54,9 +52,14 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.NavItem
 import org.polyfrost.oneconfig.api.ui.v1.components.NotificationsCenterPanel
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.PlayerHead
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.navigation.inAboutMenu
@@ -147,7 +150,7 @@ private fun Navigation(modifier: Modifier) {
                             )
                             .pointerHoverIcon(PointerIcon.Hand),
                         color = LocalTheme.current.textColorSecondary.copy(alpha = if (hovered) 1f else 0.7f),
-                        fontSize = 11.sp,
+                        fontSize = LocalTheme.current.typography.caption.fontSize,
                     )
                 }
             }
@@ -225,7 +228,6 @@ private fun NavigationEntries() {
                         NavigationEntry(
                             def.icon,
                             def.label,
-                            def.route,
                             selected
                         ) {
                             val nav = shell.navigation
@@ -249,42 +251,33 @@ private fun NavigationSection(title: String? = null, collapsed: Boolean? = null,
         horizontalAlignment = Alignment.Start
     ) {
         title?.let {
-            Text(
-                title.uppercase(),
-                modifier = Modifier.padding(start = 6.dp, bottom = 2.dp),
-                color = LocalTheme.current.textColor,
-                fontWeight = FontWeight.Medium, fontSize = 11.sp
+            SectionHeader(
+                it,
+                Modifier.width(SidebarEntryWidth),
+                contentPadding = SectionHeaderPadding,
+                textStyle = SectionHeaderDefaults.labelStyle,
+                color = OneConfigTheme.current.textColor,
             )
         }
         content()
     }
 }
 
+private val SectionHeaderPadding = PaddingValues(start = 6.dp, end = 6.dp, bottom = 2.dp)
+
 @Composable
 private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -> Unit, trackKey: Any, content: @Composable () -> Unit) {
-    val source = rememberInteractionSource()
-    val hovered by source.collectIsHoveredAsState()
-    val theme = LocalTheme.current
     Column(horizontalAlignment = Alignment.Start) {
         TrackOverflow(trackKey, enabled = collapsed) {
-            CollapsibleHeader(
-                label = title,
+            SectionHeader(
+                title,
+                Modifier.width(SidebarEntryWidth),
                 expanded = !collapsed,
                 onToggle = onToggle,
-                modifier = Modifier.width(SidebarEntryWidth),
-                contentPadding = PaddingValues(start = 6.dp, end = 6.dp, bottom = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                interactionSource = source,
-            ) {
-                Text(
-                    title.uppercase(),
-                    modifier = Modifier.weight(1f),
-                    color = if (hovered) theme.textColor else theme.textColor.copy(0.8f),
-                    fontWeight = FontWeight.Medium, fontSize = 11.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+                contentPadding = SectionHeaderPadding,
+                textStyle = SectionHeaderDefaults.labelStyle,
+                color = OneConfigTheme.current.textColor.copy(0.8f),
+            )
         }
         AnimatedVisibility(
             visible = !collapsed,
@@ -303,45 +296,8 @@ private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -
 }
 
 @Composable
-private fun NavigationEntry(icon: String, title: String, route: Any? = null, isSelected: Boolean = false, onSelect: (Any?) -> Unit) {
-    val interactionSource = rememberInteractionSource()
-
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    val theme = LocalTheme.current
-    val translucent = theme.translucentSelection
-    val selectedAlpha = Motion.animateFloatAsState(if (isSelected) 1f else 0f)
-    val textAndIconColor = Motion.animateColorAsState(
-        if (isSelected && translucent) theme.textColor
-        else if (isSelected) theme.accentTextColor
-        else if (isHovered) theme.textColor
-        else theme.textColor.copy(0.8f)
-    )
-    val borderColor = Motion.animateColorAsState(
-        if (isSelected && translucent) theme.borderColor.copy(0f)
-        else if (isHovered || isSelected) theme.borderColor
-        else theme.borderColor.copy(0f)
-    )
-
-    Row(
-        modifier = Modifier.size(SidebarEntryWidth, 33.dp)
-            .glassHover(theme.sideBarNavigationEntryShape, pull = 0.75.dp)
-            .graphicsLayer {}
-            .animatedFrame(
-                theme.sideBarNavigationEntryShape,
-                fill = { if (translucent) theme.textColor.copy(alpha = 0.12f * selectedAlpha.value) else Color.Transparent },
-                accentAlpha = { if (translucent) 0f else selectedAlpha.value },
-                border = { borderColor.value },
-            )
-            .then(if (translucent) Modifier.liquidGlass(theme.sideBarNavigationEntryShape) { selectedAlpha.value } else Modifier)
-            .oneConfigClickable(title, { onSelect(route) }, selected = isSelected, indication = false, interactionSource = interactionSource)
-            .pointerHoverIcon(PointerIcon.Hand),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Icon(icon, modifier = Modifier.padding(start = 12.dp), fitAspectRatio = true, tint = { textAndIconColor.value })
-        Text(title, color = Color.Unspecified, colorProducer = { textAndIconColor.value })
-    }
+private fun NavigationEntry(icon: String, title: String, isSelected: Boolean = false, onSelect: () -> Unit) {
+    NavItem(isSelected, title, onSelect, Modifier.width(SidebarEntryWidth), icon = icon)
 }
 
 @Composable
@@ -359,16 +315,19 @@ private fun NotificationBell() {
         }
         if (NotificationsManager.unreadCount > 0) {
             Box(Modifier.align(Alignment.Center).size(BellGlyph)) {
-                UnreadDot(Modifier.align(Alignment.TopEnd).offset(2.dp, (-2).dp))
+                UnreadDot(
+                    Modifier.align(Alignment.TopEnd).offset(2.dp, (-2).dp),
+                    translated("oneconfig.sidebar.notifications.unread", "Unread notifications"),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun UnreadDot(modifier: Modifier) {
+private fun UnreadDot(modifier: Modifier, description: String) {
     val circle = LocalTheme.current.shapes.circle
-    Box(modifier, contentAlignment = Alignment.Center) {
+    Box(modifier.semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
         Box(Modifier.size(8.dp).background(Accent, circle).blur(7.dp))
         Box(Modifier.size(6.dp).background(Accent, circle))
     }
@@ -391,7 +350,7 @@ private fun Account() {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PlayerHead(Modifier.size(32.dp).offset(x = 2.dp))
+                PlayerHead(32.dp, Modifier.offset(x = 2.dp), shape = LocalTheme.current.sideBarNavigationEntryShape)
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
@@ -400,7 +359,7 @@ private fun Account() {
                     Text(
                         session.versionLabel.ifBlank { "OneConfig" },
                         color = LocalTheme.current.textColorSecondary,
-                        fontSize = 11.sp,
+                        fontSize = LocalTheme.current.typography.caption.fontSize,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

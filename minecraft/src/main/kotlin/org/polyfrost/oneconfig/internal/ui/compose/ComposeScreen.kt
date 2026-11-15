@@ -55,6 +55,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenuRoot
 import org.polyfrost.oneconfig.api.ui.v1.components.FeedbackHosts
 import org.polyfrost.oneconfig.api.ui.v1.components.ProvideOneConfigTextContextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
+import org.polyfrost.oneconfig.api.ui.v1.components.releaseFeedback
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.compose.backend.PolyCanvas
@@ -337,6 +338,7 @@ abstract class ComposeScreen(
 
         //? if = 1.8.9 {
         /*panorama = Platform.screen().current<Any?>() as? TitleScreen ?: LegacyPanoramaTracker.current()
+            ?: if (drawsPanorama() && client.level == null) createPanorama() else null
         panorama?.width = width
         panorama?.height = height
         *///?}
@@ -387,7 +389,7 @@ abstract class ComposeScreen(
                 scrollConfig.provided(),
                 LocalWheelRouter provides wheelRouter,
             ) {
-                ProvideOneConfigTextContextMenu { ContextMenuRoot { FeedbackHosts { compose() } } }
+                ProvideOneConfigTextContextMenu { ContextMenuRoot { FeedbackHosts(this@ComposeScreen) { compose() } } }
             }
         }
     }
@@ -421,7 +423,14 @@ abstract class ComposeScreen(
     }
 
     //? if = 1.8.9 {
-    /*override fun tick() {
+    /*private fun createPanorama(): TitleScreen? = runCatching {
+        TitleScreen().also {
+            it.init(client, width, height)
+            LegacyPanoramaTracker.capture(it)
+        }
+    }.getOrNull()
+
+    override fun tick() {
         panorama?.tick()
     }
     *///?}
@@ -431,7 +440,7 @@ abstract class ComposeScreen(
     //? if > 1.8.9 {
     //~ if >= 26.1 'renderBackground' -> 'extractBackground'
     override fun extractBackground(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, tickDelta: Float) {
-        if (client.level == null) {
+        if (client.level == null && drawsPanorama()) {
             //~ if >= 26.1 'renderPanorama' -> 'extractPanorama'
             extractPanorama(ctx, tickDelta)
         }
@@ -448,6 +457,12 @@ abstract class ComposeScreen(
     //?}
 
     protected open fun blurAlpha(): Float = 0f
+
+    protected open fun drawsPanorama(): Boolean = true
+
+    protected open fun densityScale(): Float = 1f
+
+    private fun scaledDensity(): Float = sceneDensity() * (densityScale().takeIf { it > 0f && it.isFinite() } ?: 1f)
 
     /**
      * Whether the blurred copy of the screen should be made each frame without being drawn, for parts of this
@@ -490,6 +505,7 @@ abstract class ComposeScreen(
     }
     //?}
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     override fun removed() {
         //? if = 1.8.9 {
         /*Keyboard.enableRepeatEvents(false)
@@ -503,6 +519,7 @@ abstract class ComposeScreen(
         consumedButtons.clear()
         lightInside = false
         GlassLight.reset()
+        releaseFeedback(this)
         releaseScene()
         super.removed()
     }
@@ -517,7 +534,7 @@ abstract class ComposeScreen(
         /*// read inputs every frame like modern for smooth scrolling
         handleInputs()
         if (Platform.screen().current<Any?>() !== this) return
-        if (client.level == null) {
+        if (client.level == null && drawsPanorama()) {
             panorama?.let {
                 panoramaGlState.capture()
                 try {
@@ -584,7 +601,7 @@ abstract class ComposeScreen(
 
         wheelRouter.glideFrame { step ->
             glideCarry += step
-            val density = sceneDensity()
+            val density = scaledDensity()
             if (abs(glideCarry.x * density) >= 1f || abs(glideCarry.y * density) >= 1f) {
                 val carried = glideCarry
                 glideCarry = Offset.Zero
@@ -1130,7 +1147,7 @@ abstract class ComposeScreen(
         val h = Platform.screen().windowHeight()
         if (w <= 0 || h <= 0) return false
         val applied = withScene {
-            it.density = Density(sceneDensity())
+            it.density = Density(scaledDensity())
             it.size = IntSize(w, h)
         }
         if (applied == null) return false

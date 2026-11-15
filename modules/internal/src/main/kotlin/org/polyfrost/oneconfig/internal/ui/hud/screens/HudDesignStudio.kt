@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
@@ -45,11 +46,11 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -92,7 +93,9 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUI
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
@@ -100,14 +103,18 @@ import org.polyfrost.oneconfig.api.ui.v1.components.IconButton as KitIconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.PanelHeader
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
-import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
+import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
+import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
+import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.UiSound
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.popupSurface
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberContextMenuState
-import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -119,6 +126,7 @@ import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.*
+import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
 import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasMenuEntries
 import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasPasteMenuEntries
@@ -989,42 +997,27 @@ private fun DrawScope.drawHudPlacementBadge(
     drawHudBadge(label, Offset(centerX, bottomY + HUD_SIZE_BADGE_GAP + HUD_SIZE_BADGE_HEIGHT / 2f), fill, textColor, badgeRadius)
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun HudActionButton(
     icon: String,
     label: String,
     size: Dp,
-    sound: UiSoundEvent,
+    sound: UiSound,
     tint: Color = Color.Unspecified,
     danger: Boolean = false,
     onClick: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .safePointerEvent(PointerEventType.Move, PointerEventPass.Final) { event ->
-                if (event.changes.any { it.pressed }) return@safePointerEvent
-                event.changes.forEach { if (!it.isConsumed) it.consume() }
-            }
-            .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                if (event.changes.none { it.isConsumed }) {
-                    event.changes.forEach { it.consume() }
-                    UiSounds.play(sound)
-                    onClick()
-                }
-            },
-    ) {
-        KitIconButton(
-            icon,
-            label,
-            onClick,
-            Modifier.size(size),
-            size = ControlSize.Large,
-            danger = danger,
-            tooltip = null,
-            tint = tint,
-        )
-    }
+    KitIconButton(
+        icon,
+        label,
+        onClick,
+        Modifier.size(size),
+        size = ControlSize.Large,
+        danger = danger,
+        tooltip = null,
+        tint = tint,
+        sound = sound,
+    )
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -1054,7 +1047,8 @@ private fun HudActionBar(
         modifier = Modifier
             .padding(start = barX.dp, top = barY.dp)
             .graphicsLayer { alpha = chromeAlpha }
-            .themedSurface(SurfaceKind.Popup, shape)
+            .then(if (theme.shadowEnabled) Modifier.shadow(12.dp, shape, clip = false, ambientColor = theme.shadowColor, spotColor = theme.shadowColor) else Modifier)
+            .popupSurface(shape)
             .padding(barPadding),
         horizontalArrangement = Arrangement.spacedBy((actionBarGapPx / densityFloat).dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1063,14 +1057,14 @@ private fun HudActionBar(
             "settings",
             translated("oneconfig.hud.menu.settings", "Settings"),
             iconSize,
-            sound = UiSoundEvent.HUD_SELECT,
+            sound = UiSound.HudSelect,
             onClick = onSettings,
         )
         HudActionButton(
             if (isHidden) "eye-off" else "eye",
             if (isHidden) translated("oneconfig.hud.menu.show", "Show") else translated("oneconfig.hud.menu.hide", "Hide"),
             iconSize,
-            sound = UiSoundEvent.CLICK,
+            sound = UiSound.Click,
         ) {
             Snapshot.withMutableSnapshot { hud.hidden = !hud.hidden }
         }
@@ -1078,7 +1072,7 @@ private fun HudActionBar(
             if (isLocked) "lock" else "unlock",
             if (isLocked) translated("oneconfig.hud.menu.unlock", "Unlock") else translated("oneconfig.hud.menu.lock", "Lock"),
             iconSize,
-            sound = UiSoundEvent.CLICK,
+            sound = UiSound.Click,
             tint = if (isLocked) Accent else Color.Unspecified,
         ) {
             Snapshot.withMutableSnapshot { hud.locked = !hud.locked }
@@ -1088,7 +1082,7 @@ private fun HudActionBar(
                 "trash",
                 translated("oneconfig.hud.menu.delete", "Delete HUD"),
                 iconSize,
-                sound = UiSoundEvent.CLICK,
+                sound = UiSound.Click,
                 tint = theme.error,
                 danger = true,
                 onClick = onDelete,
@@ -2141,7 +2135,6 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     val chromeAlpha by Motion.animateFloatAsState(
         if (isDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
-        tween(150),
         label = "hudDragChromeAlpha",
     )
 
@@ -2170,7 +2163,6 @@ fun HudDesignStudio(visible: Boolean = true) {
     // panel reads as the focus
     val sideChromeAlpha by Motion.animateFloatAsState(
         if (selectedHuds.isNotEmpty()) SIDE_CHROME_DIM_ALPHA else 1f,
-        tween(150),
         label = "sideChromeAlpha",
     )
 
@@ -2678,11 +2670,12 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 val root = rootCoords[0]?.takeIf { it.isAttached } ?: return@onGloballyPositioned
                                 if (shortcutPill) shortcutPillRect = root.localBoundingBoxOf(coords)
                             }
-                            .safePointerEvent(PointerEventType.Press, PointerEventPass.Final) { event ->
-                                event.changes.forEach { if (!it.isConsumed) it.consume() }
-                                UiSounds.play(UiSoundEvent.CLICK)
-                                shortcutsOpen = true
-                            }
+                            .oneConfigClickable(
+                                translated("oneconfig.hud.shortcuts.pill", "Keyboard shortcuts"),
+                                { shortcutsOpen = true },
+                                shape = theme.backgroundShape,
+                                indication = false,
+                            )
                     )
                     .background(theme.popupBackground, theme.backgroundShape)
                     .border(1.dp, theme.borderColor, theme.backgroundShape)
@@ -2696,7 +2689,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     if (hint != null) {
-                        Text(hint, color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1)
+                        Text(hint, color = theme.textColorSecondary, fontSize = OneConfigTheme.typography.small.fontSize, maxLines = 1)
                     } else {
                         HudShortcutsPill(shortcutsKey)
                     }
@@ -3344,9 +3337,10 @@ private fun DesignStudioPanel(
     val shownCategory = activeCategory.takeIf { it in categories } ?: categories.first()
     LaunchedEffect(shownCategory) { onCategoryChange(shownCategory) }
     val query = searchText.trim()
-    val title = remember(selectedHud) { selectedHud?.let { localizedLabel(it.title) } }
-    val subtitle = remember(selectedHud, title) {
-        selectedHud?.configId?.let(::modNameFor)?.takeIf { it != title }
+    val titleText = remember(selectedHud) { selectedHud?.let { localizedLabel(it.title) } }
+    val title = remember(titleText) { titleText?.asStyledLabel() }
+    val subtitle = remember(selectedHud, titleText) {
+        selectedHud?.configId?.let(::modNameFor)?.takeIf { it != titleText }?.asStyledLabel()
     }
     Box(
         modifier = Modifier
@@ -3359,8 +3353,9 @@ private fun DesignStudioPanel(
             val titleInteraction = remember { MutableInteractionSource() }
             val titleHovered by titleInteraction.collectIsHoveredAsState()
             var titleDragging by remember { mutableStateOf(false) }
-            val handleAlpha by Motion.animateFloatAsState(if (titleHovered || titleDragging) 1f else 0.65f, tween(150), label = "panelHandleAlpha")
-            Row(
+            val handleAlpha by Motion.animateFloatAsState(if (titleHovered || titleDragging) 1f else 0.65f, label = "panelHandleAlpha")
+            PanelHeader(
+                title ?: AnnotatedString(translated("oneconfig.hud", "HUD")),
                 modifier = Modifier
                     .fillMaxWidth()
                     .hoverable(titleInteraction)
@@ -3381,30 +3376,22 @@ private fun DesignStudioPanel(
                         }
                     }
                     .padding(start = StudioPanelGutter, top = StudioPanelGutter, end = StudioPanelGutter, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                // sized to the icon's dots rather than its padded box so they line up with the tabs below
-                Box(modifier = Modifier.size(10.5.dp, 15.dp)) {
-                    Icon(
-                        "dots-grid",
-                        color = theme.textColor,
-                        modifier = Modifier
-                            .requiredSize(28.dp)
-                            .graphicsLayer { alpha = handleAlpha },
-                    )
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text(title ?: translated("oneconfig.hud", "HUD"), color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
-                    subtitle?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = 12.sp)
+                subtitle = subtitle,
+                onClose = onBack,
+                closeLabel = translated("oneconfig.button.close", "Close"),
+                leading = {
+                    // sized to the icon's dots rather than its padded box so they line up with the tabs below
+                    Box(modifier = Modifier.size(10.5.dp, 15.dp)) {
+                        Icon(
+                            "dots-grid",
+                            color = theme.textColor,
+                            modifier = Modifier
+                                .requiredSize(28.dp)
+                                .graphicsLayer { alpha = handleAlpha },
+                        )
                     }
-                }
-                KitIconButton("close", translated("oneconfig.button.close", "Close"), onBack, Modifier.size(32.dp))
-            }
+                },
+            )
             var searchOpen by remember { mutableStateOf(false) }
             var focusSearch by remember { mutableStateOf(false) }
             LaunchedEffect(searchFocusRequested) {
@@ -3413,7 +3400,7 @@ private fun DesignStudioPanel(
             // 0 shows the tabs and 1 the whole field, which grows out of the search button in between
             val searchProgress by animateFloatAsState(
                 if (searchOpen) 1f else 0f,
-                tween(if (Motion.reduced) 150 else 220, easing = FastOutSlowInEasing),
+                tween(if (Motion.reduced) Motion.standard else 220, easing = FastOutSlowInEasing),
             )
             Box(modifier = Modifier.fillMaxWidth().padding(start = StudioPanelGutter, end = StudioPanelGutter, bottom = 16.dp)) {
                 Row(
@@ -3427,9 +3414,14 @@ private fun DesignStudioPanel(
                         },
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    if (categories.size > 1) categories.forEach {
-                        Chip(translated("oneconfig.hud.tab.${it.name.lowercase()}", it.title), it == shownCategory, it.icon) { onCategoryChange(it) }
-                    }
+                    if (categories.size > 1) TabRow(
+                        categories.map { TabItem(it, translated("oneconfig.hud.tab.${it.name.lowercase()}", it.title), it.icon) },
+                        shownCategory,
+                        onCategoryChange,
+                        style = TabStyle.Chips,
+                        size = ChipDefaults.size,
+                        fill = false,
+                    )
                     Spacer(Modifier.weight(1f))
                     SearchToggle(Modifier.fillMaxHeight().aspectRatio(1f).graphicsLayer { alpha = if (searchProgress > 0f) 0f else 1f }) {
                         searchOpen = true
@@ -3449,7 +3441,7 @@ private fun DesignStudioPanel(
                         modifier = Modifier
                             .width(if (Motion.reduced) maxWidth else lerp(maxHeight, maxWidth, searchProgress))
                             .fillMaxHeight()
-                            .clip(theme.sideBarNavigationEntryShape)
+                            .clip(theme.shapes.field)
                             .graphicsLayer { if (Motion.reduced) alpha = searchProgress },
                         onDismiss = {
                             onSearchChange("")
@@ -3693,7 +3685,7 @@ private fun rememberHudLibraryLayout(sections: List<HudLibrarySection>, maxCardW
         }
     }
     val textMeasurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(fontSize = HUD_LABEL_FONT_SIZE, fontFamily = LocalTheme.current.typography.family)
+    val labelStyle = TextStyle(fontSize = OneConfigTheme.typography.caption.fontSize, fontFamily = LocalTheme.current.typography.family)
     // Preview dimensions can arrive after composition, repack only when sizes or layout inputs change
     return remember(sections, previews, maxCardWidth, density, textMeasurer, labelStyle) {
         derivedStateOf {
@@ -3770,17 +3762,15 @@ private fun HudLibraryPanel(
             .padding(vertical = StudioPanelGutter),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
+        PanelHeader(
+            translated("oneconfig.hud.library.title", "HUDs"),
             modifier = Modifier.fillMaxWidth().padding(horizontal = StudioPanelGutter),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(translated("oneconfig.hud.library.title", "HUDs"), color = theme.textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
-            if (!suggestEvergreenHud) {
-                SearchBar(searchText, onSearchChange, translated("oneconfig.hud.library.search", "Search HUDs..."), searchFocusRequested, onSearchFocused)
-                KitIconButton("close", translated("oneconfig.button.close", "Close"), onClose, Modifier.size(32.dp))
-            }
-        }
+            onClose = if (suggestEvergreenHud) null else onClose,
+            closeLabel = translated("oneconfig.button.close", "Close"),
+            actions = if (suggestEvergreenHud) null else {
+                { SearchBar(searchText, onSearchChange, translated("oneconfig.hud.library.search", "Search HUDs..."), searchFocusRequested, onSearchFocused) }
+            },
+        )
         if (suggestEvergreenHud) {
             EvergreenHudSuggestion(Modifier.fillMaxWidth().weight(1f).padding(horizontal = StudioPanelGutter))
             return@Column
@@ -3789,7 +3779,7 @@ private fun HudLibraryPanel(
             translated("oneconfig.hud.library.hint", "Click to add  ·  Drag to place it yourself"),
             modifier = Modifier.padding(horizontal = StudioPanelGutter),
             color = theme.textColorSecondary,
-            fontSize = 11.sp,
+            fontSize = OneConfigTheme.typography.caption.fontSize,
         )
         Box(Modifier.fillMaxWidth().weight(1f)) {
             BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -3827,7 +3817,7 @@ private fun HudLibraryPanel(
                     }
                     completeScroll(target, false)
                 }
-                ScrollbarBox(scrollState, scrollbarAdapter, StudioPanelGutter, Modifier.fillMaxSize()) {
+                ScrollContainer(scrollState, Modifier.fillMaxSize(), gutter = StudioPanelGutter, adapter = scrollbarAdapter) {
                     LazyColumn(
                         state = scrollState,
                         modifier = Modifier.fillMaxSize(),
@@ -3860,9 +3850,9 @@ private fun HudLibraryPanel(
                                                 val hudGeometry = geometry.getValue(hud)
                                                 val cardModifier = Modifier.width(with(density) { row.widths[i].toDp() }).fillMaxHeight()
                                                 if (hud is LegacyHud) {
-                                                    LegacyHudPreviewCard(hud, hudGeometry, onDragStart, onCardClick, cardModifier)
+                                                    LegacyHudCardContent(hud, hudGeometry, onDragStart, onCardClick, cardModifier)
                                                 } else {
-                                                    ComposeHudPreviewCard(hud, previews.getValue(hud), hudGeometry, onDragStart, onCardClick, cardModifier)
+                                                    ComposeHudCardContent(hud, previews.getValue(hud), hudGeometry, onDragStart, onCardClick, cardModifier)
                                                 }
                                             }
                                         }
@@ -3947,8 +3937,8 @@ private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
     AnimatedVisibility(
         visible = visible,
         modifier = Modifier.matchParentSize(),
-        enter = Motion.enter(fadeIn(tween(150))),
-        exit = Motion.exit(fadeOut(tween(150))),
+        enter = Motion.enter(fadeIn(Motion.tweenSpec())),
+        exit = Motion.exit(fadeOut(Motion.tweenSpec())),
     ) {
         Box(
             modifier = Modifier.fillMaxSize().background(theme.scrimColor),
@@ -3961,7 +3951,6 @@ private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
 
 private val PREVIEW_CARD_PADDING = 12.dp
 private val HUD_LABEL_HEIGHT = 20.dp
-private val HUD_LABEL_FONT_SIZE = 11.sp
 
 private fun hudLabel(hud: Hud): String = localizedLabel(hud.title) ?: hud.title
 private val PREVIEW_MAX_CARD_HEIGHT = 160.dp
@@ -3986,15 +3975,19 @@ private fun previewCardSize(naturalW: Float, naturalH: Float, scale: Float, maxC
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun LegacyHudPreviewCard(
+private fun HudLibraryCard(
     hud: Hud,
-    geometry: HudPreviewGeometry,
+    label: String,
+    dragArea: DpSize,
+    previewScale: Float,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
     modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     val density = LocalDensity.current.density
     val theme = LocalTheme.current
+    val shape = theme.buttonShape
 
     var isHovered by remember { mutableStateOf(false) }
     val backgroundColor by animateAccentColorAsState(
@@ -4006,14 +3999,11 @@ private fun LegacyHudPreviewCard(
     var dragStarted by remember { mutableStateOf(false) }
     var cardSize by remember { mutableStateOf(IntSize.Zero) }
 
-    val cardPadding = PREVIEW_CARD_PADDING
-    val (size, previewScale) = geometry
     Box(
         modifier = modifier
             .onSizeChanged { cardSize = it }
-            .background(backgroundColor, theme.buttonShape)
-            .border(1.dp, theme.borderColor, theme.buttonShape)
-            .clip(theme.buttonShape)
+            .background(backgroundColor, shape)
+            .border(1.dp, theme.borderColor, shape)
             .contextMenu { libraryCardMenu(hud, onCardClick) }
             .safePointerEvent(PointerEventType.Enter) { isHovered = true }
             .safePointerEvent(PointerEventType.Exit) {
@@ -4037,9 +4027,9 @@ private fun LegacyHudPreviewCard(
                     val dist = sqrt(dx * dx + dy * dy)
                     if (dist > 8f) {
                         dragStarted = true
-                        val paddingPx = cardPadding.value * density
-                        val insetX = (cardSize.width - size.width.value * density) / 2f + paddingPx
-                        val insetY = (cardSize.height - size.height.value * density) / 2f + paddingPx
+                        val paddingPx = PREVIEW_CARD_PADDING.value * density
+                        val insetX = (cardSize.width - dragArea.width.value * density) / 2f + paddingPx
+                        val insetY = (cardSize.height - dragArea.height.value * density) / 2f + paddingPx
                         val hudLocalX = ((start.x - insetX) / previewScale).coerceAtLeast(0f)
                         val hudLocalY = ((start.y - insetY) / previewScale).coerceAtLeast(0f)
                         onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
@@ -4048,120 +4038,75 @@ private fun LegacyHudPreviewCard(
                     }
                 }
             }
-            .safePointerEvent(PointerEventType.Release) { event ->
-                // ignore the fake release Compose sends when a press is interrupted, such as by alt-tabbing
-                if (!dragStarted && pressPos != null && event.changes.none { it.isConsumed }) {
-                    onCardClick(hud)
-                }
+            .safePointerEvent(PointerEventType.Release) {
                 pressPos = null
                 dragStarted = false
-            },
+            }
+            .oneConfigClickable(
+                label,
+                { if (!dragStarted) onCardClick(hud) },
+                role = A11yRole.Button,
+                shape = shape,
+                indication = false,
+                sound = null,
+            )
+            .clip(shape),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            localizedLabel(hud.title) ?: translated("oneconfig.hud.legacy", "Legacy HUD"),
-            color = theme.textColor.copy(0.85f),
-            fontSize = 12.sp,
-            modifier = Modifier.padding(cardPadding),
-        )
+        content()
         HudCardAddOverlay(isHovered)
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun ComposeHudPreviewCard(
+private fun LegacyHudCardContent(
+    hud: Hud,
+    geometry: HudPreviewGeometry,
+    onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
+    onCardClick: (Hud) -> Unit,
+    modifier: Modifier,
+) {
+    val label = localizedLabel(hud.title) ?: translated("oneconfig.hud.legacy", "Legacy HUD")
+    HudLibraryCard(hud, label, geometry.size, geometry.scale, onDragStart, onCardClick, modifier) {
+        Text(
+            label,
+            color = LocalTheme.current.textColor.copy(0.85f),
+            fontSize = OneConfigTheme.typography.small.fontSize,
+            modifier = Modifier.padding(PREVIEW_CARD_PADDING),
+        )
+    }
+}
+
+@Composable
+private fun ComposeHudCardContent(
     hud: Hud,
     preview: HudPreviewState,
     geometry: HudPreviewGeometry,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
     onCardClick: (Hud) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
 ) {
-    val density = LocalDensity.current.density
-    val theme = LocalTheme.current
-
-    var isHovered by remember { mutableStateOf(false) }
-    val backgroundColor by animateAccentColorAsState(
-        isHovered,
-        if (isHovered) Accent else theme.popupBackground,
-        animationSpec = tween(150)
-    )
-
-    var pressPos by remember { mutableStateOf<Offset?>(null) }
-    var dragStarted by remember { mutableStateOf(false) }
-    var cardSize by remember { mutableStateOf(IntSize.Zero) }
-
-    val cardPadding = PREVIEW_CARD_PADDING
     val (size, previewScale) = geometry
-    Box(
-        modifier = modifier
-            .onSizeChanged { cardSize = it }
-            .background(backgroundColor, theme.buttonShape)
-            .border(1.dp, theme.borderColor, theme.buttonShape)
-            .clip(theme.buttonShape)
-            .contextMenu { libraryCardMenu(hud, onCardClick) }
-            .safePointerEvent(PointerEventType.Enter) { isHovered = true }
-            .safePointerEvent(PointerEventType.Exit) {
-                isHovered = false
-                if (!dragStarted) pressPos = null
-            }
-            .safePointerEvent(PointerEventType.Press) { event ->
-                if (event.buttons.isSecondaryPressed) return@safePointerEvent
-                val pos = event.changes.firstOrNull()?.position
-                if (pos != null) {
-                    pressPos = pos
-                    dragStarted = false
-                }
-            }
-            .safePointerEvent(PointerEventType.Move) { event ->
-                val pos = event.changes.firstOrNull()?.position ?: return@safePointerEvent
-                val start = pressPos ?: return@safePointerEvent
-                if (!dragStarted && event.changes.any { it.pressed }) {
-                    val dx = pos.x - start.x
-                    val dy = pos.y - start.y
-                    val dist = sqrt(dx * dx + dy * dy)
-                    if (dist > 8f) {
-                        dragStarted = true
-                        val paddingPx = cardPadding.value * density
-                        val insetX = (cardSize.width - size.width.value * density) / 2f + paddingPx
-                        val insetY = (cardSize.height - (size.height + HUD_LABEL_HEIGHT).value * density) / 2f + paddingPx
-                        val hudLocalX = ((start.x - insetX) / previewScale).coerceAtLeast(0f)
-                        val hudLocalY = ((start.y - insetY) / previewScale).coerceAtLeast(0f)
-                        onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
-                        pressPos = null
-                        isHovered = false
-                    }
-                }
-            }
-            .safePointerEvent(PointerEventType.Release) { event ->
-                // ignore the fake release Compose sends when a press is interrupted, such as by alt-tabbing
-                if (!dragStarted && pressPos != null && event.changes.none { it.isConsumed }) {
-                    onCardClick(hud)
-                }
-                pressPos = null
-                dragStarted = false
-            },
-    ) {
+    val label = hudLabel(hud)
+    HudLibraryCard(hud, label, DpSize(size.width, size.height + HUD_LABEL_HEIGHT), previewScale, onDragStart, onCardClick, modifier) {
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                 HudPreviewCanvas(
                     preview,
                     previewScale,
                     hud.alwaysRedraw,
-                    modifier = Modifier.size(size).padding(cardPadding),
+                    modifier = Modifier.size(size).padding(PREVIEW_CARD_PADDING),
                 )
             }
             Text(
-                hudLabel(hud),
-                modifier = Modifier.height(HUD_LABEL_HEIGHT).padding(horizontal = cardPadding),
-                color = theme.textColorSecondary,
-                fontSize = HUD_LABEL_FONT_SIZE,
+                label,
+                modifier = Modifier.height(HUD_LABEL_HEIGHT).padding(horizontal = PREVIEW_CARD_PADDING),
+                color = LocalTheme.current.textColorSecondary,
+                fontSize = OneConfigTheme.typography.caption.fontSize,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        HudCardAddOverlay(isHovered)
     }
 }
 
@@ -4205,6 +4150,7 @@ private fun ModFilterIcon(iconName: String, label: String, selected: Boolean, on
         )
     }
 }
+
 
 @Composable
 private fun SearchBar(

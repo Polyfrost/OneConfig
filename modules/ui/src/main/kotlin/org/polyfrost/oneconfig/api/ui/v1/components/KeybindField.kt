@@ -2,8 +2,6 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +33,6 @@ import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
@@ -48,8 +45,6 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.keybind.TextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
-private val KEY_ICON_SIZE = 16.dp
-private const val FADE_MILLIS = 150
 private const val RECORDING_FILL_ALPHA = 0.2f
 private const val HOVER_FILL_ALPHA = 0.8f
 private const val HOVER_BORDER_ALPHA = 0.2f
@@ -64,6 +59,7 @@ public fun KeybindField(
     conflict: Boolean? = null,
     singleKey: Boolean = false,
     interactionSource: MutableInteractionSource? = null,
+    size: ControlSize = ControlSize.Regular,
 ) {
     val theme = OneConfigTheme.current
     val accent = OneConfigTheme.accent
@@ -139,34 +135,35 @@ public fun KeybindField(
     }
 
     val showConflict = !recording && (conflict ?: (keybind != null && KeybindManager.findConflicts(keybind).any { it.action !== keybind.action }))
-    val fill by animateColorAsState(
+    val fill by Motion.animateColorAsState(
         when {
             recording -> accent.copy(alpha = RECORDING_FILL_ALPHA)
             hovered && enabled -> theme.componentBackground.copy(alpha = theme.componentBackground.alpha * HOVER_FILL_ALPHA)
             else -> theme.componentBackground
         },
-        Motion.spec(tween(FADE_MILLIS)),
+        Motion.colorSpec(),
         label = "keybindFill",
     )
-    val border by animateColorAsState(
+    val border by Motion.animateColorAsState(
         when {
             recording -> accent
             showConflict -> theme.error
             hovered && enabled -> theme.textColor.copy(alpha = HOVER_BORDER_ALPHA)
             else -> theme.borderColor
         },
-        Motion.spec(tween(FADE_MILLIS)),
+        Motion.colorSpec(),
         label = "keybindBorder",
     )
-    val content by animateColorAsState(
+    val content by Motion.animateColorAsState(
         when {
             recording -> accent
             showConflict -> theme.error
             else -> theme.textColor
         },
-        Motion.spec(tween(FADE_MILLIS)),
+        Motion.colorSpec(),
         label = "keybindText",
     )
+    val metrics = ControlDefaults.metrics(size)
 
     val shown = when {
         recording && recordedKeys.isEmpty() && recordedMouse.isEmpty() -> formControlString("oneconfig.keybind.recording", "Press keys...")
@@ -174,13 +171,13 @@ public fun KeybindField(
         keybind != null && keybind.isBound -> keybind.displayName()
         else -> formControlString("oneconfig.keybind.none", "None")
     }
-    val shape = theme.shapes.field
+    val shape = FieldDefaults.shape
     val typography = theme.typography
 
     Row(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
-            .heightIn(min = ControlSize.Regular.height)
+            .heightIn(min = size.height)
             .onPreviewKeyEvent { event -> recording && handleRecordingKey(event, recordedKeys, heldKeys, singleKey, ::clear, ::commitIfReleased) { code -> emit(intArrayOf(code), null, KeyModifiers.NONE) } }
             .focusRequester(focusRequester)
             .formFrame(shape, theme.accentBrush, fill = { fill }, border = { border })
@@ -190,14 +187,14 @@ public fun KeybindField(
                 role = A11yRole.Button,
                 enabled = enabled,
                 shape = shape,
-                indication = false,
                 interactionSource = source,
+                indication = false,
             )
             .padding(horizontal = theme.spacing.l, vertical = theme.spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(theme.spacing.m),
     ) {
-        Icon("keyboard", null, Modifier.size(KEY_ICON_SIZE), tint = content)
+        Icon("keyboard", null, Modifier.size(metrics.iconSize), tint = content)
         Text(
             shown,
             Modifier,

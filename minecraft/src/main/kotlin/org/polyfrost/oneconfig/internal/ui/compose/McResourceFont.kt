@@ -50,6 +50,7 @@ internal object McResourceFont {
     fun init() {
         McGlyphs.source = { cp -> font?.glyph(cp) }
         McFontQueue.measureWidth = McGlyphs::width
+        McFontQueue.measureLiteralWidth = { text, scale -> McGlyphs.width(text, scale, true) }
         EventManager.register(ResourceFinishedLoading::class.java, Runnable(::reload))
         // vanilla applies font option changes without a resource reload
         EventManager.register(TickEvent.End::class.java, Runnable { if (requested != fontOptions()) reload() })

@@ -8,15 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.components.MultiSelect
 import org.polyfrost.oneconfig.api.ui.v1.components.Select
 import org.polyfrost.oneconfig.internal.ui.api.settings.MultiSelectDropdownOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.translated
-
-private const val ToggleAll = -1
 
 @Composable
 fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData) {
@@ -60,30 +56,20 @@ fun MultiSelectDropdownOption(data: MultiSelectDropdownOptionData, enabled: Bool
         }
         mutableStateOf(arr.copyOf())
     }
-    val allSelected = labels.isNotEmpty() && selectedFlags.count { it } == labels.size
     val selected = labels.indices.filterTo(mutableSetOf()) { selectedFlags.getOrElse(it) { false } }
-    val options = if (labels.size > 1) listOf(ToggleAll) + labels.indices else labels.indices.toList()
-    val toggleAllLabel = if (allSelected) {
-        translated("oneconfig.option.multi_select.deselect_all", "Deselect all")
-    } else {
-        translated("oneconfig.menu.text.select_all", "Select all")
-    }
 
     MultiSelect(
         selected = selected,
-        options = options,
+        options = labels.indices.toList(),
         onChange = { next ->
-            val updated = if (ToggleAll in next) {
-                BooleanArray(labels.size) { !allSelected }
-            } else {
-                BooleanArray(labels.size) { it in next }
-            }
+            val updated = BooleanArray(labels.size) { it in next }
             selectedFlags = updated
             (data.prop as Property<Any>).set(updated)
         },
         modifier = fieldModifier,
-        label = { if (it == ToggleAll) toggleAllLabel else labels[it] },
+        label = { labels[it] },
         enabled = enabled,
-        styledLabel = styled?.let { list -> { if (it == ToggleAll) AnnotatedString(toggleAllLabel) else list[it] } },
+        styledLabel = styled?.let { list -> { list[it] } },
+        selectAll = true,
     )
 }

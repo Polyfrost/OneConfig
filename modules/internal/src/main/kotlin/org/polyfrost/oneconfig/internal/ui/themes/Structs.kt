@@ -89,11 +89,27 @@ data class UITheme(
 
     override val accentBrush: Brush get() = AccentBrush
 
+    private var lightMode: Boolean? = null
+
+    override val isLight: Boolean get() = lightMode ?: super.isLight
+
     fun withControlTrackColor(color: Color): UITheme =
-        copy().also { it.controlTrackColor = color }
+        copy().also {
+            it.controlTrackColor = color
+            it.lightMode = lightMode
+        }
+
+    internal fun withLightMode(light: Boolean): UITheme =
+        if (light == isLight) this else copy().also {
+            it.controlTrackColor = controlTrackColor
+            it.lightMode = light
+        }
 
     internal fun withAccentText(color: Color): UITheme =
-        if (color == accentTextColor) this else copy(accentTextColor = color).also { it.controlTrackColor = controlTrackColor }
+        if (color == accentTextColor) this else copy(accentTextColor = color).also {
+            it.controlTrackColor = controlTrackColor
+            it.lightMode = lightMode
+        }
 
     internal fun withOpaqueSurfaces(): UITheme {
         val page = pageBackground.copy(alpha = 1f)
@@ -104,7 +120,10 @@ data class UITheme(
             modCardBackground = modCardBackground.compositeOver(page),
             componentBackground = componentBackground.compositeOver(page),
             popupBackground = popupBackground.compositeOver(page),
-        ).also { it.controlTrackColor = controlTrackColor }
+        ).also {
+            it.controlTrackColor = controlTrackColor
+            it.lightMode = lightMode
+        }
     }
 
     // The shapes below are kept out of the constructor. PolyPlus calls the generated copy() with the
@@ -127,7 +146,7 @@ data class UITheme(
     fun withInsetModFooter(): UITheme =
         also { insetFooterThemes += previewImage }
 
-    val translucentSelection: Boolean get() = previewImage in translucentSelectionThemes
+    override val translucentSelection: Boolean get() = previewImage in translucentSelectionThemes
 
     fun withTranslucentSelection(): UITheme =
         also { translucentSelectionThemes += previewImage }

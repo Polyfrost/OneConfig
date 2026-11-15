@@ -9,6 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.RangeSlider
 import org.polyfrost.oneconfig.internal.ui.api.settings.RangeListOptionData
 import org.polyfrost.oneconfig.internal.ui.api.settings.RangeOptionData
 
@@ -53,18 +55,7 @@ private fun RowScope.RangeEntry(
     onValueChange: (start: Float, end: Float) -> Unit,
 ) {
     if (data.style == RangeOptionData.Style.Slider) {
-        RangeSliderTrack(
-            start = start,
-            end = end,
-            onValueChange = onValueChange,
-            min = data.min,
-            max = data.max,
-            step = data.step,
-            modifier = Modifier.weight(1f),
-            thumbWidth = 11.dp,
-            thumbHeight = 14.dp,
-            trackHeight = 4.dp,
-        )
+        RangeSlider(start, end, onValueChange, Modifier.weight(1f), data.min..data.max, data.step, size = ControlSize.Compact)
         RangeSpinners(start, end, onValueChange, data.min, data.max, step, width = 56.dp, format = data.format)
     } else {
         BoxWithConstraints(modifier = Modifier.weight(1f)) {

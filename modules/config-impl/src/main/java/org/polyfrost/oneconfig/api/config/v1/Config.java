@@ -239,6 +239,7 @@ public abstract class Config {
             Node node = entry.getValue();
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
+                if (hasNoValue(p)) continue;
                 Object value = p.get();
                 if (value == null) {
                     if (p.getMetadata("default") == null) p.addMetadata("defaultNull", true);
@@ -258,6 +259,7 @@ public abstract class Config {
             Node node = entry.getValue();
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
+                if (hasNoValue(p)) continue;
                 String key = prefix + entry.getKey();
                 Object def = snapshot.get(key);
                 if (def == null) {
@@ -269,6 +271,10 @@ public abstract class Config {
                 applyDefaultSnapshot((Tree) node, prefix + entry.getKey() + ".", snapshot);
             }
         }
+    }
+
+    private static boolean hasNoValue(Property<?> p) {
+        return p.type == void.class || p.type == Void.class;
     }
 
     @ApiStatus.Internal

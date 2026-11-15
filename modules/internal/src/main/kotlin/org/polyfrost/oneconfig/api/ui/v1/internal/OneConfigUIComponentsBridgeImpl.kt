@@ -1,11 +1,17 @@
+@file:OptIn(InternalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
@@ -17,22 +23,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.ui.unit.dp
 import net.kyori.adventure.text.Component
+import org.polyfrost.oneconfig.api.ui.v1.components.Chip as KitChip
 import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerModel as KitColorPickerModel
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 import org.polyfrost.oneconfig.internal.ui.api.Tooltip as InternalTooltip
-import org.polyfrost.oneconfig.internal.ui.components.Chip as InternalChip
 import org.polyfrost.oneconfig.internal.ui.components.Icon as InternalIcon
-import org.polyfrost.oneconfig.internal.ui.components.IconButton as InternalIconButton
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.components.StyledText
 import org.polyfrost.oneconfig.internal.ui.components.componentText
 import org.polyfrost.oneconfig.internal.ui.components.legacyText
@@ -55,7 +57,12 @@ import org.polyfrost.oneconfig.internal.ui.themes.PolyfrostedLight
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
 import org.polyfrost.oneconfig.internal.ui.themes.concentric
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton as KitIconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.UiSound
+import org.polyfrost.oneconfig.api.ui.v1.components.surfaceLayers
 import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeBuilder
 import org.polyfrost.oneconfig.internal.ui.components.keepSearchFocus
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
@@ -95,6 +102,11 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
                 UiSound.Open -> UiSoundEvent.OPEN
                 UiSound.Close -> UiSoundEvent.CLOSE
                 UiSound.SliderTick -> UiSoundEvent.SLIDER_TICK
+                UiSound.HudSelect -> UiSoundEvent.HUD_SELECT
+                UiSound.HudDragStart -> UiSoundEvent.HUD_DRAG_START
+                UiSound.HudDragEnd -> UiSoundEvent.HUD_DRAG_END
+                UiSound.HudResizeStart -> UiSoundEvent.HUD_RESIZE_START
+                UiSound.HudResizeEnd -> UiSoundEvent.HUD_RESIZE_END
             },
         )
     }
@@ -179,7 +191,7 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
 
     @Composable
     override fun Chip(label: String, selected: Boolean, icon: String?, onClick: () -> Unit) =
-        InternalChip(label, selected, icon, onClick)
+        KitChip(label, selected, onClick, icon = icon)
 
     @Composable
     override fun IconButton(
@@ -190,7 +202,19 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
         enabled: Boolean,
         hoverBorder: Boolean,
         onClick: () -> Unit,
-    ) = InternalIconButton(iconName, modifier, foreground, hoveredForeground, enabled, hoverBorder, onClick)
+    ) {
+        val label = iconButtonLabel(iconName)
+        KitIconButton(
+            iconName,
+            label,
+            onClick,
+            modifier,
+            enabled = enabled,
+            size = if (hoverBorder) ControlSize.Regular else ControlSize.Compact,
+            tooltip = if (hoverBorder) label else null,
+            restTint = foreground,
+        )
+    }
 
     @Composable
     override fun Tooltip(
@@ -229,6 +253,10 @@ class OneConfigUIComponentsBridgeImpl : OneConfigUIComponentsBridge {
             .border(1.dp, theme.borderColor, shape)
             .clip(shape)
     }
+
+    @Composable
+    override fun popupSurface(modifier: Modifier, shape: Shape, blur: Boolean, glass: Boolean): Modifier =
+        modifier.shellTransition().surfaceLayers(SurfaceKind.Popup, shape, false, blur = blur, glass = glass)
 
     @Composable
     override fun Popup(

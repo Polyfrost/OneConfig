@@ -70,7 +70,9 @@ private val MinecraftIconOverrides = mapOf(
     "underline" to "/assets/oneconfig/ico/minecraft/underline.svg",
     "unlock" to "/assets/oneconfig/ico/minecraft/unlock.svg",
     "up" to "/assets/oneconfig/ico/minecraft/up.svg",
+    "upload" to "/assets/oneconfig/ico/minecraft/upload.svg",
     "uppercase" to "/assets/oneconfig/ico/minecraft/uppercase.svg",
+    "warning" to "/assets/oneconfig/ico/minecraft/warning.svg",
     "x-circle" to "/assets/oneconfig/ico/minecraft/x-circle.svg",
 )
 

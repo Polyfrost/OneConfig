@@ -29,8 +29,11 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.layout.PolyAlign
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
@@ -51,7 +54,23 @@ private val gridAlignment: Map<Pair<Int, Int>, PolyAlign> =
     alignmentGrid.entries.associate { (k, v) -> v to k }
 
 private val CENTER_INDICATOR_RADIUS = 6.dp
-private const val CELL_FADE_MILLIS = 150
+
+private val alignmentLabels: Map<PolyAlign, String> = mapOf(
+    PolyAlign.TopLeft to "Top left",
+    PolyAlign.Top to "Top",
+    PolyAlign.TopRight to "Top right",
+    PolyAlign.Left to "Left",
+    PolyAlign.Center to "Centre",
+    PolyAlign.Right to "Right",
+    PolyAlign.BottomLeft to "Bottom left",
+    PolyAlign.Bottom to "Bottom",
+    PolyAlign.BottomRight to "Bottom right",
+)
+
+private fun alignmentLabel(align: PolyAlign): String {
+    val key = align.name.replace(Regex("(?<=[a-z])(?=[A-Z])"), "_").lowercase()
+    return translated("oneconfig.hud.alignment.$key", alignmentLabels[align] ?: align.name)
+}
 
 @Composable
 fun AlignmentPicker(
@@ -82,6 +101,7 @@ fun AlignmentPicker(
                 val isHovered = hoveredCell == Pair(col, row)
 
                 AlignmentCell(
+                    label = alignmentLabel(cellAlign),
                     col = col,
                     row = row,
                     cellSize = cellSize,
@@ -105,6 +125,7 @@ fun AlignmentPicker(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun AlignmentCell(
+    label: String,
     col: Int,
     row: Int,
     cellSize: Dp,
@@ -132,14 +153,14 @@ private fun AlignmentCell(
                 1.15f,
                 spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
             )
-            animatedScale.animateTo(1f, tween(CELL_FADE_MILLIS))
+            animatedScale.animateTo(1f, tween(Motion.standard))
         }
     }
 
     LaunchedEffect(isHovered, hoverAlpha) {
         animatedAlpha.animateTo(
             if (isHovered && !isSelected) hoverAlpha else 0f,
-            Motion.spec(tween(CELL_FADE_MILLIS))
+            Motion.tweenSpec()
         )
     }
 
@@ -150,10 +171,14 @@ private fun AlignmentCell(
             .size(cellSize)
             .onPointerEvent(PointerEventType.Enter) { onHover(true) }
             .onPointerEvent(PointerEventType.Exit)  { onHover(false) }
-            .onPointerEvent(PointerEventType.Press) { event ->
-                event.changes.forEach { it.consume() }
-                onClick()
-            }
+            .oneConfigClickable(
+                label,
+                onClick,
+                role = A11yRole.RadioButton,
+                selected = isSelected,
+                indication = false,
+                sound = null,
+            )
     ) {
         if (animatedAlpha.value > 0f) {
             Box(

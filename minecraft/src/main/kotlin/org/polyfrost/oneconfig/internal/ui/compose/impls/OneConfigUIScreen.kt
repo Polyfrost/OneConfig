@@ -48,7 +48,6 @@ import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
-import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -324,22 +323,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             targetRestoring -> keepFocus
             else -> SearchFocus.Unfocus
         })
-        val client = Minecraft.getInstance()
-        val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
-        if (cachedHead != null) {
-            shell.session.updatePlayerHead(cachedHead)
-        } else {
-            Thread {
-                runCatching {
-                    val head = PlayerHeadLoader.loadLocalPlayerHeadPng(client) ?: return@runCatching
-                    client.execute { shell.session.updatePlayerHead(head) }
-                }.onFailure { LOGGER.warn("Failed to load player head", it) }
-            }.apply {
-                isDaemon = true
-                name = "OneConfig-PlayerHead"
-                start()
-            }
-        }
         try {
             val loaderStr = Platform.loader().loaderString
             val parts = loaderStr.split("-", limit = 2)

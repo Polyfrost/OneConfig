@@ -27,6 +27,12 @@ public interface OneConfigUIGlassBridge {
     @Composable
     public fun backdropBlur(modifier: Modifier, shape: Shape): Modifier
 
+    @Composable
+    public fun hoverGlow(modifier: Modifier, shape: Shape): Modifier
+
+    @Composable
+    public fun liquidGlass(modifier: Modifier, shape: Shape, frosted: Boolean, alpha: () -> Float): Modifier
+
     public fun wheelScroll(modifier: Modifier, state: ScrollableState, orientation: Orientation): Modifier
 
     @Composable

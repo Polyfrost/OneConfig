@@ -9,6 +9,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
+import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.ContextMenuRoot
 import org.polyfrost.oneconfig.api.ui.v1.components.FeedbackHosts
@@ -82,8 +83,26 @@ public object OneConfigTheme {
     @Composable
     public fun shape(radius: Dp): Shape = componentsBridge().themeShape(radius)
 
+    private val pixelIcons = ConcurrentHashMap<String, String>()
+
     @Composable
-    public fun icon(name: String): String = componentsBridge().themeIcon(name)
+    public fun icon(name: String): String {
+        val themed = componentsBridge().themeIcon(name)
+        if (themed != name || current.style != ThemeStyle.Pixel) return themed
+        return pixelIcons[name] ?: name
+    }
+
+    @JvmStatic
+    public fun registerPixelIcon(icon: String, pixelIcon: String) {
+        pixelIcons[icon] = pixelIcon
+    }
+
+    @JvmStatic
+    public fun registerPixelIcons(icons: Map<String, String>) {
+        pixelIcons.putAll(icons)
+    }
+
+    internal fun registeredPixelIcon(name: String): String? = pixelIcons[name]
 
     @JvmStatic
     public fun custom(base: OneConfigUITheme, id: String, name: String, block: ThemeBuilder.() -> Unit): OneConfigUITheme {

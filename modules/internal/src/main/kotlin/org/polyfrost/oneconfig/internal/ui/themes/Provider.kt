@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
 import androidx.compose.foundation.LocalScrollbarStyle
-import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -39,6 +38,7 @@ import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.themedScrollbarStyle
 import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 import org.polyfrost.oneconfig.api.ui.v1.theme.contrastAgainst
 import org.polyfrost.oneconfig.internal.ThemeConfig
@@ -83,6 +83,8 @@ val LocalTheme = compositionLocalOf<UITheme> {
         ?: error("The OneConfig UI has not initialised yet, so there is no theme to use. Wait for OneConfig to finish loading before composing OneConfig UI.")
 }
 
+internal val LocalThemeTarget = compositionLocalOf<UITheme?> { null }
+
 private const val TOAST_MIN_ALPHA = 0.92f
 
 private fun Color.withMinAlpha(min: Float): Color = if (alpha >= min) this else copy(alpha = min)
@@ -101,14 +103,7 @@ var pixelGridMode by mutableStateOf(0)
 
 private val UITheme.isMinecraft get() = isMinecraftStyle
 
-private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
-    minimalHeight = 24.dp,
-    thickness = 8.dp,
-    shape = theme.scrollBarShape,
-    hoverDurationMillis = 300,
-    unhoverColor = theme.textColorSecondary.copy(alpha = 0.40f),
-    hoverColor = theme.textColorSecondary.copy(alpha = 0.70f),
-)
+private fun scrollbarStyle(theme: UITheme) = themedScrollbarStyle(theme.textColorSecondary, theme.scrollBarShape)
 
 private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
 
@@ -209,6 +204,7 @@ fun ThemeWith(
 
     CompositionLocalProvider(
         LocalTheme provides animated,
+        LocalThemeTarget provides shown,
         LocalScrollbarStyle provides remember(animated.scrollBarShape, animated.textColorSecondary) { scrollbarStyle(animated) },
         LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight, target) else LocalDensity.current,
         content = content

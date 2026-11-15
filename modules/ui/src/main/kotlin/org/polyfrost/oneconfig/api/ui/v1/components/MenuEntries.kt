@@ -3,6 +3,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.page.PageText
@@ -28,6 +29,8 @@ public class MenuAction(
     public val leading: (@Composable () -> Unit)? = null,
     public val children: List<MenuEntry> = emptyList(),
     danger: Boolean = false,
+    public val dismissOnClick: Boolean = true,
+    public val dangerColor: Color = Color.Unspecified,
 ) : MenuEntry {
     public constructor(
         label: String,
@@ -45,9 +48,11 @@ public class MenuAction(
         leading: (@Composable () -> Unit)? = null,
         children: List<MenuEntry> = emptyList(),
         danger: Boolean = false,
+        dismissOnClick: Boolean = true,
+        dangerColor: Color = Color.Unspecified,
     ) : this(
         PageText.literal(label), onClick, icon, painter, detail, style, enabled, disabledReason, checked,
-        shortcutHint, badge, size, leading, children, danger,
+        shortcutHint, badge, size, leading, children, danger, dismissOnClick, dangerColor,
     )
 
     public val labelText: PageText = label
@@ -57,6 +62,52 @@ public class MenuAction(
     public val style: ControlStyle = if (danger) ControlStyle.Danger else style
 
     public val danger: Boolean get() = style == ControlStyle.Danger || style == ControlStyle.DangerFilled
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        label: PageText,
+        onClick: () -> Unit,
+        icon: String? = null,
+        painter: Painter? = null,
+        detail: String? = null,
+        style: ControlStyle = ControlStyle.Ghost,
+        enabled: Boolean = true,
+        disabledReason: String? = null,
+        checked: Boolean? = null,
+        shortcutHint: String? = null,
+        badge: String? = null,
+        size: MenuItemSize = MenuItemSize.Compact,
+        leading: (@Composable () -> Unit)? = null,
+        children: List<MenuEntry> = emptyList(),
+        danger: Boolean = false,
+        dismissOnClick: Boolean = true,
+    ) : this(
+        label, onClick, icon, painter, detail, style, enabled, disabledReason, checked,
+        shortcutHint, badge, size, leading, children, danger, dismissOnClick, Color.Unspecified,
+    )
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        label: String,
+        onClick: () -> Unit,
+        icon: String? = null,
+        painter: Painter? = null,
+        detail: String? = null,
+        style: ControlStyle = ControlStyle.Ghost,
+        enabled: Boolean = true,
+        disabledReason: String? = null,
+        checked: Boolean? = null,
+        shortcutHint: String? = null,
+        badge: String? = null,
+        size: MenuItemSize = MenuItemSize.Compact,
+        leading: (@Composable () -> Unit)? = null,
+        children: List<MenuEntry> = emptyList(),
+        danger: Boolean = false,
+        dismissOnClick: Boolean = true,
+    ) : this(
+        PageText.literal(label), onClick, icon, painter, detail, style, enabled, disabledReason, checked,
+        shortcutHint, badge, size, leading, children, danger, dismissOnClick, Color.Unspecified,
+    )
 
     @Deprecated(
         "Use the constructor that takes onClick second",
@@ -84,6 +135,7 @@ public class MenuRadioGroup<T>(
     public val selected: T,
     public val label: (T) -> String,
     public val onSelect: (T) -> Unit,
+    public val closeOnSelect: Boolean = true,
 ) : MenuEntry
 
 @ExperimentalOneConfigUiApi

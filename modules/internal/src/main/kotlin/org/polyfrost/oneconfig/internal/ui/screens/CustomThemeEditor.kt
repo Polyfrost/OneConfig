@@ -34,7 +34,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.api.ui.v1.components.ArmedConfirmButton
 import org.polyfrost.oneconfig.api.ui.v1.components.Chip
@@ -50,6 +49,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuHeading
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.components.SegmentedChips
+import org.polyfrost.oneconfig.api.ui.v1.components.Slider
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
@@ -61,7 +61,6 @@ import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.glassHover
 import org.polyfrost.oneconfig.internal.ui.components.layout.FlexibleLayout
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.settings.SliderControl
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
@@ -415,12 +414,12 @@ internal fun rememberThemeCodeNotice(): MutableState<EditorNotice?> {
 internal fun ThemeCodeNotice(notice: EditorNotice, onNotice: (EditorNotice?) -> Unit) {
     val theme = LocalTheme.current
     when (notice) {
-        is EditorNotice.Message -> Text(notice.text, color = theme.textColorSecondary, fontSize = 13.sp)
+        is EditorNotice.Message -> Text(notice.text, color = theme.textColorSecondary, fontSize = LocalTheme.current.typography.label.fontSize)
         is EditorNotice.Import -> Row(horizontalArrangement = Arrangement.spacedBy(EditorGap), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 translated("oneconfig.themes.custom.import_prompt", "Add \"%s\" to your themes?", notice.name),
                 color = theme.textColor,
-                fontSize = 13.sp,
+                fontSize = LocalTheme.current.typography.label.fontSize,
             )
             TextButton(
                 translated("oneconfig.themes.custom.import", "Add"),
@@ -515,7 +514,7 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec, noticeState: MutableState<
                             translated("oneconfig.themes.custom.contrast.secondary", "Secondary text is hard to read on this background")
                         },
                         color = theme.textColorSecondary,
-                        fontSize = 13.sp,
+                        fontSize = LocalTheme.current.typography.label.fontSize,
                     )
                     TextButton(
                         translated("oneconfig.themes.custom.contrast.fix", "Fix"),
@@ -559,15 +558,15 @@ internal fun CustomThemeEditor(spec: CustomThemeSpec, noticeState: MutableState<
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SliderControl(
+                    Slider(
                         spec.glass.toFloat(),
                         { value -> value.roundToInt().let { if (it != spec.glass) update(spec.copy(glass = it)) } },
-                        0f,
-                        100f,
-                        1f,
                         Modifier.width(EditorFieldWidth),
+                        0f..100f,
+                        1f,
+                        size = ControlSize.Regular,
                     )
-                    Text("${spec.glass}%", color = theme.textColor, fontSize = 13.sp)
+                    Text("${spec.glass}%", color = theme.textColor, fontSize = LocalTheme.current.typography.label.fontSize)
                 }
             }
         }
@@ -616,7 +615,7 @@ internal fun fullMessage(): String =
 private fun EditorRow(label: String, content: @Composable () -> Unit) {
     Row(verticalAlignment = Alignment.Top) {
         Box(Modifier.width(EditorLabelWidth).height(EditorControlHeight), contentAlignment = Alignment.CenterStart) {
-            Text(label, color = LocalTheme.current.textColorSecondary, fontSize = 13.sp)
+            Text(label, color = LocalTheme.current.textColorSecondary, fontSize = LocalTheme.current.typography.label.fontSize)
         }
         Box(Modifier.weight(1f)) { content() }
     }
@@ -655,8 +654,8 @@ private fun ColorField(label: String?, color: Color, selected: Boolean, onChange
                     .background(color.copy(alpha = 1f), circle)
                     .border(1.dp, theme.borderColor, circle)
             )
-            if (label != null) Text(label, color = theme.textColor, fontSize = 13.sp, maxLines = 1)
-            Text(hex, color = theme.textColorSecondary, fontSize = 13.sp, maxLines = 1)
+            if (label != null) Text(label, color = theme.textColor, fontSize = LocalTheme.current.typography.label.fontSize, maxLines = 1)
+            Text(hex, color = theme.textColorSecondary, fontSize = LocalTheme.current.typography.label.fontSize, maxLines = 1)
         }
         if (expanded) {
             val model = rememberColorPickerModel(color.copy(alpha = 1f), hasAlpha = false)

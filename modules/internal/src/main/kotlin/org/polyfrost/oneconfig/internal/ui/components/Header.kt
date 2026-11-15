@@ -35,7 +35,6 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -48,6 +47,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.Text as KitText
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
@@ -212,20 +212,21 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
 @Composable
 private fun TitleBreadcrumb(segments: List<TitleSegment>, controller: ShellNavigation) {
     val theme = LocalTheme.current
+    val style = theme.typography.display.copy(fontWeight = FontWeight.Medium)
     Row(verticalAlignment = Alignment.CenterVertically) {
         segments.forEachIndexed { index, segment ->
             val route = segment.route.takeIf { index < segments.lastIndex }
             if (index > 0) {
-                Text("/", Modifier.padding(horizontal = 6.dp), color = theme.textColorSecondary, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                KitText("/", Modifier.padding(horizontal = 6.dp), theme.textColorSecondary, style)
             }
             if (route == null) {
-                Text(segment.text, color = theme.textColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                KitText(segment.text.asRenderText(), color = theme.textColor, style = style, legacyFormatting = true)
             } else {
                 val interactionSource = rememberInteractionSource()
                 val isHovered by interactionSource.collectIsHoveredAsState()
                 val color by Motion.animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
-                Text(
-                    segment.text,
+                KitText(
+                    segment.text.asRenderText(),
                     Modifier.oneConfigClickable(
                         segment.text.asRenderText(),
                         { controller.navigate(route) },
@@ -234,8 +235,8 @@ private fun TitleBreadcrumb(segments: List<TitleSegment>, controller: ShellNavig
                         interactionSource = interactionSource,
                     ),
                     color = color,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = style,
+                    legacyFormatting = true,
                 )
             }
         }
@@ -261,12 +262,8 @@ private fun OpenOriginalScreenButton(runnable: Runnable) {
 @Composable
 private fun TitleAuthorByline(authors: String?) {
     val byline = authors?.authorByline() ?: return
-    Text(
-        byline,
-        color = LocalTheme.current.textColorSecondary,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-    )
+    val theme = LocalTheme.current
+    KitText(byline, color = theme.textColorSecondary, style = theme.typography.bodyMedium)
 }
 
 private fun String.authorByline(): String? {
@@ -293,13 +290,13 @@ private fun TitleInfoTooltip(title: HeaderTitle) {
         tooltip = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (authors != null) {
-                    Text(translated("oneconfig.header.author", "Author: %s", authors), color = theme.textColor, fontSize = 12.sp)
+                    KitText(translated("oneconfig.header.author", "Author: %s", authors), color = theme.textColor, style = theme.typography.small)
                 }
                 if (credits != null) {
-                    Text(translated("oneconfig.header.credits", "Credits: %s", credits), color = theme.textColor, fontSize = 12.sp)
+                    KitText(translated("oneconfig.header.credits", "Credits: %s", credits), color = theme.textColor, style = theme.typography.small)
                 }
                 if (version != null) {
-                    Text(translated("oneconfig.header.version", "Version: %s", version), color = theme.textColor, fontSize = 12.sp)
+                    KitText(translated("oneconfig.header.version", "Version: %s", version), color = theme.textColor, style = theme.typography.small)
                 }
             }
         },

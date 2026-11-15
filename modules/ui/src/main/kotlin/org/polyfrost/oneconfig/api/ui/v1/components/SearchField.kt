@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
-import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 private val CLEAR_BUTTON_SIZE = 22.dp
 
@@ -152,7 +151,7 @@ private fun SearchFieldCore(
         focusRequester,
         onSubmit,
         interactionSource,
-        fill = OneConfigTheme.current.chipBackground,
+        fill = FieldDefaults.searchFill,
         glass = true,
         hidePlaceholderWhenFocused = hidePlaceholderWhenFocused,
     )

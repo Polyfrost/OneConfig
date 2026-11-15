@@ -16,47 +16,95 @@ import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 
 private val LocalFeedbackDepth = staticCompositionLocalOf { 0 }
 
+private val LocalFeedbackOwner = staticCompositionLocalOf<Any?> { null }
+
+private val LocalFeedbackSuppressed = staticCompositionLocalOf { false }
+
 @InternalOneConfigUiApi
 @ExperimentalOneConfigUiApi
 @Composable
 public fun FeedbackHosts(content: @Composable () -> Unit) {
+    FeedbackHosts(null, content)
+}
+
+@InternalOneConfigUiApi
+@ExperimentalOneConfigUiApi
+@Composable
+public fun FeedbackHosts(owner: Any?, content: @Composable () -> Unit) {
+    if (LocalFeedbackSuppressed.current) {
+        content()
+        return
+    }
     val depth = LocalFeedbackDepth.current + 1
-    val confirmSlot = Confirm.hosts.rememberSlot(fallback = false, depth = depth)
-    val toastSlot = Toasts.hosts.rememberSlot(fallback = true, depth = depth)
-    CompositionLocalProvider(LocalFeedbackDepth provides depth) {
+    val fallbackOwner = rememberFeedbackOwner()
+    val resolved = owner ?: fallbackOwner
+    val confirmSlot = Confirm.hosts.rememberSlot(fallback = false, depth = depth, owner = resolved)
+    val toastSlot = Toasts.hosts.rememberSlot(fallback = true, depth = depth, owner = resolved)
+    CompositionLocalProvider(LocalFeedbackDepth provides depth, LocalFeedbackOwner provides resolved) {
         content()
         ConfirmHost(confirmSlot)
         ToastHostLayer(toastSlot, Modifier, ToastDefaults.alignment)
     }
 }
 
+@InternalOneConfigUiApi
+@ExperimentalOneConfigUiApi
+@Composable
+public fun WithoutFeedbackHosts(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalFeedbackSuppressed provides true, content = content)
+}
+
+@InternalOneConfigUiApi
+@ExperimentalOneConfigUiApi
+public fun releaseFeedback(owner: Any) {
+    Confirm.release(owner)
+    Toasts.release(owner)
+}
+
 @Composable
 internal fun feedbackDepth(): Int = LocalFeedbackDepth.current
 
-internal class HostStack {
-    private class Entry(val token: Any, val fallback: Boolean, val depth: Int, val owner: Any?)
+@Composable
+internal fun feedbackSuppressed(): Boolean = LocalFeedbackSuppressed.current
+
+@Composable
+internal fun rememberFeedbackOwner(): Any? {
+    val inherited = LocalFeedbackOwner.current
+    val screen = remember { currentScreen() }
+    return inherited ?: screen
+}
+
+internal class HostSlot(val owner: Any?)
+
+internal class HostStack(private val onOwnerGone: (Any) -> Unit) {
+    private class Entry(val slot: HostSlot, val fallback: Boolean, val depth: Int)
 
     private val entries = mutableStateListOf<Entry>()
 
     @Composable
-    fun rememberSlot(fallback: Boolean, depth: Int): Any {
-        val token = remember { Any() }
-        val owner = remember { currentScreen() }
-        DisposableEffect(token, fallback, depth) {
-            val entry = Entry(token, fallback, depth, owner)
+    fun rememberSlot(fallback: Boolean, depth: Int, owner: Any?): HostSlot {
+        val slot = remember(owner) { HostSlot(owner) }
+        DisposableEffect(slot, fallback, depth) {
+            val entry = Entry(slot, fallback, depth)
             entries += entry
-            onDispose { entries -= entry }
+            onDispose {
+                entries -= entry
+                val gone = slot.owner
+                if (gone != null && !hosts(gone)) onOwnerGone(gone)
+            }
         }
-        return token
+        return slot
     }
 
-    fun isActive(token: Any): Boolean {
-        val screen = currentScreen()
-        val onScreen = if (screen == null) emptyList() else entries.filter { it.owner === screen }
-        val candidates = onScreen.ifEmpty { entries.toList() }
-        val preferred = candidates.filter { !it.fallback }.ifEmpty { candidates }
+    fun hosts(owner: Any?): Boolean = owner != null && entries.any { it.slot.owner === owner }
+
+    fun isActive(slot: HostSlot): Boolean {
+        val screen = currentScreen() ?: return false
+        if (slot.owner !== screen) return false
+        val onScreen = entries.filter { it.slot.owner === screen }
+        val preferred = onScreen.filter { !it.fallback }.ifEmpty { onScreen }
         val deepest = preferred.maxOfOrNull { it.depth } ?: return false
-        return preferred.lastOrNull { it.depth == deepest }?.token === token
+        return preferred.lastOrNull { it.depth == deepest }?.slot === slot
     }
 }
 

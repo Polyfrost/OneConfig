@@ -13,6 +13,7 @@ public class McTextNode : PolyNode() {
     public var scale: Float = 1f
     public var outlineColor: PolyColor? = null
     public var textProvider: (() -> String)? = null
+    public var literal: Boolean = false
     private var measuredFonts = -1
 
     override fun measureContent() {
@@ -25,25 +26,26 @@ public class McTextNode : PolyNode() {
     public fun remeasure() {
         measuredFonts = FontManager.revision
         val lines = text.lines()
-        style.width = PolySize.Px(lines.maxOf {  McFontQueue.measureTextWidth(it, scale) })
+        style.width = PolySize.Px(lines.maxOf {  McFontQueue.measureTextWidth(it, scale, literal) })
         style.height = PolySize.Px(McFontQueue.measureBlockHeight(lines.size, scale))
     }
 
     override fun render(ctx: RenderContext) {
         val c = color
         val outline = outlineColor
+        val lit = literal
         if (c.chroma && outline == null) {
-            ctx.mcTextLive(text, x, y, { c.argb }, shadow, scale)
+            ctx.mcTextLive(text, x, y, { c.argb }, shadow, scale, lit)
         } else if (c.chroma || outline?.chroma == true) {
             val t = text; val px = x; val py = y; val sh = shadow; val sc = scale
-            ctx.live { draw(this, t, px, py, c, outline, sh, sc) }
+            ctx.live { draw(this, t, px, py, c, outline, sh, sc, lit) }
         } else {
-            draw(ctx, text, x, y, c, outline, shadow, scale)
+            draw(ctx, text, x, y, c, outline, shadow, scale, lit)
         }
     }
 
-    private fun draw(ctx: RenderContext, text: String, x: Float, y: Float, color: PolyColor, outline: PolyColor?, shadow: Boolean, scale: Float) {
-        if (outline != null) ctx.mcTextOutline(text, x, y, color.argb, outline.argb, scale)
-        else ctx.mcText(text, x, y, color.argb, shadow, scale)
+    private fun draw(ctx: RenderContext, text: String, x: Float, y: Float, color: PolyColor, outline: PolyColor?, shadow: Boolean, scale: Float, literal: Boolean) {
+        if (outline != null) ctx.mcTextOutline(text, x, y, color.argb, outline.argb, scale, literal)
+        else ctx.mcText(text, x, y, color.argb, shadow, scale, literal)
     }
 }

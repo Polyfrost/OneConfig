@@ -6,7 +6,9 @@ import com.mojang.blaze3d.platform.InputConstants
 import java.util.IdentityHashMap
 import net.minecraft.client.KeyMapping
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.dsl.visualizer
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -60,6 +62,7 @@ object VanillaKeyMappingProperties {
         private var value: OneConfigKeybind? = read(mapping)
         private var incoming: OneConfigKeybind? = null
         private var writing = false
+        private var overwriting = false
 
         init {
             visualizer = Visualizer.KeybindVisualizer::class.java
@@ -71,7 +74,18 @@ object VanillaKeyMappingProperties {
 
         override fun get(): OneConfigKeybind? = value
 
+        override fun overwrite(with: Node, preserveMissingOptions: Boolean, skipOverwritten: Boolean, root: Tree?) {
+            overwriting = true
+            try {
+                super.overwrite(with, preserveMissingOptions, skipOverwritten, root)
+            } finally {
+                overwriting = false
+                value = read(mapping)
+            }
+        }
+
         override fun set0(value: OneConfigKeybind?) {
+            if (overwriting) return
             if (value != null && value === incoming) {
                 this.value = value
                 return

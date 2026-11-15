@@ -50,7 +50,10 @@ public object McGlyphs {
 
     /** Width of [text], honoring § formatting codes, as the tessellator draws it. */
     @JvmStatic
-    public fun width(text: String, scale: Float): Float {
+    public fun width(text: String, scale: Float): Float = width(text, scale, false)
+
+    @JvmStatic
+    public fun width(text: String, scale: Float, literal: Boolean): Float {
         val source = source
         var w = 0f
         var bold = false
@@ -58,7 +61,7 @@ public object McGlyphs {
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
-            if (cp == 0xA7 && i < text.length) {
+            if (!literal && cp == 0xA7 && i < text.length) {
                 val code = text[i++].lowercaseChar()
                 if (code == 'l') bold = true else if (code == 'r' || code in '0'..'9' || code in 'a'..'f') bold = false
                 continue

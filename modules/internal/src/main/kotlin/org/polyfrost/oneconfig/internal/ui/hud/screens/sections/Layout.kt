@@ -25,9 +25,10 @@ import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
+import org.polyfrost.oneconfig.api.ui.v1.components.Switch
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
-import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.HudPositionTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
@@ -84,9 +85,10 @@ fun Layout(hud: Hud?, query: String) {
                     if (scalable) {
                         HudSettingTarget(hud, "customScale") {
                             LabeledControl(hudPanelText("scale", "Scale")) {
-                                NumberSpinner(
+                                NumberField(
                                     hud.customScale, { Snapshot.withMutableSnapshot { hud.customScale = it } },
-                                    0.25f, 4f, 0.25f, width = GridCol3, unit = "x"
+                                    range = 0.25f..4f, step = 0.25f, roundToDecimals = false, fractionDigits = 2, unit = "x", width = GridCol3,
+                                    fontSize = 13.sp,
                                 )
                             }
                         }
@@ -95,20 +97,24 @@ fun Layout(hud: Hud?, query: String) {
                 hud.externalPlacement?.takeIf { it.moved || it.scaled }?.let {
                     val secondary = LocalTheme.current.textColorSecondary
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(placementLabel(it), color = secondary, fontSize = 12.sp)
-                        if (!it.moved && it.scaled) Text(hudPanelText("reset_to_follow", "Reset position to follow it"), color = secondary, fontSize = 12.sp)
+                        Text(placementLabel(it), color = secondary, fontSize = OneConfigTheme.typography.small.fontSize)
+                        if (!it.moved && it.scaled) Text(hudPanelText("reset_to_follow", "Reset position to follow it"), color = secondary, fontSize = OneConfigTheme.typography.small.fontSize)
                     }
                 }
                 HudSettingTarget(hud, "locked") {
-                    SwitchRow(hudPanelText("lock_position", "Lock position"), locked) {
-                        Snapshot.withMutableSnapshot { locked = it; hud.locked = it }
-                    }
+                    SwitchRow(
+                        hudPanelText("lock_position", "Lock position"),
+                        locked,
+                        { Snapshot.withMutableSnapshot { locked = it; hud.locked = it } },
+                    )
                 }
                 if (hud !is LegacyHudMarker) {
                     HudSettingTarget(hud, "useGuiScale") {
-                        SwitchRow(hudPanelText("follow_gui_scale", "Follow GUI scale"), hud.useGuiScale) {
-                            Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) }
-                        }
+                        SwitchRow(
+                            hudPanelText("follow_gui_scale", "Follow GUI scale"),
+                            hud.useGuiScale,
+                            { Snapshot.withMutableSnapshot { setFollowGuiScale(hud, it) } },
+                        )
                     }
                 }
             }
@@ -124,17 +130,21 @@ fun Layout(hud: Hud?, query: String) {
                         staticWidth,
                         row = {
                             HudSettingTarget(hud, "staticWidth") {
-                                SwitchRow(hudPanelText("static_size", "Static size"), staticWidth) {
-                                    Snapshot.withMutableSnapshot {
-                                        staticWidth = it; hud.staticWidth = it
-                                        if (it) {
-                                            staticW = hud.staticW
-                                            staticH = hud.staticH
-                                        } else {
-                                            hud.updateAndRecalculate()
+                                SwitchRow(
+                                    hudPanelText("static_size", "Static size"),
+                                    staticWidth,
+                                    {
+                                        Snapshot.withMutableSnapshot {
+                                            staticWidth = it; hud.staticWidth = it
+                                            if (it) {
+                                                staticW = hud.staticW
+                                                staticH = hud.staticH
+                                            } else {
+                                                hud.updateAndRecalculate()
+                                            }
                                         }
-                                    }
-                                }
+                                    },
+                                )
                             }
                         },
                         folded = {
@@ -143,9 +153,10 @@ fun Layout(hud: Hud?, query: String) {
                                 first = {
                                     HudSettingTarget(hud, "staticW") {
                                         LabeledControl(hudPanelText("width", "Width")) {
-                                            NumberSpinner(
+                                            NumberField(
                                                 staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
-                                                20f, 2000f, 1f, width = col1, unit = "px", scrub = true, math = true,
+                                                range = 20f..2000f, roundToDecimals = false, fractionDigits = 2, unit = "px", scrub = true, width = col1, commitOnType = false,
+                                                fontSize = 13.sp,
                                             )
                                         }
                                     }
@@ -153,9 +164,10 @@ fun Layout(hud: Hud?, query: String) {
                                 second = {
                                     HudSettingTarget(hud, "staticH") {
                                         LabeledControl(hudPanelText("height", "Height")) {
-                                            NumberSpinner(
+                                            NumberField(
                                                 staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
-                                                8f, 2000f, 1f, width = GridCol2, unit = "px", scrub = true, math = true,
+                                                range = 8f..2000f, roundToDecimals = false, fractionDigits = 2, unit = "px", scrub = true, width = GridCol2, commitOnType = false,
+                                                fontSize = 13.sp,
                                             )
                                         }
                                     }
@@ -185,7 +197,7 @@ fun Layout(hud: Hud?, query: String) {
                                     if (staticWidth) hudPanelText("content_alignment.hint", "Aligns the content inside the fixed box")
                                     else hudPanelText("anchor.hint", "Pins this corner or edge in place;\nthe HUD only grows away from it"),
                                     color = LocalTheme.current.textColorSecondary,
-                                    fontSize = 12.sp
+                                    fontSize = OneConfigTheme.typography.small.fontSize
                                 )
                             }
                         }
@@ -199,14 +211,14 @@ fun Layout(hud: Hud?, query: String) {
                 ) { col1 ->
                     val perSideSwitch: @Composable () -> Unit = {
                         LabeledControl(hudPanelText("per_side", "Per side")) {
-                            SwitchControl(perSide) {
+                            Switch(perSide, {
                                 perSide = it
                                 // leaving per side mode evens the sides out so the two fields show what is applied
                                 if (!it) Snapshot.withMutableSnapshot {
                                     padRight = padLeft; hud.padRight = padLeft
                                     padBottom = padTop; hud.padBottom = padTop
                                 }
-                            }
+                            }, stateLabel = true)
                         }
                     }
 
@@ -255,7 +267,7 @@ fun Layout(hud: Hud?, query: String) {
 @Composable
 private fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float) -> Unit) {
     LabeledControl(label) {
-        NumberSpinner(value, { Snapshot.withMutableSnapshot { onChange(it) } }, 0f, 100f, 1f, width = width, unit = "px")
+        NumberField(value, { Snapshot.withMutableSnapshot { onChange(it) } }, range = 0f..100f, roundToDecimals = false, fractionDigits = 2, unit = "px", width = width, fontSize = 13.sp)
     }
 }
 
@@ -299,11 +311,12 @@ private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit)
         first = {
             HudPositionTarget(hud, lockNotice) {
                 LabeledControl("X") {
-                    NumberSpinner(
+                    NumberField(
                         origin.x, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, v - it.x, 0f) } },
-                        -screenW, screenW * 2f, 1f, width = col1, unit = "px",
-                        onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
-                        onEditStart = startMove, liveValue = { selectionOrigin(selection)?.x ?: origin.x },
+                        range = -screenW..screenW * 2f, roundToDecimals = false, fractionDigits = 2, unit = "px", enabled = !locked,
+                        scrub = true, width = col1, onScrubStart = startMove, onEditEnd = endMove,
+                        liveValue = { selectionOrigin(selection)?.x ?: origin.x }, commitOnType = false,
+                        fontSize = 13.sp,
                     )
                 }
             }
@@ -311,11 +324,12 @@ private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit)
         second = {
             HudPositionTarget(hud, lockNotice) {
                 LabeledControl("Y") {
-                    NumberSpinner(
+                    NumberField(
                         origin.y, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, 0f, v - it.y) } },
-                        -screenH, screenH * 2f, 1f, width = GridCol2, unit = "px",
-                        onEditEnd = endMove, scrub = true, math = true, enabled = !locked,
-                        onEditStart = startMove, liveValue = { selectionOrigin(selection)?.y ?: origin.y },
+                        range = -screenH..screenH * 2f, roundToDecimals = false, fractionDigits = 2, unit = "px", enabled = !locked,
+                        scrub = true, width = GridCol2, onScrubStart = startMove, onEditEnd = endMove,
+                        liveValue = { selectionOrigin(selection)?.y ?: origin.y }, commitOnType = false,
+                        fontSize = 13.sp,
                     )
                 }
             }

@@ -224,7 +224,7 @@ private fun ProgressBar(progress: () -> Float) {
         modifier = PolyModifier
             .width(CONTENT_WIDTH)
             .height(6f)
-            .background(accent.multiplyAlpha(0.5f), NotificationTheme.radiusProgress),
+            .background(NotificationTheme.progressTrackColor(), NotificationTheme.radiusProgress),
     ) {
         PolyCanvas(PolyModifier.width(CONTENT_WIDTH).height(6f), live = true) { x, y, _, h ->
             val fillWidth = (CONTENT_WIDTH * progress()).coerceIn(0f, CONTENT_WIDTH)

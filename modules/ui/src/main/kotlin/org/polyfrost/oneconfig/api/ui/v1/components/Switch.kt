@@ -5,17 +5,14 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -26,22 +23,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 
-private val TRACK_WIDTH = 42.dp
-private val TRACK_HEIGHT = 21.dp
-private val THUMB_INSET = 3.dp
 private const val TRACK_HOVER_ALPHA = 0.15f
-private const val FADE_MILLIS = 150
+
+internal fun restTrackColor(theme: OneConfigUITheme): Color = theme.controlTrackColor
+
+@ExperimentalOneConfigUiApi
+public object SwitchDefaults {
+    public val trackWidth: Dp = 42.dp
+
+    public val trackHeight: Dp = 21.dp
+
+    public val thumbInset: Dp = 3.dp
+
+    public val trackColor: Color
+        @Composable get() = restTrackColor(OneConfigTheme.current)
+}
 
 @ExperimentalOneConfigUiApi
 @Composable
@@ -51,131 +60,61 @@ public fun Switch(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    label: String? = null,
+    trackColor: Color = Color.Unspecified,
+    stateLabel: Boolean = true,
 ) {
     val theme = OneConfigTheme.current
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
-    val stateLabel = if (checked) formOnLabel() else formOffLabel()
-    Row(
-        modifier = modifier.graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(theme.spacing.m),
-    ) {
-        SwitchStateLabel(stateLabel)
-        SwitchTrack(
-            checked,
-            hovered && enabled,
-            Modifier.oneConfigClickable(
-                stateLabel,
-                { onCheckedChange(!checked) },
-                role = A11yRole.Switch,
-                enabled = enabled,
-                checked = checked,
-                shape = theme.circleShape,
-                indication = false,
-                interactionSource = source,
-            ),
-        )
-    }
-}
-
-@ExperimentalOneConfigUiApi
-@Composable
-public fun SwitchRow(
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    description: String? = null,
-    enabled: Boolean = true,
-    interactionSource: MutableInteractionSource? = null,
-) {
-    val theme = OneConfigTheme.current
-    val typography = theme.typography
-    val spacing = theme.spacing
-    val source = interactionSource ?: remember { MutableInteractionSource() }
-    val hovered by source.collectIsHoveredAsState()
-    val shape = theme.buttonShape
+    val state = if (checked) formOnLabel() else formOffLabel()
+    val circle = theme.circleShape
     Row(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
-            .heightIn(min = ControlSize.Regular.height)
-            .clip(shape)
             .oneConfigClickable(
-                title,
+                label ?: state,
                 { onCheckedChange(!checked) },
                 role = A11yRole.Switch,
                 enabled = enabled,
                 checked = checked,
-                shape = shape,
+                shape = if (stateLabel) theme.buttonShape else circle,
+                indication = false,
                 interactionSource = source,
-            )
-            .padding(horizontal = spacing.m, vertical = spacing.s),
+            ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(spacing.l),
+        horizontalArrangement = Arrangement.spacedBy(theme.spacing.m),
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
-            Text(
-                title,
-                Modifier,
-                theme.textColor,
-                OneConfigTheme.typography.body.copy(fontSize = typography.body.fontSize, fontWeight = typography.body.fontWeight ?: FontWeight.Normal),
-                Int.MAX_VALUE,
-                TextOverflow.Clip,
-                textAlign = TextAlign.Start,
-            )
-            if (description != null) {
-                Text(
-                    description,
-                    Modifier,
-                    theme.textColorSecondary,
-                    OneConfigTheme.typography.body.copy(fontSize = typography.small.fontSize, fontWeight = typography.small.fontWeight ?: FontWeight.Normal),
-                    Int.MAX_VALUE,
-                    TextOverflow.Clip,
-                    textAlign = TextAlign.Start,
-                )
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(spacing.m)) {
-            SwitchStateLabel(if (checked) formOnLabel() else formOffLabel())
-            SwitchTrack(checked, hovered && enabled, Modifier)
-        }
+        if (stateLabel) ControlStateLabel(state)
+        SwitchTrack(checked, hovered && enabled, trackColor, Modifier)
     }
 }
 
 @Composable
-private fun SwitchStateLabel(text: String) {
+internal fun ControlStateLabel(text: String) {
     val theme = OneConfigTheme.current
-    val style = theme.typography.small
-    Text(
-        text,
-        Modifier,
-        theme.textColorSecondary,
-        OneConfigTheme.typography.body.copy(fontSize = style.fontSize, fontWeight = style.fontWeight ?: FontWeight.Normal),
-        1,
-        TextOverflow.Clip,
-        textAlign = TextAlign.Start,
-    )
+    Text(text, Modifier, theme.textColorSecondary, theme.typography.small, 1, TextOverflow.Clip, textAlign = TextAlign.Start)
 }
 
 @Composable
-private fun SwitchTrack(checked: Boolean, hovered: Boolean, modifier: Modifier) {
+internal fun SwitchTrack(checked: Boolean, hovered: Boolean, trackColor: Color, modifier: Modifier) {
     val theme = OneConfigTheme.current
     val shape = theme.circleShape
-    val accentAlpha = animateFloatAsState(if (checked) 1f else 0f, Motion.spec(tween(FADE_MILLIS)), label = "switchAccent")
+    val rest = if (trackColor.isSpecified) trackColor else restTrackColor(theme)
+    val accentAlpha = animateFloatAsState(if (checked) 1f else 0f, Motion.tweenSpec(Motion.standard), label = "switchAccent")
     val thumbProgress = animateFloatAsState(if (checked) 1f else 0f, Motion.spec(spring()), label = "switchThumb")
     val border = animateColorAsState(
         if (hovered) theme.textColor.copy(alpha = TRACK_HOVER_ALPHA) else Color.Transparent,
-        Motion.spec(tween(FADE_MILLIS)),
+        Motion.tweenSpec(Motion.standard),
         label = "switchBorder",
     )
     Box(
         modifier = modifier
-            .size(TRACK_WIDTH, TRACK_HEIGHT)
+            .size(SwitchDefaults.trackWidth, SwitchDefaults.trackHeight)
             .clip(shape)
-            .background(theme.controlTrackColor)
+            .background(rest)
             .formFrame(shape, theme.accentBrush, accentAlpha = { accentAlpha.value }, border = { border.value })
-            .padding(THUMB_INSET),
+            .padding(SwitchDefaults.thumbInset),
     ) {
         Box(
             modifier = Modifier

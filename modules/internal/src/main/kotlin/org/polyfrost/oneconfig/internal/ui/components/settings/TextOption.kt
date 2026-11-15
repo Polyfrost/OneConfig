@@ -9,10 +9,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
+import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun TextOption(data: TextOptionData) {
@@ -34,6 +34,6 @@ fun TextOption(data: TextOptionData, enabled: Boolean) {
         invalid = !valid,
         singleLine = !data.multiline,
         leadingIcon = "text-input",
-        fontSize = 14.sp,
+        fontSize = LocalTheme.current.typography.body.fontSize,
     )
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,8 +34,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.glassBridge
@@ -42,6 +45,9 @@ import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 private const val SCROLLBAR_IDLE_ALPHA = 0.40f
 private const val SCROLLBAR_HOVER_ALPHA = 0.70f
+private const val SCROLLBAR_HOVER_MILLIS = 300
+private val ScrollbarThickness = 8.dp
+private val ScrollbarMinimalHeight = 24.dp
 
 private val MaskOpaque = Color.Black
 
@@ -59,38 +65,115 @@ public fun ScrollContainer(
     orientation: Orientation = Orientation.Vertical,
     scrollbar: Boolean = true,
     fadingEdges: Boolean = false,
+    gutter: Dp? = null,
+    smoothWheel: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val vertical = orientation == Orientation.Vertical
-    val spacing = OneConfigTheme.current.spacing
     val style = themedScrollbarStyle()
-    val gutter = if (scrollbar) style.thickness + spacing.xs * 2 else 0.dp
-    Box(modifier.smoothWheelScroll(state, orientation), propagateMinConstraints = true) {
+    val reserved = if (scrollbar) gutter ?: defaultGutter(style) else 0.dp
+    Box(modifier.then(if (smoothWheel) Modifier.smoothWheelScroll(state, orientation) else Modifier), propagateMinConstraints = true) {
         val viewport = Modifier
             .then(if (fadingEdges) Modifier.fadingEdgesMask(state, ScrollContainerFade, orientation) else Modifier)
             .then(if (vertical) Modifier.verticalScroll(state) else Modifier.horizontalScroll(state))
         if (vertical) {
-            Column(viewport.padding(end = gutter)) { content() }
+            Column(viewport.padding(end = reserved)) { content() }
         } else {
-            Row(viewport.padding(bottom = gutter)) { content() }
+            Row(viewport.padding(bottom = reserved)) { content() }
         }
-        if (scrollbar) {
-            Box(Modifier.matchParentSize()) {
-                ThemedScrollbar(
-                    rememberScrollbarAdapter(state),
-                    horizontal = !vertical,
-                    reverse = false,
-                    style = style,
-                    modifier = if (vertical) {
-                        Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = spacing.xs)
-                    } else {
-                        Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = spacing.xs)
-                    },
-                )
-            }
-        }
+        if (scrollbar) GutterScrollbar(rememberScrollbarAdapter(state), !vertical, false, style, reserved)
     }
 }
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun ScrollContainer(
+    state: LazyListState,
+    modifier: Modifier = Modifier,
+    gutter: Dp? = null,
+    scrollbar: Boolean = true,
+    fadingEdges: Boolean = false,
+    adapter: ScrollbarAdapter? = null,
+    reserveGutter: Boolean = false,
+    smoothWheel: Boolean = true,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val horizontal by remember(state) { derivedStateOf { state.layoutInfo.orientation == Orientation.Horizontal } }
+    val reverse by remember(state) { derivedStateOf { state.layoutInfo.reverseLayout } }
+    val resolved = adapter ?: rememberScrollbarAdapter(state)
+    LazyScrollContainer(state, resolved, horizontal, reverse, modifier, gutter, scrollbar, fadingEdges, reserveGutter, smoothWheel, content)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun ScrollContainer(
+    state: LazyGridState,
+    modifier: Modifier = Modifier,
+    gutter: Dp? = null,
+    scrollbar: Boolean = true,
+    fadingEdges: Boolean = false,
+    adapter: ScrollbarAdapter? = null,
+    reserveGutter: Boolean = false,
+    smoothWheel: Boolean = true,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val horizontal by remember(state) { derivedStateOf { state.layoutInfo.orientation == Orientation.Horizontal } }
+    val reverse by remember(state) { derivedStateOf { state.layoutInfo.reverseLayout } }
+    val resolved = adapter ?: rememberScrollbarAdapter(state)
+    LazyScrollContainer(state, resolved, horizontal, reverse, modifier, gutter, scrollbar, fadingEdges, reserveGutter, smoothWheel, content)
+}
+
+@Composable
+private fun LazyScrollContainer(
+    state: ScrollableState,
+    adapter: ScrollbarAdapter,
+    horizontal: Boolean,
+    reverse: Boolean,
+    modifier: Modifier,
+    gutter: Dp?,
+    scrollbar: Boolean,
+    fadingEdges: Boolean,
+    reserveGutter: Boolean,
+    smoothWheel: Boolean,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val orientation = if (horizontal) Orientation.Horizontal else Orientation.Vertical
+    val style = themedScrollbarStyle()
+    val width = gutter ?: defaultGutter(style)
+    val reserved = scrollbar && reserveGutter
+    Box(modifier.then(if (smoothWheel) Modifier.smoothWheelScroll(state, orientation) else Modifier)) {
+        if (fadingEdges || reserved) {
+            val viewport = Modifier
+                .then(if (!reserved) Modifier else if (horizontal) Modifier.padding(bottom = width) else Modifier.padding(end = width))
+                .then(if (fadingEdges) Modifier.fadingEdgesMask(state, ScrollContainerFade, orientation) else Modifier)
+            Box(viewport) { content() }
+        } else {
+            content()
+        }
+        if (scrollbar) GutterScrollbar(adapter, horizontal, reverse, style, width)
+    }
+}
+
+@Composable
+private fun BoxScope.GutterScrollbar(adapter: ScrollbarAdapter, horizontal: Boolean, reverse: Boolean, style: ScrollbarStyle, gutter: Dp) {
+    val inset = ((gutter - style.thickness) / 2).coerceAtLeast(0.dp)
+    Box(Modifier.matchParentSize()) {
+        ThemedScrollbar(
+            adapter,
+            horizontal = horizontal,
+            reverse = reverse,
+            style = style,
+            modifier = if (horizontal) {
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = inset)
+            } else {
+                Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = inset)
+            },
+        )
+    }
+}
+
+@Composable
+private fun defaultGutter(style: ScrollbarStyle): Dp = style.thickness + OneConfigTheme.current.spacing.xs * 2
 
 @ExperimentalOneConfigUiApi
 @Composable
@@ -133,21 +216,31 @@ internal fun Modifier.fadingEdgesMask(state: ScrollableState, length: Dp, orient
             drawRect(brush, blendMode = BlendMode.DstIn)
         }
 
+@ExperimentalOneConfigUiApi
 @Composable
-internal fun themedScrollbarStyle(): ScrollbarStyle {
+public fun themedScrollbarStyle(): ScrollbarStyle {
     val base = LocalScrollbarStyle.current
     val color = OneConfigTheme.current.textColorSecondary
     return remember(base, color) {
-        ScrollbarStyle(
-            minimalHeight = base.minimalHeight,
-            thickness = base.thickness,
-            shape = base.shape,
-            hoverDurationMillis = base.hoverDurationMillis,
-            unhoverColor = color.copy(alpha = SCROLLBAR_IDLE_ALPHA),
-            hoverColor = color.copy(alpha = SCROLLBAR_HOVER_ALPHA),
-        )
+        themedScrollbarStyle(color, base.shape, base.thickness, base.minimalHeight, base.hoverDurationMillis)
     }
 }
+
+@ExperimentalOneConfigUiApi
+public fun themedScrollbarStyle(
+    color: Color,
+    shape: Shape,
+    thickness: Dp = ScrollbarThickness,
+    minimalHeight: Dp = ScrollbarMinimalHeight,
+    hoverDurationMillis: Int = SCROLLBAR_HOVER_MILLIS,
+): ScrollbarStyle = ScrollbarStyle(
+    minimalHeight = minimalHeight,
+    thickness = thickness,
+    shape = shape,
+    hoverDurationMillis = hoverDurationMillis,
+    unhoverColor = color.copy(alpha = SCROLLBAR_IDLE_ALPHA),
+    hoverColor = color.copy(alpha = SCROLLBAR_HOVER_ALPHA),
+)
 
 @Composable
 private fun ThemedScrollbar(adapter: ScrollbarAdapter, horizontal: Boolean, reverse: Boolean, style: ScrollbarStyle, modifier: Modifier) {

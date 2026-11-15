@@ -81,7 +81,6 @@ private fun spanStyle(style: Style) = SpanStyle(
 )
 
 @Composable
-@Suppress("UNUSED_PARAMETER")
 fun Tooltip(
     text: @Composable () -> Unit,
     modifier: Modifier,
@@ -93,6 +92,7 @@ fun Tooltip(
     TooltipBox(
         tooltip = { Box(modifier) { text() } },
         placement = tooltipPlacement(anchor, alignment),
+        offset = offset,
         content = content,
     )
 }

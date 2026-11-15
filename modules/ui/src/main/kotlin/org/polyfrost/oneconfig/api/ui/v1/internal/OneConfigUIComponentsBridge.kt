@@ -146,6 +146,9 @@ public interface OneConfigUIComponentsBridge {
     public fun popupSurface(modifier: Modifier, shape: Shape): Modifier
 
     @Composable
+    public fun popupSurface(modifier: Modifier, shape: Shape, blur: Boolean, glass: Boolean): Modifier
+
+    @Composable
     public fun Popup(
         positionProvider: PopupPositionProvider,
         onDismissRequest: (() -> Unit)?,

@@ -174,10 +174,27 @@ private fun applyValue(prop: Property<*>, raw: Any?): Boolean = try {
         plain == null -> applyNull(prop as Property<Any?>, current)
         value == null -> false
         value is OneConfigKeybind && current is OneConfigKeybind -> applyKeybind(prop as Property<Any?>, current, value)
-        else -> !(prop as Property<Any?>).set(value)
+        else -> !(prop as Property<Any?>).set(clampToRange(prop, value))
     }
 } catch (e: Exception) {
     false
+}
+
+private fun clampToRange(prop: Property<*>, value: Any): Any {
+    if (value !is Number) return value
+    val min = prop[MetaKeys.MIN]?.toDouble() ?: Double.NEGATIVE_INFINITY
+    val max = prop[MetaKeys.MAX]?.toDouble() ?: Double.POSITIVE_INFINITY
+    val raw = value.toDouble()
+    if (min > max || raw.isNaN() || raw in min..max) return value
+    val clamped = raw.coerceIn(min, max)
+    return when (value) {
+        is Int -> clamped.toInt()
+        is Long -> clamped.toLong()
+        is Short -> clamped.toInt().toShort()
+        is Byte -> clamped.toInt().toByte()
+        is Float -> clamped.toFloat()
+        else -> clamped
+    }
 }
 
 private fun applyNull(prop: Property<Any?>, current: Any?): Boolean {

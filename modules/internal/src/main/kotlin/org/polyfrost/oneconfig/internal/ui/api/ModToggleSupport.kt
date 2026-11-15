@@ -6,6 +6,8 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.atomic.AtomicLong
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.NO_MASTER_SWITCH_KEY
+import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
@@ -35,6 +37,14 @@ fun isMasterSwitchName(name: String): Boolean = masterSwitchName(name) in MASTER
 
 const val MASTER_TOGGLE = "masterToggle"
 
+const val NO_MASTER_SWITCH = NO_MASTER_SWITCH_KEY
+
+const val LOCK_EXEMPT = "lockExempt"
+
+fun Property<*>.isMarkedSwitch(): Boolean = getMetadata<Boolean>(MASTER_TOGGLE) == true
+
+fun Node.isLockExempt(): Boolean = getMetadata<Boolean>(LOCK_EXEMPT) == true
+
 fun Tree.findMarkedSwitch(): Property<*>? {
     for (node in map.values) {
         val found = when (node) {
@@ -57,8 +67,10 @@ fun Tree.findMarkedSwitch(): Property<*>? {
 @Suppress("UNCHECKED_CAST")
 fun Tree.findMasterSwitch(): Property<Boolean>? {
     findMarkedSwitch()?.let { return it as Property<Boolean> }
+    if (getMetadata<Boolean>(NO_MASTER_SWITCH) == true) return null
     val candidates = map.values.filterIsInstance<Property<*>>().filter {
-        it.type == Boolean::class.javaPrimitiveType || it.type == Boolean::class.javaObjectType
+        (it.type == Boolean::class.javaPrimitiveType || it.type == Boolean::class.javaObjectType) &&
+            it.getMetadata<Boolean>(NO_MASTER_SWITCH) != true
     }
     for (name in MASTER_SWITCH_NAMES) {
         candidates.firstOrNull { masterSwitchName(it.id ?: "") == name }?.let { return it as Property<Boolean> }
@@ -73,6 +85,8 @@ class PropertyModToggle(val property: Property<Boolean>) : ModToggle {
         property.set(enabled)
     }
 }
+
+fun ModToggle?.locksOptions(): Boolean = this != null && (this !is PropertyModToggle || property.isMarkedSwitch())
 
 object ModToggleStore : ModToggles.Store {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModToggles")

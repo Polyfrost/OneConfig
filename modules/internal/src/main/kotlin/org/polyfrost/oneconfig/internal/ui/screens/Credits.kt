@@ -2,11 +2,11 @@ package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,26 +16,29 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.UUID
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.Badge
+import org.polyfrost.oneconfig.api.ui.v1.components.CardBorder
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.PlayerHead
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
 import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentGradientFill
-import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.rememberAccentBrandTint
 import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -131,9 +134,9 @@ fun Credits() {
     val shownThankedPeople = remember(query) { if (query.isEmpty()) thankedPeople else thankedPeople.filter { searchMatches("${it.name} ${it.role}", query) } }
     val shownThanks = remember(query) { if (query.isEmpty()) thanks else thanks.filter { searchMatches("${it.title} ${it.detail}", query) } }
 
-    ScrollbarBox(scrollState, PageGutter, Modifier.fillMaxSize()) {
+    ScrollContainer(scrollState, Modifier.fillMaxSize(), gutter = PageGutter) {
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(start = PageGutter, end = PageGutter, bottom = PageGutter),
+            modifier = Modifier.fillMaxWidth().padding(start = PageGutter, bottom = PageGutter),
         ) {
             if (query.isEmpty()) Masthead()
             if (shownPeople.isNotEmpty()) {
@@ -175,20 +178,12 @@ private fun Masthead() {
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(translated("oneconfig.credits.by", "by"), color = theme.textColorSecondary, fontSize = 12.sp)
+            Text(translated("oneconfig.credits.by", "by"), color = theme.textColorSecondary, fontSize = theme.typography.small.fontSize)
             rememberSvgResourcePainter("assets/oneconfig/brand/by-polyfrost.svg")?.let { poly ->
                 Image(painter = poly, contentDescription = "Polyfrost", modifier = Modifier.size(104.dp, 18.dp))
             }
             oneConfigVersion?.let { version ->
-                Text(
-                    "v$version",
-                    color = theme.textColorSecondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = 4.dp)
-                        .background(theme.chipBackground, theme.buttonShape)
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                )
+                Badge("v$version", Modifier.padding(start = 4.dp))
             }
         }
     }
@@ -196,12 +191,11 @@ private fun Masthead() {
 
 @Composable
 private fun GroupHeading(title: String) {
-    Text(
-        title.uppercase(),
-        color = LocalTheme.current.textColor.copy(0.8f),
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(top = 24.dp, bottom = 10.dp, start = 2.dp),
+    SectionHeader(
+        title,
+        contentPadding = PaddingValues(top = 24.dp, bottom = 10.dp, start = 2.dp),
+        textStyle = SectionHeaderDefaults.labelStyle,
+        color = OneConfigTheme.current.textColor.copy(0.8f),
     )
 }
 
@@ -227,17 +221,15 @@ private fun PersonCard(person: Person, modifier: Modifier) {
     Row(
         modifier
             .height(72.dp)
-            .hoverGlow(theme.modCardShape)
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, theme.borderColor, theme.modCardShape)
+            .cardSurface(border = CardBorder.Solid)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PlayerHead(person.id, 40.dp, Modifier, shape = theme.buttonShape)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(person.name, color = theme.textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(person.role, color = theme.textColorSecondary, fontSize = 12.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(person.name, theme.typography.bodyMedium, color = theme.textColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(person.role, color = theme.textColorSecondary, fontSize = theme.typography.small.fontSize, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -248,9 +240,7 @@ private fun ThanksCard(thanks: Thanks) {
     Row(
         Modifier.fillMaxWidth()
             .heightIn(min = 64.dp)
-            .hoverGlow(theme.modCardShape)
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, theme.borderColor, theme.modCardShape)
+            .cardSurface(border = CardBorder.Solid)
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -259,8 +249,8 @@ private fun ThanksCard(thanks: Thanks) {
             Icon(thanks.icon, color = theme.textColor, modifier = Modifier.size(18.dp))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(thanks.title, color = theme.textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text(thanks.detail, color = theme.textColorSecondary, fontSize = 12.sp, lineHeight = 18.sp)
+            Text(thanks.title, theme.typography.bodyMedium, color = theme.textColor)
+            Text(thanks.detail, color = theme.textColorSecondary, fontSize = theme.typography.small.fontSize, lineHeight = 18.sp)
         }
     }
 }
@@ -273,7 +263,7 @@ private fun Legal() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(translated("oneconfig.credits.legal", "Legal and corporate"), color = theme.textColorSecondary, fontSize = 11.sp)
+        Text(translated("oneconfig.credits.legal", "Legal and corporate"), color = theme.textColorSecondary, fontSize = theme.typography.caption.fontSize)
         rememberSvgResourcePainter("assets/oneconfig/brand/atmofrost.svg")?.let { atmofrost ->
             Image(painter = atmofrost, contentDescription = "Atmofrost", modifier = Modifier.size(68.dp, 28.dp))
         }

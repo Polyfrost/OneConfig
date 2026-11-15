@@ -91,3 +91,5 @@ public val Tree.enableToggle: Property<Boolean>?
     get() = getMetadata<Any?>(ENABLE_TOGGLE_KEY) as? Property<Boolean>
 
 public const val ENABLE_TOGGLE_KEY: String = "enableToggle"
+
+public const val NO_MASTER_SWITCH_KEY: String = "noMasterSwitch"

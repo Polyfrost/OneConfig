@@ -3,6 +3,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,15 +20,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -41,9 +54,12 @@ import org.polyfrost.oneconfig.api.ui.v1.a11y.notFocusable
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
-private const val SCRIM_FADE_MILLIS = 150
+private const val PANEL_HIDDEN_SCALE = 0.96f
 
 private val WindowOrigin = PointPosition(IntOffset.Zero, false)
+
+@ExperimentalOneConfigUiApi
+public val LocalAnnounceTitles: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf { false }
 
 @ExperimentalOneConfigUiApi
 public object DialogDefaults {
@@ -63,6 +79,13 @@ public object DialogDefaults {
 }
 
 @ExperimentalOneConfigUiApi
+public enum class DialogButtonLayout {
+    End,
+
+    Fill,
+}
+
+@ExperimentalOneConfigUiApi
 @Composable
 public fun ModalDialog(
     onDismiss: () -> Unit,
@@ -72,31 +95,125 @@ public fun ModalDialog(
     buttons: (@Composable RowScope.() -> Unit)? = null,
     dismissOnScrim: Boolean = true,
     dismissOnEscape: Boolean = true,
+    padding: PaddingValues = DialogDefaults.padding,
+    spacing: Dp = DialogDefaults.spacing,
+    scrimColor: Color = Color.Unspecified,
+    buttonLayout: DialogButtonLayout = DialogButtonLayout.End,
+    scrollBody: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    DialogLayer(onDismiss, dismissOnScrim, dismissOnEscape) {
-        ModalPanel(modifier.heightIn(max = popupMaxHeight()), width) {
+    DialogLayer(onDismiss, dismissOnScrim, dismissOnEscape, scrimColor) {
+        ModalPanel(modifier.heightIn(max = popupMaxHeight()), width, padding = padding, spacing = spacing) {
             title?.invoke()
-            content()
-            if (buttons != null) DialogButtons(content = buttons)
+            if (scrollBody) ScrollingDialogBody(spacing, content) else content()
+            if (buttons != null) DialogButtons(Modifier, buttonLayout, buttons)
+        }
+    }
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun ModalDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    width: Dp = DialogDefaults.width,
+    title: (@Composable () -> Unit)? = null,
+    buttons: (@Composable RowScope.() -> Unit)? = null,
+    dismissOnScrim: Boolean = true,
+    dismissOnEscape: Boolean = true,
+    padding: PaddingValues = DialogDefaults.padding,
+    spacing: Dp = DialogDefaults.spacing,
+    scrimColor: Color = Color.Unspecified,
+    buttonLayout: DialogButtonLayout = DialogButtonLayout.End,
+    scrollBody: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val fade = remember { Animatable(0f) }
+    var shown by remember { mutableStateOf(visible) }
+    LaunchedEffect(visible) {
+        if (visible) {
+            shown = true
+            fade.animateTo(1f, Motion.finiteSpec(tween(Motion.standard)))
+        } else {
+            fade.animateTo(0f, Motion.finiteSpec(tween(Motion.fast)))
+            shown = false
+        }
+    }
+    if (!visible && !shown) return
+    DialogLayer(fade, visible, onDismiss, dismissOnScrim, dismissOnEscape, scrimColor) {
+        ModalPanel(modifier.heightIn(max = popupMaxHeight()), width, padding = padding, spacing = spacing) {
+            title?.invoke()
+            if (scrollBody) ScrollingDialogBody(spacing, content) else content()
+            if (buttons != null) DialogButtons(Modifier, buttonLayout, buttons)
         }
     }
 }
 
 @Composable
-private fun DialogLayer(onDismiss: () -> Unit, dismissOnScrim: Boolean, dismissOnEscape: Boolean, panel: @Composable () -> Unit) {
-    if (dismissOnEscape) EscapeCloses(onDismiss)
-    val latest by rememberUpdatedState(onDismiss)
-    val scrimColor = OneConfigTheme.current.scrimColor
+private fun ColumnScope.ScrollingDialogBody(spacing: Dp, content: @Composable ColumnScope.() -> Unit) {
+    val scroll = rememberScrollState()
+    var overflowing by remember { mutableStateOf(false) }
+    Column(
+        Modifier
+            .weight(1f, fill = false)
+            .layout { measurable, constraints ->
+                if (constraints.hasBoundedHeight) {
+                    val natural = runCatching { measurable.maxIntrinsicHeight(constraints.maxWidth) }.getOrNull()
+                    val over = natural != null && natural > constraints.maxHeight
+                    if (over != overflowing) overflowing = over
+                }
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+            }
+            .then(if (overflowing) Modifier.smoothWheelScroll(scroll).verticalScroll(scroll) else Modifier),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+        content = content,
+    )
+}
+
+@Composable
+private fun DialogLayer(
+    onDismiss: () -> Unit,
+    dismissOnScrim: Boolean,
+    dismissOnEscape: Boolean,
+    scrimColor: Color = Color.Unspecified,
+    panel: @Composable () -> Unit,
+) {
     val fade = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { fade.animateTo(1f, Motion.finiteSpec(tween(SCRIM_FADE_MILLIS))) }
-    componentsBridge().Popup(WindowOrigin, null, true) {
+    LaunchedEffect(Unit) { fade.animateTo(1f, Motion.finiteSpec(tween(Motion.standard))) }
+    DialogLayer(fade, true, onDismiss, dismissOnScrim, dismissOnEscape, scrimColor, panel)
+}
+
+@Composable
+private fun DialogLayer(
+    fade: Animatable<Float, AnimationVector1D>,
+    interactive: Boolean,
+    onDismiss: () -> Unit,
+    dismissOnScrim: Boolean,
+    dismissOnEscape: Boolean,
+    scrimColor: Color,
+    panel: @Composable () -> Unit,
+) {
+    if (interactive) {
+        if (dismissOnEscape) EscapeCloses(onDismiss)
+        PopupSounds()
+    }
+    val latest by rememberUpdatedState(onDismiss)
+    val scrim = if (scrimColor.isSpecified) scrimColor else OneConfigTheme.current.scrimColor
+    componentsBridge().Popup(WindowOrigin, null, interactive) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .drawBehind { drawRect(scrimColor, alpha = fade.value) }
+                .drawBehind { drawRect(scrim, alpha = fade.value) }
                 .then(
-                    if (dismissOnScrim) {
+                    if (!interactive) {
+                        Modifier.pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
+                            }
+                        }
+                    } else if (dismissOnScrim) {
                         Modifier.notFocusable().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { latest() }
                     } else {
                         Modifier.swallowClicks()
@@ -104,7 +221,15 @@ private fun DialogLayer(onDismiss: () -> Unit, dismissOnScrim: Boolean, dismissO
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Box(Modifier.graphicsLayer { alpha = fade.value }) {
+            Box(
+                Modifier.graphicsLayer {
+                    val progress = fade.value
+                    val scale = PANEL_HIDDEN_SCALE + (1f - PANEL_HIDDEN_SCALE) * progress
+                    alpha = progress
+                    scaleX = scale
+                    scaleY = scale
+                },
+            ) {
                 panel()
             }
         }
@@ -124,13 +249,15 @@ public fun ModalPanel(
     val sized = modifier
         .width(width)
         .then(if (height == Dp.Unspecified) Modifier else Modifier.height(height))
-    Column(
-        modifier = componentsBridge().popupSurface(sized, OneConfigTheme.current.popupShape)
-            .swallowClicks()
-            .padding(padding),
-        verticalArrangement = Arrangement.spacedBy(spacing),
-        content = content,
-    )
+    CompositionLocalProvider(LocalAnnounceTitles provides true) {
+        Column(
+            modifier = componentsBridge().popupSurface(sized, OneConfigTheme.current.popupShape)
+                .swallowClicks()
+                .padding(padding),
+            verticalArrangement = Arrangement.spacedBy(spacing),
+            content = content,
+        )
+    }
 }
 
 @ExperimentalOneConfigUiApi
@@ -144,9 +271,18 @@ public fun DialogTitle(text: String, modifier: Modifier = Modifier) {
 @ExperimentalOneConfigUiApi
 @Composable
 public fun DialogButtons(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+    DialogButtons(modifier, DialogButtonLayout.End, content)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun DialogButtons(modifier: Modifier, layout: DialogButtonLayout, content: @Composable RowScope.() -> Unit) {
     Row(
         modifier.fillMaxWidth().padding(top = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(DialogDefaults.buttonSpacing, Alignment.End),
+        horizontalArrangement = when (layout) {
+            DialogButtonLayout.End -> Arrangement.spacedBy(DialogDefaults.buttonSpacing, Alignment.End)
+            DialogButtonLayout.Fill -> Arrangement.spacedBy(DialogDefaults.buttonSpacing)
+        },
         verticalAlignment = Alignment.CenterVertically,
         content = content,
     )
@@ -167,23 +303,60 @@ public fun ConfirmDialog(
     icon: String? = null,
     confirmEnabled: Boolean = true,
 ) {
-    val confirmStyle = if (danger) ControlStyle.Danger else style
     ModalDialog(
         onDismiss,
         modifier,
         title = { DialogTitle(title) },
-        buttons = {
-            TextButton(dismissLabel, onDismiss)
-            if (confirmLabel != null) {
-                if (icon != null) {
-                    TextButton(confirmLabel, icon, onConfirm, style = confirmStyle, enabled = confirmEnabled)
-                } else {
-                    TextButton(confirmLabel, onConfirm, style = confirmStyle, enabled = confirmEnabled)
-                }
-            }
-        },
+        buttons = { ConfirmButtons(confirmLabel, dismissLabel, onConfirm, onDismiss, if (danger) ControlStyle.Danger else style, icon, confirmEnabled) },
     ) {
         DialogBody(text)
+    }
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun ConfirmDialog(
+    visible: Boolean,
+    title: String,
+    text: String,
+    confirmLabel: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissLabel: String = DialogDefaults.cancelLabel,
+    style: ControlStyle = ControlStyle.Primary,
+    danger: Boolean = false,
+    icon: String? = null,
+    confirmEnabled: Boolean = true,
+) {
+    ModalDialog(
+        visible,
+        onDismiss,
+        modifier,
+        title = { DialogTitle(title) },
+        buttons = { ConfirmButtons(confirmLabel, dismissLabel, onConfirm, onDismiss, if (danger) ControlStyle.Danger else style, icon, confirmEnabled) },
+    ) {
+        DialogBody(text)
+    }
+}
+
+@Composable
+private fun ConfirmButtons(
+    confirmLabel: String?,
+    dismissLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    confirmStyle: ControlStyle,
+    icon: String?,
+    confirmEnabled: Boolean,
+) {
+    TextButton(dismissLabel, onDismiss)
+    if (confirmLabel != null) {
+        if (icon != null) {
+            TextButton(confirmLabel, icon, onConfirm, style = confirmStyle, enabled = confirmEnabled)
+        } else {
+            TextButton(confirmLabel, onConfirm, style = confirmStyle, enabled = confirmEnabled)
+        }
     }
 }
 

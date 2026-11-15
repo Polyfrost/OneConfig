@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
@@ -94,7 +93,7 @@ private fun RowScope.PathField(
         Modifier.weight(1f),
         placeholder = placeholder,
         framed = false,
-        fontSize = 13.sp,
+        fontSize = LocalTheme.current.typography.label.fontSize,
         interactionSource = ctx.fieldInteraction,
         visualTransformation = rememberPathTransformation(),
     )

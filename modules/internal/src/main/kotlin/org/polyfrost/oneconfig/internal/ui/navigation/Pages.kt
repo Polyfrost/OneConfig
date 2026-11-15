@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
@@ -119,9 +120,17 @@ fun resolveOpenTarget(target: Any?): Any? = when (target) {
     }
     is OneConfigPage -> {
         BuiltinPages.register()
-        if (OneConfigPages.byId(target.id) === target) pageRoute(target) else {
-            LOGGER.error("Cannot open OneConfig page {} because it is not registered, opening the mods page instead", target.id)
-            ModsGraph
+        val registered = OneConfigPages.byId(target.id)
+        when {
+            registered === target -> pageRoute(target)
+            registered != null -> {
+                LOGGER.warn("OneConfig page {} was opened through an instance that is not the registered one, opening the registered page", target.id)
+                pageRoute(registered)
+            }
+            else -> {
+                LOGGER.error("Cannot open OneConfig page {} because it is not registered, opening the mods page instead", target.id)
+                ModsGraph
+            }
         }
     }
     is ModConfigTarget -> ModConfigRoute(target.modId, target.category)
@@ -129,7 +138,11 @@ fun resolveOpenTarget(target: Any?): Any? = when (target) {
 }
 
 object PageArguments {
-    private class Delivery(val pageId: String, val argument: Any)
+    private class Delivery(val pageId: String, val argument: Any) {
+        val offeredAt: Long = System.nanoTime()
+    }
+
+    private val PENDING_TTL_NANOS = TimeUnit.SECONDS.toNanos(10)
 
     private var revision by mutableIntStateOf(0)
 
@@ -145,16 +158,29 @@ object PageArguments {
         Snapshot.withMutableSnapshot { revision++ }
     }
 
+    fun clear(pageId: String) {
+        val wasPending = pending?.pageId == pageId
+        if (wasPending) pending = null
+        if (retained.remove(pageId) != null || wasPending) Snapshot.withMutableSnapshot { revision++ }
+    }
+
+    fun retained(pageId: String): Any? = retained[pageId]?.argument
+
     fun take(): Any? {
         val pageId = scope.get() ?: live.keys.singleOrNull() ?: return null
         return retained[pageId]?.argument
     }
 
     private fun claim(pageId: String): Delivery? {
-        val delivery = pending?.takeIf { it.pageId == pageId } ?: return null
+        val offered = pending ?: return null
+        if (System.nanoTime() - offered.offeredAt > PENDING_TTL_NANOS) {
+            pending = null
+            return null
+        }
+        if (offered.pageId != pageId) return null
         pending = null
-        retained[pageId] = delivery
-        return delivery
+        retained[pageId] = offered
+        return offered
     }
 
     private class Latest(var delivery: Delivery?)
@@ -165,9 +191,13 @@ object PageArguments {
         val delivered = remember(pageId, round) { claim(pageId) }
         val latest = remember(pageId) { Latest(null) }
         if (delivered != null) latest.delivery = delivered
+        else if (latest.delivery != null && retained[pageId] == null) latest.delivery = null
         DisposableEffect(pageId) {
             live.merge(pageId, 1, Int::plus)
-            onDispose { live.compute(pageId) { _, count -> if (count == null || count <= 1) null else count - 1 } }
+            onDispose {
+                live.compute(pageId) { _, count -> if (count == null || count <= 1) null else count - 1 }
+                latest.delivery?.let { retained.remove(pageId, it) }
+            }
         }
         key(latest.delivery) {
             val previous = scope.get()

@@ -5,9 +5,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -33,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,8 +41,18 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +68,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.focusRing
 import org.polyfrost.oneconfig.api.ui.v1.a11y.isKeyboardMode
 import org.polyfrost.oneconfig.api.ui.v1.a11y.notFocusable
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
@@ -70,6 +80,8 @@ public enum class MenuItemSize(internal val height: Dp, internal val textSize: T
     Compact(30.dp, 13.sp, 14.dp, 8.dp),
     Regular(38.dp, 14.sp, 18.dp, 10.dp),
 }
+
+internal val LocalMenuSound = staticCompositionLocalOf<UiSound?> { UiSound.Click }
 
 @ExperimentalOneConfigUiApi
 public object MenuDefaults {
@@ -86,6 +98,8 @@ public object MenuDefaults {
     public val tooltipMaxWidth: Dp = 320.dp
 
     public val submenuGap: Dp = 2.dp
+
+    public val anchorGap: Dp = 6.dp
 
     public const val HOVER_ALPHA: Float = 0.10f
 
@@ -130,6 +144,8 @@ public fun MenuItem(
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
+    sound: UiSound? = LocalMenuSound.current,
+    dangerColor: Color = Color.Unspecified,
 ) {
     MenuItemRow(
         label = label,
@@ -149,6 +165,38 @@ public fun MenuItem(
         leading = leading,
         trailing = trailing,
         interactionSource = interactionSource,
+        sound = sound,
+        dangerColor = dangerColor,
+    )
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun MenuItem(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: String? = null,
+    painter: Painter? = null,
+    detail: String? = null,
+    style: ControlStyle = ControlStyle.Ghost,
+    size: MenuItemSize = MenuDefaults.size,
+    enabled: Boolean = true,
+    selected: Boolean = false,
+    checked: Boolean? = null,
+    shortcutHint: String? = null,
+    badge: String? = null,
+    tooltip: String? = null,
+    danger: Boolean = false,
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
+    sound: UiSound? = LocalMenuSound.current,
+) {
+    MenuItem(
+        label, onClick, modifier, icon, painter, detail, style, size, enabled, selected, checked, shortcutHint,
+        badge, tooltip, danger, leading, trailing, interactionSource, sound, Color.Unspecified,
     )
 }
 
@@ -221,6 +269,8 @@ internal fun MenuItemRow(
     reserveIcon: Boolean = false,
     submenu: (@Composable (MenuNavItem) -> Unit)? = null,
     styledLabel: AnnotatedString? = null,
+    sound: UiSound? = LocalMenuSound.current,
+    dangerColor: Color = Color.Unspecified,
 ) {
     val theme = OneConfigTheme.current
     val accent = OneConfigTheme.accent
@@ -236,7 +286,7 @@ internal fun MenuItemRow(
         if (submenuLevel != null && item != null) submenuLevel.toggle(item, false) else onClick()
     }
     val navItem = rememberMenuNavItem(level, label, enabled, opensSubmenu) {
-        playUiSound(UiSound.Click)
+        sound?.let(::playUiSound)
         click()
     }
     navHolder[0] = navItem
@@ -246,6 +296,7 @@ internal fun MenuItemRow(
     val active = if (enabled) hovered || highlighted || submenuOpen else highlighted && keyboard
     val base = when {
         selected -> theme.accentTextColor
+        dangerColor.isSpecified && (style == ControlStyle.Danger || style == ControlStyle.DangerFilled) -> dangerColor
         else -> MenuDefaults.contentColor(style)
     }
     val color = if (enabled) base else theme.textColorSecondary
@@ -255,7 +306,7 @@ internal fun MenuItemRow(
             active -> base.copy(alpha = MenuDefaults.HOVER_ALPHA)
             else -> base.copy(alpha = 0f)
         },
-        Motion.spec(tween(120)),
+        Motion.colorSpec(Motion.fast),
     )
     val shape = MenuDefaults.itemShape
     val spoken = if (detail == null) label else "$label. $detail"
@@ -281,7 +332,7 @@ internal fun MenuItemRow(
                 .heightIn(min = size.height)
                 .clip(shape)
                 .background(background, shape)
-                .then(if (highlighted && keyboard) Modifier.border(1.dp, theme.focusRingColor, shape) else Modifier)
+                .focusRing(shape, highlighted)
                 .hoverable(source)
                 .then(if (level != null) Modifier.notFocusable() else Modifier)
                 .oneConfigClickable(
@@ -293,6 +344,7 @@ internal fun MenuItemRow(
                     checked = checked,
                     shape = shape,
                     indication = false,
+                    sound = sound,
                     interactionSource = source,
                 )
                 .then(if (enabled) Modifier else Modifier.graphicsLayer { alpha = theme.disabledAlpha })
@@ -343,8 +395,14 @@ internal fun MenuItemRow(
 public fun MenuSurface(
     modifier: Modifier = Modifier,
     maxHeight: Dp = Dp.Unspecified,
+    surface: (@Composable (Modifier) -> Modifier)? = null,
+    tabNavigation: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    if (surface != null) {
+        ProvideMenuSurface(surface) { MenuSurface(modifier, maxHeight, null, tabNavigation, content) }
+        return
+    }
     val controller = remember { MenuNavController() }
     val focus = remember { FocusRequester() }
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -359,7 +417,7 @@ public fun MenuSurface(
     CompositionLocalProvider(LocalMenuLevel provides controller.root) {
         MenuPanel(
             modifier
-                .onKeyEvent { controller.onKey(it, rtl) }
+                .onKeyEvent { (tabNavigation && controller.onTab(it)) || controller.onKey(it, rtl) }
                 .focusRequester(focus)
                 .focusable(),
             maxHeight,
@@ -372,20 +430,46 @@ public fun MenuSurface(
 @ExperimentalOneConfigUiApi
 @Composable
 public fun MenuSurface(modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
-    MenuSurface(modifier, Dp.Unspecified, content)
+    MenuSurface(modifier, Dp.Unspecified, null, false, content)
+}
+
+private fun MenuNavController.onTab(event: KeyEvent): Boolean {
+    if (event.key != Key.Tab) return false
+    if (event.type != KeyEventType.KeyDown) return true
+    if (event.isCtrlPressed || event.isAltPressed || event.isMetaPressed) return false
+    val level = active
+    val items = level.ordered()
+    if (items.isEmpty()) return true
+    val step = if (event.isShiftPressed) -1 else 1
+    val at = items.indexOfFirst { it === level.highlighted }
+    val next = if (at < 0) {
+        if (step > 0) 0 else items.lastIndex
+    } else {
+        (at + step).mod(items.size)
+    }
+    level.select(items[next])
+    return true
+}
+
+private val LocalMenuSurface = staticCompositionLocalOf<(@Composable (Modifier) -> Modifier)?> { null }
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun ProvideMenuSurface(surface: @Composable (Modifier) -> Modifier, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalMenuSurface provides surface, content = content)
 }
 
 @Composable
 internal fun MenuPanel(modifier: Modifier, maxHeight: Dp, content: @Composable ColumnScope.() -> Unit) {
     val padding = MenuDefaults.contentPadding
+    val sized = modifier
+        .widthIn(min = MenuDefaults.minWidth, max = MenuDefaults.maxWidth)
+        .width(IntrinsicSize.Max)
+        .then(if (maxHeight.isSpecified) Modifier.heightIn(max = maxHeight) else Modifier)
+    val override = LocalMenuSurface.current
+    val surfaced = if (override != null) override(sized) else componentsBridge().popupSurface(sized, MenuDefaults.shape)
     Column(
-        modifier = componentsBridge().popupSurface(
-            modifier
-                .widthIn(min = MenuDefaults.minWidth, max = MenuDefaults.maxWidth)
-                .width(IntrinsicSize.Max)
-                .then(if (maxHeight.isSpecified) Modifier.heightIn(max = maxHeight) else Modifier),
-            MenuDefaults.shape,
-        ).verticalScroll(rememberScrollState()).padding(padding),
+        modifier = surfaced.verticalScroll(rememberScrollState()).padding(padding),
         verticalArrangement = Arrangement.spacedBy(MenuDefaults.itemSpacing),
         content = content,
     )
@@ -412,8 +496,10 @@ public fun MenuList(
     onSelect: () -> Unit,
     modifier: Modifier = Modifier,
     size: MenuItemSize = MenuItemSize.Compact,
+    surface: (@Composable (Modifier) -> Modifier)? = null,
+    tabNavigation: Boolean = false,
 ) {
-    MenuSurface(modifier) {
+    MenuSurface(modifier, surface = surface, tabNavigation = tabNavigation) {
         MenuEntryItems(entries, onSelect, size)
     }
 }

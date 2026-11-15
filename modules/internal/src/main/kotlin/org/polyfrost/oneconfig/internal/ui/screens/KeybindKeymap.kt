@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -21,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,11 +35,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
@@ -57,6 +55,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Chip
 import org.polyfrost.oneconfig.api.ui.v1.components.EscapeCloses
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberAnchoredPosition
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
@@ -69,11 +68,14 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ArrowDirection
 import org.polyfrost.oneconfig.api.ui.v1.components.ArrowKey
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.Icon
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.KeyCap
 import org.polyfrost.oneconfig.api.ui.v1.components.Select
 import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
@@ -328,7 +330,7 @@ private fun stateColor(state: KeyState): Color? = when (state) {
 }
 
 @Composable
-private fun ledShape(): Shape = if (OneConfigTheme.current.style == ThemeStyle.Pixel) RectangleShape else CircleShape
+private fun ledShape(): Shape = OneConfigTheme.current.shapes.circle
 
 @Composable
 fun KeybindKeymap(groups: List<KeybindGroup>, allGroups: List<KeybindGroup>, modifier: Modifier = Modifier) {
@@ -400,17 +402,16 @@ fun KeybindKeymap(groups: List<KeybindGroup>, allGroups: List<KeybindGroup>, mod
 
 @Composable
 private fun KeymapHeader() {
-    val theme = OneConfigTheme.current
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Icon("keyboard", null, Modifier.size(18.dp), tint = theme.textColorSecondary)
-        Text(
-            translated("oneconfig.keymap.title", "Keyboard and mouse"),
-            Modifier.weight(1f),
-            color = theme.textColorSecondary,
-            style = theme.typography.caption.copy(fontWeight = FontWeight.Medium),
-            maxLines = 1,
-        )
-        val auto = translated("oneconfig.keymap.layout.auto", "Auto-detect (%s)", KeymapStore.detected.title)
+    val auto = translated("oneconfig.keymap.layout.auto", "Auto-detect (%s)", KeymapStore.detected.title)
+    SectionHeader(
+        translated("oneconfig.keymap.title", "Keyboard and mouse"),
+        icon = "keyboard",
+        contentPadding = PaddingValues(),
+        textStyle = SectionHeaderDefaults.labelStyle,
+        color = OneConfigTheme.current.textColorSecondary,
+        uppercase = false,
+        iconSize = 18.dp,
+    ) {
         Select(
             selected = KeymapStore.layout,
             options = listOf<KeyboardLayout?>(null) + KeyboardLayout.entries,
@@ -496,7 +497,7 @@ private fun PlacedKey(spec: KeySpec, target: KeyTarget, state: KeyState, unit: D
 @Composable
 private fun SelectionRing(width: Dp, height: Dp) {
     val theme = OneConfigTheme.current
-    val shape = if (theme.style == ThemeStyle.Pixel) RectangleShape else RoundedCornerShape(8.dp)
+    val shape = theme.shapes.medium
     Box(
         Modifier
             .offset((-3).dp, (-3).dp)
@@ -509,7 +510,7 @@ private fun SelectionRing(width: Dp, height: Dp) {
 private fun KeyLegend(spec: KeySpec, label: String, state: KeyState) {
     val theme = OneConfigTheme.current
     val word = label.length > 1
-    val base = theme.typography.caption.copy(fontWeight = FontWeight.Medium)
+    val base = theme.typography.captionMedium
     val fit = LocalWordFit.current
     Box(
         Modifier.fillMaxSize().padding(horizontal = LEGEND_PAD),
@@ -556,7 +557,7 @@ private fun KeyTooltipCard(target: KeyTarget, state: KeyState) {
             Text(
                 stateText(target, state),
                 color = if (state == KeyState.Conflict) theme.error else theme.textColor,
-                style = theme.typography.small.copy(fontWeight = FontWeight.Medium),
+                style = theme.typography.smallMedium,
             )
         }
         if (target.bindings.isNotEmpty()) {
@@ -639,8 +640,8 @@ private fun MouseBody(targets: List<KeyTarget>, conflicting: Set<Any>, unit: Dp)
     val sideH = unit * 0.62f
     val leftShape = remember(corner) { RoundedCornerShape(topStart = corner) }
     val rightShape = remember(corner) { RoundedCornerShape(topEnd = corner) }
-    val wheelShape = remember(pixel) { if (pixel) RectangleShape else RoundedCornerShape(50) }
-    val sideShape = remember(pixel, sideW) { RoundedCornerShape(if (pixel) 0.dp else sideW / 2) }
+    val wheelShape = theme.shapes.pill
+    val sideShape = theme.shapes.pill
     Box(Modifier.size(bodyW + sideW, bodyH)) {
         Box(Modifier.offset(sideW / 2, 0.dp).size(bodyW, bodyH)) {
             Canvas(Modifier.size(bodyW, bodyH)) {
@@ -758,7 +759,7 @@ private fun BindPopover(target: KeyTarget, state: KeyState) {
                     stateText(target, state),
                     Modifier.weight(1f),
                     color = if (state == KeyState.Conflict) theme.error else theme.textColor,
-                    style = theme.typography.small.copy(fontWeight = FontWeight.Medium),
+                    style = theme.typography.smallMedium,
                     maxLines = 1,
                 )
                 IconButton("close", translated("oneconfig.keymap.close", "Close"), close)
@@ -778,7 +779,7 @@ private fun BindPopover(target: KeyTarget, state: KeyState) {
             Text(
                 translated("oneconfig.keymap.add", "Bind something to %s", label),
                 color = theme.textColorSecondary,
-                style = theme.typography.caption.copy(fontWeight = FontWeight.Medium),
+                style = theme.typography.captionMedium,
             )
             SearchField(
                 query,
@@ -799,24 +800,26 @@ private fun BindPopover(target: KeyTarget, state: KeyState) {
                 }
             }
             val listState = rememberLazyListState()
-            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp), state = listState) {
-                if (results.isEmpty()) {
-                    item {
-                        Text(
-                            translated("oneconfig.keymap.no_results", "No keybinds match"),
-                            Modifier.padding(vertical = 8.dp),
-                            color = theme.textColorSecondary,
-                            style = theme.typography.caption,
-                        )
+            ScrollContainer(listState, Modifier.fillMaxWidth().heightIn(max = 240.dp), scrollbar = false, smoothWheel = false) {
+                LazyColumn(Modifier.fillMaxWidth(), state = listState) {
+                    if (results.isEmpty()) {
+                        item {
+                            Text(
+                                translated("oneconfig.keymap.no_results", "No keybinds match"),
+                                Modifier.padding(vertical = 8.dp),
+                                color = theme.textColorSecondary,
+                                style = theme.typography.caption,
+                            )
+                        }
                     }
-                }
-                items(results, key = { System.identityHashCode(it.entry.prop) }) { candidate ->
-                    val blocked = (ctrl || shift || alt) && !target.mouse && candidate.singleKey
-                    BindResultRow(candidate, blocked) {
-                        val mods = if (target.mouse) KeyModifiers.NONE else modsOf(ctrl, shift, alt)
-                        if (target.mouse) writeKeybind(candidate.entry.prop, null, intArrayOf(code), mods)
-                        else writeKeybind(candidate.entry.prop, intArrayOf(code), null, mods)
-                        query = ""
+                    items(results, key = { System.identityHashCode(it.entry.prop) }) { candidate ->
+                        val blocked = (ctrl || shift || alt) && !target.mouse && candidate.singleKey
+                        BindResultRow(candidate, blocked) {
+                            val mods = if (target.mouse) KeyModifiers.NONE else modsOf(ctrl, shift, alt)
+                            if (target.mouse) writeKeybind(candidate.entry.prop, null, intArrayOf(code), mods)
+                            else writeKeybind(candidate.entry.prop, intArrayOf(code), null, mods)
+                            query = ""
+                        }
                     }
                 }
             }
@@ -831,7 +834,7 @@ private fun BindResultRow(candidate: KeyBinding, blocked: Boolean, onPick: () ->
         Modifier
             .fillMaxWidth()
             .alpha(if (blocked) 0.45f else 1f)
-            .oneConfigClickable(candidate.title, onPick, enabled = !blocked)
+            .oneConfigClickable(candidate.title, onPick, enabled = !blocked, recipe = ControlDefaults.Media)
             .padding(horizontal = 6.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),

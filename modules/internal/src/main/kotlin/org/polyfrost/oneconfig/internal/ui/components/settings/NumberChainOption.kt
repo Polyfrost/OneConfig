@@ -39,18 +39,18 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberChainOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
@@ -59,7 +59,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
-private val ChainShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val ChainShape @Composable get() = LocalTheme.current.shapes.field
 
 /** One slot in the chain where [id] is stable across reorders so equal values stay distinct rows */
 private data class ChainEntry(val id: Int, val value: Float)
@@ -213,27 +213,24 @@ fun NumberChainOption(data: NumberChainOptionData) {
                                 data.label(entry.value),
                                 color = Color.Unspecified,
                                 colorProducer = { contentColor.value },
-                                fontSize = 13.sp,
+                                fontSize = theme.typography.label.fontSize,
                                 modifier = Modifier
                                     .weight(1f)
                                     .then(
                                         if (!movable) Modifier else Modifier
-                                            .onClick(rememberInteractionSource()) { editingId = entry.id }
-                                            .pointerHoverIcon(PointerIcon.Hand)
+                                            .oneConfigClickable(data.label(entry.value), { editingId = entry.id }, indication = false)
                                     ),
                             )
                         }
 
                         if (movable) {
-                            val deleteInteraction = rememberInteractionSource()
-                            val deleteHovered by deleteInteraction.collectIsHoveredAsState()
-                            Icon(
+                            IconButton(
                                 "close",
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .onClick(deleteInteraction) { commit(entries.filterNot { it.id == entry.id }) }
-                                    .pointerHoverIcon(PointerIcon.Hand),
-                                color = if (deleteHovered) theme.textColor else theme.textColorSecondary,
+                                translated("oneconfig.list.remove", "Remove"),
+                                { commit(entries.filterNot { it.id == entry.id }) },
+                                tooltip = null,
+                                frameSize = 14.dp,
+                                iconSize = 14.dp,
                             )
                         } else {
                             Spacer(Modifier.size(14.dp))
@@ -280,7 +277,7 @@ private fun ChainValueEditor(
             if (state.isFocused) focused = true else if (focused) commit()
         },
         framed = false,
-        fontSize = 13.sp,
+        fontSize = LocalTheme.current.typography.label.fontSize,
         visualTransformation = rememberUnitSuffix(unit),
         focusRequester = focusRequester,
         onSubmit = { commit() },

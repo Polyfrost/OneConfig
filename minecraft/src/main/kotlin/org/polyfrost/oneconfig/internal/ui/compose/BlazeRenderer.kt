@@ -186,10 +186,10 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         return true
     }
 
-    private fun touchText(text: String, x: Float, y: Float, scale: Float, shadow: Boolean) {
+    private fun touchText(text: String, x: Float, y: Float, scale: Float, shadow: Boolean, literal: Boolean) {
         val font = Minecraft.getInstance().font
         val lines = text.lines()
-        val w = (lines.maxOf { font.width(it) } + 1f) * scale
+        val w = (lines.maxOf { if (literal) font.width(visualOrder(it, true)) else font.width(it) } + 1f) * scale
         val h = (lines.size * font.lineHeight + 1f) * scale
         repeat(if (shadow) 2 else 1) {
             beginDraw()
@@ -216,17 +216,21 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
+        mcText(text, x, y, color, shadow, scale, false)
+    }
+
+    override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) {
         flush()
         val c = mulAlpha(color, state.alpha)
         if (c ushr 24 == 0) return
         val scissor = state.clip?.let { rectGui(it[0], it[1], it[2], it[3]) ?: return }
-        touchText(text, x, y, scale, shadow)
+        touchText(text, x, y, scale, shadow, literal)
         val font = Minecraft.getInstance().font
         text.lines().forEachIndexed { index, line ->
             if (line.isEmpty()) return@forEachIndexed
             val m = lineMatrix(x, y, index, font.lineHeight, scale)
-            val seq = visualOrder(line)
-            val baked = if (!keepVertices || line.contains("§k", ignoreCase = true)) null
+            val seq = visualOrder(line, literal)
+            val baked = if (!keepVertices || (!literal && line.contains("§k", ignoreCase = true))) null
                 else if ('§' in line || Language.getInstance().isDefaultRightToLeft) bakeText(font, seq, m, c, shadow, scissor)
                 else GlyphQuads.bake(font, line, m, c, shadow, scissor) ?: bakeText(font, seq, m, c, shadow, scissor)
             ops.add(BakedTextOp(baked, c) { g, color -> vanillaText(g, font, seq, m, color, shadow, scissor) })
@@ -234,11 +238,17 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     override fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float) {
-        if (!keepVertices || '§' in text || Language.getInstance().isDefaultRightToLeft) return super.mcTextLive(text, x, y, color, shadow, scale)
+        mcTextLive(text, x, y, color, shadow, scale, false)
+    }
+
+    override fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float, literal: Boolean) {
+        if (!keepVertices || '§' in text || Language.getInstance().isDefaultRightToLeft) {
+            return live { it.mcText(text, x, y, color(), shadow, scale, literal) }
+        }
         flush()
         val alpha = state.alpha
         val scissor = state.clip?.let { rectGui(it[0], it[1], it[2], it[3]) ?: return }
-        touchText(text, x, y, scale, shadow)
+        touchText(text, x, y, scale, shadow, false)
         val font = Minecraft.getInstance().font
         text.lines().forEachIndexed { index, line ->
             if (line.isEmpty()) return@forEachIndexed
@@ -255,6 +265,10 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             .translate(x, y + index * lineHeight * scale).scale(scale)
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+        mcTextOutline(text, x, y, color, outlineColor, scale, false)
+    }
+
+    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean) {
         val a = mulAlpha(outlineColor, state.alpha) ushr 24
         val clip = state.clip
         val scissor = clip?.let { rectGui(it[0], it[1], it[2], it[3]) }
@@ -265,7 +279,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             val oy = y * s.sy + s.ty
             val px = floor(ox)
             val py = floor(oy)
-            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, ox - px, oy - py)
+            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, ox - px, oy - py, literal)
             if (outline != null) {
                 val x0 = px - outline.pad
                 val y0 = py - outline.pad
@@ -280,7 +294,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
                 }
             }
         }
-        mcText(text, x, y, color, false, scale)
+        mcText(text, x, y, color, false, scale, literal)
     }
 
     private fun bakeText(font: Font, seq: FormattedCharSequence, m: Matrix3x2f, color: Int, shadow: Boolean, scissor: ScreenRectangle?): List<Mesh>? {
@@ -818,7 +832,8 @@ private object GlyphQuads {
 
 }
 
-private fun visualOrder(line: String): FormattedCharSequence {
+private fun visualOrder(line: String, literal: Boolean = false): FormattedCharSequence {
+    if (literal && '§' in line) return FormattedCharSequence.forward(line, Style.EMPTY)
     val lang = Language.getInstance()
     if (!lang.isDefaultRightToLeft && line.all { it < '\u0590' }) {
         return if ('§' in line) FormattedCharSequence { sink -> StringDecomposer.iterateFormatted(line, Style.EMPTY, sink) }
@@ -833,7 +848,7 @@ internal object McOutlines {
     private const val PAD_FONT_PX = 2f
     private val OFFSETS = floatArrayOf(-1f, -1f, 0f, -1f, 1f, -1f, -1f, 0f, 1f, 0f, -1f, 1f, 0f, 1f, 1f, 1f)
 
-    internal data class Key(val text: String, val kx: Float, val ky: Float, val fx: Float, val fy: Float)
+    internal data class Key(val text: String, val kx: Float, val ky: Float, val fx: Float, val fy: Float, val literal: Boolean = false)
 
     private val entries = LinkedHashMap<Key, Outline>(16, 0.75f, true)
     private val pool = ArrayList<OffscreenTarget>()
@@ -848,13 +863,13 @@ internal object McOutlines {
         })
     }
 
-    fun get(text: String, kx: Float, ky: Float, fx: Float, fy: Float): Outline? {
+    fun get(text: String, kx: Float, ky: Float, fx: Float, fy: Float, literal: Boolean = false): Outline? {
         if (kx <= 0f || ky <= 0f) return null
-        val key = Key(text, kx, ky, (fx * 8f).roundToInt() / 8f, (fy * 8f).roundToInt() / 8f)
+        val key = Key(text, kx, ky, (fx * 8f).roundToInt() / 8f, (fy * 8f).roundToInt() / 8f, literal)
         entries[key]?.let { return it }
         val font = Minecraft.getInstance().font
         val lines = text.lines()
-        val width = lines.maxOf { font.width(visualOrder(it)) }
+        val width = lines.maxOf { font.width(visualOrder(it, literal)) }
         val pad = ceil(PAD_FONT_PX * max(kx, ky))
         val w = ceil(pad * 2f + width * kx + 1f)
         val h = ceil(pad * 2f + lines.size * font.lineHeight * ky + 1f)
@@ -881,7 +896,7 @@ internal object McOutlines {
     }
 
     class Outline internal constructor(internal val key: Key, private val lines: List<String>, val pad: Float, val w: Float, val h: Float, private val generation: Int) {
-        private val obfuscated = key.text.contains("§k", ignoreCase = true)
+        private val obfuscated = !key.literal && key.text.contains("§k", ignoreCase = true)
         private var target: OffscreenTarget? = null
         private var dirty = true
         internal var lastUsed = System.nanoTime()
@@ -932,7 +947,7 @@ internal object McOutlines {
             val oy = pad + key.fy
             lines.forEachIndexed { index, line ->
                 if (line.isEmpty()) return@forEachIndexed
-                val seq = uncolored(visualOrder(line))
+                val seq = uncolored(visualOrder(line, key.literal))
                 for (i in OFFSETS.indices step 2) {
                     val pose = graphics.pose()
                     pose.pushMatrix()

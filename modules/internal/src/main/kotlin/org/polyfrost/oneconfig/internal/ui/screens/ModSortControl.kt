@@ -1,13 +1,19 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.api.ui.v1.ModSortMode
 import org.polyfrost.oneconfig.api.ui.v1.ModSortModes
-import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
+import org.polyfrost.oneconfig.api.ui.v1.components.AnchoredConfirm
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.Placement
 import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
 import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
 import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
@@ -35,31 +41,40 @@ fun ModSortControl(modifier: Modifier = Modifier) {
         mode.onSelect()
     }
 
+    var confirming by remember { mutableStateOf(false) }
+    var pending by remember { mutableStateOf(customMode) }
+
     fun pick(mode: ModSortMode) {
         if (mode.id == selected.id) return
-        val confirmation = mode.confirmation
-        if (confirmation == null) {
+        if (mode.confirmation == null) {
             apply(mode)
             return
         }
-        Confirm.ask(
-            title = translated("oneconfig.mods.sort.confirm.title", "Sort by %s?", mode.label()),
-            text = confirmation,
-            confirmLabel = translated("oneconfig.mods.sort.confirm", "Switch"),
-            onConfirm = { apply(mode) },
-            style = ControlStyle.Primary,
-            icon = mode.icon,
-        )
+        pending = mode
+        confirming = true
     }
 
-    TabRow(
-        tabs = modes.map { TabItem(it, "", icon = it.icon, tooltip = it.label()) },
-        selected = selected,
-        onSelect = ::pick,
-        modifier = modifier.padding(end = PageGutter),
-        style = TabStyle.Segmented,
-        size = ControlSize.Large,
-        fill = false,
-        tooltipPlacement = TooltipPlacement.BelowCenter,
-    )
+    Box(modifier.padding(end = PageGutter)) {
+        TabRow(
+            tabs = modes.map { TabItem(it, "", icon = it.icon, tooltip = it.label()) },
+            selected = selected,
+            onSelect = ::pick,
+            style = TabStyle.Segmented,
+            size = ControlSize.Large,
+            fill = false,
+            tooltipPlacement = TooltipPlacement.BelowCenter,
+        )
+        val mode = pending
+        AnchoredConfirm(
+            expanded = confirming,
+            onDismiss = { confirming = false },
+            text = translated("oneconfig.mods.sort.confirm.title", "Sort by %s?", mode.label()) +
+                " " + mode.confirmation.orEmpty(),
+            confirmLabel = mode.confirmLabel ?: translated("oneconfig.mods.sort.confirm", "Switch"),
+            onConfirm = { apply(mode) },
+            style = ControlStyle.Primary,
+            placement = Placement.BelowEnd,
+            popupSounds = false,
+        )
+    }
 }

@@ -4,7 +4,6 @@ package org.polyfrost.oneconfig.internal.ui.hud
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
@@ -16,7 +15,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import kotlin.math.abs
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -32,15 +30,16 @@ import org.polyfrost.oneconfig.api.ui.v1.components.MenuIconRow
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuList
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipDefaults
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
 import org.polyfrost.oneconfig.internal.ui.components.ShellPopup
-import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.translated
+import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
 import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionHasDefault
@@ -50,7 +49,6 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.HudAlign
 import org.polyfrost.oneconfig.internal.ui.hud.screens.alignHuds
 import org.polyfrost.oneconfig.internal.ui.hud.screens.tourString
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val MenuIconSize = 14.dp
 
@@ -242,13 +240,7 @@ fun HudSettingTarget(
     Box(modifier = modifier.optionContextMenu(menu)) {
         val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
         if (description != null) {
-            Tooltip(
-                text = {
-                    Text(description, color = LocalTheme.current.textColor, fontSize = 12.sp)
-                },
-                modifier = Modifier.widthIn(max = 260.dp),
-                anchor = Alignment.TopCenter,
-            ) {
+            TooltipBox(description.asStyledLabel(), maxWidth = TooltipDefaults.descriptionMaxWidth) {
                 content()
             }
         } else {
@@ -531,7 +523,7 @@ internal fun hudCanvasPasteMenuEntries(
     entries += MenuSeparator
     if (onTour != null) entries += MenuAction(tourString("menu"), onTour, icon = "info")
     entries += MenuAction(
-        translated("oneconfig.hud.shortcuts.title", "Keyboard shortcuts"),
+        translated("oneconfig.ui.shortcuts.title", "Keyboard shortcuts"),
         onShortcuts,
         icon = "keyboard",
         shortcutHint = keybindHint(OneConfigConfig.hudShortcutsKeybind),

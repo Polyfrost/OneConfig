@@ -187,7 +187,6 @@ fun OneConfigInterface(
                         val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
                         val dragAlpha by Motion.animateFloatAsState(
                             target = if (shell.layout.hudDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
-                            spec = tween(150),
                             label = "hudDragShellAlpha"
                         )
 

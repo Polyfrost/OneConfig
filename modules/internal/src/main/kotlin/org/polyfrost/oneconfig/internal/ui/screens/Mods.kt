@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -60,9 +59,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.api.config.v1.Config
@@ -76,6 +75,8 @@ import org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
 import org.polyfrost.oneconfig.api.ui.v1.ReadOnlyModToggle
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.Card
+import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
@@ -85,11 +86,18 @@ import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
+import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
+import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.ModCardMenuContributors
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
+import org.polyfrost.oneconfig.api.ui.v1.components.Divider
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionChevron
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberGridReorderState
 import org.polyfrost.oneconfig.api.ui.v1.components.reorderAutoScroll
@@ -112,16 +120,12 @@ import org.polyfrost.oneconfig.internal.ui.api.buildModGridEntries
 import org.polyfrost.oneconfig.internal.ui.api.modCardOrder
 import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
 import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
-import org.polyfrost.oneconfig.internal.ui.components.Chip
-import org.polyfrost.oneconfig.internal.ui.components.CollapsibleHeader
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.canRenderIcon
 import org.polyfrost.oneconfig.internal.ui.components.glassHover
-import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -185,35 +189,26 @@ private fun ModsPage() {
     var activeCategory by remember { mutableStateOf(ModCategory.All) }
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        Row(
-            modifier = Modifier.padding(horizontal = PageGutter),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            val cards = ConfigRegistry.modCardConfigs
-            ModCategory.entries.forEach {
-                val shown = when {
-                    it == ModCategory.All || it.favoritesOnly || activeCategory == it -> true
-                    it.hiddenOnly -> cards.any { configData -> ModHidden.isHidden(configData.id) }
-                    else -> cards.any { configData ->
-                        configData.category == it.configCategory && !ModHidden.isHidden(configData.id)
-                    }
-                }
-                if (shown) {
-                    Chip(
-                        label = it.label,
-                        selected = activeCategory == it,
-                        icon = it.icon,
-                        onClick = {
-                            activeCategory = if (activeCategory != it) {
-                                it
-                            } else {
-                                ModCategory.All;
-                            }
-                        }
-                    )
+        val cards = ConfigRegistry.modCardConfigs
+        val tabs = ModCategory.entries.filter {
+            when {
+                it == ModCategory.All || it.favoritesOnly || activeCategory == it -> true
+                it.hiddenOnly -> cards.any { configData -> ModHidden.isHidden(configData.id) }
+                else -> cards.any { configData ->
+                    configData.category == it.configCategory && !ModHidden.isHidden(configData.id)
                 }
             }
-        }
+        }.map { TabItem(it, it.label, icon = it.icon) }
+        TabRow(
+            tabs,
+            activeCategory,
+            { activeCategory = it },
+            Modifier.padding(horizontal = PageGutter),
+            style = TabStyle.Chips,
+            size = ChipDefaults.size,
+            fill = false,
+            onDeselect = { activeCategory = ModCategory.All },
+        )
         ModsGrid(activeCategory)
     }
 }
@@ -321,9 +316,9 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     }
 
     val focusManager = LocalFocusManager.current
-    ScrollbarBox(
+    ScrollContainer(
         gridState,
-        PageGutter,
+        gutter = PageGutter,
         modifier = Modifier
             .weight(1f)
             // see overlayActive above: the overlay card has to be able to leave the grid while it exists
@@ -402,35 +397,27 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
 
 @Composable
 private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modifier, onToggle: () -> Unit) {
-    val theme = LocalTheme.current
+    val secondary = LocalTheme.current.textColorSecondary
     val title = localizedLabel(entry.type.title) ?: entry.type.title
-
-    CollapsibleHeader(
-        label = title,
-        expanded = entry.expanded,
+    val icon = remember(entry.type.icon) { entry.type.icon?.takeIf(::canRenderIcon) }
+    SectionHeader(
+        title,
+        modifier,
         onToggle = onToggle,
-        modifier = modifier,
-        trailing = { Rule(Modifier.weight(1f)) },
-    ) {
-        Rule(Modifier.weight(1f))
-        remember(entry.type.icon) { entry.type.icon?.takeIf(::canRenderIcon) }?.let { icon ->
-            Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(14.dp))
-        }
-        Text(
-            title,
-            color = theme.textColorSecondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-        )
-        if (!entry.expanded && entry.cardCount > 0) {
-            Text("(${entry.cardCount})", color = theme.textColorSecondary, fontSize = 11.sp)
-        }
-    }
-}
-
-@Composable
-private fun Rule(modifier: Modifier) {
-    Box(modifier.height(1.dp).background(LocalTheme.current.borderColor))
+        contentPadding = PaddingValues(0.dp),
+        title = { _, _ ->
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Divider(Modifier.weight(1f))
+                icon?.let { Icon(it, color = secondary, modifier = Modifier.size(14.dp)) }
+                Text(title, color = secondary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                if (!entry.expanded && entry.cardCount > 0) {
+                    Text("(${entry.cardCount})", color = secondary, fontSize = 11.sp)
+                }
+                SectionChevron(entry.expanded)
+                Divider(Modifier.weight(1f))
+            }
+        },
+    )
 }
 
 private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
@@ -550,11 +537,12 @@ private fun commitDrop(entries: List<ModGridEntry>, index: Int) {
         ModFavorites.toggle(dropped.id)
     }
     if (ModSortStore.alphabetical) return
-    val group = entries.slice(modGroupBounds(entries, index)).filterIsInstance<ModGridEntry.Card>().map { it.data }
-    ModOrder.reorder(
-        group.map { it.id },
-        ConfigRegistry.modCardConfigs.sortedWith(modCardOrder()).map { it.id },
-    )
+    val group = entries.slice(modGroupBounds(entries, index)).filterIsInstance<ModGridEntry.Card>().map { it.data.id }
+    val shown = ConfigRegistry.modCardConfigs.sortedWith(modCardOrder()).map { it.id }
+    val members = group.toSet()
+    if (shown.filter { it in members } == group) return
+    ModOrder.reorder(group, shown)
+    ModSortStore.select(ModSortStore.CUSTOM)
 }
 
 /** Dashed outline on the dragged card's slot, in the favorite color while it would land as a [favorite] */
@@ -588,6 +576,7 @@ private val ModCardInsetFooterInset = 6.dp
 private val ModCardToggleDot = 6.dp
 private val ModCardToggleRing = 12.dp
 private val ModCardToggleGlow = 5.dp
+private val ModCardToggleUnavailable = Color(0xFF4F505B)
 
 private const val ModCardToggleRingDarken = 0.42f
 private val ModCardToggleRingShade = Color(0xFF181600)
@@ -638,25 +627,21 @@ fun ModCard(
         }
     }
 
-    Box(
+    Card(
         modifier = modifier.fillMaxWidth().height(140.dp)
-            .hoverGlow(theme.modCardShape)
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, theme.modCardShape)
             .then(
                 if (interactive) {
                     // cards never take focus, otherwise they slide in from off screen when scrolled back into view
                     Modifier
                         .focusProperties { canFocus = false }
                         .contextMenu { modCardMenu(mod, navigation) }
-                        .oneConfigClickable(mod.title.asRenderText(), { openModCard(mod, navigation) }, indication = false, interactionSource = interactionSource)
                 } else {
                     Modifier
                 },
-            )
-            .clip(theme.modCardShape)
+            ),
+        onClick = if (interactive) ({ openModCard(mod, navigation) }) else null,
+        label = mod.title.asRenderText(),
+        interactionSource = interactionSource,
     ) {
         Column(Modifier.fillMaxSize()) {
             Box(
@@ -672,10 +657,9 @@ fun ModCard(
                 } else {
                     Text(
                         remember(mod.title) { mod.title.asRenderText() },
+                        theme.typography.titleSmall,
                         color = theme.textColor,
-                        fontSize = 16.sp,
                         lineHeight = 18.sp,
-                        fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(horizontal = 12.dp),
                     )
                 }
@@ -727,7 +711,7 @@ fun ModCard(
                 Text(
                     mod.title,
                     color = footerTextColor,
-                    fontSize = 16.sp,
+                    fontSize = theme.typography.titleSmall.fontSize,
                     lineHeight = 16.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
@@ -805,7 +789,7 @@ fun ModCard(
                     )
                 } else Box(Modifier.size(ModCardToggleRing), contentAlignment = Alignment.Center) {
                     val shade = ModCardToggleRingShade
-                    val unavailable = theme.mutedText
+                    val unavailable = ModCardToggleUnavailable
                     val ringStart = if (toggle != null) lerp(Accent, shade, ModCardToggleRingDarken) else unavailable.copy(alpha = 0.5f)
                     val ringEnd = if (toggle != null) lerp(AccentEnd, shade, ModCardToggleRingDarken) else ringStart
                     val ring = lerp(ringStart, ringEnd, 0.5f)

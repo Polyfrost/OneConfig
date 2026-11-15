@@ -5,6 +5,8 @@ import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyGlyphPage
 //? if >= 1.21.11 {
 import net.minecraft.client.Minecraft
+import net.minecraft.network.chat.Style
+import net.minecraft.util.FormattedCharSequence
 import org.polyfrost.compose.mc.McFontQueue
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.event.v1.EventManager
@@ -33,6 +35,9 @@ object McFontService {
         installEngines()
         //? if >= 1.21.11 {
         McFontQueue.measureWidth = { text, scale -> Minecraft.getInstance().font.width(text) * scale }
+        McFontQueue.measureLiteralWidth = { text, scale ->
+            Minecraft.getInstance().font.width(FormattedCharSequence.forward(text, Style.EMPTY)) * scale
+        }
         EventManager.register(ResourceFinishedLoading::class.java) { _ ->
             FontManager.invalidateMetrics()
             HudManager.invalidate()

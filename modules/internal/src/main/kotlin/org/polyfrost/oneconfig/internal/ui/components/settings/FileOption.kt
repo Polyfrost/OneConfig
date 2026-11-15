@@ -19,15 +19,16 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.internal.ui.api.settings.FileOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.IconButton
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
@@ -77,7 +78,7 @@ fun FileOption(data: FileOptionData, enabled: Boolean) {
         Modifier.width(LocalOptionWidth.current).heightIn(min = OptionControlHeight),
         placeholder = data.placeholder,
         enabled = enabled,
-        fontSize = 14.sp,
+        fontSize = theme.typography.body.fontSize,
         visualTransformation = rememberPathTransformation(),
         trailing = {
             Row(
@@ -87,19 +88,22 @@ fun FileOption(data: FileOptionData, enabled: Boolean) {
                 if (text.isNotEmpty()) {
                     IconButton(
                         "close",
-                        modifier = Modifier.size(16.dp),
-                        foreground = theme.textColorSecondary,
-                        hoveredForeground = theme.textColor,
+                        iconButtonLabel("close"),
+                        { update("") },
+                        Modifier.size(16.dp),
                         enabled = enabled,
-                    ) { update("") }
+                        size = ControlSize.Compact,
+                        tooltip = null,
+                    )
                 }
                 IconButton(
                     "folder",
-                    modifier = Modifier.size(18.dp),
-                    foreground = theme.textColorSecondary,
-                    hoveredForeground = theme.textColor,
+                    iconButtonLabel("folder"),
+                    ::openDialog,
+                    Modifier.size(18.dp),
                     enabled = enabled,
-                    onClick = ::openDialog,
+                    size = ControlSize.Compact,
+                    tooltip = null,
                 )
             }
         },

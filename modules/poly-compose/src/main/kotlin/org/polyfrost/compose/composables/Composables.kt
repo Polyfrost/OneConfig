@@ -98,8 +98,9 @@ public fun PolyMcText(
     shadow: Boolean = true,
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,
+    literal: Boolean = false,
 ) {
-    PolyMcText(text, null, color, shadow, scale, modifier)
+    PolyMcText(text, null, color, shadow, scale, modifier, literal)
 }
 
 @Composable
@@ -110,10 +111,12 @@ public fun PolyMcText(
     shadow: Boolean = true,
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,
+    literal: Boolean = false,
 ) {
     ComposeNode<McTextNode, PolyApplier>(
         factory = { McTextNode() },
         update = {
+            set(literal) { this.literal = it; remeasure() }
             set(text) { this.text = it; remeasure() }
             set(scale) { this.scale = it; remeasure() }
             set(color) { this.color = it }
@@ -132,10 +135,12 @@ public fun PolyMcText(
     shadow: Boolean = true,
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,
+    literal: Boolean = false,
 ) {
     ComposeNode<McTextNode, PolyApplier>(
         factory = { McTextNode() },
         update = {
+            set(literal) { this.literal = it; remeasure() }
             set(text) { textProvider = it; this.text = it(); remeasure() }
             set(scale) { this.scale = it; remeasure() }
             set(color) { this.color = it }
@@ -144,6 +149,44 @@ public fun PolyMcText(
             set(modifier) { modifier.applyTo(style); remeasure() }
         },
     )
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun PolyMcText(
+    text: String,
+    color: PolyColor = PolyColor.WHITE,
+    shadow: Boolean = true,
+    scale: Float = 1f,
+    modifier: PolyModifier = PolyModifier,
+) {
+    PolyMcText(text, null, color, shadow, scale, modifier, false)
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun PolyMcText(
+    text: String,
+    outlineColor: PolyColor?,
+    color: PolyColor = PolyColor.WHITE,
+    shadow: Boolean = true,
+    scale: Float = 1f,
+    modifier: PolyModifier = PolyModifier,
+) {
+    PolyMcText(text, outlineColor, color, shadow, scale, modifier, false)
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun PolyMcText(
+    text: () -> String,
+    outlineColor: PolyColor?,
+    color: PolyColor = PolyColor.WHITE,
+    shadow: Boolean = true,
+    scale: Float = 1f,
+    modifier: PolyModifier = PolyModifier,
+) {
+    PolyMcText(text, outlineColor, color, shadow, scale, modifier, false)
 }
 
 @Composable

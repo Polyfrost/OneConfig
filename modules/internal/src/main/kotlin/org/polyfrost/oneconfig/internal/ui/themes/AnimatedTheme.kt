@@ -76,7 +76,7 @@ fun animateTheme(target: UITheme): UITheme {
         checkBoxShape = checkBoxShape,
         buttonShape = buttonShape,
         popupShape = popupShape,
-    ).withControlTrackColor(controlTrackColor)
+    ).withControlTrackColor(controlTrackColor).withLightMode(target.isLight)
 }
 
 /**

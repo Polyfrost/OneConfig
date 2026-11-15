@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextListOptionData
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -48,7 +47,7 @@ internal fun RowScope.EntryTextField(
         Modifier.weight(1f),
         placeholder = placeholder,
         framed = false,
-        fontSize = 13.sp,
+        fontSize = LocalTheme.current.typography.label.fontSize,
         interactionSource = ctx.fieldInteraction,
     )
 }

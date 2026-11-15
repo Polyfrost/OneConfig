@@ -39,7 +39,6 @@ kotlinx.coroutines.channels.ReceiveCatching
 kotlinx.coroutines.CancellableContinuationImplKt
 androidx.compose.runtime.saveable.SaveableStateHolderImpl$SaveableStateProvider$lambda$0$1$0$$inlined$onDispose$1
 org.polyfrost.oneconfig.internal.ui.PlayerHeadTextureAccess
-org.polyfrost.oneconfig.internal.ui.PlayerHeadBlit
 androidx.compose.ui.util.ListUtilsKt
 androidx.compose.ui.input.pointer.PointerType$Companion
 androidx.compose.ui.input.pointer.PointerButton
@@ -548,7 +547,6 @@ org.polyfrost.oneconfig.api.event.v1.EventDelay$1
 org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen$Companion$OpeningRoute
 org.polyfrost.oneconfig.internal.ui.shell.HudEditorRoute
 org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
-org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
 org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform
 org.polyfrost.oneconfig.api.platform.v1.internal.LoaderPlatformImpl
 org.polyfrost.oneconfig.internal.ui.sound.UiSounds
@@ -2074,7 +2072,6 @@ androidx.compose.runtime.saveable.SaveableStateRegistryImpl$registerProvider$3
 org.polyfrost.oneconfig.internal.ui.screens.ModsKt
 org.polyfrost.oneconfig.api.ui.v1.ModsPageDecorators
 org.polyfrost.oneconfig.internal.ui.screens.ModCategory
-org.polyfrost.oneconfig.internal.ui.components.ChipsKt
 androidx.compose.foundation.layout.UnspecifiedConstraintsElement
 org.polyfrost.oneconfig.internal.ui.api.ModIdStore
 org.polyfrost.oneconfig.internal.ui.api.ModHidden
@@ -2499,7 +2496,6 @@ androidx.navigation.compose.NavHostKt$NavHost$lambda$28$0$$inlined$onDispose$1
 androidx.compose.animation.core.ActualJvm_jvmAndAndroidKt
 androidx.compose.animation.core.TransitionKt$rememberTransition$lambda$1$0$$inlined$onDispose$1
 androidx.compose.animation.core.TransitionKt$rememberTransition$lambda$3$0$$inlined$onDispose$1
-org.polyfrost.oneconfig.internal.ui.PlayerHeadSkinAccess
 org.lwjgl.stb.STBIWriteCallbackI
 org.lwjgl.stb.STBIWriteCallback
 com.mojang.blaze3d.platform.NativeImage$WriteCallback

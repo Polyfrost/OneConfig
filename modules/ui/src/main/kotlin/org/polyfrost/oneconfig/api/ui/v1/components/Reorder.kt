@@ -48,6 +48,7 @@ public class ReorderState internal constructor(
 ) {
     internal var onMove: (Int, Int) -> Unit = { _, _ -> }
     internal var onDragEnd: (() -> Unit)? = null
+    internal var sound: UiSound? = UiSound.SliderTick
 
     private class Slot(var index: Int) {
         var rect: Rect? = null
@@ -144,6 +145,7 @@ public class ReorderState internal constructor(
         dragged.index = to
         movedAt = System.nanoTime()
         onMove(from, to)
+        sound?.let(::playUiSound)
     }
 
     internal fun end() {
@@ -176,13 +178,24 @@ public fun rememberReorderState(onMove: (from: Int, to: Int) -> Unit): ReorderSt
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun rememberReorderState(orientation: Orientation, onMove: (from: Int, to: Int) -> Unit, onDragEnd: (() -> Unit)?): ReorderState {
+public fun rememberReorderState(orientation: Orientation, onMove: (from: Int, to: Int) -> Unit, onDragEnd: (() -> Unit)?): ReorderState =
+    rememberReorderState(orientation, onMove, onDragEnd, UiSound.SliderTick)
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun rememberReorderState(
+    orientation: Orientation,
+    onMove: (from: Int, to: Int) -> Unit,
+    onDragEnd: (() -> Unit)?,
+    sound: UiSound?,
+): ReorderState {
     val scope = rememberCoroutineScope()
     val state = remember(orientation) { ReorderState(orientation, scope) }
     val move by rememberUpdatedState(onMove)
     val end by rememberUpdatedState(onDragEnd)
     state.onMove = { from, to -> move(from, to) }
     state.onDragEnd = { end?.invoke() }
+    state.sound = sound
     return state
 }
 

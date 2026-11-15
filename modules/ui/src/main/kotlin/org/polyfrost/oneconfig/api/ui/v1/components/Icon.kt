@@ -46,10 +46,12 @@ public fun Icon(
     tintProducer: (() -> Color)? = null,
     fitAspectRatio: Boolean = false,
 ) {
-    val pixel = !fitAspectRatio && OneConfigTheme.current.style == ThemeStyle.Pixel &&
-        (OneConfigTheme.icon(name) != name || "/minecraft/" in name)
+    val pixelStyle = OneConfigTheme.current.style == ThemeStyle.Pixel
+    val builtIn = componentsBridge().themeIcon(name)
+    val registered = if (pixelStyle && builtIn == name) OneConfigTheme.registeredPixelIcon(name) else null
+    val pixel = !fitAspectRatio && pixelStyle && (builtIn != name || registered != null || "/minecraft/" in name)
     val sized = modifier.describedAs(contentDescription).then(if (pixel) Modifier.snapToCells(PIXEL_ICON_CELLS) else Modifier)
-    componentsBridge().Icon(name, tint, sized, fitAspectRatio, tintProducer)
+    componentsBridge().Icon(registered ?: name, tint, sized, fitAspectRatio, tintProducer)
 }
 
 @ExperimentalOneConfigUiApi

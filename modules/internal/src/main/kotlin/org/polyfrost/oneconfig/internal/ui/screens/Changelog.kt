@@ -2,9 +2,6 @@ package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,14 +10,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -33,14 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.LinkInteractionListener
@@ -65,9 +54,17 @@ import org.commonmark.node.StrongEmphasis
 import org.commonmark.node.Text as CmText
 import org.polyfrost.oneconfig.api.ui.v1.ChangelogSource
 import org.polyfrost.oneconfig.api.ui.v1.ChangelogSources
-import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.Badge
+import org.polyfrost.oneconfig.api.ui.v1.components.BadgeTone
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
+import org.polyfrost.oneconfig.api.ui.v1.components.MasterDetailLayout
+import org.polyfrost.oneconfig.api.ui.v1.components.NavItem
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.StatusDot
 import org.polyfrost.oneconfig.internal.ui.api.ChangeKind
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogEntry
@@ -75,15 +72,8 @@ import org.polyfrost.oneconfig.internal.ui.api.ChangelogGroup
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogRelease
 import org.polyfrost.oneconfig.internal.ui.api.ModrinthChangelogs
 import org.polyfrost.oneconfig.internal.ui.api.ModrinthVersionLink
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.glassHover
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
@@ -170,18 +160,18 @@ fun Changelog() {
         ?: visible.first()
 
     CompositionLocalProvider(LocalInstalledVersion provides current.installedVersion) {
-        Row(Modifier.fillMaxSize().padding(start = PageGutter)) {
-            VersionList(visible, selected) { selection = source to it.version }
-            Box(Modifier.weight(1f).fillMaxHeight()) {
-                ReleaseDetail(selected)
-            }
-        }
+        MasterDetailLayout(
+            list = { VersionList(visible, selected) { selection = source to it.version } },
+            detail = { ReleaseDetail(selected) },
+            modifier = Modifier.padding(start = PageGutter),
+            listWidth = VersionListWidth,
+            gap = 0.dp,
+        )
     }
 }
 
 @Composable
 private fun VersionList(releases: List<ChangelogRelease>, selected: ChangelogRelease, onSelect: (ChangelogRelease) -> Unit) {
-    val theme = LocalTheme.current
     val state = rememberLazyListState()
     val series = remember(releases) { releases.groupBy { seriesOf(it.version) }.entries.toList() }
 
@@ -198,37 +188,22 @@ private fun VersionList(releases: List<ChangelogRelease>, selected: ChangelogRel
         }
     }
 
-    val topFade by Motion.animateFloatAsState(if (state.canScrollBackward) 1f else 0f)
-    val bottomFade by Motion.animateFloatAsState(if (state.canScrollForward) 1f else 0f)
-    Box(Modifier.width(VersionListWidth).fillMaxHeight().wheelScroll(state).scrollable(state, Orientation.Vertical, reverseDirection = true)) {
+    ScrollContainer(state, Modifier.width(VersionListWidth).fillMaxHeight(), scrollbar = false, fadingEdges = true) {
         LazyColumn(
             state = state,
-            modifier = Modifier.fillMaxSize()
-                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                .drawWithContent {
-                    drawContent()
-                    val edge = 32.dp.toPx().coerceAtMost(size.height / 2f)
-                    drawRect(
-                        Brush.verticalGradient(
-                            0f to Color.Black.copy(1f - topFade),
-                            edge / size.height to Color.Black,
-                            1f - edge / size.height to Color.Black,
-                            1f to Color.Black.copy(1f - bottomFade),
-                        ),
-                        blendMode = BlendMode.DstIn,
-                    )
-                },
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = PageGutter),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             series.forEachIndexed { i, (name, list) ->
                 item(key = "series:$name") {
-                    Text(
+                    SectionHeader(
                         name,
-                        color = theme.textColor.copy(0.8f),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = 6.dp, top = if (i == 0) 0.dp else 14.dp, bottom = 2.dp),
+                        Modifier.width(VersionListWidth - 16.dp),
+                        contentPadding = PaddingValues(start = 6.dp, top = if (i == 0) 0.dp else 14.dp, bottom = 2.dp),
+                        textStyle = SectionHeaderDefaults.labelStyle,
+                        color = OneConfigTheme.current.textColor.copy(0.8f),
+                        uppercase = false,
                     )
                 }
                 list.forEach { release ->
@@ -243,52 +218,22 @@ private fun VersionList(releases: List<ChangelogRelease>, selected: ChangelogRel
 
 @Composable
 private fun VersionEntry(release: ChangelogRelease, isSelected: Boolean, onClick: () -> Unit) {
-    val theme = LocalTheme.current
-    val source = rememberInteractionSource()
-    val hovered by source.collectIsHoveredAsState()
-    val translucent = theme.translucentSelection
-    val selectedAlpha by Motion.animateFloatAsState(if (isSelected) 1f else 0f)
-    val foreground by Motion.animateColorAsState(
-        if (isSelected && !translucent) theme.accentTextColor
-        else if (isSelected || hovered) theme.textColor
-        else theme.textColor.copy(0.8f)
-    )
-    val secondary by Motion.animateColorAsState(
-        if (isSelected && !translucent) theme.accentTextColor.copy(0.75f) else theme.textColorSecondary
-    )
-    val border by Motion.animateColorAsState(
-        if (isSelected && translucent) theme.borderColor.copy(0f)
-        else if (hovered || isSelected) theme.borderColor
-        else theme.borderColor.copy(0f)
-    )
+    val caption = LocalTheme.current.typography.caption.fontSize
     val installed = release.version == installedVersion
-
-    Row(
-        Modifier.width(VersionListWidth - 16.dp).height(33.dp)
-            .glassHover(theme.sideBarNavigationEntryShape, pull = 0.75.dp)
-            .graphicsLayer {}
-            .animatedFrame(
-                theme.sideBarNavigationEntryShape,
-                fill = { if (translucent) theme.textColor.copy(alpha = 0.12f * selectedAlpha) else Color.Transparent },
-                accentAlpha = { if (translucent) 0f else selectedAlpha },
-                border = { border },
-            )
-            .then(if (translucent) Modifier.liquidGlass(theme.sideBarNavigationEntryShape) { selectedAlpha } else Modifier)
-            .onClick(source, onClick)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(release.version, color = Color.Unspecified, colorProducer = { foreground }, fontSize = 14.sp, maxLines = 1)
-        if (installed) {
-            Box(Modifier.size(5.dp).background(if (isSelected && !translucent) theme.accentTextColor else Accent, theme.shapes.circle))
-        }
-        Spacer(Modifier.weight(1f))
-        formatDate(release.date, FormatStyle.SHORT)?.let {
-            Text(it, color = Color.Unspecified, colorProducer = { secondary }, fontSize = 11.sp, maxLines = 1)
-        }
-    }
+    val date = formatDate(release.date, FormatStyle.SHORT)
+    NavItem(
+        isSelected,
+        release.version,
+        onClick,
+        Modifier.width(VersionListWidth - 16.dp),
+        trailing = { state ->
+            if (installed) StatusDot(BadgeTone.Accent, onAccent = state.onAccent)
+            Spacer(Modifier.weight(1f))
+            date?.let {
+                Text(it, color = Color.Unspecified, colorProducer = { state.secondary() }, fontSize = caption, maxLines = 1)
+            }
+        },
+    )
 }
 
 @Composable
@@ -298,35 +243,28 @@ private fun ReleaseDetail(release: ChangelogRelease) {
     val forPlayers = release.groups.mapNotNull { group -> group.entries.filter { !it.forDevelopers }.takeIf { it.isNotEmpty() }?.let { ChangelogGroup(group.kind, it) } }
     val forDevelopers = release.groups.mapNotNull { group -> group.entries.filter { it.forDevelopers }.takeIf { it.isNotEmpty() }?.let { ChangelogGroup(group.kind, it) } }
 
-    ScrollbarBox(scroll, PageGutter, Modifier.fillMaxSize()) {
+    ScrollContainer(scroll, Modifier.fillMaxSize(), gutter = PageGutter) {
         Column(
-            Modifier.fillMaxSize().verticalScroll(scroll).padding(start = 18.dp, end = PageGutter, bottom = PageGutter),
+            Modifier.fillMaxWidth().padding(start = 18.dp, bottom = PageGutter),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(release.version, color = theme.textColor, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                    Text(release.version, color = theme.textColor, fontSize = theme.typography.display.fontSize, fontWeight = FontWeight.SemiBold)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        formatDate(release.date, FormatStyle.LONG)?.let { Text(it, color = theme.textColorSecondary, fontSize = 12.sp) }
+                        formatDate(release.date, FormatStyle.LONG)?.let { Text(it, color = theme.textColorSecondary, fontSize = theme.typography.small.fontSize) }
                         if (release.version == installedVersion) {
-                            Text(
-                                translated("oneconfig.changelog.installed", "Installed"),
-                                color = theme.textColor,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.background(theme.chipBackground, theme.buttonShape).padding(horizontal = 8.dp, vertical = 2.dp),
-                            )
+                            Badge(translated("oneconfig.changelog.installed", "Installed"))
                         }
                     }
                 }
             }
             forPlayers.forEach { KindSection(it, developers = false) }
             if (forDevelopers.isNotEmpty()) {
-                Text(
+                SectionHeader(
                     translated("oneconfig.changelog.developers", "For mod developers"),
-                    color = theme.textColor,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(top = 32.dp),
+                    eyebrow = false,
+                    contentPadding = PaddingValues(top = 32.dp),
+                    textStyle = OneConfigTheme.current.typography.titleSmall,
                 )
                 forDevelopers.forEach { KindSection(it, developers = true) }
             }
@@ -336,13 +274,11 @@ private fun ReleaseDetail(release: ChangelogRelease) {
 
 @Composable
 private fun KindSection(group: ChangelogGroup, developers: Boolean) {
-    val theme = LocalTheme.current
-    Text(
-        group.kind.label().uppercase(),
-        color = theme.textColor.copy(0.8f),
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(top = if (developers) 16.dp else 24.dp, bottom = 8.dp, start = 2.dp),
+    SectionHeader(
+        group.kind.label(),
+        contentPadding = PaddingValues(top = if (developers) 16.dp else 24.dp, bottom = 8.dp, start = 2.dp),
+        textStyle = SectionHeaderDefaults.labelStyle,
+        color = OneConfigTheme.current.textColor.copy(0.8f),
     )
     EntryList(group.entries, depth = 0)
 }
@@ -377,7 +313,7 @@ internal fun changelogBodyStyle(depth: Int): TextStyle {
     val theme = LocalTheme.current
     return TextStyle(
         fontFamily = theme.typography.family,
-        fontSize = if (depth == 0) 14.sp else 12.sp,
+        fontSize = if (depth == 0) theme.typography.body.fontSize else theme.typography.small.fontSize,
         lineHeight = if (depth == 0) 20.sp else 18.sp,
         color = if (depth == 0) theme.textColor else theme.textColorSecondary,
     )
@@ -390,7 +326,7 @@ internal fun changelogInlineStyles(): InlineStyles {
     return InlineStyles(
         bold = SpanStyle(fontWeight = FontWeight.SemiBold),
         italic = SpanStyle(fontStyle = FontStyle.Italic),
-        code = SpanStyle(background = theme.chipBackground, fontSize = 12.sp),
+        code = SpanStyle(background = theme.chipBackground, fontSize = theme.typography.small.fontSize),
         link = TextLinkStyles(
             style = SpanStyle(color = accent, fontWeight = FontWeight.Medium, textDecoration = TextDecoration.Underline),
             hoveredStyle = SpanStyle(color = accent.copy(alpha = 0.75f)),

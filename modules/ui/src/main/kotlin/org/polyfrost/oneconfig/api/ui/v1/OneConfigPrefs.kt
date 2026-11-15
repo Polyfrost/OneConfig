@@ -27,13 +27,18 @@ public object OneConfigPrefs {
     public var uiScale: Float by mutableFloatStateOf(1f)
         private set
 
+    @JvmStatic
+    public var reduceTransparency: Boolean by mutableStateOf(false)
+        private set
+
     @InternalOneConfigUiApi
     @JvmStatic
-    public fun update(animationsEnabled: Boolean, reducedMotion: Boolean, backgroundBlur: Boolean, guiOpenAnimation: Boolean, uiScale: Float) {
+    public fun update(animationsEnabled: Boolean, reducedMotion: Boolean, backgroundBlur: Boolean, guiOpenAnimation: Boolean, uiScale: Float, reduceTransparency: Boolean) {
         this.animationsEnabled = animationsEnabled
         this.reducedMotion = reducedMotion || !animationsEnabled
         this.backgroundBlur = backgroundBlur
         this.guiOpenAnimation = guiOpenAnimation
         this.uiScale = uiScale
+        this.reduceTransparency = reduceTransparency
     }
 }

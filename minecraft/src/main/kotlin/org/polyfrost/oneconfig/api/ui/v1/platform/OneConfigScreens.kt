@@ -36,8 +36,13 @@ object OneConfigScreens {
     }
 
     internal fun allows(next: Screen?): Boolean {
+        val current = runCatching { current() }
         for (guard in guards) {
             if (next === guard.owner) continue
+            if (guard.owner is Screen && current.isSuccess && guard.owner !== current.getOrNull()) {
+                guards.remove(guard)
+                continue
+            }
             val allowed = try {
                 guard.allow(next)
             } catch (t: Throwable) {

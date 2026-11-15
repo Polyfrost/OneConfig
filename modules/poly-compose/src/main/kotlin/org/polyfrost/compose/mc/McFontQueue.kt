@@ -5,6 +5,7 @@ import org.polyfrost.compose.render.PolyGlyphPage
 public object McFontQueue {
     public var measureWidth: ((text: String, scale: Float) -> Float)? = null
     public var measureHeight: ((scale: Float) -> Float)? = null
+    public var measureLiteralWidth: ((text: String, scale: Float) -> Float)? = null
 
     @Deprecated("Minecraft text is drawn by the active PolyRenderer", level = DeprecationLevel.HIDDEN)
     public var renderer: ((canvas: Any?, text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) -> Unit)? = null
@@ -13,7 +14,12 @@ public object McFontQueue {
     public var outlineRenderer: ((canvas: Any?, text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) -> Unit)? = null
 
     public fun measureTextWidth(text: String, scale: Float): Float =
-        measureWidth?.invoke(text, scale) ?: bundledWidth(text, scale)
+        measureWidth?.invoke(text, scale) ?: bundledWidth(text, scale, false)
+
+    public fun measureTextWidth(text: String, scale: Float, literal: Boolean): Float {
+        if (!literal || '§' !in text) return measureTextWidth(text, scale)
+        return measureLiteralWidth?.invoke(text, scale) ?: bundledWidth(text, scale, true)
+    }
 
     public fun measureTextHeight(scale: Float): Float =
         measureHeight?.invoke(scale) ?: (9f * scale)
@@ -24,7 +30,7 @@ public object McFontQueue {
     private val advances = FloatArray(0x590) { Float.NaN }
     @Volatile private var advancesFor: PolyGlyphPage.Rasterizer? = null
 
-    private fun bundledWidth(text: String, scale: Float): Float {
+    private fun bundledWidth(text: String, scale: Float, literal: Boolean): Float {
         val r = PolyGlyphPage.rasterizer ?: return text.length * 6f * scale
         if ('§' !in text) plainWidth(r, text, scale)?.let { return it }
         var w = 0f
@@ -33,7 +39,7 @@ public object McFontQueue {
         while (i < text.length) {
             val cp = text.codePointAt(i)
             i += Character.charCount(cp)
-            if (cp == 0xA7 && i < text.length) {
+            if (!literal && cp == 0xA7 && i < text.length) {
                 val code = text[i++].lowercaseChar()
                 if (code == 'l') bold = true else if (code == 'r' || code in '0'..'9' || code in 'a'..'f') bold = false
                 continue

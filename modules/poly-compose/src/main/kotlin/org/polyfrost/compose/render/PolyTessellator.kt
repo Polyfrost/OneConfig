@@ -673,21 +673,31 @@ public abstract class PolyTessellator : PolyRenderer {
     }
 
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) {
+        mcText(text, x, y, color, shadow, scale, false)
+    }
+
+    override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) {
         if (cpuOnly) return
         val lines = text.lines()
         if (shadow) {
             beginDraw()
-            lines.forEachIndexed { index, line -> mcLine(line, x + scale, y + index * 9f * scale + scale, color, scale, true) }
+            lines.forEachIndexed { index, line -> mcLine(line, x + scale, y + index * 9f * scale + scale, color, scale, true, literal) }
         }
         beginDraw()
-        lines.forEachIndexed { index, line -> mcLine(line, x, y + index * 9f * scale, color, scale, false) }
+        lines.forEachIndexed { index, line -> mcLine(line, x, y + index * 9f * scale, color, scale, false, literal) }
     }
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+        mcTextOutline(text, x, y, color, outlineColor, scale, false)
+    }
+
+    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean) {
         beginDraw()
         if (cpuOnly) return
         val c = mulAlpha(outlineColor, state.alpha)
-        val rects = if (c ushr 24 == 0) null else PolyGlyphPage.rasterizer?.let { r -> mcOutlines.getOrPut(text to FontManager.revision) { mcOutline(r, text) } }
+        val rects = if (c ushr 24 == 0) null else PolyGlyphPage.rasterizer?.let { r ->
+            mcOutlines.getOrPut(Triple(text, FontManager.revision, literal)) { mcOutline(r, text, literal) }
+        }
         if (rects != null && rects.isNotEmpty()) {
             begin(whitePage(), false)
             val s = state
@@ -702,7 +712,7 @@ public abstract class PolyTessellator : PolyRenderer {
                 i += 4
             }
         }
-        mcText(text, x, y, color, false, scale)
+        mcText(text, x, y, color, false, scale, literal)
     }
 
     // device-space horizontal shear: x += shearX * (shearBase - y)
@@ -728,7 +738,7 @@ public abstract class PolyTessellator : PolyRenderer {
         quadPx(x0 * s.sx + s.tx, y0 * s.sy + s.ty, x1 * s.sx + s.tx, y1 * s.sy + s.ty, w, w, w, w, c)
     }
 
-    private fun mcLine(line: String, x: Float, top: Float, color: Int, scale: Float, shadow: Boolean) {
+    private fun mcLine(line: String, x: Float, top: Float, color: Int, scale: Float, shadow: Boolean, literal: Boolean) {
         val baseline = top + 7f * scale
         var c = color
         var bold = false
@@ -740,7 +750,7 @@ public abstract class PolyTessellator : PolyRenderer {
         while (i < line.length) {
             val cp = line.codePointAt(i)
             i += Character.charCount(cp)
-            if (cp == 0xA7 && i < line.length) {
+            if (!literal && cp == 0xA7 && i < line.length) {
                 val code = MC_CODES.indexOf(line[i].lowercaseChar())
                 i++
                 if (code in 0..15 || code == 17) { bold = false; italic = false; under = false; strike = false }
@@ -2080,7 +2090,7 @@ public abstract class PolyTessellator : PolyRenderer {
         private val ramps = lru<Pair<List<PolyColor>, List<Float>?>, PolyBitmap>(64)
         private val boxRasters = lru<Pair<PolyGradient, Int>, PolyBitmap>(32)
         private val masks = lru<Long, ShadowMask>(32)
-        private val mcOutlines = lru<Pair<String, Int>, FloatArray>(256)
+        private val mcOutlines = lru<Triple<String, Int, Boolean>, FloatArray>(256)
         private val mcRasters = HashMap<Pair<PolyGlyphPage.Face, Int>, PolyGlyphPage.Raster?>()
         // upright and italic, keyed by the McGlyph or face raster
         private val mcInks = Array(2) { WeakHashMap<Any, McInk?>() }
@@ -2134,7 +2144,7 @@ public abstract class PolyTessellator : PolyRenderer {
         }
 
         // unions the cached grown glyphs row by row, so a changed text costs its runs rather than its whole bounding block
-        private fun mcOutline(r: PolyGlyphPage.Rasterizer, text: String): FloatArray {
+        private fun mcOutline(r: PolyGlyphPage.Rasterizer, text: String, literal: Boolean): FloatArray {
             val inks = ArrayList<McInk>()
             val at = ArrayList<Int>()
             val effects = ArrayList<Int>()
@@ -2150,7 +2160,7 @@ public abstract class PolyTessellator : PolyRenderer {
                 while (i < line.length) {
                     val cp = line.codePointAt(i)
                     i += Character.charCount(cp)
-                    if (cp == 0xA7 && i < line.length) {
+                    if (!literal && cp == 0xA7 && i < line.length) {
                         val code = MC_CODES.indexOf(line[i++].lowercaseChar())
                         when (code) {
                             in 0..15, 17 -> { bold = false; italic = false; under = false; strike = false }

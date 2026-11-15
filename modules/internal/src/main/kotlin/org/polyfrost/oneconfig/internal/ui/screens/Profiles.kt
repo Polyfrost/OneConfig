@@ -5,11 +5,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,14 +40,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.nio.file.Files
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -63,7 +60,10 @@ import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.components.Chip
+import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
@@ -73,17 +73,21 @@ import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.components.ModalDialog
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
 import org.polyfrost.oneconfig.api.ui.v1.components.ProgressBar
-import org.polyfrost.oneconfig.api.ui.v1.components.Scrollbar
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
+import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
+import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextPromptDialog
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
-import org.polyfrost.oneconfig.api.ui.v1.components.smoothWheelScroll
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
-import org.polyfrost.oneconfig.internal.ui.components.Chip
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
-import org.polyfrost.oneconfig.internal.ui.components.onClick
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -271,16 +275,16 @@ fun Profiles() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProfileCategory.entries.forEach {
-                        Chip(
-                            label = translated("oneconfig.profiles.category.${it.name.lowercase()}", it.title),
-                            selected = activeCategory == it,
-                            icon = it.icon,
-                            onClick = { activeCategory = it }
-                        )
-                    }
-                }
+                TabRow(
+                    ProfileCategory.entries.map {
+                        TabItem(it, translated("oneconfig.profiles.category.${it.name.lowercase()}", it.title), icon = it.icon)
+                    },
+                    activeCategory,
+                    { activeCategory = it },
+                    style = TabStyle.Chips,
+                    size = ChipDefaults.size,
+                    fill = false,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Chip(
                         label = translated("oneconfig.profiles.separate_controls", "Separate controls"),
@@ -511,10 +515,11 @@ private fun ColumnScope.ProfilesGrid(
     }
 
     val gridState = rememberLazyGridState()
-    Box(Modifier.weight(1f)) {
+    val gutter = LocalTheme.current.spacing.l
+    ScrollContainer(gridState, Modifier.weight(1f), gutter = 0.dp) {
         LazyVerticalGrid(
             state = gridState,
-            modifier = Modifier.fillMaxSize().padding(end = LocalTheme.current.spacing.l).smoothWheelScroll(gridState),
+            modifier = Modifier.fillMaxSize().padding(end = gutter),
             columns = GridCells.Fixed(5),
             verticalArrangement = Arrangement.spacedBy(19.dp),
             horizontalArrangement = Arrangement.spacedBy(19.dp),
@@ -586,7 +591,6 @@ private fun ColumnScope.ProfilesGrid(
                 )
             }
         }
-        Scrollbar(gridState, Modifier.align(Alignment.CenterEnd).fillMaxHeight())
     }
 }
 
@@ -617,18 +621,13 @@ private fun CreateProfileCard(
         if (createTick > 0) onCreatingChange(false)
     }
 
-    val borderColor by animateAccentColorAsState(
-        creating || isHovered,
-        if (creating || isHovered) Accent else theme.borderColor
-    )
+    val lit = creating || isHovered
+    val borderColor by animateAccentColorAsState(lit, if (lit) Accent else theme.borderColor)
     val iconBackground by animateAccentColorAsState(
-        creating || isHovered,
-        if (creating || isHovered) Accent.copy(alpha = 0.18f) else theme.textColor.copy(alpha = 0.06f)
+        lit,
+        if (lit) Accent.copy(alpha = 0.18f) else theme.textColor.copy(alpha = 0.06f),
     )
-    val iconColor by animateAccentColorAsState(
-        creating || isHovered,
-        if (creating || isHovered) Accent else theme.textColorSecondary
-    )
+    val iconColor by animateAccentColorAsState(lit, if (lit) Accent else theme.textColorSecondary)
 
     Box(
         modifier = Modifier
@@ -636,16 +635,15 @@ private fun CreateProfileCard(
             .height(ProfileCardHeight)
             .hoverGlow(shape)
             .background(theme.modCardBackground, shape)
-            .border(
-                1.dp, Brush.verticalGradient(
-                    listOf(borderColor, borderColor.copy(0f))
-                ), shape
+            .border(1.dp, Brush.verticalGradient(listOf(borderColor, borderColor.copy(0f))), shape)
+            .oneConfigClickable(
+                translated("oneconfig.profiles.new", "New profile"),
+                { if (!creating) onCreatingChange(true) },
+                shape = shape,
+                indication = false,
+                interactionSource = interactionSource,
             )
-            .onClick(interactionSource) {
-                if (!creating) onCreatingChange(true)
-            }
-            .clip(shape)
-            .pointerHoverIcon(PointerIcon.Hand)
+            .clip(shape),
     ) {
         val vignetteColor = theme.textColor
         Box(
@@ -668,22 +666,16 @@ private fun CreateProfileCard(
         )
 
         if (creating) {
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 13.dp, end = 13.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            ActionRow {
                 ActionIcon(
-                    icon = "tick",
+                    "tick",
+                    translated("oneconfig.profiles.create", "Create profile"),
                     enabled = !busy,
                     tint = theme.textColorSecondary.copy(0.45f),
                     hoveredTint = Accent,
-                ) {
-                    onCreate()
-                }
-                ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary) {
+                    onClick = onCreate,
+                )
+                ActionIcon("close", iconButtonLabel("close"), enabled = !busy, tint = theme.textColorSecondary) {
                     onValueChange("")
                     onCreatingChange(false)
                 }
@@ -717,7 +709,7 @@ private fun CreateProfileCard(
                 Text(
                     translated("oneconfig.profiles.new", "New profile"),
                     color = theme.textColor.copy(alpha = 0.86f),
-                    style = theme.typography.title.copy(fontWeight = FontWeight.Medium),
+                    style = theme.typography.titleMedium,
                 )
             }
         }
@@ -798,17 +790,17 @@ private fun ProfileCard(
             .hoverGlow(shape)
             .background(theme.modCardBackground, shape)
             .border(3.dp, selectionBorderColor, shape)
-            .border(
-                1.dp, Brush.verticalGradient(
-                    listOf(theme.borderColor, theme.borderColor.copy(0f))
-                ), shape
-            )
+            .border(1.dp, Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))), shape)
             .contextMenu(enabled = editor == null) { menuEntries() }
-            .onClick(interactionSource) {
-                if (editor == null && !menuOpen) onOpen()
-            }
-            .clip(shape)
-            .pointerHoverIcon(PointerIcon.Hand)
+            .oneConfigClickable(
+                profile.name,
+                { if (editor == null && !menuOpen) onOpen() },
+                selected = profile.active,
+                shape = shape,
+                indication = false,
+                interactionSource = interactionSource,
+            )
+            .clip(shape),
     ) {
         val vignetteColor = theme.textColor
         Box(
@@ -830,22 +822,29 @@ private fun ProfileCard(
                 }
         )
 
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 13.dp, end = 13.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        ActionRow {
             if (editor == ProfileEditor.Icon) {
-                ActionIcon("close", enabled = !busy, tint = theme.textColorSecondary, onClick = ::closeEditor)
+                ActionIcon("close", iconButtonLabel("close"), enabled = !busy, tint = theme.textColorSecondary, onClick = ::closeEditor)
             } else {
                 if (profile.favorite) {
-                    ActionIcon("star-filled", enabled = !busy, tint = theme.favoriteColor) { onFavorite() }
+                    ActionIcon(
+                        "star-filled",
+                        translated("oneconfig.profiles.menu.unfavorite", "Remove favorite"),
+                        enabled = !busy,
+                        tint = theme.favoriteColor,
+                        onClick = onFavorite,
+                    )
                 }
                 if (profile.active || isHovered || menuOpen) {
                     Box {
-                        ActionIcon("settings", enabled = !busy, tint = theme.textColorSecondary, hoveredTint = Accent) {
+                        ActionIcon(
+                            "settings",
+                            translated("oneconfig.profiles.options", "Profile options"),
+                            enabled = !busy,
+                            tint = theme.textColorSecondary,
+                            hoveredTint = Accent,
+                            tooltip = if (menuOpen) null else translated("oneconfig.profiles.options", "Profile options"),
+                        ) {
                             onMenuOpenChange(true)
                         }
                         DropdownMenu(menuOpen, { onMenuOpenChange(false) }, menuEntries(), placement = Placement.BelowEnd)
@@ -885,7 +884,7 @@ private fun ProfileCard(
                         .fillMaxWidth()
                         .padding(horizontal = 18.dp),
                     theme.textColor,
-                    theme.typography.title.copy(fontWeight = FontWeight.Medium),
+                    theme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
@@ -995,11 +994,14 @@ private fun ProfileIconChoice(
             .size(24.dp)
             .background(backgroundColor, theme.sideBarNavigationEntryShape)
             .border(1.dp, borderColor, theme.sideBarNavigationEntryShape)
-            .then(
-                if (enabled) Modifier
-                    .onClick(interactionSource, onClick)
-                    .pointerHoverIcon(PointerIcon.Hand)
-                else Modifier
+            .oneConfigClickable(
+                iconButtonLabel(icon),
+                onClick,
+                enabled = enabled,
+                selected = selected,
+                shape = theme.sideBarNavigationEntryShape,
+                indication = false,
+                interactionSource = interactionSource,
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -1008,11 +1010,23 @@ private fun ProfileIconChoice(
 }
 
 @Composable
+private fun BoxScope.ActionRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        Modifier.align(Alignment.TopEnd).padding(top = 13.dp, end = 13.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content,
+    )
+}
+
+@Composable
 private fun ActionIcon(
     icon: String,
+    label: String,
     enabled: Boolean = true,
     tint: Color,
     hoveredTint: Color = tint,
+    tooltip: String? = label,
     onClick: () -> Unit,
 ) {
     val interactionSource = rememberInteractionSource()
@@ -1021,18 +1035,15 @@ private fun ActionIcon(
         if (enabled && isHovered) hoveredTint else tint
     )
 
-    Box(
-        modifier = Modifier
-            .size(22.dp)
-            .then(
-                if (enabled) Modifier
-                    .onClick(interactionSource) { onClick() }
-                    .pointerHoverIcon(PointerIcon.Hand)
-                else Modifier
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, color = iconColor, modifier = Modifier.size(18.dp))
+    TooltipBox(tooltip, placement = TooltipPlacement.BelowCenter) {
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .oneConfigClickable(label, onClick, enabled = enabled, indication = false, interactionSource = interactionSource),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, color = iconColor, modifier = Modifier.size(18.dp))
+        }
     }
 }
 
@@ -1059,7 +1070,7 @@ private fun ProfileTextField(
             placeholder = placeholder,
             enabled = enabled,
             invalid = error != null,
-            fontSize = 14.sp,
+            size = ControlSize.Regular,
             focusRequester = focusRequester,
             onSubmit = onSubmit,
         )

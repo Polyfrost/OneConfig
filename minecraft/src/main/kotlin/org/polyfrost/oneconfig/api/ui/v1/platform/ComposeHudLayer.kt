@@ -28,6 +28,7 @@ import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.EscapeStack
+import org.polyfrost.oneconfig.api.ui.v1.components.WithoutFeedbackHosts
 import org.polyfrost.oneconfig.api.ui.v1.theme.ProvideOneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
@@ -62,8 +63,10 @@ class ComposeHudLayer(val id: String, private val content: @Composable () -> Uni
             if (!value) stopInput()
         }
 
+    var scale: Float = 1f
+
     val density: Float
-        get() = runCatching { sceneDensity() }.getOrDefault(1f)
+        get() = runCatching { sceneDensity() }.getOrDefault(1f) * (scale.takeIf { it > 0f && it.isFinite() } ?: 1f)
 
     val pixelRatio: Float
         get() = runCatching { Platform.screen().pixelRatio() }.getOrDefault(1f).takeIf { it > 0f } ?: 1f
@@ -75,6 +78,7 @@ class ComposeHudLayer(val id: String, private val content: @Composable () -> Uni
     private var sceneFailure: AtomicReference<Throwable?>? = null
     private var failures = 0
     private var retryAt = 0L
+    private var builtAt = 0L
     private var inputActive = false
     private var lastPointer: Offset? = null
     private var lastDrawn = 0L
@@ -127,7 +131,7 @@ class ComposeHudLayer(val id: String, private val content: @Composable () -> Uni
                 }
             }
             rethrowSceneFailure()
-            failures = 0
+            if (failures > 0 && System.nanoTime() - builtAt > HEALTHY_NANOS) failures = 0
             drawn
         } catch (t: Throwable) {
             fail(t)
@@ -165,10 +169,11 @@ class ComposeHudLayer(val id: String, private val content: @Composable () -> Uni
             recomposer = newRecomposer
             scope = newScope
             sceneFailure = failure
+            builtAt = System.nanoTime()
             ComposeHudInput.register(this)
             newScene.setContent {
                 CompositionLocalProvider(scrollConfig.provided(), LocalWheelRouter provides wheelRouter) {
-                    ProvideOneConfigTheme { content() }
+                    WithoutFeedbackHosts { ProvideOneConfigTheme { content() } }
                 }
             }
             newScene
@@ -273,7 +278,7 @@ class ComposeHudLayer(val id: String, private val content: @Composable () -> Uni
         val scene = scene ?: return false
         return try {
             if (type == PointerEventType.Press) wheelRouter.stopFallback()
-            scene.sendPointerEvent(type, pointerPosition(), button = button) in HIT_RESULTS
+            scene.sendPointerEvent(type, pointerPosition(), button = button) in CONSUMED_RESULTS
         } catch (t: Throwable) {
             fail(t)
             false
@@ -288,6 +293,7 @@ class ComposeHudLayer(val id: String, private val content: @Composable () -> Uni
 
         const val INPUT_STALE_NANOS = 250_000_000L
         const val MAX_RETRY_DELAY_NANOS = 60_000_000_000L
+        const val HEALTHY_NANOS = 30_000_000_000L
 
         val WHEEL_UNIT_DP = if (DesktopHelper.isMac) 50f else 150f
 
@@ -299,6 +305,14 @@ class ComposeHudLayer(val id: String, private val content: @Composable () -> Uni
                     dispatchedToAPointerInputModifier = true,
                 )
             }
+        }.toSet()
+
+        val CONSUMED_RESULTS: Set<PointerEventResult> = listOf(false, true).map { moved ->
+            PointerEventResult(
+                anyMovementConsumed = moved,
+                anyChangeConsumed = true,
+                dispatchedToAPointerInputModifier = true,
+            )
         }.toSet()
 
         fun retryDelayNanos(failures: Int): Long =

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, InternalOneConfigUiApi::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
@@ -7,8 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,8 +33,10 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.util.UUID
+import kotlinx.coroutines.delay
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.playerHeadBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
@@ -45,10 +48,64 @@ public object PlayerHeads {
     @JvmStatic
     public fun defaultFace(id: UUID): ImageBitmap? = runCatching { playerHeadBridge()?.defaultFace(id) }.getOrNull()
 
+    @JvmStatic
+    public fun defaultBitmap(id: UUID): PolyBitmap? = runCatching { playerHeadBridge()?.defaultBitmap(id) }.getOrNull()
+
     @ExperimentalOneConfigUiApi
     @JvmStatic
     public fun bitmap(playerId: UUID?): PolyBitmap? =
         playerId?.let { id -> runCatching { playerHeadBridge()?.bitmap(id) }.getOrNull() }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun face(id: UUID, preferLoadedSkin: Boolean): ImageBitmap? {
+        if (!preferLoadedSkin) return face(id)
+        return runCatching { playerHeadBridge()?.loadedFace(id) }.getOrNull()
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun bitmap(playerId: UUID?, preferLoadedSkin: Boolean): PolyBitmap? {
+        if (!preferLoadedSkin) return bitmap(playerId)
+        return playerId?.let { id -> runCatching { playerHeadBridge()?.loadedBitmap(id) }.getOrNull() }
+    }
+
+    @JvmStatic
+    public fun localPlayerId(): UUID? = runCatching { playerHeadBridge()?.localPlayerId() }.getOrNull()
+
+    @JvmStatic
+    public fun localPlayerName(): String? = runCatching { playerHeadBridge()?.localPlayerName() }.getOrNull()
+
+    @JvmStatic
+    public fun localFace(): ImageBitmap? = localPlayerId()?.let { face(it, preferLoadedSkin = true) }
+
+    @JvmStatic
+    public fun skinTexture(id: UUID): String? = runCatching { playerHeadBridge()?.skinTexture(id) }.getOrNull()
+
+    @JvmStatic
+    public fun skinLayers(id: UUID): PlayerSkinLayers? = runCatching { playerHeadBridge()?.skinLayers(id) }.getOrNull()
+
+    @JvmStatic
+    public fun skinLayers(texture: String): PlayerSkinLayersResult =
+        runCatching { playerHeadBridge()?.skinLayers(texture) }.getOrNull() ?: PlayerSkinLayersResult.Unreadable
+}
+
+@ExperimentalOneConfigUiApi
+public sealed interface PlayerSkinLayersResult {
+    public data object Pending : PlayerSkinLayersResult
+
+    public data object Unreadable : PlayerSkinLayersResult
+
+    public class Loaded(public val layers: PlayerSkinLayers) : PlayerSkinLayersResult
+}
+
+@ExperimentalOneConfigUiApi
+public class PlayerSkinLayers @InternalOneConfigUiApi constructor(
+    public val texture: String,
+    public val face: PolyBitmap,
+    public val hat: PolyBitmap,
+) {
+    public val size: Int get() = face.width
 }
 
 @ExperimentalOneConfigUiApi
@@ -60,6 +117,7 @@ public fun PlayerHead(
     name: String? = null,
     shape: Shape = OneConfigTheme.shapes.small,
     contentDescription: String? = name,
+    preferLoadedSkin: Boolean = false,
 ) {
     val described = modifier
         .size(size)
@@ -71,8 +129,20 @@ public fun PlayerHead(
                 role = Role.Image
             },
         )
+    val loaded = remember(playerId, preferLoadedSkin) {
+        mutableStateOf(if (preferLoadedSkin) playerId?.let { PlayerHeads.face(it, preferLoadedSkin = true) } else null)
+    }
+    if (preferLoadedSkin && playerId != null) {
+        LaunchedEffect(playerId) {
+            while (true) {
+                delay(LOADED_SKIN_REFRESH_MILLIS)
+                val next = PlayerHeads.face(playerId, preferLoadedSkin = true)
+                if (next != null && next !== loaded.value) loaded.value = next
+            }
+        }
+    }
     val observed = remember(playerId) { playerId?.let { id -> runCatching { playerHeadBridge()?.observe(id) }.getOrNull() } }
-    val face = observed?.value
+    val face = loaded.value ?: observed?.value
     if (face != null) {
         Image(BitmapPainter(face, filterQuality = FilterQuality.None), null, described)
         return
@@ -91,6 +161,19 @@ public fun PlayerHead(
             textAlign = TextAlign.Center,
         )
     }
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun PlayerHead(
+    size: Dp,
+    modifier: Modifier = Modifier,
+    shape: Shape = OneConfigTheme.shapes.small,
+    contentDescription: String? = null,
+) {
+    val id = remember { PlayerHeads.localPlayerId() }
+    val name = remember { PlayerHeads.localPlayerName() }
+    PlayerHead(id, size, modifier, name, shape, contentDescription, preferLoadedSkin = true)
 }
 
 @ExperimentalOneConfigUiApi
@@ -134,15 +217,17 @@ public fun PlayerHeadStack(ids: List<UUID>, size: Dp, modifier: Modifier = Modif
 @ExperimentalOneConfigUiApi
 @Composable
 public fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier, shape: Shape?) {
-    PlayerHead(playerId, size, modifier, null, shape ?: RoundedCornerShape(size / 4))
+    PlayerHead(playerId, size, modifier, null, shape ?: OneConfigTheme.shapes.small)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
 public fun PlayerHead(playerId: UUID, size: Dp, modifier: Modifier) {
-    PlayerHead(playerId = playerId, size = size, modifier = modifier, name = null, shape = RoundedCornerShape(size / 4))
+    PlayerHead(playerId = playerId, size = size, modifier = modifier, name = null, shape = OneConfigTheme.shapes.small)
 }
+
+private const val LOADED_SKIN_REFRESH_MILLIS = 1000L
 
 private fun placeholderColor(id: UUID?, name: String?): Color =
     Color.hsv(((id?.hashCode() ?: name?.hashCode()) ?: 0).mod(360).toFloat(), 0.45f, 0.55f)

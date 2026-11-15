@@ -32,11 +32,12 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.screens.Accordion
 import org.polyfrost.oneconfig.internal.ui.screens.displayAlpha
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
@@ -140,12 +141,11 @@ internal fun GridRow(
 @Composable
 internal fun LabeledControl(label: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(label, color = LocalTheme.current.textColor, fontSize = 14.sp)
+        Text(label, color = LocalTheme.current.textColor, fontSize = OneConfigTheme.typography.body.fontSize)
         content()
     }
 }
 
-/** [label] with its controls at the far end, laid out like a config screen option row */
 @Composable
 internal fun ControlRow(label: String, content: @Composable RowScope.() -> Unit) {
     Row(
@@ -160,7 +160,7 @@ internal fun ControlRow(label: String, content: @Composable RowScope.() -> Unit)
 
 @Composable
 internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    ControlRow(label) { SwitchControl(checked, onCheckedChange) }
+    ControlRow(label) { Switch(checked, onCheckedChange, label = label, stateLabel = true) }
 }
 
 /**

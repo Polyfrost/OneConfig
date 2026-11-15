@@ -66,7 +66,7 @@ import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 
 private val AutoScrollZone = 40.dp
 private val AutoScrollRamp = 240.dp
-private val AutoScrollMaxSpeed = 3200.dp
+private val DefaultAutoScrollMaxSpeed = 3200.dp
 private const val SCROLL_LIFT_THRESHOLD = 1f
 private const val LIFT_SCALE = 1.04f
 
@@ -155,6 +155,11 @@ public class GridReorderState internal constructor(
     internal val onClick: (key: Any) -> Unit,
     private val crossPadding: () -> Dp,
     private val density: () -> Density,
+    private val axisLock: () -> Boolean,
+    private val lift: () -> Boolean,
+    private val sound: () -> UiSound?,
+    private val maxScrollSpeed: () -> Dp,
+    private val keyboard: () -> Boolean,
 ) {
     public var draggingKey: Any? by mutableStateOf(null)
         private set
@@ -172,7 +177,7 @@ public class GridReorderState internal constructor(
     private var dragDelta by mutableStateOf(Offset.Zero)
     private val settleOffset = Animatable(Offset.Zero, Offset.VectorConverter)
     private var settling by mutableStateOf(false)
-    private val lift = Animatable(1f)
+    private val liftAnimation = Animatable(1f)
 
     private var slot = Offset.Zero
     private var referenceKey: Any? = null
@@ -184,7 +189,9 @@ public class GridReorderState internal constructor(
     internal var containerCoordinates: LayoutCoordinates? = null
     internal val items = HashMap<Any, ReorderItemNode>()
 
-    internal val liftScale: Float get() = lift.value
+    internal val liftScale: Float get() = liftAnimation.value
+
+    internal val keyboardReorder: Boolean get() = keyboard()
 
     internal val overlayOffset: Offset
         get() = if (settling) trackSlot() + settleOffset.value else initialOffset + dragDelta
@@ -205,7 +212,7 @@ public class GridReorderState internal constructor(
         keepScroll(from, to)
         onMove(from, to)
         onDragEnded()
-        playUiSound(UiSound.SliderTick)
+        sound()?.let(::playUiSound)
         return true
     }
 
@@ -257,13 +264,18 @@ public class GridReorderState internal constructor(
         initialOffset = from
         dragDelta = Offset.Zero
         trackSlot()
-        animateLift(if (Motion.reduced) 1f else LIFT_SCALE)
+        animateLift(if (Motion.reduced || !lift()) 1f else LIFT_SCALE)
         dragLoop = scope.launch { dragLoop() }
         return true
     }
 
     internal fun dragBy(delta: Offset) {
-        if (draggingKey != null) dragDelta += delta
+        if (draggingKey == null) return
+        dragDelta += when {
+            !axisLock() -> delta
+            viewport.vertical -> Offset(0f, delta.y)
+            else -> Offset(delta.x, 0f)
+        }
     }
 
     internal fun endDrag() {
@@ -291,7 +303,7 @@ public class GridReorderState internal constructor(
     }
 
     private fun animateLift(target: Float) {
-        scope.launch { lift.animateTo(target, Motion.spec(spring())) }
+        scope.launch { liftAnimation.animateTo(target, Motion.spec(spring())) }
     }
 
     private fun keepScroll(from: Int, to: Int) {
@@ -325,7 +337,7 @@ public class GridReorderState internal constructor(
         keepScroll(draggingIndex, target.index)
         onMove(draggingIndex, target.index)
         draggingIndex = target.index
-        playUiSound(UiSound.SliderTick)
+        sound()?.let(::playUiSound)
     }
 
     private suspend fun dragLoop() {
@@ -353,7 +365,7 @@ public class GridReorderState internal constructor(
         val canScrollBack = range == null || inView.isEmpty() || range.first < inView.first().index
         val canScrollForward = range == null || inView.isEmpty() || range.last > inView.last().index
         val (zone, rampDistance, maxSpeed) = with(density()) {
-            Triple(AutoScrollZone.toPx(), AutoScrollRamp.toPx(), AutoScrollMaxSpeed.toPx())
+            Triple(AutoScrollZone.toPx(), AutoScrollRamp.toPx(), maxScrollSpeed().toPx())
         }
         val intoStart = minOf(viewStart + zone, initialOffset.main()) - start
         val intoEnd = end - maxOf(viewEnd - zone, initialOffset.main() + overlaySize.main())
@@ -376,7 +388,15 @@ public fun rememberGridReorderState(
     dropRange: (index: Int) -> IntRange? = { null },
     onClick: (key: Any) -> Unit = {},
     crossAxisPadding: Dp = 0.dp,
-): GridReorderState = rememberLazyReorderState(lazyState, onMove, onDragEnd, dropRange, onClick, crossAxisPadding) { GridViewport(lazyState) }
+    axisLock: Boolean = false,
+    lift: Boolean = true,
+    sound: UiSound? = UiSound.SliderTick,
+    maxScrollSpeed: Dp = DefaultAutoScrollMaxSpeed,
+    keyboardReorder: Boolean = true,
+): GridReorderState = rememberLazyReorderState(
+    lazyState, onMove, onDragEnd, dropRange, onClick, crossAxisPadding,
+    ReorderOptions(axisLock, lift, sound, maxScrollSpeed, keyboardReorder),
+) { GridViewport(lazyState) }
 
 @ExperimentalOneConfigUiApi
 @Composable
@@ -387,7 +407,23 @@ public fun rememberGridReorderState(
     dropRange: (index: Int) -> IntRange? = { null },
     onClick: (key: Any) -> Unit = {},
     crossAxisPadding: Dp = 0.dp,
-): GridReorderState = rememberLazyReorderState(lazyState, onMove, onDragEnd, dropRange, onClick, crossAxisPadding) { ListViewport(lazyState) }
+    axisLock: Boolean = false,
+    lift: Boolean = true,
+    sound: UiSound? = UiSound.SliderTick,
+    maxScrollSpeed: Dp = DefaultAutoScrollMaxSpeed,
+    keyboardReorder: Boolean = true,
+): GridReorderState = rememberLazyReorderState(
+    lazyState, onMove, onDragEnd, dropRange, onClick, crossAxisPadding,
+    ReorderOptions(axisLock, lift, sound, maxScrollSpeed, keyboardReorder),
+) { ListViewport(lazyState) }
+
+private class ReorderOptions(
+    val axisLock: Boolean,
+    val lift: Boolean,
+    val sound: UiSound?,
+    val maxScrollSpeed: Dp,
+    val keyboardReorder: Boolean,
+)
 
 @Composable
 private fun rememberLazyReorderState(
@@ -397,6 +433,7 @@ private fun rememberLazyReorderState(
     dropRange: (index: Int) -> IntRange?,
     onClick: (key: Any) -> Unit,
     crossAxisPadding: Dp,
+    options: ReorderOptions,
     viewport: () -> ReorderViewport,
 ): GridReorderState {
     val scope = rememberCoroutineScope()
@@ -406,6 +443,7 @@ private fun rememberLazyReorderState(
     val currentOnClick by rememberUpdatedState(onClick)
     val currentPadding by rememberUpdatedState(crossAxisPadding)
     val currentDensity by rememberUpdatedState(LocalDensity.current)
+    val currentOptions by rememberUpdatedState(options)
     return remember(lazyState, scope) {
         GridReorderState(
             viewport = viewport(),
@@ -416,6 +454,11 @@ private fun rememberLazyReorderState(
             onClick = { key -> currentOnClick(key) },
             crossPadding = { currentPadding },
             density = { currentDensity },
+            axisLock = { currentOptions.axisLock },
+            lift = { currentOptions.lift },
+            sound = { currentOptions.sound },
+            maxScrollSpeed = { currentOptions.maxScrollSpeed },
+            keyboard = { currentOptions.keyboardReorder },
         )
     }
 }
@@ -543,7 +586,7 @@ internal class ReorderItemNode(
     override fun onKeyEvent(event: KeyEvent): Boolean = false
 
     override fun onPreKeyEvent(event: KeyEvent): Boolean {
-        if (!enabled || event.type != KeyEventType.KeyDown || !event.isAltPressed) return false
+        if (!enabled || !state.keyboardReorder || event.type != KeyEventType.KeyDown || !event.isAltPressed) return false
         val delta = when (event.key) {
             Key.DirectionUp -> -1
             Key.DirectionDown -> 1

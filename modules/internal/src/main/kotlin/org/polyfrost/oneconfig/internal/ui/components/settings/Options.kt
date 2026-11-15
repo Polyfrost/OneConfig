@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -33,19 +32,23 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.Checkbox
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuCustomItem
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.components.MoreButton
 import org.polyfrost.oneconfig.api.ui.v1.components.OptionMenuContributors
+import org.polyfrost.oneconfig.api.ui.v1.components.Switch
+import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.componentText
 import org.polyfrost.oneconfig.internal.ui.components.legacyText
@@ -57,7 +60,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 val LocalOptionWidth = compositionLocalOf { 300.dp }
 
 val LocalOptionWidthOrNull = compositionLocalOf<Dp?> { null }
-internal val OptionControlHeight = 32.dp
+internal val OptionControlHeight = ControlDefaults.metrics(ControlSize.Regular).height
 
 internal val LocalOptionEnabled = compositionLocalOf { true }
 
@@ -98,8 +101,10 @@ private val resetEpochs = mutableStateMapOf<Int, Int>()
 
 /** True if [prop] has a captured default value that can be restored */
 fun optionHasDefault(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()): Boolean =
-    seen.add(prop) && (prop.getMetadata<Any?>("default") != null || prop.getMetadata<Boolean>("defaultNull") == true ||
+    seen.add(prop) && (prop.getMetadata<Any?>("default") != null || (prop.getMetadata<Boolean>("defaultNull") == true && !prop.isValueless()) ||
         prop.getMetadata<Collection<Property<*>>>("resetWith")?.any { optionHasDefault(it, seen) } == true)
+
+private fun Property<*>.isValueless(): Boolean = type == Void.TYPE || type == Void::class.java
 
 internal fun identitySet(): MutableSet<Property<*>> = Collections.newSetFromMap(IdentityHashMap())
 
@@ -160,12 +165,12 @@ fun Option(prop: Property<*>) {
     val value = prop.shown()
     Text(
         when (value) {
-            is Boolean -> if (value) translated("oneconfig.control.on", "On") else translated("oneconfig.control.off", "Off")
-            null -> "—"
-            else -> value.toString()
+            is Boolean -> AnnotatedString(if (value) translated("oneconfig.control.on", "On") else translated("oneconfig.control.off", "Off"))
+            null -> AnnotatedString("—")
+            else -> value.asStyledLabel()
         },
         color = LocalTheme.current.textColorSecondary,
-        fontSize = 14.sp,
+        style = LocalTheme.current.typography.body,
     )
 }
 
@@ -190,8 +195,8 @@ fun BooleanOption(data: BooleanOptionData, enabled: Boolean) {
         }
     }
     when (data.style) {
-        BooleanOptionData.Style.Switch -> SwitchControl(checked, enabled) { checked = it; data.boolProp.set(it) }
-        BooleanOptionData.Style.Checkbox -> CheckboxControl(checked, enabled) { checked = it; data.boolProp.set(it) }
+        BooleanOptionData.Style.Switch -> Switch(checked, { checked = it; data.boolProp.set(it) }, enabled = enabled, stateLabel = true)
+        BooleanOptionData.Style.Checkbox -> Checkbox(checked, { checked = it; data.boolProp.set(it) }, enabled = enabled, stateLabel = true)
     }
 }
 

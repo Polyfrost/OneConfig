@@ -23,22 +23,9 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.unit.IntSize
-import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 
 @Composable
 fun rememberInteractionSource() = remember { MutableInteractionSource() }
-
-fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) =
-    onClick(interactionSource, true, onClick)
-
-fun Modifier.onClick(interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit) =
-    oneConfigClickable(
-        label = null,
-        onClick = onClick,
-        enabled = enabled,
-        indication = false,
-        interactionSource = interactionSource,
-    )
 
 val LocalSearchFieldFocused = staticCompositionLocalOf<MutableState<Boolean>?> { null }
 

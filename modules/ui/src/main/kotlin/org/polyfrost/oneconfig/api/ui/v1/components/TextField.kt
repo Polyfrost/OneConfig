@@ -2,8 +2,6 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,6 +9,8 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
@@ -58,34 +57,35 @@ import org.polyfrost.oneconfig.api.ui.v1.a11y.a11yField
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
-private const val FIELD_FADE_MILLIS = 150
-
 @ExperimentalOneConfigUiApi
 public object TextFieldDefaults {
     public val size: ControlSize = ControlSize.Regular
 
-    public val horizontalPadding: Dp = 12.dp
+    public val horizontalPadding: Dp = FieldDefaults.horizontalPadding(ControlSize.Regular)
 
-    public val contentSpacing: Dp = 10.dp
+    public val contentSpacing: Dp = FieldDefaults.contentSpacing
 
     public val fill: Color
         @Composable get() = OneConfigTheme.current.modCardBackground
 
     public val border: Color
-        @Composable get() = OneConfigTheme.current.borderColor
+        @Composable get() = FieldDefaults.border
+
+    public val hoverBorder: Color
+        @Composable get() = FieldDefaults.hoverBorder
 
     public val focusBorder: Color
-        @Composable get() = OneConfigTheme.accent
+        @Composable get() = FieldDefaults.focusBorder
 
     public val errorBorder: Color
-        @Composable get() = OneConfigTheme.current.error
+        @Composable get() = FieldDefaults.errorBorder
 
     public val shape: Shape
-        @Composable get() = OneConfigTheme.current.shapes.field
+        @Composable get() = FieldDefaults.shape
 
-    public fun fontSize(size: ControlSize): TextUnit = if (size == ControlSize.Compact) 13.sp else 14.sp
+    public fun fontSize(size: ControlSize): TextUnit = ControlDefaults.metrics(size).fontSize
 
-    public fun iconSize(size: ControlSize): Dp = if (size == ControlSize.Compact) 14.dp else 16.dp
+    public fun iconSize(size: ControlSize): Dp = ControlDefaults.metrics(size).iconSize
 }
 
 @Suppress("DEPRECATION")
@@ -163,6 +163,22 @@ public fun TextField(
         maxLength, framed, fontSize, focusRequester, onSubmit, interactionSource,
         transformation = visualTransformation, hidePlaceholderWhenFocused = hidePlaceholderWhenFocused,
     )
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun FieldLabel(text: String, modifier: Modifier = Modifier) {
+    val theme = OneConfigTheme.current
+    Text(text, modifier.padding(bottom = theme.spacing.s), theme.textColorSecondary, OneConfigTheme.typography.label, 1, TextOverflow.Ellipsis)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun LabeledField(label: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier) {
+        FieldLabel(label)
+        content()
+    }
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -429,14 +445,7 @@ private fun fieldModifier(
 ): Modifier {
     val theme = OneConfigTheme.current
     val focused by source.collectIsFocusedAsState()
-    val border by animateColorAsState(
-        when {
-            invalid -> TextFieldDefaults.errorBorder
-            focused -> TextFieldDefaults.focusBorder
-            else -> TextFieldDefaults.border
-        },
-        Motion.spec(tween(FIELD_FADE_MILLIS)),
-    )
+    val border by Motion.animateColorAsState(FieldDefaults.borderColor(FieldState.of(false, focused, invalid)), Motion.colorSpec(), "fieldBorder")
     val shape = TextFieldDefaults.shape
     val frame = when {
         !framed -> Modifier
@@ -480,17 +489,17 @@ private fun FieldDecoration(
     val theme = OneConfigTheme.current
     val hovered by source.collectIsHoveredAsState()
     val focused by source.collectIsFocusedAsState()
-    val iconColor by animateColorAsState(if (hovered || focused) theme.textColor else theme.textColorSecondary, Motion.spec(tween(FIELD_FADE_MILLIS)))
+    val iconColor by Motion.animateColorAsState(if (hovered || focused) theme.textColor else theme.textColorSecondary, Motion.colorSpec())
     Row(
         modifier = if (framed) {
             Modifier
                 .defaultMinSize(minHeight = size.height)
-                .padding(horizontal = TextFieldDefaults.horizontalPadding, vertical = if (singleLine) 4.dp else 7.dp)
+                .padding(horizontal = FieldDefaults.horizontalPadding(size), vertical = if (singleLine) 4.dp else 7.dp)
         } else {
             Modifier
         },
         verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(TextFieldDefaults.contentSpacing),
+        horizontalArrangement = Arrangement.spacedBy(FieldDefaults.contentSpacing),
     ) {
         when {
             leading != null -> leading()

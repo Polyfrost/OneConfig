@@ -49,6 +49,8 @@ public abstract class OneConfigUITheme @InternalOneConfigUiApi constructor() {
 
     public open val isLight: Boolean get() = textColor.luminance() < 0.5f
 
+    public open val translucentSelection: Boolean get() = false
+
     public val pageSurface: Color get() = pageBackground.compositeOver(if (isLight) Color.White else Color.Black)
 
     public open val error: Color get() = Color(0xFFE35B5B).legibleOn(pageSurface)

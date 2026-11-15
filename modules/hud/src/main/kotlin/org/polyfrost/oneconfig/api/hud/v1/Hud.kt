@@ -128,6 +128,8 @@ private const val MAX_ANCHOR_DEPTH = 16
 
 private const val MIN_VISIBLE = 12f
 
+private val REDRAW_GETTERS = arrayOf("getAlwaysRedraw", "getBorderEnabled", "getBorderChroma")
+
 private val BORDER_OPTIONS = arrayOf("border", "borderEnabled", "borderColor", "borderChroma", "borderChromaSpeed", "borderSize")
 
 internal const val POS_SCHEMA = 1
@@ -154,8 +156,11 @@ private val externalStaticSize = object : ClassValue<Boolean>() {
 internal val hudStateWrites = AtomicInteger()
 
 private val externalRedraw = object : ClassValue<Boolean>() {
-    override fun computeValue(type: Class<*>): Boolean =
-        runCatching { type.getMethod("getAlwaysRedraw").declaringClass != Hud::class.java }.getOrDefault(true)
+    override fun computeValue(type: Class<*>): Boolean = type.overrides("getAlwaysRedraw")
+}
+
+private val liveRedrawInputs = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean = REDRAW_GETTERS.any(type::overrides)
 }
 
 private val stateOnlyMinimumSize = object : ClassValue<Boolean>() {
@@ -423,6 +428,9 @@ public abstract class Hud(
 
     @Transient
     private var toggleBind: OneConfigKeybind? = null
+
+    @Transient
+    internal var clonedKeybinds: MutableList<OneConfigKeybind> = ArrayList()
 
     @ExperimentalOneConfigUiApi
     public var toggleKeybind: OneConfigKeybind?
@@ -1593,7 +1601,7 @@ public abstract class Hud(
         val rev = revision.get()
         if (rev != flagRevision) {
             flagRevision = rev
-            if (!externalRedraw.get(javaClass)) flagRedraw = alwaysRedraw
+            if (!liveRedrawInputs.get(javaClass)) flagRedraw = alwaysRedraw
             if (!hasExternalGeometry) {
                 flagHidden = hidden
                 flagUseGuiScale = useGuiScale
@@ -1607,7 +1615,7 @@ public abstract class Hud(
     internal val redrawOverridden: Boolean get() = externalRedraw.get(javaClass)
 
     internal val frameAlwaysRedraw: Boolean
-        get() = if (!externalRedraw.get(javaClass) && refreshFrameFlags()) flagRedraw else alwaysRedraw
+        get() = if (!liveRedrawInputs.get(javaClass) && refreshFrameFlags()) flagRedraw else alwaysRedraw
 
     internal val frameHidden: Boolean
         get() = if (!hasExternalGeometry && refreshFrameFlags()) flagHidden else hidden
@@ -1774,7 +1782,7 @@ public abstract class Hud(
             tree["shadowChromaSpeed"] = ktProperty(out::shadowChromaSpeed).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowOffsetX"] = ktProperty(out::shadowOffsetX).apply { addDisplayCondition(hideFromConfigUi) }
             tree["shadowOffsetY"] = ktProperty(out::shadowOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
-            out.hasBuiltInBorderOptions = BORDER_OPTIONS.none { tree[it] != null }
+            out.hasBuiltInBorderOptions = out.hasBorder() && BORDER_OPTIONS.none { tree[it] != null }
             if (out.hasBuiltInBorderOptions) {
                 tree["borderEnabled"] = ktProperty(out::borderEnabled).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["borderColor"] = ktProperty(out::borderColor).apply { addDisplayCondition(hideFromConfigUi) }
@@ -1798,6 +1806,7 @@ public abstract class Hud(
             sanitizeHudCapturedDefaults(tree)
             this.tree = tree
             syncToggleKeybind()
+            for (bind in clonedKeybinds) KeybindManager.register(bind)
         }
         return out
     }
@@ -1815,6 +1824,8 @@ public abstract class Hud(
     }
 
     public open fun setup() {}
+
+    public open fun migrateLoaded(saved: Tree): Boolean = false
     public abstract fun update(): Boolean
     public open fun updateFrequency(): Long = -1L
     /**
@@ -1835,6 +1846,9 @@ public abstract class Hud(
 
     public open fun showByDefault(): Boolean = false
     public open fun hasBackground(): Boolean = true
+
+    @ExperimentalOneConfigUiApi
+    public open fun hasBorder(): Boolean = true
 
     /**
      * Whether this HUD's background may be fused with the backgrounds of the HUDs it touches
@@ -1860,7 +1874,7 @@ public abstract class Hud(
         if (!showBackground || !hasBackground() || bgMerged) return modifier
         val filled = modifier.background(PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius)
         val size = borderSize
-        return if (borderEnabled && size > 0f) filled.border(borderPolyColor, size, bgRadius) else filled
+        return if (borderEnabled && size > 0f && hasBorder()) filled.border(borderPolyColor, size, bgRadius) else filled
     }
 
     public open fun backgroundColor(): PolyColor? = null
@@ -1895,6 +1909,7 @@ public abstract class Hud(
     @ApiStatus.Internal
     internal fun detachTree() {
         toggleBind?.let(KeybindManager::unregister)
+        for (bind in clonedKeybinds) KeybindManager.unregister(bind)
         tree = null
     }
 
@@ -1997,7 +2012,8 @@ public abstract class Hud(
         _borderSize = mutableStateOf(this@Hud._borderSize.value)
         _hidden = mutableStateOf(this@Hud.hidden)
         _locked = mutableStateOf(this@Hud.locked)
-        cloneOptions()
+        clonedKeybinds = ArrayList()
+        deepCopyHudOptions(this, this@Hud)
         onCloned()
     }
 

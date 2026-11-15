@@ -4,6 +4,7 @@ package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,10 +34,10 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.ColorSwatchButton
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
+import org.polyfrost.oneconfig.api.ui.v1.components.RadioGroup
+import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.internal.ui.components.settings.Dropdown
-import org.polyfrost.oneconfig.internal.ui.components.settings.NumberSpinner
-import org.polyfrost.oneconfig.internal.ui.components.settings.Radio
-import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.hudOptionsCanReset
@@ -141,9 +142,10 @@ fun Style(hud: Hud?, query: String) {
                 second = {
                     HudSettingTarget(hud, "textScale") {
                         LabeledControl(hudPanelText("size", "Size")) {
-                            NumberSpinner(
+                            NumberField(
                                 hud.textScale * 100f, { Snapshot.withMutableSnapshot { hud.textScale = it / 100f } },
-                                25f, 500f, 5f, width = GridCol2, unit = "%"
+                                range = 25f..500f, step = 5f, roundToDecimals = false, fractionDigits = 2, unit = "%", width = GridCol2,
+                                fontSize = 13.sp,
                             )
                         }
                     }
@@ -218,12 +220,15 @@ fun Style(hud: Hud?, query: String) {
                 second = {
                     HudSettingTarget(hud, "caseType") {
                         LabeledControl(hudPanelText("case", "Case")) {
-                            Radio(
-                                CaseType.entries.map { null }, caseType.ordinal,
-                                fillWidth = true, icons = CaseType.entries.map { it.icon },
-                            ) {
-                                Snapshot.withMutableSnapshot { caseType = CaseType.entries[it]; hud.caseType = it }
-                            }
+                            RadioGroup(
+                                caseType, CaseType.entries, { case ->
+                                    Snapshot.withMutableSnapshot { caseType = case; hud.caseType = case.ordinal }
+                                },
+                                label = { "" },
+                                orientation = Orientation.Horizontal,
+                                fillWidth = true,
+                                icon = { it.icon },
+                            )
                         }
                     }
                 },
@@ -257,17 +262,22 @@ fun Style(hud: Hud?, query: String) {
                             else -> ShadowMode.Normal
                         }
                         HudSettingTarget(hud, "showShadow", "fullShadow") {
-                            Radio(ShadowMode.entries.map { hudPanelText("mode.${it.name.lowercase()}", it.title) }, shadowMode.ordinal, fillWidth = true) {
-                                val mode = ShadowMode.entries[it]
-                                Snapshot.withMutableSnapshot {
-                                    showShadow = mode != ShadowMode.Off
-                                    hud.showShadow = showShadow
-                                    if (showShadow) {
-                                        fullShadow = mode == ShadowMode.Full
-                                        hud.fullShadow = fullShadow
+                            RadioGroup(
+                                shadowMode, ShadowMode.entries,
+                                label = { hudPanelText("mode.${it.name.lowercase()}", it.title) },
+                                orientation = Orientation.Horizontal,
+                                fillWidth = true,
+                                onSelect = { mode ->
+                                    Snapshot.withMutableSnapshot {
+                                        showShadow = mode != ShadowMode.Off
+                                        hud.showShadow = showShadow
+                                        if (showShadow) {
+                                            fullShadow = mode == ShadowMode.Full
+                                            hud.fullShadow = fullShadow
+                                        }
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
                     }
                 },
@@ -309,9 +319,10 @@ fun Style(hud: Hud?, query: String) {
                 first = {
                     HudSettingTarget(hud, "bgRadius") {
                         LabeledControl(hudPanelText("radius", "Radius")) {
-                            NumberSpinner(
+                            NumberField(
                                 bgRadius, { Snapshot.withMutableSnapshot { bgRadius = it; hud.bgRadius = it } },
-                                0f, 32f, 1f, width = col1, unit = "px"
+                                range = 0f..32f, roundToDecimals = false, fractionDigits = 2, unit = "px", width = col1,
+                                fontSize = 13.sp,
                             )
                         }
                     }
@@ -342,9 +353,9 @@ fun Style(hud: Hud?, query: String) {
                     first = {
                         HudSettingTarget(hud, "borderEnabled") {
                             LabeledControl(hudPanelText("border", "Border")) {
-                                SwitchControl(borderEnabled) {
+                                Switch(borderEnabled, {
                                     Snapshot.withMutableSnapshot { borderEnabled = it; hud.borderEnabled = it }
-                                }
+                                }, stateLabel = true)
                             }
                         }
                     },
@@ -352,9 +363,10 @@ fun Style(hud: Hud?, query: String) {
                         FadingCell(borderEnabled) {
                             HudSettingTarget(hud, "borderSize") {
                                 LabeledControl(hudPanelText("border_size", "Border size")) {
-                                    NumberSpinner(
+                                    NumberField(
                                         borderSize, { Snapshot.withMutableSnapshot { borderSize = it; hud.borderSize = it } },
-                                        0f, 10f, 0.5f, width = GridCol2, unit = "px"
+                                        range = 0f..10f, step = 0.5f, roundToDecimals = false, fractionDigits = 2, unit = "px", width = GridCol2,
+                                        fontSize = 13.sp,
                                     )
                                 }
                             }
@@ -394,17 +406,22 @@ fun Style(hud: Hud?, query: String) {
                                 else -> MergeMode.Normal
                             }
                             HudSettingTarget(hud, "mergeBackground", "mergeDiagonally") {
-                                Radio(MergeMode.entries.map { hudPanelText("mode.${it.name.lowercase()}", it.title) }, mergeMode.ordinal, fillWidth = true) {
-                                    val mode = MergeMode.entries[it]
-                                    Snapshot.withMutableSnapshot {
-                                        mergeBackground = mode != MergeMode.Off
-                                        hud.mergeBackground = mergeBackground
-                                        if (mergeBackground) {
-                                            mergeDiagonally = mode == MergeMode.Diagonal
-                                            hud.mergeDiagonally = mergeDiagonally
+                                RadioGroup(
+                                    mergeMode, MergeMode.entries,
+                                    label = { hudPanelText("mode.${it.name.lowercase()}", it.title) },
+                                    orientation = Orientation.Horizontal,
+                                    fillWidth = true,
+                                    onSelect = { mode ->
+                                        Snapshot.withMutableSnapshot {
+                                            mergeBackground = mode != MergeMode.Off
+                                            hud.mergeBackground = mergeBackground
+                                            if (mergeBackground) {
+                                                mergeDiagonally = mode == MergeMode.Diagonal
+                                                hud.mergeDiagonally = mergeDiagonally
+                                            }
                                         }
-                                    }
-                                }
+                                    },
+                                )
                             }
                         }
                     },
@@ -412,9 +429,9 @@ fun Style(hud: Hud?, query: String) {
                         FadingCell(mergeBackground) {
                             HudSettingTarget(hud, "keepBgWhenHidden") {
                                 LabeledControl(hudPanelText("keep_hidden", "Keep hidden")) {
-                                    SwitchControl(keepBgWhenHidden) {
+                                    Switch(keepBgWhenHidden, {
                                         Snapshot.withMutableSnapshot { keepBgWhenHidden = it; hud.keepBgWhenHidden = it }
-                                    }
+                                    }, stateLabel = true)
                                 }
                             }
                         }
@@ -426,9 +443,9 @@ fun Style(hud: Hud?, query: String) {
                         FadingCell(mergeBackground) {
                             HudSettingTarget(hud, "mergeAcrossColours") {
                                 LabeledControl(hudPanelText("merge_colours", "Merge with different colours")) {
-                                    SwitchControl(mergeAcrossColours) {
+                                    Switch(mergeAcrossColours, {
                                         Snapshot.withMutableSnapshot { mergeAcrossColours = it; hud.mergeAcrossColours = it }
-                                    }
+                                    }, stateLabel = true)
                                 }
                             }
                         }

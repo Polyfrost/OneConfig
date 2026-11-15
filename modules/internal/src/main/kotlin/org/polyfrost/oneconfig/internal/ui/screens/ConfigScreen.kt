@@ -14,8 +14,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -32,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -49,9 +45,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -61,7 +55,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -69,7 +62,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -95,23 +87,32 @@ import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorator
 import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorators
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionChevron
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.components.Switch
+import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
+import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
+import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.Text
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.internal.ui.api.isLockExempt
+import org.polyfrost.oneconfig.internal.ui.api.isMarkedSwitch
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.Chip
-import org.polyfrost.oneconfig.internal.ui.components.CollapseChevron
-import org.polyfrost.oneconfig.internal.ui.components.CollapsibleHeader
 import org.polyfrost.oneconfig.internal.ui.components.ContentSlide
 import org.polyfrost.oneconfig.internal.ui.components.ContentSlide.tabSlide
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.asRenderText
-import org.polyfrost.oneconfig.internal.ui.components.collapsibleToggle
-import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -122,7 +123,8 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthO
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionControlHeight
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
-import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.components.settings.asPlainLabel
+import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -155,6 +157,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 /** The id of the config whose page is showing or null where a submenu row has no page of its config to open */
 internal val LocalConfigId = staticCompositionLocalOf<String?> { null }
+
+internal val LocalSearchExpands = staticCompositionLocalOf { false }
 
 /**
  * @param locked shows every option but [lockExempt] dimmed and out of reach, for a mod that is switched off
@@ -195,6 +199,7 @@ private fun ConfigScreenContent(
     val localSearchQuery = pageSearchQuery().trim()
     val navigation = LocalShell.current.navigation
     val groupOff = rememberSwitchValue(tree.takeIf { it.isSubmenu() }?.enableToggle) == false
+    val locksAll = locked && lockExempt?.isMarkedSwitch() != false && !tree.isLockExempt()
 
     val savedCategory = navigation.selectedCategory(pageKey) ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
@@ -206,19 +211,7 @@ private fun ConfigScreenContent(
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (localSearchQuery.isBlank() && categories.size > 1) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                categories.forEach { category ->
-                    Chip(
-                        label = category.name,
-                        selected = selectedCategory == category,
-                        onClick = { selectCategory(category) }
-                    )
-                }
-            }
+            CategoryTabs(categories, selectedCategory, Modifier.padding(horizontal = PageGutter), ::selectCategory)
         }
 
         val revision = rememberDisplayRevision(categories)
@@ -278,10 +271,10 @@ private fun ConfigScreenContent(
                 return@AnimatedContent
             }
 
-            ScrollbarBox(
+            ScrollContainer(
                 lazyListState,
-                PageGutter,
                 Modifier.fillMaxSize().then(if (leaving) Modifier.graphicsLayer { alpha = progress.value } else Modifier),
+                gutter = PageGutter,
             ) {
                 LazyColumn(
                     state = lazyListState,
@@ -311,9 +304,11 @@ private fun ConfigScreenContent(
                         }
                     }
                     items(entries) { entry ->
-                        val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
-                        val lock = locked && (option == null || option !== lockExempt)
-                        CompositionLocalProvider(LocalOptionEnabled provides !(lock || groupOff)) {
+                        val lock = locksAll && !entry.isLockExempt(lockExempt)
+                        CompositionLocalProvider(
+                            LocalOptionEnabled provides !(lock || groupOff),
+                            LocalSearchExpands provides localSearchQuery.isNotBlank(),
+                        ) {
                             Box(slide) { ConfigListRow(entry) }
                         }
                     }
@@ -323,7 +318,34 @@ private fun ConfigScreenContent(
     }
 }
 
+@Composable
+private fun CategoryTabs(
+    categories: List<CategoryGroup>,
+    selected: CategoryGroup?,
+    modifier: Modifier,
+    onSelect: (CategoryGroup) -> Unit,
+) {
+    val tabs = remember(categories) { categories.map { TabItem(it.name, it.name.asPlainLabel()) } }
+    TabRow(
+        tabs = tabs,
+        selected = selected?.name.orEmpty(),
+        onSelect = { name -> categories.firstOrNull { it.name == name }?.let(onSelect) },
+        modifier = modifier,
+        style = TabStyle.Chips,
+        size = ChipDefaults.size,
+    )
+}
+
 private class ConfigEmpty(val title: String, val icon: String?, val state: LoadState = LoadState.Idle)
+
+private fun ConfigListEntry.isLockExempt(ownSwitch: Property<*>?): Boolean {
+    val node = (this as? ConfigListEntry.Item)?.node ?: return false
+    return when (node) {
+        is SettingNode.Leaf -> node.prop === ownSwitch || node.prop.isLockExempt()
+        is SettingNode.Accordion -> node.tree.isLockExempt()
+        is SettingNode.Submenu -> node.tree.isLockExempt()
+    }
+}
 
 private fun categoryProperties(categories: List<CategoryGroup>): List<Property<*>> {
     return categories.flatMap { category ->
@@ -438,12 +460,12 @@ private fun filterSettingNode(
 
 private fun Property<*>.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
     return listOfNotNull(localizedTitle(), id, localizedDescription(), category, subcategory)
-        .any { searchMatches(it.asRenderText(), query) }
+        .any { searchMatches(it.asPlainLabel(), query) }
 }
 
 private fun Tree.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
     return listOfNotNull(localizedTitle(), id, localizedDescription(), category, subcategory)
-        .any { searchMatches(it.asRenderText(), query) }
+        .any { searchMatches(it.asPlainLabel(), query) }
 }
 
 /** Width a slider-style control needs beside its track, or null when the control is compact */
@@ -499,23 +521,25 @@ internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
 
 @Composable
 private fun CategoryHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        title,
-        color = LocalTheme.current.textColorSecondary,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = modifier.padding(top = 8.dp, bottom = 2.dp)
+    SectionHeader(
+        title.asPlainLabel(),
+        modifier,
+        contentPadding = PaddingValues(top = 8.dp, bottom = 2.dp),
+        textStyle = SectionHeaderDefaults.labelStyle,
+        color = OneConfigTheme.current.textColorSecondary,
+        uppercase = false,
     )
 }
 
 @Composable
 private fun SubcategoryHeader(title: String, modifier: Modifier = Modifier) {
+    val theme = LocalTheme.current
     Text(
         title,
-        color = LocalTheme.current.textColor,
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = modifier.padding(top = 8.dp, bottom = 2.dp)
+        modifier = modifier.padding(top = 8.dp, bottom = 2.dp),
+        color = theme.textColor,
+        style = theme.typography.titleLarge,
+        legacyFormatting = true,
     )
 }
 
@@ -523,19 +547,17 @@ private fun SubcategoryHeader(title: String, modifier: Modifier = Modifier) {
 private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) {
     val head = node.head
     val toggle = head?.takeIf { it === node.tree.enableToggle }
-    var expanded by remember(node) {
-        mutableStateOf(
-            if (node.tree[MetaKeys.COLLAPSED] == true) false
-            else toggle != null || node.head?.shown() != false
-        )
+    val searching = LocalSearchExpands.current
+    var expanded by remember(node, searching) {
+        mutableStateOf(searching || (node.tree[MetaKeys.COLLAPSED] != true && node.head?.shown() != false))
     }
     var headOn by remember(node) { mutableStateOf(head?.shown() == true) }
     if (head != null && head.isBooleanHead()) {
-        DisposableEffect(head) {
+        DisposableEffect(head, searching) {
             val boolHead = Property.recast<Boolean>(head)
             val listener = Predicate<Boolean> { value ->
                 headOn = value == true
-                if (head.hasVisualizer() && toggle == null) expanded = value == true
+                if (head.hasVisualizer() || toggle != null) expanded = value == true || searching
                 false
             }
             boolHead.addCallback(listener)
@@ -553,7 +575,7 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
             head = head,
             expanded = expanded,
             compact = compact,
-            onHeadChange = { if (toggle == null) expanded = it; headOn = it },
+            onHeadChange = { expanded = it || searching; headOn = it },
             onClick = { expanded = !expanded },
         )
 
@@ -604,7 +626,7 @@ internal fun Accordion(
             titleActions,
             dimmed = !headEnabled,
         ) {
-            if (checked != null) SwitchControl(checked, headEnabled, onCheckedChange)
+            if (checked != null) Switch(checked, onCheckedChange, enabled = headEnabled, stateLabel = true)
         }
         AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
             Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body(checked != false && headEnabled) }
@@ -625,26 +647,28 @@ private fun CardHeader(
     trailing: @Composable () -> Unit = {},
 ) {
     val labelAlpha = if (dimmed) LocalTheme.current.disabledAlpha else 1f
-    CollapsibleHeader(
-        label = title.asRenderText(),
-        expanded = expanded,
+    SectionHeader(
+        title.asPlainLabel(),
+        modifier,
+        eyebrow = false,
         onToggle = onToggle,
-        modifier = modifier,
-        chevron = false,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        HeaderLabel(title, description, Modifier.weight(1f).alpha(labelAlpha), titleActions) {
-            icon?.let { Icon(it, color = LocalTheme.current.textColor, modifier = Modifier.size(32.dp)) }
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            trailing()
-            if (onToggle != null) CollapseChevron(expanded)
-        }
-    }
+        title = { _, _ ->
+            HeaderLabel(title, description, Modifier.weight(1f).alpha(labelAlpha), titleActions) {
+                icon?.let { Icon(it, color = LocalTheme.current.textColor, modifier = Modifier.size(32.dp)) }
+            }
+        },
+        trailing = {
+            Row(
+                Modifier.padding(start = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                trailing()
+                if (onToggle != null) SectionChevron(expanded)
+            }
+        },
+    )
 }
 
 @Composable
@@ -664,10 +688,10 @@ private fun HeaderLabel(
         icon()
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(title, color = theme.textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Text(title.asStyledLabel(), color = theme.textColor, style = rememberTitleStyle())
                 titleActions()
             }
-            description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
+            description?.let { Text(it.asStyledLabel(), color = theme.textColorSecondary, style = descriptionStyle()) }
         }
     }
 }
@@ -697,7 +721,8 @@ private fun SubmenuRow(node: SettingNode.Submenu, compact: Boolean = false) {
 @Composable
 private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
     val toggle = node.head?.takeIf { it === node.tree.enableToggle }
-    var expanded by remember(node) { mutableStateOf(toggle != null || node.head?.shown() != false) }
+    val searching = LocalSearchExpands.current
+    var expanded by remember(node, searching) { mutableStateOf(searching || node.head?.shown() != false) }
     val groupOff = rememberSwitchValue(toggle) == false
     val revision = rememberDisplayRevision(node.content)
     val entries = remember(node, revision) {
@@ -710,7 +735,7 @@ private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
             head = node.head,
             expanded = expanded,
             compact = compact,
-            onHeadChange = {},
+            onHeadChange = { if (toggle != null) expanded = it || searching },
             onClick = { expanded = !expanded },
         )
 
@@ -805,7 +830,7 @@ private fun GroupHeaderContent(
             .fillMaxWidth()
             .hoverable(interaction)
             .then(if (menu != null) Modifier.optionContextMenu(menu, enabled = !headLocked) else Modifier)
-            .collapsibleToggle(tree.localizedTitle().asRenderText(), onClick, interaction)
+            .oneConfigClickable(tree.localizedTitle().asPlainLabel(), onClick, indication = false, interactionSource = interaction)
     ) {
         val switch = head != null && isSwitchHead(tree, head)
         val control = head?.takeIf { switch || headDisplay != Property.Display.HIDDEN }
@@ -836,7 +861,7 @@ private fun GroupHeaderContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     GroupLabel(tree, Modifier.weight(1f).then(labelModifier))
-                    CollapseChevron(expanded)
+                    SectionChevron(expanded)
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { headControl() }
             }
@@ -855,7 +880,7 @@ private fun GroupHeaderContent(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     headControl()
-                    CollapseChevron(expanded)
+                    SectionChevron(expanded)
                 }
             }
         }
@@ -951,11 +976,16 @@ private fun HeadSwitch(head: Property<Boolean>, enabled: Boolean, onHeadChange: 
         head.addCallback(listener)
         onDispose { head.removeCallback(listener) }
     }
-    SwitchControl(checked, enabled) {
-        checked = it
-        head.set(it)
-        onHeadChange(it)
-    }
+    Switch(
+        checked,
+        {
+            checked = it
+            head.set(it)
+            onHeadChange(it)
+        },
+        enabled = enabled,
+        stateLabel = true,
+    )
 }
 
 @Composable
@@ -983,16 +1013,7 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
 
 /** The card behind an option or accordion */
 @Composable
-private fun Modifier.optionCard(): Modifier {
-    val theme = LocalTheme.current
-    val shape = theme.modCardShape
-    val border = remember(theme.borderColor) { Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))) }
-    return fillMaxWidth()
-        .clip(shape)
-        .hoverGlow(shape)
-        .background(theme.modCardBackground, shape)
-        .border(1.dp, border, shape)
-}
+private fun Modifier.optionCard(): Modifier = fillMaxWidth().cardSurface(LocalTheme.current.modCardShape)
 
 @Composable
 private fun AccordionSettingRow(
@@ -1021,7 +1042,7 @@ private val OPTION_ROW_GAP = 8.dp
 
 private val OPTION_CHROME_WIDTH = 108.dp
 private val OPTION_ICON_WIDTH = 44.dp
-private val OPTION_ACTION_WIDTH = ControlSize.Compact.height + 16.dp
+private val OPTION_ACTION_WIDTH = ControlDefaults.metrics(ControlSize.Compact).height + 16.dp
 
 private val OPTION_ROW_CHROME = 32.dp + 16.dp
 
@@ -1043,16 +1064,14 @@ private fun optionReservedWidth(prop: Property<*>, optionWidth: Dp): Dp {
 }
 
 @Composable
-private fun rememberTitleStyle(): TextStyle {
-    val theme = LocalTheme.current
-    return remember(theme) {
-        TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
-    }
-}
+private fun rememberTitleStyle(): TextStyle = LocalTheme.current.typography.headingMedium
+
+@Composable
+private fun descriptionStyle(): TextStyle = LocalTheme.current.typography.labelRegular
 
 private fun TextMeasurer.titleWidth(node: Node, style: TextStyle, density: Density): Dp {
     return with(density) {
-        measure(node.localizedTitle().asRenderText(), style = style, softWrap = false, maxLines = 1).size.width.toDp()
+        measure(node.localizedTitle().asStyledLabel(), style = style, softWrap = false, maxLines = 1).size.width.toDp()
     }
 }
 
@@ -1212,7 +1231,7 @@ private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Bool
                 }
             }
         } else {
-            val title = prop.localizedTitle().asRenderText()
+            val title = prop.localizedTitle().asStyledLabel()
             val titleWidth = remember(title, titleStyle, measurer) {
                 measurer.measure(title, style = titleStyle, softWrap = false, maxLines = 1).size.width
             }
@@ -1301,24 +1320,14 @@ private fun SettingLabel(
     ) {
         prop.nodeIcon()?.let { NodeIcon(it, Modifier.size(32.dp)) }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            val titleStyle = rememberTitleStyle()
             val title = @Composable {
-                Text(
-                    prop.localizedTitle(),
-                    color = theme.textColor,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+                Text(prop.localizedTitle().asStyledLabel(), color = theme.textColor, style = titleStyle)
             }
             val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
 
             if (nested && description != null) {
-                Tooltip(
-                    text = {
-                        Text(description, color = theme.textColor, fontSize = 12.sp)
-                    },
-                    modifier = Modifier.widthIn(max = 260.dp),
-                    anchor = Alignment.TopCenter,
-                ) {
+                TooltipBox(description.asStyledLabel(), maxWidth = TooltipDefaults.descriptionMaxWidth) {
                     title()
                 }
             } else {
@@ -1326,7 +1335,7 @@ private fun SettingLabel(
             }
 
             if (!nested) {
-                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
+                description?.let { Text(it.asStyledLabel(), color = theme.textColorSecondary, style = descriptionStyle()) }
             }
         }
     }
@@ -1362,22 +1371,14 @@ private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
     // empty draws nothing but stays composed, so the display listeners above notice hidden options appearing
     if (entries.isEmpty()) return
 
-    CompositionLocalProvider(LocalOptionWidth provides 210.dp, LocalOptionWidthOrNull provides 210.dp) {
+    CompositionLocalProvider(
+        LocalOptionWidth provides 210.dp,
+        LocalOptionWidthOrNull provides 210.dp,
+        LocalSearchExpands provides searchQuery.isNotEmpty(),
+    ) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (searchQuery.isEmpty() && visibleCategories.size > 1) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                visibleCategories.forEach { category ->
-                    Chip(
-                        label = category.name,
-                        selected = selectedCategory == category,
-                        onClick = { chosenCategory = category }
-                    )
-                }
-            }
+            CategoryTabs(visibleCategories, selectedCategory, Modifier) { chosenCategory = it }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

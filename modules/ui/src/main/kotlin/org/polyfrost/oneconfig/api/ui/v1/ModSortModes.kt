@@ -10,13 +10,41 @@ import org.polyfrost.oneconfig.api.ui.v1.page.PageText
 import org.polyfrost.oneconfig.api.ui.v1.page.translate
 
 @ExperimentalOneConfigUiApi
-public class ModSortMode @JvmOverloads constructor(
+public class ModSortMode(
     public val id: String,
     public val icon: String,
     title: PageText,
     confirmation: PageText? = null,
+    confirmLabel: PageText? = null,
     public val onSelect: () -> Unit,
 ) {
+    public constructor(
+        id: String,
+        icon: String,
+        title: String,
+        confirmation: String? = null,
+        confirmLabel: String? = null,
+        onSelect: () -> Unit,
+    ) : this(
+        id,
+        icon,
+        PageText.literal(title),
+        confirmation?.let(PageText::literal),
+        confirmLabel?.let(PageText::literal),
+        onSelect,
+    )
+
+    @Deprecated("Use the constructor that takes confirmLabel", level = DeprecationLevel.HIDDEN)
+    @JvmOverloads
+    public constructor(
+        id: String,
+        icon: String,
+        title: PageText,
+        confirmation: PageText? = null,
+        onSelect: () -> Unit,
+    ) : this(id, icon, title, confirmation, null as PageText?, onSelect)
+
+    @Deprecated("Use the constructor that takes confirmLabel", level = DeprecationLevel.HIDDEN)
     @JvmOverloads
     public constructor(
         id: String,
@@ -24,19 +52,27 @@ public class ModSortMode @JvmOverloads constructor(
         title: String,
         confirmation: String? = null,
         onSelect: () -> Unit,
-    ) : this(id, icon, PageText.literal(title), confirmation?.let(PageText::literal), onSelect)
+    ) : this(id, icon, title, confirmation, null as String?, onSelect)
 
     public val titleText: PageText = title
 
     public val confirmationText: PageText? = confirmation
 
+    public val confirmLabelText: PageText? = confirmLabel
+
     public val title: String get() = titleText.translate()
 
     public val confirmation: String? get() = confirmationText?.translate()
+
+    public val confirmLabel: String? get() = confirmLabelText?.translate()
 }
 
 @ExperimentalOneConfigUiApi
 public object ModSortModes {
+    public const val CUSTOM: String = "custom"
+
+    public const val ALPHABETICAL: String = "alphabetical"
+
     private val LOGGER = LogManager.getLogger("OneConfig/ModSortModes")
     private val lock = Any()
 
@@ -65,4 +101,9 @@ public object ModSortModes {
 
     @JvmStatic
     public fun currentId(): String? = extensionsBridge()?.modSortModeId()
+
+    @JvmStatic
+    public fun select(id: String) {
+        extensionsBridge()?.selectModSortMode(id)
+    }
 }

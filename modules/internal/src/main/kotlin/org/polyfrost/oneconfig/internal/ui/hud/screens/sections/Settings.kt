@@ -44,24 +44,32 @@ fun Settings(hud: Hud?, query: String) {
                     collapsedByDefault = !canReset,
                 ) {
                     HudSettingTarget(hud, "showInF3") {
-                        SwitchRow(hudPanelText("show_in_f3", "Show in F3 Screen"), showInF3) {
-                            Snapshot.withMutableSnapshot { showInF3 = it; hud.showInF3 = it }
-                        }
+                        SwitchRow(
+                            hudPanelText("show_in_f3", "Show in F3 Screen"),
+                            showInF3,
+                            { Snapshot.withMutableSnapshot { showInF3 = it; hud.showInF3 = it } },
+                        )
                     }
                     HudSettingTarget(hud, "showInTab") {
-                        SwitchRow(hudPanelText("show_in_tab", "Show in Tab List"), showInTab) {
-                            Snapshot.withMutableSnapshot { showInTab = it; hud.showInTab = it }
-                        }
+                        SwitchRow(
+                            hudPanelText("show_in_tab", "Show in Tab List"),
+                            showInTab,
+                            { Snapshot.withMutableSnapshot { showInTab = it; hud.showInTab = it } },
+                        )
                     }
                     HudSettingTarget(hud, "showInScreens") {
-                        SwitchRow(hudPanelText("show_in_screens", "Show in GUIs"), showInScreens) {
-                            Snapshot.withMutableSnapshot { showInScreens = it; hud.showInScreens = it }
-                        }
+                        SwitchRow(
+                            hudPanelText("show_in_screens", "Show in GUIs"),
+                            showInScreens,
+                            { Snapshot.withMutableSnapshot { showInScreens = it; hud.showInScreens = it } },
+                        )
                     }
                     HudSettingTarget(hud, "showInChat") {
-                        SwitchRow(hudPanelText("show_in_chat", "Show in Chat"), showInChat) {
-                            Snapshot.withMutableSnapshot { showInChat = it; hud.showInChat = it }
-                        }
+                        SwitchRow(
+                            hudPanelText("show_in_chat", "Show in Chat"),
+                            showInChat,
+                            { Snapshot.withMutableSnapshot { showInChat = it; hud.showInChat = it } },
+                        )
                     }
                 }
             }

@@ -37,12 +37,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
+import org.polyfrost.oneconfig.api.ui.v1.components.Checkbox
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
@@ -64,8 +64,8 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
-private val ListContainerShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-private val ListItemShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+private val ListContainerShape @Composable get() = LocalTheme.current.shapes.field
+private val ListItemShape @Composable get() = LocalTheme.current.shapes.field
 private val PlainListItemHeight = 32.dp
 private val CheckableListItemHeight = 40.dp
 private val ListItemSpacing = 14.dp
@@ -148,7 +148,6 @@ fun DraggableListOption(data: DraggableListOptionData) {
         { from, to ->
             if (from in items.indices && to in items.indices) {
                 items = items.toMutableList().also { it.add(to, it.removeAt(from)) }
-                UiSounds.play(UiSoundEvent.SLIDER_TICK)
             }
         },
         { save() },
@@ -227,9 +226,9 @@ fun DraggableListOption(data: DraggableListOptionData) {
 
                         if (data.checkable) {
                             val checked = item.id in enabledIds
-                            CheckboxIndicator(
+                            Checkbox(
                                 checked = checked,
-                                onToggle = {
+                                onCheckedChange = {
                                     enabledIds = if (checked) enabledIds - item.id else enabledIds + item.id
                                     save()
                                 },
@@ -243,7 +242,7 @@ fun DraggableListOption(data: DraggableListOptionData) {
                             modifier = Modifier.weight(1f, fill = false),
                             color = Color.Unspecified,
                             colorProducer = { contentColor.value },
-                            fontSize = 13.sp,
+                            fontSize = theme.typography.label.fontSize,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

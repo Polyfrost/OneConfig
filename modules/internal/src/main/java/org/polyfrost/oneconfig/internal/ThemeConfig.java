@@ -260,6 +260,7 @@ public class ThemeConfig extends Config {
             "reduceTransparency", (Boolean v) -> {
                 reduceTransparency = v;
                 ReduceTransparency.setEnabled(v);
+                PrefsSync.reduceTransparency(v);
                 updateAppearance();
                 return false;
             });

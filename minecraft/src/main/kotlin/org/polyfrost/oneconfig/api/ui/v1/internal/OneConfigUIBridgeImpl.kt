@@ -7,24 +7,35 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUIBridge
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
-import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
 import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.PageArguments
 import org.polyfrost.oneconfig.internal.ui.navigation.PageRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.pageRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.resolveOpenTarget
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
 class OneConfigUIBridgeImpl : OneConfigUIBridge {
-    override fun createScreen(route: Any?): Any = OneConfigUIScreen.forRoute(resolveOpenTarget(route))
+    override fun createScreen(route: Any?): Any {
+        val target = resolveOpenTarget(route)
+        clearArgument(target)
+        return OneConfigUIScreen.forRoute(target)
+    }
 
     override fun open(route: Any?) {
         val target = resolveOpenTarget(route)
+        clearArgument(target)
+        show(target)
+    }
+
+    private fun clearArgument(target: Any?) {
+        if (target is PageRoute) PageArguments.clear(target.pageId)
+    }
+
+    private fun show(target: Any?) {
         if (target == null) {
             OneConfigUIScreen.openLastSession()
             return
@@ -45,10 +56,13 @@ class OneConfigUIBridgeImpl : OneConfigUIBridge {
 
     @OptIn(ExperimentalOneConfigUiApi::class)
     override fun openPage(page: OneConfigPage, argument: Any?) {
-        if (argument != null && OneConfigPages.byId(page.id) === page && pageRoute(page) == PageRoute(page.id)) {
+        val target = resolveOpenTarget(page)
+        if (argument != null && target == PageRoute(page.id)) {
             PageArguments.offer(page.id, argument)
+        } else {
+            clearArgument(target)
         }
-        open(page)
+        show(target)
     }
 
     @OptIn(ExperimentalOneConfigUiApi::class)

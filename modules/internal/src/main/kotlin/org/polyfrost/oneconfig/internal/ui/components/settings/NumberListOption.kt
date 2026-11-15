@@ -6,6 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
+import org.polyfrost.oneconfig.api.ui.v1.components.Slider
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberListOptionData
 
 @Composable
@@ -42,34 +46,34 @@ private fun RowScope.NumberEntry(
 ) {
     if (data.style == NumberListOptionData.Style.Slider) {
         Box(modifier = Modifier.weight(1f)) {
-            SliderControl(
+            Slider(
                 value = value,
                 onValueChange = onValueChange,
-                min = data.min,
-                max = data.max,
+                range = data.min..data.max,
                 step = data.step,
-                thumbSize = 14.dp,
-                trackHeight = 4.dp,
+                size = ControlSize.Compact,
             )
         }
-        NumberSpinner(
+        NumberField(
             value = value,
             onValueChange = onValueChange,
-            min = data.min,
-            max = data.max,
+            range = data.min..data.max,
             step = step,
-            width = 66.dp,
+            roundToDecimals = false, fractionDigits = 2,
             format = data.format,
+            width = 66.dp,
+            fontSize = 13.sp,
         )
     } else {
         Box(modifier = Modifier.weight(1f)) {
-            NumberSpinner(
+            NumberField(
                 value = value,
                 onValueChange = onValueChange,
-                min = data.min,
-                max = data.max,
+                range = data.min..data.max,
                 step = step,
+                roundToDecimals = false, fractionDigits = 2,
                 format = data.format,
+                fontSize = 13.sp,
             )
         }
     }

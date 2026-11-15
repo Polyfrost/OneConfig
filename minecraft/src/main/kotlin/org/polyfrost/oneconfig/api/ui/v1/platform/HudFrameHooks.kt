@@ -2,11 +2,13 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.platform
 
+import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.ChatScreen
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudClickInput
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.HudMouseButton
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
@@ -33,11 +35,21 @@ internal object HudFrameHooks {
     }
 
     @JvmStatic
-    fun consumeButton(button: Int, pressed: Boolean): Boolean = HudClickInput.consumeButton(button, pressed)
+    fun consumeButton(button: Int, pressed: Boolean): Boolean =
+        HudClickInput.consumeButton(
+            when (button) {
+                InputConstants.MOUSE_BUTTON_LEFT -> HudMouseButton.Left.ordinal
+                InputConstants.MOUSE_BUTTON_RIGHT -> HudMouseButton.Right.ordinal
+                InputConstants.MOUSE_BUTTON_MIDDLE -> HudMouseButton.Middle.ordinal
+                else -> -1
+            },
+            pressed,
+        )
 
     private fun feedPointer() {
         val screen = Platform.screen()
-        val allowed = inputAllowed()
+        val current = if (Minecraft.getInstance().isWindowActive) runCatching { screen.current<Any?>() }.getOrNull() else null
+        val allowed = current is ChatScreen || current is ComposeHudLayer.InputScreen
         //? if > 1.8.9 {
         val mouse = Minecraft.getInstance().mouseHandler
         val windowX = mouse.xpos().toFloat()
@@ -49,12 +61,6 @@ internal object HudFrameHooks {
         *///?}
         val guiX = windowX * screen.guiWidth() / screen.windowWidth().coerceAtLeast(1)
         val guiY = windowY * screen.guiHeight() / screen.windowHeight().coerceAtLeast(1)
-        HudClickInput.updatePointer(guiX, guiY, allowed)
-    }
-
-    private fun inputAllowed(): Boolean {
-        if (!Minecraft.getInstance().isWindowActive) return false
-        val screen = runCatching { Platform.screen().current<Any?>() }.getOrNull() ?: return false
-        return screen is ChatScreen || screen is ComposeHudLayer.InputScreen
+        HudClickInput.updatePointer(guiX, guiY, allowed, current != null)
     }
 }

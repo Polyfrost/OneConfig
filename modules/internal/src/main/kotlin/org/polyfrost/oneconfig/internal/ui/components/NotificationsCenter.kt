@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,14 +34,17 @@ import org.polyfrost.oneconfig.api.notifications.v1.NotificationState
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.BadgeTone
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.Divider
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.PanelHeader
 import org.polyfrost.oneconfig.api.ui.v1.components.ProgressBar
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.StatusDot
 import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
@@ -68,19 +70,13 @@ fun NotificationsCenter() {
             .padding(horizontal = 14.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(
-            translated("oneconfig.sidebar.notifications", "Notifications"),
-            color = theme.textColor,
-            fontSize = 18.sp,
-            lineHeight = 28.sp,
-            fontWeight = FontWeight.Medium,
-        )
+        PanelHeader(translated("oneconfig.sidebar.notifications", "Notifications"))
 
         if (history.isEmpty()) {
             Text(
                 translated("oneconfig.notifications.empty", "You're all caught up."),
                 color = theme.textColorSecondary,
-                fontSize = 12.sp,
+                fontSize = theme.typography.small.fontSize,
                 modifier = Modifier.padding(vertical = 8.dp),
             )
         } else {
@@ -121,7 +117,7 @@ private fun NotificationRow(notification: Notification) {
                 Text(
                     state.title,
                     color = accent,
-                    fontSize = 14.sp,
+                    fontSize = theme.typography.body.fontSize,
                     lineHeight = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f).padding(end = 8.dp),
@@ -129,22 +125,17 @@ private fun NotificationRow(notification: Notification) {
                 Text(
                     Formatters.relativeTime(Instant.ofEpochMilli(notification.createdAt)),
                     color = theme.textColorSecondary,
-                    fontSize = 10.sp,
+                    fontSize = theme.typography.caption.fontSize,
                 )
                 if (!state.read) {
-                    Box(
-                        Modifier
-                            .padding(start = 6.dp)
-                            .size(6.dp)
-                            .background(Accent, theme.circleShape),
-                    )
+                    StatusDot(BadgeTone.Accent, Modifier.padding(start = 6.dp), contentDescription = translated("oneconfig.notifications.unread", "Unread"))
                 }
             }
             if (state.message.isNotEmpty()) {
                 Text(
                     state.message,
                     color = theme.textColorSecondary,
-                    fontSize = 12.sp,
+                    fontSize = theme.typography.small.fontSize,
                     lineHeight = 21.sp,
                 )
             }
@@ -222,7 +213,7 @@ private fun Footer() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon("trash", color = color, modifier = Modifier.size(18.dp))
-            Text(label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text(label, theme.typography.smallMedium, color = color)
         }
     }
 }

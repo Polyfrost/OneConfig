@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.internal.ui.api.settings.InfoOptionData
@@ -39,18 +38,17 @@ fun InfoOption(data: InfoOptionData) {
         ) {
             Text(
                 data.heading,
+                theme.typography.titleSmall,
                 modifier = Modifier.fillMaxWidth(),
                 color = theme.textColor,
-                fontSize = 16.sp,
                 lineHeight = 19.sp,
-                fontWeight = FontWeight.Medium,
             )
             data.body?.let {
                 Text(
                     it,
                     modifier = Modifier.fillMaxWidth(),
                     color = theme.textColorSecondary,
-                    fontSize = 13.sp,
+                    fontSize = theme.typography.label.fontSize,
                     lineHeight = 16.sp,
                 )
             }

@@ -3,7 +3,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,7 +38,6 @@ public sealed class LoadState {
 private val ICON_SIZE = 32.dp
 private val PROGRESS_WIDTH = 160.dp
 private val TEXT_MAX_WIDTH = 420.dp
-private const val RESIZE_MILLIS = 150
 
 @ExperimentalOneConfigUiApi
 @Composable
@@ -83,10 +81,11 @@ private fun EmptyStateFrame(
     val theme = OneConfigTheme.current
     val spacing = theme.spacing
     val typography = theme.typography
+    if (LocalAnnounceTitles.current) Announce(title)
     Announce((state as? LoadState.Error)?.message)
     Column(
         modifier
-            .animateContentSize(Motion.finiteSpec(tween(RESIZE_MILLIS)))
+            .animateContentSize(Motion.tweenSpec(Motion.standard))
             .padding(spacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing.m, Alignment.CenterVertically),

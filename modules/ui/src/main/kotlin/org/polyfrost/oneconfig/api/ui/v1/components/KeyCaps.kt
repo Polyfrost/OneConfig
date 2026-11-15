@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -139,7 +138,7 @@ public fun KeyCap(
             label,
             Modifier.padding(horizontal = if (width != null) 3.dp else 8.dp),
             color = theme.textColor,
-            style = theme.typography.caption.copy(fontWeight = FontWeight.Medium),
+            style = theme.typography.captionMedium,
             textAlign = TextAlign.Center,
             maxLines = 1,
         )

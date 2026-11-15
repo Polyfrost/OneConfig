@@ -107,7 +107,7 @@ public object ModToggles {
     @JvmStatic
     public fun isEnabled(modId: String): Boolean {
         val off = disabled
-        return off.isEmpty() || modId !in off
+        return off.isEmpty() || normalise(modId) !in off
     }
 
     @JvmStatic

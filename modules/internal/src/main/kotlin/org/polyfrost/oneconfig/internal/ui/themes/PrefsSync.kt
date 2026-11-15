@@ -22,13 +22,17 @@ object PrefsSync {
     @JvmStatic
     fun uiScale(percent: Float) = push(uiScalePercent = percent)
 
+    @JvmStatic
+    fun reduceTransparency(value: Boolean) = push(reduceTransparency = value)
+
     private fun push(
         animations: Boolean = ThemeConfig.animations,
         reducedMotion: Boolean = ThemeConfig.reducedMotion,
         backgroundBlur: Boolean = ThemeConfig.enableBackgroundBlur,
         guiOpenAnimation: Boolean = ThemeConfig.guiOpenAnimation,
         uiScalePercent: Float = ThemeConfig.uiScale,
+        reduceTransparency: Boolean = ThemeConfig.reduceTransparency,
     ) {
-        OneConfigPrefs.update(animations, reducedMotion, backgroundBlur, guiOpenAnimation, uiScalePercent / 100f)
+        OneConfigPrefs.update(animations, reducedMotion, backgroundBlur, guiOpenAnimation, uiScalePercent / 100f, reduceTransparency)
     }
 }

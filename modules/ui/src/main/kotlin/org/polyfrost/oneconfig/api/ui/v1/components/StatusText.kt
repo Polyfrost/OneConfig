@@ -2,8 +2,6 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -24,8 +22,6 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
-
-private const val STATUS_FADE_MILLIS = 150
 
 @Stable
 @ExperimentalOneConfigUiApi
@@ -73,7 +69,7 @@ public fun StatusText(state: StatusMessage, modifier: Modifier = Modifier) {
     val last = remember { arrayOf("" to NotificationType.INFO) }
     if (current != null) last[0] = current to state.type
     val (text, type) = last[0]
-    val alpha by animateFloatAsState(if (current != null) 1f else 0f, Motion.spec(tween(STATUS_FADE_MILLIS)), label = "statusText")
+    val alpha by Motion.animateFloatAsState(if (current != null) 1f else 0f, Motion.tweenSpec(Motion.standard), "statusText")
     Announce(current)
     val color = if (type == NotificationType.INFO) theme.textColorSecondary else toastColor(type)
     Text(

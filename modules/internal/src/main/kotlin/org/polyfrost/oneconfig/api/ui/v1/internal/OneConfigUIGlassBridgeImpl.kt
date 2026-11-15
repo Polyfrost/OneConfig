@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import androidx.compose.foundation.LocalScrollbarStyle
-import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.runtime.Composable
@@ -12,11 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
+import org.polyfrost.oneconfig.api.ui.v1.components.themedScrollbarStyle
 import org.polyfrost.oneconfig.internal.ui.components.backdropBlur as internalBackdropBlur
 import org.polyfrost.oneconfig.internal.ui.components.wheelScroll as internalWheelScroll
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.CustomBase
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.LocalThemeTarget
 import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
 import org.polyfrost.oneconfig.internal.ui.themes.UITheme
@@ -28,12 +29,10 @@ import org.polyfrost.oneconfig.internal.ui.themes.isCustom
 import org.polyfrost.oneconfig.internal.ui.themes.palette
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame as internalAnimatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.glassHover as internalGlassHover
+import org.polyfrost.oneconfig.internal.ui.components.hoverGlow as internalHoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass as internalLiquidGlass
 
 private val LocalVariantBase = compositionLocalOf<UITheme?> { null }
-
-private const val SCROLLBAR_IDLE_ALPHA = 0.40f
-private const val SCROLLBAR_HOVER_ALPHA = 0.70f
 
 class OneConfigUIGlassBridgeImpl : OneConfigUIGlassBridge {
     @Composable
@@ -51,30 +50,31 @@ class OneConfigUIGlassBridgeImpl : OneConfigUIGlassBridge {
     @Composable
     override fun backdropBlur(modifier: Modifier, shape: Shape): Modifier = modifier.internalBackdropBlur(shape)
 
+    @Composable
+    override fun hoverGlow(modifier: Modifier, shape: Shape): Modifier = modifier.internalHoverGlow(shape)
+
+    @Composable
+    override fun liquidGlass(modifier: Modifier, shape: Shape, frosted: Boolean, alpha: () -> Float): Modifier =
+        modifier.internalLiquidGlass(shape, frosted, alpha)
+
     override fun wheelScroll(modifier: Modifier, state: ScrollableState, orientation: Orientation): Modifier =
         modifier.internalWheelScroll(state, orientation)
 
     @Composable
     override fun ProvideThemeVariant(dark: Boolean, keepAccent: Boolean, content: @Composable () -> Unit) {
-        val base = LocalVariantBase.current ?: LocalTheme.current
+        val base = LocalVariantBase.current ?: LocalThemeTarget.current ?: LocalTheme.current
         val opaque = ReduceTransparency.enabled
         val accent = Accent
         val target = remember(base, dark, keepAccent, opaque, accent) { variantOf(base, dark, keepAccent, opaque, accent) }
         val shown = animateTheme(target)
         val scrollbar = LocalScrollbarStyle.current
         val scrollbarStyle = remember(scrollbar, shown.textColorSecondary) {
-            ScrollbarStyle(
-                minimalHeight = scrollbar.minimalHeight,
-                thickness = scrollbar.thickness,
-                shape = scrollbar.shape,
-                hoverDurationMillis = scrollbar.hoverDurationMillis,
-                unhoverColor = shown.textColorSecondary.copy(alpha = SCROLLBAR_IDLE_ALPHA),
-                hoverColor = shown.textColorSecondary.copy(alpha = SCROLLBAR_HOVER_ALPHA),
-            )
+            themedScrollbarStyle(shown.textColorSecondary, scrollbar.shape, scrollbar.thickness, scrollbar.minimalHeight, scrollbar.hoverDurationMillis)
         }
         CompositionLocalProvider(
             LocalVariantBase provides base,
             LocalTheme provides shown,
+            LocalThemeTarget provides target,
             LocalScrollbarStyle provides scrollbarStyle,
             content = content,
         )

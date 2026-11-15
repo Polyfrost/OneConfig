@@ -50,8 +50,18 @@ public fun Hud.HudText(lines: List<List<TextRun>>, alignColumns: Boolean = false
     HudRunText({ lines }, alignColumns)
 }
 
+@ExperimentalOneConfigUiApi
 @Composable
-internal fun Hud.HudRunText(lines: () -> List<List<TextRun>>, alignColumns: Boolean) {
+public fun Hud.HudCellText(lines: List<List<List<TextRun>>>, alignColumns: Boolean = false) {
+    HudRunText({ emptyList() }, alignColumns, { lines })
+}
+
+@Composable
+internal fun Hud.HudRunText(
+    lines: () -> List<List<TextRun>>,
+    alignColumns: Boolean,
+    cells: (() -> List<List<List<TextRun>>>)? = null,
+) {
     val contentAlign = alignment
     val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
     val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
@@ -81,6 +91,7 @@ internal fun Hud.HudRunText(lines: () -> List<List<TextRun>>, alignColumns: Bool
             factory = { RunTextNode() },
             update = {
                 set(lines) { this.lines = it }
+                set(cells) { this.cells = it }
                 set(spec) { this.spec = it }
                 set(if (isStaticValid) contentAlign else PolyAlign.TopLeft) { style.align = it }
             },
@@ -225,8 +236,10 @@ private class LaidLine(val runs: List<LaidRun>, val width: Float)
 
 private class RunTextNode : PolyNode() {
     var lines: () -> List<List<TextRun>> = { emptyList() }
+    var cells: (() -> List<List<List<TextRun>>>)? = null
     var spec: RunTextSpec? = null
     private var measuredLines: List<List<TextRun>>? = null
+    private var measuredCells: List<List<List<TextRun>>>? = null
     private var measuredSpec: RunTextSpec? = null
     private var measuredFonts = -1
     private var laid: List<LaidLine> = emptyList()
@@ -236,26 +249,32 @@ private class RunTextNode : PolyNode() {
 
     override fun measureContent() {
         val s = spec ?: return
-        val source = lines()
-        if (source == measuredLines && s == measuredSpec && measuredFonts == FontManager.revision) return
+        val cellSource = cells?.invoke()
+        val source = if (cellSource == null) lines() else null
+        if (source == measuredLines && cellSource == measuredCells && s == measuredSpec && measuredFonts == FontManager.revision) return
         measuredLines = source
+        measuredCells = cellSource
         measuredSpec = s
         measuredFonts = FontManager.revision
 
         val base = s.poppinsName?.let { PolyFont(it, POPPINS_SIZE * s.scale) }
-        val measured = source.map { line -> line.map { layoutRun(s, base, it) } }
+        val measured = cellSource?.map { line -> line.map { cell -> cell.map { layoutRun(s, base, it) } } }
+            ?: source.orEmpty().map { line -> line.map { listOf(layoutRun(s, base, it)) } }
         val columns = if (s.alignColumns) columnOffsets(measured) else null
-        laid = measured.map { runs ->
+        laid = measured.map { line ->
             var cursor = 0f
             var right = 0f
-            for ((i, run) in runs.withIndex()) {
-                run.offset = columns?.get(i) ?: cursor
-                cursor = run.offset + run.width
+            for ((i, cell) in line.withIndex()) {
+                cursor = columns?.get(i) ?: cursor
+                for (run in cell) {
+                    run.offset = cursor
+                    cursor += run.width
+                }
                 right = maxOf(right, cursor)
             }
-            LaidLine(runs, right)
+            LaidLine(line.flatten(), right)
         }
-        chroma = s.color.chroma || s.shadow?.chroma == true || source.any { line -> line.any { it.color?.chroma == true } }
+        chroma = s.color.chroma || s.shadow?.chroma == true || measured.any { line -> line.any { cell -> cell.any { it.color?.chroma == true } } }
 
         if (base != null) {
             val metrics = base.metrics
@@ -287,10 +306,10 @@ private class RunTextNode : PolyNode() {
         return LaidRun(formatted, run.color, null, false, McFontQueue.measureTextWidth(formatted, s.scale))
     }
 
-    private fun columnOffsets(lines: List<List<LaidRun>>): List<Float> {
+    private fun columnOffsets(lines: List<List<List<LaidRun>>>): List<Float> {
         val count = lines.maxOfOrNull { it.size } ?: return emptyList()
         val widths = FloatArray(count)
-        for (line in lines) for ((i, run) in line.withIndex()) widths[i] = maxOf(widths[i], run.width)
+        for (line in lines) for ((i, cell) in line.withIndex()) widths[i] = maxOf(widths[i], cell.fold(0f) { sum, run -> sum + run.width })
         var offset = 0f
         return List(count) { i -> offset.also { offset += widths[i] } }
     }

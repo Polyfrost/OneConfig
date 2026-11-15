@@ -2,11 +2,11 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -16,22 +16,28 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.render.PolyColor
@@ -40,10 +46,9 @@ import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 
 private val SWATCH_SIZE = 24.dp
-
-private const val SWATCH_BORDER_MILLIS = 120
 
 @ExperimentalOneConfigUiApi
 public open class ColorPickerModel private constructor(private val delegate: ColorPickerModel?, @Suppress("UNUSED_PARAMETER") marker: Unit) {
@@ -104,8 +109,9 @@ public fun ColorPickerPopup(
     placement: Placement = Placement.BelowStart,
     chromaCapable: Boolean = false,
     gradientCapable: Boolean = false,
+    onCommit: ((Color) -> Unit)? = null,
 ) {
-    TriggeredColorPickerPopup(model, onColorChanged, onDismiss, null, modifier, placement, chromaCapable, gradientCapable)
+    TriggeredColorPickerPopup(model, onColorChanged, onDismiss, null, modifier, placement, chromaCapable, gradientCapable, onCommit)
 }
 
 @Composable
@@ -118,9 +124,56 @@ private fun TriggeredColorPickerPopup(
     placement: Placement = Placement.BelowStart,
     chromaCapable: Boolean = false,
     gradientCapable: Boolean = false,
+    onCommit: ((Color) -> Unit)? = null,
 ) {
-    AnchoredPopup(true, onDismiss, placement, trigger = trigger) {
-        componentsBridge().ColorPickerPanel(model, onColorChanged, onDismiss, modifier, chromaCapable, gradientCapable)
+    if (onCommit == null) {
+        AnchoredPopup(true, onDismiss, placement, trigger = trigger) {
+            componentsBridge().ColorPickerPanel(model, onColorChanged, onDismiss, modifier, chromaCapable, gradientCapable)
+        }
+        return
+    }
+    val latestCommit by rememberUpdatedState(onCommit)
+    val latestChanged by rememberUpdatedState(onColorChanged)
+    val latestDismiss by rememberUpdatedState(onDismiss)
+    val pending = remember(model) { booleanArrayOf(false) }
+    val commit = remember(model) {
+        {
+            if (pending[0]) {
+                pending[0] = false
+                latestCommit(model.color)
+            }
+        }
+    }
+    val changed: (Color) -> Unit = remember(model) {
+        { color ->
+            pending[0] = true
+            latestChanged(color)
+        }
+    }
+    val dismiss: () -> Unit = remember(commit) {
+        {
+            commit()
+            latestDismiss()
+        }
+    }
+    DisposableEffect(commit) { onDispose { commit() } }
+    AnchoredPopup(true, dismiss, placement, trigger = trigger) {
+        componentsBridge().ColorPickerPanel(model, changed, dismiss, modifier.commitOnRelease(commit).commitOnEnter(commit), chromaCapable, gradientCapable)
+    }
+}
+
+private fun Modifier.commitOnEnter(commit: () -> Unit): Modifier = onPreviewKeyEvent { event ->
+    if (event.type == KeyEventType.KeyDown && (event.key == Key.Enter || event.key == Key.NumPadEnter)) commit()
+    false
+}
+
+private fun Modifier.commitOnRelease(commit: () -> Unit): Modifier = pointerInput(commit) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Final)
+        do {
+            val event = awaitPointerEvent(PointerEventPass.Final)
+        } while (event.changes.any { it.pressed })
+        commit()
     }
 }
 
@@ -135,12 +188,14 @@ public fun ColorSwatchButton(
     chromaCapable: Boolean = false,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    onReset: (() -> Unit)? = null,
+    menu: (List<MenuEntry>) -> List<MenuEntry> = { it },
 ) {
     val model = rememberColorPickerModel(color, hasAlpha)
     LaunchedEffect(model, color) {
         if (model.color.toArgb() != color.toArgb()) model.set(color.opaqueUnless(hasAlpha))
     }
-    SwatchButton(model, onColorChanged, modifier, label, false, false, enabled, interactionSource)
+    SwatchButton(model, onColorChanged, modifier, label, hasAlpha, false, false, enabled, interactionSource, onReset, menu)
 }
 
 @ExperimentalOneConfigUiApi
@@ -155,6 +210,8 @@ public fun ColorSwatchButton(
     gradientCapable: Boolean = false,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    onReset: (() -> Unit)? = null,
+    menu: (List<MenuEntry>) -> List<MenuEntry> = { it },
 ) {
     val model = rememberColorPickerModel(color, hasAlpha)
     val gradient = if (color.gradientEnabled) color.gradientArgb else null
@@ -171,7 +228,7 @@ public fun ColorSwatchButton(
             )
         }
     }
-    SwatchButton(model, { onColorChanged(model.toPolyColor()) }, modifier, label, chromaCapable, gradientCapable, enabled, interactionSource)
+    SwatchButton(model, { onColorChanged(model.toPolyColor()) }, modifier, label, hasAlpha, chromaCapable, gradientCapable, enabled, interactionSource, onReset, menu)
 }
 
 @Composable
@@ -180,10 +237,13 @@ private fun SwatchButton(
     onColorChanged: (Color) -> Unit,
     modifier: Modifier,
     label: String?,
+    hasAlpha: Boolean,
     chromaCapable: Boolean,
     gradientCapable: Boolean,
     enabled: Boolean,
     interactionSource: MutableInteractionSource?,
+    onReset: (() -> Unit)?,
+    menu: (List<MenuEntry>) -> List<MenuEntry>,
 ) {
     val theme = OneConfigTheme.current
     val source = interactionSource ?: remember { MutableInteractionSource() }
@@ -195,15 +255,31 @@ private fun SwatchButton(
     val shown = rememberShownColor(model)
     val gradient = model.gradient
     val fill = if (gradient != null && !model.chroma && gradientCapable) Brush.horizontalGradient(listOf(shown, gradient)) else SolidColor(shown)
-    val border by animateColorAsState(
+    val border by Motion.animateColorAsState(
         if (enabled && (hovered || open)) theme.textColor.copy(alpha = 0.3f) else theme.borderColor,
-        Motion.spec(tween(SWATCH_BORDER_MILLIS)),
-        label = "swatchBorder",
+        Motion.colorSpec(Motion.fast),
+        "swatchBorder",
     )
+    val latestChanged by rememberUpdatedState(onColorChanged)
+    val latestReset by rememberUpdatedState(onReset)
+    val latestMenu by rememberUpdatedState(menu)
     val spoken = label ?: "${kitString("oneconfig.colour", "Colour")} #${colorToHex(model.color)}"
     Box(modifier) {
         Row(
             Modifier
+                .contextMenu(enabled) {
+                    latestMenu(
+                        colorSwatchMenu(
+                            model,
+                            hasAlpha,
+                            onPaste = { pasted ->
+                                model.set(pasted)
+                                latestChanged(model.color)
+                            },
+                            onReset = latestReset,
+                        ),
+                    )
+                }
                 .popupTrigger(trigger)
                 .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
                 .oneConfigClickable(
@@ -222,20 +298,7 @@ private fun SwatchButton(
                 Modifier
                     .size(SWATCH_SIZE)
                     .clip(shape)
-                    .drawBehind {
-                        val cell = 6.dp.toPx()
-                        val columns = (size.width / cell).toInt()
-                        val rows = (size.height / cell).toInt()
-                        for (row in 0..rows) {
-                            for (column in 0..columns) {
-                                drawRect(
-                                    if ((row + column) % 2 == 0) theme.checkerLight else theme.checkerDark,
-                                    Offset(column * cell, row * cell),
-                                    Size(cell, cell),
-                                )
-                            }
-                        }
-                    }
+                    .transparencyCheckerboard()
                     .background(fill, shape)
                     .border(1.dp, border, shape),
             )
@@ -265,6 +328,34 @@ private fun rememberShownColor(model: ColorPickerModel): Color {
 }
 
 private fun Color.opaqueUnless(hasAlpha: Boolean): Color = if (hasAlpha) this else copy(alpha = 1f)
+
+@ExperimentalOneConfigUiApi
+public fun colorSwatchMenu(
+    model: ColorPickerModel,
+    hasAlpha: Boolean,
+    onPaste: (Color) -> Unit,
+    onReset: (() -> Unit)? = null,
+    color: Color = model.color,
+): List<MenuEntry> {
+    val pasted = ClipboardHelper.getString()?.trim()?.let { text ->
+        runCatching { PolyColor.hex(text) }.getOrNull()?.let { Color(it.rawArgb).opaqueUnless(hasAlpha) }
+    }
+    return buildList {
+        add(MenuAction(kitString("oneconfig.menu.option.copy_hex", "Copy hex"), { ClipboardHelper.setString("#${colorToHex(color)}") }, icon = "copy"))
+        add(
+            MenuAction(
+                kitString("oneconfig.menu.option.paste_hex", "Paste hex"),
+                { if (pasted != null) onPaste(pasted) },
+                icon = "clipboard",
+                enabled = pasted != null && pasted.toArgb() != color.toArgb(),
+            ),
+        )
+        if (onReset != null) {
+            add(MenuSeparator)
+            add(MenuAction(kitString("oneconfig.menu.option.reset", "Reset to default"), onReset, icon = "refresh"))
+        }
+    }
+}
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi

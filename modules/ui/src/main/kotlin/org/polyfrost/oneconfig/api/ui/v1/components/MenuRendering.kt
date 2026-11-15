@@ -2,7 +2,6 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -16,12 +15,12 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -29,10 +28,13 @@ import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.focusRing
 import org.polyfrost.oneconfig.api.ui.v1.a11y.isKeyboardMode
 import org.polyfrost.oneconfig.api.ui.v1.a11y.notFocusable
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+
+internal val LocalMenuRefresh = staticCompositionLocalOf<(() -> Unit)?> { null }
 
 @Composable
 internal fun MenuEntryItems(entries: List<MenuEntry>, onSelect: () -> Unit, size: MenuItemSize) {
@@ -53,6 +55,7 @@ internal fun MenuEntryItems(entries: List<MenuEntry>, onSelect: () -> Unit, size
 @Composable
 private fun MenuActionRow(action: MenuAction, onSelect: () -> Unit, size: MenuItemSize, reserveCheck: Boolean, reserveIcon: Boolean) {
     val level = LocalMenuLevel.current
+    val refresh = LocalMenuRefresh.current
     val itemSize = maxOf(action.size, size)
     val submenu: (@Composable (MenuNavItem) -> Unit)? =
         if (action.children.isEmpty() || level == null) null
@@ -60,8 +63,9 @@ private fun MenuActionRow(action: MenuAction, onSelect: () -> Unit, size: MenuIt
     MenuItemRow(
         label = action.label,
         onClick = {
-            onSelect()
+            if (action.dismissOnClick) onSelect()
             action.onClick()
+            if (!action.dismissOnClick) refresh?.invoke()
         },
         icon = action.icon,
         painter = action.painter,
@@ -77,6 +81,7 @@ private fun MenuActionRow(action: MenuAction, onSelect: () -> Unit, size: MenuIt
         reserveCheck = reserveCheck,
         reserveIcon = reserveIcon,
         submenu = submenu,
+        dangerColor = action.dangerColor,
     )
 }
 
@@ -90,7 +95,7 @@ private fun MenuHeadingText(text: String, size: MenuItemSize) {
             .padding(start = size.inset, end = size.inset, top = 6.dp, bottom = 2.dp)
             .semantics { heading() },
         theme.mutedText,
-        theme.typography.caption.copy(fontWeight = FontWeight.Medium),
+        theme.typography.captionMedium,
         1,
         TextOverflow.Ellipsis,
     )
@@ -98,12 +103,14 @@ private fun MenuHeadingText(text: String, size: MenuItemSize) {
 
 @Composable
 private fun <T> MenuRadioRows(group: MenuRadioGroup<T>, onSelect: () -> Unit, size: MenuItemSize, reserveIcon: Boolean) {
+    val refresh = LocalMenuRefresh.current
     group.options.forEach { option ->
         MenuItemRow(
             label = group.label(option),
             onClick = {
-                onSelect()
+                if (group.closeOnSelect) onSelect()
                 group.onSelect(option)
+                if (!group.closeOnSelect) refresh?.invoke()
             },
             size = size,
             checked = option == group.selected,
@@ -125,14 +132,15 @@ private fun MenuIconRowItems(row: MenuIconRow, onSelect: () -> Unit) {
 
 @Composable
 private fun MenuIconButton(action: MenuAction, onSelect: () -> Unit) {
-    val theme = OneConfigTheme.current
     val level = LocalMenuLevel.current
     val source = remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
     val keyboard = isKeyboardMode()
+    val refresh = LocalMenuRefresh.current
     val click = {
-        onSelect()
+        if (action.dismissOnClick) onSelect()
         action.onClick()
+        if (!action.dismissOnClick) refresh?.invoke()
     }
     val nav = rememberMenuNavItem(level, action.label, action.enabled, false) {
         playUiSound(UiSound.Click)
@@ -145,24 +153,24 @@ private fun MenuIconButton(action: MenuAction, onSelect: () -> Unit) {
         if (highlighted && keyboard) A11y.focused(tooltip, A11yRole.Button, null, null)
     }
     val ringShape = if (action.painter != null || action.icon != null) IconButtonDefaults.shape(IconButtonStyle.Ghost) else ButtonDefaults.shape
-    val ring = if (highlighted && keyboard) Modifier.border(1.dp, theme.focusRingColor, ringShape) else Modifier
-    Box(Modifier.menuNavPosition(nav).then(ring)) {
+    Box(Modifier.menuNavPosition(nav).focusRing(ringShape, highlighted)) {
         val modifier = if (level != null) Modifier.notFocusable() else Modifier
         when {
             action.painter != null -> IconButton(
                 action.painter, action.label, click, modifier,
                 enabled = action.enabled, size = ControlSize.Compact, danger = action.danger,
-                tooltip = tooltip, interactionSource = source,
+                tooltip = tooltip, interactionSource = source, dangerColor = action.dangerColor,
             )
             action.icon != null -> IconButton(
                 action.icon, action.label, click, modifier,
                 enabled = action.enabled, size = ControlSize.Compact, danger = action.danger,
-                tooltip = tooltip, interactionSource = source,
+                tooltip = tooltip, interactionSource = source, dangerColor = action.dangerColor,
             )
             else -> TextButton(
                 action.label, click, modifier,
                 style = if (action.danger) ControlStyle.Danger else ControlStyle.Ghost, size = ControlSize.Compact,
                 enabled = action.enabled, leading = action.leading, interactionSource = source,
+                dangerColor = action.dangerColor,
             )
         }
         if (rememberTooltipShown(highlighted && keyboard)) TooltipPopup(tooltip, Modifier, TooltipPlacement.BelowCenter)

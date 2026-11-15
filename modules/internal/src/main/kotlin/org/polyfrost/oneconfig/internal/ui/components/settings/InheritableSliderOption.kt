@@ -1,16 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,24 +10,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
-import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.ui.v1.components.Chip
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
-import org.polyfrost.oneconfig.api.ui.v1.components.SegmentedChips
+import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
+import org.polyfrost.oneconfig.api.ui.v1.components.Slider
 import org.polyfrost.oneconfig.internal.ui.api.settings.InheritableSliderOptionData
-import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
-import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 /**
@@ -46,123 +27,47 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
  */
 @Composable
 fun InheritableSliderOption(data: InheritableSliderOptionData) {
-    val theme = LocalTheme.current
-
     // bumped on every write so the derived state below re-reads the property
     var revision by remember(data.prop) { mutableStateOf(0) }
     val inherited = remember(data.prop, revision) { data.isInherited }
     var value by remember(data.prop, revision) { mutableStateOf(data.shownValue) }
-    var trackWidthPx by remember { mutableStateOf(0f) }
-
-    val thumbDp = 19.dp
-    val span = (data.max - data.min).takeIf { it != 0f } ?: 1f
-    val fraction = Motion.animateFloatAsState(((value - data.min) / span).coerceIn(0f, 1f), spring())
-
-    val filledColor = animateAccentColorAsState(inherited, if (inherited) theme.textColorSecondary.copy(alpha = 0.4f) else Accent)
-    val thumbColor = Motion.animateColorAsState(if (inherited) theme.controlThumbColor.copy(alpha = 0.5f) else theme.controlThumbColor)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Box(
+        Slider(
+            value = value,
+            onValueChange = { value = it; data.set(it); revision++ },
             modifier = Modifier
                 // the spinners beside the track outgrow narrow columns like the HUD editor's
                 .weight(1f, fill = false)
-                .width(LocalOptionWidth.current)
-                .height(19.dp)
-                .onSizeChanged { trackWidthPx = it.width.toFloat() }
-                .pointerInput(data.min, data.max, data.step) {
-                    val thumbPx = thumbDp.toPx()
-                    var lastTickValue = Float.NaN
-                    var lastTickAt = 0L
-                    fun maybeTick(newValue: Float) {
-                        if (newValue == lastTickValue) return
-                        lastTickValue = newValue
-                        val now = System.currentTimeMillis()
-                        if (now - lastTickAt >= 70L) {
-                            lastTickAt = now
-                            UiSounds.play(UiSoundEvent.SLIDER_TICK)
-                        }
-                    }
-                    fun snap(raw: Float): Float {
-                        val clamped = raw.coerceIn(data.min, data.max)
-                        if (data.step <= 0f) return clamped
-                        return (data.min + ((clamped - data.min) / data.step).roundToInt() * data.step)
-                            .coerceIn(data.min, data.max)
-                    }
-                    fun xToValue(x: Float): Float {
-                        val usable = (trackWidthPx - thumbPx).coerceAtLeast(1f)
-                        return snap(data.min + ((x - thumbPx / 2f) / usable).coerceIn(0f, 1f) * (data.max - data.min))
-                    }
-                    fun apply(newValue: Float) {
-                        value = newValue
-                        maybeTick(newValue)
-                        data.set(newValue)
-                        revision++
-                    }
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        apply(xToValue(down.position.x))
-                        do {
-                            val event = awaitPointerEvent()
-                            event.changes.forEach { change ->
-                                if (change.pressed) {
-                                    apply(xToValue(change.position.x))
-                                    change.consume()
-                                }
-                            }
-                        } while (event.changes.any { it.pressed })
-                    }
-                }
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth().height(5.dp)
-                    .align(Alignment.CenterStart)
-                    .clip(theme.checkBoxShape)
-                    .background(theme.chipBackground)
-            )
-            Box(
-                Modifier
-                    .layout { measurable, constraints ->
-                        val w = (constraints.maxWidth * fraction.value).roundToInt().coerceIn(constraints.minWidth, constraints.maxWidth)
-                        val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
-                        layout(w, placeable.height) { placeable.place(0, 0) }
-                    }
-                    .height(5.dp)
-                    .align(Alignment.CenterStart)
-                    .graphicsLayer {}
-                    .animatedFrame(theme.checkBoxShape, fill = { filledColor.value }, border = { Color.Transparent })
-            )
-            Box(
-                Modifier
-                    .align(Alignment.CenterStart)
-                    .offset { IntOffset((fraction.value * (trackWidthPx - thumbDp.toPx())).toInt(), 0) }
-                    .size(thumbDp)
-                    .graphicsLayer {}
-                    .animatedFrame(theme.circleShape, fill = { thumbColor.value }, border = { Color.Transparent })
-            )
-        }
-        NumberSpinner(
+                .width(LocalOptionWidth.current),
+            range = data.min..data.max,
+            step = data.step,
+            muted = inherited,
+            trackColor = LocalTheme.current.chipBackground,
+            fillColor = Accent,
+        )
+        NumberField(
             value = value,
             onValueChange = { value = it; data.set(it); revision++ },
-            min = data.min,
-            max = data.max,
+            range = data.min..data.max,
             step = if (data.step > 0f) data.step else 1f,
-            width = 80.dp,
+            roundToDecimals = false, fractionDigits = 2,
             format = data.format,
+            width = 80.dp,
+            fontSize = 13.sp,
         )
-        SegmentedChips(
-            options = listOf(true),
+        Chip(
+            label = data.inheritLabel,
             selected = inherited,
-            onSelect = {
+            onClick = {
                 if (!inherited) {
                     data.inherit()
                     revision++
                 }
             },
-            label = { data.inheritLabel },
             size = ControlSize.Compact,
         )
     }

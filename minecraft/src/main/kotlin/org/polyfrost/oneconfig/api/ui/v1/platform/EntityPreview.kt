@@ -56,6 +56,12 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState
 import net.minecraft.world.phys.Vec3
 //?}
 
+//? if > 1.8.9 && < 1.21.10
+//import net.minecraft.util.Mth
+
+//? if = 1.8.9
+//import net.minecraft.util.math.MathHelper
+
 //? if >= 26.2
 import net.minecraft.client.renderer.SubmitNodeStorage
 
@@ -74,6 +80,8 @@ private const val FIT_HEIGHT = 2.1f
 private const val FIT_WIDTH = 1.1f
 private const val NAME_TAG_HEIGHT = 0.6f
 private const val FALLBACK_HEAD_FRACTION = 0.5f
+private const val RETRY_BASE_NANOS = 1_000_000_000L
+private const val MAX_RETRY_NANOS = 60_000_000_000L
 
 private val MinPreviewWidth = 48.dp
 private val MinPreviewHeight = 96.dp
@@ -87,6 +95,10 @@ fun EntityPreview(
     pitch: Float = 0f,
     scale: Float = 1f,
     showNameTag: Boolean = false,
+    headYaw: Float? = 0f,
+    headPitch: Float? = 0f,
+    followBodyYaw: Boolean = false,
+    verticalAnchor: Float = 0.5f,
 ) {
     val slot = remember { PreviewSlot(playerId) }
     SideEffect {
@@ -95,6 +107,10 @@ fun EntityPreview(
         slot.pitch = pitch
         slot.scale = scale
         slot.showNameTag = showNameTag
+        slot.headYaw = headYaw
+        slot.headPitch = headPitch
+        slot.followBodyYaw = followBodyYaw
+        slot.verticalAnchor = verticalAnchor
     }
     DisposableEffect(slot) {
         EntityPreviews.register(slot)
@@ -128,6 +144,20 @@ fun EntityPreview(
     }
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+fun EntityPreview(
+    playerId: UUID?,
+    modifier: Modifier = Modifier,
+    yaw: Float = 0f,
+    pitch: Float = 0f,
+    scale: Float = 1f,
+    showNameTag: Boolean = false,
+) {
+    EntityPreview(playerId, modifier, yaw, pitch, scale, showNameTag, headYaw = 0f)
+}
+
 private class PreviewSlot(initialId: UUID?) {
     var playerId: UUID? = initialId
         private set
@@ -135,13 +165,21 @@ private class PreviewSlot(initialId: UUID?) {
     var pitch = 0f
     var scale = 1f
     var showNameTag = false
+    var headYaw: Float? = 0f
+    var headPitch: Float? = 0f
+    var followBodyYaw = false
+    var verticalAnchor = 0.5f
 
     var available by mutableStateOf(findPlayer(initialId) != null)
 
     var layoutWidth = 0f
     var layoutHeight = 0f
     var lastDrawNanos = 0L
-    var failed = false
+    var failures = 0
+    var retryAt = 0L
+
+    val failed: Boolean
+        get() = failures > 0 && System.nanoTime() - retryAt < 0
 
     var anchorHeight = -1f
     var lastAnchorNanos = 0L
@@ -150,7 +188,7 @@ private class PreviewSlot(initialId: UUID?) {
 
     fun retarget(id: UUID?) {
         playerId = id
-        failed = false
+        failures = 0
         anchorHeight = -1f
         lastAnchorNanos = 0L
     }
@@ -235,8 +273,9 @@ private object EntityPreviews {
                     renderPlayer(slot, rt, player, partialTick)
                 }
             } catch (t: Throwable) {
-                LOGGER.warn("Entity preview render failed; showing the player head instead", t)
-                slot.failed = true
+                if (slot.failures == 0) LOGGER.warn("Entity preview render failed; showing the player head instead", t)
+                slot.failures++
+                slot.retryAt = System.nanoTime() + (RETRY_BASE_NANOS shl (slot.failures - 1).coerceAtMost(6)).coerceAtMost(MAX_RETRY_NANOS)
                 slot.available = false
                 slot.release()
             }
@@ -282,9 +321,10 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
 
     state.lightCoords = FULL_BRIGHT
     if (!slot.showNameTag) state.nameTag = null
-    state.bodyRot = 180f + slot.yaw
-    state.yRot = 0f
-    state.xRot = 0f
+    val liveHeadYaw = state.yRot
+    state.bodyRot = 180f + slot.yaw - (if (slot.followBodyYaw) liveHeadYaw else 0f)
+    state.yRot = slot.headYaw ?: liveHeadYaw
+    state.xRot = slot.headPitch ?: state.xRot
     val boxHeight = state.boundingBoxHeight / state.scale
     state.boundingBoxWidth /= state.scale
     state.boundingBoxHeight = boxHeight
@@ -298,7 +338,7 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
     if (tilt != 0f) rotation.mul(Quaternionf().rotateX(tilt))
 
     val pose = PoseStack()
-    pose.translate(width / 2f, height / 2f, 0f)
+    pose.translate(width / 2f, height * slot.verticalAnchor, 0f)
     pose.scale(size, size, -size)
     pose.translate(0f, (anchor + tag) / 2f + OFFSET_Y, 0f)
     //? if >= 26.3 {
@@ -356,7 +396,11 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
     val width = rt.width
     val height = rt.height
     val entityScale = player.scale.coerceAtLeast(0.0001f)
-    val bodyRot = 180f + slot.yaw
+    val liveBodyRot = Mth.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot)
+    val liveHeadYaw = Mth.wrapDegrees(Mth.rotLerp(partialTick, player.yHeadRotO, player.yHeadRot) - liveBodyRot)
+    val bodyRot = 180f + slot.yaw - (if (slot.followBodyYaw) liveHeadYaw else 0f)
+    val headRot = bodyRot + (slot.headYaw ?: liveHeadYaw)
+    val headPitch = slot.headPitch ?: Mth.lerp(partialTick, player.xRotO, player.xRot)
 
     val anchor = slot.smoothAnchorHeight(player.bbHeight / entityScale)
     val tag = if (slot.showNameTag) NAME_TAG_HEIGHT else 0f
@@ -367,7 +411,7 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
     val rotation = Quaternionf().rotateZ(Math.PI.toFloat()).mul(cameraRotation)
 
     val pose = PoseStack()
-    pose.translate(width / 2f, height / 2f, 0f)
+    pose.translate(width / 2f, height * slot.verticalAnchor, 0f)
     pose.scale(modelScale, modelScale, -modelScale)
     pose.translate(0f, entityScale * ((anchor + tag) / 2f + OFFSET_Y), 0f)
     pose.mulPose(rotation)
@@ -387,11 +431,11 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
     PreviewNameTag.show = slot.showNameTag
     player.yBodyRot = bodyRot
     player.yBodyRotO = bodyRot
-    player.yHeadRot = bodyRot
-    player.yHeadRotO = bodyRot
-    player.yRot = bodyRot
-    player.xRot = 0f
-    player.xRotO = 0f
+    player.yHeadRot = headRot
+    player.yHeadRotO = headRot
+    player.yRot = headRot
+    player.xRot = headPitch
+    player.xRotO = headPitch
     //? if >= 1.21.8 {
     client.gameRenderer.lighting.setupFor(Lighting.Entry.ENTITY_IN_UI)
     //?} else
@@ -432,7 +476,12 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
     val client = Minecraft.getInstance()
     val width = rt.width
     val height = rt.height
-    val bodyRot = slot.yaw
+    val liveBodyRot = player.lastBodyYaw + partialTick * MathHelper.wrapDegrees(player.bodyYaw - player.lastBodyYaw)
+    val liveHeadRot = player.lastHeadYaw + partialTick * MathHelper.wrapDegrees(player.headYaw - player.lastHeadYaw)
+    val liveHeadYaw = MathHelper.wrapDegrees(liveHeadRot - liveBodyRot)
+    val bodyRot = slot.yaw - (if (slot.followBodyYaw) liveHeadYaw else 0f)
+    val headRot = bodyRot + (slot.headYaw ?: liveHeadYaw)
+    val headPitch = slot.headPitch ?: (player.lastPitch + partialTick * (player.pitch - player.lastPitch))
 
     val anchor = slot.smoothAnchorHeight(player.height)
     val tag = if (slot.showNameTag) NAME_TAG_HEIGHT else 0f
@@ -453,18 +502,18 @@ private fun renderPlayer(slot: PreviewSlot, rt: RenderTarget, player: Player, pa
     PreviewNameTag.show = slot.showNameTag
     player.bodyYaw = bodyRot
     player.lastBodyYaw = bodyRot
-    player.headYaw = bodyRot
-    player.lastHeadYaw = bodyRot
-    player.yaw = bodyRot
-    player.lastYaw = bodyRot
-    player.pitch = 0f
-    player.lastPitch = 0f
+    player.headYaw = headRot
+    player.lastHeadYaw = headRot
+    player.yaw = headRot
+    player.lastYaw = headRot
+    player.pitch = headPitch
+    player.lastPitch = headPitch
 
     GL11.glEnable(GL11.GL_NORMALIZE)
     GlStateManager.enableColorMaterial()
     GlStateManager.pushMatrix()
     try {
-        GlStateManager.translatef(width / 2f, height / 2f, 50f)
+        GlStateManager.translatef(width / 2f, height * slot.verticalAnchor, 50f)
         GlStateManager.scalef(-size, size, size)
         GlStateManager.translatef(0f, (anchor + tag) / 2f + OFFSET_Y, 0f)
         GlStateManager.rotatef(180f, 0f, 0f, 1f)

@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -29,30 +28,33 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.util.IdentityHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
+import org.polyfrost.oneconfig.api.ui.v1.components.Text as KitText
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
-import org.polyfrost.oneconfig.internal.ui.components.CollapsibleHeader
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
-import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
+import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
@@ -89,7 +91,7 @@ fun Keybinds() {
 
     val searching = localSearchQuery.isNotBlank()
 
-    ScrollbarBox(listState, PageGutter, Modifier.fillMaxSize()) {
+    ScrollContainer(listState, Modifier.fillMaxSize(), gutter = PageGutter) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
@@ -186,23 +188,28 @@ private fun searchKeybindGroups(groups: List<KeybindGroup>, query: String): List
 
 @Composable
 private fun KeybindGroupHeader(group: KeybindGroup, expanded: Boolean, onToggle: () -> Unit) {
-    val theme = LocalTheme.current
-    CollapsibleHeader(
-        label = group.modTitle.asRenderText(),
+    val secondary = OneConfigTheme.current.textColorSecondary
+    SectionHeader(
+        group.modTitle.asRenderText(),
+        icon = group.modIcon,
         expanded = expanded,
         onToggle = onToggle,
         contentPadding = PaddingValues(top = 4.dp, bottom = 2.dp),
-    ) {
-        group.modIcon?.let { icon ->
-            Icon(icon, color = theme.textColorSecondary, modifier = Modifier.size(18.dp))
-        }
-        Text(
-            group.modTitle,
-            color = theme.textColorSecondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-        )
-    }
+        textStyle = SectionHeaderDefaults.labelStyle,
+        color = secondary,
+        hoverColor = secondary,
+        iconSize = 18.dp,
+        title = { style, color ->
+            KitText(
+                group.modTitle.asStyledLabel(),
+                Modifier.weight(1f, fill = false),
+                color,
+                style,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+    )
 }
 
 @Composable
@@ -224,13 +231,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
             .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
             .optionContextMenu(menu)
-            .hoverGlow(shape)
-            .background(theme.modCardBackground, shape)
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f))),
-                shape,
-            )
+            .cardSurface(shape)
     ) {
         val vignetteColor = theme.textColor
         Box(
@@ -263,17 +264,16 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         prop.localizedTitle(),
+                        theme.typography.headingMedium,
                         color = theme.textColor,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
                     )
                     prop.localizedDescription()?.takeUnless { it.isEmptyText() }?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
+                        Text(it, color = theme.textColorSecondary, fontSize = theme.typography.label.fontSize)
                     }
                     Text(
                         "${entry.category} / ${entry.subcategory}",
                         color = theme.textColorSecondary,
-                        fontSize = 11.sp,
+                        fontSize = theme.typography.caption.fontSize,
                     )
                     if (conflictsWith.isNotEmpty()) {
                         val names = conflictsWith.joinToString(", ") { KeybindConflicts.displayName(it) }
@@ -285,7 +285,7 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
                             Text(
                                 translated("oneconfig.keybind.conflicts", "Conflicts with %s", names),
                                 color = theme.error,
-                                fontSize = 11.sp,
+                                fontSize = theme.typography.caption.fontSize,
                             )
                         }
                     }

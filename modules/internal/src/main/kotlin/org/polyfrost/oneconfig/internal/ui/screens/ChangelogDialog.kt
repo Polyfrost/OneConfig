@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.commonmark.node.BlockQuote
@@ -39,6 +40,7 @@ import org.commonmark.node.Node
 import org.commonmark.node.OrderedList
 import org.commonmark.node.Paragraph
 import org.commonmark.node.ThematicBreak
+import org.polyfrost.oneconfig.api.ui.v1.components.CodeBlock
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.DialogTitle
 import org.polyfrost.oneconfig.api.ui.v1.components.Divider
@@ -89,6 +91,7 @@ internal fun ModrinthChangelogDialog(link: ModrinthVersionLink, onDismiss: () ->
         onDismiss,
         Modifier.shellTransition().heightIn(max = maxHeight),
         width = width,
+        scrollBody = false,
         title = {
             Row(
                 Modifier.fillMaxWidth(),
@@ -161,7 +164,7 @@ private fun MarkdownBlock(node: Node, lists: Int) {
                 val base = changelogBodyStyle(0)
                 val style = when (node.level) {
                     1 -> base.copy(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium)
-                    2 -> base.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)
+                    2 -> base.copy(fontSize = theme.typography.titleSmall.fontSize, lineHeight = 22.sp, fontWeight = theme.typography.titleSmall.fontWeight)
                     else -> base.copy(fontWeight = FontWeight.Medium)
                 }
                 BasicText(text, Modifier.padding(top = 8.dp), style = style)
@@ -196,8 +199,8 @@ private fun MarkdownBlock(node: Node, lists: Int) {
             Box(Modifier.width(2.dp).fillMaxHeight().background(theme.borderColor))
             Column(Modifier.weight(1f).padding(start = 12.dp)) { MarkdownBlocks(node, lists) }
         }
-        is FencedCodeBlock -> CodeBlock(node.literal)
-        is IndentedCodeBlock -> CodeBlock(node.literal)
+        is FencedCodeBlock -> MarkdownCode(node.literal)
+        is IndentedCodeBlock -> MarkdownCode(node.literal)
         is ThematicBreak -> Divider(Modifier.padding(vertical = 4.dp))
         is HtmlBlock -> {
             val text = htmlText(node.literal.orEmpty())
@@ -218,11 +221,8 @@ private fun htmlText(html: String): String {
 }
 
 @Composable
-private fun CodeBlock(literal: String?) {
-    val theme = LocalTheme.current
+private fun MarkdownCode(literal: String?) {
     val text = literal.orEmpty().trimEnd('\n', '\r')
     if (text.isBlank()) return
-    Box(Modifier.fillMaxWidth().background(theme.chipBackground, theme.buttonShape).padding(horizontal = 10.dp, vertical = 8.dp)) {
-        BasicText(text, style = changelogBodyStyle(0).copy(fontSize = 12.sp, lineHeight = 18.sp))
-    }
+    CodeBlock(text, height = Dp.Unspecified, wrap = true)
 }

@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, InternalOneConfigUiApi::class)
 
 package org.polyfrost.oneconfig.api.hud.v1
 
@@ -68,6 +68,7 @@ public object HudManager {
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val unsupportedHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    private val pendingUnsupported: MutableSet<Class<out Hud>> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
 
@@ -132,6 +133,11 @@ public object HudManager {
     @Volatile private var loadingLayout = false
 
     @Volatile @JvmField internal var systemReposition = false
+
+    @ExperimentalOneConfigUiApi
+    @get:JvmName("isSystemPosition")
+    @JvmStatic
+    public val isSystemPosition: Boolean get() = systemReposition
 
     internal fun noteLayoutArranged() {
         if (loadingLayout || systemReposition) return
@@ -415,14 +421,21 @@ public object HudManager {
                 false
             }
             if (!ok) {
-                if (hud::class.java !in hudProviders) unsupportedHuds.add(hud::class.java.name)
+                if (hud::class.java !in hudProviders) {
+                    unsupportedHuds.add(hud::class.java.name)
+                    pendingUnsupported.add(hud::class.java)
+                }
                 LOGGER.info("HUD ${hud.title} is not supported here and was not registered")
                 return@afterInit
             }
+            val id = configId ?: hud.configId
             when {
-                configId != null && icon != null -> register(hud, configId, icon)
-                configId != null -> register(hud, configId)
-                else -> register(hud)
+                id != null && icon != null -> register(hud, id, icon)
+                id != null -> register(hud, id)
+                else -> {
+                    if (icon != null) LOGGER.warn("HUD ${hud.title} has no config id, so its icon $icon was not used")
+                    register(hud)
+                }
             }
         }
     }
@@ -439,6 +452,21 @@ public object HudManager {
                 return@afterInit
             }
             register(hud)
+        }
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun registerLater(configId: String?, icon: String? = null, supported: () -> Boolean = { true }, factory: () -> Hud) {
+        afterInit {
+            val hud = try {
+                factory()
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                LOGGER.error("Failed to create a HUD registered with registerLater", e)
+                return@afterInit
+            }
+            register(hud, configId, icon, supported)
         }
     }
 
@@ -591,6 +619,8 @@ public object HudManager {
         cleanup { hud.detachTree() }
         failure?.let { throw it }
     }
+
+    internal fun bodyBounds(hud: Hud): FloatArray? = screenBounds(hud)
 
     private fun screenBounds(hud: Hud): FloatArray? {
         val scale = hud.frameEffectiveScale
@@ -936,6 +966,7 @@ public object HudManager {
         afterPreparation: Runnable? = null,
     ): Float {
         drainProfileReload()
+        drainUnsupported()
         noteScreenSize()
         migratePositions(screenWidth, screenHeight)
         val scale = Platform.compatibility().options().guiScale
@@ -1340,44 +1371,51 @@ public object HudManager {
             }
         }
         val huds = {
-            for (i in frameOrder.indices) {
-                val hud = frameOrder[i]
-                val ctx = if (split && frameVolatile[i]) volatileCtx else ctx
-                val cr = ctx.renderer as? CapturingRenderer
-                val hudScale = if (framePositions) framePos[i * 3 + 2] else hud.effectiveScale
-                val root = try {
-                    layoutOnce(hud, screenWidth, screenHeight, scale)
-                } catch (e: Throwable) {
-                    LOGGER.error("Failed to lay out HUD ${hud.title}", e)
-                    continue
-                }
-                ctx.save()
-                if (framePositions) ctx.translate(framePos[i * 3], framePos[i * 3 + 1]) else ctx.translate(hud.x, hud.y)
-                if (hudScale != 1f) ctx.scale(hudScale, hudScale)
-                val rt = hud.runtimeOrNull
-                val redraw = if (framePositions) frameRedraw[i] else hud.alwaysRedraw
-                if (cr == null || rt == null || redraw && hud.redrawOverridden) {
-                    drawHud(hud, root, ctx)
-                } else {
-                    val cached = lastDraw(hud)
-                    if (cached != null && cached.runtime === rt && cached.revision == rt.revision && cached.reads == hud.drawReads &&
-                        cached.epoch == drawEpoch && cached.editing == isEditing && cr.sameState(cached.key) && cr.valid(cached.captured)
-                    ) {
-                        cr.append(cached.captured)
-                        stored(hud, cached)
-                        if (cached.volatile && ++cached.hits > VOLATILE_HITS) cached.volatile = false
-                    } else {
-                        val key = cr.stateKey()
-                        val reads = hud.drawReads
-                        val chroma = PolyColor.chromaReads
-                        val mark = cr.mark()
-                        drawReadObserver.observeReads(hud, onHudDrawStateChanged) { drawHud(hud, root, ctx) }
-                        val captured = cr.since(mark)
-                        val volatile = cached != null && (cached.volatile || cached.missFrame == frameId - 1)
-                        if (!redraw || PolyColor.chromaReads == chroma) stored(hud, HudDraw(rt, rt.revision, reads, drawEpoch, isEditing, key, captured, frameId, volatile))
+            try {
+                for (i in frameOrder.indices) {
+                    val hud = frameOrder[i]
+                    val ctx = if (split && frameVolatile[i]) volatileCtx else ctx
+                    val cr = ctx.renderer as? CapturingRenderer
+                    val hudScale = if (framePositions) framePos[i * 3 + 2] else hud.effectiveScale
+                    val clickPass = HudClickInput.passStart(hud)
+                    val root = try {
+                        layoutOnce(hud, screenWidth, screenHeight, scale)
+                    } catch (e: Throwable) {
+                        LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+                        continue
                     }
+                    ctx.save()
+                    if (framePositions) ctx.translate(framePos[i * 3], framePos[i * 3 + 1]) else ctx.translate(hud.x, hud.y)
+                    if (hudScale != 1f) ctx.scale(hudScale, hudScale)
+                    val rt = hud.runtimeOrNull
+                    val redraw = if (framePositions) frameRedraw[i] else hud.alwaysRedraw
+                    if (cr == null || rt == null || redraw && hud.redrawOverridden) {
+                        HudClickInput.recorded(hud, clickPass)
+                        drawHud(hud, root, ctx)
+                    } else {
+                        val cached = lastDraw(hud)
+                        if (cached != null && cached.runtime === rt && cached.revision == rt.revision && cached.reads == hud.drawReads &&
+                            cached.epoch == drawEpoch && cached.editing == isEditing && cr.sameState(cached.key) && cr.valid(cached.captured)
+                        ) {
+                            cr.append(cached.captured)
+                            stored(hud, cached)
+                            if (cached.volatile && ++cached.hits > VOLATILE_HITS) cached.volatile = false
+                        } else {
+                            val key = cr.stateKey()
+                            val reads = hud.drawReads
+                            val chroma = PolyColor.chromaReads
+                            val mark = cr.mark()
+                            HudClickInput.recorded(hud, clickPass)
+                            drawReadObserver.observeReads(hud, onHudDrawStateChanged) { drawHud(hud, root, ctx) }
+                            val captured = cr.since(mark)
+                            val volatile = cached != null && (cached.volatile || cached.missFrame == frameId - 1)
+                            if (!redraw || PolyColor.chromaReads == chroma) stored(hud, HudDraw(rt, rt.revision, reads, drawEpoch, isEditing, key, captured, frameId, volatile))
+                        }
+                    }
+                    ctx.restore()
                 }
-                ctx.restore()
+            } finally {
+                HudClickInput.passEnd()
             }
         }
         if (framePositions) {
@@ -1539,6 +1577,19 @@ public object HudManager {
         }
     }
 
+    private fun drainUnsupported() {
+        if (pendingUnsupported.isEmpty()) return
+        val classes = pendingUnsupported.toList()
+        pendingUnsupported.removeAll(classes.toSet())
+        for (cls in classes) {
+            if (cls in hudProviders || cls.name !in unsupportedHuds) continue
+            for (hud in activeInstances.filter { it.javaClass == cls }) {
+                LOGGER.info("Removing loaded HUD ${hud.title} because it is not supported here")
+                removeHud(hud, delete = false)
+            }
+        }
+    }
+
     private fun drainProfileReload() {
         val reload = pendingProfileReload.getAndSet(null) ?: return
         try {
@@ -1610,6 +1661,15 @@ public object HudManager {
         }
     }
 
+    private fun migrateLoaded(hud: Hud, saved: Tree) {
+        try {
+            if (hud.migrateLoaded(saved)) hud.tree?.let { ConfigManager.active().save(it) }
+        } catch (e: Throwable) {
+            if (e.isFatalHudFailure()) throw e
+            LOGGER.error("Failed to migrate saved data for HUD ${hud.title}", e)
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun loadHuds(now: Long, prefetched: Collection<Tree>?) {
         val loader = HudManager::class.java.classLoader
@@ -1655,8 +1715,11 @@ public object HudManager {
                 // Drop only the in-memory binding; make() will load the unchanged file into the new HUD.
                 ConfigManager.active().unregister(data.id)
                 val savedSchema = data.getProp("posSchema")?.getAs<Number?>()?.toInt() ?: 0
-                val hud = h.make(data)
+                var made: Hud? = null
+                val failures = Tree.collectFailures { made = h.make(data) }
+                val hud = made ?: throw IllegalStateException("HUD from ${data.id} was not created")
                 candidate = hud
+                if (failures.isNotEmpty()) LOGGER.warn("Reset {} unreadable value(s) of HUD {} to defaults: {}", failures.size, hud.title, failures)
                 val sec = data.getProp("section")?.getAs<Section?>()
                 if (sec != null) {
                     hud.section = sec
@@ -1670,6 +1733,7 @@ public object HudManager {
                     val absY = data.getProp("y")?.getAs<Number?>()?.toFloat() ?: 0f
                     hud.setAbsolutePosition(absX, absY)
                 }
+                migrateLoaded(hud, data)
                 activeInstances.add(hud)
                 instancesRevision.intValue++
                 hud.setup()

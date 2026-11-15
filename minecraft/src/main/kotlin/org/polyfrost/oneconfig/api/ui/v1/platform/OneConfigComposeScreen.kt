@@ -2,10 +2,15 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.platform
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
@@ -13,6 +18,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigPrefs
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUI
 import org.polyfrost.oneconfig.api.ui.v1.components.handleEscapeStack
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ProvideOneConfigTheme
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
@@ -48,6 +54,14 @@ abstract class OneConfigComposeScreen(
 
     open val closeOnEscape: Boolean get() = true
 
+    open val panoramaBackground: Boolean get() = true
+
+    open val dimBackground: Boolean get() = false
+
+    open val pausesGame: Boolean get() = false
+
+    open val uiScale: Float get() = 1f
+
     @Composable
     abstract fun Content()
 
@@ -61,9 +75,23 @@ abstract class OneConfigComposeScreen(
     @Composable
     final override fun compose() {
         ProvideOneConfigTheme {
-            Box(Modifier.fillMaxSize().handleEscapeStack(), propagateMinConstraints = true) { Content() }
+            val scrim = OneConfigTheme.current.scrimColor
+            val dim = needsScrim()
+            val fade = remember { Animatable(if (OneConfigPrefs.animationsEnabled) 0f else 1f) }
+            LaunchedEffect(dim) { if (dim) fade.animateTo(1f, tween(BLUR_FADE_MS.toInt())) }
+            Box(
+                Modifier.fillMaxSize().drawBehind { if (dim) drawRect(scrim, alpha = fade.value) }.handleEscapeStack(),
+                propagateMinConstraints = true,
+            ) { Content() }
         }
     }
+
+    private fun needsScrim(): Boolean =
+        dimBackground && client.level != null && (!blurBackground || ThemeConfig.reduceTransparency)
+
+    override fun isPauseScreen(): Boolean = pausesGame
+
+    override fun densityScale(): Float = uiScale
 
     override fun init() {
         if (openedAt == 0L) openedAt = System.currentTimeMillis()
@@ -76,6 +104,8 @@ abstract class OneConfigComposeScreen(
         val start = openedAt.takeIf { it > 0L } ?: return 0f
         return ((System.currentTimeMillis() - start).toFloat() / BLUR_FADE_MS).coerceIn(0f, 1f)
     }
+
+    override fun drawsPanorama(): Boolean = panoramaBackground
 
     override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key != InputConstants.KEY_ESCAPE) return false
@@ -90,6 +120,7 @@ abstract class OneConfigComposeScreen(
 
     override fun onClose() {
         dismiss()
+        if (OneConfigScreens.current() !== this) super.onClose()
     }
     //?} else {
     /*private var escaping = false

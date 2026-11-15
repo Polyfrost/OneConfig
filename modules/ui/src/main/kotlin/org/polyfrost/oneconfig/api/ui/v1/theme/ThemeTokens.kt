@@ -42,6 +42,15 @@ public open class OneConfigTypography(
     public val caption: TextStyle,
     public val eyebrow: TextStyle,
     public val mono: TextStyle,
+    public val titleSmall: TextStyle = title.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+    public val titleLarge: TextStyle = title.copy(fontSize = 22.sp, fontWeight = FontWeight.Medium),
+    public val display: TextStyle = title.copy(fontSize = 24.sp, fontWeight = FontWeight.SemiBold),
+    public val bodyMedium: TextStyle = body.copy(fontWeight = FontWeight.Medium),
+    public val smallMedium: TextStyle = small.copy(fontWeight = FontWeight.Medium),
+    public val headingMedium: TextStyle = heading.copy(fontWeight = FontWeight.Medium),
+    public val captionMedium: TextStyle = caption.copy(fontWeight = FontWeight.Medium),
+    public val titleMedium: TextStyle = title.copy(fontWeight = FontWeight.Medium),
+    public val labelRegular: TextStyle = label.copy(fontWeight = FontWeight.Normal),
 ) {
     public constructor(fontFamily: FontFamily) : this(
         title = TextStyle(fontFamily = fontFamily, fontSize = 18.sp, fontWeight = FontWeight.SemiBold),

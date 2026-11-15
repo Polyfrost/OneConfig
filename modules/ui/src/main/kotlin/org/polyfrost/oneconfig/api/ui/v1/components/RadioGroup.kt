@@ -2,18 +2,12 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.animateIntOffsetAsState
-import androidx.compose.animation.core.animateIntSizeAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -21,54 +15,29 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.semantics.selectableGroup
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.concentric
 
-private val GROUP_PADDING = 3.dp
-private val ITEM_MIN_HEIGHT = ControlSize.Regular.height - GROUP_PADDING * 2
-private const val FADE_MILLIS = 150
-
-private class RadioSlot {
-    var offset by mutableStateOf(IntOffset.Zero)
-    var size by mutableStateOf(IntSize.Zero)
-}
+private val ITEM_MIN_HEIGHT = ControlSize.Regular.height - ChoiceInset * 2
+private val ITEM_ICON_SIZE = 16.dp
 
 @ExperimentalOneConfigUiApi
 @Composable
@@ -82,100 +51,85 @@ public fun <T> RadioGroup(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
     styledLabel: ((T) -> AnnotatedString)? = null,
+    fillWidth: Boolean = false,
+    shape: Shape = OneConfigTheme.current.shapes.field,
+    icon: ((T) -> String?)? = null,
+    activation: TabActivation = TabActivation.Automatic,
 ) {
     val theme = OneConfigTheme.current
-    val groupShape = theme.shapes.field
-    val itemShape = groupShape.concentric(GROUP_PADDING)
+    val itemShape = shape.concentric(ChoiceInset)
     val vertical = orientation == Orientation.Vertical
-    val slots = remember(options.size) { List(options.size) { RadioSlot() } }
-    val requesters = remember(options.size) { List(options.size) { FocusRequester() } }
-    var focusedIndex by remember(options.size) { mutableIntStateOf(-1) }
+    val indicator = rememberSlidingIndicatorState(options.size)
+    val focus = rememberChoiceFocus(options.size)
     val selectedIndex = options.indexOf(selected)
-
-    fun move(by: Int): Boolean {
-        if (!enabled || options.isEmpty()) return false
-        val from = if (focusedIndex in options.indices) focusedIndex else selectedIndex.coerceAtLeast(0)
-        val to = (from + by).mod(options.size)
-        onSelect(options[to])
-        runCatching { requesters[to].requestFocus() }
-        return true
-    }
+    val fill = if (fillWidth) Modifier.fillMaxWidth() else Modifier
 
     Box(
         modifier = modifier
+            .then(fill)
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
             .groupInteractions(interactionSource, enabled)
-            .border(1.dp, theme.borderColor, groupShape)
-            .clip(groupShape)
+            .border(1.dp, theme.borderColor, shape)
+            .clip(shape)
             .background(theme.componentBackground)
-            .semantics { selectableGroup() }
-            .onKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                when (event.key) {
-                    Key.DirectionLeft, Key.DirectionUp -> move(-1)
-                    Key.DirectionRight, Key.DirectionDown -> move(1)
-                    else -> false
-                }
-            },
+            .choiceGroup(focus, selectedIndex, enabled, { true }, activation, orientation) { onSelect(options[it]) },
     ) {
-        Box(Modifier.padding(GROUP_PADDING)) {
-            val target = slots.getOrNull(selectedIndex)
-            if (target != null && target.size.width > 0) {
-                val offset by animateIntOffsetAsState(
-                    target.offset,
-                    Motion.finiteSpec(spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntOffset.VisibilityThreshold)),
-                    label = "radioIndicatorOffset",
-                )
-                val size by animateIntSizeAsState(
-                    target.size,
-                    Motion.finiteSpec(spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntSize.VisibilityThreshold)),
-                    label = "radioIndicatorSize",
-                )
-                Box(
-                    Modifier
-                        .layout { measurable, _ ->
-                            val placeable = measurable.measure(Constraints.fixed(size.width, size.height))
-                            layout(0, 0) { placeable.place(offset.x, offset.y) }
-                        }
-                        .clip(itemShape)
-                        .background(OneConfigTheme.accent),
-                )
-            }
+        Box(fill.padding(ChoiceInset).slidingIndicatorContainer(indicator)) {
+            SlidingIndicator(indicator, selectedIndex, Modifier.clip(itemShape).background(OneConfigTheme.accent))
             val items: @Composable (Modifier) -> Unit = { itemModifier ->
                 options.forEachIndexed { index, option ->
                     RadioItem(
                         text = label(option),
                         styled = styledLabel?.invoke(option),
+                        icon = icon?.invoke(option),
                         selected = index == selectedIndex,
                         enabled = enabled,
                         shape = itemShape,
                         vertical = vertical,
-                        slot = slots[index],
                         modifier = itemModifier
-                            .focusRequester(requesters[index])
-                            .onFocusChanged { if (it.isFocused) focusedIndex = index else if (focusedIndex == index) focusedIndex = -1 },
+                            .slidingIndicatorItem(indicator, index)
+                            .choiceItem(focus, index),
                         onClick = { onSelect(option) },
                     )
                 }
             }
             if (vertical) {
-                Column(Modifier.width(IntrinsicSize.Max)) { items(Modifier.fillMaxWidth()) }
+                Column(if (fillWidth) Modifier.fillMaxWidth() else Modifier.width(IntrinsicSize.Max)) { items(Modifier.fillMaxWidth()) }
             } else {
-                Row(verticalAlignment = Alignment.CenterVertically) { items(Modifier) }
+                Row(fill, verticalAlignment = Alignment.CenterVertically) {
+                    items(if (fillWidth) Modifier.weight(1f) else Modifier)
+                }
             }
         }
     }
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@ExperimentalOneConfigUiApi
+@Composable
+public fun <T> RadioGroup(
+    selected: T,
+    options: List<T>,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    label: (T) -> String = { it.toString() },
+    orientation: Orientation = Orientation.Vertical,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    styledLabel: ((T) -> AnnotatedString)? = null,
+) {
+    RadioGroup(selected, options, onSelect, modifier, label, orientation, enabled, interactionSource, styledLabel, fillWidth = false)
 }
 
 @Composable
 private fun RadioItem(
     text: String,
     styled: AnnotatedString?,
+    icon: String?,
     selected: Boolean,
     enabled: Boolean,
     shape: Shape,
     vertical: Boolean,
-    slot: RadioSlot,
     modifier: Modifier,
     onClick: () -> Unit,
 ) {
@@ -183,20 +137,14 @@ private fun RadioItem(
     val style = theme.typography.small
     val source = remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
-    val color by animateColorAsState(
+    val color by Motion.animateColorAsState(
         if (selected || (hovered && enabled)) theme.textColor else theme.textColorSecondary,
-        Motion.spec(tween(FADE_MILLIS)),
         label = "radioItemText",
     )
     Box(
         modifier = modifier
-            .onPlaced { coordinates ->
-                val position = coordinates.positionInParent()
-                slot.offset = IntOffset(position.x.roundToInt(), position.y.roundToInt())
-                slot.size = coordinates.size
-            }
             .oneConfigClickable(
-                text,
+                text.ifEmpty { icon.orEmpty() },
                 onClick,
                 role = A11yRole.RadioButton,
                 enabled = enabled,
@@ -209,9 +157,14 @@ private fun RadioItem(
             .padding(horizontal = theme.spacing.m, vertical = theme.spacing.xs),
         contentAlignment = if (vertical) Alignment.CenterStart else Alignment.Center,
     ) {
-        val textStyle = OneConfigTheme.typography.body.copy(fontSize = style.fontSize, fontWeight = style.fontWeight ?: FontWeight.Normal)
-        val align = if (vertical) TextAlign.Start else TextAlign.Center
-        if (styled != null) Text(styled, Modifier, color, textStyle, 1, TextOverflow.Ellipsis, textAlign = align)
-        else Text(text, Modifier, color, textStyle, 1, TextOverflow.Ellipsis, textAlign = align)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) Icon(icon, null, Modifier.size(ITEM_ICON_SIZE), tint = color)
+            if (styled != null || text.isNotEmpty()) {
+                val textStyle = OneConfigTheme.typography.body.copy(fontSize = style.fontSize, fontWeight = style.fontWeight ?: FontWeight.Normal)
+                val align = if (vertical) TextAlign.Start else TextAlign.Center
+                if (styled != null) Text(styled, Modifier, color, textStyle, 1, TextOverflow.Ellipsis, textAlign = align)
+                else Text(text, Modifier, color, textStyle, 1, TextOverflow.Ellipsis, textAlign = align)
+            }
+        }
     }
 }

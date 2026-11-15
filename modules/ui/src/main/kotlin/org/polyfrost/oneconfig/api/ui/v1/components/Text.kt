@@ -4,6 +4,7 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
@@ -42,8 +43,14 @@ public fun Text(
     textAlign: TextAlign? = null,
     colorProducer: ColorProducer? = null,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
+    legacyFormatting: Boolean = true,
 ) {
-    componentsBridge().Text(text, modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer, onTextLayout)
+    if (legacyFormatting) {
+        componentsBridge().Text(text, modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer, onTextLayout)
+    } else {
+        val literal = remember(text) { AnnotatedString(text) }
+        componentsBridge().Text(literal, modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer, onTextLayout)
+    }
 }
 
 @ExperimentalOneConfigUiApi
@@ -92,9 +99,10 @@ public fun Text(
     softWrap: Boolean = true,
     textAlign: TextAlign? = null,
     colorProducer: ColorProducer? = null,
+    legacyFormatting: Boolean = true,
 ) {
     Column(modifier) {
-        for (line in text) Text(line, Modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer)
+        for (line in text) Text(line, Modifier, color, style, maxLines, overflow, softWrap, textAlign, colorProducer, legacyFormatting = legacyFormatting)
     }
 }
 
@@ -154,7 +162,7 @@ private fun AnyText(
     overflow: TextOverflow,
 ) {
     when (val value = runCatching { Platform.compatibility().wrapPlatformComponent(text) }.getOrNull() ?: text) {
-        is String -> Text(value, modifier, color, style, maxLines, overflow, textAlign = textAlign)
+        is String -> Text(value, modifier, color, style, maxLines, overflow, textAlign = textAlign, legacyFormatting = true)
         is AnnotatedString -> Text(value, modifier, color, style, maxLines, overflow, textAlign = textAlign)
         is Component -> Text(value, modifier, color, style, maxLines, overflow, textAlign = textAlign)
         is ComponentLike -> Text(value.asComponent(), modifier, color, style, maxLines, overflow, textAlign = textAlign)
@@ -163,7 +171,7 @@ private fun AnyText(
         }
         else -> {
             if (warnedTextTypes.add(value.javaClass)) LOGGER.warn("Text does not support {}; drawing its toString() instead", value.javaClass.name)
-            Text(value.toString(), modifier, color, style, maxLines, overflow, textAlign = textAlign)
+            Text(value.toString(), modifier, color, style, maxLines, overflow, textAlign = textAlign, legacyFormatting = true)
         }
     }
 }

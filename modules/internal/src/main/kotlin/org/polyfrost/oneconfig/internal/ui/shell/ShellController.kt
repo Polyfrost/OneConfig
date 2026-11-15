@@ -20,6 +20,8 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
+import org.polyfrost.oneconfig.internal.ui.navigation.PageArguments
+import org.polyfrost.oneconfig.internal.ui.navigation.PageRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
@@ -54,10 +56,6 @@ class ShellSession : LifecycleOwner, ViewModelStoreOwner {
     var playerName by mutableStateOf("Player")
         private set
 
-    /** PNG bytes for the local player's head avatar or null until loaded */
-    var playerHeadPng by mutableStateOf<ByteArray?>(null)
-        private set
-
     var versionLabel by mutableStateOf("")
         private set
 
@@ -67,10 +65,6 @@ class ShellSession : LifecycleOwner, ViewModelStoreOwner {
 
     fun updatePlayerName(name: String) {
         playerName = name
-    }
-
-    fun updatePlayerHead(png: ByteArray?) {
-        playerHeadPng = png
     }
 
     fun updateVersionLabel(label: String) {
@@ -266,6 +260,7 @@ class ShellNavigation internal constructor(
         val categoryKey: String? = null,
         val category: String? = null,
         val searchQuery: String = "",
+        val pageArgument: Any? = null,
     )
 
     private var host: NavHostController? = null
@@ -336,7 +331,7 @@ class ShellNavigation internal constructor(
         transitions.prepare(animate, back = false)
         host.navigate(route)
         forwardStack.clear()
-        backStack.addLast(currentEntry.withCurrentSearch())
+        backStack.addLast(currentEntry.withCurrentState())
         currentEntry = Entry(route, searchQuery = query)
         lastRoute = route
         seedRouteCategory(route)
@@ -382,7 +377,7 @@ class ShellNavigation internal constructor(
         // same page with only the tab changed so restore it in place with no screen transition
         if (previous.route == currentEntry.route) {
             backStack.removeLast()
-            forwardStack.addLast(currentEntry.withCurrentSearch())
+            forwardStack.addLast(currentEntry.withCurrentState())
             currentEntry = previous
             applyCategory(previous)
             updateArrows()
@@ -398,12 +393,14 @@ class ShellNavigation internal constructor(
         // instead of animating. The host is rebuilt every time the menu opens, which bounds the growth
         // to one session; this wrapper's stacks are the real history.
         transitions.prepare(ThemeConfig.showPageAnimations, back = true)
+        restoreArgument(previous)
         runCatching { host.navigate(previous.route) }.onFailure {
             LOGGER.error("Failed to navigate back to {}", previous.route, it)
+            (previous.route as? PageRoute)?.let { route -> PageArguments.clear(route.pageId) }
             transitions.prepare(ThemeConfig.showPageAnimations, back = false)
             return
         }
-        forwardStack.addLast(currentEntry.withCurrentSearch())
+        forwardStack.addLast(currentEntry.withCurrentState())
         currentEntry = backStack.removeLast()
         applyCategory(currentEntry)
         search.bind(host.currentBackStackEntry?.id, currentEntry.searchQuery)
@@ -417,7 +414,7 @@ class ShellNavigation internal constructor(
         val samePage = next.route == currentEntry.route
         val host = if (samePage) null else (readyHost() ?: return)
         forwardStack.removeLast()
-        backStack.addLast(currentEntry.withCurrentSearch())
+        backStack.addLast(currentEntry.withCurrentState())
         currentEntry = next
         if (host != null) seedRouteCategory(next.route)
         applyCategory(next)
@@ -428,6 +425,7 @@ class ShellNavigation internal constructor(
         lastRoute = next.route
         transitions.prepare(ThemeConfig.showPageAnimations, back = false)
         updateArrows()
+        restoreArgument(next)
         host.navigate(next.route)
         search.bind(host.currentBackStackEntry?.id, next.searchQuery)
         instantSearch()
@@ -451,7 +449,14 @@ class ShellNavigation internal constructor(
         else selectedCategories[key] = entry.category
     }
 
-    private fun Entry.withCurrentSearch() = copy(searchQuery = search.query)
+    private fun Entry.withCurrentState() =
+        copy(searchQuery = search.query, pageArgument = (route as? PageRoute)?.let { PageArguments.retained(it.pageId) })
+
+    private fun restoreArgument(entry: Entry) {
+        val route = entry.route as? PageRoute ?: return
+        val argument = entry.pageArgument ?: return
+        PageArguments.offer(route.pageId, argument)
+    }
 }
 
 @Composable

@@ -2,8 +2,6 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -21,8 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +35,6 @@ import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.legibleOn
 
-private const val LINK_FADE_MILLIS = 120
 private const val LINK_REST_ALPHA = 0.85f
 private val LINK_ICON_SIZE = 12.dp
 
@@ -50,9 +49,10 @@ public fun LinkText(
     icon: String? = null,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    style: TextStyle? = null,
 ) {
     val glyph: (@Composable (Color) -> Unit)? = if (icon == null) null else { { color -> Icon(icon, null, Modifier.size(LINK_ICON_SIZE), tint = color) } }
-    LinkTextFrame(text, onClick, modifier, enabled, interactionSource, glyph)
+    LinkTextFrame(text, onClick, modifier, enabled, interactionSource, style, glyph)
 }
 
 @ExperimentalOneConfigUiApi
@@ -64,8 +64,9 @@ public fun LinkText(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    style: TextStyle? = null,
 ) {
-    LinkTextFrame(text, onClick, modifier, enabled, interactionSource) { color ->
+    LinkTextFrame(text, onClick, modifier, enabled, interactionSource, style) { color ->
         Image(icon, null, Modifier.size(LINK_ICON_SIZE), colorFilter = ColorFilter.tint(color))
     }
 }
@@ -79,8 +80,9 @@ public fun LinkText(
     icon: String? = null,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    style: TextStyle? = null,
 ) {
-    LinkText(text, { openUrl(url) }, modifier, icon, enabled, interactionSource)
+    LinkText(text, { openUrl(url) }, modifier, icon, enabled, interactionSource, style)
 }
 
 @ExperimentalOneConfigUiApi
@@ -92,8 +94,9 @@ public fun LinkText(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    style: TextStyle? = null,
 ) {
-    LinkText(text, { openUrl(url) }, icon, modifier, enabled, interactionSource)
+    LinkText(text, { openUrl(url) }, icon, modifier, enabled, interactionSource, style)
 }
 
 @Composable
@@ -103,6 +106,7 @@ private fun LinkTextFrame(
     modifier: Modifier,
     enabled: Boolean,
     interactionSource: MutableInteractionSource?,
+    style: TextStyle?,
     glyph: (@Composable (Color) -> Unit)?,
 ) {
     val theme = OneConfigTheme.current
@@ -110,7 +114,9 @@ private fun LinkTextFrame(
     val hovered by source.collectIsHoveredAsState()
     val active = hovered && enabled
     val base = OneConfigTheme.accent.legibleOn(theme.pageSurface)
-    val color by animateColorAsState(if (active) base else base.copy(alpha = base.alpha * LINK_REST_ALPHA), Motion.spec(tween(LINK_FADE_MILLIS)))
+    val textStyle = style ?: OneConfigTheme.typography.body.copy(fontSize = 13.sp, fontWeight = FontWeight.Normal)
+    val underlined = textStyle.textDecoration?.contains(TextDecoration.Underline) == true
+    val color by Motion.animateColorAsState(if (active) base else base.copy(alpha = base.alpha * LINK_REST_ALPHA), Motion.colorSpec(Motion.fast), "linkText")
     Row(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
@@ -121,12 +127,12 @@ private fun LinkTextFrame(
         Text(
             text,
             Modifier.drawBehind {
-                if (!active) return@drawBehind
+                if (!active || underlined) return@drawBehind
                 val y = size.height - 1.dp.toPx()
                 drawLine(color, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
             },
             color,
-            OneConfigTheme.typography.body.copy(fontSize = 13.sp, fontWeight = FontWeight.Normal),
+            textStyle,
             1,
             TextOverflow.Ellipsis,
         )

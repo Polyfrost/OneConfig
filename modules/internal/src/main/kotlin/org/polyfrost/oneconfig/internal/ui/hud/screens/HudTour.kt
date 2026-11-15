@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -224,8 +223,8 @@ internal fun HudTourOverlay(
                     )
                 }
             }
-            Text(step.title, color = theme.textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text(step.body, color = theme.textColorSecondary, fontSize = 12.sp, lineHeight = 17.sp)
+            Text(step.title, OneConfigTheme.typography.bodyMedium, color = theme.textColor)
+            Text(step.body, color = theme.textColorSecondary, fontSize = OneConfigTheme.typography.small.fontSize, lineHeight = 17.sp)
             if (task != null) {
                 Row(
                     modifier = Modifier
@@ -236,7 +235,7 @@ internal fun HudTourOverlay(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(if (taskDone) "check-circle" else "move", color = Accent, modifier = Modifier.size(16.dp))
-                    Text(task, color = theme.textColor, fontSize = 12.sp, lineHeight = 17.sp)
+                    Text(task, color = theme.textColor, fontSize = OneConfigTheme.typography.small.fontSize, lineHeight = 17.sp)
                 }
             }
             Row(

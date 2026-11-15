@@ -78,6 +78,15 @@ public interface PolyRenderer {
     public fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float): Unit =
         live { it.mcText(text, x, y, color(), shadow, scale) }
 
+    public fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean): Unit =
+        mcText(if (literal) text.replace("§", "") else text, x, y, color, shadow, scale)
+
+    public fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean): Unit =
+        mcTextOutline(if (literal) text.replace("§", "") else text, x, y, color, outlineColor, scale)
+
+    public fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float, literal: Boolean): Unit =
+        if (literal) live { it.mcText(text, x, y, color(), shadow, scale, true) } else mcTextLive(text, x, y, color, shadow, scale)
+
     public fun image(bitmap: PolyBitmap, x: Float, y: Float, w: Float, h: Float, filterQuality: FilterQuality = FilterQuality.Low): Unit =
         image(bitmap, x, y, w, h, 0f, 0f, 1f, 1f, -1, filterQuality)
 

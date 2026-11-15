@@ -29,6 +29,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/MetaKeys {
 
 public final class org/polyfrost/oneconfig/api/config/v1/MetaKeysKt {
 	public static final field ENABLE_TOGGLE_KEY Ljava/lang/String;
+	public static final field NO_MASTER_SWITCH_KEY Ljava/lang/String;
 	public static final fun get (Lorg/polyfrost/oneconfig/api/config/v1/Node;Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;)Ljava/lang/Object;
 	public static final fun getEnableToggle (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static final fun set (Lorg/polyfrost/oneconfig/api/config/v1/Node;Lorg/polyfrost/oneconfig/api/config/v1/MetaKey;Ljava/lang/Object;)V

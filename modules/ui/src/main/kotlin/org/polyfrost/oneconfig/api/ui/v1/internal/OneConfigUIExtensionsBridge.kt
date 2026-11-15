@@ -13,6 +13,8 @@ public interface OneConfigUIExtensionsBridge {
 
     public fun modSortModeId(): String
 
+    public fun selectModSortMode(id: String)
+
     public fun refreshOption(property: Property<*>)
 }
 

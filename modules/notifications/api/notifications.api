@@ -109,6 +109,7 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationThem
 	public final fun getOnInfo ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getOnSuccess ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getOnWarning ()Lorg/polyfrost/compose/render/PolyColor;
+	public final fun getProgressTrack ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getRadiusButton ()F
 	public final fun getRadiusCard ()F
 	public final fun getRadiusProgress ()F
@@ -118,6 +119,7 @@ public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationThem
 	public final fun getTextSecondary ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun getWarning ()Lorg/polyfrost/compose/render/PolyColor;
 	public final fun onActionFillFor (Lorg/polyfrost/oneconfig/api/notifications/v1/NotificationType;)Lorg/polyfrost/compose/render/PolyColor;
+	public final fun progressTrackColor ()Lorg/polyfrost/compose/render/PolyColor;
 }
 
 public final class org/polyfrost/oneconfig/api/notifications/v1/NotificationToastsKt {

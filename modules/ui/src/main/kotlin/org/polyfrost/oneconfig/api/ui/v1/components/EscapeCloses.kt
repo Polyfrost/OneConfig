@@ -19,7 +19,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -66,8 +66,8 @@ public object EscapeStack {
 @ExperimentalOneConfigUiApi
 public fun Modifier.handleEscapeStack(): Modifier = composed {
     var swallowRelease by remember { mutableStateOf(false) }
-    onPreviewKeyEvent { event ->
-        if (event.key != Key.Escape) return@onPreviewKeyEvent false
+    onKeyEvent { event ->
+        if (event.key != Key.Escape) return@onKeyEvent false
         when (event.type) {
             KeyEventType.KeyDown -> EscapeStack.dispatch().also { swallowRelease = it }
             KeyEventType.KeyUp -> swallowRelease.also { swallowRelease = false }

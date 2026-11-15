@@ -62,6 +62,7 @@ public abstract class Property<T> extends Node implements Serializable {
     private transient List<Consumer<Display>> displayListeners = null;
     private transient Display display = Display.SHOWN;
     private transient List<Supplier<Display>> conditions = null;
+    private transient boolean conditionFailed = false;
     private transient List<WeakReference<Property<?>>> dependents = null;
 
     protected Property(@Nullable String id, @Nullable Object title, @Nullable Object description, @NotNull Class<T> type) {
@@ -159,7 +160,16 @@ public abstract class Property<T> extends Node implements Serializable {
         Display d = Display.SHOWN;
         if (conditions != null) {
             for (Supplier<Display> s : conditions) {
-                Display out = s.get();
+                Display out;
+                try {
+                    out = s.get();
+                } catch (Throwable t) {
+                    if (!conditionFailed) {
+                        conditionFailed = true;
+                        LOGGER.error("display condition {} of property {} failed, ignoring it", s, this.getID(), t);
+                    }
+                    continue;
+                }
                 if (out == Display.HIDDEN) {
                     d = Display.HIDDEN;
                     break;

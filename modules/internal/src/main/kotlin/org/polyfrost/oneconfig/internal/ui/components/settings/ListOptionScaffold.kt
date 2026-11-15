@@ -236,10 +236,7 @@ internal fun <T> ListOptionContainer(
 
     val reorder = rememberReorderState(
         Orientation.Vertical,
-        { from, to ->
-            state.reorder(from, to)
-            UiSounds.play(UiSoundEvent.SLIDER_TICK)
-        },
+        { from, to -> state.reorder(from, to) },
         { state.commitReorder() },
     )
 

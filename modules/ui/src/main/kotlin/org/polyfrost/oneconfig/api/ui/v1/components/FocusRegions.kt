@@ -36,9 +36,13 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 
 @ExperimentalOneConfigUiApi
-public fun Modifier.focusRegion(order: Int): Modifier = composed {
+public fun Modifier.focusRegion(order: Int): Modifier = focusRegion(order, true)
+
+@ExperimentalOneConfigUiApi
+public fun Modifier.focusRegion(order: Int, spatialExit: Boolean): Modifier = composed {
     val scope = remember { FocusScopeHandle(isRoot = false) }
     scope.order = order
+    scope.spatialExit = spatialExit
     Modifier
         .then(FocusScopeElement(scope))
         .focusRequester(scope.requester)
@@ -117,6 +121,7 @@ private object FocusScopeTraverseKey
 private class FocusScopeHandle(val isRoot: Boolean) {
     val requester = FocusRequester()
     var order = 0
+    var spatialExit = true
     var node: FocusScopeNode? = null
 
     fun exitRegion(scope: FocusEnterExitScope) {
@@ -131,7 +136,7 @@ private class FocusScopeHandle(val isRoot: Boolean) {
                     if (target.requester.requestFocus(direction)) return
                 }
             }
-            FocusDirection.Left, FocusDirection.Right, FocusDirection.Up, FocusDirection.Down -> scope.cancelFocusChange()
+            FocusDirection.Left, FocusDirection.Right, FocusDirection.Up, FocusDirection.Down -> if (!spatialExit) scope.cancelFocusChange()
         }
     }
 

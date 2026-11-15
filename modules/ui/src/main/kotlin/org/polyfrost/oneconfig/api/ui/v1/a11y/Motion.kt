@@ -27,7 +27,9 @@ import org.polyfrost.oneconfig.api.ui.v1.OneConfigPrefs
 
 @ExperimentalOneConfigUiApi
 public object Motion {
-    private const val REDUCED_FADE_MILLIS = 150
+    public const val fast: Int = 120
+
+    public const val standard: Int = 150
 
     @JvmStatic
     public val reduced: Boolean
@@ -40,25 +42,31 @@ public object Motion {
     public fun <T> finiteSpec(spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> = if (reduced) snap() else spec
 
     @JvmStatic
-    public fun enter(enter: EnterTransition): EnterTransition = if (reduced) fadeIn(tween(REDUCED_FADE_MILLIS)) else enter
+    public fun enter(enter: EnterTransition): EnterTransition = if (reduced) fadeIn(tween(standard)) else enter
 
     @JvmStatic
-    public fun exit(exit: ExitTransition): ExitTransition = if (reduced) fadeOut(tween(REDUCED_FADE_MILLIS)) else exit
+    public fun exit(exit: ExitTransition): ExitTransition = if (reduced) fadeOut(tween(standard)) else exit
+
+    @JvmStatic
+    public fun <T> tweenSpec(durationMillis: Int = standard): FiniteAnimationSpec<T> = finiteSpec(tween(durationMillis))
+
+    @JvmStatic
+    public fun colorSpec(durationMillis: Int = standard): FiniteAnimationSpec<Color> = tweenSpec(durationMillis)
 
     @JvmStatic
     public fun itemPlacementSpec(): FiniteAnimationSpec<IntOffset>? =
         if (reduced) null else spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntOffset.VisibilityThreshold)
 
     @Composable
-    public fun animateColorAsState(target: Color, spec: AnimationSpec<Color> = spring(), label: String = "ColorAnimation"): State<Color> =
+    public fun animateColorAsState(target: Color, spec: AnimationSpec<Color> = tween(standard), label: String = "ColorAnimation"): State<Color> =
         androidx.compose.animation.animateColorAsState(target, spec(spec), label)
 
     @Composable
-    public fun animateFloatAsState(target: Float, spec: AnimationSpec<Float> = spring(), label: String = "FloatAnimation"): State<Float> =
+    public fun animateFloatAsState(target: Float, spec: AnimationSpec<Float> = tween(standard), label: String = "FloatAnimation"): State<Float> =
         androidx.compose.animation.core.animateFloatAsState(target, spec(spec), label = label)
 
     @Composable
-    public fun animateDpAsState(target: Dp, spec: AnimationSpec<Dp> = spring(), label: String = "DpAnimation"): State<Dp> =
+    public fun animateDpAsState(target: Dp, spec: AnimationSpec<Dp> = tween(standard), label: String = "DpAnimation"): State<Dp> =
         androidx.compose.animation.core.animateDpAsState(target, spec(spec), label = label)
 
     @Composable

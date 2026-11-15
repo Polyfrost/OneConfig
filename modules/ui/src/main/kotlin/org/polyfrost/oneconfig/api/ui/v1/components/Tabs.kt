@@ -2,18 +2,15 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,28 +25,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
-import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.page.PageText
 import org.polyfrost.oneconfig.api.ui.v1.page.resolve
 import org.polyfrost.oneconfig.api.ui.v1.page.translate
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.concentric
 
-private const val TAB_FADE_MILLIS = 150
+private val UNDERLINE_THICKNESS = 2.dp
 private const val SEGMENT_SELECTED_ALPHA = 0.1f
-private val SEGMENT_INSET = 3.dp
-private val UNDERLINE_WIDTH = 2.dp
+private val PILL_PADDING = 14.dp
+private val CORNER_BADGE_GAP = 1.dp
+private val CORNER_BADGE_RISE = 7.dp
 
 @ExperimentalOneConfigUiApi
 public enum class TabStyle {
@@ -58,6 +62,22 @@ public enum class TabStyle {
     Underline,
 
     Segmented,
+
+    Chips,
+}
+
+@ExperimentalOneConfigUiApi
+public enum class TabBadgePlacement {
+    Inline,
+
+    Corner,
+}
+
+@ExperimentalOneConfigUiApi
+public enum class TabActivation {
+    Automatic,
+
+    Manual,
 }
 
 @ExperimentalOneConfigUiApi
@@ -71,6 +91,8 @@ public class TabItem<T>(
     public val size: ControlSize? = null,
     public val interactionSource: MutableInteractionSource? = null,
     public val tooltip: String? = null,
+    public val modifier: Modifier = Modifier,
+    public val badgeDescription: String? = null,
 ) {
     public constructor(
         value: T,
@@ -82,10 +104,12 @@ public class TabItem<T>(
         size: ControlSize? = null,
         interactionSource: MutableInteractionSource? = null,
         tooltip: String? = null,
-    ) : this(value, PageText.literal(label), icon, enabled, badge, iconPainter, size, interactionSource, tooltip)
+        modifier: Modifier = Modifier,
+        badgeDescription: String? = null,
+    ) : this(value, PageText.literal(label), icon, enabled, badge, iconPainter, size, interactionSource, tooltip, modifier, badgeDescription)
 
     @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public constructor(value: T, label: String) : this(value, PageText.literal(label), null, true, null, null, null, null, null)
+    public constructor(value: T, label: String) : this(value, PageText.literal(label), null, true, null, null, null, null, null, Modifier)
 
     public val labelText: PageText = label
 
@@ -105,46 +129,107 @@ public fun <T> TabRow(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
     tooltipPlacement: TooltipPlacement = TooltipDefaults.placement,
+    sound: UiSound? = UiSound.Click,
+    onDeselect: ((T) -> Unit)? = null,
+    track: Boolean = true,
+    underlineWidth: Dp? = null,
+    badgePlacement: TabBadgePlacement = TabBadgePlacement.Inline,
+    activation: TabActivation = TabActivation.Automatic,
+    underlineThickness: Dp? = null,
 ) {
-    val rowModifier = modifier.groupInteractions(interactionSource, enabled).then(if (fill) Modifier.fillMaxWidth() else Modifier)
+    val theme = OneConfigTheme.current
+    val fillModifier = if (fill) Modifier.fillMaxWidth() else Modifier
+    val indicator = rememberSlidingIndicatorState(tabs.size)
+    val focus = rememberChoiceFocus(tabs.size)
+    val selectedIndex = tabs.indexOfFirst { it.value == selected }
+    val rowModifier = modifier
+        .groupInteractions(interactionSource, enabled)
+        .then(fillModifier)
+        .choiceGroup(focus, selectedIndex, enabled, { enabled && tabs[it].enabled }, activation) { onSelect(tabs[it].value) }
+    val click: (Int) -> Unit = { index ->
+        val tab = tabs[index]
+        val deselect = onDeselect
+        if (index == selectedIndex && deselect != null) deselect(tab.value) else onSelect(tab.value)
+    }
+
+    fun item(index: Int, host: Modifier): Modifier = host.then(tabs[index].modifier).slidingIndicatorItem(indicator, index).choiceItem(focus, index)
+
     when (style) {
         TabStyle.Pill -> Row(rowModifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            tabs.forEach { tab ->
+            tabs.forEachIndexed { index, tab ->
                 TabHost(tab, fill, false, tooltipPlacement) { host ->
-                    PillTab(tab, tab.value == selected, enabled && tab.enabled, tab.size ?: size, host) { onSelect(tab.value) }
+                    PillTab(tab, index == selectedIndex, enabled && tab.enabled, tab.size ?: size, theme.buttonShape, sound, badgePlacement, host.then(tab.modifier).choiceItem(focus, index)) { click(index) }
                 }
             }
         }
         TabStyle.Underline -> {
-            val hairline = OneConfigTheme.current.borderColor
-            Row(
-                rowModifier.drawBehind {
-                    val y = this.size.height - 0.5.dp.toPx()
-                    drawLine(hairline, Offset(0f, y), Offset(this.size.width, y), 1.dp.toPx())
-                },
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            val hairline = theme.borderColor
+            val density = LocalDensity.current
+            val stroke = with(density) { (underlineThickness ?: UNDERLINE_THICKNESS).roundToPx() }
+            val lineWidth = underlineWidth?.let { with(density) { it.roundToPx() } }
+            Box(
+                rowModifier
+                    .then(
+                        if (track) {
+                            Modifier.drawBehind {
+                                val y = this.size.height - 0.5.dp.toPx()
+                                drawLine(hairline, Offset(0f, y), Offset(this.size.width, y), 1.dp.toPx())
+                            }
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .slidingIndicatorContainer(indicator),
             ) {
-                tabs.forEach { tab ->
-                    TabHost(tab, fill, false, tooltipPlacement) { host ->
-                        UnderlineTab(tab, tab.value == selected, enabled && tab.enabled, tab.size ?: size, host) { onSelect(tab.value) }
+                SlidingIndicator(
+                    indicator,
+                    selectedIndex,
+                    Modifier.background(OneConfigTheme.accent),
+                    area = { bounds ->
+                        if (lineWidth == null) {
+                            IntRect(bounds.left, bounds.bottom - stroke, bounds.right, bounds.bottom)
+                        } else {
+                            val width = lineWidth.coerceAtMost(bounds.width)
+                            val left = bounds.center.x - width / 2
+                            IntRect(left, bounds.bottom - stroke, left + width, bounds.bottom)
+                        }
+                    },
+                )
+                Row(fillModifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    tabs.forEachIndexed { index, tab ->
+                        TabHost(tab, fill, false, tooltipPlacement) { host ->
+                            UnderlineTab(tab, index == selectedIndex, enabled && tab.enabled, tab.size ?: size, theme.shapes.small, sound, badgePlacement, item(index, host)) { click(index) }
+                        }
                     }
                 }
             }
         }
         TabStyle.Segmented -> {
-            val theme = OneConfigTheme.current
-            val track = theme.componentBackground
-            val border = theme.borderColor
+            val trackShape = theme.buttonShape
+            val itemShape = if (track) trackShape.concentric(ChoiceInset) else trackShape
+            val rowHeight = tabs.maxOfOrNull { (it.size ?: size).height } ?: size.height
             Row(
                 rowModifier
-                    .height(size.height)
-                    .glassFrame(theme.buttonShape, { track }, { border }, hover = false)
-                    .padding(SEGMENT_INSET),
+                    .height(rowHeight)
+                    .then(if (track) Modifier.choiceTrack(trackShape).padding(ChoiceInset) else Modifier),
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                tabs.forEach { tab ->
+                tabs.forEachIndexed { index, tab ->
                     TabHost(tab, fill, true, tooltipPlacement) { host ->
-                        SegmentTab(tab, tab.value == selected, enabled && tab.enabled, tab.size ?: size, host) { onSelect(tab.value) }
+                        SegmentTab(tab, index == selectedIndex, enabled && tab.enabled, tab.size ?: size, itemShape, sound, badgePlacement, host.then(tab.modifier).choiceItem(focus, index)) { click(index) }
+                    }
+                }
+            }
+        }
+        TabStyle.Chips -> {
+            FlowRow(
+                rowModifier,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                tabs.forEachIndexed { index, tab ->
+                    TabHost(tab, false, false, tooltipPlacement) { host ->
+                        ChipTab(tab, index == selectedIndex, enabled && tab.enabled, tab.size ?: size, ChipDefaults.shape, sound, badgePlacement, host.then(tab.modifier).choiceItem(focus, index)) { click(index) }
                     }
                 }
             }
@@ -163,11 +248,8 @@ public fun <T> SegmentedChips(
     enabled: Boolean = true,
     size: ControlSize = ChipDefaults.size,
 ) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-        options.forEach { option ->
-            Chip(label(option), option == selected, { onSelect(option) }, enabled = enabled, size = size, role = A11yRole.Tab)
-        }
-    }
+    val tabs = options.map { TabItem(it, label(it)) }
+    TabRow(tabs, selected, onSelect, modifier, TabStyle.Chips, size, fill = false, enabled = enabled)
 }
 
 private fun RowScope.tabWeight(fill: Boolean): Modifier = if (fill) Modifier.weight(1f) else Modifier
@@ -188,99 +270,123 @@ private fun RowScope.TabHost(tab: TabItem<*>, fill: Boolean, tall: Boolean, plac
 @Composable
 private fun tabLabel(tab: TabItem<*>): String {
     val label = tab.labelText.resolve().ifEmpty { tab.tooltip.orEmpty() }
-    return if (tab.badge.isNullOrEmpty()) label else "$label, ${tab.badge}"
+    val spoken = tab.badgeDescription ?: tab.badge
+    return if (spoken.isNullOrEmpty()) label else "$label, $spoken"
 }
 
 @Composable
-private fun PillTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, modifier: Modifier, onClick: () -> Unit) {
+private fun PillTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, shape: Shape, sound: UiSound?, badges: TabBadgePlacement, modifier: Modifier, onClick: () -> Unit) {
     val theme = OneConfigTheme.current
     val source = tab.interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
-    val active = hovered && enabled
-    val fill by animateColorAsState(if (selected) Color.Transparent else theme.componentBackground, Motion.spec(tween(TAB_FADE_MILLIS)))
-    val accentAlpha by animateFloatAsState(if (selected) 1f else 0f, Motion.spec(tween(TAB_FADE_MILLIS)))
-    val border by animateColorAsState(
+    val fill by Motion.animateColorAsState(if (selected) Color.Transparent else theme.componentBackground, label = "pillTabFill")
+    val accentAlpha by Motion.animateFloatAsState(if (selected) 1f else 0f, label = "pillTabAccent")
+    val border by Motion.animateColorAsState(
         when {
             selected -> Color.Transparent
-            active -> theme.textColorSecondary
+            hovered && enabled -> theme.textColorSecondary
             else -> theme.borderColor
         },
-        Motion.spec(tween(TAB_FADE_MILLIS)),
+        label = "pillTabBorder",
     )
-    val shape = theme.buttonShape
     Box(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
-            .heightIn(min = size.height)
+            .heightIn(min = ControlDefaults.metrics(size).height)
             .glassFrame(shape, { fill }, { border }, { accentAlpha }, hover = enabled)
-            .oneConfigClickable(tabLabel(tab), onClick, role = A11yRole.Tab, enabled = enabled, selected = selected, shape = shape, indication = !glassAvailable, interactionSource = source)
-            .padding(horizontal = 14.dp),
+            .oneConfigClickable(tabLabel(tab), onClick, role = A11yRole.Tab, enabled = enabled, selected = selected, shape = shape, indication = !glassAvailable, sound = sound, interactionSource = source)
+            .padding(horizontal = PILL_PADDING),
         contentAlignment = Alignment.Center,
     ) {
-        TabContent(tab, if (selected) theme.accentTextColor else theme.textColor, size)
+        TabContent(tab, if (selected) theme.accentTextColor else theme.textColor, size, badges)
     }
 }
 
 @Composable
-private fun UnderlineTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, modifier: Modifier, onClick: () -> Unit) {
+private fun ChipTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, shape: Shape, sound: UiSound?, badges: TabBadgePlacement, modifier: Modifier, onClick: () -> Unit) {
     val theme = OneConfigTheme.current
-    val accent = OneConfigTheme.accent
     val source = tab.interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
-    val content by animateColorAsState(
-        if (selected || hovered && enabled) theme.textColor else theme.textColorSecondary,
-        Motion.spec(tween(TAB_FADE_MILLIS)),
-    )
-    val indicator by animateFloatAsState(if (selected) 1f else 0f, Motion.spec(tween(TAB_FADE_MILLIS)))
+    val rest = ChipDefaults.fill
+    val hoverFill = OneConfigTheme.accent.copy(alpha = ChipDefaults.HOVER_ACCENT_ALPHA).compositeOver(rest)
+    val fill by Motion.animateColorAsState(if (hovered && enabled) hoverFill else rest, label = "chipTabFill")
+    val accentAlpha by Motion.animateFloatAsState(if (selected) 1f else 0f, label = "chipTabAccent")
+    val content by Motion.animateColorAsState(ChipDefaults.contentColor(selected), label = "chipTabContent")
+    val border = theme.borderColor
     Box(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
-            .height(size.height)
-            .oneConfigClickable(tabLabel(tab), onClick, role = A11yRole.Tab, enabled = enabled, selected = selected, shape = theme.shapes.small, indication = false, interactionSource = source)
-            .drawBehind {
-                if (indicator <= 0f) return@drawBehind
-                val stroke = UNDERLINE_WIDTH.toPx()
-                val y = this.size.height - stroke / 2f
-                drawLine(accent.copy(alpha = accent.alpha * indicator), Offset(0f, y), Offset(this.size.width, y), stroke)
-            }
+            .heightIn(min = ControlDefaults.metrics(size).height)
+            .glassFrame(shape, { fill }, { border }, { accentAlpha }, hover = enabled)
+            .oneConfigClickable(tabLabel(tab), onClick, role = A11yRole.Tab, enabled = enabled, selected = selected, shape = shape, indication = !glassAvailable, sound = sound, interactionSource = source)
+            .padding(horizontal = ChipDefaults.horizontalPadding(size)),
+        contentAlignment = Alignment.Center,
+    ) {
+        TabContent(tab, content, size, badges, ChipDefaults.contentSpacing(size))
+    }
+}
+
+@Composable
+private fun UnderlineTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, shape: Shape, sound: UiSound?, badges: TabBadgePlacement, modifier: Modifier, onClick: () -> Unit) {
+    val theme = OneConfigTheme.current
+    val source = tab.interactionSource ?: remember { MutableInteractionSource() }
+    val hovered by source.collectIsHoveredAsState()
+    val content by Motion.animateColorAsState(if (selected || hovered && enabled) theme.textColor else theme.textColorSecondary, label = "underlineTabContent")
+    Box(
+        modifier = modifier
+            .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
+            .height(ControlDefaults.metrics(size).height)
+            .oneConfigClickable(tabLabel(tab), onClick, role = A11yRole.Tab, enabled = enabled, selected = selected, shape = shape, indication = false, sound = sound, interactionSource = source)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        TabContent(tab, content, size)
+        TabContent(tab, content, size, badges)
     }
 }
 
 @Composable
-private fun SegmentTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, modifier: Modifier, onClick: () -> Unit) {
+private fun SegmentTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, size: ControlSize, shape: Shape, sound: UiSound?, badges: TabBadgePlacement, modifier: Modifier, onClick: () -> Unit) {
     val theme = OneConfigTheme.current
     val source = tab.interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
-    val fill by animateColorAsState(
-        if (selected) theme.textColor.copy(alpha = SEGMENT_SELECTED_ALPHA) else Color.Transparent,
-        Motion.spec(tween(TAB_FADE_MILLIS)),
-    )
-    val content by animateColorAsState(
-        if (selected || hovered && enabled) theme.textColor else theme.textColorSecondary,
-        Motion.spec(tween(TAB_FADE_MILLIS)),
-    )
-    val shape = componentsBridge().concentric(theme.buttonShape, SEGMENT_INSET, 0.dp)
+    val fill by Motion.animateColorAsState(if (selected) theme.textColor.copy(alpha = SEGMENT_SELECTED_ALPHA) else Color.Transparent, label = "segmentTabFill")
+    val content by Motion.animateColorAsState(if (selected || hovered && enabled) theme.textColor else theme.textColorSecondary, label = "segmentTabContent")
     Box(
         modifier = modifier
             .fillMaxHeight()
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
             .glassFrame(shape, { fill }, { Color.Transparent }, hover = enabled, glass = false, pull = 0.75.dp)
-            .oneConfigClickable(tabLabel(tab), onClick, role = A11yRole.Tab, enabled = enabled, selected = selected, shape = shape, indication = !glassAvailable, interactionSource = source)
+            .oneConfigClickable(tabLabel(tab), onClick, role = A11yRole.Tab, enabled = enabled, selected = selected, shape = shape, indication = !glassAvailable, sound = sound, interactionSource = source, recipe = ControlDefaults.Underlay)
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        TabContent(tab, content, size)
+        TabContent(tab, content, size, badges)
     }
 }
 
 @Composable
-private fun TabContent(tab: TabItem<*>, color: Color, size: ControlSize) {
-    val iconSize: Dp = if (size == ControlSize.Compact) 14.dp else 16.dp
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun TabContent(tab: TabItem<*>, color: Color, size: ControlSize, badges: TabBadgePlacement, spacing: Dp = 6.dp) {
+    val badge = tab.badge
+    if (badges == TabBadgePlacement.Corner && badge != null) {
+        Box(contentAlignment = Alignment.CenterEnd) {
+            TabContentRow(tab, color, size, spacing, null)
+            Badge(badge, Modifier.cornerBadge(), tone = BadgeTone.Accent)
+        }
+    } else {
+        TabContentRow(tab, color, size, spacing, badge)
+    }
+}
+
+private fun Modifier.cornerBadge(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = Constraints.Infinity))
+    layout(0, 0) { placeable.placeRelative(CORNER_BADGE_GAP.roundToPx(), -CORNER_BADGE_RISE.roundToPx() - placeable.height / 2) }
+}
+
+@Composable
+private fun TabContentRow(tab: TabItem<*>, color: Color, size: ControlSize, spacing: Dp, badge: String?) {
+    val compact = size == ControlSize.Compact
+    val iconSize = if (compact) 14.dp else 16.dp
+    Row(horizontalArrangement = Arrangement.spacedBy(spacing), verticalAlignment = Alignment.CenterVertically) {
         val painter = tab.iconPainter
         when {
             painter != null -> Image(painter, null, Modifier.size(iconSize), colorFilter = ColorFilter.tint(color))
@@ -288,27 +394,9 @@ private fun TabContent(tab: TabItem<*>, color: Color, size: ControlSize) {
         }
         val label = tab.labelText.resolve()
         if (label.isNotEmpty()) {
-            Text(label, Modifier, color, OneConfigTheme.typography.body.copy(fontSize = if (size == ControlSize.Compact) 13.sp else 14.sp, fontWeight = FontWeight.Normal), 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+            val style = OneConfigTheme.typography.body.copy(fontSize = if (compact) 13.sp else 14.sp, fontWeight = FontWeight.Normal)
+            Text(label, Modifier, color, style, 1, TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         }
-        tab.badge?.let { TabBadge(it) }
-    }
-}
-
-@Composable
-private fun TabBadge(text: String) {
-    val theme = OneConfigTheme.current
-    val accent = OneConfigTheme.accent
-    if (text.isEmpty()) {
-        Box(Modifier.size(8.dp).background(accent, theme.shapes.circle))
-        return
-    }
-    Box(
-        Modifier
-            .defaultMinSize(minWidth = 16.dp, minHeight = 16.dp)
-            .background(accent, theme.shapes.pill)
-            .padding(horizontal = 5.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, Modifier, theme.accentTextColor, OneConfigTheme.typography.body.copy(fontSize = 10.sp, fontWeight = FontWeight.Medium), 1, TextOverflow.Clip, textAlign = TextAlign.Center)
+        badge?.let { Badge(it, tone = BadgeTone.Accent) }
     }
 }
