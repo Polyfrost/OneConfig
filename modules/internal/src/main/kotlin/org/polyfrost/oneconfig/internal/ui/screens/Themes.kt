@@ -347,7 +347,9 @@ internal fun ThemeCardShell(
                     )
                     if (action != null) {
                         Box(Modifier.onFocusChanged { actionFocused = it.hasFocus }) {
-                            action(Modifier.hiddenUntilHover(hovered || focused || actionFocused))
+                            // keep the action visible on the active theme too: switching themes can reset the
+                            // hover interaction state, hiding the button until the pointer moves away and back
+                            action(Modifier.hiddenUntilHover(hovered || focused || actionFocused || selected))
                         }
                     }
                 }

@@ -20,6 +20,10 @@ import net.minecraft.util.RandomSource
 class McUiSoundService : UiSoundService {
     private val sliderTick = AtomicInteger(0)
 
+    /** The most recent one-shot UI sound, so a new one can interrupt it */
+    @Volatile
+    private var currentUiSound: SoundInstance? = null
+
     @Volatile
     private var ambience: FadingLoopSoundInstance? = null
 
@@ -34,6 +38,15 @@ class McUiSoundService : UiSoundService {
     override fun play(event: UiSoundEvent, theme: UiSoundTheme, volume: Float) {
         if (volume <= 0f) return
         try {
+            // stop any sound still playing so overlapping events (e.g. open and close) interrupt each other;
+            // stopping an already-stopped sound is a no-op
+            val previous = currentUiSound
+            if (previous != null) {
+                try {
+                    mc.soundManager.stop(previous)
+                } catch (_: Throwable) {
+                }
+            }
             when (theme) {
                 UiSoundTheme.MODERN -> playModern(event, volume)
                 UiSoundTheme.MINECRAFT -> playMinecraft(event, volume)
@@ -61,7 +74,9 @@ class McUiSoundService : UiSoundService {
         val event = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("oneconfig", id))
         //?} else
         //val event = Identifier("oneconfig", id)
-        mc.soundManager.play(SimpleSoundInstance.forUI(event, pitch, volume.coerceIn(0f, 1f)))
+        currentUiSound = SimpleSoundInstance.forUI(event, pitch, volume.coerceIn(0f, 1f)).also {
+            mc.soundManager.play(it)
+        }
     }
 
     private fun playMinecraft(event: UiSoundEvent, volume: Float) {
@@ -83,7 +98,9 @@ class McUiSoundService : UiSoundService {
 
     //~ if = 1.8.9 'SoundEvent' -> 'Identifier'
     private fun playVanilla(event: SoundEvent, pitch: Float, volume: Float) {
-        mc.soundManager.play(SimpleSoundInstance.forUI(event, pitch, volume.coerceIn(0f, 1f)))
+        currentUiSound = SimpleSoundInstance.forUI(event, pitch, volume.coerceIn(0f, 1f)).also {
+            mc.soundManager.play(it)
+        }
     }
 
     //? if > 1.8.9 {
