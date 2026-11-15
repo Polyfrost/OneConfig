@@ -712,7 +712,7 @@ public abstract class PolyTessellator : PolyRenderer {
                 i += 4
             }
         }
-        mcText(text, x, y, color, false, scale, literal)
+        if (literal) mcText(text, x, y, color, false, scale, true) else mcText(text, x, y, color, false, scale)
     }
 
     // device-space horizontal shear: x += shearX * (shearBase - y)
