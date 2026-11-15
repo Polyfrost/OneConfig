@@ -46,6 +46,9 @@ fun resyncTextureBindCache() {
 }
 
 class StoredGLState(val exact: Boolean = false) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(glVersion: Int) : this()
+
     private var depth = 0
 
     fun capture() {
@@ -55,6 +58,16 @@ class StoredGLState(val exact: Boolean = false) {
     fun restore() {
         if (--depth == 0) load()
     }
+
+    //? if > 1.8.9 {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @JvmName("capture")
+    fun captureState(): StoredGLState = apply { capture() }
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    @JvmName("restore")
+    fun restoreState(): StoredGLState = apply { restore() }
+    //?}
 
     fun restored(block: () -> Unit) {
         if (depth != 1) return block()
