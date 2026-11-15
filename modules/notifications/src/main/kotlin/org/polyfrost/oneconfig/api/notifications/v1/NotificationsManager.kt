@@ -26,7 +26,9 @@
 
 package org.polyfrost.oneconfig.api.notifications.v1
 
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
@@ -39,18 +41,31 @@ public object NotificationsManager {
 
     private val LOGGER = LogManager.getLogger("OneConfig/Notifications")
 
-    private val _active = mutableStateListOf<Notification>()
-    private val _history = mutableStateListOf<Notification>()
+    private val _active = ArrayList<Notification>()
+    private val _history = ArrayList<Notification>()
 
     @JvmStatic
     public fun ensureInitialized() {
         if (_active.size < 0 || _history.size < 0) error("unreachable")
     }
 
+    private val lock = Any()
+    private val revisionLock = Any()
+
+    internal var revision: Int by Snapshot.withoutReadObservation { mutableIntStateOf(0) }
+        private set
+
     internal fun mutate(block: () -> Unit) {
-        if (Snapshot.current.readOnly) Snapshot.global { Snapshot.withMutableSnapshot(block) }
-        else Snapshot.withMutableSnapshot(block)
+        locked(block)
+        synchronized(revisionLock) { Snapshot.global { revision++ } }
     }
+
+    private fun <T> read(block: () -> T): T {
+        revision
+        return locked(block)
+    }
+
+    private fun <T> locked(block: () -> T): T = Snapshot.withoutReadObservation { synchronized(lock, block) }
 
     private fun fireDismissed(removed: List<Notification>) {
         for (notification in removed) {
@@ -63,14 +78,14 @@ public object NotificationsManager {
     /**
      * The notifications currently on screen with the oldest first
      */
-    public val active: List<Notification> get() = _active
+    public val active: List<Notification> get() = read { _active.toList() }
 
     /**
      * Every notification that has been pushed up to [MAX_HISTORY] with the newest first
      */
-    public val history: List<Notification> get() = _history
+    public val history: List<Notification> get() = read { _history.toList() }
 
-    public val unreadCount: Int get() = _history.count { !it.read }
+    public val unreadCount: Int get() = read { _history.count { !it.read } }
 
     /**
      * Adds [notification] to the live set so it begins rendering on the next frame
@@ -143,8 +158,8 @@ public object NotificationsManager {
         fireDismissed(removed)
     }
 
-    public val count: Int get() = _active.size
+    public val count: Int get() = read { _active.size }
 
     @ApiStatus.Internal
-    public fun contains(notification: Notification): Boolean = _active.contains(notification)
+    public fun contains(notification: Notification): Boolean = read { _active.contains(notification) }
 }

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import java.time.Instant
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationState
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
@@ -102,14 +103,15 @@ fun NotificationsCenter() {
 @Composable
 private fun NotificationRow(notification: Notification) {
     val theme = LocalTheme.current
-    val accent = accentFor(notification.type)
+    val state = notification.state
+    val accent = accentFor(state.type)
 
     Row(
         modifier = Modifier.contextMenu { notificationMenu(notification) },
         horizontalArrangement = Arrangement.spacedBy(13.dp),
     ) {
         Box(Modifier.size(32.dp).padding(4.dp), contentAlignment = Alignment.Center) {
-            Icon(notification.iconName ?: notification.type.iconName, color = accent, modifier = Modifier.size(24.dp))
+            Icon(notification.iconName ?: state.type.iconName, color = accent, modifier = Modifier.size(24.dp))
         }
         Column(
             modifier = Modifier.weight(1f),
@@ -117,7 +119,7 @@ private fun NotificationRow(notification: Notification) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    notification.title,
+                    state.title,
                     color = accent,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
@@ -129,7 +131,7 @@ private fun NotificationRow(notification: Notification) {
                     color = theme.textColorSecondary,
                     fontSize = 10.sp,
                 )
-                if (!notification.read) {
+                if (!state.read) {
                     Box(
                         Modifier
                             .padding(start = 6.dp)
@@ -138,16 +140,16 @@ private fun NotificationRow(notification: Notification) {
                     )
                 }
             }
-            if (notification.message.isNotEmpty()) {
+            if (state.message.isNotEmpty()) {
                 Text(
-                    notification.message,
+                    state.message,
                     color = theme.textColorSecondary,
                     fontSize = 12.sp,
                     lineHeight = 21.sp,
                 )
             }
 
-            val progress = liveProgress(notification)
+            val progress = liveProgress(notification, state)
             if (progress != null) {
                 ProgressBar(progress, Modifier.padding(top = 8.dp), ControlSize.Regular)
             }
@@ -157,7 +159,7 @@ private fun NotificationRow(notification: Notification) {
                     modifier = Modifier.padding(top = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    for (action in notification.actions) ActionButton(notification, action)
+                    for (action in notification.actions) ActionButton(notification, action, state.type)
                 }
             }
         }
@@ -165,7 +167,7 @@ private fun NotificationRow(notification: Notification) {
 }
 
 @Composable
-private fun ActionButton(notification: Notification, action: NotificationAction) {
+private fun ActionButton(notification: Notification, action: NotificationAction, type: NotificationType) {
     TextButton(
         action.label,
         {
@@ -174,7 +176,7 @@ private fun ActionButton(notification: Notification, action: NotificationAction)
         },
         style = when {
             !action.primary -> ControlStyle.Secondary
-            notification.type == NotificationType.ERROR -> ControlStyle.DangerFilled
+            type == NotificationType.ERROR -> ControlStyle.DangerFilled
             else -> ControlStyle.Primary
         },
         size = ControlSize.Compact,
@@ -186,7 +188,7 @@ private fun notificationMenu(notification: Notification): List<MenuEntry> = list
     MenuAction(translated("oneconfig.notifications.dismiss", "Dismiss"), { NotificationsManager.remove(notification) }, icon = "close"),
     MenuAction(
         translated("oneconfig.notifications.copy", "Copy text"),
-        { ClipboardHelper.setString(listOf(notification.title, notification.message).filter { it.isNotEmpty() }.joinToString("\n")) },
+        { ClipboardHelper.setString(notification.state.let { listOf(it.title, it.message) }.filter { it.isNotEmpty() }.joinToString("\n")) },
         icon = "copy",
     ),
     MenuSeparator,
@@ -235,9 +237,9 @@ private fun accentFor(type: NotificationType): Color = when (type) {
 }
 
 @Composable
-private fun liveProgress(notification: Notification): Float? {
+private fun liveProgress(notification: Notification, state: NotificationState): Float? {
     var frame by remember(notification.id) { mutableLongStateOf(0L) }
-    val progress = frame.let { notification.progressOrNull() }
+    val progress = frame.let { notification.progressOrNull(state) }
     if (progress != null && progress < 1f && notification.progress != null) {
         LaunchedEffect(notification.id) {
             while (true) withFrameNanos { frame = it }

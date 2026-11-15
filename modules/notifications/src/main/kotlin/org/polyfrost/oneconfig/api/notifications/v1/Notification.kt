@@ -26,10 +26,6 @@
 
 package org.polyfrost.oneconfig.api.notifications.v1
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -180,14 +176,21 @@ public class Notification @JvmOverloads constructor(
     @get:JvmName("getIcon")
     public val skiaIcon: Image? get() = null
 
-    public var title: String by mutableStateOf(title)
-        private set
+    @Volatile
+    private var fields = NotificationState(title, message, type)
 
-    public var message: String by mutableStateOf(message)
-        private set
+    @get:ApiStatus.Internal
+    public val state: NotificationState
+        get() {
+            NotificationsManager.revision
+            return fields
+        }
 
-    public var type: NotificationType by mutableStateOf(type)
-        private set
+    public val title: String get() = state.title
+
+    public val message: String get() = state.message
+
+    public val type: NotificationType get() = state.type
 
     @Deprecated("Use durationMillis and persistent")
     public val duration: Float get() = legacyDuration ?: if (persistent) -1f else durationMillis.toFloat()
@@ -198,29 +201,42 @@ public class Notification @JvmOverloads constructor(
 
     public val createdAt: Long = System.currentTimeMillis()
 
-    internal var hovered by mutableStateOf(false)
+    internal var hovered: Boolean
+        get() = state.hovered
+        set(value) {
+            fields = fields.copy(hovered = value)
+        }
 
-    internal var dismissRequested by mutableStateOf(false)
+    internal var dismissRequested: Boolean
+        get() = state.dismissRequested
+        set(value) {
+            fields = fields.copy(dismissRequested = value)
+        }
 
-    internal var revision by mutableIntStateOf(0)
-
-    private var progressValue by mutableStateOf<Float?>(null)
-
-    private var progressEnded by mutableStateOf(false)
+    internal val revision: Int get() = state.revision
 
     private val dismissFired = AtomicBoolean(false)
 
     /**
      * Whether this notification has been seen in the notifications center
      */
-    public var read: Boolean by mutableStateOf(false)
-        internal set
+    public var read: Boolean
+        get() = state.read
+        internal set(value) {
+            fields = fields.copy(read = value)
+        }
 
-    internal val tracksProgress: Boolean get() = !progressEnded && (progressValue != null || progress != null)
+    internal val tracksProgress: Boolean get() = tracksProgress(state)
 
-    public fun progressOrNull(): Float? {
-        if (progressEnded) return null
-        progressValue?.let { return it.coerceIn(0f, 1f) }
+    internal fun tracksProgress(state: NotificationState): Boolean =
+        !state.progressEnded && (state.progressValue != null || progress != null)
+
+    public fun progressOrNull(): Float? = progressOrNull(state)
+
+    @ApiStatus.Internal
+    public fun progressOrNull(state: NotificationState): Float? {
+        if (state.progressEnded) return null
+        state.progressValue?.let { return it.coerceIn(0f, 1f) }
         val p = progress ?: return null
         return runCatching { p.call() }.getOrNull()?.coerceIn(0f, 1f)
     }
@@ -228,18 +244,20 @@ public class Notification @JvmOverloads constructor(
     @ApiStatus.Experimental
     override fun update(title: String?, message: String?, type: NotificationType?, progress: Float?) {
         NotificationsManager.mutate {
-            if (title != null) this.title = title
-            if (message != null) this.message = message
-            if (type != null) {
-                if (progress == null && type != NotificationType.PROGRESS && type != this.type) progressEnded = true
-                this.type = type
-            }
-            if (progress != null) {
-                progressValue = progress.coerceIn(0f, 1f)
-                progressEnded = false
-            }
-            if (title != null || message != null || type != null) read = false
-            revision++
+            val old = fields
+            fields = old.copy(
+                title = title ?: old.title,
+                message = message ?: old.message,
+                type = type ?: old.type,
+                progressValue = progress?.coerceIn(0f, 1f) ?: old.progressValue,
+                progressEnded = when {
+                    progress != null -> false
+                    type != null && type != NotificationType.PROGRESS && type != old.type -> true
+                    else -> old.progressEnded
+                },
+                read = old.read && title == null && message == null && type == null,
+                revision = old.revision + 1,
+            )
         }
     }
 
@@ -249,7 +267,7 @@ public class Notification @JvmOverloads constructor(
     }
 
     internal fun startProgress() {
-        progressValue = 0f
+        fields = fields.copy(progressValue = 0f)
     }
 
     internal fun fireDismissed(): Runnable? = if (dismissFired.compareAndSet(false, true)) onDismiss else null
@@ -270,6 +288,19 @@ public class Notification @JvmOverloads constructor(
         private fun legacyPersistent(duration: Float, progress: Callable<Float>?): Boolean = duration <= 0f && progress == null
     }
 }
+
+@ApiStatus.Internal
+public data class NotificationState(
+    public val title: String,
+    public val message: String,
+    public val type: NotificationType,
+    public val read: Boolean = false,
+    public val hovered: Boolean = false,
+    public val dismissRequested: Boolean = false,
+    public val revision: Int = 0,
+    public val progressValue: Float? = null,
+    public val progressEnded: Boolean = false,
+)
 
 internal fun legacyNotification(
     title: String,
