@@ -179,6 +179,25 @@ class HudHistoryTest {
         assertNotNull(HudManager.INSTANCE.instanceById(id));
     }
 
+    @Test
+    void gestureStartedBeforeTheLastSettledIsItsOwnStep() {
+        Hud hud = place();
+        history.poll(false);
+
+        hud.setAbsolutePosition(100f, 60f);
+        history.poll(true);
+        history.poll(false);
+        hud.setAbsolutePosition(200f, 120f);
+        history.poll(true);
+        history.poll(true);
+        settle();
+
+        assertNotNull(history.undo());
+        assertEquals(100f, hud.getX(), 0.01f);
+        assertNotNull(history.undo());
+        assertEquals(10f, hud.getX(), 0.01f);
+    }
+
     private void settle() {
         history.poll(false);
         history.poll(false);

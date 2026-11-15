@@ -195,12 +195,15 @@ internal class HudHistory {
     private val redoStack = ArrayDeque<Layout>()
     private var recorded: Layout? = null
     private var settling: Layout? = null
+    private var pending: Layout? = null
+    private var wasBusy = false
 
     private fun reset(now: Layout) {
         undoStack.clear()
         redoStack.clear()
         recorded = now
         settling = null
+        pending = null
     }
 
     private fun record(now: Layout) {
@@ -209,6 +212,7 @@ internal class HudHistory {
         redoStack.clear()
         recorded = now
         settling = null
+        pending = null
     }
 
     private fun unrecorded(): Boolean = recorded?.let { !sameLayout(it, capture()) } == true
@@ -225,10 +229,16 @@ internal class HudHistory {
             reset(now)
             return
         }
+        val gestureStarted = busy && !wasBusy
+        wasBusy = busy
+        if (gestureStarted) {
+            pending?.let(::record)
+        }
         if (busy || sameLayout(last, now)) {
             settling = null
             return
         }
+        pending = now
         val previous = settling
         if (previous != null && sameLayout(previous, now)) record(now) else settling = now
     }
@@ -251,6 +261,7 @@ internal class HudHistory {
         val revived = restore(target)
         recorded = capture()
         settling = null
+        pending = null
         return revived
     }
 }
