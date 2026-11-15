@@ -29,7 +29,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.settings.Dropdown
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
-import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.draggableHuds
 import org.polyfrost.oneconfig.internal.ui.screens.ConfigListRow
 import org.polyfrost.oneconfig.internal.ui.screens.HudCategoryList
@@ -69,8 +68,6 @@ private fun SharedValue<*>.isMixed(): Boolean = this is SharedValue.Mixed
 private fun SharedContent(huds: Collection<Hud>, content: @Composable (List<Hud>, SharedEdits) -> Unit) {
     val list = huds.toList()
     if (list.isEmpty()) return
-
-    LaunchedEffect(list) { list.forEach(::repairHudStaticSize) }
 
     HudSettingsContent(list) {
         val edits = remember { SharedEdits() }

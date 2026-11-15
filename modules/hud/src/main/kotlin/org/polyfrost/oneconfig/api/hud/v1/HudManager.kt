@@ -675,31 +675,7 @@ public object HudManager {
     internal fun bodyBounds(hud: Hud, out: FloatArray): Boolean = fillBounds(hud, out, 0)
 
     private fun fillBounds(hud: Hud, out: FloatArray, offset: Int): Boolean {
-        val scale = hud.frameEffectiveScale
-        val w = if (hud.staticWidth) {
-            val s = hud.staticW
-            if (s > 0f) s * scale else return false
-        } else {
-            val r = hud.renderedW
-            if (r > 0f) {
-                r
-            } else {
-                val s = hud.staticW
-                if (s > 0f) s * scale else return false
-            }
-        }
-        val h = if (hud.staticWidth) {
-            val s = hud.staticH
-            if (s > 0f) s * scale else return false
-        } else {
-            val r = hud.renderedH
-            if (r > 0f) {
-                r
-            } else {
-                val s = hud.staticH
-                if (s > 0f) s * scale else return false
-            }
-        }
+        val (w, h) = hud.boundsSize(hud.frameEffectiveScale) ?: return false
         out[offset] = hud.frameX
         out[offset + 1] = hud.frameY
         out[offset + 2] = w
@@ -2066,6 +2042,7 @@ public object HudManager {
                 var made: Hud? = null
                 val failures = Tree.collectFailures { made = h.make(data) }
                 val hud = made ?: throw IllegalStateException("HUD from ${data.id} was not created")
+                hud.migrateLegacySize(data)
                 candidate = hud
                 if (failures.isNotEmpty()) LOGGER.warn("Reset {} unreadable value(s) of HUD {} to defaults: {}", failures.size, hud.title, failures)
                 val sec = data.getProp("section")?.getAs<Section?>()

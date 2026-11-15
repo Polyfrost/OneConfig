@@ -56,7 +56,6 @@ private val MenuIconSize = 14.dp
 
 private val hudUiEpochs = mutableStateMapOf<Hud, Int>()
 
-private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
 private val POSITION_OPTIONS = setOf(
     "section", "relativeX", "relativeY",
     "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY", "movedByPlayer",
@@ -101,17 +100,8 @@ private fun treeHasResettableDefaults(tree: Tree, root: Boolean): Boolean {
 
 fun resetAllHudProperties(hud: Hud) {
     val tree = hud.tree ?: return
-    resetHudStaticSize(hud)
     resetTreeDefaults(tree, root = true)
     finishHudReset(hud)
-}
-
-private fun resetHudStaticSize(hud: Hud) {
-    if (!hud.staticWidth) return
-    for (id in STATIC_SIZE_OPTIONS) {
-        val prop = hudProperty(hud, id) ?: continue
-        performHudOptionReset(hud, prop, id)
-    }
 }
 
 fun hudHasPositionDefaults(hud: Hud): Boolean = hud.defaultPosition() != null
@@ -162,25 +152,16 @@ private fun resetPositionOptions(hud: Hud): Boolean {
 }
 
 private fun finishHudReset(hud: Hud) {
-    hud.reseedStaticSizeIfNeeded()
-    hud.captureStaticSizeDefaults()
     bumpHudUiEpoch(hud)
     hud.updateAndRecalculate()
 }
 
 private fun canResetHudOption(hud: Hud, prop: Property<*>, optionId: String): Boolean {
-    if (optionHasDefault(prop)) return true
-    return hud.staticWidth && optionId in STATIC_SIZE_OPTIONS
+    return optionHasDefault(prop)
 }
 
 private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String) {
     when (optionId) {
-        "staticW" -> {
-            if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticWidth()
-        }
-        "staticH" -> {
-            if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticHeight()
-        }
         "growthAnchor" -> {
             val def = prop.getMetadata<Any?>("default") as? HudAnchor
             if (def != null) hud.setGrowthAnchorKeepingPosition(def) else resetOption(prop)
@@ -190,19 +171,6 @@ private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String)
             resetOption(prop)
         }
     }
-    hud.captureStaticSizeDefaults(force = optionId in STATIC_SIZE_OPTIONS)
-}
-
-/** Fixes invalid static dimensions such as after a bad reset and refreshes the settings UI */
-fun repairHudStaticSize(hud: Hud) {
-    if (!hud.staticWidth) return
-    if (hud.staticW > 0f && hud.staticH > 0f) {
-        hud.captureStaticSizeDefaults()
-        return
-    }
-    hud.reseedStaticSizeIfNeeded()
-    hud.captureStaticSizeDefaults(force = true)
-    bumpHudUiEpoch(hud)
 }
 
 private fun resetTreeDefaults(tree: Tree, root: Boolean, seen: MutableSet<Property<*>> = identitySet()) {
@@ -210,7 +178,8 @@ private fun resetTreeDefaults(tree: Tree, root: Boolean, seen: MutableSet<Proper
         when (node) {
             is Property<*> -> {
                 val optionId = node.id ?: node.getID()
-                val builtIn = root && (optionId in STATIC_SIZE_OPTIONS || optionId in POSITION_OPTIONS)
+                // staticW/staticH only mirror a fixed size, so the min/max limits are what resets
+                val builtIn = root && (optionId in POSITION_OPTIONS || optionId == "staticW" || optionId == "staticH")
                 if (!builtIn && optionId !in UNRESETTABLE_OPTIONS && optionHasDefault(node)) resetOption(node, seen)
             }
             is Tree -> resetTreeDefaults(node, root = false, seen = seen)
