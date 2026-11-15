@@ -65,23 +65,26 @@ fun DropdownOption(data: DropdownOptionData, enabled: Boolean) {
 
 /** [options] can be anything [Text] can show, such as translated text */
 @Composable
-fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: Dp = LocalOptionWidth.current) {
-    Dropdown(options, selected, onSelect, width, true)
-}
-
-@Composable
-fun Dropdown(options: List<Any>, selected: Int, onSelect: (Int) -> Unit, width: Dp, enabled: Boolean) {
+fun Dropdown(
+    options: List<Any>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    width: Dp = LocalOptionWidth.current,
+    enabled: Boolean = true,
+    mixed: Boolean = false,
+) {
     val stamp = languageStamp()
     val labels = remember(options, stamp) { options.map { it.asPlainLabel() } }
     val styled = remember(options, stamp) { options.styledLabelsOrNull() }
     Select(
-        selected = selected,
+        // an index outside the options leaves the field showing its placeholder
+        selected = if (mixed) -1 else selected,
         options = labels.indices.toList(),
         onSelect = onSelect,
         modifier = Modifier.width(width).heightIn(min = OptionControlHeight),
         label = { labels[it] },
         enabled = enabled,
-        placeholder = "—",
+        placeholder = if (mixed) "Mixed" else "—",
         styledLabel = styled?.let { list -> { list[it] } },
     )
 }

@@ -35,6 +35,8 @@ internal fun formOnLabel(): String = formControlString("oneconfig.control.on", "
 
 internal fun formOffLabel(): String = formControlString("oneconfig.control.off", "Off")
 
+internal fun formMixedLabel(): String = formControlString("oneconfig.control.mixed", "Mixed")
+
 internal fun Modifier.formFrame(
     shape: Shape,
     accent: Brush,

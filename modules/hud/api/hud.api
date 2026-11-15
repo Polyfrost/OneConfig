@@ -322,12 +322,6 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudColors {
 	public static final fun toPolyColor-8_81llA (J)Lorg/polyfrost/compose/render/PolyColor;
 }
 
-public final class org/polyfrost/oneconfig/api/hud/v1/HudIcons {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudIcons;
-	public final fun bitmap (Ljava/lang/String;IZLandroidx/compose/runtime/Composer;II)Lorg/polyfrost/compose/render/PolyBitmap;
-}
-
 public final class org/polyfrost/oneconfig/api/hud/v1/HudGroup {
 	public static final field $stable I
 	public final fun contains (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
@@ -337,10 +331,13 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudGroup {
 	public final fun getDirectHuds ()Ljava/util/List;
 	public final fun getHuds ()Ljava/util/List;
 	public final fun getId ()Ljava/lang/String;
+	public final fun getLocked ()Z
 	public final fun getName ()Ljava/lang/String;
 	public final fun getParent ()Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
 	public final fun getPath ()Ljava/lang/String;
+	public final fun getScale ()F
 	public final fun getSubGroups ()Ljava/util/List;
+	public final fun getUniformScale ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -361,6 +358,9 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudGroups {
 	public static final fun group (Ljava/util/Collection;Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
 	public static synthetic fun group$default (Ljava/util/Collection;Ljava/util/Collection;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
 	public static final fun groupable (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
+	public static final fun hasUniformScale (Ljava/util/Collection;)Z
+	public static final fun matchScale (Ljava/util/Collection;F)V
+	public static final fun matchScale (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;F)V
 	public static final fun moveFrom (Ljava/util/Collection;Ljava/util/Map;FF)V
 	public static final fun nameOf (Ljava/lang/String;)Ljava/lang/String;
 	public static final fun of (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
@@ -369,7 +369,15 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudGroups {
 	public static final fun removeFromGroup (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun removeFromGroup (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)V
 	public static final fun roots (Ljava/util/Collection;)Ljava/util/List;
+	public static final fun scalable (Ljava/util/Collection;)Ljava/util/List;
+	public static final fun scaleOf (Ljava/util/Collection;)F
+	public static final fun scaleRange (Ljava/util/Collection;)Lkotlin/ranges/ClosedFloatingPointRange;
+	public static final fun scaleRange (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)Lkotlin/ranges/ClosedFloatingPointRange;
 	public static final fun scaling (Ljava/util/Collection;FF)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroups$Scaling;
+	public static final fun setLocked (Ljava/util/Collection;Z)V
+	public static final fun setLocked (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;Z)V
+	public static final fun setScale (Ljava/util/Collection;F)V
+	public static final fun setScale (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;F)V
 	public static final fun ungroup (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)V
 }
 
@@ -378,6 +386,12 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudGroups$Scaling {
 	public final fun apply (F)F
 	public final fun getMaxFactor ()F
 	public final fun getMinFactor ()F
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudIcons {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudIcons;
+	public final fun bitmap (Ljava/lang/String;IZLandroidx/compose/runtime/Composer;II)Lorg/polyfrost/compose/render/PolyBitmap;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {

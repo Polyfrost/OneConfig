@@ -1739,7 +1739,8 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/SwitchDefaults {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/SwitchKt {
-	public static final fun Switch-3csKH6Y (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;JZLandroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun Switch-3csKH6Y (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;JZLandroidx/compose/runtime/Composer;II)V
+	public static final fun Switch-mwpFuRA (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;JZZLandroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TabActivation : java/lang/Enum {

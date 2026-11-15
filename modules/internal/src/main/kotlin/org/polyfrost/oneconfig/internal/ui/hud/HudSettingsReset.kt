@@ -270,6 +270,15 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
     }
 }
 
+/** [HudSettingsContent] for a panel editing several HUDs at once, which is recreated when any one of them is */
+@Composable
+fun HudSettingsContent(huds: Collection<Hud>, content: @Composable () -> Unit) {
+    val list = huds.toList()
+    key(list, list.map(::hudUiEpoch)) {
+        content()
+    }
+}
+
 /**
  * Right-click menu on a HUD element in the design studio canvas
  *
@@ -298,7 +307,6 @@ fun HudCanvasResetMenu(
         hud = hud,
         targets = targets,
         onSettings = {},
-        settingsEnabled = true,
         onCopy = {},
         onCut = {},
         onPaste = {},
@@ -333,7 +341,6 @@ internal fun hudCanvasMenuEntries(
     hud: Hud,
     targets: List<Hud>,
     onSettings: (Hud) -> Unit,
-    settingsEnabled: Boolean,
     onCopy: (Hud) -> Unit,
     onCut: (Hud) -> Unit,
     onPaste: (Hud) -> Unit,
@@ -356,7 +363,6 @@ internal fun hudCanvasMenuEntries(
     hud = hud,
     targets = targets,
     onSettings = onSettings,
-    settingsEnabled = settingsEnabled,
     onCopy = onCopy,
     onCut = onCut,
     onPaste = onPaste,
@@ -382,7 +388,6 @@ private fun buildHudCanvasMenuEntries(
     hud: Hud,
     targets: List<Hud>,
     onSettings: (Hud) -> Unit,
-    settingsEnabled: Boolean,
     onCopy: (Hud) -> Unit,
     onCut: (Hud) -> Unit,
     onPaste: (Hud) -> Unit,
@@ -412,7 +417,6 @@ private fun buildHudCanvasMenuEntries(
         translated("oneconfig.hud.menu.settings", "Settings"),
         { onSettings(hud) },
         icon = "settings",
-        enabled = settingsEnabled,
         shortcutHint = keybindHint(OneConfigConfig.hudSettingsKeybind),
     )
     entries += MenuAction(
