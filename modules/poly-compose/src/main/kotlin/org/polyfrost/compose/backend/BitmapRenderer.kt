@@ -1,14 +1,14 @@
 package org.polyfrost.compose.backend
 
 import androidx.compose.ui.graphics.ImageBitmapConfig
-import kotlin.math.ceil
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.min
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyTessellator
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Rasterizes the tessellator's output into a [PolyImageBitmap] on the CPU, backing `Canvas(ImageBitmap)`.

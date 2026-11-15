@@ -1,12 +1,5 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
-import java.util.Collections
-import java.util.ServiceLoader
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.BooleanSupplier
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -16,6 +9,13 @@ import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.keybindBridge
+import java.util.Collections
+import java.util.ServiceLoader
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.BooleanSupplier
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
 
 @Suppress("UnstableApiUsage")
 public object KeybindManager {

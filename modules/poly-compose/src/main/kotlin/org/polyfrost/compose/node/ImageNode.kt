@@ -1,7 +1,7 @@
 package org.polyfrost.compose.node
 
-import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.layout.px
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.RenderContext
 
 public class ImageNode(

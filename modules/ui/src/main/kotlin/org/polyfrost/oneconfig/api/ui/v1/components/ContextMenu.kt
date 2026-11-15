@@ -45,14 +45,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntOffset
-import java.awt.event.KeyEvent as AwtKeyEvent
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.roundToInt
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.internal.keybindRecordingBridge
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.roundToInt
+import java.awt.event.KeyEvent as AwtKeyEvent
 
 @ExperimentalOneConfigUiApi
 @Composable

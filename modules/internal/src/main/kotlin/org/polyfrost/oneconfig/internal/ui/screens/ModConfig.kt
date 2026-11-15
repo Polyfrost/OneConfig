@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import java.util.function.Predicate
 import kotlinx.coroutines.delay
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
@@ -25,6 +24,7 @@ import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.search.submenuTrail
+import java.util.function.Predicate
 
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 

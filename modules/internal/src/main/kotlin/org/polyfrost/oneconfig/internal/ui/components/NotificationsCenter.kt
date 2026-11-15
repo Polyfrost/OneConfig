@@ -27,7 +27,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.time.Instant
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationState
@@ -54,6 +53,7 @@ import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.oneconfig.utils.v1.Formatters
+import java.time.Instant
 
 private val PanelWidth = 368.dp
 private val ButtonShape @Composable get() = LocalTheme.current.buttonShape

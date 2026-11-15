@@ -1,8 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings
 
-import java.awt.Color
-import java.util.function.Function
-import java.util.function.Supplier
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.SliderBounds
@@ -17,6 +14,9 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedText
 import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
 import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
 import org.polyfrost.oneconfig.internal.ui.components.settings.toNumberType
+import java.awt.Color
+import java.util.function.Function
+import java.util.function.Supplier
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import java.lang.reflect.Array as ReflectArray

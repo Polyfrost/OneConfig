@@ -6,10 +6,10 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.ServiceLoader
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.api.hud.v1.LocalHud
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
+import java.util.ServiceLoader
 
 /** A stable item registry ID and the localized name shown to the user */
 data class ItemDescriptor(override val id: String, override val displayName: String) : PickerEntry

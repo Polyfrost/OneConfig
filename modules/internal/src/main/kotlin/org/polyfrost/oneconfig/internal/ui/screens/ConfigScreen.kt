@@ -62,12 +62,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
-import java.util.function.Predicate
-import javax.imageio.ImageIO
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.polyfrost.compose.backend.asComposeImageBitmap
@@ -151,6 +145,12 @@ import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
+import java.util.function.Predicate
+import javax.imageio.ImageIO
 import kotlin.math.min
 import kotlin.math.roundToInt
 

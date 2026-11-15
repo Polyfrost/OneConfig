@@ -1,9 +1,9 @@
 package org.polyfrost.compose.mc
 
-import kotlin.math.roundToInt
 import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
+import kotlin.math.roundToInt
 
 /**
  * A glyph of the game's active font, drawn from the [u0]..[v1] region of [bitmap] (null for blank glyphs) and tinted by the text color.

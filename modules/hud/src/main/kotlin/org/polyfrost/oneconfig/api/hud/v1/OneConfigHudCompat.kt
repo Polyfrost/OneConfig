@@ -2,12 +2,12 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.BooleanSupplier
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.BooleanSupplier
 
 private class OneConfigHudCompat(val wrapper: OneConfigHudWrapper) :
     Hud(wrapper.id, wrapper.name, Category.COMPAT), LegacyHudMarker {

@@ -2,11 +2,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import java.util.function.Supplier
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import java.util.function.Supplier
 
 private val LOGGER = LogManager.getLogger("OneConfig/Config")
 

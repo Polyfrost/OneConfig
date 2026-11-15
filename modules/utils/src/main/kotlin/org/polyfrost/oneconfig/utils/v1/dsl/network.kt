@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.utils.v1.dsl
 
-import java.nio.file.Path
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
+import java.nio.file.Path
 
 /**
  * Downloads the given [url] to the given [Path]

@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
-import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyBitmap
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 public object SvgMask {

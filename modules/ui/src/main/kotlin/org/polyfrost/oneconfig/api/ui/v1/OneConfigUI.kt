@@ -2,11 +2,11 @@
 
 package org.polyfrost.oneconfig.api.ui.v1
 
-import java.util.ServiceLoader
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
+import java.util.ServiceLoader
 
 /**
  * Utility for opening the OneConfig UI

@@ -1,8 +1,8 @@
 package org.polyfrost.compose.node
 
 import org.polyfrost.compose.layout.PolySize
-import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.RenderContext
 
 public class TextNode : PolyNode() {

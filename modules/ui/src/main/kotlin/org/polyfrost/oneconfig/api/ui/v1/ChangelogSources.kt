@@ -4,8 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.concurrent.CompletableFuture
 import org.apache.logging.log4j.LogManager
+import java.util.concurrent.CompletableFuture
 
 @ExperimentalOneConfigUiApi
 public abstract class ChangelogSource {

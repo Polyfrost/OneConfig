@@ -7,11 +7,11 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTypography
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
+import java.util.concurrent.ConcurrentHashMap
 
 /** Sets a panel background color's alpha from an opacity percentage between 0 and 100 */
 fun Color.withOpacityPercent(percent: Float): Color =

@@ -12,13 +12,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import java.math.BigDecimal
-import java.util.Locale
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import java.math.BigDecimal
+import java.util.Locale
 import kotlin.math.roundToInt
 
 fun Float.toNumberType(type: Class<*>): Number = when (type) {

@@ -7,11 +7,6 @@ import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.hypot
-import kotlin.math.roundToInt
-import kotlin.math.sin
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -21,6 +16,11 @@ import org.polyfrost.compose.backend.PolyCompose
 import org.polyfrost.compose.backend.PolyPaint
 import org.polyfrost.compose.mc.McGlyph
 import org.polyfrost.compose.mc.McGlyphs
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.hypot
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 class PolyTessellatorTest {
     private class Batch(val texture: Any, val verts: FloatArray, val colors: IntArray, val nearest: Boolean = false)

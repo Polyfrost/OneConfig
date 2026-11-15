@@ -15,7 +15,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotMutableState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import java.lang.reflect.Array as ReflectArray
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include
+import org.polyfrost.oneconfig.api.config.v1.annotations.MasterToggle
+import org.polyfrost.oneconfig.api.config.v1.annotations.Option
+import org.polyfrost.oneconfig.api.config.v1.copy
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.utils.v1.MHUtils
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.util.ArrayDeque
@@ -36,16 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.oneconfig.api.config.v1.Config
-import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion
-import org.polyfrost.oneconfig.api.config.v1.annotations.Include
-import org.polyfrost.oneconfig.api.config.v1.annotations.MasterToggle
-import org.polyfrost.oneconfig.api.config.v1.annotations.Option
-import org.polyfrost.oneconfig.api.config.v1.copy
-import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
-import org.polyfrost.oneconfig.utils.v1.MHUtils
+import java.lang.reflect.Array as ReflectArray
 
 private const val MAX_NESTED_DEPTH = 4
 private const val MAX_REBIND_DEPTH = 3

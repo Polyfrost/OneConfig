@@ -1,12 +1,13 @@
 package org.polyfrost.compose.render
 
+import org.polyfrost.compose.mc.McGlyph
+import org.polyfrost.compose.mc.McGlyphs
 import java.util.Arrays
 import java.util.Collections
 import java.util.WeakHashMap
+import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.atan2
-import kotlin.math.tan
-import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.exp
@@ -17,8 +18,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
-import org.polyfrost.compose.mc.McGlyph
-import org.polyfrost.compose.mc.McGlyphs
+import kotlin.math.tan
 
 public abstract class PolyTessellator : PolyRenderer {
     // explicit API mode demands visibility on members of these protected classes, yet the

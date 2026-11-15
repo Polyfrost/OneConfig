@@ -4,10 +4,10 @@ package org.polyfrost.oneconfig.api.config.v1
 
 import com.electronwill.nightconfig.json.JsonFormat
 import com.electronwill.nightconfig.json.JsonParser
-import java.io.StringWriter
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter
+import java.io.StringWriter
 
 @ApiStatus.Experimental
 @JvmOverloads

@@ -38,6 +38,10 @@ import androidx.compose.ui.graphics.platform.PlatformGraphics
 import androidx.compose.ui.graphics.platform.PlatformRenderEffect
 import androidx.compose.ui.graphics.platform.PlatformShader
 import androidx.compose.ui.graphics.toArgb
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFade
+import org.polyfrost.compose.render.PolyGradient
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -46,10 +50,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
-import org.polyfrost.compose.render.PolyBitmap
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.render.PolyFade
-import org.polyfrost.compose.render.PolyGradient
 
 public object PolyGraphics : PlatformGraphics {
     override fun createCanvas(image: ImageBitmap): Canvas {

@@ -17,7 +17,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import java.util.concurrent.ConcurrentHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
 import org.apache.logging.log4j.LogManager
@@ -25,6 +24,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import java.util.concurrent.ConcurrentHashMap
 
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 

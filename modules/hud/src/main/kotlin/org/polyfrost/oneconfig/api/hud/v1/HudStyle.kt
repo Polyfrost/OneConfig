@@ -3,13 +3,13 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.Collections
-import java.util.IdentityHashMap
-import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.copy
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 @ExperimentalOneConfigUiApi
 public data class HudStyle(

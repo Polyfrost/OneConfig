@@ -54,8 +54,8 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
@@ -74,6 +74,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
+import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.asin
@@ -87,16 +97,6 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.math.sin
-import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
-import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
-import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
-import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
-import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
-import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
-import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
-import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
-import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 
 @ExperimentalOneConfigUiApi
 @Immutable

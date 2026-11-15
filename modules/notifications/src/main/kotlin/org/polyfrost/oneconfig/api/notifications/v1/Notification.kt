@@ -26,13 +26,13 @@
 
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.skia.Image
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.render.PolyColor
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.render.PolyBitmap
-import org.jetbrains.skia.Image
 
 /**
  * The visual category of a [Notification]

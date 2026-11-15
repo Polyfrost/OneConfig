@@ -1,11 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Predicate
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -16,6 +10,12 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.slf4j.LoggerFactory
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Predicate
 
 object ProfileKeybinds {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ProfileKeybinds")

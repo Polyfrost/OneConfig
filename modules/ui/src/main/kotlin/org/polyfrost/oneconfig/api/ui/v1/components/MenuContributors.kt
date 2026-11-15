@@ -2,9 +2,6 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
-import java.lang.reflect.Array as ReflectArray
-import java.util.Locale
-import java.util.concurrent.CopyOnWriteArrayList
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -14,6 +11,9 @@ import org.polyfrost.oneconfig.api.ui.v1.OptionWidgets
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
+import java.util.Locale
+import java.util.concurrent.CopyOnWriteArrayList
+import java.lang.reflect.Array as ReflectArray
 
 private val CONTRIBUTOR_LOGGER = LogManager.getLogger("OneConfig/MenuContributors")
 

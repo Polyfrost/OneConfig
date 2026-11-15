@@ -31,9 +31,9 @@ import androidx.compose.ui.node.TraversableNode.Companion.TraverseDescendantsAct
 import androidx.compose.ui.node.traverseAncestors
 import androidx.compose.ui.node.traverseDescendants
 import androidx.compose.ui.platform.LocalFocusManager
-import java.util.function.BooleanSupplier
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import java.util.function.BooleanSupplier
 
 @ExperimentalOneConfigUiApi
 public fun Modifier.focusRegion(order: Int): Modifier = focusRegion(order, true)

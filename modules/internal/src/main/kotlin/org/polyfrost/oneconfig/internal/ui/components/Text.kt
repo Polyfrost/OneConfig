@@ -13,7 +13,6 @@ import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
-import java.util.concurrent.ConcurrentHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.format.Style
@@ -21,6 +20,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.api.TextComponent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import java.util.concurrent.ConcurrentHashMap
 import net.kyori.adventure.text.format.TextDecoration as KyoriDecoration
 
 fun Any.asRenderText(): String {

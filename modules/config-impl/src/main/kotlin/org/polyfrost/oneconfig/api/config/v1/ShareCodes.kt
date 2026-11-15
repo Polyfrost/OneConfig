@@ -6,13 +6,6 @@ import com.electronwill.nightconfig.core.Config
 import com.electronwill.nightconfig.core.NullObject
 import com.electronwill.nightconfig.core.UnmodifiableConfig
 import com.electronwill.nightconfig.json.JsonFormat
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.util.Base64
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter
@@ -21,6 +14,13 @@ import org.polyfrost.oneconfig.api.ui.v1.OptionWidgets
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.util.Base64
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import java.lang.reflect.Array as JArray
 
 @ApiStatus.Experimental

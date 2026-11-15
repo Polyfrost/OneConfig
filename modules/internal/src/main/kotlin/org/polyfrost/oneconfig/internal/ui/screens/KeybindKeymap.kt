@@ -50,9 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import java.awt.im.InputContext
-import java.util.Locale
-import java.util.ServiceLoader
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.ArrowDirection
 import org.polyfrost.oneconfig.api.ui.v1.components.ArrowKey
@@ -88,6 +85,9 @@ import org.polyfrost.oneconfig.internal.ui.components.shellTransition
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindGroup
+import java.awt.im.InputContext
+import java.util.Locale
+import java.util.ServiceLoader
 
 private val MAX_UNIT = 42.dp
 private val MIN_UNIT = 26.dp

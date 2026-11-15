@@ -1,8 +1,8 @@
 package org.polyfrost.compose.render
 
-import java.util.Base64
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.Base64
 
 class PolyBitmapTest {
     @Test

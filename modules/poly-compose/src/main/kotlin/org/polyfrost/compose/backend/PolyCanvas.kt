@@ -27,13 +27,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import java.util.WeakHashMap
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.hypot
-import kotlin.math.min
-import kotlin.math.sqrt
-import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFade
@@ -42,6 +35,13 @@ import org.polyfrost.compose.render.PolyPath
 import org.polyfrost.compose.render.PolyRenderer
 import org.polyfrost.compose.render.PolyShadow
 import org.polyfrost.compose.render.RenderContext
+import java.util.WeakHashMap
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.hypot
+import kotlin.math.min
+import kotlin.math.sqrt
+import org.polyfrost.compose.render.FilterQuality as PolyFilterQuality
 
 public interface PolyDrawCanvas : Canvas {
     public fun polyOp(op: (PolyCanvas) -> Unit)

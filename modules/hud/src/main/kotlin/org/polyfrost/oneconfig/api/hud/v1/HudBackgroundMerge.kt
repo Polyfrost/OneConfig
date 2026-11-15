@@ -26,17 +26,17 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyGradient
+import org.polyfrost.compose.render.PolyPath
+import org.polyfrost.compose.render.RenderContext
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import java.util.IdentityHashMap
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.roundToInt
-import org.polyfrost.compose.render.PolyColor
-import org.polyfrost.compose.render.PolyGradient
-import org.polyfrost.compose.render.PolyPath
-import org.polyfrost.compose.render.RenderContext
-import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 internal enum class MergeAxis { X, Y }
 

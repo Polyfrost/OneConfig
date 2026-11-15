@@ -1,10 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.concurrent.atomic.AtomicLong
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.NO_MASTER_SWITCH_KEY
 import org.polyfrost.oneconfig.api.config.v1.Node
@@ -14,6 +9,11 @@ import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import org.slf4j.LoggerFactory
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.concurrent.atomic.AtomicLong
 
 /** What the user set for an option whose value is overwritten while its mod is switched off */
 class HeldValue(val value: Any?)

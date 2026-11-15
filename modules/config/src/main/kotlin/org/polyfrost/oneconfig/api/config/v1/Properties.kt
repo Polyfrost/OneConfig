@@ -26,11 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
+import org.jetbrains.annotations.Contract
 import java.lang.reflect.Field
 import java.util.function.Consumer
 import java.util.function.Supplier
 import kotlin.reflect.KMutableProperty0
-import org.jetbrains.annotations.Contract
 
 public object Properties {
     /**

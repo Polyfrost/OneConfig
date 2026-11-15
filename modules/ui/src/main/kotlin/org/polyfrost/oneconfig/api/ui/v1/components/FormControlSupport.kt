@@ -23,10 +23,10 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.ceil
-import kotlin.math.min
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import kotlin.math.ceil
+import kotlin.math.min
 
 internal fun formControlString(key: String, fallback: String): String =
     runCatching { Platform.i18n().translateString(key) }.getOrNull()?.takeIf { it.isNotBlank() && it != key } ?: fallback

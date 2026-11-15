@@ -3,8 +3,8 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import java.util.IdentityHashMap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import java.util.IdentityHashMap
 
 private object HeldPreviews {
     private val held = IdentityHashMap<Hud, HashMap<String, Any?>>()

@@ -2,11 +2,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import java.lang.ref.WeakReference
-import java.util.function.Supplier
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
+import java.lang.ref.WeakReference
+import java.util.function.Supplier
 
 @ApiStatus.Experimental
 @JvmOverloads

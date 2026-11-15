@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.utils.v1
 
+import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -11,8 +13,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.math.abs
-import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 @ApiStatus.Experimental
 public object Formatters {

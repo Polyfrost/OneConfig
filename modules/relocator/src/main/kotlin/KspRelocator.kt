@@ -7,12 +7,12 @@ import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSFile
-import java.io.OutputStream
 import me.owdding.kotlinpoet.*
 import me.owdding.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import me.owdding.kotlinpoet.ksp.writeTo
 import org.polyfrost.oneconfig.relocator.SourceFileHelper.replacePatterns
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin
+import java.io.OutputStream
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.readText

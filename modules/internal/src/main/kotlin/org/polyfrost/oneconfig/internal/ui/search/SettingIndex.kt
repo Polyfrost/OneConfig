@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
-import java.util.IdentityHashMap
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -15,6 +14,7 @@ import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
+import java.util.IdentityHashMap
 
 internal const val PRIMARY = "primary"
 internal const val SUBMENU = "submenu"

@@ -28,14 +28,10 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import androidx.compose.runtime.ProvidableCompositionLocal
-import java.lang.ref.WeakReference
-import java.util.WeakHashMap
-import java.util.concurrent.atomic.AtomicInteger
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
@@ -62,6 +58,9 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.page.PageText
+import java.lang.ref.WeakReference
+import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 
 @ApiStatus.Internal

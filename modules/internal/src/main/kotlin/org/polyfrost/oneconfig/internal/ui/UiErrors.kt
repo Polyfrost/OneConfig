@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui
 
-import java.util.concurrent.ConcurrentHashMap
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import java.util.concurrent.ConcurrentHashMap
 
 object UiErrors {
     private val LOGGER = LogManager.getLogger("OneConfig/UI")

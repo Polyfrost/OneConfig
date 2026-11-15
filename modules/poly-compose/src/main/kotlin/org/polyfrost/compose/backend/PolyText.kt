@@ -17,9 +17,9 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.FontHinting
 import androidx.compose.ui.text.FontRasterizationSettings
 import androidx.compose.ui.text.FontSmoothing
-import androidx.compose.ui.text.FontHinting
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlatformParagraph

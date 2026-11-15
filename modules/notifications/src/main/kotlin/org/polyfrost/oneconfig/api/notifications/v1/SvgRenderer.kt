@@ -1,5 +1,10 @@
 package org.polyfrost.oneconfig.api.notifications.v1
 
+import org.polyfrost.compose.render.PolyBitmap
+import org.w3c.dom.Element
+import org.xml.sax.ErrorHandler
+import org.xml.sax.InputSource
+import org.xml.sax.SAXParseException
 import java.io.StringReader
 import java.util.Base64
 import javax.xml.XMLConstants
@@ -16,11 +21,6 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
-import org.polyfrost.compose.render.PolyBitmap
-import org.w3c.dom.Element
-import org.xml.sax.ErrorHandler
-import org.xml.sax.InputSource
-import org.xml.sax.SAXParseException
 
 internal class SvgStyle(
     var fill: String = "black",
@@ -242,7 +242,7 @@ internal class SvgDoc(val root: Element) {
         }
 
         fun parse(svg: String): SvgDoc? {
-            val text = svg.trimStart('﻿', ' ', '\t', '\r', '\n')
+            val text = svg.trimStart('', ' ', '\t', '\r', '\n')
             val root = builders.get().parse(InputSource(StringReader(text))).documentElement ?: return null
             if (root.localName != "svg") return null
             return SvgDoc(root)

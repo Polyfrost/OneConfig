@@ -43,10 +43,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.net.URI
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import org.commonmark.node.Code
 import org.commonmark.node.Emphasis
 import org.commonmark.node.HardLineBreak
@@ -83,6 +79,10 @@ import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
+import java.net.URI
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import org.commonmark.node.Text as CmText
 
 private val LocalInstalledVersion = compositionLocalOf<String?> { null }

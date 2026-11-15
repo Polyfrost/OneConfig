@@ -18,11 +18,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.util.Collections
-import java.util.IdentityHashMap
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
-import java.util.function.Predicate
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
 import org.polyfrost.compose.render.PolyColor
@@ -56,6 +51,11 @@ import org.polyfrost.oneconfig.internal.ui.components.legacyText
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
+import java.util.function.Predicate
 
 val LocalOptionWidth = compositionLocalOf { 300.dp }
 

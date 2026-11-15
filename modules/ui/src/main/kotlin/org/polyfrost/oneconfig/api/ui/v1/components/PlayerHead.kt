@@ -28,17 +28,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.util.UUID
 import kotlinx.coroutines.delay
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.playerHeadBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import java.util.UUID
 
 @ExperimentalOneConfigUiApi
 public object PlayerHeads {

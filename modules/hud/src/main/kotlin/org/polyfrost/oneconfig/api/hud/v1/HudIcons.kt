@@ -3,6 +3,11 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.oneconfig.api.notifications.v1.SvgMask
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -10,11 +15,6 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import kotlin.math.max
 import kotlin.math.roundToInt
-import org.polyfrost.compose.render.PolyBitmap
-import org.polyfrost.oneconfig.api.notifications.v1.SvgMask
-import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
-import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
-import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 
 @ExperimentalOneConfigUiApi
 public object HudIcons {

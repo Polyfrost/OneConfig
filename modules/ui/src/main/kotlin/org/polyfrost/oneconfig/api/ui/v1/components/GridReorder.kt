@@ -54,8 +54,6 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -63,6 +61,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val AutoScrollZone = 40.dp
 private val AutoScrollRamp = 240.dp

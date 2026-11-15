@@ -4,9 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.concurrent.CopyOnWriteArrayList
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Registry of the master switches shown on mod cards

@@ -15,9 +15,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
@@ -43,6 +40,9 @@ import org.polyfrost.oneconfig.internal.ui.screens.Preferences
 import org.polyfrost.oneconfig.internal.ui.screens.Profiles
 import org.polyfrost.oneconfig.internal.ui.screens.Themes
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 @Serializable
 data class PageRoute(val pageId: String)

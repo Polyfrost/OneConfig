@@ -1,9 +1,9 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
-import kotlin.experimental.and
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable
+import kotlin.experimental.and
 
 public open class OneConfigKeybind(
     public var keyCodes: IntArray?,

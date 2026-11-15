@@ -4,17 +4,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
-import java.lang.invoke.MethodHandles.publicLookup
-import java.lang.invoke.MethodType.methodType
-import java.net.URLClassLoader
-import java.time.Duration.ofSeconds
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.CyclicBarrier
-import java.util.concurrent.TimeUnit.SECONDS
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.thread
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -30,6 +19,17 @@ import org.polyfrost.compose.node.TextNode
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.runtime.PolyComposeClock
 import org.polyfrost.compose.runtime.PolyComposeRuntime
+import java.lang.invoke.MethodHandles.publicLookup
+import java.lang.invoke.MethodType.methodType
+import java.net.URLClassLoader
+import java.time.Duration.ofSeconds
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 
 class NotificationsManagerConcurrencyTest {
     @BeforeEach

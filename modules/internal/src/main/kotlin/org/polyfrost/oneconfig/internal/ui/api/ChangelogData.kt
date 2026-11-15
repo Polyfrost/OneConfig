@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
-import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -19,6 +18,7 @@ import org.commonmark.parser.Parser
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.ui.v1.ChangelogSource
 import org.slf4j.LoggerFactory
+import java.nio.charset.StandardCharsets
 import kotlin.time.Duration.Companion.seconds
 
 enum class ChangeKind(val heading: String) {

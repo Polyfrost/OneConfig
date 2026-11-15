@@ -1,8 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
-import java.net.URLDecoder
-import java.net.URLEncoder
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,6 +11,9 @@ import org.commonmark.parser.Parser
 import org.polyfrost.oneconfig.utils.v1.JsonUtils
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.slf4j.LoggerFactory
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
 
 data class ModrinthVersionLink(val project: String, val version: String) {
     val pageUrl: String get() = "https://modrinth.com/project/${encode(project)}/version/${encode(version)}"

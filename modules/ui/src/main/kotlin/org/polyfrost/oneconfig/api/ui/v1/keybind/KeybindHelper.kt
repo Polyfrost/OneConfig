@@ -1,8 +1,8 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import java.util.function.Consumer
 import kotlin.experimental.or
-import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 public class KeybindHelper {
     private val keyCodes = mutableListOf<Int>()

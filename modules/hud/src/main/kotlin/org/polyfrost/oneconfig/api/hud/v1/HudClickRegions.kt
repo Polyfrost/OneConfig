@@ -5,12 +5,12 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.Collections
-import java.util.IdentityHashMap
-import java.util.concurrent.atomic.AtomicLong
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 @ExperimentalOneConfigUiApi
 public enum class HudMouseButton {

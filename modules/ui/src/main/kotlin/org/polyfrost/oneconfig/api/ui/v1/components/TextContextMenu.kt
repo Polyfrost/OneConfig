@@ -12,8 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import java.util.Locale
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import java.util.Locale
 import androidx.compose.foundation.ContextMenuState as FoundationContextMenuState
 
 @ExperimentalOneConfigUiApi

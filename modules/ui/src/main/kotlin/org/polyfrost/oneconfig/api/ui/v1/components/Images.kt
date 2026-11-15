@@ -6,12 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
-import java.awt.RenderingHints
-import java.awt.image.BufferedImage
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
-import javax.imageio.ImageIO
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +18,12 @@ import kotlinx.coroutines.withContext
 import org.polyfrost.compose.backend.asComposeImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import javax.imageio.ImageIO
 
 @ExperimentalOneConfigUiApi
 public fun PolyBitmap.Companion.fromFile(path: Path, maxBytes: Long = 16L shl 20): PolyBitmap? = runCatching {
