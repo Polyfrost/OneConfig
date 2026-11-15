@@ -242,7 +242,7 @@ internal class SvgDoc(val root: Element) {
         }
 
         fun parse(svg: String): SvgDoc? {
-            val text = svg.trimStart('', ' ', '\t', '\r', '\n')
+            val text = svg.trimStart('\uFEFF', ' ', '\t', '\r', '\n')
             val root = builders.get().parse(InputSource(StringReader(text))).documentElement ?: return null
             if (root.localName != "svg") return null
             return SvgDoc(root)
