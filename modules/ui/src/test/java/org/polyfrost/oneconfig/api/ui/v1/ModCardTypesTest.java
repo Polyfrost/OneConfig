@@ -26,13 +26,24 @@
 
 package org.polyfrost.oneconfig.api.ui.v1;
 
+import androidx.compose.runtime.snapshots.MutableSnapshot;
+import androidx.compose.runtime.snapshots.ObserverHandle;
+import androidx.compose.runtime.snapshots.Snapshot;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
+import kotlin.Unit;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModCardTypesTest {
     @Test
@@ -111,5 +122,98 @@ class ModCardTypesTest {
                 .toList();
 
         assertEquals(List.of("mct.order.high", "mct.order.mid", "mct.order.low"), ordered);
+    }
+
+    @Test
+    void everyMutationInvalidatesRevisionReaders() {
+        ModCardTypeResolver resolver = id -> null;
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> ModCardTypes.register(new ModCardType("mct.inv", "Inv"))));
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> ModCardTypes.assign("mct-inv", "mct.inv")));
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> ModCardTypes.assignAll("mct.inv", "mct-inv-b")));
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> ModCardTypes.registerResolver(resolver)));
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> ModCardTypes.unassign("mct-inv")));
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> ModCardTypes.unregisterResolver(resolver)));
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> ModCardTypes.unregister("mct.inv")));
+    }
+
+    @Test
+    void concurrentMutationsAreAllPublished() {
+        ModCardTypes.register(new ModCardType("mct.race", "Race"));
+        int before = ModCardTypes.getRevision();
+        assertTrue(invalidates(ModCardTypes::getRevision, () -> race(i -> ModCardTypes.assign("mct-race-" + i, "mct.race"))));
+        assertEquals(before + RACE_THREADS * RACE_ITERATIONS, ModCardTypes.getRevision());
+        for (int i = 0; i < RACE_THREADS * RACE_ITERATIONS; i++) assertNotNull(ModCardTypes.typeFor("mct-race-" + i));
+    }
+
+    static final int RACE_THREADS = 4;
+    static final int RACE_ITERATIONS = 2000;
+
+    static void race(IntConsumer mutation) {
+        Thread[] threads = new Thread[RACE_THREADS];
+        for (int t = 0; t < threads.length; t++) {
+            int base = t * RACE_ITERATIONS;
+            threads[t] = new Thread(() -> {
+                for (int i = 0; i < RACE_ITERATIONS; i++) mutation.accept(base + i);
+            });
+            threads[t].setDaemon(true);
+            threads[t].start();
+        }
+        for (Thread thread : threads) {
+            try {
+                thread.join(30_000);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+            assertFalse(thread.isAlive(), () -> thread.getName() + " still running: " + Arrays.toString(thread.getStackTrace()));
+        }
+    }
+
+    static boolean invalidates(IntSupplier getter, Runnable mutation) {
+        Set<Object> reads = new HashSet<>();
+        Snapshot snapshot = Snapshot.Companion.takeSnapshot(state -> {
+            reads.add(state);
+            return Unit.INSTANCE;
+        });
+        try {
+            snapshot.enter(getter::getAsInt);
+        } finally {
+            snapshot.dispose();
+        }
+        Snapshot.Companion.sendApplyNotifications();
+        Set<Object> changed = new HashSet<>();
+        ObserverHandle observer = Snapshot.Companion.registerApplyObserver((set, applied) -> {
+            changed.addAll(set);
+            return Unit.INSTANCE;
+        });
+        try {
+            mutation.run();
+            Snapshot.Companion.sendApplyNotifications();
+        } finally {
+            observer.dispose();
+        }
+        return !reads.isEmpty() && changed.containsAll(reads);
+    }
+
+    @Test
+    void bumpsFromOverlappingCallerSnapshotsAreNotLost() {
+        MutableSnapshot a = Snapshot.Companion.takeMutableSnapshot(null, null);
+        MutableSnapshot b = Snapshot.Companion.takeMutableSnapshot(null, null);
+        try {
+            int before = ModCardTypes.getRevision();
+            a.enter(() -> {
+                ModCardTypes.assign("mct-snap-a", "mct.snap");
+                return null;
+            });
+            b.enter(() -> {
+                ModCardTypes.assign("mct-snap-b", "mct.snap");
+                return null;
+            });
+            a.apply().check();
+            b.apply().check();
+            assertEquals(before + 2, ModCardTypes.getRevision());
+        } finally {
+            a.dispose();
+            b.dispose();
+        }
     }
 }

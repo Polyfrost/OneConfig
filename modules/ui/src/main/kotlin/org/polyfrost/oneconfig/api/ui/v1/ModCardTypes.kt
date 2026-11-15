@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager
 public object ModCardTypes {
     private val LOGGER = LogManager.getLogger("OneConfig/ModCardTypes")
     private val lock = Any()
+    private val revisionLock = Any()
 
     @Volatile
     private var typesById: Map<String, ModCardType> = emptyMap()
@@ -147,6 +148,6 @@ public object ModCardTypes {
         }
 
     private fun bump() {
-        Snapshot.withMutableSnapshot { revision++ }
+        synchronized(revisionLock) { Snapshot.global { revision++ } }
     }
 }

@@ -19,6 +19,7 @@ import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 public object ModToggles {
     private val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
     private val lock = Any()
+    private val revisionLock = Any()
 
     @Volatile
     private var toggles: Map<String, ModToggle> = emptyMap()
@@ -175,6 +176,6 @@ public object ModToggles {
     ).map { it.trim().lowercase() }.distinct()
 
     private fun bump() {
-        Snapshot.withMutableSnapshot { revision++ }
+        synchronized(revisionLock) { Snapshot.global { revision++ } }
     }
 }
