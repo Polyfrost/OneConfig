@@ -30,3 +30,26 @@ Guidelines for pull requests:
 - **One pull request per feature**: Please open an individual pull request for each new feature or for each bug fix, this makes it easier for us to keep track of everything.
 - **Update documentation**: Please update the documentation of features your pull request effects, and if you don't have access to this docmentation please state it in your pull request description.
 - **Backwards compatibility**: Please keep in mind that OneConfig **has** to be backwards compatible, if you change anything about the public API that can break mods that use OneConfig, your pull request will be instantly denied.
+
+## Commit messages
+
+Commits follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):
+
+```
+<type>(<scope>): <description>
+```
+
+- `type` is one of `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `style`, `build`, `ci`, `chore` or `revert`.
+- `scope` is optional. Use the module or area the change touches, or `deps` for dependency bumps.
+- Write the description in the imperative, starting lowercase, with no full stop at the end.
+- Mark a breaking change with `!` before the colon.
+- Keep the subject under about 72 characters. Only add a body to reference an issue, such as `Fixes #12`.
+- Put one change in each commit. Unrelated fixes go in separate commits.
+
+Examples:
+
+```
+fix: keep the menu open after resizing the window
+chore(deps): bump Gradle to 9.2
+feat!: rename the config file
+```
