@@ -429,7 +429,7 @@ internal fun ColorPicker(
                 model,
                 onColorChanged,
                 { expanded = false },
-                placement = Placement.BelowStart,
+                placement = Placement.BelowEnd,
                 chromaCapable = chromaCapable,
                 gradientCapable = gradientCapable,
             )
