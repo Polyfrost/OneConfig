@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -168,10 +169,7 @@ enum class ModCategory(
 
 @Composable
 fun Mods() {
-    Box {
-        DecoratedModsPage(ModsPageDecorators.all(), 0)
-        ModSortControl(Modifier.align(Alignment.TopEnd))
-    }
+    DecoratedModsPage(ModsPageDecorators.all(), 0)
 }
 
 @Composable
@@ -188,6 +186,7 @@ private fun ModsPage() {
         Row(
             modifier = Modifier.padding(horizontal = PageGutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             val cards = ConfigRegistry.modCardConfigs
             ModCategory.entries.forEach {
@@ -213,6 +212,9 @@ private fun ModsPage() {
                     )
                 }
             }
+            // in the flow instead of overlaid, so the sort control never covers category chips
+            Spacer(Modifier.weight(1f))
+            ModSortControl()
         }
         ModsGrid(activeCategory)
     }

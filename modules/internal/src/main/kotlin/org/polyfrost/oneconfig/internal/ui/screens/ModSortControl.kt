@@ -14,7 +14,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.internal.ui.api.ModSortStore
 import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 
 private val customMode = ModSortMode(ModSortStore.CUSTOM, "dots-grid", "Custom order") {}
 private val alphabeticalMode = ModSortMode(ModSortStore.ALPHABETICAL, "capitalized", "A to Z") {}
@@ -56,7 +55,7 @@ fun ModSortControl(modifier: Modifier = Modifier) {
         tabs = modes.map { TabItem(it, "", icon = it.icon, tooltip = it.label()) },
         selected = selected,
         onSelect = ::pick,
-        modifier = modifier.padding(end = PageGutter),
+        modifier = modifier,
         style = TabStyle.Segmented,
         size = ControlSize.Large,
         fill = false,
