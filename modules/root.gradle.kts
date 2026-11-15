@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.diffplug.gradle.spotless.SpotlessExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -7,6 +8,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("maven-publish")
     id("signing")
+    id("com.diffplug.spotless") version "8.11.0"
 }
 
 val rootModuleProject = project
@@ -18,6 +20,7 @@ subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "oneconfig-lint")
+    apply(plugin = "com.diffplug.spotless")
 
     group = rootProject.group
     version = rootProject.version
@@ -125,8 +128,8 @@ subprojects {
         }
         // otherwise the compile finalizer fails the build before updateKotlinAbi gets to run
         tasks.named("checkKotlinAbi") { mustRunAfter("updateKotlinAbi") }
-        tasks.withType<JavaCompile>().configureEach { finalizedBy("checkKotlinAbi") }
-        tasks.withType<KotlinCompile>().configureEach { finalizedBy("checkKotlinAbi") }
+        tasks.withType<JavaCompile>().configureEach { finalizedBy("checkKotlinAbi", "spotlessJavaCheck") }
+        tasks.withType<KotlinCompile>().configureEach { finalizedBy("checkKotlinAbi", "spotlessKotlinCheck") }
     }
 
     val kotlinModuleName = project.name
@@ -211,5 +214,17 @@ subprojects {
             archiveBaseName.set(project.name)
         }
     }
-}
 
+    configure<SpotlessExtension> {
+        java {
+            target("**/*.java")
+            importOrder("", "javax|java", "\\#")
+            removeUnusedImports()
+        }
+
+        kotlin {
+            target("**/*.kt", "**/*.kts")
+            ktlint()
+        }
+    }
+}

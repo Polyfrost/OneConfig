@@ -1,0 +1,4 @@
+[*.{kt,kts}]
+ktlint_standard = disabled
+ktlint_standard_no-unused-imports = enabled
+ij_kotlin_imports_layout = *,java.,javax.,kotlin.**,^
