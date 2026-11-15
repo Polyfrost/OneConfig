@@ -43,8 +43,15 @@ private class Entry(val hudClass: Class<out Hud>, val values: Map<String, Value>
 
 private class Layout(val owner: ConfigManager, val huds: Map<String, Entry>)
 
-private fun sameValue(a: Any?, b: Any?): Boolean =
-    if (a is Float && b is Float) abs(a - b) < FLOAT_TOLERANCE else a == b
+private fun sameValue(a: Any?, b: Any?): Boolean = when {
+    a is Float && b is Float -> abs(a - b) < FLOAT_TOLERANCE
+    a is Map<*, *> && b is Map<*, *> ->
+        a.size == b.size && a.all { (key, value) -> b.containsKey(key) && sameValue(value, b[key]) }
+    a is List<*> && b is List<*> -> a.size == b.size && a.indices.all { sameValue(a[it], b[it]) }
+    a is Array<*> && b is Array<*> -> sameValue(a.asList(), b.asList())
+    a != null && b != null && a.javaClass.isArray && b.javaClass.isArray -> java.util.Objects.deepEquals(a, b)
+    else -> a == b
+}
 
 private fun sameLayout(a: Layout, b: Layout): Boolean {
     if (a.owner !== b.owner || a.huds.size != b.huds.size) return false
