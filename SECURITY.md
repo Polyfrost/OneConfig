@@ -1,6 +1,6 @@
 # Security Policy
 
-Please be sure to read our [official security disclosure](https://polyfrost.org/legal/security), as the following inline docs will be removed soon.
+Please be sure to read our [official security disclosure](https://github.com/Polyfrost/OneConfig/security/advisories/new), as the following inline docs will be removed soon.
 
 ## Supported Versions
 
