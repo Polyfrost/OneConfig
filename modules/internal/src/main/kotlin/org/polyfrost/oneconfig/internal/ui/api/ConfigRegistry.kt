@@ -158,7 +158,7 @@ object ConfigRegistry {
         }
     }
 
-    fun findById(id: String): ConfigData? = configs.find { it.id == id }
+    fun findById(id: String): ConfigData? = configs.toList().find { it.id == id }
 
     fun findTree(id: String): Tree? = (findById(id) as? TreeConfigData)?.tree
 
