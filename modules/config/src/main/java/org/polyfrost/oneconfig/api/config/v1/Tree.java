@@ -26,6 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.jetbrains.annotations.*;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,7 +38,6 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.jetbrains.annotations.*;
 
 /**
  * The Tree class represents a tree structure that contains properties and other trees as children
@@ -413,6 +414,3 @@ public class Tree extends Node implements Serializable {
         return false;
     }
 }
-
-
-

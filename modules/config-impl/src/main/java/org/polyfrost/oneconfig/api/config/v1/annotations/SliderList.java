@@ -26,10 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import java.lang.annotation.*;
 import org.polyfrost.oneconfig.api.config.v1.SliderBounds;
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
+
+import java.lang.annotation.*;
 
 /**
  * Renders a user-editable list of numbers with each row being a slider with a value field beside it

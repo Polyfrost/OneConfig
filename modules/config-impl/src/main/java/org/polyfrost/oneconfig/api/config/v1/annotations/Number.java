@@ -26,9 +26,10 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import java.lang.annotation.*;
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
+
+import java.lang.annotation.*;
 
 @Option(display = Visualizer.NumberVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)

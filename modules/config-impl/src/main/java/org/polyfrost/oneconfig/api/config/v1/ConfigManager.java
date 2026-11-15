@@ -26,6 +26,24 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
+import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
+import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
+import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.v1.migrate.MigrationRunner;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
+import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -51,23 +69,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnmodifiableView;
-import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
-import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
-import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
-import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
-import org.polyfrost.oneconfig.api.config.v1.migrate.MigrationRunner;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
-import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
-import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
-import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 

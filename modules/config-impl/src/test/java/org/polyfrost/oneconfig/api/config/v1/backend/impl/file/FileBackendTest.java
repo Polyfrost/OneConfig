@@ -26,10 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1.backend.impl.file;
 
-import java.nio.file.Paths;
 import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
+
+import java.nio.file.Paths;
 
 class FileBackendTest {
     @SuppressWarnings("unchecked") // every serializer in ALL is a FileSerializer<String>

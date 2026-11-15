@@ -26,13 +26,14 @@
 
 package org.polyfrost.oneconfig.api;
 
+import kotlin.annotation.MustBeDocumented;
+import org.jetbrains.annotations.ApiStatus;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import kotlin.annotation.MustBeDocumented;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * This annotation is for codebase navigation

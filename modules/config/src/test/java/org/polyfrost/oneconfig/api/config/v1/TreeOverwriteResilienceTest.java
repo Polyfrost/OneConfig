@@ -26,9 +26,10 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.junit.jupiter.api.Test;
+
 import java.awt.Point;
 import java.util.List;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 

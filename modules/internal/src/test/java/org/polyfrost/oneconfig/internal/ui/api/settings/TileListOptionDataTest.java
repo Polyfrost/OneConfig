@@ -1,9 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.api.settings;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;

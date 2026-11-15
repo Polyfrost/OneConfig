@@ -137,7 +137,6 @@ import org.polyfrost.oneconfig.internal.ui.search.SearchRow
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
 import org.polyfrost.oneconfig.internal.ui.search.SettingNode
 import org.polyfrost.oneconfig.internal.ui.search.SubcategoryGroup
-import org.polyfrost.oneconfig.internal.ui.search.buildAccordionNode
 import org.polyfrost.oneconfig.internal.ui.search.buildCategories
 import org.polyfrost.oneconfig.internal.ui.search.buildSearchIndex
 import org.polyfrost.oneconfig.internal.ui.search.filterHiddenNodes

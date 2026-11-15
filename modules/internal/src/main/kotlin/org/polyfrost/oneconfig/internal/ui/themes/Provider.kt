@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.ui.themes
 
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.shape.CornerBasedShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect

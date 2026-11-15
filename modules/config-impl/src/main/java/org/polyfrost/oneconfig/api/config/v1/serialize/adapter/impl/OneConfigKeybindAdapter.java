@@ -1,5 +1,13 @@
 package org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.BindNotInScreen;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.KeybindCodec;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,14 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
-import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.BindNotInScreen;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.KeybindCodec;
 
 // adapters are looked up by their output's Class, which can only be the raw Map.class
 @SuppressWarnings({"rawtypes", "unchecked"})

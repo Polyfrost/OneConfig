@@ -26,9 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1.backend;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BooleanSupplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,6 +35,10 @@ import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 
 /**
  * A backend is a storage system for ConfigTrees

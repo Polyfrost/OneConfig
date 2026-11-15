@@ -1,9 +1,10 @@
 package org.polyfrost.oneconfig.api.config.v1;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

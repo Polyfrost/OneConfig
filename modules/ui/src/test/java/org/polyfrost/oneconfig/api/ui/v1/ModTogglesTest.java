@@ -2,14 +2,15 @@ package org.polyfrost.oneconfig.api.ui.v1;
 
 import androidx.compose.runtime.snapshots.MutableSnapshot;
 import androidx.compose.runtime.snapshots.Snapshot;
+import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.api.toggle.v1.ModToggle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

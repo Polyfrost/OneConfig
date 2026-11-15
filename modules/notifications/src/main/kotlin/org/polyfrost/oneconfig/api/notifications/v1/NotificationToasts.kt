@@ -52,7 +52,6 @@ import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.composables.tag
 import org.polyfrost.compose.composables.width
 import org.polyfrost.compose.layout.PolyAlign
-import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFont
 
 private const val CARD_WIDTH = 340f

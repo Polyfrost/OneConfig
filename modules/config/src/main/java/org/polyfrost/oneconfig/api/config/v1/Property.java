@@ -26,13 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import java.io.Serializable;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 import kotlin.OverloadResolutionByLambdaReturnType;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,6 +36,14 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
+
+import java.io.Serializable;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Class which represents a property in a tree

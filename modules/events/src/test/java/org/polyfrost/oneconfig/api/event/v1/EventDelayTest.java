@@ -26,9 +26,10 @@
 
 package org.polyfrost.oneconfig.api.event.v1;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

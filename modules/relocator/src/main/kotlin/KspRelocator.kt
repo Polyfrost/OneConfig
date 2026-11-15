@@ -8,7 +8,6 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import java.io.OutputStream
-import javax.annotation.processing.Generated
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.readText

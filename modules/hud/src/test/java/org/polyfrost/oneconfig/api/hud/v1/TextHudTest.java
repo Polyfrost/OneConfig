@@ -26,8 +26,9 @@
 
 package org.polyfrost.oneconfig.api.hud.v1;
 
-import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;

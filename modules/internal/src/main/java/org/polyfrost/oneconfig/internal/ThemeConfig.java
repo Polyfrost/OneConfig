@@ -1,7 +1,5 @@
 package org.polyfrost.oneconfig.internal;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.compose.render.PolyColor;
@@ -25,8 +23,11 @@ import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
 import org.polyfrost.oneconfig.internal.ui.themes.GlassTint;
 import org.polyfrost.oneconfig.internal.ui.themes.PaletteAccent;
 import org.polyfrost.oneconfig.internal.ui.themes.PrefsSync;
-import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency;
 import org.polyfrost.oneconfig.internal.ui.themes.ProviderKt;
+import org.polyfrost.oneconfig.internal.ui.themes.ReduceTransparency;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class ThemeConfig extends Config {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Themes");
