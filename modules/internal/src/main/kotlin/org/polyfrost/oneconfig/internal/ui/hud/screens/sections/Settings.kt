@@ -11,9 +11,15 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
+import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressMode
+import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
+import org.polyfrost.oneconfig.internal.ui.components.settings.Dropdown
+import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.hudOptionsCanReset
+import org.polyfrost.oneconfig.internal.ui.hud.hudProperty
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudOptions
 import org.polyfrost.oneconfig.internal.ui.screens.HudConfigScreen
 
@@ -32,6 +38,8 @@ fun Settings(hud: Hud?, query: String) {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             hud.tree?.let { HudConfigScreen(it, query) }
+
+            if (hud.hasVisibilityKeyMode()) VisibilityKeyCard(hud, query)
 
             if (hud !is LegacyHudMarker) {
                 val canReset = remember(showInF3, showInTab, showInScreens, showInChat) {
@@ -69,6 +77,50 @@ fun Settings(hud: Hud?, query: String) {
                             hudPanelText("show_in_chat", "Show in Chat"),
                             showInChat,
                             { Snapshot.withMutableSnapshot { showInChat = it; hud.showInChat = it } },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VisibilityKeyCard(hud: Hud, query: String) {
+    val keyProp = hudProperty(hud, "visibilityKeybind")
+    if (hudProperty(hud, "visibilityKeyMode") == null) return
+    var mode by remember { mutableStateOf(hud.visibilityKeyMode) }
+    var holdThreshold by remember { mutableStateOf(hud.visibilityKeyHoldThreshold.toFloat()) }
+    // a HUD without its own key is driven by some other input so its mode always applies
+    val bound = keyProp == null || hud.visibilityKeybind.isBound
+
+    CardSection("Visibility Keybind", query, "Visibility Keybind", "Key Mode", "Hold Threshold") {
+        if (keyProp != null) {
+            HudSettingTarget(hud, "visibilityKeybind") {
+                ControlRow("Key") { KeybindOption(KeybindOptionData(keyProp)) }
+            }
+        }
+        if (bound) {
+            HudSettingTarget(hud, "visibilityKeyMode") {
+                ControlRow("Key Mode") {
+                    Dropdown(KeyPressMode.entries.map { it.name }, mode.ordinal, onSelect = {
+                        Snapshot.withMutableSnapshot { mode = KeyPressMode.entries[it]; hud.visibilityKeyMode = mode }
+                    }, width = 176.dp)
+                }
+            }
+            if (mode == KeyPressMode.QuickPress) {
+                HudSettingTarget(hud, "visibilityKeyHoldThreshold") {
+                    ControlRow("Hold Threshold") {
+                        NumberField(
+                            holdThreshold,
+                            {
+                                holdThreshold = it
+                                Snapshot.withMutableSnapshot { hud.visibilityKeyHoldThreshold = it.toInt() }
+                            },
+                            range = 50f..1000f,
+                            step = 50f,
+                            unit = "ms",
+                            width = 176.dp,
                         )
                     }
                 }
