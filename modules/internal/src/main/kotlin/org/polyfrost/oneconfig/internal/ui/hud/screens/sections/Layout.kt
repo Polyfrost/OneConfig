@@ -1,10 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,12 +30,13 @@ import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
 import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.components.Text
+import org.polyfrost.oneconfig.internal.ui.components.settings.RangeSeparatorWidth
+import org.polyfrost.oneconfig.internal.ui.components.settings.formatSpinnerValue
 import org.polyfrost.oneconfig.internal.ui.hud.HudPositionTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.components.AlignmentPicker
 import org.polyfrost.oneconfig.internal.ui.hud.hudOptionsCanReset
-import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudOptions
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.hud.screens.beginHudMove
@@ -47,21 +49,15 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.selectionOrigin
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 private val POSITION_SCALE_OPTIONS = listOf("locked", "useGuiScale", "customScale")
-private val SIZE_OPTIONS = listOf("staticWidth", "staticW", "staticH", "alignment", "growthAnchor")
+private val SIZE_OPTIONS = listOf("minW", "maxW", "minH", "maxH", "fitContent", "alignment", "growthAnchor")
 private val PADDING_OPTIONS = listOf("padLeft", "padRight", "padTop", "padBottom")
 
 @Composable
 fun Layout(hud: Hud?, query: String) {
     if (hud == null) return
 
-    LaunchedEffect(hud) { repairHudStaticSize(hud) }
-
     HudSettingsContent(hud) {
         var locked by remember { mutableStateOf(hud.locked) }
-        var staticWidth by remember { mutableStateOf(hud.staticWidth) }
-        var staticW by remember { mutableStateOf(hud.staticW) }
-        var staticH by remember { mutableStateOf(hud.staticH) }
-        var alignment by remember { mutableStateOf(hud.alignment) }
         var growthAnchor by remember { mutableStateOf(hud.effectiveGrowthAnchor) }
         val growthAlign = growthAnchor.toAlign() ?: PolyAlign.Center
         var padLeft by remember { mutableStateOf(hud.padLeft) }
@@ -121,84 +117,66 @@ fun Layout(hud: Hud?, query: String) {
 
             if (hud !is LegacyHudMarker) {
                 CardSection(
-                    hudPanelText("size_alignment", "Size & Alignment"), query, hudPanelText("static_size", "Static size"), hudPanelText("width", "Width"), hudPanelText("height", "Height"), hudPanelText("anchor", "Anchor"), hudPanelText("content_alignment", "Content alignment"),
-                    "Alignment", "Growth anchor",
+                    hudPanelText("size_alignment", "Size & Alignment"), query, hudPanelText("width", "Width"), hudPanelText("height", "Height"), hudPanelText("min_width", "Min width"), hudPanelText("max_width", "Max width"), hudPanelText("min_height", "Min height"), hudPanelText("max_height", "Max height"),
+                    hudPanelText("scale_to_fit", "Scale content to fit"), hudPanelText("anchor", "Anchor"), hudPanelText("content_alignment", "Content alignment"), "Alignment", "Growth anchor",
                     onReset = { resetHudOptions(hud, SIZE_OPTIONS) },
                     canReset = hudOptionsCanReset(hud, SIZE_OPTIONS),
                 ) { col1 ->
-                    RowWithFold(
-                        staticWidth,
-                        row = {
-                            HudSettingTarget(hud, "staticWidth") {
-                                SwitchRow(
-                                    hudPanelText("static_size", "Static size"),
-                                    staticWidth,
-                                    {
-                                        Snapshot.withMutableSnapshot {
-                                            staticWidth = it; hud.staticWidth = it
-                                            if (it) {
-                                                staticW = hud.staticW
-                                                staticH = hud.staticH
-                                            } else {
-                                                hud.updateAndRecalculate()
-                                            }
-                                        }
-                                    },
-                                )
-                            }
-                        },
-                        folded = {
-                            GridRow(
-                                col1,
-                                first = {
-                                    HudSettingTarget(hud, "staticW") {
-                                        LabeledControl(hudPanelText("width", "Width")) {
-                                            NumberField(
-                                                staticW, { Snapshot.withMutableSnapshot { staticW = it; hud.staticW = it } },
-                                                range = 20f..2000f, roundToDecimals = false, fractionDigits = 2, unit = "px", scrub = true, width = col1, commitOnType = false,
-                                                fontSize = 13.sp,
-                                            )
-                                        }
-                                    }
-                                },
-                                second = {
-                                    HudSettingTarget(hud, "staticH") {
-                                        LabeledControl(hudPanelText("height", "Height")) {
-                                            NumberField(
-                                                staticH, { Snapshot.withMutableSnapshot { staticH = it; hud.staticH = it } },
-                                                range = 8f..2000f, roundToDecimals = false, fractionDigits = 2, unit = "px", scrub = true, width = GridCol2, commitOnType = false,
-                                                fontSize = 13.sp,
-                                            )
-                                        }
-                                    }
-                                },
-                            )
-                        },
-                    )
+                    // the limits are read from the HUD every time so a canvas resize drag is reflected right away
+                    val capped = hud.maxW > 0f || hud.maxH > 0f
+                    val limited = hud.hasSizeLimits
+                    val pinned = hud.isFixedW && hud.isFixedH
 
-                    HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
-                        LabeledControl(if (staticWidth) hudPanelText("content_alignment", "Content alignment") else hudPanelText("anchor", "Anchor")) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                AlignmentPicker(if (staticWidth) alignment else growthAlign) {
-                                    Snapshot.withMutableSnapshot {
-                                        if (staticWidth) {
-                                            alignment = it
-                                            hud.alignment = it
-                                        } else {
+                    SizeRangeRow(hud, "width", 20f, hud.minW, hud.maxW, { hud.minW = it }, { hud.maxW = it })
+                    SizeRangeRow(hud, "height", 8f, hud.minH, hud.maxH, { hud.minH = it }, { hud.maxH = it })
+
+                    if (capped) {
+                        HudSettingTarget(hud, "fitContent") {
+                            SwitchRow(hudPanelText("scale_to_fit", "Scale content to fit"), hud.fitContent) {
+                                Snapshot.withMutableSnapshot { hud.fitContent = it }
+                            }
+                        }
+                    }
+
+                    if (limited) {
+                        HudSettingTarget(hud, "alignment") {
+                            LabeledControl(hudPanelText("content_alignment", "Content alignment")) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    AlignmentPicker(hud.alignment) {
+                                        Snapshot.withMutableSnapshot { hud.alignment = it }
+                                    }
+                                    Text(
+                                        hudPanelText("content_alignment.limits_hint", "Aligns the content inside the size limits"),
+                                        color = LocalTheme.current.textColorSecondary,
+                                        fontSize = OneConfigTheme.typography.small.fontSize
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (!pinned) {
+                        HudSettingTarget(hud, "growthAnchor") {
+                            LabeledControl(hudPanelText("anchor", "Anchor")) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    AlignmentPicker(growthAlign) {
+                                        Snapshot.withMutableSnapshot {
                                             growthAnchor = HudAnchor.of(it)
                                             hud.setGrowthAnchorKeepingPosition(growthAnchor)
                                         }
                                     }
+                                    Text(
+                                        hudPanelText("anchor.hint", "Pins this corner or edge in place;\nthe HUD only grows away from it"),
+                                        color = LocalTheme.current.textColorSecondary,
+                                        fontSize = OneConfigTheme.typography.small.fontSize
+                                    )
                                 }
-                                Text(
-                                    if (staticWidth) hudPanelText("content_alignment.hint", "Aligns the content inside the fixed box")
-                                    else hudPanelText("anchor.hint", "Pins this corner or edge in place;\nthe HUD only grows away from it"),
-                                    color = LocalTheme.current.textColorSecondary,
-                                    fontSize = OneConfigTheme.typography.small.fontSize
-                                )
                             }
                         }
                     }
@@ -344,4 +322,49 @@ private fun setFollowGuiScale(hud: Hud, follow: Boolean) {
     val gui = Platform.compatibility().options().guiScale.takeIf { it > 0f } ?: 1f
     if (follow) hud.customScale *= hud.fixedGuiScale / gui else hud.fixedGuiScale = gui
     hud.useGuiScale = follow
+}
+
+/**
+ * One axis' size limits as a minimum and maximum, where 0 is no limit and reads as None
+ *
+ * Giving both ends the same value pins the axis to that size
+ */
+@Composable
+private fun SizeRangeRow(
+    hud: Hud,
+    axis: String,
+    floor: Float,
+    min: Float,
+    max: Float,
+    onMin: (Float) -> Unit,
+    onMax: (Float) -> Unit,
+) {
+    val id = if (axis == "width") "W" else "H"
+    val none: (Float) -> String = { if (it <= 0f) hudPanelText("none", "None") else formatSpinnerValue(it, 1f) }
+    GridRow(
+        GridCol3,
+        wide = {
+            LabeledControl(if (axis == "width") hudPanelText("width", "Width") else hudPanelText("height", "Height")) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    HudSettingTarget(hud, "min$id") {
+                        NumberField(
+                            min, { v -> Snapshot.withMutableSnapshot { onMin(v); hud.updateAndRecalculate() } },
+                            range = 0f..2000f, roundToDecimals = false, format = none, unit = "px", scrub = true, width = GridCol3, label = hudPanelText("min", "Min"),
+                            fontSize = 13.sp,
+                        )
+                    }
+                    Box(Modifier.width(RangeSeparatorWidth), contentAlignment = Alignment.Center) {
+                        Text("-", color = LocalTheme.current.textColorSecondary, fontSize = 13.sp)
+                    }
+                    HudSettingTarget(hud, "max$id") {
+                        NumberField(
+                            max, { v -> Snapshot.withMutableSnapshot { onMax(v); hud.updateAndRecalculate() } },
+                            range = 0f..2000f, roundToDecimals = false, format = none, unit = "px", scrub = true, width = GridCol3, label = hudPanelText("max", "Max"),
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+            }
+        },
+    )
 }
