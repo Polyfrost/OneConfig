@@ -20,6 +20,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
@@ -170,3 +171,7 @@ internal fun Modifier.choiceTrack(shape: Shape): Modifier {
     val border = theme.borderColor
     return glassFrame(shape, { track }, { border }, hover = false)
 }
+
+@Composable
+internal fun Modifier.choiceIndicator(shape: Shape, glass: Boolean): Modifier =
+    glassFrame(shape, { Color.Transparent }, { Color.Transparent }, { 1f }, hover = false, glass = glass)
