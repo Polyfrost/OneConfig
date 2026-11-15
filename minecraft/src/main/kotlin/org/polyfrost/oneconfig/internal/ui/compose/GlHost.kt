@@ -13,6 +13,8 @@ import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.internal.ui.compose.opengl.StoredGLState
 import org.slf4j.LoggerFactory
+//? if = 1.8.9
+//import org.polyfrost.oneconfig.api.hud.v1.HudManager
 
 //? if >= 26.2 {
 import com.mojang.renderpearl.api.GpuFormat
@@ -321,57 +323,17 @@ object GlHost {
     }
     //?} else {
     /*fun blitHud() {
-        val rt = hudTarget ?: return
-        val w = rt.width
-        val h = rt.height
-
-        val depthTest = GlStateManager.DEPTH.state.enabled
-        val depthMask = GlStateManager.DEPTH.mask
-        val alphaTest = GlStateManager.ALPHA_TEST.state.enabled
-        val lighting = GlStateManager.LIGHTING.enabled
-        val unit = GlStateManager.TEXTURES[GlStateManager.texture]
-        val texture2d = unit.state.enabled
-        val texture = unit.texture
-        val blendState = GlStateManager.BLEND
-        val blend = blendState.state.enabled
-        val srcRgb = blendState.sfactorRGB
-        val dstRgb = blendState.dfactorRGB
-        val srcAlpha = blendState.sfactorAlpha
-        val dstAlpha = blendState.dfactorAlpha
-        val c = GlStateManager.COLOR
-        val color = floatArrayOf(c.r, c.g, c.b, c.a)
-        GL11.glPushAttrib(GL11.GL_VIEWPORT_BIT)
-        val fbo = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING)
+        if (!hudLayersReady) return
+        gl.capture()
         try {
-            GlStateManager.enableBlend()
-            GlStateManager.blendFuncSeparate(
-                GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
-                GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA,
-            )
-            GlStateManager.matrixMode(GL11.GL_PROJECTION)
-            GlStateManager.pushMatrix()
-            GlStateManager.matrixMode(GL11.GL_MODELVIEW)
-            GlStateManager.pushMatrix()
-            try {
-                rt.draw(w, h, false)
-            } finally {
-                GlStateManager.matrixMode(GL11.GL_PROJECTION)
-                GlStateManager.popMatrix()
-                GlStateManager.matrixMode(GL11.GL_MODELVIEW)
-                GlStateManager.popMatrix()
-            }
+            val fbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
+            val w = Platform.screen().viewportWidth()
+            val h = Platform.screen().viewportHeight()
+            if (w > 0 && h > 0) GlRenderer.Layer.draw(fbo, w, h, topDown = false, clear = false, stableLayer, volatileLayer)
+        } catch (e: Throwable) {
+            UiErrors.warn("GlHost.blitHud() error", e)
         } finally {
-            if (depthTest) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
-            GlStateManager.depthMask(depthMask)
-            if (alphaTest) GlStateManager.enableAlphaTest() else GlStateManager.disableAlphaTest()
-            if (lighting) GlStateManager.enableLighting() else GlStateManager.disableLighting()
-            if (texture2d) GlStateManager.enableTexture() else GlStateManager.disableTexture()
-            if (blend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
-            GlStateManager.blendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha)
-            GlStateManager.bindTexture(texture)
-            GlStateManager.color4f(color[0], color[1], color[2], color[3])
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo)
-            GL11.glPopAttrib()
+            gl.restore()
         }
     }
     *///?}
@@ -614,6 +576,8 @@ object GlHost {
     private var hudVolatile: GlRenderer? = null
     private val stableLayer = GlRenderer.Layer(coalesce = true)
     private val volatileLayer = GlRenderer.Layer()
+    //? if = 1.8.9
+    //private var hudLayersReady = false
 
     private fun reuse(renderer: GlRenderer?): GlRenderer {
         if (renderer == null || !renderer.matches()) return GlRenderer()
@@ -630,6 +594,22 @@ object GlHost {
             return
         }
         *///?}
+        //? if = 1.8.9 {
+        /*gl.capture()
+        try {
+            val stable = reuse(hudStable).also { hudStable = it }
+            val volatile = reuse(hudVolatile).also { hudVolatile = it }
+            draw(RenderContext(stable), RenderContext(volatile))
+            stableLayer.take(stable)
+            volatileLayer.take(volatile)
+            hudLayersReady = true
+        } catch (e: Throwable) {
+            HudManager.invalidate()
+            UiErrors.warn("GlHost.drawHudGl() error", e)
+        } finally {
+            gl.restore()
+        }
+        *///?} else {
         val rt = resolveHudTarget() ?: return
         val fbo = RenderTargetFbo.getFboId(rt)
         if (fbo <= 0) return
@@ -640,13 +620,13 @@ object GlHost {
             draw(RenderContext(stable), RenderContext(volatile))
             stableLayer.take(stable)
             volatileLayer.take(volatile)
-            //~ if = 1.8.9 'topDown = true' -> 'topDown = false'
             GlRenderer.Layer.draw(fbo, rt.width, rt.height, topDown = true, clear = true, stableLayer, volatileLayer)
         } catch (e: Throwable) {
             UiErrors.warn("GlHost.drawHudGl() error", e)
         } finally {
             gl.restore()
         }
+        //?}
     }
 
     private fun resolveHudTarget(): RenderTarget? {

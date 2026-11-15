@@ -18,7 +18,6 @@ import org.lwjgl.opengl.GL45.*
 import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
-import org.lwjgl.opengl.GL33
 *///?}
 
 fun resyncTextureBindCache() {
@@ -240,8 +239,7 @@ class StoredGLState(private val glVersion: Int) {
         GlStateManager._depthMask(mask)
     }
     //?} else {
-    /*private val isMacOS = System.getProperty("os.name").lowercase().contains("mac")
-    private var alphaTestEnabled = false
+    /*private var alphaTestEnabled = false
     private var depthTestEnabled = false
     private var activeTextureUnit = 0
 
@@ -276,12 +274,6 @@ class StoredGLState(private val glVersion: Int) {
         if (depthTestEnabled) GlStateManager.enableDepthTest() else GlStateManager.disableDepthTest()
 
         with(props) {
-            if (!isMacOS) {
-                for (unit in 0..7) {
-                    GL33.glBindSampler(unit, 0)
-                }
-            }
-
             if (lastEnableBlend) GlStateManager.enableBlend() else GlStateManager.disableBlend()
 
             GL20.glUseProgram(lastProgram[0])
