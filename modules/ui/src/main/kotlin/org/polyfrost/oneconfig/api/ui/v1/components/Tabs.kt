@@ -94,6 +94,7 @@ public class TabItem<T>(
     public val modifier: Modifier = Modifier,
     public val badgeDescription: String? = null,
 ) {
+    @JvmOverloads
     public constructor(
         value: T,
         label: String,
@@ -107,9 +108,6 @@ public class TabItem<T>(
         modifier: Modifier = Modifier,
         badgeDescription: String? = null,
     ) : this(value, PageText.literal(label), icon, enabled, badge, iconPainter, size, interactionSource, tooltip, modifier, badgeDescription)
-
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public constructor(value: T, label: String) : this(value, PageText.literal(label), null, true, null, null, null, null, null, Modifier)
 
     public val labelText: PageText = label
 

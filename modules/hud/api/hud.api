@@ -301,10 +301,11 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudAnchor$Companion {
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudClickRegions {
-	public static final synthetic fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function0;)Z
+	public static final fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function0;)Z
 	public static final fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFZLjava/util/Set;JLkotlin/jvm/functions/Function1;)Z
-	public static final synthetic fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFZLkotlin/jvm/functions/Function0;)Z
+	public static final fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFZLkotlin/jvm/functions/Function0;)Z
 	public static final fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFZLorg/polyfrost/oneconfig/api/hud/v1/HudMouseButton;JLkotlin/jvm/functions/Function0;)Z
+	public static final fun clickRegion (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFZLorg/polyfrost/oneconfig/api/hud/v1/HudMouseButton;Lkotlin/jvm/functions/Function0;)Z
 	public static synthetic fun clickRegion$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFZLjava/util/Set;JLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Z
 	public static synthetic fun clickRegion$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/lang/String;FFFFZLorg/polyfrost/oneconfig/api/hud/v1/HudMouseButton;JLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Z
 	public static final fun defaultRegionExpiryMillis (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)J

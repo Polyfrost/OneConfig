@@ -22,6 +22,7 @@ public enum class HudMouseButton {
 }
 
 @ExperimentalOneConfigUiApi
+@JvmOverloads
 public fun Hud.clickRegion(
     id: String,
     x: Float,
@@ -83,16 +84,6 @@ public fun Hud.isClickRegionHovered(id: String): Boolean = HudClickInput.hovered
 
 @ExperimentalOneConfigUiApi
 public fun Hud.hoveredClickRegion(): String? = HudClickInput.hoveredId(this)
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-public fun Hud.clickRegion(id: String, x: Float, y: Float, w: Float, h: Float, onClick: () -> Unit): Boolean =
-    clickRegion(id, x, y, w, h, false, HudMouseButton.Left, onClick = onClick)
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-public fun Hud.clickRegion(id: String, x: Float, y: Float, w: Float, h: Float, anyScreen: Boolean, onClick: () -> Unit): Boolean =
-    clickRegion(id, x, y, w, h, anyScreen, HudMouseButton.Left, onClick = onClick)
 
 private fun buttonMask(vararg buttons: HudMouseButton): Int {
     var mask = 0

@@ -1786,7 +1786,15 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacemen
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TabItem {
 	public static final field $stable I
-	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Z)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;Landroidx/compose/ui/Modifier;)V
 	public fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/ui/v1/page/PageText;Ljava/lang/String;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;)V
