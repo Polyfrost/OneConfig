@@ -111,6 +111,8 @@ jobs:
   minecraft:
     name: Build ${{ matrix.node }}
 
+    needs: [modules]
+
     runs-on: ubuntu-26.04
 
     strategy:
