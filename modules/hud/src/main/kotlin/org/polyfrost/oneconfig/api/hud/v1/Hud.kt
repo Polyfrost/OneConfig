@@ -1708,7 +1708,13 @@ public abstract class Hud(
     public fun make(with: Tree? = null): Hud {
         if (tree != null) throw IllegalArgumentException("HUD is already made, it cannot be made again")
         val out = if (multipleInstancesAllowed()) clone() else this
-        val treeId = with?.id ?: if (multipleInstancesAllowed()) "huds/${(1000..9999).random()}-$id" else "huds/$id"
+        val treeId = with?.id ?: if (multipleInstancesAllowed()) {
+            // number the config file, not the folder it lives in when the HUD's id is nested
+            val random = (1000..9999).random()
+            val slash = id.lastIndexOf('/')
+            val numbered = if (slash < 0) "$random-$id" else id.substring(0, slash + 1) + "$random-" + id.substring(slash + 1)
+            "huds/$numbered"
+        } else "huds/$id"
         if (out.defaultStaticWidth) out.staticWidth = true
         HudStyles.applyDefaultTo(out)
         val tree = ConfigManager.collect(out, treeId)
