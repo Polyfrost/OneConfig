@@ -9,8 +9,6 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.api.settings.BuiltinVisualizers
 import org.polyfrost.oneconfig.internal.ui.screens.THEMES_ID
-import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
-import org.polyfrost.oneconfig.internal.ui.sound.UiSoundTheme
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
 object ThemeRegistry {
@@ -69,11 +67,10 @@ object ThemeRegistry {
         syncNotificationTheme(theme)
         saveThemeToConfig()
         if (previous != null) {
-            if (UiSoundTheme.resolve(previous) != UiSoundTheme.resolve(theme)) {
-                UiSounds.onSoundThemeChanged()
-            } else {
-                UiSounds.play(UiSoundEvent.CLICK)
-            }
+            // Activating a theme only re-syncs the ambience track to the new sound theme.
+            // It must not replay menu sounds or restart the ambience copy from scratch, which
+            // briefly lifts the music ducking.
+            UiSounds.syncAmbienceTheme()
         }
     }
 
