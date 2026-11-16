@@ -156,6 +156,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/ModToggles {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles;
 	public static final fun addListener (Lorg/polyfrost/oneconfig/api/ui/v1/ModToggles$Listener;)V
 	public static final fun getRevision ()I
+	public static final fun handle (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;
 	public static final fun isEnabled (Ljava/lang/String;)Z
 	public static final fun manage ([Ljava/lang/String;)V
 	public static final fun register (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/toggle/v1/ModToggle;)V

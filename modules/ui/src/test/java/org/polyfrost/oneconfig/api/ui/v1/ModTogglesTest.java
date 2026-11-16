@@ -42,6 +42,63 @@ class ModTogglesTest {
     }
 
     @Test
+    void handleFollowsEveryStateChange() {
+        String id = "mt-handle-" + UUID.randomUUID();
+        ModToggle handle = ModToggles.handle(id);
+        assertSame(handle, ModToggles.handle(id.toUpperCase() + ".json"));
+        assertTrue(handle.isEnabled());
+
+        ModToggles.setEnabled(id, false);
+        assertFalse(handle.isEnabled());
+        ModToggles.setEnabled(id, true);
+        assertTrue(handle.isEnabled());
+
+        ModToggles.setStore(new ModToggles.Store() {
+            @Override
+            public Set<String> load() {
+                return Collections.singleton(id);
+            }
+
+            @Override
+            public void save(Set<String> disabled) {
+            }
+        });
+        assertFalse(handle.isEnabled());
+        ModToggles.setEnabled(id, true);
+
+        ModToggles.setEnabled(id + "-late", false);
+        assertFalse(ModToggles.handle(id + "-late").isEnabled());
+        ModToggles.setEnabled(id + "-late", true);
+    }
+
+    @Test
+    void handleWritesItsOwnKey() {
+        String id = "mt-handle-alias-" + UUID.randomUUID();
+        ModToggles.manage(id);
+        ModToggle alias = ModToggles.handle(id + "/config");
+        alias.setEnabled(false);
+        assertFalse(alias.isEnabled());
+        assertFalse(ModToggles.isEnabled(id + "/config"));
+        assertTrue(ModToggles.isEnabled(id));
+        alias.setEnabled(true);
+
+        ModToggle suffixed = ModToggles.handle(id + "-raw.JSON");
+        suffixed.setEnabled(false);
+        assertFalse(suffixed.isEnabled());
+        assertFalse(ModToggles.isEnabled(id + "-raw.JSON"));
+        suffixed.setEnabled(true);
+        assertTrue(suffixed.isEnabled());
+
+        String upper = id + "-managed.JSON";
+        ModToggles.manage(upper);
+        ModToggle managed = ModToggles.toggleFor(upper);
+        managed.setEnabled(false);
+        assertFalse(managed.isEnabled());
+        assertFalse(ModToggles.isEnabled(upper));
+        managed.setEnabled(true);
+    }
+
+    @Test
     void registeredSwitchWinsOverTheManagedOne() {
         ModToggle own = new ModToggle() {
             @Override

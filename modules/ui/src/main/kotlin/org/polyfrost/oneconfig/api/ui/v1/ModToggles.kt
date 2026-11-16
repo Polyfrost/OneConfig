@@ -33,6 +33,8 @@ public object ModToggles {
     @Volatile
     private var store: Store? = null
 
+    private val handles = HashMap<String, ManagedToggle>()
+
     private val listeners = CopyOnWriteArrayList<Listener>()
 
     @JvmStatic
@@ -95,8 +97,14 @@ public object ModToggles {
     public fun toggleFor(modId: String): ModToggle? {
         val keys = keysFor(modId).toList()
         keys.firstNotNullOfOrNull(toggles::get)?.let { return it }
-        return keys.firstOrNull(managed::contains)?.let(::ManagedToggle)
+        return keys.firstOrNull(managed::contains)?.let(::handleForKey)
     }
+
+    @JvmStatic
+    public fun handle(modId: String): ModToggle = handleForKey(normalise(modId))
+
+    private fun handleForKey(key: String): ModToggle =
+        synchronized(lock) { handles.getOrPut(key) { ManagedToggle(key, key !in disabled) } }
 
     /**
      * Whether the [manage]d mod [modId] is switched on
@@ -112,12 +120,16 @@ public object ModToggles {
 
     @JvmStatic
     public fun setEnabled(modId: String, enabled: Boolean) {
-        val key = keysFor(modId).firstOrNull(managed::contains) ?: normalise(modId)
+        setKey(keysFor(modId).firstOrNull(managed::contains) ?: normalise(modId), enabled)
+    }
+
+    private fun setKey(key: String, enabled: Boolean) {
         if (key.isEmpty()) return
         val snapshot = synchronized(lock) {
             val next = if (enabled) disabled - key else disabled + key
             if (next == disabled) return
             disabled = next
+            handles[key]?.enabled = enabled
             next
         }
         bump()
@@ -156,14 +168,15 @@ public object ModToggles {
         synchronized(lock) {
             this.store = store
             disabled = disabled + loaded
+            loaded.forEach { handles[it]?.enabled = false }
         }
         bump()
     }
 
-    private class ManagedToggle(private val key: String) : ModToggle {
-        override fun isEnabled() = ModToggles.isEnabled(key)
+    private class ManagedToggle(private val key: String, @JvmField @Volatile var enabled: Boolean) : ModToggle {
+        override fun isEnabled() = enabled
 
-        override fun setEnabled(enabled: Boolean) = ModToggles.setEnabled(key, enabled)
+        override fun setEnabled(enabled: Boolean) = setKey(key, enabled)
     }
 
     private fun normalise(modId: String) = modId.trim().removeSuffix(".json").lowercase()
