@@ -370,8 +370,8 @@ private class RunTextNode : PolyNode() {
         val start = if (m == null || m[0] == 0f) x else ((x * m[0] + m[2]).roundToInt() - m[2]) / m[0]
         for (run in line.runs) {
             val color = (run.color ?: s.color).argb
-            if (shadow != null && s.fullShadow) ctx.mcTextOutline(run.text, start + run.offset, top, color, shadow.argb, s.scale)
-            else ctx.mcText(run.text, start + run.offset, top, color, shadow != null, s.scale)
+            if (shadow != null && s.fullShadow) ctx.mcTextOutline(run.text, start + run.offset, top, color, shadow.argb, s.scale, false, false)
+            else ctx.mcText(run.text, start + run.offset, top, color, shadow != null, s.scale, false, false)
         }
     }
 }

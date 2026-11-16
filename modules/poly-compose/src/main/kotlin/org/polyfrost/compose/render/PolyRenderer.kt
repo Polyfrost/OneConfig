@@ -84,6 +84,12 @@ public interface PolyRenderer {
     public fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean): Unit =
         mcTextOutline(if (literal) text.replace("§", "") else text, x, y, color, outlineColor, scale)
 
+    public fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean): Unit =
+        mcText(text, x, y, color, shadow, scale, literal)
+
+    public fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean, snapX: Boolean): Unit =
+        mcTextOutline(text, x, y, color, outlineColor, scale, literal)
+
     public fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float, literal: Boolean): Unit =
         if (literal) live { it.mcText(text, x, y, color(), shadow, scale, true) } else mcTextLive(text, x, y, color, shadow, scale)
 
