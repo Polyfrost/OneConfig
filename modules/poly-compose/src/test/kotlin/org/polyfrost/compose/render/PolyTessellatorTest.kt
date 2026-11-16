@@ -803,7 +803,7 @@ class PolyTessellatorTest {
         PolyGlyphPage.rasterizer = object : PolyGlyphPage.Rasterizer { override fun face(name: String) = face.takeIf { name == "minecraft" } }
         try {
             // at scale 2 a device pixel is one outline cell: the glyphs grow to 6x20 cells at (-2, -1) and (2, 17)
-            val b = Recorder().run { mcTextOutline("a\n a", 10f, 20f, -1, 0x40000000, 2f); done() }
+            val b = Recorder().run { mcTextOutline("c\n c", 10f, 20f, -1, 0x40000000, 2f); done() }
             b.forEach(::assertWinding)
             var covered = 0
             for (py in 0 until 80) for (px in 0 until 40) {
@@ -814,6 +814,13 @@ class PolyTessellatorTest {
             assertEquals(2 * 6 * 20 - 2 * 2, covered)
             assertEquals(0x40, b.alphaAt(13.37f, 38.41f))
             assertEquals(0, b.alphaAt(11.37f, 40.41f))
+            for (step in 0 until 20) for (scale in listOf(1.05f, 1.5f, 2.1f)) {
+                val f = Recorder().run { translate(0f, step / 20f); mcTextOutline("c\n c", 10f, 20f, -1, 0x40000000, scale); done() }
+                for (py in 0 until 80) for (px in 0 until 40) {
+                    val a = f.alphaAt(px + 0.37f, py + 0.41f)
+                    assertTrue(a == 0 || a == 0x40, "alpha $a at ($px, $py), offset ${step / 20f}, scale $scale")
+                }
+            }
         } finally {
             PolyGlyphPage.rasterizer = old
         }
@@ -852,15 +859,18 @@ class PolyTessellatorTest {
         McGlyphs.source = { glyph }
         try {
             for (offset in listOf(0f, 0.11f, 0.25f, 0.5f, 0.75f)) for (scale in listOf(1f, 1.05f, 1.5f, 3f, 3.375f)) {
-                val quad = GlyphRecorder().run {
+                val quads = GlyphRecorder().run {
                     translate(0f, offset)
                     scale(scale, scale)
-                    mcText("a", 0f, 0f, -1, false, 1f)
+                    mcText("a\na\na", 0f, 0f, -1, false, 1f)
                     done()
                     verts.single()
                 }
-                assertEquals(quad[1].roundToInt().toFloat(), quad[1], 1e-4f, "offset $offset, scale $scale")
-                assertEquals(8f * scale, quad[5] - quad[1], 1e-4f, "offset $offset, scale $scale")
+                assertEquals(3 * 16, quads.size)
+                for (q in quads.indices step 16) {
+                    assertEquals(quads[q + 1].roundToInt().toFloat(), quads[q + 1], 1e-4f, "offset $offset, scale $scale, line ${q / 16}")
+                    assertEquals(8f * scale, quads[q + 5] - quads[q + 1], 1e-4f, "offset $offset, scale $scale, line ${q / 16}")
+                }
             }
         } finally {
             McGlyphs.source = source

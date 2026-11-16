@@ -679,13 +679,12 @@ public abstract class PolyTessellator : PolyRenderer {
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) {
         if (cpuOnly) return
         val lines = text.lines()
-        val y = snapTop(y)
         if (shadow) {
             beginDraw()
-            lines.forEachIndexed { index, line -> mcLine(line, x + scale, y + index * 9f * scale + scale, color, scale, true, literal) }
+            lines.forEachIndexed { index, line -> mcLine(line, x + scale, mcLineTop(y, index, scale) + scale, color, scale, true, literal) }
         }
         beginDraw()
-        lines.forEachIndexed { index, line -> mcLine(line, x, y + index * 9f * scale, color, scale, false, literal) }
+        lines.forEachIndexed { index, line -> mcLine(line, x, mcLineTop(y, index, scale), color, scale, false, literal) }
     }
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
@@ -696,32 +695,62 @@ public abstract class PolyTessellator : PolyRenderer {
         beginDraw()
         if (cpuOnly) return
         val c = mulAlpha(outlineColor, state.alpha)
-        val rects = if (c ushr 24 == 0) null else PolyGlyphPage.rasterizer?.let { r ->
-            mcOutlines.getOrPut(Triple(text, FontManager.revision, literal)) { mcOutline(r, text, literal) }
-        }
-        if (rects != null && rects.isNotEmpty()) {
-            begin(whitePage(), false)
+        val r = PolyGlyphPage.rasterizer
+        if (c ushr 24 != 0 && r != null) {
             val s = state
-            val wuv = PolyGlyphPage.WHITE_UV
-            val top = snapTop(y)
-            var i = 0
-            while (i < rects.size) {
-                val ax = coveredFrom((x + rects[i] * scale) * s.sx + s.tx)
-                val ay = coveredFrom((top + rects[i + 1] * scale) * s.sy + s.ty)
-                val bx = coveredFrom((x + rects[i + 2] * scale) * s.sx + s.tx)
-                val by = coveredFrom((top + rects[i + 3] * scale) * s.sy + s.ty)
-                if (ax != bx && ay != by) quadPx(min(ax, bx), min(ay, by), max(ax, bx), max(ay, by), wuv, wuv, wuv, wuv, c)
-                i += 4
+            val lines = text.lines()
+            var boxes = FloatArray(64)
+            var n = 0
+            lines.forEachIndexed { index, line ->
+                val rects = mcOutlines.getOrPut(Triple(line, FontManager.revision, literal)) { mcOutline(r, line, literal) }
+                val top = mcLineTop(y, index, scale)
+                var i = 0
+                while (i < rects.size) {
+                    val ax = coveredFrom((x + rects[i] * scale) * s.sx + s.tx)
+                    val ay = coveredFrom((top + rects[i + 1] * scale) * s.sy + s.ty)
+                    val bx = coveredFrom((x + rects[i + 2] * scale) * s.sx + s.tx)
+                    val by = coveredFrom((top + rects[i + 3] * scale) * s.sy + s.ty)
+                    if (ax != bx && ay != by) {
+                        if (n + 4 > boxes.size) boxes = boxes.copyOf(boxes.size * 2)
+                        boxes[n++] = min(ax, bx); boxes[n++] = min(ay, by); boxes[n++] = max(ax, bx); boxes[n++] = max(ay, by)
+                    }
+                    i += 4
+                }
+            }
+            if (n > 0) {
+                begin(whitePage(), false)
+                val wuv = PolyGlyphPage.WHITE_UV
+                if (lines.size == 1) {
+                    for (i in 0 until n step 4) quadPx(boxes[i], boxes[i + 1], boxes[i + 2], boxes[i + 3], wuv, wuv, wuv, wuv, c)
+                } else {
+                    val ys = (0 until n step 4).flatMap { listOf(boxes[it + 1], boxes[it + 3]) }.distinct().sorted()
+                    for (j in 0 until ys.size - 1) {
+                        val y0 = ys[j]
+                        val y1 = ys[j + 1]
+                        var start = 0f
+                        var end = Float.NEGATIVE_INFINITY
+                        for (k in (0 until n step 4).filter { boxes[it + 1] <= y0 && boxes[it + 3] >= y1 }.sortedBy { boxes[it] }) {
+                            if (boxes[k] > end) {
+                                if (end > start) quadPx(start, y0, end, y1, wuv, wuv, wuv, wuv, c)
+                                start = boxes[k]
+                                end = boxes[k + 2]
+                            } else end = max(end, boxes[k + 2])
+                        }
+                        if (end > start) quadPx(start, y0, end, y1, wuv, wuv, wuv, wuv, c)
+                    }
+                }
             }
         }
         if (literal) mcText(text, x, y, color, false, scale, true) else mcText(text, x, y, color, false, scale)
     }
 
-    private fun snapTop(y: Float): Float {
+    private fun mcLineTop(y: Float, index: Int, scale: Float): Float {
         val s = state
-        if (s.rot != null || s.sy == 0f) return y
+        val step = index * 9f * scale
+        if (s.rot != null || s.sy == 0f) return y + step
         val device = y * s.sy + s.ty
-        return y + (device.roundToInt() - device) / s.sy
+        val deviceStep = step * s.sy
+        return y + step + (device.roundToInt() - device + deviceStep.roundToInt() - deviceStep) / s.sy
     }
 
     private fun coveredFrom(edge: Float): Float = ceil(edge - 0.5f - EDGE_EPSILON)
