@@ -735,7 +735,13 @@ public abstract class PolyTessellator : PolyRenderer {
         begin(whitePage(), false)
         val s = state
         val w = PolyGlyphPage.WHITE_UV
-        quadPx(x0 * s.sx + s.tx, y0 * s.sy + s.ty, x1 * s.sx + s.tx, y1 * s.sy + s.ty, w, w, w, w, c)
+        var ay = y0 * s.sy + s.ty
+        var by = y1 * s.sy + s.ty
+        if (s.rot == null) {
+            ay = ay.roundToInt().toFloat()
+            by = by.roundToInt().toFloat()
+        }
+        quadPx(x0 * s.sx + s.tx, ay, x1 * s.sx + s.tx, by, w, w, w, w, c)
     }
 
     private fun mcLine(line: String, x: Float, top: Float, color: Int, scale: Float, shadow: Boolean, literal: Boolean) {
@@ -806,11 +812,17 @@ public abstract class PolyTessellator : PolyRenderer {
         begin(p?.page ?: bitmapTexture(b), !nearest, nearest)
         val tint = if (nearest) c else scaleArgb(c or -0x1000000, (c ushr 24) / 255f)
         val x0 = x * s.sx + s.tx
-        val y0 = (top + g.top * scale) * s.sy + s.ty
+        var y0 = (top + g.top * scale) * s.sy + s.ty
+        var y1 = y0 + g.height * scale * s.sy
+        if (nearest && s.rot == null) {
+            // round rows only because rounding the sides would move the two strikes of bold text apart
+            y0 = y0.roundToInt().toFloat()
+            y1 = y1.roundToInt().toFloat()
+        }
         val tu = if (nearest) (p?.let { it.u1 - it.u0 } ?: 1f) / b.width * NEAREST_TIE_BIAS else 0f
         val tv = if (nearest) (p?.let { it.v1 - it.v0 } ?: 1f) / b.height * NEAREST_TIE_BIAS else 0f
         glyphQuad(
-            x0, y0, x0 + g.width * scale * s.sx, y0 + g.height * scale * s.sy,
+            x0, y0, x0 + g.width * scale * s.sx, y1,
             (if (nearest) p?.u(g.u0) ?: g.u0 else p?.u0 ?: 0f) + tu,
             (if (nearest) p?.v(g.v0) ?: g.v0 else p?.v0 ?: 0f) + tv,
             (if (nearest) p?.u(g.u1) ?: g.u1 else p?.u1 ?: 1f) + tu,

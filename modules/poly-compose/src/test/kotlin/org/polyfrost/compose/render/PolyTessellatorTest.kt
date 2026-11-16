@@ -43,8 +43,10 @@ class PolyTessellatorTest {
 
     private class GlyphRecorder : PolyTessellator() {
         private val nearest = ArrayList<Boolean>()
+        val verts = ArrayList<FloatArray>()
         override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) {
             this.nearest += nearest
+            this.verts += verts
         }
         override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
         override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
@@ -836,6 +838,28 @@ class PolyTessellatorTest {
                     assertFalse(nearestAt(sx * 0.99f, sy), "horizontal downscale, cell ($x, $y)")
                     assertFalse(nearestAt(sx, sy * 0.99f), "vertical downscale, cell ($x, $y)")
                 }
+            }
+        } finally {
+            McGlyphs.source = source
+        }
+    }
+
+    @Test
+    fun nearestMcGlyphRowsStartAndEndOnWholePixels() {
+        val sheet = PolyBitmap(16, 16, ByteArray(16 * 16 * 4) { -1 })
+        val glyph = McGlyph(sheet, 0f, 0f, 0.5f, 0.5f, 0f, 8f, 8f, 8f, 1f)
+        val source = McGlyphs.source
+        McGlyphs.source = { glyph }
+        try {
+            for (offset in listOf(0f, 0.25f, 0.5f, 0.75f)) for (scale in listOf(1f, 1.5f, 3f, 3.375f)) {
+                val quad = GlyphRecorder().run {
+                    translate(0f, offset)
+                    scale(scale, scale)
+                    mcText("a", 0f, 0f, -1, false, 1f)
+                    done()
+                    verts.single()
+                }
+                for (edge in listOf(quad[1], quad[5])) assertEquals(edge.roundToInt().toFloat(), edge, "offset $offset, scale $scale")
             }
         } finally {
             McGlyphs.source = source
