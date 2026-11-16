@@ -679,6 +679,7 @@ public abstract class PolyTessellator : PolyRenderer {
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) {
         if (cpuOnly) return
         val lines = text.lines()
+        val y = snapTop(y)
         if (shadow) {
             beginDraw()
             lines.forEachIndexed { index, line -> mcLine(line, x + scale, y + index * 9f * scale + scale, color, scale, true, literal) }
@@ -702,18 +703,28 @@ public abstract class PolyTessellator : PolyRenderer {
             begin(whitePage(), false)
             val s = state
             val wuv = PolyGlyphPage.WHITE_UV
+            val top = snapTop(y)
             var i = 0
             while (i < rects.size) {
-                val ax = ((x + rects[i] * scale) * s.sx + s.tx).roundToInt().toFloat()
-                val ay = ((y + rects[i + 1] * scale) * s.sy + s.ty).roundToInt().toFloat()
-                val bx = ((x + rects[i + 2] * scale) * s.sx + s.tx).roundToInt().toFloat()
-                val by = ((y + rects[i + 3] * scale) * s.sy + s.ty).roundToInt().toFloat()
+                val ax = coveredFrom((x + rects[i] * scale) * s.sx + s.tx)
+                val ay = coveredFrom((top + rects[i + 1] * scale) * s.sy + s.ty)
+                val bx = coveredFrom((x + rects[i + 2] * scale) * s.sx + s.tx)
+                val by = coveredFrom((top + rects[i + 3] * scale) * s.sy + s.ty)
                 if (ax != bx && ay != by) quadPx(min(ax, bx), min(ay, by), max(ax, bx), max(ay, by), wuv, wuv, wuv, wuv, c)
                 i += 4
             }
         }
         if (literal) mcText(text, x, y, color, false, scale, true) else mcText(text, x, y, color, false, scale)
     }
+
+    private fun snapTop(y: Float): Float {
+        val s = state
+        if (s.rot != null || s.sy == 0f) return y
+        val device = y * s.sy + s.ty
+        return y + (device.roundToInt() - device) / s.sy
+    }
+
+    private fun coveredFrom(edge: Float): Float = ceil(edge - 0.5f - EDGE_EPSILON)
 
     // device-space horizontal shear: x += shearX * (shearBase - y)
     private var shearX = 0f
@@ -735,13 +746,7 @@ public abstract class PolyTessellator : PolyRenderer {
         begin(whitePage(), false)
         val s = state
         val w = PolyGlyphPage.WHITE_UV
-        var ay = y0 * s.sy + s.ty
-        var by = y1 * s.sy + s.ty
-        if (s.rot == null) {
-            ay = ay.roundToInt().toFloat()
-            by = by.roundToInt().toFloat()
-        }
-        quadPx(x0 * s.sx + s.tx, ay, x1 * s.sx + s.tx, by, w, w, w, w, c)
+        quadPx(x0 * s.sx + s.tx, y0 * s.sy + s.ty, x1 * s.sx + s.tx, y1 * s.sy + s.ty, w, w, w, w, c)
     }
 
     private fun mcLine(line: String, x: Float, top: Float, color: Int, scale: Float, shadow: Boolean, literal: Boolean) {
@@ -812,17 +817,11 @@ public abstract class PolyTessellator : PolyRenderer {
         begin(p?.page ?: bitmapTexture(b), !nearest, nearest)
         val tint = if (nearest) c else scaleArgb(c or -0x1000000, (c ushr 24) / 255f)
         val x0 = x * s.sx + s.tx
-        var y0 = (top + g.top * scale) * s.sy + s.ty
-        var y1 = y0 + g.height * scale * s.sy
-        if (nearest && s.rot == null) {
-            // round rows only because rounding the sides would move the two strikes of bold text apart
-            y0 = y0.roundToInt().toFloat()
-            y1 = y1.roundToInt().toFloat()
-        }
+        val y0 = (top + g.top * scale) * s.sy + s.ty
         val tu = if (nearest) (p?.let { it.u1 - it.u0 } ?: 1f) / b.width * NEAREST_TIE_BIAS else 0f
         val tv = if (nearest) (p?.let { it.v1 - it.v0 } ?: 1f) / b.height * NEAREST_TIE_BIAS else 0f
         glyphQuad(
-            x0, y0, x0 + g.width * scale * s.sx, y1,
+            x0, y0, x0 + g.width * scale * s.sx, y0 + g.height * scale * s.sy,
             (if (nearest) p?.u(g.u0) ?: g.u0 else p?.u0 ?: 0f) + tu,
             (if (nearest) p?.v(g.v0) ?: g.v0 else p?.v0 ?: 0f) + tv,
             (if (nearest) p?.u(g.u1) ?: g.u1 else p?.u1 ?: 1f) + tu,
@@ -2035,6 +2034,7 @@ public abstract class PolyTessellator : PolyRenderer {
         private const val MAX_FADE_DRAWS = 16
 
         private const val NEAREST_TIE_BIAS = 1f / 256f
+        private const val EDGE_EPSILON = 1f / 512f
 
         // Holes are only cut along their edges, so they need no safe areas or box
         private val NONE = FloatArray(0)

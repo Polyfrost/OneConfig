@@ -845,13 +845,13 @@ class PolyTessellatorTest {
     }
 
     @Test
-    fun nearestMcGlyphRowsStartAndEndOnWholePixels() {
+    fun nearestMcGlyphsStartOnWholePixelsAndKeepTheirScale() {
         val sheet = PolyBitmap(16, 16, ByteArray(16 * 16 * 4) { -1 })
         val glyph = McGlyph(sheet, 0f, 0f, 0.5f, 0.5f, 0f, 8f, 8f, 8f, 1f)
         val source = McGlyphs.source
         McGlyphs.source = { glyph }
         try {
-            for (offset in listOf(0f, 0.25f, 0.5f, 0.75f)) for (scale in listOf(1f, 1.5f, 3f, 3.375f)) {
+            for (offset in listOf(0f, 0.11f, 0.25f, 0.5f, 0.75f)) for (scale in listOf(1f, 1.05f, 1.5f, 3f, 3.375f)) {
                 val quad = GlyphRecorder().run {
                     translate(0f, offset)
                     scale(scale, scale)
@@ -859,10 +859,48 @@ class PolyTessellatorTest {
                     done()
                     verts.single()
                 }
-                for (edge in listOf(quad[1], quad[5])) assertEquals(edge.roundToInt().toFloat(), edge, "offset $offset, scale $scale")
+                assertEquals(quad[1].roundToInt().toFloat(), quad[1], 1e-4f, "offset $offset, scale $scale")
+                assertEquals(8f * scale, quad[5] - quad[1], 1e-4f, "offset $offset, scale $scale")
             }
         } finally {
             McGlyphs.source = source
+        }
+    }
+
+    @Test
+    fun mcOutlineSurroundsEveryRowOfNearestGlyphs() {
+        val pixels = ByteArray(8 * 8 * 4)
+        for (x in 0 until 8) pixels.fill(-1, (4 * 8 + x) * 4, (4 * 8 + x) * 4 + 4)
+        val glyph = McGlyph(PolyBitmap(8, 8, pixels), 0f, 0f, 1f, 1f, 0f, 8f, 8f, 9f, 1f)
+        val source = McGlyphs.source
+        val old = PolyGlyphPage.rasterizer
+        McGlyphs.source = { glyph }
+        PolyGlyphPage.rasterizer = object : PolyGlyphPage.Rasterizer { override fun face(name: String) = null }
+        try {
+            for (step in 0 until 40) for (scale in listOf(1f, 1.01f, 1.05f, 1.1f, 1.5f, 2.3f)) {
+                val offset = 10f + step / 40f
+                val quad = GlyphRecorder().run {
+                    translate(10f, offset)
+                    scale(scale, scale)
+                    mcText("a", 0f, 0f, -1, false, 1f)
+                    done()
+                    verts.single()
+                }
+                val outline = Recorder().run {
+                    translate(10f, offset)
+                    scale(scale, scale)
+                    mcTextOutline("a", 0f, 0f, -1, -0x1000000, 1f)
+                    done()
+                }
+                val h = quad[5] - quad[1]
+                val rows = (0 until 64).filter { p -> ((p + 0.5f - quad[1]) / h * 8f + 1f / 256f).toInt() == 4 && p + 0.5f >= quad[1] }
+                val x = quad[0] + 4.5f
+                assertTrue(rows.isNotEmpty(), "offset $offset, scale $scale")
+                for (p in listOf(rows.first() - 1, rows.last() + 1)) assertEquals(0xFF, outline.alphaAt(x, p + 0.5f), "offset $offset, scale $scale, row $p")
+            }
+        } finally {
+            McGlyphs.source = source
+            PolyGlyphPage.rasterizer = old
         }
     }
 
