@@ -144,20 +144,6 @@ fun EntityPreview(
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-fun EntityPreview(
-    playerId: UUID?,
-    modifier: Modifier = Modifier,
-    yaw: Float = 0f,
-    pitch: Float = 0f,
-    scale: Float = 1f,
-    showNameTag: Boolean = false,
-) {
-    EntityPreview(playerId, modifier, yaw, pitch, scale, showNameTag, headYaw = 0f)
-}
-
 private class PreviewSlot(initialId: UUID?) {
     var playerId: UUID? = initialId
         private set

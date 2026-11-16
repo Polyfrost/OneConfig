@@ -246,22 +246,6 @@ public fun Badge(
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun Badge(
-    text: String,
-    modifier: Modifier = Modifier,
-    tone: BadgeTone = BadgeTone.Neutral,
-    overImage: Boolean = false,
-    style: BadgeStyle = BadgeStyle.Tint,
-    icon: String? = null,
-    dot: Boolean = overImage && tone != BadgeTone.Neutral && style == BadgeStyle.Tint,
-    contentDescription: String? = null,
-) {
-    Badge(text, modifier, tone, overImage, style, icon, dot, contentDescription, null, null, null, null)
-}
-
 private fun solidBadgeFill(theme: OneConfigUITheme, tone: BadgeTone, accent: Color): Color = when (tone) {
     BadgeTone.Neutral -> theme.chipBackground
     BadgeTone.Accent -> accent
@@ -361,26 +345,6 @@ public fun SectionHeader(
         if (expanded != null) SectionChevron(expanded)
         trailing?.invoke(this)
     }
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun SectionHeader(
-    text: String,
-    modifier: Modifier = Modifier,
-    eyebrow: Boolean = true,
-    icon: String? = null,
-    count: Int? = null,
-    expanded: Boolean? = null,
-    onToggle: (() -> Unit)? = null,
-    rule: Boolean = false,
-    contentPadding: PaddingValues = PaddingValues(vertical = OneConfigTheme.current.spacing.xs),
-    interactionSource: MutableInteractionSource? = null,
-    title: (@Composable RowScope.(style: TextStyle, color: Color) -> Unit)? = null,
-    trailing: (@Composable RowScope.() -> Unit)? = null,
-) {
-    SectionHeader(text, modifier, eyebrow, icon, count, expanded, onToggle, rule, contentPadding, interactionSource, title = title, trailing = trailing)
 }
 
 @ExperimentalOneConfigUiApi

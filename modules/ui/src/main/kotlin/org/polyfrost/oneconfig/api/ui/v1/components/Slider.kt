@@ -233,31 +233,6 @@ public fun Slider(
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun Slider(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-    range: ClosedFloatingPointRange<Float> = 0f..1f,
-    step: Float = 0f,
-    enabled: Boolean = true,
-    label: String? = null,
-    valueText: ((Float) -> String)? = null,
-    interactionSource: MutableInteractionSource? = null,
-    onValueChangeFinished: (() -> Unit)? = null,
-    size: ControlSize = SliderDefaults.size,
-    keyStep: Float = 0f,
-    contentDescription: String? = null,
-    valueDescription: ((Float) -> String)? = null,
-    muted: Boolean = false,
-    trackColor: Color = Color.Unspecified,
-    sound: UiSound? = UiSound.SliderTick,
-) {
-    Slider(value, onValueChange, modifier, range, step, enabled, label, valueText, interactionSource, onValueChangeFinished, size, keyStep, contentDescription, valueDescription, muted, trackColor, sound, Color.Unspecified)
-}
-
 @Composable
 internal fun SliderHeader(label: String?, value: String?) {
     val theme = OneConfigTheme.current

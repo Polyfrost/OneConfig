@@ -312,40 +312,6 @@ public fun NumberField(
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun NumberField(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-    range: ClosedFloatingPointRange<Float>? = null,
-    step: Float = 1f,
-    decimals: Int = 0,
-    roundToDecimals: Boolean = true,
-    unit: String? = null,
-    format: ((Float) -> String)? = null,
-    enabled: Boolean = true,
-    size: ControlSize = ControlSize.Regular,
-    label: String? = null,
-    interactionSource: MutableInteractionSource? = null,
-    invalid: Boolean = false,
-    leading: (@Composable () -> Unit)? = null,
-    scrub: Boolean = false,
-    width: Dp = NUMBER_FIELD_WIDTH,
-    stepRange: ClosedFloatingPointRange<Float>? = null,
-    onScrubStart: (() -> Unit)? = null,
-    onEditEnd: (() -> Unit)? = null,
-    fractionDigits: Int? = null,
-    liveValue: (() -> Float)? = null,
-    commitOnType: Boolean = true,
-) {
-    NumberField(
-        value, onValueChange, modifier, range, step, decimals, roundToDecimals, unit, format, enabled, size, label, interactionSource,
-        invalid, leading, scrub, width, stepRange, onScrubStart, onEditEnd, fractionDigits, liveValue, commitOnType, TextUnit.Unspecified,
-    )
-}
-
 private class NumberFieldSession(var base: Float) {
     var scrubbing = false
     var focused = false

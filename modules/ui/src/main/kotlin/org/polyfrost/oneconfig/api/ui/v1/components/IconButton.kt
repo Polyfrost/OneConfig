@@ -142,100 +142,6 @@ public fun IconButton(
     IconButtonFrame(contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, interactionSource, shape, restTint, active, frameSize, sound, glass, focusRing, dangerColor, content)
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun IconButton(
-    icon: String,
-    contentDescription: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    style: IconButtonStyle = IconButtonStyle.Ghost,
-    size: ControlSize = ControlSize.Regular,
-    selected: Boolean = false,
-    danger: Boolean = false,
-    tooltip: String? = contentDescription,
-    tooltipPlacement: TooltipPlacement = TooltipPlacement.BelowCenter,
-    tint: Color = Color.Unspecified,
-    interactionSource: MutableInteractionSource? = null,
-    shape: Shape = IconButtonDefaults.shape(style),
-    restTint: Color = Color.Unspecified,
-    active: Boolean = false,
-    frameSize: Dp = Dp.Unspecified,
-    iconSize: Dp = Dp.Unspecified,
-    sound: UiSound? = UiSound.Click,
-    glass: Boolean = true,
-    focusRing: Boolean = true,
-) {
-    IconButton(
-        icon, contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, tint,
-        interactionSource, shape, restTint, active, frameSize, iconSize, sound, glass, focusRing, Color.Unspecified,
-    )
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun IconButton(
-    painter: Painter,
-    contentDescription: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    style: IconButtonStyle = IconButtonStyle.Ghost,
-    size: ControlSize = ControlSize.Regular,
-    selected: Boolean = false,
-    danger: Boolean = false,
-    tooltip: String? = contentDescription,
-    tooltipPlacement: TooltipPlacement = TooltipPlacement.BelowCenter,
-    tint: Color = Color.Unspecified,
-    interactionSource: MutableInteractionSource? = null,
-    shape: Shape = IconButtonDefaults.shape(style),
-    restTint: Color = Color.Unspecified,
-    active: Boolean = false,
-    frameSize: Dp = Dp.Unspecified,
-    iconSize: Dp = Dp.Unspecified,
-    sound: UiSound? = UiSound.Click,
-    glass: Boolean = true,
-    focusRing: Boolean = true,
-) {
-    IconButton(
-        painter, contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement, tint,
-        interactionSource, shape, restTint, active, frameSize, iconSize, sound, glass, focusRing, Color.Unspecified,
-    )
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun IconButton(
-    contentDescription: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    style: IconButtonStyle = IconButtonStyle.Ghost,
-    size: ControlSize = ControlSize.Regular,
-    selected: Boolean = false,
-    danger: Boolean = false,
-    tooltip: String? = contentDescription,
-    tooltipPlacement: TooltipPlacement = TooltipPlacement.BelowCenter,
-    interactionSource: MutableInteractionSource? = null,
-    shape: Shape = IconButtonDefaults.shape(style),
-    restTint: Color = Color.Unspecified,
-    active: Boolean = false,
-    frameSize: Dp = Dp.Unspecified,
-    sound: UiSound? = UiSound.Click,
-    glass: Boolean = true,
-    focusRing: Boolean = true,
-    content: @Composable (tint: Color) -> Unit,
-) {
-    IconButton(
-        contentDescription, onClick, modifier, enabled, style, size, selected, danger, tooltip, tooltipPlacement,
-        interactionSource, shape, restTint, active, frameSize, sound, glass, focusRing, Color.Unspecified, content,
-    )
-}
-
 @ExperimentalOneConfigUiApi
 public object IconButtonDefaults {
     public val style: IconButtonStyle = IconButtonStyle.Ghost
@@ -289,16 +195,6 @@ public object IconButtonDefaults {
             else -> theme.textColorSecondary
         }
     }
-
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    @Composable
-    public fun contentColor(
-        style: IconButtonStyle,
-        hovered: Boolean,
-        selected: Boolean = false,
-        danger: Boolean = false,
-        restTint: Color = Color.Unspecified,
-    ): Color = contentColor(style, hovered, selected, danger, restTint, Color.Unspecified)
 }
 
 @Composable

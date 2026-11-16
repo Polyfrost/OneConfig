@@ -39,16 +39,6 @@ public class ModSortMode(
     public constructor(
         id: String,
         icon: String,
-        title: PageText,
-        confirmation: PageText? = null,
-        onSelect: () -> Unit,
-    ) : this(id, icon, title, confirmation, null as PageText?, onSelect)
-
-    @Deprecated("Use the constructor that takes confirmLabel", level = DeprecationLevel.HIDDEN)
-    @JvmOverloads
-    public constructor(
-        id: String,
-        icon: String,
         title: String,
         confirmation: String? = null,
         onSelect: () -> Unit,

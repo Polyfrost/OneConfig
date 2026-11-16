@@ -63,52 +63,6 @@ public class MenuAction(
 
     public val danger: Boolean get() = style == ControlStyle.Danger || style == ControlStyle.DangerFilled
 
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public constructor(
-        label: PageText,
-        onClick: () -> Unit,
-        icon: String? = null,
-        painter: Painter? = null,
-        detail: String? = null,
-        style: ControlStyle = ControlStyle.Ghost,
-        enabled: Boolean = true,
-        disabledReason: String? = null,
-        checked: Boolean? = null,
-        shortcutHint: String? = null,
-        badge: String? = null,
-        size: MenuItemSize = MenuItemSize.Compact,
-        leading: (@Composable () -> Unit)? = null,
-        children: List<MenuEntry> = emptyList(),
-        danger: Boolean = false,
-        dismissOnClick: Boolean = true,
-    ) : this(
-        label, onClick, icon, painter, detail, style, enabled, disabledReason, checked,
-        shortcutHint, badge, size, leading, children, danger, dismissOnClick, Color.Unspecified,
-    )
-
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public constructor(
-        label: String,
-        onClick: () -> Unit,
-        icon: String? = null,
-        painter: Painter? = null,
-        detail: String? = null,
-        style: ControlStyle = ControlStyle.Ghost,
-        enabled: Boolean = true,
-        disabledReason: String? = null,
-        checked: Boolean? = null,
-        shortcutHint: String? = null,
-        badge: String? = null,
-        size: MenuItemSize = MenuItemSize.Compact,
-        leading: (@Composable () -> Unit)? = null,
-        children: List<MenuEntry> = emptyList(),
-        danger: Boolean = false,
-        dismissOnClick: Boolean = true,
-    ) : this(
-        PageText.literal(label), onClick, icon, painter, detail, style, enabled, disabledReason, checked,
-        shortcutHint, badge, size, leading, children, danger, dismissOnClick, Color.Unspecified,
-    )
-
     @Deprecated(
         "Use the constructor that takes onClick second",
         ReplaceWith("MenuAction(label, onClick, icon = icon, detail = detail, enabled = enabled, danger = danger)"),

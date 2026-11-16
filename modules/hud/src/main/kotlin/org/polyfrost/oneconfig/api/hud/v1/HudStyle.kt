@@ -38,67 +38,7 @@ public data class HudStyle(
     public val paddingLeft: Float? = null,
     public val paddingRight: Float? = null,
     public val useGuiScale: Boolean = true,
-) {
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public constructor(
-        font: Font = Font.Minecraft,
-        textColor: PolyColor = PolyColor(0xFFFFFFFF.toInt()),
-        shadow: Boolean = false,
-        shadowColor: PolyColor = PolyColor(0x40000000),
-        background: Boolean = true,
-        backgroundColor: PolyColor = PolyColor(0x80000000.toInt()),
-        border: Boolean = false,
-        borderColor: PolyColor = PolyColor(0xFF000000.toInt()),
-        borderSize: Float = 1f,
-        radius: Float = 4f,
-        padding: Float = 4f,
-        scale: Float = 1f,
-    ) : this(
-        font = font,
-        textColor = textColor,
-        shadow = shadow,
-        shadowColor = shadowColor,
-        background = background,
-        backgroundColor = backgroundColor,
-        border = border,
-        borderColor = borderColor,
-        borderSize = borderSize,
-        radius = radius,
-        padding = padding,
-        scale = scale,
-        textScale = 1f,
-    )
-
-    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-    public fun copy(
-        font: Font = this.font,
-        textColor: PolyColor = this.textColor,
-        shadow: Boolean = this.shadow,
-        shadowColor: PolyColor = this.shadowColor,
-        background: Boolean = this.background,
-        backgroundColor: PolyColor = this.backgroundColor,
-        border: Boolean = this.border,
-        borderColor: PolyColor = this.borderColor,
-        borderSize: Float = this.borderSize,
-        radius: Float = this.radius,
-        padding: Float = this.padding,
-        scale: Float = this.scale,
-    ): HudStyle = copy(
-        font = font,
-        textColor = textColor,
-        shadow = shadow,
-        shadowColor = shadowColor,
-        background = background,
-        backgroundColor = backgroundColor,
-        border = border,
-        borderColor = borderColor,
-        borderSize = borderSize,
-        radius = radius,
-        padding = padding,
-        scale = scale,
-        textScale = textScale,
-    )
-}
+)
 
 @ExperimentalOneConfigUiApi
 public object HudStyles {

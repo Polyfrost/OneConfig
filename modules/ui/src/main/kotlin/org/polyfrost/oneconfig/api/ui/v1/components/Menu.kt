@@ -173,36 +173,6 @@ public fun MenuItem(
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
-public fun MenuItem(
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    icon: String? = null,
-    painter: Painter? = null,
-    detail: String? = null,
-    style: ControlStyle = ControlStyle.Ghost,
-    size: MenuItemSize = MenuDefaults.size,
-    enabled: Boolean = true,
-    selected: Boolean = false,
-    checked: Boolean? = null,
-    shortcutHint: String? = null,
-    badge: String? = null,
-    tooltip: String? = null,
-    danger: Boolean = false,
-    leading: (@Composable () -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null,
-    interactionSource: MutableInteractionSource? = null,
-    sound: UiSound? = LocalMenuSound.current,
-) {
-    MenuItem(
-        label, onClick, modifier, icon, painter, detail, style, size, enabled, selected, checked, shortcutHint,
-        badge, tooltip, danger, leading, trailing, interactionSource, sound, Color.Unspecified,
-    )
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
 public fun MenuItem(label: String, icon: String?, onClick: () -> Unit) {
     MenuItem(label, onClick, Modifier, icon = icon)
 }

@@ -243,31 +243,6 @@ public fun <T> TabRow(
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun <T> TabRow(
-    tabs: List<TabItem<T>>,
-    selected: T,
-    onSelect: (T) -> Unit,
-    modifier: Modifier = Modifier,
-    style: TabStyle = TabStyle.Pill,
-    size: ControlSize = ControlSize.Regular,
-    fill: Boolean = true,
-    enabled: Boolean = true,
-    interactionSource: MutableInteractionSource? = null,
-    tooltipPlacement: TooltipPlacement = TooltipDefaults.placement,
-    sound: UiSound? = UiSound.Click,
-    onDeselect: ((T) -> Unit)? = null,
-    track: Boolean = true,
-    underlineWidth: Dp? = null,
-    badgePlacement: TabBadgePlacement = TabBadgePlacement.Inline,
-    activation: TabActivation = TabActivation.Automatic,
-    underlineThickness: Dp? = null,
-) {
-    TabRow(tabs, selected, onSelect, modifier, style, size, fill, enabled, interactionSource, tooltipPlacement, sound, onDeselect, track, underlineWidth, badgePlacement, activation, underlineThickness, slide = false)
-}
-
 @ExperimentalOneConfigUiApi
 @Composable
 public fun <T> SegmentedChips(

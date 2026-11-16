@@ -104,23 +104,6 @@ public fun <T> RadioGroup(
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun <T> RadioGroup(
-    selected: T,
-    options: List<T>,
-    onSelect: (T) -> Unit,
-    modifier: Modifier = Modifier,
-    label: (T) -> String = { it.toString() },
-    orientation: Orientation = Orientation.Vertical,
-    enabled: Boolean = true,
-    interactionSource: MutableInteractionSource? = null,
-    styledLabel: ((T) -> AnnotatedString)? = null,
-) {
-    RadioGroup(selected, options, onSelect, modifier, label, orientation, enabled, interactionSource, styledLabel, fillWidth = false)
-}
-
 @Composable
 private fun RadioItem(
     text: String,

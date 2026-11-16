@@ -22,7 +22,6 @@ public enum class HudMouseButton {
 }
 
 @ExperimentalOneConfigUiApi
-@JvmOverloads
 public fun Hud.clickRegion(
     id: String,
     x: Float,
