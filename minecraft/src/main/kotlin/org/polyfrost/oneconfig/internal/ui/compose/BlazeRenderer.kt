@@ -287,7 +287,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             val ox = x * s.sx + s.tx
             val px = if (snapX) snap(ox) else floor(ox)
             val py = snap(y * s.sy + s.ty)
-            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, ox - px, 0f, literal)
+            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, if (snapX) 0f else ox - px, 0f, literal)
             if (outline != null) {
                 val x0 = px - outline.pad
                 val y0 = py - outline.pad
