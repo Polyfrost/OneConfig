@@ -261,10 +261,9 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     private fun lineMatrix(x: Float, y: Float, index: Int, lineHeight: Int, scale: Float): Matrix3x2f =
-        Matrix3x2f().scale(1f / guiScale).translate(snap(x * state.sx + state.tx), snap(y * state.sy + state.ty))
-            .scale(state.sx * scale, state.sy * scale).translate(0f, index * lineHeight.toFloat())
-
-    private fun snap(pixel: Float) = pixel.roundToInt().toFloat()
+        Matrix3x2f().scale(1f / guiScale)
+            .translate(snap(x * state.sx + state.tx), snap(y * state.sy + state.ty) + snap(index * lineHeight * scale * state.sy))
+            .scale(state.sx * scale, state.sy * scale)
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
         mcTextOutline(text, x, y, color, outlineColor, scale, false)
@@ -842,6 +841,8 @@ private fun visualOrder(line: String, literal: Boolean = false): FormattedCharSe
     return lang.getVisualOrder(FormattedText.of(line))
 }
 
+private fun snap(pixel: Float) = pixel.roundToInt().toFloat()
+
 internal object McOutlines {
     private const val MAX_ENTRIES = 32
     private const val MAX_POOLED = 8
@@ -951,7 +952,7 @@ internal object McOutlines {
                 for (i in OFFSETS.indices step 2) {
                     val pose = graphics.pose()
                     pose.pushMatrix()
-                    pose.translate(ox, oy).scale(key.kx, key.ky).translate(OFFSETS[i], OFFSETS[i + 1] + index * font.lineHeight)
+                    pose.translate(ox, oy + snap(index * font.lineHeight * key.ky)).scale(key.kx, key.ky).translate(OFFSETS[i], OFFSETS[i + 1])
                     //~ if >= 26.1 'drawString' -> 'text'
                     graphics.text(font, seq, 0, 0, -1, false)
                     pose.popMatrix()
