@@ -261,8 +261,10 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     private fun lineMatrix(x: Float, y: Float, index: Int, lineHeight: Int, scale: Float): Matrix3x2f =
-        Matrix3x2f().scale(1f / guiScale).translate(state.tx, state.ty).scale(state.sx, state.sy)
-            .translate(x, y + index * lineHeight * scale).scale(scale)
+        Matrix3x2f().scale(1f / guiScale).translate(snap(x * state.sx + state.tx), snap(y * state.sy + state.ty))
+            .scale(state.sx * scale, state.sy * scale).translate(0f, index * lineHeight.toFloat())
+
+    private fun snap(pixel: Float) = pixel.roundToInt().toFloat()
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
         mcTextOutline(text, x, y, color, outlineColor, scale, false)
@@ -275,11 +277,9 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         if (a != 0 && (clip == null || scissor != null)) {
             flush()
             val s = state
-            val ox = x * s.sx + s.tx
-            val oy = y * s.sy + s.ty
-            val px = floor(ox)
-            val py = floor(oy)
-            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, ox - px, oy - py, literal)
+            val px = snap(x * s.sx + s.tx)
+            val py = snap(y * s.sy + s.ty)
+            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, 0f, 0f, literal)
             if (outline != null) {
                 val x0 = px - outline.pad
                 val y0 = py - outline.pad
