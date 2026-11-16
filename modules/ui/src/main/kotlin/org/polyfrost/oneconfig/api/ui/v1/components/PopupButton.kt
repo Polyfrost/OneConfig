@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, ExperimentalVersionOverloading::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
@@ -35,18 +35,18 @@ public fun ProvidePopupSounds(enabled: Boolean, content: @Composable () -> Unit)
 public fun AnchoredPopupButton(
     icon: String,
     contentDescription: String,
-    modifier: Modifier = Modifier,
-    placement: Placement = Placement.BelowEnd,
-    gap: Dp = POPUP_GAP,
-    enabled: Boolean = true,
-    style: IconButtonStyle = IconButtonStyle.Ghost,
-    size: ControlSize = ControlSize.Regular,
-    interactionSource: MutableInteractionSource? = null,
-    selectedWhenOpen: Boolean = false,
-    tooltip: String? = contentDescription,
-    tooltipPlacement: TooltipPlacement = TooltipPlacement.BelowCenter,
-    sound: UiSound? = UiSound.Click,
-    popupSounds: Boolean = LocalPopupSounds.current,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") placement: Placement = Placement.BelowEnd,
+    @IntroducedAt("1.8.0") gap: Dp = POPUP_GAP,
+    @IntroducedAt("1.8.0") enabled: Boolean = true,
+    @IntroducedAt("1.8.0") style: IconButtonStyle = IconButtonStyle.Ghost,
+    @IntroducedAt("1.8.0") size: ControlSize = ControlSize.Regular,
+    @IntroducedAt("1.8.0") interactionSource: MutableInteractionSource? = null,
+    @IntroducedAt("1.8.0") selectedWhenOpen: Boolean = false,
+    @IntroducedAt("1.8.0") tooltip: String? = contentDescription,
+    @IntroducedAt("1.8.0") tooltipPlacement: TooltipPlacement = TooltipPlacement.BelowCenter,
+    @IntroducedAt("1.8.0") sound: UiSound? = UiSound.Click,
+    @IntroducedAt("1.8.0") popupSounds: Boolean = LocalPopupSounds.current,
     content: @Composable (close: () -> Unit) -> Unit,
 ) {
     PopupButtonFrame(contentDescription, modifier, placement, gap, enabled, popupSounds, content) { open, toggle, triggerModifier ->
@@ -147,13 +147,6 @@ private fun PopupButtonFrame(
             }
         }
     }
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun AnchoredPopupButton(icon: String, tooltip: String, content: @Composable (close: () -> Unit) -> Unit) {
-    AnchoredPopupButton(icon, tooltip, Modifier, content = content)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

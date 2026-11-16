@@ -1,6 +1,6 @@
 @file:JvmMultifileClass
 @file:JvmName("MenuKt")
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, ExperimentalVersionOverloading::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
@@ -128,24 +128,24 @@ public object MenuDefaults {
 public fun MenuItem(
     label: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    icon: String? = null,
-    painter: Painter? = null,
-    detail: String? = null,
-    style: ControlStyle = ControlStyle.Ghost,
-    size: MenuItemSize = MenuDefaults.size,
-    enabled: Boolean = true,
-    selected: Boolean = false,
-    checked: Boolean? = null,
-    shortcutHint: String? = null,
-    badge: String? = null,
-    tooltip: String? = null,
-    danger: Boolean = false,
-    leading: (@Composable () -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null,
-    interactionSource: MutableInteractionSource? = null,
-    sound: UiSound? = LocalMenuSound.current,
-    dangerColor: Color = Color.Unspecified,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") icon: String? = null,
+    @IntroducedAt("1.8.0") painter: Painter? = null,
+    @IntroducedAt("1.8.0") detail: String? = null,
+    @IntroducedAt("1.8.0") style: ControlStyle = ControlStyle.Ghost,
+    @IntroducedAt("1.8.0") size: MenuItemSize = MenuDefaults.size,
+    @IntroducedAt("1.8.0") enabled: Boolean = true,
+    @IntroducedAt("1.8.0") selected: Boolean = false,
+    @IntroducedAt("1.8.0") checked: Boolean? = null,
+    @IntroducedAt("1.8.0") shortcutHint: String? = null,
+    @IntroducedAt("1.8.0") badge: String? = null,
+    @IntroducedAt("1.8.0") tooltip: String? = null,
+    @IntroducedAt("1.8.0") danger: Boolean = false,
+    @IntroducedAt("1.8.0") leading: (@Composable () -> Unit)? = null,
+    @IntroducedAt("1.8.0") trailing: (@Composable () -> Unit)? = null,
+    @IntroducedAt("1.8.0") interactionSource: MutableInteractionSource? = null,
+    @IntroducedAt("1.8.0") sound: UiSound? = LocalMenuSound.current,
+    @IntroducedAt("1.8.0") dangerColor: Color = Color.Unspecified,
 ) {
     MenuItemRow(
         label = label,
@@ -198,13 +198,6 @@ public fun MenuItem(
         label, onClick, modifier, icon, painter, detail, style, size, enabled, selected, checked, shortcutHint,
         badge, tooltip, danger, leading, trailing, interactionSource, sound, Color.Unspecified,
     )
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun MenuItem(label: String, onClick: () -> Unit) {
-    MenuItem(label, onClick, Modifier)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -478,13 +471,6 @@ internal fun MenuPanel(modifier: Modifier, maxHeight: Dp, content: @Composable C
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
-public fun MenuList(items: List<MenuAction>, onPicked: () -> Unit) {
-    MenuList(items, onPicked, Modifier, MenuItemSize.Compact)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
 public fun MenuList(items: List<MenuAction>, size: MenuItemSize, onPicked: () -> Unit) {
     MenuList(items, onPicked, Modifier, size)
 }
@@ -494,10 +480,10 @@ public fun MenuList(items: List<MenuAction>, size: MenuItemSize, onPicked: () ->
 public fun MenuList(
     entries: List<MenuEntry>,
     onSelect: () -> Unit,
-    modifier: Modifier = Modifier,
-    size: MenuItemSize = MenuItemSize.Compact,
-    surface: (@Composable (Modifier) -> Modifier)? = null,
-    tabNavigation: Boolean = false,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") size: MenuItemSize = MenuItemSize.Compact,
+    @IntroducedAt("1.8.0") surface: (@Composable (Modifier) -> Modifier)? = null,
+    @IntroducedAt("1.8.0") tabNavigation: Boolean = false,
 ) {
     MenuSurface(modifier, surface = surface, tabNavigation = tabNavigation) {
         MenuEntryItems(entries, onSelect, size)

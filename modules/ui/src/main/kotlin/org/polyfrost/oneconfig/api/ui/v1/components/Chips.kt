@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, ExperimentalVersionOverloading::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
@@ -79,16 +79,16 @@ public fun Chip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    icon: String? = null,
-    enabled: Boolean = true,
-    size: ControlSize = ChipDefaults.size,
-    role: A11yRole = A11yRole.Button,
-    contentDescription: String? = null,
-    leading: (@Composable () -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null,
-    interactionSource: MutableInteractionSource? = null,
-    sound: UiSound? = UiSound.Click,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") icon: String? = null,
+    @IntroducedAt("1.8.0") enabled: Boolean = true,
+    @IntroducedAt("1.8.0") size: ControlSize = ChipDefaults.size,
+    @IntroducedAt("1.8.0") role: A11yRole = A11yRole.Button,
+    @IntroducedAt("1.8.0") contentDescription: String? = null,
+    @IntroducedAt("1.8.0") leading: (@Composable () -> Unit)? = null,
+    @IntroducedAt("1.8.0") trailing: (@Composable () -> Unit)? = null,
+    @IntroducedAt("1.8.0") interactionSource: MutableInteractionSource? = null,
+    @IntroducedAt("1.8.0") sound: UiSound? = UiSound.Click,
 ) {
     val theme = OneConfigTheme.current
     val source = interactionSource ?: remember { MutableInteractionSource() }
@@ -136,13 +136,6 @@ public fun Chip(
         )
         trailing?.invoke()
     }
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Chip(label, selected, onClick, Modifier)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

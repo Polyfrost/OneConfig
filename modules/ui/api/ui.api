@@ -594,7 +594,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ChipDefaults {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/ChipsKt {
 	public static final synthetic fun Chip (Ljava/lang/String;ZLjava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public static final synthetic fun Chip (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun Chip (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final fun Chip (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Lorg/polyfrost/oneconfig/api/ui/v1/a11y/A11yRole;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -787,15 +787,15 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/DialogDefaults {
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/DialogKt {
 	public static final synthetic fun ConfirmDialog (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public static final synthetic fun ConfirmDialog (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ConfirmDialog (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final fun ConfirmDialog (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;ZLjava/lang/String;ZLandroidx/compose/runtime/Composer;III)V
 	public static final fun ConfirmDialog (ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;ZLjava/lang/String;ZLandroidx/compose/runtime/Composer;III)V
 	public static final fun DialogButtons (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DialogButtons (Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/DialogButtonLayout;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
-	public static final synthetic fun DialogButtons (Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
-	public static final synthetic fun DialogTitle (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)V
+	public static final fun DialogButtons (Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+	public static final fun DialogTitle (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)V
 	public static final fun DialogTitle (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun ModalDialog (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ModalDialog (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun ModalDialog-VxB0X1c (Lkotlin/jvm/functions/Function0;FFLandroidx/compose/foundation/layout/PaddingValues;FZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final fun ModalDialog-dBKJ9eM (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;FLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;ZZLandroidx/compose/foundation/layout/PaddingValues;FJLorg/polyfrost/oneconfig/api/ui/v1/components/DialogButtonLayout;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 	public static final fun ModalDialog-kGLe4N0 (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;FLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;ZZLandroidx/compose/foundation/layout/PaddingValues;FJLorg/polyfrost/oneconfig/api/ui/v1/components/DialogButtonLayout;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
@@ -1171,15 +1171,15 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize : j
 public final class org/polyfrost/oneconfig/api/ui/v1/components/MenuKt {
 	public static final fun ContextMenu-K5zGePQ (ZJLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ContextMenu-K5zGePQ (ZJLkotlin/jvm/functions/Function0;Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Ljava/util/List;Landroidx/compose/runtime/Composer;I)V
-	public static final synthetic fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Ljava/util/List;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ContextMenu-vxkq2O8 (ZJLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun ContextMenuHost (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun MenuItem (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZZLjava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
 	public static final synthetic fun MenuItem (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public static final synthetic fun MenuItem (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun MenuItem (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun MenuItem (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZLjava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;Landroidx/compose/runtime/Composer;III)V
 	public static final fun MenuItem-VCm7RN4 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;ZZLjava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;JLandroidx/compose/runtime/Composer;III)V
-	public static final synthetic fun MenuList (Ljava/util/List;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun MenuList (Ljava/util/List;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final fun MenuList (Ljava/util/List;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;Lkotlin/jvm/functions/Function3;ZLandroidx/compose/runtime/Composer;II)V
 	public static final synthetic fun MenuList (Ljava/util/List;Lorg/polyfrost/oneconfig/api/ui/v1/components/MenuItemSize;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun MenuSurface (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
@@ -1399,7 +1399,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/PlayerSkinLayers
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/PopupButtonKt {
-	public static final synthetic fun AnchoredPopupButton (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
+	public static final fun AnchoredPopupButton (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final synthetic fun AnchoredPopupButton-FJfuzF0 (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment$Horizontal;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;I)V
 	public static final fun AnchoredPopupButton-GHTll3U (Ljava/lang/String;Lkotlin/jvm/functions/Function5;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/Placement;FZZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun AnchoredPopupButton-GVfq81o (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lorg/polyfrost/oneconfig/api/ui/v1/components/Placement;FZLorg/polyfrost/oneconfig/api/ui/v1/components/IconButtonStyle;Lorg/polyfrost/oneconfig/api/ui/v1/components/ControlSize;Landroidx/compose/foundation/interaction/MutableInteractionSource;ZLjava/lang/String;Lorg/polyfrost/oneconfig/api/ui/v1/components/TooltipPlacement;Lorg/polyfrost/oneconfig/api/ui/v1/components/UiSound;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
@@ -2398,7 +2398,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme {
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigThemeKt {
-	public static final synthetic fun ProvideOneConfigTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ProvideOneConfigTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun ProvideOneConfigTheme (Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 

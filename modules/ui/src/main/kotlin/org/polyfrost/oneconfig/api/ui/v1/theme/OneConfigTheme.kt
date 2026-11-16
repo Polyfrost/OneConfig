@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalVersionOverloading::class)
+
 package org.polyfrost.oneconfig.api.ui.v1.theme
 
 import androidx.compose.runtime.Composable
@@ -123,8 +125,8 @@ public object OneConfigTheme {
 @ExperimentalOneConfigUiApi
 @Composable
 public fun ProvideOneConfigTheme(
-    theme: OneConfigUITheme? = null,
-    scaleToUi: Boolean = false,
+    @IntroducedAt("1.8.0") theme: OneConfigUITheme? = null,
+    @IntroducedAt("1.8.0") scaleToUi: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val nested = LocalThemeProvided.current
@@ -144,10 +146,3 @@ public fun ProvideOneConfigTheme(
 }
 
 private val LocalThemeProvided = staticCompositionLocalOf { false }
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun ProvideOneConfigTheme(content: @Composable () -> Unit) {
-    ProvideOneConfigTheme(null, false, content)
-}

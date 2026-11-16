@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalVersionOverloading::class)
+
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.foundation.layout.Column
@@ -134,7 +136,6 @@ fun Text(
     null,
 )
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @Composable
 fun Text(
     text: Any,
@@ -147,21 +148,7 @@ fun Text(
     textAlign: TextAlign = TextAlign.Start,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
-) = Text(text, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, null)
-
-@Composable
-fun Text(
-    text: Any,
-    modifier: Modifier = Modifier,
-    color: Color,
-    fontSize: TextUnit = 14.sp,
-    lineHeight: TextUnit? = null,
-    shift: BaselineShift = BaselineShift.None,
-    fontWeight: FontWeight = FontWeight.Normal,
-    textAlign: TextAlign = TextAlign.Start,
-    maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip,
-    colorProducer: ColorProducer? = null,
+    @IntroducedAt("1.6.0") colorProducer: ColorProducer? = null,
 ) {
     when (val comp: Any = Platform.compatibility().wrapPlatformComponent(text)) {
         is Component -> TextComponent(comp, modifier, color, fontSize, lineHeight, shift, fontWeight, textAlign, maxLines, overflow, colorProducer)

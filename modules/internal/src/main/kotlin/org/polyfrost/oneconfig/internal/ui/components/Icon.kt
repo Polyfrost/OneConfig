@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalVersionOverloading::class)
+
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.foundation.Image
@@ -150,22 +152,13 @@ private class RasterIconPainter(private val icon: RasterIcon) : Painter() {
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @Composable
 fun Icon(
     iconName: String,
     color: Color = Color.Unspecified,
     modifier: Modifier = Modifier,
     fitAspectRatio: Boolean = false,
-) = Icon(iconName, color, modifier, fitAspectRatio, null)
-
-@Composable
-fun Icon(
-    iconName: String,
-    color: Color = Color.Unspecified,
-    modifier: Modifier = Modifier,
-    fitAspectRatio: Boolean = false,
-    tint: (() -> Color)? = null,
+    @IntroducedAt("1.6.0") tint: (() -> Color)? = null,
 ) {
     val theme = LocalTheme.current
     val resolvedColor = if (color == Color.Unspecified) theme.textColor else color

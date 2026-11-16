@@ -1,6 +1,6 @@
 @file:JvmMultifileClass
 @file:JvmName("MenuKt")
-@file:OptIn(ExperimentalOneConfigUiApi::class, InternalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, InternalOneConfigUiApi::class, ExperimentalVersionOverloading::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
@@ -60,7 +60,7 @@ public fun ContextMenu(
     expanded: Boolean,
     offset: IntOffset,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (!expanded) return
@@ -71,13 +71,6 @@ public fun ContextMenu(
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    ContextMenu(expanded, offset, onDismiss, Modifier, content)
-}
-
 @ExperimentalOneConfigUiApi
 @Composable
 public fun ContextMenu(
@@ -85,17 +78,10 @@ public fun ContextMenu(
     offset: IntOffset,
     onDismiss: () -> Unit,
     entries: List<MenuEntry>,
-    modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
 ) {
     if (!expanded) return
     ContextMenuPopup(offset, true, entries, modifier, null, onDismiss = onDismiss)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun ContextMenu(expanded: Boolean, offset: IntOffset, onDismiss: () -> Unit, items: List<MenuAction>) {
-    ContextMenu(expanded, offset, onDismiss, items, Modifier)
 }
 
 @ExperimentalOneConfigUiApi

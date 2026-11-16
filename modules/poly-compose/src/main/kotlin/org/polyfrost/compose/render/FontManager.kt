@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalVersionOverloading::class)
+
 package org.polyfrost.compose.render
 
 import java.util.concurrent.ConcurrentHashMap
@@ -25,7 +27,7 @@ public object FontManager {
         revision++
     }
 
-    public fun loadFromResource(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null, pixelAligned: Boolean = false): Boolean {
+    public fun loadFromResource(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null, @IntroducedAt("1.2.15") pixelAligned: Boolean = false): Boolean {
         val cl = loader ?: FontManager::class.java.classLoader
         val bytes = (cl?.getResourceAsStream(path) ?: FontManager::class.java.getResourceAsStream(path))
             ?.use { it.readBytes() }?.takeIf(::isReadableFont) ?: return false
@@ -41,11 +43,6 @@ public object FontManager {
     public fun fontData(name: String): ByteArray? = fontData[name]
 
     public fun isPixelAligned(name: String): Boolean = name in pixelFonts
-
-    @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
-    @JvmName("loadFromResource")
-    public fun loadFromResourceCompat(path: String, name: String = DEFAULT_KEY, loader: ClassLoader? = null): Boolean =
-        loadFromResource(path, name, loader, false)
 
     @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
     @JvmName("loadFromResource")

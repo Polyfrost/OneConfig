@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalVersionOverloading::class)
+
 package org.polyfrost.compose.composables
 
 import androidx.compose.runtime.Composable
@@ -98,7 +100,7 @@ public fun PolyMcText(
     shadow: Boolean = true,
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,
-    literal: Boolean = false,
+    @IntroducedAt("1.8.0") literal: Boolean = false,
 ) {
     PolyMcText(text, null, color, shadow, scale, modifier, literal)
 }
@@ -111,7 +113,7 @@ public fun PolyMcText(
     shadow: Boolean = true,
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,
-    literal: Boolean = false,
+    @IntroducedAt("1.8.0") literal: Boolean = false,
 ) {
     ComposeNode<McTextNode, PolyApplier>(
         factory = { McTextNode() },
@@ -135,7 +137,7 @@ public fun PolyMcText(
     shadow: Boolean = true,
     scale: Float = 1f,
     modifier: PolyModifier = PolyModifier,
-    literal: Boolean = false,
+    @IntroducedAt("1.8.0") literal: Boolean = false,
 ) {
     ComposeNode<McTextNode, PolyApplier>(
         factory = { McTextNode() },
@@ -151,44 +153,6 @@ public fun PolyMcText(
     )
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@Composable
-public fun PolyMcText(
-    text: String,
-    color: PolyColor = PolyColor.WHITE,
-    shadow: Boolean = true,
-    scale: Float = 1f,
-    modifier: PolyModifier = PolyModifier,
-) {
-    PolyMcText(text, null, color, shadow, scale, modifier, false)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@Composable
-public fun PolyMcText(
-    text: String,
-    outlineColor: PolyColor?,
-    color: PolyColor = PolyColor.WHITE,
-    shadow: Boolean = true,
-    scale: Float = 1f,
-    modifier: PolyModifier = PolyModifier,
-) {
-    PolyMcText(text, outlineColor, color, shadow, scale, modifier, false)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@Composable
-public fun PolyMcText(
-    text: () -> String,
-    outlineColor: PolyColor?,
-    color: PolyColor = PolyColor.WHITE,
-    shadow: Boolean = true,
-    scale: Float = 1f,
-    modifier: PolyModifier = PolyModifier,
-) {
-    PolyMcText(text, outlineColor, color, shadow, scale, modifier, false)
-}
-
 @Composable
 public fun PolySpacer(width: Float = 0f, height: Float = 0f) {
     ComposeNode<SpacerNode, PolyApplier>(
@@ -200,15 +164,10 @@ public fun PolySpacer(width: Float = 0f, height: Float = 0f) {
     )
 }
 
-@Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
-@Composable
-public fun PolyCanvas(modifier: PolyModifier, onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit): Unit =
-    PolyCanvas(modifier, false, onDraw)
-
 @Composable
 public fun PolyCanvas(
     modifier: PolyModifier,
-    live: Boolean = false,
+    @IntroducedAt("1.6.0") live: Boolean = false,
     onDraw: RenderContext.(x: Float, y: Float, width: Float, height: Float) -> Unit,
 ) {
     ComposeNode<CanvasNode, PolyApplier>(

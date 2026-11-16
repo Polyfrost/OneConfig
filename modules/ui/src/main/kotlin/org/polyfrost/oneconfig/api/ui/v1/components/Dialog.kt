@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalOneConfigUiApi::class)
+@file:OptIn(ExperimentalOneConfigUiApi::class, ExperimentalVersionOverloading::class)
 
 package org.polyfrost.oneconfig.api.ui.v1.components
 
@@ -89,17 +89,17 @@ public enum class DialogButtonLayout {
 @Composable
 public fun ModalDialog(
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-    width: Dp = DialogDefaults.width,
-    title: (@Composable () -> Unit)? = null,
-    buttons: (@Composable RowScope.() -> Unit)? = null,
-    dismissOnScrim: Boolean = true,
-    dismissOnEscape: Boolean = true,
-    padding: PaddingValues = DialogDefaults.padding,
-    spacing: Dp = DialogDefaults.spacing,
-    scrimColor: Color = Color.Unspecified,
-    buttonLayout: DialogButtonLayout = DialogButtonLayout.End,
-    scrollBody: Boolean = true,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") width: Dp = DialogDefaults.width,
+    @IntroducedAt("1.8.0") title: (@Composable () -> Unit)? = null,
+    @IntroducedAt("1.8.0") buttons: (@Composable RowScope.() -> Unit)? = null,
+    @IntroducedAt("1.8.0") dismissOnScrim: Boolean = true,
+    @IntroducedAt("1.8.0") dismissOnEscape: Boolean = true,
+    @IntroducedAt("1.8.0") padding: PaddingValues = DialogDefaults.padding,
+    @IntroducedAt("1.8.0") spacing: Dp = DialogDefaults.spacing,
+    @IntroducedAt("1.8.0") scrimColor: Color = Color.Unspecified,
+    @IntroducedAt("1.8.0") buttonLayout: DialogButtonLayout = DialogButtonLayout.End,
+    @IntroducedAt("1.8.0") scrollBody: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DialogLayer(onDismiss, dismissOnScrim, dismissOnEscape, scrimColor) {
@@ -262,7 +262,7 @@ public fun ModalPanel(
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun DialogTitle(text: String, modifier: Modifier = Modifier) {
+public fun DialogTitle(text: String, @IntroducedAt("1.8.0") modifier: Modifier = Modifier) {
     Announce(text)
     val theme = OneConfigTheme.current
     Text(text, modifier.semantics { heading() }, theme.textColor, theme.typography.title)
@@ -270,7 +270,7 @@ public fun DialogTitle(text: String, modifier: Modifier = Modifier) {
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun DialogButtons(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+public fun DialogButtons(@IntroducedAt("1.8.0") modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     DialogButtons(modifier, DialogButtonLayout.End, content)
 }
 
@@ -296,12 +296,12 @@ public fun ConfirmDialog(
     confirmLabel: String?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-    dismissLabel: String = DialogDefaults.cancelLabel,
-    style: ControlStyle = ControlStyle.Primary,
-    danger: Boolean = false,
-    icon: String? = null,
-    confirmEnabled: Boolean = true,
+    @IntroducedAt("1.8.0") modifier: Modifier = Modifier,
+    @IntroducedAt("1.8.0") dismissLabel: String = DialogDefaults.cancelLabel,
+    @IntroducedAt("1.8.0") style: ControlStyle = ControlStyle.Primary,
+    @IntroducedAt("1.8.0") danger: Boolean = false,
+    @IntroducedAt("1.8.0") icon: String? = null,
+    @IntroducedAt("1.8.0") confirmEnabled: Boolean = true,
 ) {
     ModalDialog(
         onDismiss,
@@ -372,13 +372,6 @@ internal fun kitString(key: String, fallback: String, vararg args: Any): String 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @ExperimentalOneConfigUiApi
 @Composable
-public fun ModalDialog(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    ModalDialog(onDismiss, Modifier, content = content)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
 public fun ModalDialog(onDismiss: () -> Unit, width: Dp, dismissOnScrim: Boolean, content: @Composable ColumnScope.() -> Unit) {
     ModalDialog(onDismiss, Modifier, width, dismissOnScrim = dismissOnScrim, content = content)
 }
@@ -419,27 +412,6 @@ public fun ModalPanel(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ModalPanel(modifier, width, height, padding, spacing, content)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun DialogTitle(text: String) {
-    DialogTitle(text, Modifier)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun DialogButtons(content: @Composable RowScope.() -> Unit) {
-    DialogButtons(Modifier, content)
-}
-
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@ExperimentalOneConfigUiApi
-@Composable
-public fun ConfirmDialog(title: String, text: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    ConfirmDialog(title, text, confirmLabel, onConfirm, onDismiss, Modifier)
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

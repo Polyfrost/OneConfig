@@ -345,15 +345,15 @@ public final class org/polyfrost/compose/composables/ComposableSingletons$Compos
 
 public final class org/polyfrost/compose/composables/ComposablesKt {
 	public static final fun PolyBox (Lorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun PolyCanvas (Lorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;I)V
+	public static final fun PolyCanvas (Lorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;I)V
 	public static final fun PolyCanvas (Lorg/polyfrost/compose/composables/PolyModifier;ZLkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyColumn (FLorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyImage (Lorg/polyfrost/compose/composables/PolyModifier;Lorg/polyfrost/compose/render/PolyBitmap;Landroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;ZLandroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyMcText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;ZLandroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun PolyMcText (Lkotlin/jvm/functions/Function0;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun PolyMcText (Lkotlin/jvm/functions/Function0;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyMcText (Lkotlin/jvm/functions/Function0;Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/render/PolyColor;ZFLorg/polyfrost/compose/composables/PolyModifier;ZLandroidx/compose/runtime/Composer;II)V
 	public static final fun PolyRect (Lorg/polyfrost/compose/render/PolyColor;Lorg/polyfrost/compose/composables/PolyModifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PolyRow (FLorg/polyfrost/compose/composables/PolyModifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
@@ -763,7 +763,7 @@ public final class org/polyfrost/compose/render/FontManager {
 	public final fun invalidateMetrics ()V
 	public final fun isPixelAligned (Ljava/lang/String;)Z
 	public final synthetic fun loadFromResource (Ljava/lang/String;)V
-	public final synthetic fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Z
+	public final fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Z
 	public final fun loadFromResource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;Z)Z
 	public static synthetic fun loadFromResource$default (Lorg/polyfrost/compose/render/FontManager;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;ILjava/lang/Object;)Z
 	public static synthetic fun loadFromResource$default (Lorg/polyfrost/compose/render/FontManager;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;ZILjava/lang/Object;)Z
