@@ -58,6 +58,7 @@ private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
 private val POSITION_OPTIONS = setOf(
     "section", "relativeX", "relativeY",
     "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY", "movedByPlayer",
+    "snapEdgeX", "snapEdgeY",
 )
 
 // which group a HUD is in is structure rather than a setting, so resetting the HUD keeps it grouped

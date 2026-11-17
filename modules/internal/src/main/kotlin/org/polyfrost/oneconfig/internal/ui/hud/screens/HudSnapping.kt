@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
+import org.polyfrost.oneconfig.api.hud.v1.HudSnapEdge
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -38,6 +40,20 @@ internal class HudSnapResult(
     companion object {
         val NONE = HudSnapResult(emptyList(), emptyList(), emptyList())
     }
+}
+
+internal val HudAnchor.edgeX: HudSnapEdge get() = when (this) {
+    HudAnchor.Auto -> HudSnapEdge.None
+    HudAnchor.TopLeft, HudAnchor.Left, HudAnchor.BottomLeft -> HudSnapEdge.Start
+    HudAnchor.Top, HudAnchor.Center, HudAnchor.Bottom -> HudSnapEdge.Center
+    HudAnchor.TopRight, HudAnchor.Right, HudAnchor.BottomRight -> HudSnapEdge.End
+}
+
+internal val HudAnchor.edgeY: HudSnapEdge get() = when (this) {
+    HudAnchor.Auto -> HudSnapEdge.None
+    HudAnchor.TopLeft, HudAnchor.Top, HudAnchor.TopRight -> HudSnapEdge.Start
+    HudAnchor.Left, HudAnchor.Center, HudAnchor.Right -> HudSnapEdge.Center
+    HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight -> HudSnapEdge.End
 }
 
 private fun Rect.lo(h: Boolean) = if (h) left else top
@@ -163,6 +179,31 @@ internal class HudSnapContext(
     fun snapY(rawX: Float, rawY: Float, width: Float, height: Float, threshold: Float): Float? =
         snapAxis(rawY, height, rawX, rawX + width, false, threshold)
 
+    /** Which part of [rect] sits on a guide along one axis, favouring [prefer] and then the centre when several do */
+    fun edge(rect: Rect, h: Boolean, prefer: HudSnapEdge): HudSnapEdge {
+        val lo = rect.lo(h)
+        val hi = rect.hi(h)
+        val mid = (lo + hi) / 2f
+        var start = false
+        var center = false
+        var end = false
+        for (line in lines(h)) {
+            val p = line.position
+            if (line.start && abs(p - lo) < ALIGN_EPSILON) start = true
+            if (line.center && abs(p - mid) < ALIGN_EPSILON) center = true
+            if (line.end && abs(p - hi) < ALIGN_EPSILON) end = true
+        }
+        return when {
+            prefer == HudSnapEdge.Start && start -> HudSnapEdge.Start
+            prefer == HudSnapEdge.Center && center -> HudSnapEdge.Center
+            prefer == HudSnapEdge.End && end -> HudSnapEdge.End
+            center -> HudSnapEdge.Center
+            start -> HudSnapEdge.Start
+            end -> HudSnapEdge.End
+            else -> HudSnapEdge.None
+        }
+    }
+
     fun feedback(rect: Rect, snapping: Boolean): HudSnapResult {
         val sideGaps = hudSideGaps(rect, obstacles, screen)
         if (!snapping) return HudSnapResult(emptyList(), emptyList(), sideGaps)
@@ -237,6 +278,8 @@ internal class HudDragSnapper {
     private var context: HudSnapContext? = null
     private var startRect: Rect? = null
     private var grabbedRect: Rect? = null
+    private var snapped = false
+    private var delta = Offset.Zero
 
     var result by mutableStateOf(HudSnapResult.NONE)
         private set
@@ -262,12 +305,15 @@ internal class HudDragSnapper {
         context = HudSnapContext(Rect(0f, 0f, screenWidth, screenHeight), outlines, outlines + members)
 
         result = HudSnapResult.NONE
+        snapped = false
+        delta = Offset.Zero
     }
 
     fun move(rawDx: Float, rawDy: Float, threshold: Float, snapping: Boolean, gridEnabled: Boolean): Offset {
         val ctx = context
         val start = startRect
         if (ctx == null || start == null) return Offset(rawDx, rawDy)
+        snapped = snapping
         if (!snapping) {
             result = ctx.feedback(start.translate(rawDx, rawDy), false)
             return Offset(rawDx, rawDy)
@@ -279,6 +325,7 @@ internal class HudDragSnapper {
         val dy = snapDelta(rawDy, false, gridEnabled, start, grabbed) { r, raw ->
             ctx.snapY(r.left + rawDx, raw, r.width, r.height, threshold)
         }
+        delta = Offset(dx, dy)
         val group = start.translate(dx, dy)
         val feedback = ctx.feedback(group, true)
         result = if (grabbed == null) {
@@ -315,7 +362,22 @@ internal class HudDragSnapper {
         return rawDelta
     }
 
+    /**
+     * The edges the last move snapped for a HUD that began the drag at [startRect], favouring those of [prefer]
+     *
+     * Measured from where the drag aimed the HUD because HUDs sit on whole pixels and can land half a pixel
+     * off the guide
+     */
+    fun edges(startRect: Rect, prefer: HudAnchor): Pair<HudSnapEdge, HudSnapEdge> {
+        val ctx = context
+        if (ctx == null || !snapped) return HudSnapEdge.None to HudSnapEdge.None
+        val aimed = startRect.translate(delta)
+        return ctx.edge(aimed, true, prefer.edgeX) to ctx.edge(aimed, false, prefer.edgeY)
+    }
+
     fun end() {
+        snapped = false
+        delta = Offset.Zero
         context = null
         startRect = null
         grabbedRect = null

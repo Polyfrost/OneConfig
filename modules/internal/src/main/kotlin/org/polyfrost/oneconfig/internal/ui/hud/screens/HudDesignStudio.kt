@@ -78,6 +78,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudGroup
 import org.polyfrost.oneconfig.api.hud.v1.HudGroups
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudResize
+import org.polyfrost.oneconfig.api.hud.v1.HudSnapEdge
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
@@ -375,6 +376,17 @@ private fun beginHudSnap(
     )
 }
 
+/** Makes each dropped HUD grow from the edge it was snapped by so it stays on the guide when its size changes */
+private fun settleSnapEdges(snapper: HudDragSnapper, starts: Map<Hud, Pair<Float, Float>>) {
+    for ((hud, start) in starts) {
+        if (hud.isAnchored || hud.isMergeAnchored) continue
+        val bounds = hudBounds(hud) ?: continue
+        val startRect = Rect(start.first, start.second, start.first + bounds.width, start.second + bounds.height)
+        val (edgeX, edgeY) = snapper.edges(startRect, hud.effectiveGrowthAnchor)
+        hud.setSnapEdgesKeepingPosition(edgeX, edgeY)
+    }
+}
+
 private fun fusedShapes(huds: List<Hud>): List<List<Hud>> {
     val seen = HashSet<Hud>()
     val out = ArrayList<List<Hud>>()
@@ -581,7 +593,19 @@ internal fun alignHuds(units: List<Collection<Hud>>, align: HudAlign) {
         }
         HudGroups.roots(unit).map { Triple(it, it.x + dx, it.y + dy) }
     }
-    applyHudTargets(moves.flatten())
+    val targets = moves.flatten()
+    applyHudTargets(targets)
+    val edge = when (align) {
+        HudAlign.Left, HudAlign.Top -> HudSnapEdge.Start
+        HudAlign.CenterX, HudAlign.CenterY -> HudSnapEdge.Center
+        HudAlign.Right, HudAlign.Bottom -> HudSnapEdge.End
+    }
+    val horizontal = align == HudAlign.Left || align == HudAlign.CenterX || align == HudAlign.Right
+    for ((hud) in targets) {
+        if (hud.isAnchored || hud.isMergeAnchored) continue
+        if (horizontal) hud.setSnapEdgesKeepingPosition(edge, hud.snapEdgeY)
+        else hud.setSnapEdgesKeepingPosition(hud.snapEdgeX, edge)
+    }
 }
 
 private fun hudBounds(hud: Hud): HudBounds? {
@@ -2279,6 +2303,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     val dropped = draggedGroup
                     HudManager.setMergeExclusions(emptySet())
                     Snapshot.withMutableSnapshot {
+                        settleSnapEdges(dragSnapper, dragStarts.filterKeys { it in draggedGroup })
                         isDragging = false
                         draggedHud = null
                         draggedGroup = emptySet()
@@ -2414,6 +2439,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             val wasCluster = dragTookWholeMerge
             HudManager.setMergeExclusions(emptySet())
             Snapshot.withMutableSnapshot {
+                if (wasDragging) settleSnapEdges(dragSnapper, dragStarts.filterKeys { it in wasDraggedGroup })
                 isDragging = false
                 draggedHud = null
                 draggedGroup = emptySet()
@@ -3534,6 +3560,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
     fun endDrag() {
         val dropped = if (isDragging) dragSet else emptySet()
         Snapshot.withMutableSnapshot {
+            if (dropped.isNotEmpty()) settleSnapEdges(dragSnapper, dragStarts.filterKeys { it in dropped })
             isDragging = false
             draggedHud = null
             dragSnapper.end()
