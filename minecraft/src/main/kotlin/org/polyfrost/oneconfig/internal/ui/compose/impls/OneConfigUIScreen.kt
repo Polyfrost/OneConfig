@@ -133,7 +133,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         /** For returning from a HUD editor opened from the OneConfig menu */
         @JvmStatic
-        fun resume(): OneConfigUIScreen = forRoute(null).also { it.resumeNext = true }
+        fun resume(): OneConfigUIScreen =
+            if (shell.layout.minimal) minimal() else forRoute(null).also { it.resumeNext = true }
 
         private const val OPEN_ANIMATION_MS = 250L
 
