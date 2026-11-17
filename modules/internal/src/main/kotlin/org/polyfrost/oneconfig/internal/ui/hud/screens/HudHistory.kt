@@ -235,6 +235,7 @@ internal class HudHistory {
             pending?.let(::record)
         }
         if (busy || sameLayout(last, now)) {
+            if (!busy) pending = null
             settling = null
             return
         }
