@@ -65,12 +65,14 @@ public final class VanillaHudSampler {
         //?} else
         //DeltaTracker deltaTracker = minecraft.getTimer();
         VanillaHudFootprint.begin(true);
+        HudManager.isSamplingVanilla = true;
         try {
             run(() -> sampleBossBar(accessor, graphics, deltaTracker));
             run(() -> sampleSidebar(accessor, graphics, minecraft));
             run(() -> sampleActionBar(accessor, graphics, deltaTracker));
             run(() -> sampleTitle(accessor, graphics, deltaTracker));
         } finally {
+            HudManager.isSamplingVanilla = false;
             VanillaHudFootprint.end(HudManager.guiScreenWidth, HudManager.guiScreenHeight);
         }
     }

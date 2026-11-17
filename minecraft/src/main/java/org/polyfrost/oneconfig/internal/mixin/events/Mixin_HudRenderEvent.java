@@ -3,9 +3,7 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.internal.OneConfig;
-//? if > 1.8.9 {
-import org.polyfrost.oneconfig.internal.VanillaHudSampler;
-//?} else
+//? if = 1.8.9
 //import org.polyfrost.oneconfig.internal.LegacyVanillaHudSampler;
 import org.polyfrost.oneconfig.internal.ui.hud.VanillaHudFootprint;
 import org.spongepowered.asm.mixin.Mixin;
@@ -50,9 +48,7 @@ public class Mixin_HudRenderEvent {
     //~ if = 1.8.9 '(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker' -> '(float partialTicks'
     private void renderHudCallback(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, CallbackInfo ci) {
         VanillaHudFootprint.end(HudManager.guiScreenWidth, HudManager.guiScreenHeight);
-        //? if > 1.8.9 {
-        VanillaHudSampler.sample(this);
-        //?} else
+        //? if = 1.8.9
         //LegacyVanillaHudSampler.sample(this);
 
 
