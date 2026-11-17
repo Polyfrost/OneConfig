@@ -34,6 +34,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -1126,7 +1128,12 @@ private fun AccordionSettingRow(
     modifier: Modifier,
     compact: Boolean = false,
 ) {
-    Box(modifier.jumpHighlightOf(prop)) {
+    val requester = remember { BringIntoViewRequester() }
+    val jumpTarget = LocalJumpHighlight.current?.target
+    LaunchedEffect(jumpTarget) {
+        if (jumpTarget === prop) requester.bringIntoView()
+    }
+    Box(modifier.bringIntoViewRequester(requester).jumpHighlightOf(prop)) {
         SettingContent(prop, nested = true, compact = compact, enabled = groupEnabled && display != Property.Display.DISABLED)
     }
 }
