@@ -95,6 +95,11 @@ public class KeysImpl implements Keys {
     }
 
     @Override
+    public int getKeyBackslash() {
+        return InputConstants.KEY_BACKSLASH;
+    }
+
+    @Override
     public int getMouseButtonLeft() {
         return InputConstants.MOUSE_BUTTON_LEFT;
     }
