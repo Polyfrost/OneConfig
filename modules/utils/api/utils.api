@@ -95,6 +95,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Keys {
 	public abstract fun getKey9 ()I
 	public abstract fun getKeyA ()I
 	public abstract fun getKeyB ()I
+	public abstract fun getKeyBackslash ()I
 	public abstract fun getKeyBackspace ()I
 	public abstract fun getKeyC ()I
 	public abstract fun getKeyD ()I
