@@ -31,7 +31,7 @@ class PolyTessellatorTest {
             batches.add(Batch(texture, verts, colors, nearest))
         }
         override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
-        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) = Unit
+        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = Unit
         var lives = 0
         override fun live(draw: (PolyRenderer) -> Unit) { lives++; draw(this) }
         val rectYs = ArrayList<Float>()
@@ -59,7 +59,7 @@ class PolyTessellatorTest {
             ops.add(Batch(texture, verts, colors, nearest))
         }
         override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
-        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) = Unit
+        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = Unit
         override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
         override val layered get() = true
         override fun layerMark(): Any = ops.size
@@ -878,6 +878,26 @@ class PolyTessellatorTest {
         } finally {
             McGlyphs.source = source
         }
+    }
+
+    @Test
+    fun mcTextOverloadsReachOlderOverrides() {
+        val calls = ArrayList<String>()
+        val r = object : PolyTessellator() {
+            override fun submit(texture: Any, premultiplied: Boolean, nearest: Boolean, verts: FloatArray, colors: IntArray, bounds: FloatArray) = Unit
+            override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
+            override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
+            override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) { calls += "text $text" }
+            override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) { calls += "literal $text" }
+            override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
+                calls += "outline $text"
+                super.mcTextOutline(text, x, y, color, outlineColor, scale)
+            }
+        }
+        r.mcText("a", 0f, 0f, -1, false, 1f, false, false)
+        r.mcText("b", 0f, 0f, -1, false, 1f, true, false)
+        r.mcTextOutline("c", 0f, 0f, -1, -1, 1f, false, false)
+        assertEquals(listOf("text a", "literal b", "outline c", "text c"), calls)
     }
 
     @Test

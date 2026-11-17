@@ -677,13 +677,9 @@ public abstract class PolyTessellator : PolyRenderer {
     }
 
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) {
-        mcText(text, x, y, color, shadow, scale, literal, true)
-    }
-
-    override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) {
         if (cpuOnly) return
         val lines = text.lines()
-        val x = if (snapX) mcLineLeft(x) else x
+        val x = if (snapMcX) mcLineLeft(x) else x
         if (shadow) {
             beginDraw()
             lines.forEachIndexed { index, line -> mcLine(line, x + scale, mcLineTop(y, index, scale) + scale, color, scale, true, literal) }
@@ -692,18 +688,18 @@ public abstract class PolyTessellator : PolyRenderer {
         lines.forEachIndexed { index, line -> mcLine(line, x, mcLineTop(y, index, scale), color, scale, false, literal) }
     }
 
+    override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) {
+        withMcX(snapX) { if (literal) mcText(text, x, y, color, shadow, scale, true) else mcText(text, x, y, color, shadow, scale) }
+    }
+
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
         mcTextOutline(text, x, y, color, outlineColor, scale, false)
     }
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean) {
-        mcTextOutline(text, x, y, color, outlineColor, scale, literal, true)
-    }
-
-    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean, snapX: Boolean) {
         beginDraw()
         if (cpuOnly) return
-        val x = if (snapX) mcLineLeft(x) else x
+        val x = if (snapMcX) mcLineLeft(x) else x
         val c = mulAlpha(outlineColor, state.alpha)
         val r = PolyGlyphPage.rasterizer
         if (c ushr 24 != 0 && r != null) {
@@ -759,6 +755,22 @@ public abstract class PolyTessellator : PolyRenderer {
             }
         }
         mcText(text, x, y, color, false, scale, literal, false)
+    }
+
+    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean, snapX: Boolean) {
+        withMcX(snapX) { if (literal) mcTextOutline(text, x, y, color, outlineColor, scale, true) else mcTextOutline(text, x, y, color, outlineColor, scale) }
+    }
+
+    private var snapMcX = true
+
+    private inline fun withMcX(snapX: Boolean, draw: () -> Unit) {
+        val previous = snapMcX
+        snapMcX = snapX
+        try {
+            draw()
+        } finally {
+            snapMcX = previous
+        }
     }
 
     private fun mcLineLeft(x: Float): Float {
