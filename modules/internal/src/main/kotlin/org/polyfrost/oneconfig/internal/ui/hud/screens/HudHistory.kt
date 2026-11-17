@@ -47,7 +47,7 @@ private fun sameValue(a: Any?, b: Any?): Boolean = when {
     a is Float && b is Float -> abs(a - b) < FLOAT_TOLERANCE
     a is Map<*, *> && b is Map<*, *> ->
         a.size == b.size && a.all { (key, value) -> b.containsKey(key) && sameValue(value, b[key]) }
-    a is List<*> && b is List<*> -> a.size == b.size && a.indices.all { sameValue(a[it], b[it]) }
+    a is List<*> && b is List<*> -> a.size == b.size && a.zip(b).all { (x, y) -> sameValue(x, y) }
     a is Array<*> && b is Array<*> -> sameValue(a.asList(), b.asList())
     a != null && b != null && a.javaClass.isArray && b.javaClass.isArray -> java.util.Objects.deepEquals(a, b)
     else -> a == b
