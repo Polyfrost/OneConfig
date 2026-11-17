@@ -18,7 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.node.LayoutModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -211,10 +217,54 @@ private fun SubmenuPopup(
     }
 }
 
-internal fun Modifier.outset(by: Dp): Modifier = layout { measurable, constraints ->
-    val px = by.roundToPx()
-    val width = constraints.maxWidth
-    val height = constraints.maxHeight
-    val placeable = measurable.measure(Constraints.fixed(width + px * 2, height + px * 2))
-    layout(width, height) { placeable.place(-px, -px) }
+internal fun Modifier.outset(by: Dp): Modifier = this then OutsetElement(by)
+
+private data class OutsetElement(val by: Dp) : ModifierNodeElement<OutsetNode>() {
+    override fun create(): OutsetNode = OutsetNode(by)
+
+    override fun update(node: OutsetNode) {
+        node.by = by
+    }
+}
+
+private class OutsetNode(var by: Dp) : Modifier.Node(), LayoutModifierNode {
+    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
+        val px = by.roundToPx()
+        val extra = px * 2
+        val placeable = measurable.measure(
+            Constraints(
+                minWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + extra else constraints.minWidth + extra,
+                maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + extra else Constraints.Infinity,
+                minHeight = if (constraints.hasBoundedHeight) constraints.maxHeight + extra else constraints.minHeight + extra,
+                maxHeight = if (constraints.hasBoundedHeight) constraints.maxHeight + extra else Constraints.Infinity,
+            ),
+        )
+        val width = if (constraints.hasBoundedWidth) constraints.maxWidth else (placeable.width - extra).coerceAtLeast(constraints.minWidth)
+        val height = if (constraints.hasBoundedHeight) constraints.maxHeight else (placeable.height - extra).coerceAtLeast(constraints.minHeight)
+        return layout(width, height) { placeable.place(-px, -px) }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int {
+        val extra = by.roundToPx() * 2
+        return shrink(measurable.minIntrinsicWidth(grow(height, extra)), extra)
+    }
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int {
+        val extra = by.roundToPx() * 2
+        return shrink(measurable.maxIntrinsicWidth(grow(height, extra)), extra)
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int {
+        val extra = by.roundToPx() * 2
+        return shrink(measurable.minIntrinsicHeight(grow(width, extra)), extra)
+    }
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int {
+        val extra = by.roundToPx() * 2
+        return shrink(measurable.maxIntrinsicHeight(grow(width, extra)), extra)
+    }
+
+    private fun grow(size: Int, extra: Int): Int = if (size == Constraints.Infinity) size else size + extra
+
+    private fun shrink(size: Int, extra: Int): Int = (size - extra).coerceAtLeast(0)
 }
