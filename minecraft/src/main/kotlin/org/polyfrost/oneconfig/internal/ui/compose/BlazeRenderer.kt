@@ -220,6 +220,10 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
     }
 
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) {
+        mcText(text, x, y, color, shadow, scale, literal, true)
+    }
+
+    override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) {
         flush()
         val c = mulAlpha(color, state.alpha)
         if (c ushr 24 == 0) return
@@ -228,7 +232,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         val font = Minecraft.getInstance().font
         text.lines().forEachIndexed { index, line ->
             if (line.isEmpty()) return@forEachIndexed
-            val m = lineMatrix(x, y, index, font.lineHeight, scale)
+            val m = lineMatrix(x, y, index, font.lineHeight, scale, snapX)
             val seq = visualOrder(line, literal)
             val baked = if (!keepVertices || (!literal && line.contains("§k", ignoreCase = true))) null
                 else if ('§' in line || Language.getInstance().isDefaultRightToLeft) bakeText(font, seq, m, c, shadow, scissor)
@@ -252,7 +256,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         val font = Minecraft.getInstance().font
         text.lines().forEachIndexed { index, line ->
             if (line.isEmpty()) return@forEachIndexed
-            val m = lineMatrix(x, y, index, font.lineHeight, scale)
+            val m = lineMatrix(x, y, index, font.lineHeight, scale, true)
             val seq = visualOrder(line)
             val meshes = GlyphQuads.bake(font, line, m, -1, shadow, scissor, keep = false)
             val op = LiveTextOp(meshes, color, alpha) { g, c -> vanillaText(g, font, seq, m, c, shadow, scissor) }
@@ -260,15 +264,20 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
         }
     }
 
-    private fun lineMatrix(x: Float, y: Float, index: Int, lineHeight: Int, scale: Float): Matrix3x2f =
-        Matrix3x2f().scale(1f / guiScale).translate(state.tx, state.ty).scale(state.sx, state.sy)
-            .translate(x, y + index * lineHeight * scale).scale(scale)
+    private fun lineMatrix(x: Float, y: Float, index: Int, lineHeight: Int, scale: Float, snapX: Boolean): Matrix3x2f =
+        Matrix3x2f().scale(1f / guiScale)
+            .translate((x * state.sx + state.tx).let { if (snapX) snap(it) else it }, snap(y * state.sy + state.ty) + snap(index * lineHeight * scale * state.sy))
+            .scale(state.sx * scale, state.sy * scale)
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float) {
         mcTextOutline(text, x, y, color, outlineColor, scale, false)
     }
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean) {
+        mcTextOutline(text, x, y, color, outlineColor, scale, literal, true)
+    }
+
+    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean, snapX: Boolean) {
         val a = mulAlpha(outlineColor, state.alpha) ushr 24
         val clip = state.clip
         val scissor = clip?.let { rectGui(it[0], it[1], it[2], it[3]) }
@@ -276,10 +285,9 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
             flush()
             val s = state
             val ox = x * s.sx + s.tx
-            val oy = y * s.sy + s.ty
-            val px = floor(ox)
-            val py = floor(oy)
-            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, ox - px, oy - py, literal)
+            val px = if (snapX) snap(ox) else floor(ox)
+            val py = snap(y * s.sy + s.ty)
+            val outline = McOutlines.get(text, scale * s.sx, scale * s.sy, if (snapX) 0f else ox - px, 0f, literal)
             if (outline != null) {
                 val x0 = px - outline.pad
                 val y0 = py - outline.pad
@@ -294,7 +302,7 @@ class BlazeRenderer(private val guiScale: Float, private val keepVertices: Boole
                 }
             }
         }
-        mcText(text, x, y, color, false, scale, literal)
+        mcText(text, x, y, color, false, scale, literal, snapX)
     }
 
     private fun bakeText(font: Font, seq: FormattedCharSequence, m: Matrix3x2f, color: Int, shadow: Boolean, scissor: ScreenRectangle?): List<Mesh>? {
@@ -842,6 +850,8 @@ private fun visualOrder(line: String, literal: Boolean = false): FormattedCharSe
     return lang.getVisualOrder(FormattedText.of(line))
 }
 
+private fun snap(pixel: Float) = pixel.roundToInt().toFloat()
+
 internal object McOutlines {
     private const val MAX_ENTRIES = 32
     private const val MAX_POOLED = 8
@@ -951,7 +961,7 @@ internal object McOutlines {
                 for (i in OFFSETS.indices step 2) {
                     val pose = graphics.pose()
                     pose.pushMatrix()
-                    pose.translate(ox, oy).scale(key.kx, key.ky).translate(OFFSETS[i], OFFSETS[i + 1] + index * font.lineHeight)
+                    pose.translate(ox, oy + snap(index * font.lineHeight * key.ky)).scale(key.kx, key.ky).translate(OFFSETS[i], OFFSETS[i + 1])
                     //~ if >= 26.1 'drawString' -> 'text'
                     graphics.text(font, seq, 0, 0, -1, false)
                     pose.popMatrix()

@@ -1211,10 +1211,12 @@ public abstract interface class org/polyfrost/compose/render/PolyRenderer {
 	public abstract fun live (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun mcText (Ljava/lang/String;FFIZF)V
 	public fun mcText (Ljava/lang/String;FFIZFZ)V
+	public fun mcText (Ljava/lang/String;FFIZFZZ)V
 	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZFZ)V
 	public abstract fun mcTextOutline (Ljava/lang/String;FFIIF)V
 	public fun mcTextOutline (Ljava/lang/String;FFIIFZ)V
+	public fun mcTextOutline (Ljava/lang/String;FFIIFZZ)V
 	public abstract fun rect (FFFFIF)V
 	public abstract fun rectGradient (FFFFLorg/polyfrost/compose/render/PolyGradient;F)V
 	public abstract fun rectStroke (FFFFIFF)V
@@ -1261,9 +1263,11 @@ public final class org/polyfrost/compose/render/PolyRenderer$DefaultImpls {
 	public static synthetic fun image$default (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyBitmap;FFFFLorg/polyfrost/compose/render/FilterQuality;ILjava/lang/Object;)V
 	public static fun live (Lorg/polyfrost/compose/render/PolyRenderer;FFFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
 	public static fun mcText (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFIZFZ)V
+	public static fun mcText (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFIZFZZ)V
 	public static fun mcTextLive (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public static fun mcTextLive (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZFZ)V
 	public static fun mcTextOutline (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFIIFZ)V
+	public static fun mcTextOutline (Lorg/polyfrost/compose/render/PolyRenderer;Ljava/lang/String;FFIIFZZ)V
 	public static fun rotate (Lorg/polyfrost/compose/render/PolyRenderer;F)V
 	public static fun saveLayerFade (Lorg/polyfrost/compose/render/PolyRenderer;Lorg/polyfrost/compose/render/PolyFade;)V
 	public static fun shadowWithHole (Lorg/polyfrost/compose/render/PolyRenderer;FFFFFLorg/polyfrost/compose/render/PolyShadow;FFFFF)V
@@ -1343,10 +1347,12 @@ public abstract class org/polyfrost/compose/render/PolyTessellator : org/polyfro
 	public fun live (FFFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
 	public fun mcText (Ljava/lang/String;FFIZF)V
 	public fun mcText (Ljava/lang/String;FFIZFZ)V
+	public fun mcText (Ljava/lang/String;FFIZFZZ)V
 	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZFZ)V
 	public fun mcTextOutline (Ljava/lang/String;FFIIF)V
 	public fun mcTextOutline (Ljava/lang/String;FFIIFZ)V
+	public fun mcTextOutline (Ljava/lang/String;FFIIFZZ)V
 	protected final fun mulAlpha (IF)I
 	protected final fun quadPx (FFFFFFFFI)V
 	public fun rect (FFFFIF)V
@@ -1450,10 +1456,12 @@ public final class org/polyfrost/compose/render/RenderContext {
 	public final fun live (Lkotlin/jvm/functions/Function1;)V
 	public final fun mcText (Ljava/lang/String;FFIZF)V
 	public final fun mcText (Ljava/lang/String;FFIZFZ)V
+	public final fun mcText (Ljava/lang/String;FFIZFZZ)V
 	public final fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZF)V
 	public final fun mcTextLive (Ljava/lang/String;FFLkotlin/jvm/functions/Function0;ZFZ)V
 	public final fun mcTextOutline (Ljava/lang/String;FFIIF)V
 	public final fun mcTextOutline (Ljava/lang/String;FFIIFZ)V
+	public final fun mcTextOutline (Ljava/lang/String;FFIIFZZ)V
 	public final fun measureText (Ljava/lang/String;Lorg/polyfrost/compose/render/PolyFont;)F
 	public final fun rect (FFFFLorg/polyfrost/compose/render/PolyColor;F)V
 	public static synthetic fun rect$default (Lorg/polyfrost/compose/render/RenderContext;FFFFLorg/polyfrost/compose/render/PolyColor;FILjava/lang/Object;)V
