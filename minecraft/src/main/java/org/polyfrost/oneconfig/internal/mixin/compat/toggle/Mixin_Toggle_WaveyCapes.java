@@ -16,10 +16,12 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 *///?}
+import org.polyfrost.oneconfig.api.toggle.v1.ModToggle;
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles;
 import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -28,6 +30,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Pseudo
 @Mixin(targets = "dev.tr7zw.waveycapes.renderlayers.CustomCapeRenderLayer", remap = false)
 public class Mixin_Toggle_WaveyCapes {
+    @Unique
+    private static final ModToggle oneconfig$toggle = ModToggles.handle("waveycapes");
 
     //? if >= 1.21.10 {
     @Inject(
@@ -38,7 +42,7 @@ public class Mixin_Toggle_WaveyCapes {
         at = @At("HEAD"), cancellable = true, require = 0
     )
     private void oneconfig$vanillaCape(PoseStack pose, SubmitNodeCollector collector, int light, AvatarRenderState state, float yRot, float xRot, CallbackInfo ci) {
-        if (ModToggles.isEnabled("waveycapes")) return;
+        if (oneconfig$toggle.isEnabled()) return;
         Object vanilla = ModGates.waveyCapesVanillaLayer();
         if (vanilla instanceof CapeLayer) ((CapeLayer) vanilla).submit(pose, collector, light, state, yRot, xRot);
         ci.cancel();
@@ -52,7 +56,7 @@ public class Mixin_Toggle_WaveyCapes {
         at = @At("HEAD"), cancellable = true, require = 0
     )
     private void oneconfig$vanillaCape(PoseStack pose, MultiBufferSource buffers, int light, PlayerRenderState state, float yRot, float xRot, CallbackInfo ci) {
-        if (ModToggles.isEnabled("waveycapes")) return;
+        if (oneconfig$toggle.isEnabled()) return;
         Object vanilla = ModGates.waveyCapesVanillaLayer();
         if (vanilla instanceof CapeLayer) ((CapeLayer) vanilla).render(pose, buffers, light, state, yRot, xRot);
         ci.cancel();
@@ -66,7 +70,7 @@ public class Mixin_Toggle_WaveyCapes {
         at = @At("HEAD"), cancellable = true, require = 0
     )
     private void oneconfig$vanillaCape(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
-        if (ModToggles.isEnabled("waveycapes")) return;
+        if (oneconfig$toggle.isEnabled()) return;
         Object vanilla = ModGates.waveyCapesVanillaLayer();
         if (vanilla instanceof CapeLayer) ((CapeLayer) vanilla).render(pose, buffers, light, player, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch);
         ci.cancel();
