@@ -368,10 +368,14 @@ public class PolyCanvas(public val renderer: PolyRenderer) : PolyDrawCanvas {
             // draw the padded copy over a correspondingly larger area so the blur spreads past the image
             val k = blur.scale.toFloat()
             val pad = blur.pad.toFloat()
-            val padX = pad * k * w / sw
-            val padY = pad * k * h / sh
-            x -= padX; y -= padY; w += 2f * padX; h += 2f * padY
-            sx /= k; sy /= k; sw = sw / k + 2f * pad; sh = sh / k + 2f * pad
+            if (sx <= 0f && sy <= 0f && sw >= bmp.width && sh >= bmp.height) {
+                val padX = pad * k * w / sw
+                val padY = pad * k * h / sh
+                x -= padX; y -= padY; w += 2f * padX; h += 2f * padY
+                sx /= k; sy /= k; sw = sw / k + 2f * pad; sh = sh / k + 2f * pad
+            } else {
+                sx = sx / k + pad; sy = sy / k + pad; sw /= k; sh /= k
+            }
             bmp = blur.bitmap
         }
         val iw = bmp.width.toFloat()
