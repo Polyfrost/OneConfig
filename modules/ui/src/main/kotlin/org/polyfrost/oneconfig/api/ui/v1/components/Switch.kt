@@ -120,8 +120,9 @@ internal fun SwitchTrack(checked: Boolean, hovered: Boolean, trackColor: Color, 
             modifier = Modifier
                 .layout { measurable, constraints ->
                     val thumb = measurable.measure(constraints)
-                    layout(constraints.maxWidth, thumb.height) {
-                        thumb.place(((constraints.maxWidth - thumb.width) * thumbProgress.value).roundToInt(), 0)
+                    val track = if (constraints.hasBoundedWidth) constraints.maxWidth else thumb.width
+                    layout(track, thumb.height) {
+                        thumb.place(((track - thumb.width) * thumbProgress.value).roundToInt(), 0)
                     }
                 }
                 .fillMaxHeight()
