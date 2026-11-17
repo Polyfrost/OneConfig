@@ -73,6 +73,16 @@ public class RenderContext(public val renderer: PolyRenderer) {
         renderer.mcText(text, x, y, color, shadow, scale, literal)
     }
 
+    public fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) {
+        if (text.isEmpty()) return
+        renderer.mcText(text, x, y, color, shadow, scale, literal, snapX)
+    }
+
+    public fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean, snapX: Boolean) {
+        if (text.isEmpty()) return
+        renderer.mcTextOutline(text, x, y, color, outlineColor, scale, literal, snapX)
+    }
+
     public fun mcTextLive(text: String, x: Float, y: Float, color: () -> Int, shadow: Boolean, scale: Float, literal: Boolean) {
         if (text.isEmpty()) return
         renderer.mcTextLive(text, x, y, color, shadow, scale, literal)

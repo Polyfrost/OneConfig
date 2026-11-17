@@ -136,6 +136,7 @@ internal object McResourceFont {
         if (cellW == 0 || cellH == 0) return emptyMap()
         val ascent = provider.get("ascent")?.asInt ?: 7
         val scale = (provider.get("height")?.asInt ?: 8).toFloat() / cellH
+        val sheet = spaced(image, cols, rows.size, cellW, cellH)
         val out = HashMap<Int, McGlyph>()
         rows.forEachIndexed { r, cps ->
             cps.forEachIndexed { c, cp ->
@@ -143,13 +144,26 @@ internal object McResourceFont {
                 val x = c * cellW
                 val y = r * cellH
                 val w = (cellW downTo 1).firstOrNull { px -> (y until y + cellH).any { py -> image.pixels[(py * image.width + x + px - 1) * 4 + 3].toInt() != 0 } } ?: 0
+                val sx = c * (cellW + 2) + 1
+                val sy = r * (cellH + 2) + 1
                 out[cp] = McGlyph(
-                    image.takeIf { w > 0 }, x / image.width.toFloat(), y / image.height.toFloat(), (x + w) / image.width.toFloat(), (y + cellH) / image.height.toFloat(),
+                    sheet.takeIf { w > 0 }, sx / sheet.width.toFloat(), sy / sheet.height.toFloat(), (sx + w) / sheet.width.toFloat(), (sy + cellH) / sheet.height.toFloat(),
                     (7 - ascent).toFloat(), w * scale, cellH * scale, Math.round(w * scale) + 1f, 1f,
                 )
             }
         }
         return out
+    }
+
+    // repacks the sheet with a 1px border of edge pixels around each cell
+    private fun spaced(image: PolyBitmap, cols: Int, rows: Int, cellW: Int, cellH: Int): PolyBitmap {
+        val width = cols * (cellW + 2)
+        val pixels = ByteArray(width * rows * (cellH + 2) * 4)
+        for (r in 0 until rows) for (c in 0 until cols) for (py in -1..cellH) for (px in -1..cellW) {
+            val from = ((r * cellH + py.coerceIn(0, cellH - 1)) * image.width + c * cellW + px.coerceIn(0, cellW - 1)) * 4
+            image.pixels.copyInto(pixels, ((r * (cellH + 2) + 1 + py) * width + c * (cellW + 2) + 1 + px) * 4, from, from + 4)
+        }
+        return PolyBitmap(width, rows * (cellH + 2), pixels)
     }
 
     private fun loadUnihex(rm: ResourceManager, provider: JsonObject): Map<Int, Unihex> {
