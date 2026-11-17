@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2026-11-14
 
 ### Added
+- Mod toggles are saved per profile
 - Mod cards and list entries can be moved with the keyboard: focus one and press Alt+Up or Alt+Down
 - Multi-select options have a Select all row
 - Deleting a profile now asks you to confirm first
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API: Attack, place block, player turn and block update events
 - API: Keybinds can stay out of Minecraft's controls screen
 - API: Notification handles, a warning type and theme colours for notifications
+- API: Segmented and pill tabs can slide a pill between options
 
 ### Changed
 - Every OneConfig screen now uses the same controls, so buttons, menus, fields and tooltips look and behave the same everywhere
@@ -39,11 +41,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Measurements and spacing guides in the HUD editor use your accent colour
 - Reduced Motion now also applies to page slides, scrolling and the HUD editor
 - API: The `Notifications` calls that take a float duration are deprecated in favour of `durationMillis`. Mods built against older versions keep working
+- Mod Menu opens OneConfig mod settings faster
+- Turning Mount Opacity, LambDynamicLights, Sciophobia, Blur and Block Highlight on or off from OneConfig is faster
+- OneConfig asks the GPU for its state less often while drawing
+- The colour picker opens lined up with the end of its button
+- Options without a title no longer show a placeholder label
+- Mod toggles and card types update on every screen at once
 
 ### Fixed
 - Fixed the keyboard focus ring never showing in the Minecraft themes
 - Colours stored inside a config object now load their saved value instead of the default
 - The resource reload event no longer fires a second time for server datapack reloads
+- Text in the Minecraft font lines up with the pixel grid again instead of bleeding into the next pixel
+- Fixed HUDs on 1.8.9 drawing into the wrong framebuffer
+- Fixed notifications breaking when a mod sends one from another thread
+- Fixed a crash when searching options while the list changes
+- Fixed submenus and switches crashing in some layouts
+- Fixed compatibility with WalksyLib
 
 ## [1.7.1] - 2026-11-12
 
