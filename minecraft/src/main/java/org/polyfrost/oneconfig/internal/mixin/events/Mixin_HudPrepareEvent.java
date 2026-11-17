@@ -1,9 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 //? if > 1.8.9 {
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.client.DeltaTracker;
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.polyfrost.oneconfig.internal.VanillaHudSampler;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,18 +10,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //? if >= 26.2 {
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Hud;
-//?} elif >= 26.1 {
-/*import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-*///?} else {
-/*import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiGraphics;
-*///?}
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Shadow;
+//?}
 
 //? if < 26.2 {
-/*import net.minecraft.client.renderer.GameRenderer;
+/*import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
 *///?}
 
 //? if >= 26.2 {
@@ -48,21 +41,29 @@ public class Mixin_HudPrepareEvent {
     }
 
     //? if >= 26.2 {
-    @WrapOperation(method = "extractRenderState", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/Hud;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V"))
-    private void sampleVanillaHud(Hud hud, GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, Operation<Void> original) {
-    //? } elif >= 26.1 {
-    /*@WrapOperation(method = "extractGui", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/Gui;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V"))
-    private void sampleVanillaHud(Gui hud, GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, Operation<Void> original) {
-    *///? } else {
-    /*@WrapOperation(method = "render", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/Gui;render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V"))
-    private void sampleVanillaHud(Gui hud, GuiGraphics ctx, DeltaTracker deltaTracker, Operation<Void> original) {
-    *///? }
-        original.call(hud, ctx, deltaTracker);
+    @Shadow @Final private Hud hud;
+
+    @Inject(method = "extractRenderState", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/Hud;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V",
+            shift = At.Shift.AFTER))
+    private void sampleVanillaHud(CallbackInfo ci) {
         VanillaHudSampler.sample(hud);
     }
+    //? } elif >= 26.1 {
+    /*@Inject(method = "extractGui", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/Gui;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V",
+            shift = At.Shift.AFTER))
+    private void sampleVanillaHud(CallbackInfo ci) {
+        VanillaHudSampler.sample(Minecraft.getInstance().gui);
+    }
+    *///? } else {
+    /*@Inject(method = "render", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/Gui;render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V",
+            shift = At.Shift.AFTER))
+    private void sampleVanillaHud(CallbackInfo ci) {
+        VanillaHudSampler.sample(Minecraft.getInstance().gui);
+    }
+    *///? }
 }
 //?} else {
 /*import net.minecraft.SharedConstants;
