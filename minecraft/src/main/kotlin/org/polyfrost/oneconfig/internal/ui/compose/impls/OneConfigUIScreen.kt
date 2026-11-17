@@ -311,7 +311,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         route = target
         restoring = targetRestoring
         openRevision++
-        shell.navigation.recordLastRoute(target)
+        if (!shell.layout.minimal) shell.navigation.recordLastRoute(target)
 
         try {
             shell.session.updatePlayerName(Minecraft.getInstance().user.name)
