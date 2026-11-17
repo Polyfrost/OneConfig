@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -47,6 +48,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
@@ -312,7 +314,14 @@ private fun TitleInfoTooltip(title: HeaderTitle) {
 }
 
 @Composable
-fun GlobalSearchBar() {
+fun GlobalSearchBar(
+    /** Replaces the page's own placeholder and stays shown while the empty field is focused */
+    placeholderText: String? = null,
+    /** Replaces the magnifying glass, and with it the bar fills its [modifier] at [fontSize] */
+    leading: (@Composable () -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = TextUnit.Unspecified,
+) {
     val navController = LocalShellNavController.current
     val search = LocalShell.current.search
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -352,16 +361,40 @@ fun GlobalSearchBar() {
         search.consumeFocusRequest()
     }
 
+    val fieldModifier = Modifier.trackTextInputFocus().onFocusChanged { searchFocused?.value = it.hasFocus }
+    if (leading != null) {
+        // the kit's search field has no slot for its icon, so the minimal menu's bar is a text field with its own clear button
+        TextField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            modifier = modifier.then(fieldModifier),
+            placeholder = placeholderText ?: placeholder,
+            size = ControlSize.ExtraLarge,
+            leading = leading,
+            trailing = if (searchText.text.isEmpty()) null else ({
+                IconButton(
+                    "close",
+                    translated("oneconfig.ui.search.clear", "Clear search"),
+                    { searchText = TextFieldValue() },
+                    Modifier.size(22.dp),
+                    size = ControlSize.Compact,
+                    tooltip = null,
+                )
+            }),
+            fontSize = fontSize,
+            focusRequester = focusRequester,
+            interactionSource = interactionSource,
+        )
+        return
+    }
     SearchField(
         value = searchText,
         onValueChange = { searchText = it },
-        modifier = Modifier.width(256.dp)
-            .trackTextInputFocus()
-            .onFocusChanged { searchFocused?.value = it.hasFocus },
-        placeholder = placeholder,
+        modifier = Modifier.width(256.dp).then(fieldModifier),
+        placeholder = placeholderText ?: placeholder,
         size = ControlSize.Regular,
         focusRequester = focusRequester,
         interactionSource = interactionSource,
-        hidePlaceholderWhenFocused = true,
+        hidePlaceholderWhenFocused = placeholderText == null,
     )
 }

@@ -38,6 +38,7 @@ import org.polyfrost.compose.render.RenderContext
 import java.util.WeakHashMap
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.ceil
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -63,50 +64,85 @@ private fun isWhite(bitmap: PolyBitmap): Boolean = synchronized(whiteCache) {
 
 internal var imageBlur = 0f
 
-private val blurCache = WeakHashMap<PolyBitmap, MutableMap<Int, PolyBitmap>>()
+/**
+ * A blurred copy of a bitmap, [scale] times smaller and padded by [pad] of its own pixels on every side so the blur
+ * can spread past the original edges
+ */
+internal class Blurred(val bitmap: PolyBitmap, val scale: Int, val pad: Int)
 
-private fun blurred(bitmap: PolyBitmap, sigma: Float): PolyBitmap = synchronized(blurCache) {
+/** Blurred copies kept per bitmap; an animated blur asks for a new radius most frames so older ones are dropped */
+private const val BLURS_KEPT = 4
+
+private val blurCache = WeakHashMap<PolyBitmap, LinkedHashMap<Int, Blurred>>()
+
+internal fun blurred(bitmap: PolyBitmap, sigma: Float): Blurred? = synchronized(blurCache) {
     val key = (sigma * 4f).toInt()
-    if (key <= 0) return bitmap
-    blurCache.getOrPut(bitmap) { HashMap() }.getOrPut(key) {
-        val w = bitmap.width
-        val h = bitmap.height
+    if (key <= 0) return null
+    val kept = blurCache.getOrPut(bitmap) {
+        object : LinkedHashMap<Int, Blurred>(BLURS_KEPT + 1, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Int, Blurred>) = size > BLURS_KEPT
+        }
+    }
+    kept.getOrPut(key) {
+        val full = key / 4f
+        // a wide blur hides detail anyway, so blurring a smaller copy looks the same for a fraction of the work
+        val scale = (full / 3f).toInt().coerceIn(1, 64)
+        val s = full / scale
+        val pad = ceil(s * 3f).toInt()
+        val sw = (bitmap.width + scale - 1) / scale
+        val sh = (bitmap.height + scale - 1) / scale
+        val w = sw + 2 * pad
+        val h = sh + 2 * pad
         val src = bitmap.pixels
+        // premultiplied and averaged down to the smaller copy, with transparent padding around it
         val buf = FloatArray(w * h * 4)
-        for (i in 0 until w * h) {
-            val a = (src[i * 4 + 3].toInt() and 0xFF) / 255f
-            for (c in 0..2) buf[i * 4 + c] = (src[i * 4 + c].toInt() and 0xFF) * a
-            buf[i * 4 + 3] = a * 255f
+        for (y in 0 until sh) for (x in 0 until sw) {
+            var r = 0f; var g = 0f; var b = 0f; var a = 0f; var n = 0
+            for (yy in y * scale until min((y + 1) * scale, bitmap.height)) for (xx in x * scale until min((x + 1) * scale, bitmap.width)) {
+                val o = (yy * bitmap.width + xx) * 4
+                val pa = (src[o + 3].toInt() and 0xFF) / 255f
+                r += (src[o].toInt() and 0xFF) * pa
+                g += (src[o + 1].toInt() and 0xFF) * pa
+                b += (src[o + 2].toInt() and 0xFF) * pa
+                a += pa * 255f
+                n++
+            }
+            val o = ((y + pad) * w + x + pad) * 4
+            buf[o] = r / n; buf[o + 1] = g / n; buf[o + 2] = b / n; buf[o + 3] = a / n
         }
         val tmp = FloatArray(buf.size)
-        val ideal = sqrt(4f * sigma * sigma + 1f)
+        // three box passes approximate a gaussian; a fractional radius keeps an animated blur from stepping
+        val radius = (sqrt(4f * s * s + 1f) - 1f) / 2f
         for (pass in 0 until 3) {
-            val r = ((ideal - 1f) / 2f).toInt().coerceAtLeast(1)
-            boxBlur(buf, tmp, w, h, r, 4, w * 4)
-            boxBlur(tmp, buf, h, w, r, w * 4, 4)
+            boxBlur(buf, tmp, w, h, radius, 4, w * 4)
+            boxBlur(tmp, buf, h, w, radius, w * 4, 4)
         }
-        val out = ByteArray(src.size)
+        val out = ByteArray(w * h * 4)
         for (i in 0 until w * h) {
             val a = buf[i * 4 + 3]
             if (a <= 0f) continue
             for (c in 0..2) out[i * 4 + c] = (buf[i * 4 + c] / (a / 255f)).toInt().coerceIn(0, 255).toByte()
             out[i * 4 + 3] = a.toInt().coerceIn(0, 255).toByte()
         }
-        PolyBitmap(w, h, out)
+        Blurred(PolyBitmap(w, h, out), scale, pad)
     }
 }
 
-private fun boxBlur(src: FloatArray, dst: FloatArray, len: Int, lines: Int, r: Int, step: Int, lineStep: Int) {
-    val norm = 1f / (2 * r + 1)
+/** One box blur along [len] samples of each line, where the window reaches [r] samples each side with the last one weighted by its fraction */
+private fun boxBlur(src: FloatArray, dst: FloatArray, len: Int, lines: Int, r: Float, step: Int, lineStep: Int) {
+    val whole = r.toInt()
+    val frac = r - whole
+    val norm = 1f / (2f * r + 1f)
     for (line in 0 until lines) {
         val base = line * lineStep
         for (c in 0..3) {
-            fun at(i: Int) = src[base + i.coerceIn(0, len - 1) * step + c]
+            // outside the line is transparent padding, so it counts as zero
+            fun at(i: Int) = if (i < 0 || i >= len) 0f else src[base + i * step + c]
             var sum = 0f
-            for (i in -r..r) sum += at(i)
+            for (i in -whole..whole) sum += at(i)
             for (i in 0 until len) {
-                dst[base + i * step + c] = sum * norm
-                sum += at(i + r + 1) - at(i - r)
+                dst[base + i * step + c] = (sum + frac * (at(i - whole - 1) + at(i + whole + 1))) * norm
+                sum += at(i + whole + 1) - at(i - whole)
             }
         }
     }
@@ -323,11 +359,27 @@ public class PolyCanvas(public val renderer: PolyRenderer) : PolyDrawCanvas {
         image(image, srcOffset.x.toFloat(), srcOffset.y.toFloat(), srcSize.width.toFloat(), srcSize.height.toFloat(),
             dstOffset.x.toFloat(), dstOffset.y.toFloat(), dstSize.width.toFloat(), dstSize.height.toFloat(), paint as PolyPaint)
 
-    private fun image(image: ImageBitmap, sx: Float, sy: Float, sw: Float, sh: Float, x: Float, y: Float, w: Float, h: Float, paint: PolyPaint) {
+    private fun image(image: ImageBitmap, srcX: Float, srcY: Float, srcW: Float, srcH: Float, dstX: Float, dstY: Float, dstW: Float, dstH: Float, paint: PolyPaint) {
         var bmp = (image as? PolyImageBitmap)?.bitmap ?: return
+        var sx = srcX; var sy = srcY; var sw = srcW; var sh = srcH
+        var x = dstX; var y = dstY; var w = dstW; var h = dstH
+        val blur = if (imageBlur > 0f && w > 0f && sw > 0f) blurred(bmp, imageBlur * sw / w) else null
+        if (blur != null) {
+            // draw the padded copy over a correspondingly larger area so the blur spreads past the image
+            val k = blur.scale.toFloat()
+            val pad = blur.pad.toFloat()
+            if (sx <= 0f && sy <= 0f && sw >= bmp.width && sh >= bmp.height) {
+                val padX = pad * k * w / sw
+                val padY = pad * k * h / sh
+                x -= padX; y -= padY; w += 2f * padX; h += 2f * padY
+                sx /= k; sy /= k; sw = sw / k + 2f * pad; sh = sh / k + 2f * pad
+            } else {
+                sx = sx / k + pad; sy = sy / k + pad; sw /= k; sh /= k
+            }
+            bmp = blur.bitmap
+        }
         val iw = bmp.width.toFloat()
         val ih = bmp.height.toFloat()
-        if (imageBlur > 0f && w > 0f) bmp = blurred(bmp, imageBlur * sw / w)
         val filter = paint.colorFilter?.let { PolyPaint.filterPlatform(it) }
         val whiten = filter is TintFilter && filter.blendMode == BlendMode.SrcIn && !isWhite(bmp)
         val matrix = when {
@@ -342,7 +394,8 @@ public class PolyCanvas(public val renderer: PolyRenderer) : PolyDrawCanvas {
         if (matrix != null) bmp = recolored(bmp, matrix)
         val tint = if (paint.colorFilter != null && (matrix == null || whiten)) paint.argb() else ((paint.alpha * 255f).toInt().coerceIn(0, 255) shl 24) or 0xFFFFFF
         val fq = when (paint.filterQuality) {
-            FilterQuality.None -> PolyFilterQuality.None
+            // a blurred copy is smaller or padded, so nearest sampling would show its pixels
+            FilterQuality.None -> if (blur != null) PolyFilterQuality.Low else PolyFilterQuality.None
             FilterQuality.Low -> PolyFilterQuality.Low
             FilterQuality.Medium -> PolyFilterQuality.Medium
             else -> PolyFilterQuality.High

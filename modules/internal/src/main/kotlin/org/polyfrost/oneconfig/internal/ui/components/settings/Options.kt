@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
@@ -253,6 +254,7 @@ class OptionMenuState internal constructor(private val prop: Property<*>) {
 
     internal var onReset: (() -> Unit)? = null
     internal var resetEnabled: Boolean? = null
+    internal var openPage: ((Property<*>) -> Unit)? = null
 
     private val tracker = MenuCustomItem { TrackOpen() }
 
@@ -261,7 +263,12 @@ class OptionMenuState internal constructor(private val prop: Property<*>) {
 
     val isOpen: Boolean get() = openCount > 0
 
-    fun entries(): List<MenuEntry> = optionMenuEntries(prop, onReset, resetEnabled) + tracker
+    fun entries(): List<MenuEntry> = jumpEntries() + optionMenuEntries(prop, onReset, resetEnabled) + tracker
+
+    private fun jumpEntries(): List<MenuEntry> {
+        val open = openPage ?: return emptyList()
+        return listOf(MenuAction(translated("oneconfig.search.jump_to_option", "Jump to option"), { open(prop) }, icon = "external-link"), MenuSeparator)
+    }
 
     private fun deferredEntries(): List<MenuEntry> = DeferredMenuEntries(::entries)
 
@@ -289,11 +296,15 @@ private class DeferredMenuEntries(compute: () -> List<MenuEntry>) : AbstractList
     override fun hashCode(): Int = System.identityHashCode(this)
 }
 
+/** Opens the full page of an option shown away from it, such as in search results, from its context menu */
+val LocalOpenOptionPage = staticCompositionLocalOf<((Property<*>) -> Unit)?> { null }
+
 @Composable
 fun rememberOptionMenu(prop: Property<*>, onReset: (() -> Unit)? = null, resetEnabled: Boolean? = null): OptionMenuState {
     val state = remember(System.identityHashCode(prop)) { OptionMenuState(prop) }
     state.onReset = onReset
     state.resetEnabled = resetEnabled
+    state.openPage = LocalOpenOptionPage.current
     return state
 }
 

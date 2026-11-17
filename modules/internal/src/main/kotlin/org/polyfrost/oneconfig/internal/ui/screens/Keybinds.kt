@@ -50,6 +50,7 @@ import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.scrollFade
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
@@ -94,7 +95,7 @@ fun Keybinds() {
     ScrollContainer(listState, Modifier.fillMaxSize(), gutter = PageGutter) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().scrollFade(listState),
             contentPadding = PaddingValues(horizontal = PageGutter),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {

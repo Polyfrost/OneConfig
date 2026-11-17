@@ -243,7 +243,7 @@ private fun ReleaseDetail(release: ChangelogRelease) {
     val forPlayers = release.groups.mapNotNull { group -> group.entries.filter { !it.forDevelopers }.takeIf { it.isNotEmpty() }?.let { ChangelogGroup(group.kind, it) } }
     val forDevelopers = release.groups.mapNotNull { group -> group.entries.filter { it.forDevelopers }.takeIf { it.isNotEmpty() }?.let { ChangelogGroup(group.kind, it) } }
 
-    ScrollContainer(scroll, Modifier.fillMaxSize(), gutter = PageGutter) {
+    ScrollContainer(scroll, Modifier.fillMaxSize(), gutter = PageGutter, fadingEdges = true) {
         Column(
             Modifier.fillMaxWidth().padding(start = 18.dp, bottom = PageGutter),
         ) {

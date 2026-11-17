@@ -41,6 +41,15 @@ public class OneConfigConfig extends Config {
     public static OneConfigKeybind oneConfigKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyRightShift()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
+    // unbound by default; the action comes from the minecraft module via setMinimalOpenAction like oneConfigKeybind
+    @Keybind(
+        title = "oneconfig.preferences.minimal_keybind.title",
+        subcategory = "oneconfig.preferences.category.gui",
+        description = "oneconfig.preferences.minimal_keybind.description"
+    )
+    public static OneConfigKeybind minimalMenuKeybind =
+        new OneConfigKeybind(new int[0], null, KeyModifiers.NONE, 0L, pressed -> true);
+
     @Switch(
         title = "oneconfig.preferences.keybind_closes_gui.title",
         subcategory = "oneconfig.preferences.category.gui",
@@ -256,6 +265,13 @@ public class OneConfigConfig extends Config {
     )
     public static boolean instantSearch = true;
 
+    @Switch(
+        title = "oneconfig.preferences.animate_search_results.title",
+        subcategory = "oneconfig.preferences.category.search",
+        description = "oneconfig.preferences.animate_search_results.description"
+    )
+    public static boolean animateSearchResults = false;
+
     @Keybind(
         title = "oneconfig.preferences.search_keybind.title",
         subcategory = "oneconfig.preferences.category.search",
@@ -374,6 +390,12 @@ public class OneConfigConfig extends Config {
     private static OneConfigKeybind registeredKeybind;
 
     /**
+     * The action run when {@link #minimalMenuKeybind} is pressed and the keybind registered for it
+     */
+    private static Function1<Boolean, Boolean> minimalOpenAction;
+    private static final AtomicReference<OneConfigKeybind> registeredMinimalKeybind = new AtomicReference<>();
+
+    /**
      * The keybind registered with the {@link KeybindManager} for duplicating the selected HUD in the design studio
      */
     private static OneConfigKeybind registeredHudDuplicateKeybind;
@@ -467,6 +489,12 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshKeybind(oneConfigKeybind);
+        addCallback(
+            "minimalMenuKeybind", (OneConfigKeybind kb) -> {
+                refreshMinimalKeybind();
+                return false;
+            });
+        refreshMinimalKeybind();
         addCallback(
             "searchKeybind", (OneConfigKeybind kb) -> {
                 refreshSearchKeybind();
@@ -674,6 +702,19 @@ public class OneConfigConfig extends Config {
     public static void setOpenAction(Function1<Boolean, Boolean> action) {
         openAction = action;
         refreshKeybind(oneConfigKeybind);
+    }
+
+    /**
+     * Supplies the action run when {@link #minimalMenuKeybind} is pressed, see {@link #setOpenAction}
+     */
+    public static void setMinimalOpenAction(Function1<Boolean, Boolean> action) {
+        minimalOpenAction = action;
+        refreshMinimalKeybind();
+    }
+
+    private static void refreshMinimalKeybind() {
+        if (minimalOpenAction == null) return;
+        refreshHudEditorKeybind(minimalMenuKeybind, registeredMinimalKeybind, minimalOpenAction);
     }
 
     /**

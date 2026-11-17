@@ -155,35 +155,38 @@ public class OneConfig implements ClientModInitializer {
     private static void registerKeybinds() {
         // the action lives here rather than on the keybind because it references platform classes and
         // is lost when the keybind is deserialized
-        OneConfigConfig.setOpenAction(pressed -> {
-            if (!pressed) {
-                return true;
-            }
-            // the screen may have closed itself on this very press (see notifyKeybindClosedGui) so
-            // reopening here would make the keybind look like it does nothing
-            if (OneConfigConfig.consumeKeybindClose()) {
-                return true;
-            }
-            Object screen = Platform.screen().current();
-            if (screen != null && !(Platform.compatibility().isDevelopment() && screen instanceof TitleScreen)) {
-                return true;
-            }
-            if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
-                return true;
-            }
-            try {
-                OneConfigUIScreen.openLastSession();
-            } catch (Throwable t) {
-                //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
-                Minecraft.getInstance().gui.hud.getChat()
-                        //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
-                        .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
-                                .withStyle(
-                                        ChatFormatting.RED));
-                throw t;
-            }
+        OneConfigConfig.setOpenAction(pressed -> openFromKeybind(pressed, OneConfigUIScreen::openLastSession));
+        OneConfigConfig.setMinimalOpenAction(pressed -> openFromKeybind(pressed, () -> Platform.screen().display(OneConfigUIScreen.minimal())));
+    }
+
+    private static boolean openFromKeybind(boolean pressed, Runnable open) {
+        if (!pressed) {
             return true;
-        });
+        }
+        // the screen may have closed itself on this very press (see notifyKeybindClosedGui) so
+        // reopening here would make the keybind look like it does nothing
+        if (OneConfigConfig.consumeKeybindClose()) {
+            return true;
+        }
+        Object screen = Platform.screen().current();
+        if (screen != null && !(Platform.compatibility().isDevelopment() && screen instanceof TitleScreen)) {
+            return true;
+        }
+        if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
+            return true;
+        }
+        try {
+            open.run();
+        } catch (Throwable t) {
+            //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
+            Minecraft.getInstance().gui.hud.getChat()
+                    //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
+                    .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
+                            .withStyle(
+                                    ChatFormatting.RED));
+            throw t;
+        }
+        return true;
     }
 
     /**

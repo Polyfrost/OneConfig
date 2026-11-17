@@ -34,7 +34,7 @@ class ShellController(val warming: Boolean = false) {
     val layout = ShellLayout()
     val transitions = ShellTransitions()
     val scroll = ShellScroll()
-    val navigation = ShellNavigation(search, transitions)
+    val navigation = ShellNavigation(search, transitions, layout)
 
     companion object {
         @JvmStatic
@@ -168,6 +168,14 @@ class ShellLayout {
     var shellBounds by mutableStateOf<Rect?>(null)
         private set
 
+    /** True while the menu shows only the search bar and its results, cleared by any navigation */
+    var minimal by mutableStateOf(false)
+        private set
+
+    fun updateMinimal(minimal: Boolean) {
+        this.minimal = minimal
+    }
+
     fun markHudDragging(dragging: Boolean) {
         hudDragging = dragging
     }
@@ -245,6 +253,7 @@ class ShellScroll {
 class ShellNavigation internal constructor(
     private val search: ShellSearch,
     private val transitions: ShellTransitions,
+    private val layout: ShellLayout,
 ) {
     /**
      * One step of history
@@ -277,6 +286,23 @@ class ShellNavigation internal constructor(
 
     /** Last selected settings tab per page key restored when a page is reopened or navigated back to */
     private val selectedCategories = mutableStateMapOf<String, String>()
+
+    /**
+     * The option or group the page just opened should scroll to and highlight, see [jumpTo]
+     *
+     * Any other navigation clears it so a row the page could not show is not jumped to later
+     */
+    var pendingJump: Any? by mutableStateOf(null)
+        private set
+
+    /** Has the page opened by the last navigation scroll to and highlight the row for [anchor] */
+    fun jumpTo(anchor: Any) {
+        pendingJump = anchor
+    }
+
+    fun consumeJump(anchor: Any) {
+        if (pendingJump === anchor) pendingJump = null
+    }
 
     /** Last top-level route navigated to used by the "Previous page" and "Smart reset" opening behaviors */
     var lastRoute: Any? = null
@@ -325,6 +351,9 @@ class ShellNavigation internal constructor(
 
     /** [clearSearch] is off when the navigation only restores a page the user was already on */
     fun navigate(route: Any, clearSearch: Boolean = true, animate: Boolean = ThemeConfig.showPageAnimations) {
+        pendingJump = null
+        // the menu's own opening navigation keeps the minimal search bar, anything after it is the user opening a result
+        if (!transitions.awaitingInitialRoute) layout.updateMinimal(false)
         if (route == currentEntry.route) return
         val host = readyHost() ?: return
         val query = if (clearSearch) "" else search.query
@@ -338,6 +367,11 @@ class ShellNavigation internal constructor(
         updateArrows()
         search.bind(host.currentBackStackEntry?.id, query)
         if (clearSearch) instantSearch()
+    }
+
+    /** Sets the tab [pageKey] opens on without adding a history step */
+    fun rememberCategory(pageKey: String, category: String) {
+        selectedCategories[pageKey] = category
     }
 
     fun discard(route: Any, fallback: Any) {
@@ -373,6 +407,7 @@ class ShellNavigation internal constructor(
     }
 
     fun back() {
+        pendingJump = null
         val previous = backStack.lastOrNull() ?: return
         // same page with only the tab changed so restore it in place with no screen transition
         if (previous.route == currentEntry.route) {
@@ -410,6 +445,7 @@ class ShellNavigation internal constructor(
     }
 
     fun forward() {
+        pendingJump = null
         val next = forwardStack.lastOrNull() ?: return
         val samePage = next.route == currentEntry.route
         val host = if (samePage) null else (readyHost() ?: return)

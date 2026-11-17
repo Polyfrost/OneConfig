@@ -5,15 +5,18 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -31,23 +34,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -63,7 +74,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.asComposeImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
@@ -109,6 +124,7 @@ import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.scrollFade
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionEnabled
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
@@ -144,6 +160,7 @@ import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -151,6 +168,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
 import javax.imageio.ImageIO
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -200,7 +218,13 @@ private fun ConfigScreenContent(
     val groupOff = rememberSwitchValue(tree.takeIf { it.isSubmenu() }?.enableToggle) == false
     val locksAll = locked && lockExempt?.isMarkedSwitch() != false && !tree.isLockExempt()
 
-    val savedCategory = navigation.selectedCategory(pageKey) ?: initialCategory
+    // an option jumped to from search opens on its own tab, kept once the jump is done
+    val jump = navigation.pendingJump
+    val jumpCategory = remember(jump, categories) {
+        jump?.let { target -> categories.firstOrNull { c -> c.subcategories.any { s -> s.nodes.any { it.holds(target) } } } }
+    }
+    SideEffect { jumpCategory?.let { navigation.rememberCategory(pageKey, it.name) } }
+    val savedCategory = jumpCategory?.name ?: navigation.selectedCategory(pageKey) ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
         ?: categories.firstOrNull()
 
@@ -256,6 +280,31 @@ private fun ConfigScreenContent(
                 search.query,
             )
 
+            val jumpHighlight = remember { JumpHighlight() }
+            val highlightScope = rememberCoroutineScope()
+            LaunchedEffect(jump, entries) {
+                val target = jump ?: return@LaunchedEffect
+                val at = entries.indexOfFirst { (it as? ConfigListEntry.Item)?.node?.holds(target) == true }
+                if (at < 0) return@LaunchedEffect
+                // clearing the jump restarts this effect, so the scroll and highlight run in a scope that outlives it
+                highlightScope.launch {
+                    try {
+                        // the list has no size until its first layout, and the row ends a third of the way down
+                        // rather than at the top
+                        val viewport = snapshotFlow { lazyListState.layoutInfo.viewportSize.height }.first { it > 0 }
+                        lazyListState.scrollToItem(at + if (header != null) 1 else 0)
+                        lazyListState.scrollBy(-viewport / 3f)
+                    } catch (e: CancellationException) {
+                        // scrolling by hand stops the jump, which should still leave the highlight
+                        if (!isActive) throw e
+                    } catch (t: Throwable) {
+                        LOGGER.warn("Failed to scroll to the option jumped to on {}", pageKey, t)
+                    }
+                    jumpHighlight.play(target)
+                }
+                navigation.consumeJump(target)
+            }
+
             val empty = when {
                 entries.isNotEmpty() -> null
                 localSearchQuery.isBlank() -> ConfigEmpty(translated("oneconfig.search.no_settings", "No settings available."), "settings")
@@ -275,11 +324,13 @@ private fun ConfigScreenContent(
                 Modifier.fillMaxSize().then(if (leaving) Modifier.graphicsLayer { alpha = progress.value } else Modifier),
                 gutter = PageGutter,
             ) {
-                LazyColumn(
-                    state = lazyListState,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = PageGutter),
-                ) {
+                CompositionLocalProvider(LocalJumpHighlight provides jumpHighlight) {
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier.scrollFade(lazyListState),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = PageGutter),
+                    ) {
                     if (header != null) {
                         item(key = "header") {
                             Box(
@@ -311,9 +362,60 @@ private fun ConfigScreenContent(
                             Box(slide) { ConfigListRow(entry) }
                         }
                     }
+                    }
                 }
             }
         }
+    }
+}
+
+private val LOGGER = LogManager.getLogger("OneConfig/UI")
+
+private const val JUMP_HIGHLIGHT_IN_MS = 150
+private const val JUMP_HIGHLIGHT_HOLD_MS = 700
+private const val JUMP_HIGHLIGHT_OUT_MS = 900
+
+/** The option or group a page was jumped to from search, and how strongly it is highlighted right now */
+private class JumpHighlight {
+    var target: Any? by mutableStateOf(null)
+        private set
+    val strength = Animatable(0f)
+
+    suspend fun play(target: Any) {
+        this.target = target
+        try {
+            strength.snapTo(0f)
+            strength.animateTo(1f, tween(JUMP_HIGHLIGHT_IN_MS))
+            strength.animateTo(0f, tween(JUMP_HIGHLIGHT_OUT_MS, delayMillis = JUMP_HIGHLIGHT_HOLD_MS))
+        } finally {
+            this.target = null
+        }
+    }
+}
+
+private val LocalJumpHighlight = staticCompositionLocalOf<JumpHighlight?> { null }
+
+/** Whether this node's row is [target] or holds it, such as an accordion holding an option */
+private fun SettingNode.holds(target: Any): Boolean = when (this) {
+    is SettingNode.Leaf -> prop === target
+    is SettingNode.Accordion -> tree === target || head === target || body.any { it === target }
+    is SettingNode.Submenu -> tree === target || head === target
+}
+
+/** An accent tint and outline in the card's own shape over a row that was jumped to and stands for one of [anchors] */
+@Composable
+private fun Modifier.jumpHighlightOf(vararg anchors: Any?): Modifier {
+    val jump = LocalJumpHighlight.current ?: return this
+    val target = jump.target ?: return this
+    if (anchors.none { it === target }) return this
+    val shape = LocalTheme.current.modCardShape
+    return drawWithContent {
+        drawContent()
+        val a = jump.strength.value
+        if (a <= 0f) return@drawWithContent
+        val outline = shape.createOutline(size, layoutDirection, this)
+        drawOutline(outline, Accent.copy(alpha = 0.14f * a))
+        drawOutline(outline, Accent.copy(alpha = 0.7f * a), style = Stroke(1.5.dp.toPx()))
     }
 }
 
@@ -567,8 +669,12 @@ private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) 
     val switchHead = head != null && isSwitchHead(node.tree, head)
     if (switchHead && headDisplay == Property.Display.HIDDEN) return
     val enabled = !switchHead || (headOn && headDisplay != Property.Display.DISABLED)
+    val jumpTarget = LocalJumpHighlight.current?.target
+    LaunchedEffect(jumpTarget) {
+        if (jumpTarget != null && node.body.any { it === jumpTarget }) expanded = true
+    }
 
-    GroupCard {
+    GroupCard(Modifier.jumpHighlightOf(node.tree, node.head)) {
         GroupHeader(
             tree = node.tree,
             head = head,
@@ -704,7 +810,7 @@ private fun SubmenuRow(node: SettingNode.Submenu, compact: Boolean = false) {
     }
 
     val navigation = LocalShell.current.navigation
-    GroupCard {
+    GroupCard(Modifier.jumpHighlightOf(node.tree, node.head)) {
         GroupHeader(
             tree = node.tree,
             head = node.head,
@@ -728,7 +834,7 @@ private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
         node.content.mapNotNull(::filterHiddenNodes).flatMap(::flattenEntries)
     }
 
-    GroupCard {
+    GroupCard(Modifier.jumpHighlightOf(node.tree, node.head)) {
         GroupHeader(
             tree = node.tree,
             head = node.head,
@@ -754,8 +860,8 @@ private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
 }
 
 @Composable
-private fun GroupCard(content: @Composable ColumnScope.() -> Unit) {
-    Column(Modifier.optionCard(), content = content)
+private fun GroupCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.optionCard().then(modifier), content = content)
 }
 
 /**
@@ -1005,7 +1111,7 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         return
     }
 
-    Box(Modifier.optionCard()) {
+    Box(Modifier.optionCard().jumpHighlightOf(prop)) {
         SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
     }
 }
@@ -1022,7 +1128,12 @@ private fun AccordionSettingRow(
     modifier: Modifier,
     compact: Boolean = false,
 ) {
-    Box(modifier) {
+    val requester = remember { BringIntoViewRequester() }
+    val jumpTarget = LocalJumpHighlight.current?.target
+    LaunchedEffect(jumpTarget) {
+        if (jumpTarget === prop) requester.bringIntoView()
+    }
+    Box(modifier.bringIntoViewRequester(requester).jumpHighlightOf(prop)) {
         SettingContent(prop, nested = true, compact = compact, enabled = groupEnabled && display != Property.Display.DISABLED)
     }
 }
