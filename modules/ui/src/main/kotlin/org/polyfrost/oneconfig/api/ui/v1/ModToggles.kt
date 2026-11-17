@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -125,19 +126,38 @@ public object ModToggles {
 
     private fun setKey(key: String, enabled: Boolean) {
         if (key.isEmpty()) return
-        val snapshot = synchronized(lock) {
+        synchronized(lock) {
             val next = if (enabled) disabled - key else disabled + key
             if (next == disabled) return
             disabled = next
             handles[key]?.enabled = enabled
-            next
+            try {
+                store?.save(next)
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to persist the disabled mods", t)
+            }
         }
         bump()
-        try {
-            store?.save(snapshot)
-        } catch (t: Throwable) {
-            LOGGER.error("Failed to persist the disabled mods", t)
+        notifyListeners(key, enabled)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun replaceDisabled(transform: (Set<String>) -> Set<String>) {
+        val changed = synchronized(lock) {
+            val previous = disabled
+            val next = transform(previous).mapTo(HashSet(), ::normalise).apply { remove("") }
+            if (next == previous) return
+            disabled = next
+            val changed = (previous - next).associateWith { true } + (next - previous).associateWith { false }
+            changed.forEach { (key, enabled) -> handles[key]?.enabled = enabled }
+            changed
         }
+        bump()
+        changed.forEach(::notifyListeners)
+    }
+
+    private fun notifyListeners(key: String, enabled: Boolean) {
         listeners.forEach {
             try {
                 it.onToggle(key, enabled)

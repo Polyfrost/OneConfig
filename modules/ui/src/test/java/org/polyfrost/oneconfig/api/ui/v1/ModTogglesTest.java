@@ -99,6 +99,28 @@ class ModTogglesTest {
     }
 
     @Test
+    void replaceDisabledMatchesKeysExactly() {
+        String id = "mt-replace-" + UUID.randomUUID();
+        ModToggles.manage(id);
+        List<String> heard = new ArrayList<>();
+        ModToggles.Listener listener = (modId, enabled) -> {
+            if (modId.startsWith(id)) heard.add(modId + "=" + enabled);
+        };
+        ModToggles.addListener(listener);
+        try {
+            ModToggles.replaceDisabled(live -> Collections.singleton(id + "/config"));
+            assertFalse(ModToggles.isEnabled(id + "/config"));
+            assertTrue(ModToggles.isEnabled(id));
+
+            ModToggles.replaceDisabled(live -> Collections.emptySet());
+            assertTrue(ModToggles.isEnabled(id + "/config"));
+            assertEquals(List.of(id + "/config=false", id + "/config=true"), heard);
+        } finally {
+            ModToggles.removeListener(listener);
+        }
+    }
+
+    @Test
     void registeredSwitchWinsOverTheManagedOne() {
         ModToggle own = new ModToggle() {
             @Override
