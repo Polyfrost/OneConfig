@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2026-11-14
 
 ### Added
+- New Quick Search UI, toggled by clicking `\` in-game
 - Mod toggles are saved per profile
 - Mod cards and list entries can be moved with the keyboard: focus one and press Alt+Up or Alt+Down
 - Multi-select options have a Select all row
@@ -49,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mod toggles and card types update on every screen at once
 
 ### Fixed
+- Fixed undo / redo changing all actions taken during a session
 - Fixed the keyboard focus ring never showing in the Minecraft themes
 - Colours stored inside a config object now load their saved value instead of the default
 - The resource reload event no longer fires a second time for server datapack reloads
