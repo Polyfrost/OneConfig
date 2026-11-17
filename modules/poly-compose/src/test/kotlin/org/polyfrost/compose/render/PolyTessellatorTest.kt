@@ -31,7 +31,7 @@ class PolyTessellatorTest {
             batches.add(Batch(texture, verts, colors, nearest))
         }
         override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
-        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = Unit
+        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) = Unit
         var lives = 0
         override fun live(draw: (PolyRenderer) -> Unit) { lives++; draw(this) }
         val rectYs = ArrayList<Float>()
@@ -59,7 +59,7 @@ class PolyTessellatorTest {
             ops.add(Batch(texture, verts, colors, nearest))
         }
         override fun bitmapTexture(bitmap: PolyBitmap) = bitmap
-        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float) = Unit
+        override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) = Unit
         override fun live(draw: (PolyRenderer) -> Unit) = draw(this)
         override val layered get() = true
         override fun layerMark(): Any = ops.size
@@ -860,7 +860,7 @@ class PolyTessellatorTest {
         try {
             for (offset in listOf(0f, 0.11f, 0.25f, 0.5f, 0.75f)) for (scale in listOf(1f, 1.05f, 1.5f, 3f, 3.375f)) {
                 val quads = GlyphRecorder().run {
-                    translate(0f, offset)
+                    translate(offset, offset)
                     scale(scale, scale)
                     mcText("a\na\na", 0f, 0f, -1, false, 1f)
                     done()
@@ -868,10 +868,13 @@ class PolyTessellatorTest {
                 }
                 assertEquals(3 * 16, quads.size)
                 for (q in quads.indices step 16) {
+                    assertEquals(quads[q].roundToInt().toFloat(), quads[q], 1e-4f, "offset $offset, scale $scale, line ${q / 16}")
                     assertEquals(quads[q + 1].roundToInt().toFloat(), quads[q + 1], 1e-4f, "offset $offset, scale $scale, line ${q / 16}")
                     assertEquals(8f * scale, quads[q + 5] - quads[q + 1], 1e-4f, "offset $offset, scale $scale, line ${q / 16}")
                 }
             }
+            val exact = GlyphRecorder().run { translate(0.4f, 0f); mcText("a", 0f, 0f, -1, false, 1f, false, false); done(); verts.single() }
+            assertEquals(0.4f, exact[0], 1e-4f)
         } finally {
             McGlyphs.source = source
         }

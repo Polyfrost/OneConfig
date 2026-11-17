@@ -677,8 +677,13 @@ public abstract class PolyTessellator : PolyRenderer {
     }
 
     override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean) {
+        mcText(text, x, y, color, shadow, scale, literal, true)
+    }
+
+    override fun mcText(text: String, x: Float, y: Float, color: Int, shadow: Boolean, scale: Float, literal: Boolean, snapX: Boolean) {
         if (cpuOnly) return
         val lines = text.lines()
+        val x = if (snapX) mcLineLeft(x) else x
         if (shadow) {
             beginDraw()
             lines.forEachIndexed { index, line -> mcLine(line, x + scale, mcLineTop(y, index, scale) + scale, color, scale, true, literal) }
@@ -692,8 +697,13 @@ public abstract class PolyTessellator : PolyRenderer {
     }
 
     override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean) {
+        mcTextOutline(text, x, y, color, outlineColor, scale, literal, true)
+    }
+
+    override fun mcTextOutline(text: String, x: Float, y: Float, color: Int, outlineColor: Int, scale: Float, literal: Boolean, snapX: Boolean) {
         beginDraw()
         if (cpuOnly) return
+        val x = if (snapX) mcLineLeft(x) else x
         val c = mulAlpha(outlineColor, state.alpha)
         val r = PolyGlyphPage.rasterizer
         if (c ushr 24 != 0 && r != null) {
@@ -723,13 +733,20 @@ public abstract class PolyTessellator : PolyRenderer {
                 if (lines.size == 1) {
                     for (i in 0 until n step 4) quadPx(boxes[i], boxes[i + 1], boxes[i + 2], boxes[i + 3], wuv, wuv, wuv, wuv, c)
                 } else {
-                    val ys = (0 until n step 4).flatMap { listOf(boxes[it + 1], boxes[it + 3]) }.distinct().sorted()
+                    val ys = FloatArray(n / 2) { boxes[it / 2 * 4 + 1 + it % 2 * 2] }.apply { sort() }
+                    val byTop = (0 until n step 4).sortedBy { boxes[it + 1] }
+                    val active = ArrayList<Int>()
+                    var next = 0
                     for (j in 0 until ys.size - 1) {
                         val y0 = ys[j]
                         val y1 = ys[j + 1]
+                        if (y1 == y0) continue
+                        active.removeAll { boxes[it + 3] <= y0 }
+                        while (next < byTop.size && boxes[byTop[next] + 1] <= y0) active += byTop[next++]
+                        active.sortBy { boxes[it] }
                         var start = 0f
                         var end = Float.NEGATIVE_INFINITY
-                        for (k in (0 until n step 4).filter { boxes[it + 1] <= y0 && boxes[it + 3] >= y1 }.sortedBy { boxes[it] }) {
+                        for (k in active) {
                             if (boxes[k] > end) {
                                 if (end > start) quadPx(start, y0, end, y1, wuv, wuv, wuv, wuv, c)
                                 start = boxes[k]
@@ -741,7 +758,14 @@ public abstract class PolyTessellator : PolyRenderer {
                 }
             }
         }
-        if (literal) mcText(text, x, y, color, false, scale, true) else mcText(text, x, y, color, false, scale)
+        mcText(text, x, y, color, false, scale, literal, false)
+    }
+
+    private fun mcLineLeft(x: Float): Float {
+        val s = state
+        if (s.rot != null || s.sx == 0f) return x
+        val device = x * s.sx + s.tx
+        return x + (device.roundToInt() - device) / s.sx
     }
 
     private fun mcLineTop(y: Float, index: Int, scale: Float): Float {
