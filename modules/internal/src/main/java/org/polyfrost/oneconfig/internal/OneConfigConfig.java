@@ -41,14 +41,13 @@ public class OneConfigConfig extends Config {
     public static OneConfigKeybind oneConfigKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyRightShift()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
-    // unbound by default; the action comes from the minecraft module via setMinimalOpenAction like oneConfigKeybind
     @Keybind(
         title = "oneconfig.preferences.minimal_keybind.title",
         subcategory = "oneconfig.preferences.category.gui",
         description = "oneconfig.preferences.minimal_keybind.description"
     )
     public static OneConfigKeybind minimalMenuKeybind =
-        new OneConfigKeybind(new int[0], null, KeyModifiers.NONE, 0L, pressed -> true);
+        new OneConfigKeybind(new int[] {KEYS.getKeyBackslash()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.keybind_closes_gui.title",
