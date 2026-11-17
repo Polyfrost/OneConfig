@@ -100,12 +100,14 @@ public final class LegacyVanillaHudSampler {
         accessor.oneconfig$setOverlayMessageTinted(false);
         actionBarFaked = true;
         inlineRecording = true;
+        HudManager.isSamplingVanilla = true;
     }
 
     public static void beginInlineTitle(Object gameGui) {
         LegacyHudSampleAccessor accessor = (LegacyHudSampleAccessor) gameGui;
         restoreActionBar(accessor);
         inlineRecording = false;
+        HudManager.isSamplingVanilla = false;
         if (!inlineArmed || accessor.oneconfig$titleTime() > 0) return;
         savedTitle = accessor.oneconfig$title();
         savedSubtitle = accessor.oneconfig$subtitle();
@@ -121,6 +123,7 @@ public final class LegacyVanillaHudSampler {
         accessor.oneconfig$setTitleTime(60);
         titleFaked = true;
         inlineRecording = true;
+        HudManager.isSamplingVanilla = true;
     }
 
     public static void endInline(Object gameGui) {
@@ -129,6 +132,7 @@ public final class LegacyVanillaHudSampler {
 
     private static void restoreInline(LegacyHudSampleAccessor accessor) {
         inlineRecording = false;
+        HudManager.isSamplingVanilla = false;
         restoreActionBar(accessor);
         restoreTitle(accessor);
     }
@@ -167,6 +171,7 @@ public final class LegacyVanillaHudSampler {
         final LegacyHudSampleAccessor accessor = (LegacyHudSampleAccessor) gameGui;
         restoreInline(accessor);
         VanillaHudFootprint.begin(true);
+        HudManager.isSamplingVanilla = true;
         try {
             if (inlineArmed) {
                 for (int k = 0; k < inlineCount; k++) {
@@ -177,6 +182,7 @@ public final class LegacyVanillaHudSampler {
             run(() -> sampleBossBar(accessor));
             run(() -> sampleSidebar(accessor, minecraft));
         } finally {
+            HudManager.isSamplingVanilla = false;
             inlineArmed = false;
             inlineCount = 0;
             VanillaHudFootprint.end(HudManager.guiScreenWidth, HudManager.guiScreenHeight);

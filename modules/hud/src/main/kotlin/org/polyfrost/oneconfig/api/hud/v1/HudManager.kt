@@ -109,6 +109,9 @@ public object HudManager {
     @Volatile public var isEditorOpen: Boolean = false
         private set
 
+    /** `true` while OneConfig draws vanilla HUD elements off-screen to measure them for the HUD editor */
+    @Volatile @JvmField public var isSamplingVanilla: Boolean = false
+
     /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
     @Volatile @JvmField public var isConfigUiOpen: Boolean = false
 
