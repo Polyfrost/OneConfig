@@ -12,6 +12,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.components.settings.bumpResetEpoch
 import org.polyfrost.oneconfig.internal.ui.hud.bumpHudUiEpoch
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
+import java.util.Objects
 import kotlin.math.abs
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudHistory")
@@ -49,7 +50,7 @@ private fun sameValue(a: Any?, b: Any?): Boolean = when {
         a.size == b.size && a.all { (key, value) -> b.containsKey(key) && sameValue(value, b[key]) }
     a is List<*> && b is List<*> -> a.size == b.size && a.zip(b).all { (x, y) -> sameValue(x, y) }
     a is Array<*> && b is Array<*> -> sameValue(a.asList(), b.asList())
-    a != null && b != null && a.javaClass.isArray && b.javaClass.isArray -> java.util.Objects.deepEquals(a, b)
+    a != null && b != null && a.javaClass.isArray && b.javaClass.isArray -> Objects.deepEquals(a, b)
     else -> a == b
 }
 
