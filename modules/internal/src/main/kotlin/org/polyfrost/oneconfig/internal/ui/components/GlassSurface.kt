@@ -348,7 +348,7 @@ internal fun DrawScope.drawLive(block: DrawScope.() -> Unit) {
     val density = Density(density, fontScale)
     val direction = layoutDirection
     val size = size
-    drawPoly { liveScope.draw(density, direction, PolyCanvas(it.renderer), size, block) }
+    drawPoly { it.renderer.live { r -> liveScope.draw(density, direction, PolyCanvas(r), size, block) } }
 }
 
 private fun restingLight(nx: Float, ny: Float): Float {

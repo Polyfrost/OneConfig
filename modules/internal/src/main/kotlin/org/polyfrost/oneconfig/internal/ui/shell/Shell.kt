@@ -18,13 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -38,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -70,6 +66,7 @@ import org.polyfrost.oneconfig.internal.ui.components.Sidebar
 import org.polyfrost.oneconfig.internal.ui.components.SidebarWidth
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentGradientFill
+import org.polyfrost.oneconfig.internal.ui.components.drawLive
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
 import org.polyfrost.oneconfig.internal.ui.components.rememberAccentBrandTint
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
@@ -287,15 +284,7 @@ fun Shell(
         if (glowAlpha > 0f) {
             val sidebarGlow = remember { GlowLayers() }
             val pageGlow = remember { GlowLayers() }
-            val frameNanos = remember { mutableLongStateOf(0L) }
-            // held still under Reduced Motion
-            LaunchedEffect(ReducedMotion.enabled) {
-                if (ReducedMotion.enabled) return@LaunchedEffect
-                while (true) withFrameNanos { frameNanos.longValue = it }
-            }
-            // its own layer so redrawing the moving glow every frame leaves the menu content alone
-            Box(Modifier.matchParentSize().graphicsLayer {}.drawBehind {
-                val centers = glowMotion.frame(frameNanos.longValue, size)
+            Box(Modifier.matchParentSize().drawBehind {
                 val w = size.width.roundToInt()
                 val sw = SidebarWidth.roundToPx().coerceIn(0, w)
                 val accent = Accent.copy(alpha = 1f)
@@ -306,9 +295,14 @@ fun Shell(
                     val c = backgroundShadow.color
                     ShadowBake(ox - sp, oy - sp, size.width + ox + sp, size.height + oy + sp, backgroundShadow.radius.toPx() * 0.57735f, c.copy(alpha = c.alpha * backgroundShadow.alpha))
                 } else null
-                with(sidebarGlow) { draw(0f, sw.toFloat(), accent, glowAlpha, sidebarColor, shadow, centers) }
-                drawLine(theme.borderColor, Offset(sw.toFloat(), 0f), Offset(sw.toFloat(), size.height), 1f)
-                with(pageGlow) { draw(sw.toFloat(), w.toFloat(), accent, glowAlpha, pageColor, shadow, centers) }
+                val border = theme.borderColor
+                fun DrawScope.glow(nanos: Long) {
+                    val centers = glowMotion.frame(nanos, size)
+                    with(sidebarGlow) { draw(0f, sw.toFloat(), accent, glowAlpha, sidebarColor, shadow, centers) }
+                    drawLine(border, Offset(sw.toFloat(), 0f), Offset(sw.toFloat(), size.height), 1f)
+                    with(pageGlow) { draw(sw.toFloat(), w.toFloat(), accent, glowAlpha, pageColor, shadow, centers) }
+                }
+                if (ReducedMotion.enabled) glow(0L) else drawLive { glow(System.nanoTime()) }
             })
         }
         Row(Modifier.matchParentSize()) {
