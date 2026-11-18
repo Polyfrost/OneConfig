@@ -2,6 +2,8 @@ package org.polyfrost.oneconfig.internal.mixin.fixes;
 
 //? if = 1.8.9 {
 /*import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
@@ -141,6 +143,17 @@ public abstract class Mixin_RememberUnknownOptions {
         return LegacyOptionsFormat.toLegacyLine(line);
     }
 
+    @WrapOperation(
+        method = "load",
+        at = @At(value = "INVOKE", target = "Ljava/lang/String;split(Ljava/lang/String;)[Ljava/lang/String;", remap = false)
+    )
+    private String[] ocfg$splitKeyOnLastColon(String line, String regex, Operation<String[]> original) {
+        if (!line.startsWith(ocfg$KEY_PREFIX) || !":".equals(regex)) return original.call(line, regex);
+        int colon = line.lastIndexOf(':');
+        if (colon < 0) return original.call(line, regex);
+        return new String[]{line.substring(0, colon), line.substring(colon + 1)};
+    }
+
     @WrapWithCondition(
         method = "load",
         at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V", remap = false)
@@ -243,7 +256,7 @@ public abstract class Mixin_RememberUnknownOptions {
 
     @Unique
     private static String ocfg$keyOf(String line) {
-        int colon = line.indexOf(':');
+        int colon = line.startsWith(ocfg$KEY_PREFIX) ? line.lastIndexOf(':') : line.indexOf(':');
         return colon > 0 ? line.substring(0, colon) : null;
     }
 }
