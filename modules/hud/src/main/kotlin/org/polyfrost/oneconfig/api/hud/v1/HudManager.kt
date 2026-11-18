@@ -1079,6 +1079,7 @@ public object HudManager {
         val refW = if (layoutRefWidth > 0f) layoutRefWidth else screenWidth
         val refH = if (layoutRefHeight > 0f) layoutRefHeight else screenHeight
         frameGroups = HudBackgroundMerge.computeGroups(mergeable, refW, refH)
+        if (releaseStaleMergeLinks()) frameGroups = HudBackgroundMerge.computeGroups(mergeable, refW, refH)
         val merged = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         for (group in frameGroups) merged.addAll(group.huds)
         updateMergeLinks()
@@ -1174,20 +1175,34 @@ public object HudManager {
      * A HUD which stops being merged is let go and stays where it was left
      */
     private fun updateMergeLinks() {
-        val linkedX = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
-        val linkedY = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         Snapshot.withMutableSnapshot {
             for (group in frameGroups) {
                 for (link in group.links) {
                     link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint, link.axis)
-                    (if (link.axis == MergeAxis.X) linkedX else linkedY).add(link.child)
                 }
             }
-            for (hud in activeInstances) {
-                hud.clearMergeLinks(clearX = hud !in linkedX, clearY = hud !in linkedY)
-            }
+            releaseStaleMergeLinks()
             for (hud in activeInstances) hud.keepMergedPosition()
         }
+    }
+
+    private fun releaseStaleMergeLinks(): Boolean {
+        val linkedX = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
+        val linkedY = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
+        for (group in frameGroups) {
+            for (link in group.links) (if (link.axis == MergeAxis.X) linkedX else linkedY).add(link.child)
+        }
+        var released = false
+        Snapshot.withMutableSnapshot {
+            for (hud in activeInstances) {
+                val clearX = hud !in linkedX && hud.mergeLinkX != null
+                val clearY = hud !in linkedY && hud.mergeLinkY != null
+                if (!clearX && !clearY) continue
+                hud.releaseMergeLinks(clearX, clearY)
+                released = true
+            }
+        }
+        return released
     }
 
     /**

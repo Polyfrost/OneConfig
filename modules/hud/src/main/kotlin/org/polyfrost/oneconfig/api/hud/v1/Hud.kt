@@ -1108,6 +1108,11 @@ public abstract class Hud(
         }
     }
 
+    internal fun releaseMergeLinks(clearX: Boolean, clearY: Boolean) {
+        if (clearX && mergeLinkX != null) mergeLinkX = null
+        if (clearY && mergeLinkY != null) mergeLinkY = null
+    }
+
     /** Drops the merge links without touching the stored position, for a caller about to overwrite it */
     @ApiStatus.Internal
     public fun dropMergeLinks() {

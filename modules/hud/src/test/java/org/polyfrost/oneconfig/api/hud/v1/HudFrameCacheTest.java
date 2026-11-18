@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -252,5 +255,68 @@ class HudFrameCacheTest {
         frameId.setLong(HudManager.INSTANCE, frameId.getLong(HudManager.INSTANCE) + 1);
         assertNotEquals(before, child.getY(), 0.001f, "the Y merge parent moved so the child must move");
         assertEquals(child.getY(), child.getFrameY(), 0.001f, "a move of any external parent must refresh the cached y");
+    }
+
+    @Test
+    void releasedMergeLinkIgnoresCollapsedParent() {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = false;
+        CacheHud above = new CacheHud();
+        CacheHud child = new CacheHud();
+        above.setRenderedW(60f);
+        above.setRenderedH(30f);
+        child.setRenderedW(60f);
+        child.setRenderedH(20f);
+        above.setAbsolutePosition(10f, 10f);
+        child.setAbsolutePosition(10f, 40f);
+
+        child.applyMergeLink$hud(above, HudAnchor.TopLeft, HudAnchor.BottomLeft, MergeAxis.Y);
+        child.keepMergedPosition$hud();
+        float merged = child.getY();
+        above.setRenderedH(5f);
+        child.releaseMergeLinks$hud(false, true);
+        assertEquals(merged, child.getY(), 0.001f, "losing the merge parent must not move the HUD");
+    }
+
+    @Test
+    void releasedHudDoesNotDragHudItTouchedWhileStale() throws Exception {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = false;
+        StaticSizeHud above = new StaticSizeHud();
+        StaticSizeHud child = new StaticSizeHud();
+        StaticSizeHud other = new StaticSizeHud();
+        above.side = 40f;
+        child.side = 60f;
+        other.side = 20f;
+        for (Hud hud : new Hud[]{above, child, other}) {
+            hud.setStaticWidth(true);
+            hud.setRenderedW(hud.getStaticW());
+            hud.setRenderedH(hud.getStaticH());
+        }
+        above.setAbsolutePosition(10f, 10f);
+        child.setAbsolutePosition(10f, 50f);
+        other.setAbsolutePosition(70f, 20f);
+        List<Hud> huds = Arrays.asList(above, child, other);
+        HudManager.INSTANCE.getActiveInstances().addAll(huds);
+        try {
+            Method groups = HudManager.class.getDeclaredMethod("updateBackgroundGroups", List.class, float.class, float.class, float.class);
+            groups.setAccessible(true);
+            groups.invoke(HudManager.INSTANCE, huds, 960f, 540f, 1f);
+            assertTrue(child.getMergeLinkY$hud() != null && child.getMergeLinkY$hud().getParent() == above, "child must hang under the HUD above it");
+
+            above.side = 0f;
+            above.setRenderedH(0f);
+            assertTrue(child.layoutY$hud(540f) < 30f, "setup: the collapsed parent must pull the child beside the other HUD");
+            groups.invoke(HudManager.INSTANCE, huds, 960f, 540f, 1f);
+            assertEquals(50f, child.getY(), 0.001f, "losing the merge parent must not move the HUD");
+            assertEquals(20f, other.getY(), 0.001f, "a HUD the stale child brushed past must stay put");
+            assertTrue(other.getMergeLinkY$hud() == null && other.getMergeLinkX$hud() == null, "the brushed HUD must not stay merged");
+        } finally {
+            HudManager.INSTANCE.getActiveInstances().removeAll(huds);
+        }
     }
 }
