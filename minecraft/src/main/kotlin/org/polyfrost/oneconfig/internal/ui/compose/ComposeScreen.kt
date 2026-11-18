@@ -177,6 +177,7 @@ abstract class ComposeScreen(
     private var showing = false
 
     private var scenePoisoned = false
+    private var poisonCause: Throwable? = null
 
     private var sceneRebuilds = 0
 
@@ -218,6 +219,7 @@ abstract class ComposeScreen(
     }
 
     private fun poisonScene(cause: Throwable) {
+        poisonCause = cause
         if (scenePoisoned) return
         scenePoisoned = true
         sceneDirty = true
@@ -356,6 +358,8 @@ abstract class ComposeScreen(
         cachedSurfaceScale = -1f
 
         if (!bindContent()) {
+            val why = if (sceneBusy) "init ran while the scene was busy" else "setting the content failed"
+            LOGGER.error("Failed to start ${this::class.java.simpleName}: $why", poisonCause)
             closeWithMessage("OneConfig's UI failed to start. Please check your logs and report this.")
             return
         }
