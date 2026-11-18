@@ -76,6 +76,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if = 1.8.9 {
         /*mixins.add("command.Mixin_LegacyChatCompletion");
         mixins.add("fixes.Mixin_RememberUnknownOptions");
+        mixins.add("keybind.Mixin_LegacySharedKeyCodes");
         *///?}
 
         //? moul_compat {
