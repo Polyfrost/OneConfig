@@ -1186,6 +1186,7 @@ public object HudManager {
             for (hud in activeInstances) {
                 hud.clearMergeLinks(clearX = hud !in linkedX, clearY = hud !in linkedY)
             }
+            for (hud in activeInstances) hud.keepMergedPosition()
         }
     }
 

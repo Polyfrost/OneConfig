@@ -685,12 +685,7 @@ public abstract class Hud(
         }
         // kept up to date even while anchored so dropping the anchor (or losing the target HUD)
         // leaves the HUD exactly where it was instead of jumping back to a stale screen position
-        val anchor = absX + anchorFracX * scaledWidth
-        relativeX = when (section) {
-            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> anchor
-            Section.TopCenter, Section.Center, Section.BottomCenter -> anchor - sw / 2f
-            else -> sw - anchor
-        }.let { if (HudManager.systemReposition) it else it.coerceIn(-sw, sw * 2f) }
+        relativeX = relativeXFor(absX, sw).let { if (HudManager.systemReposition) it else it.coerceIn(-sw, sw * 2f) }
         posSchema = POS_SCHEMA
         HudManager.noteLayoutArranged()
         notePositionWrite()
@@ -710,15 +705,28 @@ public abstract class Hud(
                 resolvingAnchor = false
             }
         }
-        val anchor = absY + anchorFracY * scaledHeight
-        relativeY = when (section) {
-            Section.TopLeft, Section.TopCenter, Section.TopRight -> anchor
-            Section.CenterLeft, Section.Center, Section.CenterRight -> anchor - sh / 2f
-            else -> sh - anchor
-        }.let { if (HudManager.systemReposition) it else it.coerceIn(-sh, sh * 2f) }
+        relativeY = relativeYFor(absY, sh).let { if (HudManager.systemReposition) it else it.coerceIn(-sh, sh * 2f) }
         posSchema = POS_SCHEMA
         HudManager.noteLayoutArranged()
         notePositionWrite()
+    }
+
+    private fun relativeXFor(absX: Float, sw: Float): Float {
+        val anchor = absX + anchorFracX * scaledWidth
+        return when (section) {
+            Section.TopLeft, Section.CenterLeft, Section.BottomLeft -> anchor
+            Section.TopCenter, Section.Center, Section.BottomCenter -> anchor - sw / 2f
+            else -> sw - anchor
+        }
+    }
+
+    private fun relativeYFor(absY: Float, sh: Float): Float {
+        val anchor = absY + anchorFracY * scaledHeight
+        return when (section) {
+            Section.TopLeft, Section.TopCenter, Section.TopRight -> anchor
+            Section.CenterLeft, Section.Center, Section.CenterRight -> anchor - sh / 2f
+            else -> sh - anchor
+        }
     }
 
     public fun setAbsolutePosition(absX: Float, absY: Float) {
@@ -1085,6 +1093,20 @@ public abstract class Hud(
     }
 
     internal fun clearMergeLink() = clearMergeLinks(clearX = true, clearY = true)
+
+    internal fun keepMergedPosition() {
+        if (anchorParent != null) return
+        val linkX = mergeLinkX
+        val linkY = mergeLinkY
+        if (linkX != null && linkX.parent !== this) {
+            val sw = HudManager.guiScreenWidth
+            relativeX = relativeXFor(layoutX(sw), sw)
+        }
+        if (linkY != null && linkY.parent !== this) {
+            val sh = HudManager.guiScreenHeight
+            relativeY = relativeYFor(layoutY(sh), sh)
+        }
+    }
 
     /** Drops the merge links without touching the stored position, for a caller about to overwrite it */
     @ApiStatus.Internal
