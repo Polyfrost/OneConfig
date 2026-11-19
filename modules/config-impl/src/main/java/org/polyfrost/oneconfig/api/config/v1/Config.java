@@ -77,11 +77,18 @@ public abstract class Config {
     }
 
     public final void addAliases(String... aliases) {
-        whenInitialized(() -> tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
+        whenInitialized(() -> appendAliases(tree, aliases));
     }
 
     public final void addAliases(String option, String... aliases) {
-        whenInitialized(() -> getProperty(option).getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
+        whenInitialized(() -> appendAliases(getProperty(option), aliases));
+    }
+
+    private static void appendAliases(Node node, String[] aliases) {
+        Collection<String> existing = node.getMetadata("aliases");
+        List<String> merged = existing == null ? new ArrayList<>(aliases.length) : new ArrayList<>(existing);
+        merged.addAll(Arrays.asList(aliases));
+        node.addMetadata("aliases", merged);
     }
 
     private void whenInitialized(Runnable action) {
