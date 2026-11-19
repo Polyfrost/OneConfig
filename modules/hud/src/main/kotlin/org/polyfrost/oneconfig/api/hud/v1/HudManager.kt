@@ -98,12 +98,12 @@ public object HudManager {
     /**
      * `true` while HUDs are being shown for editing or preview
      *
-     * That is while either the HUD editor or the main OneConfig UI is open
+     * That is only while the HUD editor is open, the main OneConfig UI shows HUDs live like any other screen
      *
      * HUDs should render example content when this is set
      */
     @get:JvmName("isEditing")
-    public val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
+    public val isEditing: Boolean get() = isEditorOpen
 
     /** `true` only while the HUD editor screen itself is open */
     @Volatile public var isEditorOpen: Boolean = false
@@ -112,7 +112,7 @@ public object HudManager {
     /** `true` while OneConfig draws vanilla HUD elements off-screen to measure them for the HUD editor */
     @Volatile @JvmField public var isSamplingVanilla: Boolean = false
 
-    /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
+    /** Set by the OneConfig UI screen while it is open, it does not put HUDs into preview mode */
     @Volatile @JvmField public var isConfigUiOpen: Boolean = false
 
     @ExperimentalOneConfigUiApi
@@ -181,7 +181,7 @@ public object HudManager {
 
     private var wasEditing = false
 
-    private val showingPreviews get() = isConfigUiOpen || isEditorOpen
+    private val showingPreviews get() = isEditorOpen
 
     @ApiStatus.Internal
     public val previewRevision: MutableIntState = mutableIntStateOf(0)

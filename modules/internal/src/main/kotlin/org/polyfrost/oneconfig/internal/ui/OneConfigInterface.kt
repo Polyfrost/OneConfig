@@ -40,7 +40,6 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalSearchFieldFocused
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
-import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDragLayer
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
@@ -161,8 +160,6 @@ fun OneConfigInterface(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            if (!shell.warming) HudDragLayer()
-
             val currentDensity = LocalDensity.current
             val scaleFactor = run {
                 val designWidthPx  = DESIGN_WIDTH_DP  * currentDensity.density

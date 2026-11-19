@@ -123,7 +123,7 @@ class HudFrameCacheTest {
         assertEquals(hud.getX(), hud.getFrameX());
 
         HudManager.isConfigUiOpen = true;
-        assertEquals(-1, hud.getGeometryStamp$hud(), "editing turns the cache off");
+        assertNotEquals(-1, hud.getGeometryStamp$hud(), "the OneConfig menu alone is not editing");
     }
 
     @Test
