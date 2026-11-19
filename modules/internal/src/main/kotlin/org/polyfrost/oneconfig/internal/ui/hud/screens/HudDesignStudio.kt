@@ -2629,17 +2629,18 @@ fun HudDesignStudio(visible: Boolean = true) {
         // no slide the first time round when the hint has nowhere to slide from
         val hintPlaced = hintSlot != Offset.Zero
         val hintMargin = with(densityObj) { 16.dp.toPx() }
-        // the action bar floats above the hovered HUD so keep that strip clear as well
-        val actionBarStrip = with(densityObj) { 40.dp.toPx() }
         if (hintShown && rootSize.width > 0 && hintSize.width > 0) {
             val mcToScreen = Platform.screen().mcToScreenScale()
-            val obstacles = ArrayList<Rect>(HudManager.activeInstances.size + chromeRects.size)
+            val obstacles = ArrayList<Rect>(HudManager.activeInstances.size + chromeRects.size + 1)
             for (hud in HudManager.activeInstances) {
                 val b = hudBounds(hud) ?: continue
-                val top = b.y * mcToScreen - if (hud === hoveredHud) actionBarStrip else 0f
                 obstacles.add(
-                    Rect(b.x * mcToScreen, top, (b.x + b.width) * mcToScreen, (b.y + b.height) * mcToScreen)
+                    Rect(b.x * mcToScreen, b.y * mcToScreen, (b.x + b.width) * mcToScreen, (b.y + b.height) * mcToScreen)
                 )
+            }
+            // keep the hovered HUD's action bar clear wherever it was placed, usually below the HUD
+            hoveredHud?.let { hudActionBarLayout(it, mcToScreen, actionIconPx, actionBarGapPx) }?.let { bar ->
+                obstacles.add(Rect(bar.x, bar.y, bar.x + bar.width, bar.y + bar.height))
             }
             obstacles.addAll(chromeRects.values)
             hintSlot = pickHintSlot(rootSize, hintSize, hintMargin, obstacles)
