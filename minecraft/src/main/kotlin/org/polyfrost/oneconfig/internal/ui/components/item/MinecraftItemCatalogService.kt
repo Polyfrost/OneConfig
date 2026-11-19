@@ -801,6 +801,11 @@ class MinecraftItemCatalogService : ItemCatalogService {
             //?} else
             //resources.renderer.incrementFrameNumber()
         } catch (throwable: Throwable) {
+            //? if < 26.3 {
+            /*RenderSystem.outputColorTextureOverride = null
+            RenderSystem.outputDepthTextureOverride = null
+            *///?}
+            RenderSystem.disableScissorForRenderTypeDraws()
             discardItemGuiResources(page)
             throw throwable
         }
