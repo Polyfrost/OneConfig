@@ -56,17 +56,41 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         return p
     }
 
+    private val optionPaths = HashMap<String, String>()
+
+    private var placing: Group? = null
+
     final override fun makeTree(): Tree = pendingTree ?: Tree.tree(id)
+
+    private fun rootTree(): Tree = tree ?: pendingTree()
+
+    @JvmSynthetic
+    internal fun targetTree(): Tree {
+        val root = rootTree()
+        return placing?.resolve(root) ?: root
+    }
+
+    @JvmSynthetic
+    internal fun recordPlacement(name: String) {
+        val group = placing ?: return
+        optionPaths[name] = group.path + "." + name
+    }
+
+    private fun pathOf(name: String): String = optionPaths[name] ?: name
+
+    @JvmSynthetic
+    internal fun optionAt(name: String): Property<*>? {
+        val path = pathOf(name)
+        val root = rootTree()
+        return if ('.' in path) root.getProp(*path.split('.').toTypedArray()) else root.getProp(path)
+    }
 
     /**
      * return the property with the given id by a kotlin property reference
      */
     @Suppress("UNCHECKED_CAST")
     protected val <V> KProperty<V>.property: Property<V>
-        get() {
-            val t = tree ?: pendingTree()
-            return t.getProp(this.name) as Property<V>
-        }
+        get() = optionAt(this.name) as Property<V>
 
     @JvmSynthetic
     protected inline fun <reified T : Any> property(
@@ -1107,14 +1131,104 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
     private fun requireStep(name: String, min: Float, max: Float, step: Float) =
         require(step <= 0f || step <= max - min) { "slider '$name' has step ($step) larger than its range ($min to $max)" }
 
+    @JvmSynthetic
+    protected fun accordion(
+        id: String,
+        title: String,
+        description: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        subcategory: String? = "General",
+        index: Int = -1,
+        collapsed: Boolean = false,
+        titleKey: String? = null,
+        descriptionKey: String? = null,
+        categoryKey: String? = null,
+        subcategoryKey: String? = null,
+        parent: Group? = null,
+    ): Group = group(id, parent, false) {
+        addMetadata(title, titleKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        if (index >= 0) addMetadata("index", index)
+        if (collapsed) addMetadata("collapsed", true)
+    }
+
+    @JvmSynthetic
+    protected fun submenu(
+        id: String,
+        title: String,
+        description: String? = null,
+        icon: String? = null,
+        category: String? = "General",
+        subcategory: String? = "General",
+        titleKey: String? = null,
+        descriptionKey: String? = null,
+        categoryKey: String? = null,
+        subcategoryKey: String? = null,
+        parent: Group? = null,
+    ): Group = group(id, parent, true) {
+        addMetadata(title, titleKey, description, descriptionKey, icon, category, categoryKey, subcategory, subcategoryKey)
+        addMetadata("submenu", true)
+    }
+
+    private fun group(id: String, parent: Group?, submenu: Boolean, meta: Tree.() -> Unit): Group {
+        require(id.isNotEmpty() && '.' !in id) { "group id '$id' must be non-empty and contain no dots" }
+        val root = rootTree()
+        val parentTree = if (parent == null) root else {
+            require(parent.submenu) { "'$id' cannot be placed in accordion '${parent.id}', only submenus can hold accordions and submenus" }
+            parent.resolve(root)
+        }
+        require(parentTree.get(id) == null) { "'$id' is already used by another option or group in ${parent?.path ?: this.id}" }
+        val t = Tree.tree(id)
+        t.meta()
+        parentTree.put(t)
+        return Group(id, if (parent == null) id else parent.path + "." + id, submenu)
+    }
+
+    public fun <R> PropertyDelegateProvider<KtConfig, R>.inside(group: Group): PropertyDelegateProvider<KtConfig, R> =
+        PropertyDelegateProvider { thisRef, property ->
+            val previous = thisRef.placing
+            thisRef.placing = group
+            try {
+                provideDelegate(thisRef, property)
+            } finally {
+                thisRef.placing = previous
+            }
+        }
+
+    public fun <R> PropertyDelegateProvider<KtConfig, R>.primary(): PropertyDelegateProvider<KtConfig, R> =
+        PropertyDelegateProvider { thisRef, property ->
+            provideDelegate(thisRef, property).also { thisRef.markPrimary(property.name) }
+        }
+
+    private fun markPrimary(name: String) {
+        val path = pathOf(name)
+        val split = path.lastIndexOf('.')
+        require(split > 0) { "primary option '$name' must be placed in an accordion or submenu with inside()" }
+        val group = rootTree().getChild(*path.substring(0, split).split('.').toTypedArray())
+        val option = group.getProp(name)
+        val other = group.map.values.firstOrNull { it is Property<*> && it !== option && it.getMetadata<Any?>("primary") != null }
+        require(other == null) { "'${group.id}' already has the primary option '${other!!.id}', only one is allowed" }
+        option.addMetadata("primary", true)
+    }
+
+    public class Group internal constructor(
+        public val id: String,
+        public val path: String,
+        internal val submenu: Boolean,
+    ) {
+        internal fun resolve(root: Tree): Tree =
+            (if ('.' in path) root.getChild(*path.split('.').toTypedArray()) else root.getChild(path))
+                ?: throw IllegalStateException("group '$path' is missing from the config tree")
+    }
+
     public fun hideIf(option: KProperty<*>, condition: () -> Boolean) {
         if (tree == null) runInitialize(false)
-        hideIf(option.name) { condition() }
+        hideIf(pathOf(option.name)) { condition() }
     }
 
     public fun hideIf(option: KProperty<*>, condition: KProperty0<Boolean>) {
         if (tree == null) runInitialize(false)
-        hideIf(option.name) { condition.get() }
+        hideIf(pathOf(option.name)) { condition.get() }
     }
 
     // a KProperty1 given here is a member of this config, so this is always a valid receiver
@@ -1158,13 +1272,14 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
             thisRef: KtConfig,
             property: KProperty<*>
         ): ReadWriteProperty<KtConfig, T> {
-            val tree = thisRef.tree ?: thisRef.pendingTree()
+            val tree = thisRef.targetTree()
             val p = build?.invoke(tree, property.name) ?: Properties.simple(property.name, name ?: property.name, description, def, type)
             extra?.invoke(p)
             p.addMetadata("visualizer", visualizer)
             p.addMetadata("category", category)
             p.addMetadata("subcategory", subcategory)
             tree.put(p)
+            thisRef.recordPlacement(property.name)
             return PropertyDelegate(p)
         }
     }
@@ -1193,13 +1308,14 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
         }
 
         override operator fun provideDelegate(thisRef: KtConfig, property: KProperty<*>): ReadOnlyProperty<KtConfig, Unit> {
-            val tree = thisRef.tree ?: thisRef.pendingTree()
+            val tree = thisRef.targetTree()
             val p = build?.invoke(tree, property.name) ?: Properties.dummy(property.name, name, description)
             p.extra()
             p.addMetadata("visualizer", visualizer)
             p.addMetadata("category", category)
             p.addMetadata("subcategory", subcategory)
             tree.put(p)
+            thisRef.recordPlacement(property.name)
             return ReadOnlyProperty { _, _ -> }
         }
     }
@@ -1231,7 +1347,7 @@ public open class KtConfig(id: String, title: String, category: Category, icon: 
     public fun <Type : Any> PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>>.fullWidth(): PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, Type>> =
         PropertyDelegateProvider { thisRef, property ->
             provideDelegate(thisRef, property).also {
-                (thisRef.tree ?: thisRef.pendingTree()).getProp(property.name)?.addMetadata("fullWidth", true)
+                thisRef.optionAt(property.name)?.addMetadata("fullWidth", true)
             }
         }
 
