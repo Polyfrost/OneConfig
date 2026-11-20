@@ -37,6 +37,6 @@ dependencies {
     api(project(":modules:config"))
     api(project(":modules:events"))
     api(project(":modules:mod-toggles"))
-    api(project(":modules:poly-compose"))
+    api(libs.polycompose.core)
     implementation(project(":modules:notifications"))
 }

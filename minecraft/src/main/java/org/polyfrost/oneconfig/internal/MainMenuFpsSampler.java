@@ -34,7 +34,8 @@ import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.MainMenuFpsEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
+import org.polyfrost.compose.host.ComposeHost;
+import org.polyfrost.compose.minecraft.screen.ComposeScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 
 import java.lang.invoke.MethodHandle;
@@ -50,6 +51,10 @@ public final class MainMenuFpsSampler {
 
     private static volatile boolean sampling = false;
 
+    private static final int SAMPLING_FRAMERATE = 260;
+
+    private static AutoCloseable framerateRequest;
+
     private boolean started = false;
     private long lastTickNanos = 0L;
     private long elapsedNanos = 0L;
@@ -58,6 +63,21 @@ public final class MainMenuFpsSampler {
     private int sampleCount = 0;
 
     private MainMenuFpsSampler() {
+    }
+
+    private static void setSampling(boolean value) {
+        sampling = value;
+        if (value && framerateRequest == null) {
+            framerateRequest = ComposeHost.requestFramerate(SAMPLING_FRAMERATE);
+        } else if (!value && framerateRequest != null) {
+            try {
+                framerateRequest.close();
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            } finally {
+                framerateRequest = null;
+            }
+        }
     }
 
     public static boolean isSampling() {
@@ -103,7 +123,7 @@ public final class MainMenuFpsSampler {
         if (started && mc.level != null) return finish();
 
         if (!mc.isWindowActive()) {
-            sampling = false; // don't fight power saving while nobody is looking
+            setSampling(false); // don't fight power saving while nobody is looking
             elapsedNanos = 0L;
             fpsSum = 0L;
             sampleCount = 0;
@@ -119,7 +139,7 @@ public final class MainMenuFpsSampler {
         }
         boolean representative = !OneConfigUIScreen.warmBusy() && !hasOverlay() && !(screen instanceof LevelLoadingScreen)
                 && (!(screen instanceof ComposeScreen) || screen.getClass().getName().startsWith(POLYPLUS_PACKAGE));
-        sampling = representative;
+        setSampling(representative);
         if (!representative) {
             settledNanos = 0L;
             return false;
@@ -150,7 +170,7 @@ public final class MainMenuFpsSampler {
     }
 
     private boolean finish() {
-        sampling = false;
+        setSampling(false);
         if (sampleCount == 0) {
             started = false;
             return false;

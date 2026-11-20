@@ -30,8 +30,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-//? if >= 1.21.11
-import net.fabricmc.loader.api.FabricLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
@@ -108,7 +106,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.osl.Mixin_OslConfigManager");
 
         mixins.add("Mixin_SimpleReloadInstance");
-        mixins.add("Mixin_MainMenuFpsUncap");
         //? if > 1.8.9
         mixins.add("Mixin_VersionedResourcePacks");
         //? if > 1.8.9
@@ -184,15 +181,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
 
-        mixins.add("skia.Mixin_SkiaFrame");
-        mixins.add("render.Mixin_FramePresentHooks");
-        mixins.add("render.Mixin_EntityPreviewNameTag");
         mixins.add("render.Mixin_HudFrameState");
         mixins.add("render.Mixin_VanillaHudElements");
-        //? if >= 26.1 {
-        mixins.add("blaze3d.GpuDeviceAccessor");
-        mixins.add("blaze3d.GlDeviceAccessor");
-        //? }
         //? if > 1.8.9 {
         mixins.add("render.HudSampleAccessor");
         mixins.add("render.BossHealthOverlayAccessor");
@@ -209,30 +199,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if >= 1.21.8 {
         mixins.add("render.Mixin_VanillaHudFootprint");
 
-        mixins.add("skia.Mixin_GuiRendererLegacyTarget");
 
-        mixins.add("render.GameRendererAccessor");
-        mixins.add("render.GuiRendererAccessor");
         //? }
-        //? if > 1.8.9
-        mixins.add("skia.Mixin_ItemAtlasScissor");
-        //? if < 1.21.8
-        //mixins.add("skia.Mixin_MainTargetRedirect");
-        //? if > 1.8.9 && < 1.21.11
-        //mixins.add("skia.Mixin_GlHostPresent");
-        //? if < 1.21.11
-        //mixins.add("skia.Mixin_DebugOverlayAboveUi");
-        //? if >= 1.21.11 {
-        mixins.add("skia.Mixin_BlazeToasts");
-        mixins.add("render.BufferBuilderAccessor");
-        mixins.add("render.RenderPipelinesAccessor");
-        mixins.add("render.Mixin_GuiRendererKeptMeshes");
-        mixins.add("render.Mixin_GuiRenderStateStacking");
-        if (FabricLoader.getInstance().isModLoaded("gnetum")) mixins.add("compat.Mixin_GnetumOffscreenState");
-        mixins.add("render.Mixin_UiBlur");
-        mixins.add("render.PostChainAccessor");
-        mixins.add("render.PostPassAccessor");
-        //?}
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");

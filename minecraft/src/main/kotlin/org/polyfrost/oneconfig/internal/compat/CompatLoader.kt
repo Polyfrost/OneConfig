@@ -11,8 +11,8 @@ import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.ui.GpuBackend
-import org.polyfrost.oneconfig.internal.ui.compose.opengl.resyncTextureBindCache
+import org.polyfrost.compose.minecraft.render.GpuBackend
+import org.polyfrost.compose.minecraft.render.gl.resyncTextureBindCache
 
 object CompatLoader {
     private val LOGGER = LogManager.getLogger("OneConfig/Compat")

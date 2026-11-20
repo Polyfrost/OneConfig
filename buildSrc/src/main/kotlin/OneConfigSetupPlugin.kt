@@ -70,8 +70,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
         }
 
         evaluationDependsOn(":modules")
-        // build metadata is ignored by version comparisons anyway
-        val composeBundleVersion = evaluationDependsOn(":modules:compose-bundle").version.toString().substringBefore('+')
+        val polyComposeVersion = versionedCatalog.versions["polycompose"].requiredVersion
 
         // nested into the jar shipped to players by OneConfigDistributionPlugin
         configurations.dependencyScope("bundle")
@@ -117,13 +116,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 exclude("assets/minecraft/shaders/post/fade_in_blur.json")
                 exclude("assets/minecraft/shaders/program/fade_in_blur.json")
                 exclude("assets/minecraft/shaders/program/fade_in_blur.fsh")
-            }
-        }
-
-        if (stonecutter.eval(stonecutter.current.version, "< 1.21.11")) {
-            tasks.named<ProcessResources>("processResources") {
-                exclude("assets/oneconfig/post_effect/**")
-                exclude("assets/oneconfig/shaders/**")
             }
         }
 
@@ -200,6 +192,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
             "api"(versionedCatalog["jetbrains.lifecycle"])
             "api"(versionedCatalog["jetbrains.viewmodel"])
             "api"(versionedCatalog["commonmark"])
+            "modApi"("org.polyfrost:polycompose-${stonecutter.current.project}:$polyComposeVersion")
             handleApiDep(versionedCatalog.bundles["adventure"])
 
             if (adventurePlatform != null) {
@@ -295,8 +288,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
                     "compileOnly"(project(project.path))
                 } else {
                     "api"(project(project.path))
-                    // compose-bundle ships as its own mod
-                    if (project.path != ":modules:compose-bundle") "bundle"(project(project.path))
+                    "bundle"(project(project.path))
                 }
             }
         }
@@ -364,7 +356,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 put("fabric_mc_version", range)
                 put("loader_version", versionedCatalog.versions["loader"].requiredVersion)
                 put("flk_version", versionedCatalog.versions["fabric-language-kotlin"].requiredVersion)
-                put("compose_version", composeBundleVersion)
+                put("polycompose_version", polyComposeVersion)
             }
 
             this.inputs.properties(fabricProperties)
@@ -377,8 +369,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 eachFile { if (path == "ornithe.mod.json") path = "fabric.mod.json" }
             } else {
                 exclude("ornithe.mod.json")
-                // modern font loading rejects its legacy_unicode provider
-                exclude("assets/oneconfig/font/legacy_default.json")
             }
 
             val mixinCompat = if (

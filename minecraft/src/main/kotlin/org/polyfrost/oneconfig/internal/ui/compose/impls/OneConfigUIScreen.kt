@@ -42,6 +42,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.platform.OneConfigComposeOptions
 import org.polyfrost.oneconfig.internal.ClassPreloader
 import org.polyfrost.oneconfig.internal.MainMenuFpsSampler
 import org.polyfrost.oneconfig.internal.OneConfig
@@ -52,11 +53,11 @@ import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
-import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport
-import org.polyfrost.oneconfig.internal.ui.compose.sceneDensity
+import org.polyfrost.compose.minecraft.screen.ComposeScreen
+import org.polyfrost.compose.minecraft.screen.ComposeSupport
+import org.polyfrost.compose.minecraft.screen.sceneDensity
+import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
@@ -86,7 +87,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,
-) : ComposeScreen() {
+) : ComposeScreen(options = OneConfigComposeOptions) {
     private var initialRoute: Any? = null
 
     override val retainsScene: Boolean get() = this === sharedScreen
@@ -412,7 +413,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return false
     }
 
-    override val modifierTapBind: OneConfigKeybind get() = OneConfigConfig.oneConfigKeybind
+    override val modifierTapKeys: Set<Int>? get() = OneConfigComposeHooks.modifierTapKeys
 
     override fun handleModifierTapped() {
         handleOneConfigKeybind(onRelease = true)
@@ -471,7 +472,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
-            ItemCatalog.renderHudIcons()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //? if > 1.8.9 {

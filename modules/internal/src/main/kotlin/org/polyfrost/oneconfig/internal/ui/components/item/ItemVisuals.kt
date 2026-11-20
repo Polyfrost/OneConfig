@@ -11,24 +11,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.backend.drawPoly
-import org.polyfrost.oneconfig.api.hud.v1.Hud
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerTileIcon
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import kotlin.math.ceil
 
 val ItemIconShape @Composable get() = LocalTheme.current.checkBoxShape
 
 internal val ItemTileIcon: PickerTileIcon<ItemDescriptor> = { item, modifier, alpha ->
     ItemIcon(item.id, modifier, framed = false, alpha = alpha)
 }
-
-fun polyItemRenderSizePx(size: Float, hud: Hud?): Int =
-    ceil(size * Platform.compatibility().options().guiScale * (hud?.effectiveScale ?: 1f)).toInt()
 
 /** The catalog deduplicated and sorted by display name so grid positions never jump */
 @Composable
@@ -74,11 +67,7 @@ fun ItemIcon(
         contentAlignment = Alignment.Center,
     ) {
         if (itemIcon != null) {
-            // Register at placement so icons revealed by a scroll are in the atlas before this frame draws.
-            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp).onPlaced { coords ->
-                val surfaceScale = Platform.screen().surfaceRatio().coerceAtLeast(0.0001f)
-                itemIcon.setRenderSizePx(ceil(maxOf(coords.size.width, coords.size.height) * surfaceScale).toInt())
-            }) {
+            Canvas(modifier = Modifier.fillMaxSize().padding(if (framed) 2.dp else 1.dp)) {
                 val w = size.width
                 val h = size.height
                 drawPoly { itemIcon.draw(it, 0f, 0f, w, h, alpha) }

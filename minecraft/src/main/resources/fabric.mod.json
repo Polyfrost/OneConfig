@@ -43,7 +43,7 @@
     "minecraft": "${fabric_mc_version}",
     "fabric-api": "*",
     "fabric-language-kotlin": ">=${flk_version}",
-    "compose-multiplatform": ">=${compose_version}"
+    "polycompose": ">=${polycompose_version}"
   },
   "breaks": {
     "chattweaks": "<1.2.3",

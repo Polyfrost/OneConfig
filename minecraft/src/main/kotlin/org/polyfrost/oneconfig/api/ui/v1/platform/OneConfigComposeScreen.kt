@@ -21,7 +21,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.handleEscapeStack
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ProvideOneConfigTheme
 import org.polyfrost.oneconfig.internal.ThemeConfig
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.compose.minecraft.screen.ComposeScreen
 
 //? if = 1.8.9 {
 /*import net.minecraft.client.Minecraft
@@ -34,7 +34,7 @@ abstract class OneConfigComposeScreen(
     title: Component = Component.empty(),
     val previous: Screen? = OneConfigScreens.current(),
     renderMode: RenderMode = RenderMode.OnDemand,
-) : ComposeScreen(renderMode.internal()) {
+) : ComposeScreen(renderMode.internal(), OneConfigComposeOptions) {
     @ExperimentalOneConfigUiApi
     enum class RenderMode {
         OnDemand,

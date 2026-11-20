@@ -25,12 +25,12 @@ import org.polyfrost.oneconfig.internal.ui.themes.baseTheme
 import org.polyfrost.oneconfig.internal.ui.themes.customSpec
 import org.polyfrost.oneconfig.internal.ui.themes.isCustom
 import org.polyfrost.oneconfig.internal.ui.themes.palette
+import org.polyfrost.compose.host.wheelScroll as internalWheelScroll
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame as internalAnimatedFrame
 import org.polyfrost.oneconfig.internal.ui.components.backdropBlur as internalBackdropBlur
 import org.polyfrost.oneconfig.internal.ui.components.glassHover as internalGlassHover
 import org.polyfrost.oneconfig.internal.ui.components.hoverGlow as internalHoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.liquidGlass as internalLiquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.wheelScroll as internalWheelScroll
 
 private val LocalVariantBase = compositionLocalOf<UITheme?> { null }
 

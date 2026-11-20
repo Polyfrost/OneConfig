@@ -18,8 +18,8 @@ import kotlinx.coroutines.launch
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
-import org.polyfrost.oneconfig.internal.ui.compose.RenderThreadDispatcher
+import org.polyfrost.compose.minecraft.screen.ComposeScreen
+import org.polyfrost.compose.minecraft.platform.RenderThreadDispatcher
 import java.io.File
 
 //? if >= 1.21.10 {

@@ -11,8 +11,6 @@ import org.polyfrost.oneconfig.api.notifications.v1.NotificationsRenderer;
 import pl.tomgirl.pylon.window.DisplaySdl;
 
 public final class LegacyInputEvents {
-    public static boolean deferred;
-
     private LegacyInputEvents() {}
 
     public static void postKeyboard() {

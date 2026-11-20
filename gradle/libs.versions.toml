@@ -31,6 +31,7 @@ errorprone-plugin = "5.2.0"
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
 # Compose
+polycompose = "1.0.0"
 compose = "1.13.0-alpha02"
 androidx-compose-runtime = "1.13.0-alpha03"
 compose-navigation = "2.10.0-rc01"
@@ -100,6 +101,8 @@ jetbrains-compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backh
 jetbrains-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "compose-navigation" }
 jetbrains-lifecycle = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 jetbrains-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "viewmodel" }
+
+polycompose-core = { module = "org.polyfrost:polycompose-core", version.ref = "polycompose" }
 
 commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 

@@ -6,6 +6,7 @@ import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.ChatScreen
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.compose.minecraft.hud.HudLayer
 import org.polyfrost.oneconfig.api.hud.v1.HudClickInput
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudMouseButton
@@ -49,7 +50,7 @@ internal object HudFrameHooks {
     private fun feedPointer() {
         val screen = Platform.screen()
         val current = if (Minecraft.getInstance().isWindowActive) runCatching { screen.current<Any?>() }.getOrNull() else null
-        val allowed = current is ChatScreen || current is ComposeHudLayer.InputScreen
+        val allowed = current is ChatScreen || current is HudLayer.InputScreen
         //? if > 1.8.9 {
         val mouse = Minecraft.getInstance().mouseHandler
         val windowX = mouse.xpos().toFloat()

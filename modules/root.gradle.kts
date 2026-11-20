@@ -29,6 +29,7 @@ subprojects {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
         google()
+        mavenLocal()
     }
 
     configure<JavaPluginExtension> {
@@ -117,7 +118,7 @@ subprojects {
     tasks.withType<JavaCompile>().configureEach { finalizedBy("spotlessJavaCheck") }
     tasks.withType<KotlinCompile>().configureEach { finalizedBy("spotlessKotlinCheck") }
 
-    if (name !in listOf("compose-bundle", "internal", "relocator")) {
+    if (name !in listOf("internal", "relocator")) {
         configure<KotlinJvmProjectExtension> {
             explicitApi()
             @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4

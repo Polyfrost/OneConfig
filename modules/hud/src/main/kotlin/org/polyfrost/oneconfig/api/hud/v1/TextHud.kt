@@ -34,8 +34,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyMcText
+import org.polyfrost.compose.composables.NodeBox
+import org.polyfrost.compose.composables.NodeMcText
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.padding
@@ -113,7 +113,7 @@ public abstract class TextHud(
             if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
             else bgModifier.padding(padInsets)
 
-        PolyBox(modifier = outerModifier) {
+        NodeBox(modifier = outerModifier) {
             if (font == Font.Poppins) {
                 val spec = PoppinsTextSpec(
                     PolyFont(getPoppinsFontName(), 8f * textScale),
@@ -143,7 +143,7 @@ public abstract class TextHud(
                 val tail = if (textBold || textItalic || textUnderline) "§r" else ""
                 val provider = { head + casedText(case) + tail }
 
-                PolyMcText(
+                NodeMcText(
                     text = provider,
                     color = fgColor,
                     shadow = showShadow && !fullShadow,
