@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Mods that [Hotwire](https://modrinth.com/mod/irenehotwire) turns off, turns on, adds or updates while the game runs keep their settings, mod cards and HUDs, including when a profile was switched to, created or renamed while they were off
 - API: `Hud.previewsBehindMenu` lets HUDs that only show now and then stay as they are in game behind the config menu and preview only in Edit HUD (#1423)
+- API: `oneconfig:config` entrypoints of mods that Hotwire adds or updates while the game runs are run as the mod starts
 
 ### Changed
 - Needs PolyCompose 3.0.9 or newer
+- Marked as incompatible with Hotwire versions below 0.9.2-beta
 
 ### Fixed
 - Merged HUDs stay in place when one of them changes size (#1431)
