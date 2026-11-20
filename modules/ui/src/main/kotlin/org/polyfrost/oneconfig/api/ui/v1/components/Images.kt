@@ -88,6 +88,7 @@ private object KitImageCache {
                     return existing.await()
                 } catch (e: CancellationException) {
                     currentCoroutineContext().ensureActive()
+                    inFlight.remove(key, existing)
                     continue
                 }
             }
@@ -95,18 +96,19 @@ private object KitImageCache {
                 val bitmap = decoders.withPermit { withContext(Dispatchers.IO) { decodeScaled(key.path, key.maxWidth) } }
                 if (bitmap == null) {
                     failed += key
+                    inFlight.remove(key, mine)
                     mine.complete(null)
                     return null
                 }
                 val image = bitmap.asComposeImageBitmap()
                 put(key, KitImageCacheEntry(image, bitmap.width.toLong() * bitmap.height * 4))
+                inFlight.remove(key, mine)
                 mine.complete(image)
                 return image
             } catch (t: Throwable) {
+                inFlight.remove(key, mine)
                 mine.completeExceptionally(t)
                 throw t
-            } finally {
-                inFlight.remove(key, mine)
             }
         }
     }
