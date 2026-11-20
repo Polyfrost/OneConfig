@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose.impls
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,7 @@ import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.PolyCompose
+import org.polyfrost.compose.host.LocalComposeOptions
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
@@ -40,6 +42,8 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.releaseFeedback
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.platform.OneConfigComposeOptions
@@ -551,7 +555,11 @@ private class WarmScene(w: Int, h: Int, density: Float, private val surface: Flo
             scene.size = IntSize(w, h)
             shell.session.resume()
             if (OneConfigConfig.instantSearch) shell.search.requestFocus(SearchFocus.SelectAll)
-            scene.setContent { OneConfigInterface(w.toFloat(), h.toFloat(), shell = shell) }
+            scene.setContent {
+                CompositionLocalProvider(LocalComposeOptions provides OneConfigComposeOptions) {
+                    OneConfigComposeOptions.Decorate(this@WarmScene) { OneConfigInterface(w.toFloat(), h.toFloat(), shell = shell) }
+                }
+            }
         } catch (t: Throwable) {
             close()
             throw t
@@ -572,12 +580,14 @@ private class WarmScene(w: Int, h: Int, density: Float, private val surface: Flo
         frames++
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     fun close() {
         try {
             scene.close()
             recomposer.close()
             shell.session.stop()
             drain()
+            releaseFeedback(this)
         } catch (t: Throwable) {
             LogManager.getLogger("OneConfig/UI").debug("Ignoring failure while closing the OneConfig UI warm-up scene", t)
         }
