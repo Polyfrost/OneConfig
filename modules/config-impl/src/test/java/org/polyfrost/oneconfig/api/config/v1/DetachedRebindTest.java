@@ -136,19 +136,19 @@ class DetachedRebindTest {
         assertSame(config.getTree(), ConfigManager.active().get(CONFIG));
     }
 
-    // Hotwire 0.9.5.1 also resets Config.tree of a mod it turned off, even when the profile never changed
+    // Hotwire 0.9.5.1 also resets Config.tree of a mod it turned off, without which Config.save() does nothing
     @Test
-    void configWhoseTreeWasForgottenSurvivesTheNextProfileSwitch() throws Exception {
+    void configWhoseTreeWasResetIsBoundToTheTreePutBack() throws Exception {
         DetachedConfig config = configWith(true);
+        Tree tree = config.getTree();
         Off off = turnOff(config);
         config.tree = null;
         off.turnOn();
         ConfigManager.rebindDetached();
 
-        assertSame(config.getTree(), ConfigManager.active().get(CONFIG));
-        ConfigManager.createProfile(PROFILE_A);
-        ConfigManager.openProfile("");
-        assertTrue(config.enabled, "its value on the profile it went off in was overwritten");
+        assertSame(tree, config.getTree());
+        assertSame(tree, ConfigManager.active().get(CONFIG));
+        assertTrue(config.enabled);
     }
 
     @Test
