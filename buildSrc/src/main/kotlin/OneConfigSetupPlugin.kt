@@ -123,6 +123,8 @@ class OneConfigSetupPlugin : Plugin<Project> {
             exclude(group = "org.jetbrains.skiko")
             exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
             exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
+            exclude(group = "org.jetbrains.compose.ui", module = "ui")
+            exclude(group = "org.jetbrains.compose.ui", module = "ui-desktop")
         }
 
         val skyhanniRelocated = registerRelocationAttribute("relocate-skyhanni-moulconfig") {
@@ -185,7 +187,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
             "api"(versionedCatalog["jetbrains.compose.runtime"])
             "api"(versionedCatalog["jetbrains.compose.foundation"])
             "api"(versionedCatalog["jetbrains.compose.material"])
-            "api"(versionedCatalog["jetbrains.compose.ui"])
             "api"(versionedCatalog["jetbrains.compose.ui.util"])
             "api"(versionedCatalog["jetbrains.compose.ui.backhandler"])
             "api"(versionedCatalog["jetbrains.compose.navigation"])

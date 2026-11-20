@@ -41,6 +41,8 @@ subprojects {
         exclude(group = "org.jetbrains.skiko")
         exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
         exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui-desktop")
     }
 
     dependencies {

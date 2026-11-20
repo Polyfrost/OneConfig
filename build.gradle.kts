@@ -9,8 +9,6 @@ allprojects {
 
 val minecraftNodes = subprojects.filter { it.parent?.path == ":minecraft" }
 
-subprojects { useSkikoRemappedRuntime() }
-
 // Sync rather than Copy because node build/dist keeps jars of previously built versions
 tasks.register<Sync>("buildAndCollect") {
     group = "build"
