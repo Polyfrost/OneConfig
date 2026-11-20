@@ -359,18 +359,6 @@ public class OneConfig implements ClientModInitializer {
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
         EventManager.register(ResourceFinishedLoading.class, e -> CompatLoader.INSTANCE.onResourcesLoaded());
-//        //#if MC < 1.13
-//        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
-//        AtomicBoolean active = new AtomicBoolean(false);
-//        EventManager.register(TickEvent.End.class, e -> {
-//            boolean current = org.lwjgl.opengl.Display.isActive();
-//            if (current != active.get()) {
-//                active.set(current);
-//                if (current) EventManager.INSTANCE.post(WindowFocusEvent.Gained.INSTANCE);
-//                else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);
-//            }
-//        });
-//        //#endif
     }
 
     private static Notification firstLaunchToast;
