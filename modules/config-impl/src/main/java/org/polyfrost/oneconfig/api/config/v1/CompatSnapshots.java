@@ -337,6 +337,18 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
         if (changed[0] && ownerStillThere) runSave(tree);
     }
 
+    // for a tree that missed the switch to the active profile, which a new profile would have reset
+    void applyOrReset(Tree tree) {
+        String profile = ConfigManager.activeProfile();
+        if (store.load(profile).containsKey(tree.getID())) {
+            applyProfile(tree, profile);
+            return;
+        }
+        restoreDefaults(tree);
+        captureAll(tree, profile);
+        flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
+    }
+
     public static void capture(Tree tree) {
         if (tree == null || !Boolean.TRUE.equals(tree.getMetadata(TAG))) return;
         INSTANCE.captureAll(tree, ConfigManager.activeProfile());
