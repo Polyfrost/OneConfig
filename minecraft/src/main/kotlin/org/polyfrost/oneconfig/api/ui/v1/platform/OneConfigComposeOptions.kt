@@ -3,7 +3,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.platform
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.geometry.Offset
 import org.polyfrost.compose.host.ComposeOptions
 import org.polyfrost.compose.host.SceneKind
 import org.polyfrost.compose.minecraft.hud.HudLayer
@@ -17,7 +16,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.WithoutFeedbackHosts
 import org.polyfrost.oneconfig.api.ui.v1.components.releaseFeedback
 import org.polyfrost.oneconfig.api.ui.v1.theme.ProvideOneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
-import org.polyfrost.oneconfig.internal.ui.components.GlassLight
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
 
@@ -39,16 +37,9 @@ object OneConfigComposeOptions : ComposeOptions() {
         if (kind == SceneKind.HudLayer) OneConfigUIScreen.stopWarmUp()
     }
 
-    override fun onPointer(owner: Any, position: Offset?) {
-        if (position != null) GlassLight.moveTo(position) else GlassLight.leave()
-    }
-
     override fun onInputKind(owner: Any, keyboard: Boolean) = A11y.reportInput(keyboard)
 
-    override fun onRemoved(owner: Any) {
-        GlassLight.reset()
-        releaseFeedback(owner)
-    }
+    override fun onRemoved(owner: Any) = releaseFeedback(owner)
 
     override val isCapturingInput: Boolean get() = KeybindRecordingBus.isRecording
 

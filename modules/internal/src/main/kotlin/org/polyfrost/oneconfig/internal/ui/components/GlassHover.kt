@@ -14,33 +14,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
-import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.compose.effect.polyGlassGlow
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import kotlin.math.max
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 private const val PRESS_SCALE = 1.03f
 
@@ -117,49 +108,5 @@ fun Modifier.glassHover(shape: Shape, pull: Dp = 1.dp): Modifier {
 fun Modifier.hoverGlow(shape: Shape, radius: Dp = 90.dp, isolate: Boolean = true): Modifier {
     val theme = LocalTheme.current
     if (!theme.cursorEffects) return this
-    var bounds by remember { mutableStateOf(Rect.Zero) }
-    val density = LocalDensity.current
-    val reach = with(density) { radius.toPx() }
-    val slack = with(density) { GateSlack.toPx() }
-    val strength = if (theme.isLight) 0.2f else 0.055f
-    val near = remember(reach, slack) { derivedStateOf { lightNear(bounds, reach + slack) } }
-    return this
-        .then(if (isolate) Modifier.graphicsLayer {} else Modifier)
-        .onGloballyPositioned { bounds = Rect(it.positionInWindow(), it.size.toSize()) }
-        .drawWithCache {
-            val outline = shape.createOutline(size, layoutDirection, this)
-            val corner = (outline as? Outline.Rounded)?.roundRect?.topLeftCornerRadius?.x ?: 0f
-            val w = size.width
-            val h = size.height
-            onDrawWithContent {
-                drawContent()
-                if (near.value) drawLight(0f, 0f, w, h, { lightKey(cursorNear(bounds, reach), strength) }) { r ->
-                    val c = cursorNear(bounds, reach)
-                    if (c.isUnspecified) return@drawLight
-                    val a = strength * GlassLight.presence
-                    if (a <= 0f) return@drawLight
-                    r.save()
-                    r.clipRRect(0f, 0f, w, h, corner)
-                    r.image(GlowBitmap, c.x - reach, c.y - reach, reach * 2f, reach * 2f, 0f, 0f, 1f, 1f, white(a))
-                    r.restore()
-                }
-            }
-        }
-}
-
-private val GlowBitmap: PolyBitmap by lazy {
-    val n = 128
-    val pixels = ByteArray(n * n * 4)
-    for (y in 0 until n) {
-        for (x in 0 until n) {
-            val dx = (x + 0.5f) / n * 2f - 1f
-            val dy = (y + 0.5f) / n * 2f - 1f
-            val o = (y * n + x) * 4
-            pixels[o] = -1
-            pixels[o + 1] = -1
-            pixels[o + 2] = -1
-            pixels[o + 3] = ((1f - sqrt(dx * dx + dy * dy)).coerceAtLeast(0f) * 255f).roundToInt().toByte()
-        }
-    }
-    PolyBitmap(n, n, pixels)
+    return polyGlassGlow(shape, if (theme.isLight) 0.2f else 0.055f, radius, isolate = isolate)
 }
