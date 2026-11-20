@@ -84,6 +84,8 @@ public final class ConfigManager {
     private static boolean isFirstRun = false;
     private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
     private static final Map<String, Config> initializedConfigs = new LinkedHashMap<>();
+    // backends a profile switch closed, kept as whatever took a tree out of one before the switch puts it back there
+    private static final List<ConfigManager> retired = new ArrayList<>();
     private static final ReentrantLock PROFILE_LIFECYCLE_LOCK = new ReentrantLock();
     private static final long PROFILE_OPERATION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(30L);
     private static final long MINIMUM_WAIT_NANOS = TimeUnit.MILLISECONDS.toNanos(500L);
@@ -259,6 +261,15 @@ public final class ConfigManager {
 
     static boolean didInitializationFail(Config config) {
         return failedInitialization.contains(config.id);
+    }
+
+    /**
+     * Makes configs created from now on wait for the next {@link #initialize()} again, for mods that start after
+     * the game did
+     */
+    @ApiStatus.Internal
+    public static void reopenInitialization() {
+        initialized = false;
     }
 
     @ApiStatus.Internal
@@ -472,6 +483,11 @@ public final class ConfigManager {
                 externalTrees.add(t);
             }
             active.close();
+            // emptied so that a tree put back later stands out, see rebindDetached()
+            for (Tree t : new ArrayList<>(active.trees())) {
+                if (t.getID() != null) active.unregister(t.getID());
+            }
+            retired.add(active);
         }
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
         internal().save("profiles.json");
@@ -505,6 +521,61 @@ public final class ConfigManager {
             if (wasRebinding) REBINDING_PROFILES.set(Boolean.TRUE);
             else REBINDING_PROFILES.remove();
         }
+    }
+
+    /**
+     * Binds what is registered but not on the active profile to it: configs whose tree is not in the active backend,
+     * and trees put back into a backend that a profile switch has closed. Hotwire returns a mod's objects to where it
+     * took them from when the mod went off, which is no longer where they belong if the profile changed since.
+     * <br>
+     * Each is loaded from the active profile, or reset to its defaults when the profile has nothing stored for it
+     */
+    @ApiStatus.Internal
+    public static synchronized void rebindDetached() {
+        ConfigManager mgr = activeLocked();
+        boolean wasRebinding = REBINDING_PROFILES.get();
+        REBINDING_PROFILES.set(Boolean.TRUE);
+        try {
+            for (Config config : new ArrayList<>(initializedConfigs.values())) {
+                if (mgr.tracks(config.tree)) continue;
+                try {
+                    config.rebindToActiveProfile(!Files.exists(mgr.getFolder().resolve(config.id)));
+                } catch (Throwable t) {
+                    LOGGER.error("Failed to rebind config {} onto the active profile", config.id, t);
+                }
+            }
+            for (ConfigManager closed : retired) {
+                for (Tree tree : new ArrayList<>(closed.trees())) {
+                    closed.unregister(tree.getID());
+                    try {
+                        mgr.adopt(tree);
+                    } catch (Throwable t) {
+                        LOGGER.error("Failed to rebind tree {} onto the active profile", tree.getID(), t);
+                    }
+                }
+            }
+        } finally {
+            if (wasRebinding) REBINDING_PROFILES.set(Boolean.TRUE);
+            else REBINDING_PROFILES.remove();
+        }
+    }
+
+    private boolean tracks(@Nullable Tree tree) {
+        return tree != null && tree.getID() != null && backend.exists(tree.getID()) && backend.get(tree.getID()) == tree;
+    }
+
+    private void adopt(Tree tree) {
+        String id = tree.getID();
+        // configs build their tree anew and HUDs are loaded from their files, so only what nothing else brings back
+        if (initializedConfigs.containsKey(id) || Boolean.TRUE.equals(tree.getMetadata(PROFILE_LOCAL_METADATA))) return;
+        // left alone if something registered it anew in the meantime, as registering over that would clear the tree
+        if (backend.exists(id) && !Boolean.TRUE.equals(backend.get(id).getMetadata(Backend.UI_PLACEHOLDER_METADATA))) return;
+        boolean snapshot = Boolean.TRUE.equals(tree.getMetadata(CompatSnapshots.SNAPSHOT_METADATA));
+        if (!snapshot && !Boolean.TRUE.equals(tree.getMetadata(Backend.UI_ONLY_METADATA)) && !Files.exists(getFolder().resolve(id))) {
+            Config.restoreCapturedDefaults(tree);
+        }
+        register(tree);
+        if (snapshot) CompatSnapshots.INSTANCE.applyOrReset(tree);
     }
 
     public static synchronized String activeProfile() {
