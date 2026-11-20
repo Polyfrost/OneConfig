@@ -29,6 +29,9 @@ package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -56,6 +59,7 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.compat.CompatLoader;
 import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
+import org.polyfrost.oneconfig.internal.compat.HotwireLifecycle;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
 import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
@@ -343,6 +347,7 @@ public class OneConfig implements ClientModInitializer {
                     //? if wwaypoints_compat
                     WWaypointsCompat.register();
                     ThemeRegistry.INSTANCE.loadFromConfig();
+                    registerWithHotwire();
                 });
         EventManager.register(WorldEvent.Load.class, e -> {
             showFirstLaunchNotification();
@@ -350,6 +355,24 @@ public class OneConfig implements ClientModInitializer {
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
         EventManager.register(ResourceFinishedLoading.class, e -> CompatLoader.INSTANCE.onResourcesLoaded());
+    }
+
+    // HotwireLifecycle names Hotwire's types, so nothing may load it unless a Hotwire with that API is installed
+    private static void registerWithHotwire() {
+        FabricLoader.getInstance().getModContainer("hotwire").ifPresent(hotwire -> {
+            Version version = hotwire.getMetadata().getVersion();
+            Throwable failure = null;
+            try {
+                // 0.9.2 is the first build with lifecycle listeners
+                if (version instanceof SemanticVersion && version.compareTo(SemanticVersion.parse("0.9.2-")) >= 0) {
+                    HotwireLifecycle.register();
+                    return;
+                }
+            } catch (Exception | LinkageError e) {
+                failure = e;
+            }
+            LOGGER.warn("Hotwire {} is too old for OneConfig to work with, mods it changes may lose their settings", version, failure);
+        });
     }
 
     private static Notification firstLaunchToast;

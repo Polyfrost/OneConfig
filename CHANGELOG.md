@@ -5,6 +5,12 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Mods that [Hotwire](https://modrinth.com/mod/irenehotwire) turns off, turns on, adds or updates while the game runs keep their settings, mod cards and HUDs, including when a profile was switched to, created or renamed while they were off
+- API: `oneconfig:config` entrypoints of mods that Hotwire adds or updates while the game runs are run as the mod starts
+
 ## [1.9.0] - 2026-11-21
 
 ### Changed
