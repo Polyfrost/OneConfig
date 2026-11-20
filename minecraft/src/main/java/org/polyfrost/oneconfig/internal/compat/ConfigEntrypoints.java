@@ -49,6 +49,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.ConfigEntrypoint;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImpl;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -76,6 +77,7 @@ public final class ConfigEntrypoints {
     // keyed so a hook that fires more than once before the mod is decided is only retried once
     private static final Map<String, Map<Object, Skipped>> skippedExtractions = new HashMap<>();
     private static final AtomicBoolean registered = new AtomicBoolean();
+    private static final AtomicBoolean listening = new AtomicBoolean();
     private static final Map<String, String> treeOwners = new ConcurrentHashMap<>();
     // configs claimed only because they existed before the entrypoint ran, which do not count when it threw
     private static final Set<String> earlierConfigs = ConcurrentHashMap.newKeySet();
@@ -152,13 +154,61 @@ public final class ConfigEntrypoints {
     public static void registerAll() {
         if (!registered.compareAndSet(false, true)) return;
         if (providers().isEmpty()) return;
-        ConfigManager.addTreeRegistrationListener(ConfigEntrypoints::onTreeRegistered);
-        ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::onConfigSubmitted);
+        listen();
         claimEarlierConfigs();
         // a mod may name more than one entrypoint, which only decide together whether its original is extracted
         Map<String, List<Provider>> byMod = new LinkedHashMap<>();
         for (Provider provider : providers()) byMod.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
         byMod.forEach((modId, entrypoints) -> undecided.put(modId, register(modId, entrypoints)));
+    }
+
+    private static void listen() {
+        if (!listening.compareAndSet(false, true)) return;
+        ConfigManager.addTreeRegistrationListener(ConfigEntrypoints::onTreeRegistered);
+        ConfigManager.addConfigSubmissionListener(ConfigEntrypoints::onConfigSubmitted);
+    }
+
+    /**
+     * Runs the entrypoints of mods that Hotwire started after the game did, to be decided by the next
+     * {@link #finishRegistration()} like those of {@link #registerAll()}. A mod that was already decided is left
+     * alone, as it only gained other entrypoints, unless it is a copy, which starts over what it stands in for.
+     */
+    public static void registerStarted(Collection<String> modIds) {
+        // registerAll has not run yet and will find them itself
+        if (!registered.get()) return;
+        Set<String> started = new HashSet<>();
+        for (String id : modIds) {
+            String original = CompatibilityPlatformImpl.liveCopies.get(id);
+            if (original != null) forgetDecision(original);
+            started.add(original == null ? id : original);
+        }
+        Map<String, List<Provider>> byMod = new LinkedHashMap<>();
+        for (Provider provider : providers()) {
+            if (started.contains(provider.modId) && !isDecided(provider.modId)) byMod.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
+        }
+        if (byMod.isEmpty()) return;
+        listen();
+        claimEarlierConfigs();
+        byMod.forEach((modId, entrypoints) -> {
+            // as CompatLoader did for the providers it saw when it initialized
+            CompatLoader.INSTANCE.getNativeLoadedConfigs().add(modId);
+            undecided.put(modId, register(modId, entrypoints));
+        });
+    }
+
+    private static synchronized void forgetDecision(String modId) {
+        succeeded.remove(modId);
+        failed.remove(modId);
+    }
+
+    /**
+     * Looks the entrypoints up again at their next use, for when the mods that provide them changed
+     */
+    static void forgetProviders() {
+        synchronized (DISCOVERY_LOCK) {
+            providers = null;
+        }
+        defaultOpeners.clear();
     }
 
     /**
@@ -497,8 +547,9 @@ public final class ConfigEntrypoints {
             List<Provider> found = new ArrayList<>();
             try {
                 for (EntrypointContainer<ConfigEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(ConfigEntrypoint.ENTRYPOINT, ConfigEntrypoint.class)) {
+                    String id = container.getProvider().getMetadata().getId();
                     found.add(new Provider(
-                            container.getProvider().getMetadata().getId(),
+                            CompatibilityPlatformImpl.liveCopies.getOrDefault(id, id),
                             container.getDefinition(),
                             container::getEntrypoint
                     ));

@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import com.google.common.collect.Iterables;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.fabricmc.loader.api.FabricLoader;
@@ -41,13 +43,17 @@ public class CompatibilityPlatformImpl implements CompatibilityPlatform {
         *///?}
     }
 
+    // by its own id, the mod each copy stands in for that Hotwire runs in place of a mod it could not update in place
+    public static volatile Map<String, String> liveCopies = Collections.emptyMap();
+
     @Override
     public Set<ModInfo> getMods() {
         return FabricLoader.getInstance().getAllMods().stream()
                 .map(mod -> {
                     var metadata = mod.getMetadata();
                     return new ModInfo(
-                        metadata.getId(),
+                        // so the copy's settings, snapshots and cards stay those of the mod it stands in for
+                        liveCopies.getOrDefault(metadata.getId(), metadata.getId()),
                         metadata.getName(),
                         metadata.getVersion().getFriendlyString(),
                         Iterables.getFirst(mod.getRootPaths(), null),
