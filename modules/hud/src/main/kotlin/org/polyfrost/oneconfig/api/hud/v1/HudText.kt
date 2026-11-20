@@ -11,7 +11,6 @@ import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.padding
-import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.layout.PolySize
@@ -65,11 +64,8 @@ internal fun Hud.HudRunText(
 ) {
     val contentAlign = alignment
     val padInsets = PolyInsets(padLeft, padTop, padRight, padBottom)
-    val isStaticValid = staticWidth && staticW > 0f && staticH > 0f
-    val bgModifier = hudBackground()
-    val outerModifier =
-        if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
-        else bgModifier.padding(padInsets)
+    val aligned = hasSizeLimits
+    val outerModifier = hudBackground().padding(padInsets)
 
     val spec = RunTextSpec(
         poppinsName = if (font == Font.Poppins) getPoppinsFontName() else null,
@@ -84,7 +80,7 @@ internal fun Hud.HudRunText(
         shadowY = shadowOffsetY,
         case = caseType,
         alignColumns = alignColumns,
-        lineAlign = if (isStaticValid) horizontalFactor(contentAlign) else 0f,
+        lineAlign = if (aligned) horizontalFactor(contentAlign) else 0f,
     )
 
     PolyBox(modifier = outerModifier) {
@@ -94,7 +90,7 @@ internal fun Hud.HudRunText(
                 set(lines) { this.lines = it }
                 set(cells) { this.cells = it }
                 set(spec) { this.spec = it }
-                set(if (isStaticValid) contentAlign else PolyAlign.TopLeft) { style.align = it }
+                set(if (aligned) contentAlign else PolyAlign.TopLeft) { style.align = it }
             },
         )
     }
