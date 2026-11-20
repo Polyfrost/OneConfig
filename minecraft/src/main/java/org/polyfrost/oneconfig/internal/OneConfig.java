@@ -254,12 +254,6 @@ public class OneConfig implements ClientModInitializer {
         HudManager.targetPixelWidth = Platform.screen().viewportWidth();
         HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
-        if (HudManager.isConfigUiOpen) {
-            HudManager.INSTANCE.prepare(sw, sh);
-            ItemCatalog.INSTANCE.renderHudIcons();
-            HudManager.invalidate();
-            return;
-        }
         //? if >= 1.21.11 {
         if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, true, true)) BlazeHud.markDirty();
         //?} else {
@@ -272,14 +266,12 @@ public class OneConfig implements ClientModInitializer {
         *///?}
     }
 
-    /** Submits the legacy HUDs (unless the OneConfig menu draws them) and the GlHost HUD blit into the vanilla HUD */
+    /** Submits the legacy HUDs and the GlHost HUD blit into the vanilla HUD */
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void submitHud(GuiGraphicsExtractor graphics) {
-        if (!HudManager.isConfigUiOpen || !GlHost.INSTANCE.getDrawsGuiOverScreen()) {
-            //~ if = 1.8.9 '(graphics)' -> '()'
-            LegacyHudRenderer.INSTANCE.renderLive(graphics);
-        }
-        if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
+        //~ if = 1.8.9 '(graphics)' -> '()'
+        LegacyHudRenderer.INSTANCE.renderLive(graphics);
+        if (GlHost.INSTANCE.unavailableReason() != null) return;
         //? if >= 1.21.11 {
         BlazeHud.render(graphics);
         //?} else {
