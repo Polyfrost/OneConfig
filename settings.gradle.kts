@@ -118,7 +118,6 @@ project(":modules").apply {
 listOf(
     "config",
     "config-impl",
-    "commands",
     "hud",
     "events",
     "notifications",

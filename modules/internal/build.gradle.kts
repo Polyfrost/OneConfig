@@ -32,7 +32,6 @@ plugins {
 dependencies {
     api(project(":modules:hud"))
     api(project(":modules:events"))
-    api(project(":modules:commands"))
     api(project(":modules:notifications"))
     api(libs.jetbrains.compose.runtime)
     api(project(":modules:poly-compose"))
