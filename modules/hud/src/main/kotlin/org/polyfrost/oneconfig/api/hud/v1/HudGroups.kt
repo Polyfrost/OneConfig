@@ -355,22 +355,34 @@ public object HudGroups {
         for (default in defaults.values) {
             if (HudManager.isGroupKnown(default.id)) continue
             val members = HudManager.activeInstances.filter { hud ->
-                hud.groupPath.isEmpty() && hud.isReal && groupable(hud) && default.members.any { it.isInstance(hud) }
+                (hud.groupPath.isEmpty() || inDefault(hud, default.id)) && hud.isReal && groupable(hud) &&
+                    default.members.any { it.isInstance(hud) }
             }
             if (members.size < 2) continue
-            Snapshot.withMutableSnapshot { for (hud in members) hud.groupPath = default.id }
-            for (hud in members) {
+            if (!default.members.all { type -> members.any(type::isInstance) }) continue
+            val added = members.filter { it.groupPath.isEmpty() }
+            Snapshot.withMutableSnapshot { for (hud in added) hud.groupPath = default.id }
+            var saved = true
+            for (hud in added) {
                 val treeId = hud.tree?.id ?: continue
                 try {
-                    ConfigManager.active().save(treeId)
+                    if (!ConfigManager.active().save(treeId)) {
+                        HudManager.LOGGER.error("Failed to save HUD {} after grouping it", treeId)
+                        saved = false
+                    }
                 } catch (e: Exception) {
                     HudManager.LOGGER.error("Failed to save HUD $treeId after grouping it", e)
+                    saved = false
                 }
             }
+            if (!saved) continue
             HudManager.markGroupKnown(default.id)
             HudManager.LOGGER.info("Grouped {} HUDs into default group {}", members.size, default.id)
         }
     }
+
+    private fun inDefault(hud: Hud, id: String): Boolean =
+        hud.groupPath == id || hud.groupPath.startsWith(id + SEPARATOR)
 
     /**
      * The box around [huds] as `[x, y, width, height]` in gui units, or `null` when none of them has a
