@@ -948,7 +948,10 @@ abstract class ComposeScreen(
             tapClean = false
             return
         }
-        val held = KeybindManager.heldKeys + heldAtOpen
+        // Keys already held when the screen opened (movement, sprint, sneak...) came from gameplay, not from this tap,
+        // so they must not block it. Anything pressed after the screen opened still counts
+        val carriedOver = heldAtOpen.filterTo(HashSet()) { it !in keys }
+        val held = (KeybindManager.heldKeys + heldAtOpen) - carriedOver
         val noButtons = heldButtons.isEmpty() && mouseHeldAtOpen == 0
         if (keys.none { it != key && it in held }) {
             tapClean = held.none { it != key } && noButtons
