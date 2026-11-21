@@ -330,7 +330,7 @@ internal object SharedProperties {
     )
 
     /** What has to be the same for two options to be one setting, since each is drawn from it */
-    private val MATCHED_METADATA = listOf("options", "optionLabels", "optionValues", "min", "max", "step")
+    private val MATCHED_METADATA = listOf("options", "optionLabels", "optionValues", "min", "max", "step", "regex", "noAlpha", "multiline", "unit")
 
     /** Everything the built-in options already cover, in case a HUD does not hide its own copy */
     private val BUILT_IN_OPTIONS: Set<String> by lazy {
@@ -357,7 +357,7 @@ internal object SharedProperties {
     /** Whether [a] and [b] are the same option, so one control can edit both */
     @JvmStatic
     fun matches(a: Property<*>, b: Property<*>): Boolean =
-        a.id == b.id && a.type == b.type && visualizerClass(a) == visualizerClass(b) &&
+        a.id == b.id && a.type == b.type && a.title == b.title && visualizerClass(a) == visualizerClass(b) &&
             MATCHED_METADATA.all { key ->
                 Arrays.deepEquals(arrayOf(a.getMetadata<Any?>(key)), arrayOf(b.getMetadata<Any?>(key)))
             }
