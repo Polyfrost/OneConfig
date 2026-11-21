@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.api.config.v1.Config
-import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.ui.v1.ModCardTypes
@@ -102,7 +101,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.reorderAutoScroll
 import org.polyfrost.oneconfig.api.ui.v1.components.reorderContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.reorderOverlay
 import org.polyfrost.oneconfig.api.ui.v1.components.reorderableItem
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
@@ -131,8 +129,7 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.rememberModEnabled
 import org.polyfrost.oneconfig.internal.ui.components.scrollFade
 import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
-import org.polyfrost.oneconfig.internal.ui.components.settings.resetKeybindOption
-import org.polyfrost.oneconfig.internal.ui.components.settings.resetOption
+import org.polyfrost.oneconfig.internal.ui.components.settings.resetTree
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
@@ -514,19 +511,6 @@ private fun confirmReset(mod: ConfigData, tree: Tree) {
         onConfirm = { resetTree(tree, identitySet().also { seen -> ownSwitch?.let(seen::add) }) },
         icon = "refresh",
     )
-}
-
-private fun resetTree(tree: Tree, seen: MutableSet<Property<*>>) {
-    for (node in tree.map.values) {
-        when (node) {
-            is Property<*> -> if (node.get() is OneConfigKeybind) {
-                if (seen.add(node)) resetKeybindOption(node)
-            } else {
-                resetOption(node, seen)
-            }
-            is Tree -> resetTree(node, seen)
-        }
-    }
 }
 
 /** Persists the arrangement and the favorite state after a card is dropped at [index] */
