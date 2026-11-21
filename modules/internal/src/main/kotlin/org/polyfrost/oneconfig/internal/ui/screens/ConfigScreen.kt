@@ -95,10 +95,13 @@ import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorator
 import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorators
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionChevron
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
@@ -111,9 +114,12 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.api.isLockExempt
 import org.polyfrost.oneconfig.internal.ui.api.isMarkedSwitch
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -130,11 +136,15 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionControlHeight
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMenuState
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
 import org.polyfrost.oneconfig.internal.ui.components.settings.asPlainLabel
 import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
+import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.resetTree
+import org.polyfrost.oneconfig.internal.ui.components.settings.treeHasDefault
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
@@ -929,12 +939,14 @@ private fun GroupHeaderContent(
     val labelModifier = if (groupEnabled) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
     val showActionButton = OneConfigConfig.showOptionActionButtons && !headLocked
     val menu = head?.let { rememberOptionMenu(it) }
+    val configId = LocalConfigId.current
+    menu?.extraEntries = { listOf(groupResetEntry(tree, false, configId)) }
 
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(interaction)
-            .then(if (menu != null) Modifier.optionContextMenu(menu, enabled = !headLocked) else Modifier)
+            .contextMenu { groupMenuEntries(tree, menu.takeUnless { headLocked }, headLocked, configId) }
             .oneConfigClickable(tree.localizedTitle().asPlainLabel(), onClick, indication = false, interactionSource = interaction)
     ) {
         val switch = head != null && isSwitchHead(tree, head)
@@ -990,6 +1002,39 @@ private fun GroupHeaderContent(
             }
         }
     }
+}
+
+private fun groupMenuEntries(tree: Tree, headMenu: OptionMenuState?, locked: Boolean, configId: String?): List<MenuEntry> =
+    headMenu?.entries() ?: listOf(groupResetEntry(tree, locked, configId))
+
+private fun groupResetEntry(tree: Tree, locked: Boolean, configId: String?): MenuEntry {
+    val ownSwitch = ownSwitchOf(configId)
+    val resettable = treeHasDefault(tree, identitySet().also { seen -> ownSwitch?.let(seen::add) })
+    return MenuAction(
+        translated("oneconfig.group.menu.reset", "Reset to defaults"),
+        { confirmGroupReset(tree, ownSwitch) },
+        icon = "refresh",
+        danger = true,
+        enabled = !locked && resettable,
+        disabledReason = if (locked) {
+            translated("oneconfig.group.menu.reset.locked", "These settings can't be reset while they are switched off.")
+        } else {
+            translated("oneconfig.group.menu.reset.disabled", "Nothing in this group has a default to restore.")
+        },
+    )
+}
+
+private fun ownSwitchOf(configId: String?): Property<*>? =
+    (configId?.let { ConfigRegistry.findById(it)?.toggle } as? PropertyModToggle)?.property
+
+private fun confirmGroupReset(tree: Tree, ownSwitch: Property<*>?) {
+    Confirm.ask(
+        title = translated("oneconfig.group.menu.reset.title", "Reset %s?", tree.localizedTitle().asPlainLabel()),
+        text = translated("oneconfig.group.menu.reset.text", "Every setting in this group goes back to its default. This can't be undone."),
+        confirmLabel = translated("oneconfig.group.menu.reset.confirm", "Reset settings"),
+        onConfirm = { resetTree(tree, identitySet().also { seen -> ownSwitch?.let(seen::add) }) },
+        icon = "refresh",
+    )
 }
 
 @Composable

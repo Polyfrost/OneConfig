@@ -25,6 +25,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -132,6 +133,27 @@ fun resetOption(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()
     val linked = prop.getMetadata<Collection<Property<*>>>("resetWith")
     linked?.forEach { resetOption(it, seen) }
     if (def != null || nullDefault || linked != null) bumpResetEpoch(prop)
+}
+
+internal fun treeHasDefault(tree: Tree, seen: MutableSet<Property<*>> = identitySet()): Boolean = tree.map.values.any { node ->
+    when (node) {
+        is Property<*> -> if (node.get() is OneConfigKeybind) seen.add(node) else optionHasDefault(node, seen)
+        is Tree -> treeHasDefault(node, seen)
+        else -> false
+    }
+}
+
+internal fun resetTree(tree: Tree, seen: MutableSet<Property<*>> = identitySet()) {
+    for (node in tree.map.values) {
+        when (node) {
+            is Property<*> -> if (node.get() is OneConfigKeybind) {
+                if (seen.add(node)) resetKeybindOption(node)
+            } else {
+                resetOption(node, seen)
+            }
+            is Tree -> resetTree(node, seen)
+        }
+    }
 }
 
 @Composable
@@ -255,6 +277,7 @@ class OptionMenuState internal constructor(private val prop: Property<*>) {
     internal var onReset: (() -> Unit)? = null
     internal var resetEnabled: Boolean? = null
     internal var openPage: ((Property<*>) -> Unit)? = null
+    internal var extraEntries: (() -> List<MenuEntry>)? = null
 
     private val tracker = MenuCustomItem { TrackOpen() }
 
@@ -263,7 +286,10 @@ class OptionMenuState internal constructor(private val prop: Property<*>) {
 
     val isOpen: Boolean get() = openCount > 0
 
-    fun entries(): List<MenuEntry> = jumpEntries() + optionMenuEntries(prop, onReset, resetEnabled) + tracker
+    fun entries(): List<MenuEntry> {
+        val extras = extraEntries?.invoke().orEmpty()
+        return jumpEntries() + optionMenuEntries(prop, onReset, resetEnabled) + (if (extras.isEmpty()) emptyList() else listOf(MenuSeparator) + extras) + tracker
+    }
 
     private fun jumpEntries(): List<MenuEntry> {
         val open = openPage ?: return emptyList()
