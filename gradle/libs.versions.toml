@@ -15,7 +15,7 @@ asm = "9.11.1" # compile baseline only, Fabric Loader provides ASM at runtime; k
 # Not in risk of needing to be relaunched / bumped by JiJ
 snakeyaml = "1.33"
 nightconfig = "3.9.0"
-java-objc-bridge = "1.2"
+java-objc-bridge = "1.3.0"
 
 # Per version
 lwjgl = "3.3.3"
