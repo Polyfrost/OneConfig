@@ -42,6 +42,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -312,6 +314,79 @@ class HudProfileIsolationTest {
         } finally {
             HudManager.INSTANCE.unregister(lateProvider, true, true);
         }
+    }
+
+    @Test
+    void profileLoadDoesNotRunAHudWhoseProviderWasTakenOut() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        Runnable putBack = () -> {
+        };
+        try {
+            launch();
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size());
+            ConfigManager.active().saveAll();
+            putBack = takeOut(provider);
+            int made = SwitchedHud.made;
+
+            ConfigManager.createProfile(PROFILE);
+            ConfigManager.openProfile("");
+
+            assertEquals(made, SwitchedHud.made, "a HUD of a mod that is off must not be made from its file");
+            assertTrue(HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).isEmpty());
+        } finally {
+            putBack.run();
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void providerPutBackAfterAProfileSwitchGetsThatProfilesHud() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+            ConfigManager.createProfile(PROFILE);
+            assertFalse(switched().getHidden());
+            ConfigManager.openProfile("");
+            assertTrue(switched().getHidden());
+            Runnable putBack = takeOut(provider);
+
+            ConfigManager.openProfile(PROFILE);
+            putBack.run();
+            HudManager.INSTANCE.reloadForNewProviders();
+
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size());
+            assertFalse(switched().getHidden(), "it must get this profile's settings, not the ones it went off with");
+            Object tree = switched().getTree();
+            assertTrue(ConfigManager.active().trees().stream().anyMatch(t -> t == tree),
+                    "the HUD that came back must be bound to the profile that is open now");
+            ConfigManager.openProfile("");
+            assertTrue(switched().getHidden(), "the profile it went off in must keep its settings");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    /** Takes a provider and its HUDs out of the manager's collections the way Hotwire does when their mod goes off */
+    @SuppressWarnings("unchecked")
+    private static Runnable takeOut(Hud provider) throws Exception {
+        Field f = HudManager.class.getDeclaredField("hudProviders");
+        f.setAccessible(true);
+        Map<Class<? extends Hud>, Hud> providers = (Map<Class<? extends Hud>, Hud>) f.get(HudManager.INSTANCE);
+        List<Hud> instances = new ArrayList<>(HudManager.INSTANCE.getHudsOfType(provider.getClass()));
+        providers.remove(provider.getClass());
+        HudManager.INSTANCE.getActiveInstances().removeAll(instances);
+        return () -> {
+            HudManager.INSTANCE.getActiveInstances().addAll(instances);
+            providers.put(provider.getClass(), provider);
+        };
+    }
+
+    private static Hud switched() {
+        return HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).get(0);
     }
 
     private static Hud hud() {
@@ -604,6 +679,35 @@ class HudProfileIsolationTest {
         @Override
         public String getText() {
             return "late";
+        }
+    }
+
+    static class SwitchedHud extends TextHud {
+        static int made = 0;
+
+        SwitchedHud() {
+            super("test-switched", "Test Switched HUD", Hud.Category.getINFO(), "", "");
+            made++;
+        }
+
+        @Override
+        public Pair<Float, Float> defaultPosition() {
+            return new Pair<>(10f, 10f);
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "switched";
         }
     }
 

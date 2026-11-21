@@ -25,7 +25,8 @@ object CompatLoader {
     var queuedCompatsRan = false
         private set
 
-    private val pathFactory: MutableMap<ModInfo, (String) -> String> = mutableMapOf()
+    @Volatile
+    private var pathFactory: Map<ModInfo, (String) -> String> = emptyMap()
 
     // concurrent as compat hooks may fire on other threads while ConfigEntrypoints un-marks a failed mod
     val nativeLoadedConfigs: MutableSet<String> = ConcurrentHashMap.newKeySet()
@@ -174,14 +175,30 @@ object CompatLoader {
     private var entrypointsDecided = false
 
     init {
-        ModInfo.loadedMods.forEach { mod ->
-            mod.file?.let {
-                pathFactory[mod] = it.toUri().toString()::plus
-            }
-        }
+        indexMods()
 
         // filtered so a mod whose entrypoint already failed is never marked again
         nativeLoadedConfigs.addAll(ConfigEntrypoints.providerModIds().filter(ConfigEntrypoints::provides))
+    }
+
+    /**
+     * Reads the loader's mod list again into everything built from it, for when mods changed while the game runs
+     */
+    fun refreshMods() {
+        ModInfo.forgetLoadedMods()
+        indexMods()
+        ConfigEntrypoints.forgetProviders()
+    }
+
+    private fun indexMods() {
+        val paths = HashMap<ModInfo, (String) -> String>()
+        ModInfo.loadedMods.forEach { mod ->
+            mod.file?.let {
+                paths[mod] = it.toUri().toString()::plus
+            }
+        }
+        pathFactory = paths
+        ownerByClassName.clear()
     }
 
     /**

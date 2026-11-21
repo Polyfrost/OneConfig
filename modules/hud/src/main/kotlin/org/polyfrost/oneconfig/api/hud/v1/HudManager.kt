@@ -68,6 +68,9 @@ public object HudManager {
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val unsupportedHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    // classes registered and not unregistered here, which still names a provider that Hotwire took out of hudProviders
+    private val registeredHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    private var loadedProviders: Set<Class<out Hud>> = emptySet()
     private val pendingUnsupported: MutableSet<Class<out Hud>> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
@@ -365,6 +368,7 @@ public object HudManager {
     @JvmStatic
     public fun register(hud: Hud) {
         unsupportedHuds.remove(hud::class.java.name)
+        registeredHuds.add(hud::class.java.name)
         HudStyles.captureBuiltIn(hud)
         hudProviders[hud::class.java] = hud
         revision++
@@ -510,6 +514,7 @@ public object HudManager {
     public fun providers(): Collection<Hud> = hudProviders.values
 
     public fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
+        registeredHuds.remove(hud::class.java.name)
         if (hudProviders.remove(hud::class.java) != null) {
             revision++
             notifyRegistrationChanged()
@@ -1554,6 +1559,19 @@ public object HudManager {
         profileReloadDispatcher = dispatcher
     }
 
+    /**
+     * Reloads the active profile's HUDs if providers are registered that its last load did not see, which is how
+     * Hotwire leaves the ones of a mod it turned back on after the profile changed
+     *
+     * The instances put back with them belong to the profile the mod went off in and are dropped without being saved
+     */
+    @ApiStatus.Internal
+    public fun reloadForNewProviders() {
+        if (!init || loadedProviders.containsAll(hudProviders.keys)) return
+        pendingProfileReload.set(ProfileReload(ConfigManager.activeProfile(), saveCurrent = true))
+        applyPendingProfileReload()
+    }
+
     private fun teardownForProfile(profile: String) {
         val kept = ArrayList<Hud>(activeInstances.size)
         for (hud in ArrayList(activeInstances)) {
@@ -1725,6 +1743,8 @@ public object HudManager {
                     ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name")
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
                 if (clsName in unsupportedHuds) return@forEach
+                // its mod is off, so its class must not be instantiated and its file stays as it is
+                if (clsName in registeredHuds && hudProviders.keys.none { it.name == clsName }) return@forEach
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 providerClass = cls
@@ -1817,6 +1837,7 @@ public object HudManager {
         }
 
         if (registryChanged) saveRegistry()
+        loadedProviders = HashSet(hudProviders.keys)
 
         LOGGER.info("HUD load took {}ms, loaded {} HUDs from {} providers ({} registered)",
             (System.nanoTime() - now) / 1_000_000.0, i, used.size, hudProviders.size)

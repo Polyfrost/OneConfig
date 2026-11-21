@@ -29,6 +29,9 @@ package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -56,6 +59,7 @@ import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.compat.CompatLoader;
 import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
+import org.polyfrost.oneconfig.internal.compat.HotwireLifecycle;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
 import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
@@ -343,6 +347,7 @@ public class OneConfig implements ClientModInitializer {
                     //? if wwaypoints_compat
                     WWaypointsCompat.register();
                     ThemeRegistry.INSTANCE.loadFromConfig();
+                    HotwireLifecycle.register();
                 });
         EventManager.register(WorldEvent.Load.class, e -> {
             showFirstLaunchNotification();
