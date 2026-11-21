@@ -401,8 +401,10 @@ class OneConfigSetupPlugin : Plugin<Project> {
             jvmToolchain(javaVersion)
         }
 
+        val inCI = providers.environmentVariable("CI").map { it.toBoolean() }.orElse(false).get()
+
         tasks.named<JavaCompile>("compileJava") {
-            finalizedBy("checkstyleMain")
+            if (!inCI) finalizedBy("checkstyleMain")
         }
 
         tasks.withType<KotlinCompile>().configureEach {

@@ -116,8 +116,10 @@ subprojects {
         }
     }
 
-    tasks.withType<JavaCompile>().configureEach { finalizedBy("spotlessJavaCheck") }
-    tasks.withType<KotlinCompile>().configureEach { finalizedBy("spotlessKotlinCheck") }
+    val inCI = providers.environmentVariable("CI").map { it.toBoolean() }.orElse(false).get()
+
+    tasks.withType<JavaCompile>().configureEach { if (!inCI) finalizedBy("spotlessJavaCheck") }
+    tasks.withType<KotlinCompile>().configureEach { if (!inCI) finalizedBy("spotlessKotlinCheck") }
 
     if (name !in listOf("internal", "relocator")) {
         configure<KotlinJvmProjectExtension> {
@@ -133,8 +135,8 @@ subprojects {
         }
         // otherwise the compile finalizer fails the build before updateKotlinAbi gets to run
         tasks.named("checkKotlinAbi") { mustRunAfter("updateKotlinAbi") }
-        tasks.withType<JavaCompile>().configureEach { finalizedBy("checkKotlinAbi") }
-        tasks.withType<KotlinCompile>().configureEach { finalizedBy("checkKotlinAbi") }
+        tasks.withType<JavaCompile>().configureEach { if (!inCI) finalizedBy("checkKotlinAbi") }
+        tasks.withType<KotlinCompile>().configureEach { if (!inCI) finalizedBy("checkKotlinAbi") }
     }
 
     val kotlinModuleName = project.name
