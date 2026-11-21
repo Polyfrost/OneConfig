@@ -158,8 +158,20 @@ internal class InlineCanvasSurface(val name: String) {
     *///?} else {
     /*fun draw(block: (PolyCanvas) -> Unit): Boolean {
         if (!GlHost.legacyGl) return false
-        val fbo = RenderTargetFbo.getFboId(Minecraft.getInstance().mainRenderTarget)
-        return drawGl(fbo, Platform.screen().viewportWidth(), Platform.screen().viewportHeight(), topDown = false, clear = false, block)
+        val w = Platform.screen().viewportWidth()
+        val h = Platform.screen().viewportHeight()
+        if (w <= 0 || h <= 0) return false
+        glState.capture()
+        try {
+            val renderer = GlRenderer()
+            block(PolyCanvas(renderer))
+            val main = RenderTargetFbo.getFboId(Minecraft.getInstance().mainRenderTarget)
+            val fbo = glState.drawFramebuffer.takeIf { it == 0 || it == main } ?: main
+            renderer.draw(fbo, w, h, topDown = false, clear = false)
+        } finally {
+            glState.restore()
+        }
+        return true
     }
 
     fun close() {}
