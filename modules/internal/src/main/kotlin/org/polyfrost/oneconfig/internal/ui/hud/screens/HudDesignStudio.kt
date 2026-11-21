@@ -1514,9 +1514,13 @@ fun HudDesignStudio(visible: Boolean = true) {
                         }
                     }
 
-                    StudioCommand.Undo, StudioCommand.Redo -> {
+                    StudioCommand.Undo, StudioCommand.Redo, StudioCommand.UndoAll -> {
                         if (!isDragging && !isResizing && pendingPress == null) {
-                            val revived = if (command == StudioCommand.Undo) history.undo() else history.redo()
+                            val revived = when (command) {
+                                StudioCommand.Undo -> history.undo()
+                                StudioCommand.UndoAll -> history.undoAll()
+                                else -> history.redo()
+                            }
                             if (revived != null) {
                                 Snapshot.withMutableSnapshot {
                                     val live = HudManager.activeInstances
@@ -1769,6 +1773,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         undoEnabled = canUndo,
                         onRedo = { HudDesignSession.handleRedo(true) },
                         redoEnabled = canRedo,
+                        onUndoAll = { HudDesignSession.handleUndoAll(true) },
                     )
                 } else {
                     hudCanvasPasteMenuEntries(
@@ -1790,6 +1795,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         undoEnabled = canUndo,
                         onRedo = { HudDesignSession.handleRedo(true) },
                         redoEnabled = canRedo,
+                        onUndoAll = { HudDesignSession.handleUndoAll(true) },
                         onTour = { startTour() },
                         onShortcuts = { shortcutsOpen = true },
                     )
