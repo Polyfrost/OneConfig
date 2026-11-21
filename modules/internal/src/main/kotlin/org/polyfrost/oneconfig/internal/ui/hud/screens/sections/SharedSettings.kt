@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.draggableHuds
 import org.polyfrost.oneconfig.internal.ui.screens.ConfigListRow
 import org.polyfrost.oneconfig.internal.ui.screens.HudCategoryList
 import org.polyfrost.oneconfig.internal.ui.screens.HudOptionRow
+import org.polyfrost.oneconfig.internal.ui.screens.rememberDisplay
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
 import org.polyfrost.oneconfig.internal.ui.search.SettingNode
@@ -416,6 +417,7 @@ private fun SharedPropertyRows(huds: List<Hud>, query: String, edits: SharedEdit
 private fun SharedPropertyRow(shared: SharedProperty, proxy: Property<Any?>, edits: SharedEdits) {
     // read so the note reads the HUDs again after an edit
     edits.revision
+    val display = rememberDisplay(proxy)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         HudOptionRow(proxy)
         if (shared.resolve().isMixed()) {
@@ -424,7 +426,9 @@ private fun SharedPropertyRow(shared: SharedProperty, proxy: Property<Any?>, edi
                 color = LocalTheme.current.textColorSecondary,
                 fontSize = 12.sp,
             )
-            GroupRow("Set every HUD to the value shown", "align") { proxy.setReferential(proxy.get()) }
+            if (display == Property.Display.SHOWN) {
+                GroupRow("Set every HUD to the value shown", "align") { proxy.setReferential(proxy.get()) }
+            }
         }
     }
 }
