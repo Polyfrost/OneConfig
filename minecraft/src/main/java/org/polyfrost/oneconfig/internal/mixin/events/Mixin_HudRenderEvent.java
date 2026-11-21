@@ -40,7 +40,7 @@ public class Mixin_HudRenderEvent {
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     //~ if = 1.8.9 '(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker' -> '(float partialTicks'
     private void beginVanillaFootprint(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, CallbackInfo ci) {
-        VanillaHudFootprint.begin();
+        if (HudManager.INSTANCE.isEditorOpen()) VanillaHudFootprint.begin();
     }
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
