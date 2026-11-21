@@ -73,7 +73,7 @@ jobs:
 
       # checks run after the uploads so that their failures don't withhold the built artifacts
       - name: Build
-        run: ./gradlew -p modules assemble --no-daemon
+        run: ./gradlew -p modules assemble
 
       - name: Test publication
         run: ./gradlew -p modules publishToMavenLocal
@@ -87,11 +87,11 @@ jobs:
           if-no-files-found: error
 
       - name: Check
-        run: ./gradlew -p modules check --no-daemon
+        run: ./gradlew -p modules check
 
       # buildSrc's Detekt tasks (which also cover the Gradle scripts) aren't part of any project's build
       - name: Lint
-        run: ./gradlew :buildSrc:detekt --no-daemon
+        run: ./gradlew :buildSrc:detekt
 
   minecraft:
     name: Build ${{ matrix.node }}
@@ -126,7 +126,7 @@ jobs:
 
       # checks run after the uploads so that their failures don't withhold the built artifacts
       - name: Build
-        run: ./gradlew :minecraft:$NODE:assemble --no-daemon
+        run: ./gradlew :minecraft:$NODE:assemble
 
       - name: Test publication
         run: ./gradlew :minecraft:$NODE:publishToMavenLocal
@@ -146,7 +146,7 @@ jobs:
           if-no-files-found: error
 
       - name: Check
-        run: ./gradlew :minecraft:$NODE:check --no-daemon
+        run: ./gradlew :minecraft:$NODE:check
 
   lib-artifacts:
     name: Merge dev artifacts
