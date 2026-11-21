@@ -36,8 +36,6 @@ dependencies {
     api(libs.polycompose.core)
     api(project(":modules:events"))
 
-    compileOnly(libs.jetbrains.compose.runtime)
     compileOnly(libs.kotlinx.coroutines)
-    testImplementation(libs.jetbrains.compose.runtime)
     testImplementation(libs.kotlinx.coroutines)
 }

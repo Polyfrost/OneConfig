@@ -184,14 +184,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
 
             moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, skysoftRelocatedConfiguration)
 
-            "api"(versionedCatalog["jetbrains.compose.runtime"])
-            "api"(versionedCatalog["jetbrains.compose.foundation"])
-            "api"(versionedCatalog["jetbrains.compose.material"])
-            "api"(versionedCatalog["jetbrains.compose.ui.util"])
-            "api"(versionedCatalog["jetbrains.compose.ui.backhandler"])
-            "api"(versionedCatalog["jetbrains.compose.navigation"])
-            "api"(versionedCatalog["jetbrains.lifecycle"])
-            "api"(versionedCatalog["jetbrains.viewmodel"])
             "api"(versionedCatalog["commonmark"])
             "modApi"("org.polyfrost:polycompose-${stonecutter.current.project}:$polyComposeVersion")
             handleApiDep(versionedCatalog.bundles["adventure"])

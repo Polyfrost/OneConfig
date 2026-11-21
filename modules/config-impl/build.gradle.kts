@@ -35,6 +35,5 @@ dependencies {
     api(libs.polycompose.core)
     api(project(":modules:ui"))
     implementation(project(":modules:notifications"))
-    api(libs.jetbrains.compose.runtime)
     compileOnly(libs.kotlin.reflect)
 }

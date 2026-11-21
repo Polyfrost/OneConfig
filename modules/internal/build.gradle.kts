@@ -33,7 +33,6 @@ dependencies {
     api(project(":modules:hud"))
     api(project(":modules:events"))
     api(project(":modules:notifications"))
-    api(libs.jetbrains.compose.runtime)
     api(libs.polycompose.core)
     api(libs.jetbrains.compose.navigation)
     api(libs.jetbrains.lifecycle)

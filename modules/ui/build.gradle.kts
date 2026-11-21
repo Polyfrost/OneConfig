@@ -29,10 +29,6 @@ plugins {
 }
 
 dependencies {
-    api(libs.jetbrains.compose.foundation)
-    api(libs.jetbrains.compose.material)
-    api(libs.jetbrains.compose.runtime)
-    api(libs.jetbrains.compose.ui.util)
     api(project(":modules:config"))
     api(project(":modules:events"))
     api(project(":modules:mod-toggles"))
