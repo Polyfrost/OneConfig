@@ -65,13 +65,13 @@ enum class Modifiers(val icon: String) {
     Underline("underline");
 }
 
-private enum class ShadowMode(val title: String) {
+internal enum class ShadowMode(val title: String) {
     Off("Off"),
     Normal("Normal"),
     Full("Full");
 }
 
-private enum class MergeMode(val title: String) {
+internal enum class MergeMode(val title: String) {
     Off("Off"),
     Normal("Normal"),
     Diagonal("Diagonal");
@@ -153,55 +153,19 @@ fun Style(hud: Hud?, query: String) {
                 third = {
                     HudSettingTarget(hud, "textBold") {
                         LabeledControl(hudPanelText("modifiers", "Modifiers")) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(LocalTheme.current.componentBackground, LocalTheme.current.buttonShape)
-                                    .border(1.dp, LocalTheme.current.borderColor, LocalTheme.current.buttonShape)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    IconButton(
-                                        Modifiers.Bold.icon,
-                                        hudPanelText("bold", "Bold"),
-                                        modifier = Modifier.size(28.dp),
-                                        size = ControlSize.Large,
-                                        selected = textBold,
-                                        onClick = {
-                                            Snapshot.withMutableSnapshot {
-                                                textBold = !textBold; hud.textBold = textBold
-                                            }
-                                        }
-                                    )
-                                    IconButton(
-                                        Modifiers.Italic.icon,
-                                        hudPanelText("italic", "Italic"),
-                                        modifier = Modifier.size(28.dp),
-                                        size = ControlSize.Large,
-                                        selected = textItalic,
-                                        onClick = {
-                                            Snapshot.withMutableSnapshot {
-                                                textItalic = !textItalic; hud.textItalic = textItalic
-                                            }
-                                        }
-                                    )
-                                    IconButton(
-                                        Modifiers.Underline.icon,
-                                        hudPanelText("underline", "Underline"),
-                                        modifier = Modifier.size(28.dp),
-                                        size = ControlSize.Large,
-                                        selected = textUnderline,
-                                        onClick = {
-                                            Snapshot.withMutableSnapshot {
-                                                textUnderline = !textUnderline; hud.textUnderline = textUnderline
-                                            }
-                                        }
-                                    )
-                                }
-                            }
+                            ModifierButtons(
+                                listOf(
+                                    ModifierToggle(Modifiers.Bold.icon, hudPanelText("bold", "Bold"), textBold) {
+                                        Snapshot.withMutableSnapshot { textBold = !textBold; hud.textBold = textBold }
+                                    },
+                                    ModifierToggle(Modifiers.Italic.icon, hudPanelText("italic", "Italic"), textItalic) {
+                                        Snapshot.withMutableSnapshot { textItalic = !textItalic; hud.textItalic = textItalic }
+                                    },
+                                    ModifierToggle(Modifiers.Underline.icon, hudPanelText("underline", "Underline"), textUnderline) {
+                                        Snapshot.withMutableSnapshot { textUnderline = !textUnderline; hud.textUnderline = textUnderline }
+                                    },
+                                ),
+                            )
                         }
                     }
                 },
@@ -457,9 +421,40 @@ fun Style(hud: Hud?, query: String) {
     }
 }
 
+internal class ModifierToggle(val icon: String, val label: String, val selected: Boolean, val onToggle: () -> Unit)
+
+/** A row of icon switches that light up while on */
+@Composable
+internal fun ModifierButtons(toggles: List<ModifierToggle>) {
+    val theme = LocalTheme.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(theme.componentBackground, theme.buttonShape)
+            .border(1.dp, theme.borderColor, theme.buttonShape)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            for (toggle in toggles) {
+                IconButton(
+                    toggle.icon,
+                    toggle.label,
+                    modifier = Modifier.size(28.dp),
+                    size = ControlSize.Large,
+                    selected = toggle.selected,
+                    onClick = toggle.onToggle,
+                )
+            }
+        }
+    }
+}
+
 /** [ColorPicker] for a HUD colour stored as separate colour, chroma and speed fields */
 @Composable
-private fun ColorSwatch(
+internal fun ColorSwatch(
     color: Color,
     chroma: Boolean = false,
     chromaSpeed: Float = 1f,

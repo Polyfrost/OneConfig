@@ -60,6 +60,9 @@ private val POSITION_OPTIONS = setOf(
     "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY", "movedByPlayer",
 )
 
+// which group a HUD is in is structure rather than a setting, so resetting the HUD keeps it grouped
+private val UNRESETTABLE_OPTIONS = setOf("groupPath")
+
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
 fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
 
@@ -84,7 +87,10 @@ fun hudHasResettableDefaults(hud: Hud): Boolean {
 private fun treeHasResettableDefaults(tree: Tree, root: Boolean): Boolean {
     for (node in tree.map.values) {
         when (node) {
-            is Property<*> -> if (!(root && (node.id ?: node.getID()) in POSITION_OPTIONS) && optionHasDefault(node)) return true
+            is Property<*> -> {
+                val optionId = node.id ?: node.getID()
+                if (!(root && optionId in POSITION_OPTIONS) && optionId !in UNRESETTABLE_OPTIONS && optionHasDefault(node)) return true
+            }
             is Tree -> if (treeHasResettableDefaults(node, root = false)) return true
         }
     }
@@ -198,7 +204,7 @@ private fun resetTreeDefaults(tree: Tree, root: Boolean, seen: MutableSet<Proper
             is Property<*> -> {
                 val optionId = node.id ?: node.getID()
                 val builtIn = root && (optionId in STATIC_SIZE_OPTIONS || optionId in POSITION_OPTIONS)
-                if (!builtIn && optionHasDefault(node)) resetOption(node, seen)
+                if (!builtIn && optionId !in UNRESETTABLE_OPTIONS && optionHasDefault(node)) resetOption(node, seen)
             }
             is Tree -> resetTreeDefaults(node, root = false, seen = seen)
         }
@@ -264,6 +270,15 @@ fun HudSettingsContent(hud: Hud, content: @Composable () -> Unit) {
     }
 }
 
+/** [HudSettingsContent] for a panel editing several HUDs at once, which is recreated when any one of them is */
+@Composable
+fun HudSettingsContent(huds: Collection<Hud>, content: @Composable () -> Unit) {
+    val list = huds.toList()
+    key(list, list.map(::hudUiEpoch)) {
+        content()
+    }
+}
+
 /**
  * Right-click menu on a HUD element in the design studio canvas
  *
@@ -279,13 +294,19 @@ fun HudCanvasResetMenu(
     targets: List<Hud> = emptyList(),
     preview: Boolean = false,
     onMeasured: (IntSize) -> Unit = {},
+    /** [targets] split into what moves as one block, so a selected group aligns as a whole */
+    units: List<Collection<Hud>> = emptyList(),
+    onGroup: (() -> Unit)? = null,
+    onUngroup: (() -> Unit)? = null,
+    onRemoveFromGroup: (() -> Unit)? = null,
+    /** Existing groups the targets can be moved into, each with its label */
+    addToGroups: List<Pair<String, () -> Unit>> = emptyList(),
 ) {
     if (hud == null || !expanded) return
     val entries = buildHudCanvasMenuEntries(
         hud = hud,
         targets = targets,
         onSettings = {},
-        settingsEnabled = true,
         onCopy = {},
         onCut = {},
         onPaste = {},
@@ -300,6 +321,11 @@ fun HudCanvasResetMenu(
         onRedo = {},
         redoEnabled = false,
         highlightAnchor = preview,
+        units = units,
+        onGroup = onGroup,
+        onUngroup = onUngroup,
+        onRemoveFromGroup = onRemoveFromGroup,
+        addToGroups = addToGroups,
     )
     ShellPopup(
         alignment = Alignment.TopStart,
@@ -315,7 +341,6 @@ internal fun hudCanvasMenuEntries(
     hud: Hud,
     targets: List<Hud>,
     onSettings: (Hud) -> Unit,
-    settingsEnabled: Boolean,
     onCopy: (Hud) -> Unit,
     onCut: (Hud) -> Unit,
     onPaste: (Hud) -> Unit,
@@ -329,11 +354,15 @@ internal fun hudCanvasMenuEntries(
     undoEnabled: Boolean,
     onRedo: () -> Unit,
     redoEnabled: Boolean,
+    units: List<Collection<Hud>> = emptyList(),
+    onGroup: (() -> Unit)? = null,
+    onUngroup: (() -> Unit)? = null,
+    onRemoveFromGroup: (() -> Unit)? = null,
+    addToGroups: List<Pair<String, () -> Unit>> = emptyList(),
 ): List<MenuEntry> = buildHudCanvasMenuEntries(
     hud = hud,
     targets = targets,
     onSettings = onSettings,
-    settingsEnabled = settingsEnabled,
     onCopy = onCopy,
     onCut = onCut,
     onPaste = onPaste,
@@ -348,13 +377,17 @@ internal fun hudCanvasMenuEntries(
     onRedo = onRedo,
     redoEnabled = redoEnabled,
     highlightAnchor = false,
+    units = units,
+    onGroup = onGroup,
+    onUngroup = onUngroup,
+    onRemoveFromGroup = onRemoveFromGroup,
+    addToGroups = addToGroups,
 )
 
 private fun buildHudCanvasMenuEntries(
     hud: Hud,
     targets: List<Hud>,
     onSettings: (Hud) -> Unit,
-    settingsEnabled: Boolean,
     onCopy: (Hud) -> Unit,
     onCut: (Hud) -> Unit,
     onPaste: (Hud) -> Unit,
@@ -369,6 +402,11 @@ private fun buildHudCanvasMenuEntries(
     onRedo: () -> Unit,
     redoEnabled: Boolean,
     highlightAnchor: Boolean,
+    units: List<Collection<Hud>> = emptyList(),
+    onGroup: (() -> Unit)? = null,
+    onUngroup: (() -> Unit)? = null,
+    onRemoveFromGroup: (() -> Unit)? = null,
+    addToGroups: List<Pair<String, () -> Unit>> = emptyList(),
 ): List<MenuEntry> {
     val actionTargets = targets.ifEmpty { listOf(hud) }
     val allHidden = actionTargets.all { it.hidden }
@@ -379,7 +417,6 @@ private fun buildHudCanvasMenuEntries(
         translated("oneconfig.hud.menu.settings", "Settings"),
         { onSettings(hud) },
         icon = "settings",
-        enabled = settingsEnabled,
         shortcutHint = keybindHint(OneConfigConfig.hudSettingsKeybind),
     )
     entries += MenuAction(
@@ -408,7 +445,7 @@ private fun buildHudCanvasMenuEntries(
     )
     entries += MenuIconRow(
         HudAlign.entries.map { align ->
-            MenuAction(alignLabel(align), { alignHuds(actionTargets, align) }, icon = align.icon)
+            MenuAction(alignLabel(align), { alignHuds(units.ifEmpty { actionTargets.map(::listOf) }, align) }, icon = align.icon)
         },
     )
     val anchorLabel = translated("oneconfig.hud.menu.anchor", "Anchor")
@@ -441,6 +478,22 @@ private fun buildHudCanvasMenuEntries(
             { Snapshot.withMutableSnapshot { mergeable.forEach { it.mergeBackground = true } } },
             icon = "layers",
         )
+    }
+
+    if (onGroup != null || onUngroup != null || onRemoveFromGroup != null || addToGroups.isNotEmpty()) {
+        entries += MenuSeparator
+    }
+    if (onGroup != null) {
+        entries += MenuAction(translated("oneconfig.hud.menu.group", "Group"), onGroup, icon = "group")
+    }
+    if (onUngroup != null) {
+        entries += MenuAction(translated("oneconfig.hud.menu.ungroup", "Ungroup"), onUngroup, icon = "ungroup")
+    }
+    for ((label, onAdd) in addToGroups) {
+        entries += MenuAction(translated("oneconfig.hud.menu.add_to_group", "Add to %s", label), onAdd, icon = "plus")
+    }
+    if (onRemoveFromGroup != null) {
+        entries += MenuAction(translated("oneconfig.hud.menu.remove_from_group", "Remove from group"), onRemoveFromGroup, icon = "minus")
     }
 
     entries += MenuSeparator
