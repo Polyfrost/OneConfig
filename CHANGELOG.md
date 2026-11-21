@@ -5,7 +5,13 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.9.0] - 2026-11-21
+
+### Changed
+- OneConfig now draws its UI with [PolyCompose](https://github.com/Polyfrost/PolyCompose), which ships as its own mod and replaces the Compose Multiplatform bundle. PolyCompose 3.0.0 or newer is required
+- The HUD editor only measures where vanilla HUD elements sit while it is open
+- API: The Compose host, renderers, HUD layers, inline canvases, offscreen rendering, screen blur, entity previews and item icons moved from OneConfig to PolyCompose. Mods using them must depend on PolyCompose and use the `org.polyfrost.compose` packages: `InlinePolyCanvas`, `PolyOffscreen`, `ScreenBlur` and `EntityPreview` keep their names, `ComposeHudLayer` and `ComposeHudInput` are now `HudLayer` and `HudInput`, and `PolyItemIcon` is now `McItemIcon`
+- API: The `poly-compose` module is gone. Depend on `org.polyfrost:polycompose-core` instead
 
 ### Fixed
 - API: `Backend.lastSaveFailure()` now also reports failures from `Backend.save(String)`
@@ -13,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed the `commands` module, which contained no code. If you were explicitly depending on it, you may have to update your build script.
 - Removed the `/oneconfig delete` command, which only printed a message and did nothing
+- API: Removed `EscapeStack` from the UI module
 
 ## [1.8.0] - 2026-11-14
 

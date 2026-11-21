@@ -5,8 +5,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.text.Font
 
 private val MinecraftIconOverrides = mapOf(
     "cog" to "/assets/oneconfig/ico/minecraft/cog.svg",

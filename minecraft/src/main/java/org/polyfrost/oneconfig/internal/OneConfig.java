@@ -61,11 +61,11 @@ import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
-import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
+import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks;
 //? if >= 1.21.11
-import org.polyfrost.oneconfig.internal.ui.compose.BlazeHud;
-import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
+import org.polyfrost.compose.minecraft.render.blaze.BlazeHud;
+import org.polyfrost.compose.minecraft.render.gl.GlHost;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
@@ -249,14 +249,13 @@ public class OneConfig implements ClientModInitializer {
 
         if (HudManager.isConfigUiOpen) {
             HudManager.INSTANCE.prepare(sw, sh);
-            ItemCatalog.INSTANCE.renderHudIcons();
             HudManager.invalidate();
             return;
         }
         //? if >= 1.21.11 {
-        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, true, true)) BlazeHud.markDirty();
+        if (HudManager.INSTANCE.beginFrame(sw, sh, null, true, true)) BlazeHud.markDirty();
         //?} else {
-        /*if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, false)) {
+        /*if (HudManager.INSTANCE.beginFrame(sw, sh, null, false)) {
             GlHost.INSTANCE.drawHudGl((ctx, volatileCtx) -> {
                 HudManager.INSTANCE.render(ctx, sw, sh, volatileCtx);
                 return Unit.INSTANCE;
@@ -274,7 +273,7 @@ public class OneConfig implements ClientModInitializer {
         }
         if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
         //? if >= 1.21.11 {
-        BlazeHud.render(graphics);
+        BlazeHud.render(graphics, OneConfigComposeHooks.drawHuds);
         //?} else {
         /*//~ if = 1.8.9 '(graphics)' -> '()'
         GlHost.INSTANCE.blitHud(graphics);
@@ -347,7 +346,6 @@ public class OneConfig implements ClientModInitializer {
                 });
         EventManager.register(WorldEvent.Load.class, e -> {
             showFirstLaunchNotification();
-            ItemCatalog.INSTANCE.markIconsAvailable();
         });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
@@ -413,6 +411,7 @@ public class OneConfig implements ClientModInitializer {
         String v = self == null ? "LOCAL" : self.getVersion();
         LOGGER.info("Loading OneConfig v{}", v);
         McFontService.INSTANCE.init();
+        OneConfigComposeHooks.INSTANCE.install();
         ThirdPartyModCategories.INSTANCE.init();
         BuiltinPages.register();
         // force class-load so the hello/disconnect handlers are armed before joining any server

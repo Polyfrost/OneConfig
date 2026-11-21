@@ -14,14 +14,15 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.platform.OneConfigComposeOptions
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.BackdropUsers
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
-import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.compose.minecraft.screen.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks
 //? if >= 1.21.11
-import org.polyfrost.oneconfig.internal.ui.compose.BlazeHud
+import org.polyfrost.compose.minecraft.render.blaze.BlazeHud
 //? if < 1.21.11
 //import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
@@ -46,7 +47,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudEditor")
 
-class HudEditorUIScreen private constructor() : ComposeScreen() {
+class HudEditorUIScreen private constructor() : ComposeScreen(options = OneConfigComposeOptions) {
     companion object {
         private var instance: HudEditorUIScreen? = null
 
@@ -72,7 +73,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         HudManager.inWorld = false
         HudManager.guiScreenWidth = sw
         HudManager.guiScreenHeight = sh
-        return HudManager.beginFrame(sw, sh, { ItemCatalog.renderHudIcons() }, true, true)
+        return HudManager.beginFrame(sw, sh, null, true, true)
     }
 
     // in a world the game's HUD pass draws the HUDs before the blur, so off it they're drawn the same way here
@@ -80,7 +81,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     override fun extractBeneathBlur(ctx: GuiGraphicsExtractor): Boolean {
         if (client.level != null) return false
         if (prepareHudsOffWorld()) BlazeHud.markDirty()
-        BlazeHud.render(ctx)
+        BlazeHud.render(ctx, OneConfigComposeHooks.drawHuds)
         return true
     }
     //?} else {
@@ -182,7 +183,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         return false
     }
 
-    override val modifierTapBind: OneConfigKeybind get() = OneConfigConfig.oneConfigKeybind
+    override val modifierTapKeys: Set<Int>? get() = OneConfigComposeHooks.modifierTapKeys
 
     override fun handleModifierTapped() {
         handleOneConfigKeybind(onRelease = true)

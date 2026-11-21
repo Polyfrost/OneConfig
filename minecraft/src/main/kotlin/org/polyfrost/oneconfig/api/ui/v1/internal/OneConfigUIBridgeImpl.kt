@@ -8,7 +8,7 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUIBridge
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
 import org.polyfrost.oneconfig.internal.OneConfig
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.compose.minecraft.screen.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.navigation.PageArguments
 import org.polyfrost.oneconfig.internal.ui.navigation.PageRoute

@@ -32,14 +32,13 @@ import jdk.jfr.consumer.RecordingFile;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.polyfrost.compose.render.PolyGlyphPage;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.compat.CompatLoader;
-import org.polyfrost.oneconfig.internal.ui.compose.StbFonts;
+import org.polyfrost.compose.minecraft.font.StbFonts;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 
 import java.io.BufferedReader;
@@ -51,14 +50,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 public final class ClassPreloader {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/ClassPreloader");
     private static final String LIST = "/assets/oneconfig/open-classes.txt";
     private static final String GLYPHS = "/assets/oneconfig/open-glyphs.txt";
     private static final String RECORD = System.getProperty("oneconfig.debug.recordOpenClasses");
-    private static final String RECORD_GLYPHS = System.getProperty("oneconfig.debug.recordOpenGlyphs");
     private static final boolean IN_WORLD = Boolean.getBoolean("oneconfig.debug.preloadInWorld");
     private static final String[] SKIP = {"java.", "javax.", "jdk.", "sun.", "com.sun.", "net.minecraft."};
 
@@ -68,7 +65,7 @@ public final class ClassPreloader {
     }
 
     public static void init() {
-        if (RECORD != null || RECORD_GLYPHS != null || Boolean.getBoolean("oneconfig.debug.noPreload")) {
+        if (RECORD != null || Boolean.getBoolean("oneconfig.debug.noPreload")) {
             OneConfigUIScreen.stopWarmUp();
             return;
         }
@@ -127,7 +124,6 @@ public final class ClassPreloader {
     public static void recordFirstOpen() {
         if (recorded) return;
         recorded = true;
-        if (RECORD_GLYPHS != null) recordGlyphs();
         if (RECORD == null) return;
         Recording recording = new Recording();
         recording.enable("jdk.ClassLoad").withoutThreshold().withoutStackTrace();
@@ -153,23 +149,6 @@ public final class ClassPreloader {
                 LOGGER.error("Failed to record the classes loaded by the first menu open", e);
             }
         }, "OneConfig Class Recorder");
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    private static void recordGlyphs() {
-        Set<String> glyphs = StbFonts.INSTANCE.recordGlyphs();
-        Thread thread = new Thread(() -> {
-            try {
-                Thread.sleep(8000L);
-                PolyGlyphPage.setRecorder(null);
-                Path out = Paths.get(RECORD_GLYPHS).toAbsolutePath();
-                Files.write(out, new TreeSet<>(glyphs), StandardCharsets.UTF_8);
-                LOGGER.info("Recorded {} glyphs rasterized by the first menu open to {}", glyphs.size(), out);
-            } catch (Exception e) {
-                LOGGER.error("Failed to record the glyphs rasterized by the first menu open", e);
-            }
-        }, "OneConfig Glyph Recorder");
         thread.setDaemon(true);
         thread.start();
     }

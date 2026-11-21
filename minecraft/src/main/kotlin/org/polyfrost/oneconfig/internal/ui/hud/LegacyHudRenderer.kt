@@ -6,7 +6,7 @@ import java.util.WeakHashMap
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
-import org.polyfrost.oneconfig.internal.ui.compose.GuiDraw
+import org.polyfrost.compose.minecraft.render.gl.GuiDraw
 
 //? if > 1.8.9 {
 import net.minecraft.client.gui.GuiGraphicsExtractor

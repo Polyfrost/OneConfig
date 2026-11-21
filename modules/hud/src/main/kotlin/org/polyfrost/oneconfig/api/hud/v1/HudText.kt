@@ -9,7 +9,7 @@ import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration
-import org.polyfrost.compose.composables.PolyBox
+import org.polyfrost.compose.composables.NodeBox
 import org.polyfrost.compose.composables.padding
 import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.layout.PolyAlign
@@ -87,7 +87,7 @@ internal fun Hud.HudRunText(
         lineAlign = if (isStaticValid) horizontalFactor(contentAlign) else 0f,
     )
 
-    PolyBox(modifier = outerModifier) {
+    NodeBox(modifier = outerModifier) {
         ComposeNode<RunTextNode, PolyApplier>(
             factory = { RunTextNode() },
             update = {

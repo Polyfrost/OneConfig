@@ -40,6 +40,8 @@ subprojects {
         exclude(group = "org.jetbrains.skiko")
         exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
         exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui-desktop")
     }
 
     dependencies {
@@ -117,7 +119,7 @@ subprojects {
     tasks.withType<JavaCompile>().configureEach { finalizedBy("spotlessJavaCheck") }
     tasks.withType<KotlinCompile>().configureEach { finalizedBy("spotlessKotlinCheck") }
 
-    if (name !in listOf("compose-bundle", "internal", "relocator")) {
+    if (name !in listOf("internal", "relocator")) {
         configure<KotlinJvmProjectExtension> {
             explicitApi()
             @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4

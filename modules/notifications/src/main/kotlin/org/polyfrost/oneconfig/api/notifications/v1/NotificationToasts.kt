@@ -35,12 +35,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyCanvas
-import org.polyfrost.compose.composables.PolyColumn
+import org.polyfrost.compose.composables.NodeBox
+import org.polyfrost.compose.composables.NodeCanvas
+import org.polyfrost.compose.composables.NodeColumn
+import org.polyfrost.compose.composables.NodeRow
+import org.polyfrost.compose.composables.NodeText
 import org.polyfrost.compose.composables.PolyModifier
-import org.polyfrost.compose.composables.PolyRow
-import org.polyfrost.compose.composables.PolyText
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.composables.border
@@ -89,8 +89,8 @@ public fun NotificationToasts() {
     val h = ToastViewport.height
     if (w <= 0f || h <= 0f) return
 
-    PolyBox(modifier = PolyModifier.width(w).height(h)) {
-        PolyColumn(
+    NodeBox(modifier = PolyModifier.width(w).height(h)) {
+        NodeColumn(
             gap = 12f,
             modifier = PolyModifier.align(PolyAlign.BottomRight).margin(16f),
         ) {
@@ -166,7 +166,7 @@ private fun Toast(notification: Notification) {
     val hasProgress = notification.tracksProgress(state)
     val bgBase = if (state.hovered) NotificationTheme.background.lighten(0.06f) else NotificationTheme.background
 
-    PolyColumn(
+    NodeColumn(
         gap = 12f,
         modifier = PolyModifier
             .width(CARD_WIDTH)
@@ -176,17 +176,17 @@ private fun Toast(notification: Notification) {
             .tag(ToastHit.Body(notification))
             .fade(if (opaque) null else ({ appear })),
     ) {
-        PolyRow(gap = ICON_GAP) {
+        NodeRow(gap = ICON_GAP) {
             ToastIcon(notification, state.type)
-            PolyColumn(gap = 4f) {
-                PolyText(state.title, color = NotificationTheme.accentFor(state.type), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
+            NodeColumn(gap = 4f) {
+                NodeText(state.title, color = NotificationTheme.accentFor(state.type), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
                 val bodyFont = messageFont()
                 val message = state.message
                 val lines = remember(message, bodyFont) {
                     wrapText(message, TEXT_WIDTH, bodyFont)
                 }
                 for (line in lines) {
-                    PolyText(line, color = NotificationTheme.textSecondary, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
+                    NodeText(line, color = NotificationTheme.textSecondary, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
                 }
             }
         }
@@ -199,7 +199,7 @@ private fun Toast(notification: Notification) {
         }
 
         if (notification.actions.isNotEmpty()) {
-            PolyRow(gap = 16f) {
+            NodeRow(gap = 16f) {
                 for (action in notification.actions) {
                     ActionButton(notification, action, state.type)
                 }
@@ -219,13 +219,13 @@ private fun quantize(value: Float): Float {
 @Composable
 private fun ProgressBar(progress: () -> Float) {
     val accent = NotificationTheme.accent
-    PolyBox(
+    NodeBox(
         modifier = PolyModifier
             .width(CONTENT_WIDTH)
             .height(6f)
             .background(NotificationTheme.progressTrackColor(), NotificationTheme.radiusProgress),
     ) {
-        PolyCanvas(PolyModifier.width(CONTENT_WIDTH).height(6f), live = true) { x, y, _, h ->
+        NodeCanvas(PolyModifier.width(CONTENT_WIDTH).height(6f), live = true) { x, y, _, h ->
             val fillWidth = (CONTENT_WIDTH * progress()).coerceIn(0f, CONTENT_WIDTH)
             if (fillWidth > 0f) rect(x, y, fillWidth, h, accent, NotificationTheme.radiusProgress)
         }
@@ -238,13 +238,13 @@ private fun ActionButton(notification: Notification, action: NotificationAction,
     val base = if (action.primary) NotificationTheme.actionFillFor(type) else NotificationTheme.subtleButton
     val fill = if (hovered) base.lighten(0.12f) else base
     val textColor = if (action.primary) NotificationTheme.onActionFillFor(type) else NotificationTheme.actionSubtleText
-    PolyBox(
+    NodeBox(
         modifier = PolyModifier
             .background(if (action.enabled) fill else fill.multiplyAlpha(NotificationTheme.disabledAlpha), NotificationTheme.radiusButton)
             .padding(horizontal = 12f, vertical = 6f)
             .tag(ToastHit.Action(notification, action)),
     ) {
-        PolyText(action.label, color = if (action.enabled) textColor else textColor.multiplyAlpha(NotificationTheme.disabledAlpha), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
+        NodeText(action.label, color = if (action.enabled) textColor else textColor.multiplyAlpha(NotificationTheme.disabledAlpha), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
     }
 }
 
@@ -252,7 +252,7 @@ private fun ActionButton(notification: Notification, action: NotificationAction,
 private fun ToastIcon(notification: Notification, type: NotificationType) {
     val custom = notification.icon
     if (custom != null) {
-        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
+        NodeCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val s = minOf(w / custom.width, h / custom.height)
             image(custom, x + (w - custom.width * s) / 2f, y + (h - custom.height * s) / 2f, custom.width * s, custom.height * s)
         }
@@ -260,7 +260,7 @@ private fun ToastIcon(notification: Notification, type: NotificationType) {
         val accent = NotificationTheme.accentFor(type)
         val iconFolder = NotificationTheme.iconFolder
         val name = notification.iconName ?: type.iconName
-        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
+        NodeCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
             // white masks tinted when drawn, so animating theme colours don't rasterize and cache a mask per colour
             val img = if (name.endsWith(".svg")) {

@@ -32,7 +32,7 @@ dependencies {
     api(libs.bundles.nightconfig)
     implementation(libs.snakeyaml)
     api(project(":modules:config"))
-    api(project(":modules:poly-compose"))
+    api(libs.polycompose.core)
     api(project(":modules:ui"))
     implementation(project(":modules:notifications"))
     api(libs.jetbrains.compose.runtime)

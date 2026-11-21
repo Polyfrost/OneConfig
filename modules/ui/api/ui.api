@@ -822,16 +822,6 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/EscapeClosesKt {
 	public static final fun handleEscapeStack (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 }
 
-public final class org/polyfrost/oneconfig/api/ui/v1/components/EscapeStack {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/components/EscapeStack;
-	public static final fun closeTop ()Z
-	public static final fun dispatch ()Z
-	public static final fun getHasOpen ()Z
-	public static final fun push (Lkotlin/jvm/functions/Function0;)V
-	public static final fun remove (Lkotlin/jvm/functions/Function0;)V
-}
-
 public final class org/polyfrost/oneconfig/api/ui/v1/components/FieldDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/components/FieldDefaults;

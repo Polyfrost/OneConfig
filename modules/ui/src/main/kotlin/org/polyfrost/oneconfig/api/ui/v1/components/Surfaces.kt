@@ -119,7 +119,7 @@ public fun Modifier.cardSurface(
     hoverGlow: Boolean = true,
     border: CardBorder = CardBorder.Gradient,
     borderColor: Color? = null,
-): Modifier = themedSurface(SurfaceKind.Card, shape, false, hoverGlow, border, borderColor, glass = false)
+): Modifier = themedSurface(SurfaceKind.Card, shape, false, hoverGlow, border, borderColor)
 
 @ExperimentalOneConfigUiApi
 @Composable

@@ -7,18 +7,12 @@ allprojects {
     }
 }
 
-// compose-bundle ships standalone, so the nodes' bundle jars leave it out
 val minecraftNodes = subprojects.filter { it.parent?.path == ":minecraft" }
-val composeBundle = project(":modules:compose-bundle")
-
-// compose-bundle carries its own version so evaluate it to grab the jar task
-// rather than guessing the file name
-evaluationDependsOn(composeBundle.path)
 
 // Sync rather than Copy because node build/dist keeps jars of previously built versions
 tasks.register<Sync>("buildAndCollect") {
     group = "build"
-    description = "Builds every OneConfig Minecraft node plus compose-bundle and collects the production jars into build/libs."
+    description = "Builds every OneConfig Minecraft node and collects the production jars into build/libs."
 
     // task paths rather than task providers so the nodes aren't all configured with the root project
     dependsOn(minecraftNodes.map { "${it.path}:bundleJar" })
@@ -27,7 +21,6 @@ tasks.register<Sync>("buildAndCollect") {
     from(minecraftNodes.map { it.layout.buildDirectory.dir("dist") }) {
         include("*-${rootProject.version}.jar")
     }
-    from(composeBundle.tasks.named<Jar>("jar").flatMap { it.archiveFile })
     into(layout.buildDirectory.dir("libs"))
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

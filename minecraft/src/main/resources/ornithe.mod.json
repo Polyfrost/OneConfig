@@ -49,7 +49,7 @@
     "osl-resource-loader": ">=0.8.0",
     "osl-text-components": ">=0.1.0-alpha.5",
     "fabric-language-kotlin": ">=${flk_version}",
-    "compose-multiplatform": ">=${compose_version}"
+    "polycompose": ">=${polycompose_version}"
   },
   "breaks": {
     "chattweaks": "<1.2.3",

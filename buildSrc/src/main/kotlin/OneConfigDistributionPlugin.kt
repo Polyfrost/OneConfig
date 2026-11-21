@@ -99,7 +99,7 @@ class OneConfigDistributionPlugin : Plugin<Project> {
                         requires("fabric-api")
                     }
                     requires("fabric-language-kotlin")
-                    findProperty("publish.modrinth.compose-bundle")
+                    findProperty("publish.modrinth.polycompose")
                         ?.toString()
                         ?.takeIf { it.isNotBlank() }
                         ?.let { requires(it) }
@@ -116,7 +116,7 @@ class OneConfigDistributionPlugin : Plugin<Project> {
 
                     requires("fabric-api")
                     requires("fabric-language-kotlin")
-                    findProperty("publish.curseforge.compose-bundle.slug")
+                    findProperty("publish.curseforge.polycompose.slug")
                         ?.toString()
                         ?.takeIf { it.isNotBlank() }
                         ?.let { requires(it) }

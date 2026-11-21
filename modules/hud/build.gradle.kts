@@ -31,7 +31,7 @@ plugins {
 dependencies {
     api(project(":modules:config-impl"))
     api(project(":modules:ui"))
-    api(project(":modules:poly-compose"))
+    api(libs.polycompose.core)
     api(project(":modules:events"))
     implementation(project(":modules:notifications"))
     compileOnly(libs.jetbrains.compose.runtime)

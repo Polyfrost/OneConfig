@@ -78,27 +78,12 @@ jobs:
       - name: Test publication
         run: ./gradlew -p modules publishToMavenLocal
 
-      - name: Upload compose-bundle
-        uses: actions/upload-artifact@v7
-        with:
-          path: |
-            modules/compose-bundle/build/libs/*.jar
-            !**/*-javadoc.jar
-            !**/*-sources.jar
-            !**/*-ornithe.jar
-          archive: false
-          if-no-files-found: error
-
       - name: Upload module libs
         uses: actions/upload-artifact@v7
         with:
           name: lib-artifacts-modules
-          # the compose-bundle main jar is uploaded on its own
           path: |
             modules/**/build/libs/
-            !modules/compose-bundle/build/libs/*.jar
-            modules/compose-bundle/build/libs/*-javadoc.jar
-            modules/compose-bundle/build/libs/*-sources.jar
           if-no-files-found: error
 
       - name: Check

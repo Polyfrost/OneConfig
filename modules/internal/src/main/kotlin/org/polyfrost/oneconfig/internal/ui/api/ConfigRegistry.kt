@@ -41,6 +41,7 @@ object ConfigRegistry {
         "collective",
         "cloth-config",
         "compose-bundle",
+        "polycompose",
         "trender",
         "libjf-config-core-v2",
         "libjf-config-network-v0",

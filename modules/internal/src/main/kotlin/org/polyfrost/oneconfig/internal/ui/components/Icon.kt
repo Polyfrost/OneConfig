@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.polyfrost.compose.backend.asComposeImageBitmap
+import org.polyfrost.compose.host.LocalUiOversample
+import org.polyfrost.compose.host.OversampledSvgPainter
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
