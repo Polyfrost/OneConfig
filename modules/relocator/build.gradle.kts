@@ -8,7 +8,7 @@ apply<KotlinApiPlugin>()
 
 repositories {
     maven(url = "https://maven.teamresourceful.com/repository/maven-public/")
-    mavenCentral()
+    maven(url = "https://maven-central.storage-download.googleapis.com/maven2/")
 }
 
 dependencies {

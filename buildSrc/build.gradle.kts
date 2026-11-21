@@ -11,7 +11,7 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
+    maven(url = "https://maven-central.storage-download.googleapis.com/maven2/")
     gradlePluginPortal()
     maven("https://maven.fabricmc.net/")
     maven("https://maven.ornithemc.net/releases")

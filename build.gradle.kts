@@ -1,7 +1,7 @@
 
 allprojects {
     repositories {
-        mavenCentral()
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
         maven("https://maven.fabricmc.net/releases")
         maven("https://maven.ornithemc.net/releases")
     }
