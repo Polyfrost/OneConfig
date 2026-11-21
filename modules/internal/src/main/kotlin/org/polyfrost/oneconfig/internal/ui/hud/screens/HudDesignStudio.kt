@@ -123,6 +123,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Layout
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Style
+import org.polyfrost.oneconfig.internal.ui.hud.toggleHudVisibility
 import org.polyfrost.oneconfig.internal.ui.screens.rememberHasHudOptions
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
@@ -160,6 +161,16 @@ internal fun notifyHudLocked() {
         translated("oneconfig.hud.locked.title", "HUD element locked"),
         translated("oneconfig.hud.locked.message", "Unlock in settings to change its position."),
     )
+}
+
+private var allHudsHiddenToast: Notification? = null
+
+private fun notifyAllHudsHidden() {
+    allHudsHiddenToast?.let { if (NotificationsManager.contains(it)) return }
+    allHudsHiddenToast = Notifications.builder(
+        "All HUDs hidden",
+        "The Hide All HUDs keybind is hiding every HUD outside the editor.",
+    ).action("Show HUDs") { HudManager.resetAllHudsKey() }.send()
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -256,11 +267,14 @@ private val lockedHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 4f)
 private const val IDLE_HUD_BOX_ALPHA = 0.2f
 private const val HOVERED_HUD_BOX_ALPHA = 0.5f
 private const val HIDDEN_HUD_BOX_ALPHA = 0.4f
+private const val TEMPORARY_HUD_BOX_ALPHA = 0.8f
 
 private class StudioCanvasColors(
     val idleBox: Color,
     val hoveredBox: Color,
     val hiddenBox: Color,
+    /** Outline of a HUD its visibility keybind is currently showing or hiding */
+    val temporaryBox: Color,
     val locked: Color,
     val onLocked: Color,
     val hiddenLegacyScrim: Color,
@@ -280,6 +294,7 @@ private fun rememberStudioCanvasColors(): StudioCanvasColors {
             idleBox = theme.onMedia.copy(alpha = IDLE_HUD_BOX_ALPHA),
             hoveredBox = theme.onMedia.copy(alpha = HOVERED_HUD_BOX_ALPHA),
             hiddenBox = theme.onMedia.copy(alpha = HIDDEN_HUD_BOX_ALPHA),
+            temporaryBox = accent.copy(alpha = TEMPORARY_HUD_BOX_ALPHA),
             locked = theme.warning,
             onLocked = theme.pageSurface,
             hiddenLegacyScrim = theme.scrimColor,
@@ -688,9 +703,9 @@ private fun drawHudContents(ctx: RenderContext, mcToScreen: Float) {
         sk.save()
         sk.translate(bounds.x * mcToScreen, bounds.y * mcToScreen)
         if (contentScale != 1f) sk.scale(contentScale, contentScale)
-        if (hud.hidden) sk.saveLayerAlpha(0.35f)
+        if (hud.effectivelyHidden) sk.saveLayerAlpha(0.35f)
         try { root.render(ctx) } catch (_: Throwable) {}
-        if (hud.hidden) sk.restore()
+        if (hud.effectivelyHidden) sk.restore()
         sk.restore()
     }
 }
@@ -1036,7 +1051,8 @@ private fun HudActionBar(
     val barX = (layout.x / densityFloat).coerceAtLeast(0f)
     val barY = (layout.y / densityFloat).coerceAtLeast(0f)
     val barPadding = (actionBarPadding(actionBarGapPx) / densityFloat).dp
-    val isHidden = hud.hidden
+    val isHidden = hud.effectivelyHidden
+    val isTemporary = hud.visibilityKeyActive
     val isLocked = hud.locked
     Row(
         modifier = Modifier
@@ -1059,9 +1075,10 @@ private fun HudActionBar(
             if (isHidden) "eye-off" else "eye",
             if (isHidden) translated("oneconfig.hud.menu.show", "Show") else translated("oneconfig.hud.menu.hide", "Hide"),
             iconSize,
+            tint = if (isTemporary) Accent else Color.Unspecified,
             sound = UiSound.Click,
         ) {
-            Snapshot.withMutableSnapshot { hud.hidden = !hud.hidden }
+            toggleHudVisibility(listOf(hud))
         }
         HudActionButton(
             if (isLocked) "lock" else "unlock",
@@ -1535,6 +1552,11 @@ fun HudDesignStudio(visible: Boolean = true) {
                 LOGGER.error("Failed to handle $command in the HUD Design Studio", e)
             }
         }
+    }
+
+    // the editor shows every HUD regardless, so say why they will all be gone again once it closes
+    LaunchedEffect(visible) {
+        if (visible && HudManager.allHudsHiddenByKey) notifyAllHudsHidden()
     }
 
     LaunchedEffect(Unit) {
@@ -2425,7 +2447,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 colors = canvasColors,
                                 showBadge = singleSelection,
                             )
-                        } else if (hud.hidden) {
+                        } else if (hud.effectivelyHidden) {
                             if (hud is LegacyHud) {
                                 drawRect(
                                     color = canvasColors.hiddenLegacyScrim,
@@ -2434,14 +2456,14 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 )
                             }
                             drawRect(
-                                color = if (isHovered) canvasColors.hoveredBox else canvasColors.hiddenBox,
+                                color = if (isHovered) canvasColors.hoveredBox else if (hud.visibilityKeyActive) canvasColors.temporaryBox else canvasColors.hiddenBox,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f, pathEffect = hiddenHudDashEffect)
                             )
                         } else {
                             drawRect(
-                                color = if (isHovered) canvasColors.hoveredBox else canvasColors.idleBox,
+                                color = if (isHovered) canvasColors.hoveredBox else if (hud.visibilityKeyActive) canvasColors.temporaryBox else canvasColors.idleBox,
                                 topLeft = Offset(sx, sy),
                                 size = Size(sw, sh),
                                 style = Stroke(width = 1f)
