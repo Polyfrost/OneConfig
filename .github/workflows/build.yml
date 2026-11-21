@@ -126,10 +126,10 @@ jobs:
 
       # checks run after the uploads so that their failures don't withhold the built artifacts
       - name: Build
-        run: ./gradlew :minecraft:$NODE:assemble
+        run: ./gradlew ":minecraft:$NODE:assemble"
 
       - name: Test publication
-        run: ./gradlew :minecraft:$NODE:publishToMavenLocal
+        run: ./gradlew ":minecraft:$NODE:publishToMavenLocal"
 
       - name: Upload mod jar
         uses: actions/upload-artifact@v7
@@ -146,7 +146,7 @@ jobs:
           if-no-files-found: error
 
       - name: Check
-        run: ./gradlew :minecraft:$NODE:check
+        run: ./gradlew ":minecraft:$NODE:check"
 
   lib-artifacts:
     name: Merge dev artifacts
