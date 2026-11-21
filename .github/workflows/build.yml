@@ -94,7 +94,7 @@ jobs:
         run: ./gradlew :buildSrc:detekt
 
   minecraft:
-    name: Build ${{ matrix.node }}
+    name: Build ${{ matrix.node || 'minecraft' }}
 
     needs: [modules]
 
