@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class Mixin_VanillaHudFootprint {
     @Unique
     private static void oneconfig$measure(ScreenArea area) {
-        if (area == null) return;
+        if (area == null || !VanillaHudFootprint.isCapturing()) return;
         ScreenRectangle bounds = area.bounds();
         if (bounds == null) return;
         VanillaHudFootprint.add(bounds.left(), bounds.top(), bounds.right(), bounds.bottom());
