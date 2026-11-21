@@ -21,7 +21,7 @@ OneConfig may look like a client, but it is a standalone mod. You can [see for y
 - Minecraft 1.8.9 on Ornithe.
 - Minecraft 1.21.1-26.3 on Fabric.
 
-OneConfig needs [Compose Multiplatform](https://modrinth.com/mod/compose-multiplatform) and Fabric Language Kotlin. It also needs Fabric API on Fabric and OSL on Ornithe.
+OneConfig needs [PolyCompose](https://modrinth.com/mod/polycompose) and Fabric Language Kotlin. It also needs Fabric API on Fabric and OSL on Ornithe.
 
 ## ⚡️ Getting started
 Almost everything you need to start using OneConfig is in [our documentation](https://docsv1.polyfrost.org). For further questions, make a developer ticket in [our Discord](https://polyfrost.org/discord).
