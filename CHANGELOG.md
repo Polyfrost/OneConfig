@@ -5,6 +5,13 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-11-22
+
+### Added
+- HUD groups: group HUDs in the HUD editor so they move, scale and lock together. A HUD locked inside a group stays put within it but still moves with the group
+- Selecting several HUDs or a group shows the settings they have in common, and changing one changes it for all of them
+- API: `HudGroups`, including `HudGroups.registerDefault` to group a mod's HUDs the first time they all load
+
 ## [1.9.0] - 2026-11-21
 
 ### Changed
