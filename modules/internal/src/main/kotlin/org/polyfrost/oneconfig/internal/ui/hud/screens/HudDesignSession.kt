@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudGroup
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.hud.resetAllHudProperties
 
@@ -40,6 +41,13 @@ object HudDesignSession {
     /** The HUDs currently selected in the design studio so global keybinds can act on them */
     var activeSelection: List<Hud> by mutableStateOf(emptyList())
 
+    /** The group the user stepped into in the design studio, whose members a click picks one by one */
+    var enteredGroup: HudGroup? by mutableStateOf(null)
+
+    /** The group selected on its own in the design studio, if any */
+    @Volatile
+    var activeGroup: HudGroup? = null
+
     private val commandQueue = Channel<StudioCommand>(Channel.UNLIMITED)
 
     /**
@@ -66,7 +74,7 @@ object HudDesignSession {
         if (!HudManager.isEditorOpen) return false
         val huds = activeSelection
         if (huds.isEmpty()) return false
-        if (huds.any { it.locked }) return false
+        if (selectionUnits(huds.toSet(), enteredGroup).any { unit -> unit.all { it.locked } }) return false
         if (huds.none(::canDuplicateHud)) return false
         val dups = duplicateHudGroup(huds)
         if (dups.isEmpty()) return false
@@ -80,8 +88,8 @@ object HudDesignSession {
         if (!pressed) return false
         if (!HudManager.isEditorOpen) return false
         val huds = activeSelection
-        if (huds.size != 1) return false
-        if (huds.first().locked) return false
+        if (huds.isEmpty()) return false
+        if (activeGroup == null && huds.size == 1 && huds.first().locked) return false
         post(StudioCommand.OpenSettings)
         return true
     }

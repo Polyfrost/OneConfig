@@ -54,6 +54,7 @@ public object SwitchDefaults {
 
 @ExperimentalOneConfigUiApi
 @Composable
+@Deprecated("Kept for binary compatibility, use the overload with mixed", level = DeprecationLevel.HIDDEN)
 public fun Switch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -64,17 +65,33 @@ public fun Switch(
     trackColor: Color = Color.Unspecified,
     stateLabel: Boolean = true,
 ) {
+    Switch(checked, onCheckedChange, modifier, enabled, interactionSource, label, trackColor, stateLabel, mixed = false)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun Switch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    label: String? = null,
+    trackColor: Color = Color.Unspecified,
+    stateLabel: Boolean = true,
+    mixed: Boolean = false,
+) {
     val theme = OneConfigTheme.current
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val hovered by source.collectIsHoveredAsState()
-    val state = if (checked) formOnLabel() else formOffLabel()
+    val state = if (mixed) formMixedLabel() else if (checked) formOnLabel() else formOffLabel()
     val circle = theme.circleShape
     Row(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
             .oneConfigClickable(
                 label ?: state,
-                { onCheckedChange(!checked) },
+                { onCheckedChange(mixed || !checked) },
                 role = A11yRole.Switch,
                 enabled = enabled,
                 checked = checked,
@@ -86,7 +103,7 @@ public fun Switch(
         horizontalArrangement = Arrangement.spacedBy(theme.spacing.m),
     ) {
         if (stateLabel) ControlStateLabel(state)
-        SwitchTrack(checked, hovered && enabled, trackColor, Modifier)
+        SwitchTrack(checked, hovered && enabled, trackColor, Modifier, mixed)
     }
 }
 
@@ -96,13 +113,15 @@ internal fun ControlStateLabel(text: String) {
     Text(text, Modifier, theme.textColorSecondary, theme.typography.small, 1, TextOverflow.Clip, textAlign = TextAlign.Start)
 }
 
+private fun switchProgress(checked: Boolean, mixed: Boolean): Float = if (mixed) 0.5f else if (checked) 1f else 0f
+
 @Composable
-internal fun SwitchTrack(checked: Boolean, hovered: Boolean, trackColor: Color, modifier: Modifier) {
+internal fun SwitchTrack(checked: Boolean, hovered: Boolean, trackColor: Color, modifier: Modifier, mixed: Boolean = false) {
     val theme = OneConfigTheme.current
     val shape = theme.circleShape
     val rest = if (trackColor.isSpecified) trackColor else restTrackColor(theme)
-    val accentAlpha = animateFloatAsState(if (checked) 1f else 0f, Motion.tweenSpec(Motion.standard), label = "switchAccent")
-    val thumbProgress = animateFloatAsState(if (checked) 1f else 0f, Motion.spec(spring()), label = "switchThumb")
+    val accentAlpha = animateFloatAsState(switchProgress(checked, mixed), Motion.tweenSpec(Motion.standard), label = "switchAccent")
+    val thumbProgress = animateFloatAsState(switchProgress(checked, mixed), Motion.spec(spring()), label = "switchThumb")
     val border = animateColorAsState(
         if (hovered) theme.textColor.copy(alpha = TRACK_HOVER_ALPHA) else Color.Transparent,
         Motion.tweenSpec(Motion.standard),

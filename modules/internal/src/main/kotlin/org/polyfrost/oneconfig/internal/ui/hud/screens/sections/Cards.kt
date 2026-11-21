@@ -74,6 +74,7 @@ internal fun CardSection(
     vararg labels: String,
     checked: Boolean? = null,
     onCheckedChange: (Boolean) -> Unit = {},
+    mixed: Boolean = false,
     onReset: (() -> Unit)? = null,
     canReset: Boolean = true,
     collapsedByDefault: Boolean? = null,
@@ -81,12 +82,13 @@ internal fun CardSection(
 ) {
     if (!hudSearchMatches(query, title, *labels)) return
     val foldable = checked != null || collapsedByDefault != null
-    var expanded by remember { mutableStateOf(checked ?: (collapsedByDefault != true)) }
+    var expanded by remember { mutableStateOf(checked == true || mixed || (checked == null && collapsedByDefault != true)) }
     Accordion(
         title = title,
         expanded = !foldable || expanded || query.isNotEmpty(),
         onExpandedChange = if (foldable) ({ expanded = it }) else null,
         checked = checked,
+        mixed = mixed,
         onCheckedChange = {
             onCheckedChange(it)
             expanded = it
@@ -137,11 +139,14 @@ internal fun GridRow(
     }
 }
 
-/** [label] above its control */
+/** [label] above its control, with a note beside it while the control is [mixed] between several HUDs */
 @Composable
-internal fun LabeledControl(label: String, content: @Composable () -> Unit) {
+internal fun LabeledControl(label: String, mixed: Boolean = false, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(label, color = LocalTheme.current.textColor, fontSize = OneConfigTheme.typography.body.fontSize)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(label, color = LocalTheme.current.textColor, fontSize = OneConfigTheme.typography.body.fontSize)
+            if (mixed) Text("Mixed", color = LocalTheme.current.textColorSecondary, fontSize = 12.sp)
+        }
         content()
     }
 }
@@ -160,7 +165,12 @@ internal fun ControlRow(label: String, content: @Composable RowScope.() -> Unit)
 
 @Composable
 internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    ControlRow(label) { Switch(checked, onCheckedChange, label = label, stateLabel = true) }
+    SwitchRow(label, checked, false, onCheckedChange)
+}
+
+@Composable
+internal fun SwitchRow(label: String, checked: Boolean, mixed: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    ControlRow(label) { Switch(checked, onCheckedChange, label = label, stateLabel = true, mixed = mixed) }
 }
 
 /**

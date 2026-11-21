@@ -44,7 +44,7 @@ private class Entry(val hudClass: Class<out Hud>, val values: Map<String, Value>
 
 private class Layout(val owner: ConfigManager, val huds: Map<String, Entry>)
 
-private fun sameValue(a: Any?, b: Any?): Boolean = when {
+internal fun sameValue(a: Any?, b: Any?): Boolean = when {
     a is Float && b is Float -> abs(a - b) < FLOAT_TOLERANCE
     a is Map<*, *> && b is Map<*, *> ->
         a.size == b.size && a.all { (key, value) -> b.containsKey(key) && sameValue(value, b[key]) }
@@ -81,7 +81,7 @@ private fun forEachOption(tree: Tree, prefix: String = "", action: (String, Prop
     }
 }
 
-private fun comparable(prop: Property<*>): Any? {
+internal fun comparable(prop: Property<*>): Any? {
     val value = prop.get()
     if (value == null || WrappingUtils.isSimpleClass(prop.type)) return value
     return try {

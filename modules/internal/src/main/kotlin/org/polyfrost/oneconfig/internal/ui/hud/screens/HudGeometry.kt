@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.hud.screens
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.geometry.Offset
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudGroup
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 
 private const val MIN_VISIBLE_PX = 12f
@@ -17,9 +18,20 @@ internal fun selectionOrigin(huds: Collection<Hud>): Offset? {
     return Offset(huds.minOf { it.x }, huds.minOf { it.y })
 }
 
-internal fun moveHudsBy(huds: Collection<Hud>, dx: Float, dy: Float): Boolean {
-    if (huds.isEmpty()) return false
-    if (huds.any { it.locked }) {
+/**
+ * What of [huds] can be moved, the same as dragging them on the canvas
+ *
+ * Each HUD is judged as part of what a click on it picks at the level the user is working at, which is the
+ * group inside [entered] it sits in or the HUD alone. That is held only once all of it is locked, while a
+ * locked HUD in a group that is not rides along with it
+ */
+internal fun draggableHuds(huds: Collection<Hud>, entered: HudGroup? = HudDesignSession.enteredGroup): List<Hud> =
+    huds.filter { hud -> !unitOf(hud, entered).all { it.locked } }
+
+internal fun moveHudsBy(selection: Collection<Hud>, dx: Float, dy: Float): Boolean {
+    if (selection.isEmpty()) return false
+    val huds = draggableHuds(selection)
+    if (huds.isEmpty()) {
         notifyHudLocked()
         return false
     }

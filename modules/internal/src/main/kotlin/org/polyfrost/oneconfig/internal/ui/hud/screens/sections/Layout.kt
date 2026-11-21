@@ -39,6 +39,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.resetHudOptions
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.hud.screens.beginHudMove
 import org.polyfrost.oneconfig.internal.ui.hud.screens.designerSelection
+import org.polyfrost.oneconfig.internal.ui.hud.screens.draggableHuds
 import org.polyfrost.oneconfig.internal.ui.hud.screens.endHudMove
 import org.polyfrost.oneconfig.internal.ui.hud.screens.moveHudsBy
 import org.polyfrost.oneconfig.internal.ui.hud.screens.notifyHudLocked
@@ -265,7 +266,7 @@ fun Layout(hud: Hud?, query: String) {
 }
 
 @Composable
-private fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float) -> Unit) {
+internal fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float) -> Unit) {
     LabeledControl(label) {
         NumberField(value, { Snapshot.withMutableSnapshot { onChange(it) } }, range = 0f..100f, roundToDecimals = false, fractionDigits = 2, unit = "px", width = width, fontSize = 13.sp)
     }
@@ -273,18 +274,20 @@ private fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float)
 
 /** X and Y of the selection's top left corner, moving every selected HUD together, with [third] in the last column */
 @Composable
-private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit) {
+internal fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit) {
     HudEditorViewport.observe()
     val selection = designerSelection(hud)
-    val origin = selectionOrigin(selection) ?: Offset(hud.x, hud.y)
-    val locked = selection.any { it.locked }
+    // the fields read and move what a drag would, so a locked HUD that holds still does not count
+    val movable = { draggableHuds(selection).ifEmpty { selection } }
+    val origin = selectionOrigin(movable()) ?: Offset(hud.x, hud.y)
+    val locked = draggableHuds(selection).isEmpty()
     val screenW = HudManager.guiScreenWidth
     val screenH = HudManager.guiScreenHeight
     var moving by remember { mutableStateOf(false) }
     val startMove = {
         if (!moving) {
             moving = true
-            beginHudMove(selection)
+            beginHudMove(movable())
         }
     }
     val endMove = {
@@ -312,10 +315,10 @@ private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit)
             HudPositionTarget(hud, lockNotice) {
                 LabeledControl("X") {
                     NumberField(
-                        origin.x, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, v - it.x, 0f) } },
+                        origin.x, { v -> selectionOrigin(movable())?.let { moveHudsBy(selection, v - it.x, 0f) } },
                         range = -screenW..screenW * 2f, roundToDecimals = false, fractionDigits = 2, unit = "px", enabled = !locked,
                         scrub = true, width = col1, onScrubStart = startMove, onEditEnd = endMove,
-                        liveValue = { selectionOrigin(selection)?.x ?: origin.x }, commitOnType = false,
+                        liveValue = { selectionOrigin(movable())?.x ?: origin.x }, commitOnType = false,
                         fontSize = 13.sp,
                     )
                 }
@@ -325,10 +328,10 @@ private fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit)
             HudPositionTarget(hud, lockNotice) {
                 LabeledControl("Y") {
                     NumberField(
-                        origin.y, { v -> selectionOrigin(selection)?.let { moveHudsBy(selection, 0f, v - it.y) } },
+                        origin.y, { v -> selectionOrigin(movable())?.let { moveHudsBy(selection, 0f, v - it.y) } },
                         range = -screenH..screenH * 2f, roundToDecimals = false, fractionDigits = 2, unit = "px", enabled = !locked,
                         scrub = true, width = GridCol2, onScrubStart = startMove, onEditEnd = endMove,
-                        liveValue = { selectionOrigin(selection)?.y ?: origin.y }, commitOnType = false,
+                        liveValue = { selectionOrigin(movable())?.y ?: origin.y }, commitOnType = false,
                         fontSize = 13.sp,
                     )
                 }
