@@ -98,12 +98,12 @@ public object HudManager {
     /**
      * `true` while HUDs are being shown for editing or preview
      *
-     * That is while either the HUD editor or the main OneConfig UI is open
+     * That is while the HUD editor is open, or the main OneConfig UI while [previewInConfigUi] is on
      *
      * HUDs should render example content when this is set
      */
     @get:JvmName("isEditing")
-    public val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
+    public val isEditing: Boolean get() = isEditorOpen || isConfigUiPreviewing
 
     /** `true` only while the HUD editor screen itself is open */
     @Volatile public var isEditorOpen: Boolean = false
@@ -112,8 +112,16 @@ public object HudManager {
     /** `true` while OneConfig draws vanilla HUD elements off-screen to measure them for the HUD editor */
     @Volatile @JvmField public var isSamplingVanilla: Boolean = false
 
-    /** Set by the OneConfig UI screen while it is open so HUDs behind it still render as previews */
+    /** Set by the OneConfig UI screen while it is open, HUDs behind it render as previews while [previewInConfigUi] is on */
     @Volatile @JvmField public var isConfigUiOpen: Boolean = false
+
+    /** Whether the main OneConfig UI shows HUDs behind it as editable previews, synced from the OneConfig preferences */
+    @ApiStatus.Internal
+    @Volatile @JvmField public var previewInConfigUi: Boolean = true
+
+    /** `true` while the main OneConfig UI is open and shows HUDs behind it as editable previews */
+    @get:JvmName("isConfigUiPreviewing")
+    public val isConfigUiPreviewing: Boolean get() = isConfigUiOpen && previewInConfigUi
 
     @ExperimentalOneConfigUiApi
     @Volatile @JvmField public var partialTick: Float = 1f
@@ -181,7 +189,7 @@ public object HudManager {
 
     private var wasEditing = false
 
-    private val showingPreviews get() = isConfigUiOpen || isEditorOpen
+    private val showingPreviews get() = isConfigUiPreviewing || isEditorOpen
 
     @ApiStatus.Internal
     public val previewRevision: MutableIntState = mutableIntStateOf(0)

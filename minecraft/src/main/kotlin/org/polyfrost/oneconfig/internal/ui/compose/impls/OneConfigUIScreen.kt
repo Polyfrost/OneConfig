@@ -97,7 +97,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override val retainsScene: Boolean get() = this === sharedScreen
 
     // over the blur, legacy HUDs stay as sharp as the HUD previews next to them
-    override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null }
+    override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null && HudManager.isConfigUiPreviewing }
 
     override fun blurAlpha(): Float {
         if (!ThemeConfig.enableBackgroundBlur || ThemeConfig.reduceTransparency) return 0f

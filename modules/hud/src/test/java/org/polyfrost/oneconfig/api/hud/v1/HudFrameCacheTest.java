@@ -45,6 +45,7 @@ class HudFrameCacheTest {
     private float savedHeight;
     private boolean savedGuiOpen;
     private boolean savedConfigUiOpen;
+    private boolean savedPreviewInConfigUi;
 
     @BeforeEach
     void saveGlobals() {
@@ -52,6 +53,7 @@ class HudFrameCacheTest {
         savedHeight = HudManager.guiScreenHeight;
         savedGuiOpen = HudManager.isGuiScreenOpen;
         savedConfigUiOpen = HudManager.isConfigUiOpen;
+        savedPreviewInConfigUi = HudManager.previewInConfigUi;
     }
 
     @AfterEach
@@ -60,6 +62,7 @@ class HudFrameCacheTest {
         HudManager.guiScreenHeight = savedHeight;
         HudManager.isGuiScreenOpen = savedGuiOpen;
         HudManager.isConfigUiOpen = savedConfigUiOpen;
+        HudManager.previewInConfigUi = savedPreviewInConfigUi;
     }
 
     @Test
@@ -122,8 +125,23 @@ class HudFrameCacheTest {
         assertNotEquals(stamp, hud.getGeometryStamp$hud(), "a move still invalidates it");
         assertEquals(hud.getX(), hud.getFrameX());
 
+        HudManager.previewInConfigUi = true;
         HudManager.isConfigUiOpen = true;
         assertEquals(-1, hud.getGeometryStamp$hud(), "editing turns the cache off");
+    }
+
+    @Test
+    void menuWithoutPreviewsKeepsCacheOn() {
+        ConfigManager.active();
+        HudManager.guiScreenWidth = 960f;
+        HudManager.guiScreenHeight = 540f;
+        HudManager.isGuiScreenOpen = true;
+        HudManager.isConfigUiOpen = true;
+        HudManager.previewInConfigUi = false;
+        CacheHud hud = new CacheHud();
+
+        assertFalse(HudManager.INSTANCE.isEditing(), "the menu alone is not editing with previews turned off");
+        assertNotEquals(-1, hud.getGeometryStamp$hud(), "so the cache stays on like behind any other screen");
     }
 
     @Test

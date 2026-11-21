@@ -421,6 +421,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun instanceById (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static final fun instances ()Ljava/util/List;
 	public static final fun invalidate ()V
+	public final fun isConfigUiPreviewing ()Z
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z
 	public static final fun isSuppressed (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z

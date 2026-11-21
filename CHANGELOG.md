@@ -5,6 +5,12 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Edit HUDs From the Menu option under Preferences > HUD Editor. Turn it off to show HUDs live behind the OneConfig menu and only edit them in the HUD editor. It is on by default, which keeps the current behavior
+- API: `HudManager.isConfigUiPreviewing`, which is `true` while the OneConfig menu is open and shows HUDs behind it as previews
+
 ## [1.9.1] - 2026-11-22
 
 ### Added

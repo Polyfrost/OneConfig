@@ -12,6 +12,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
+import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
@@ -182,6 +183,13 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.hud_show_keybind_hints.description"
     )
     public static boolean showKeybindHints = true;
+
+    @Switch(
+        title = "oneconfig.preferences.hud_previews_in_menu.title",
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        description = "oneconfig.preferences.hud_previews_in_menu.description"
+    )
+    public static boolean hudPreviewsInMenu = true;
 
     @Switch(
         title = "oneconfig.preferences.hud_marquee_anim.title",
@@ -466,6 +474,12 @@ public class OneConfigConfig extends Config {
         hideIf("uiAmbienceVolume", "enableUIAmbience");
         hideIf("marqueeSelectionAnimDuration", "marqueeSelectionAnim");
         for (String option : KEYBINDS_PAGE_ONLY) getProperty(option).addMetadata("keybindsPageOnly", true);
+        addCallback(
+            "hudPreviewsInMenu", (Boolean v) -> {
+                HudManager.previewInConfigUi = v;
+                return false;
+            });
+        HudManager.previewInConfigUi = hudPreviewsInMenu;
         addCallback(
             "enableUIAmbience", (Boolean v) -> {
                 UiSounds.refreshAmbience();
