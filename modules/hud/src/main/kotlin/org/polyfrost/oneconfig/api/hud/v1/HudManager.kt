@@ -638,6 +638,7 @@ public object HudManager {
         } else if (delete && treeId != null) {
             cleanup { ConfigManager.active().delete(treeId) }
             cleanup { CompatSnapshots.untrack(treeId) }
+            cleanup { hud.groupPath = "" }
         }
         // back to being a plain provider so a single-instance HUD can be made again later
         cleanup { hud.detachTree() }
