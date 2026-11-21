@@ -47,9 +47,10 @@
   },
   "breaks": {
     "chattweaks": "<1.2.3",
-    "crashpatch": "<2.2.3",
-    "evergreenhud": "<3.9.13",
+    "crashpatch": "<2.3.0",
+    "evergreenhud": "<3.10.0",
     "polydium": "<1.2.0",
-    "polyplus": "<2.0.0"
+    "polyplus": "<2.3.0",
+    "vanillahud": "<3.5.11"
   }
 }
