@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
+import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.api.isLockExempt
 import org.polyfrost.oneconfig.internal.ui.api.locksOptions
@@ -76,8 +77,10 @@ fun SearchResultsScreen(query: String, columns: Int = MOD_GRID_COLUMNS) {
         searchedQuery = query
     }
 
+    // Favorite mods first, keeping the provider's ranking within each group (stable sort)
     val matchingMods: List<ConfigData> = remember(results) {
         results[null].orEmpty().map { it.payload }.filterIsInstance<ConfigData>()
+            .sortedWith(compareByDescending<ConfigData> { ModFavorites.isFavorite(it.id) })
     }
     // grouped by owning mod in order of first appearance so a mod is headed once while keeping its best
     // hit's rank and accordions collapse into one row each
