@@ -29,7 +29,6 @@ subprojects {
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.polyfrost.org/snapshots")
         google()
-        mavenLocal()
     }
 
     configure<JavaPluginExtension> {
