@@ -247,7 +247,7 @@ public class OneConfig implements ClientModInitializer {
         HudManager.targetPixelWidth = Platform.screen().viewportWidth();
         HudManager.targetPixelHeight = Platform.screen().viewportHeight();
 
-        if (HudManager.isConfigUiOpen) {
+        if (HudManager.INSTANCE.isConfigUiPreviewing()) {
             HudManager.INSTANCE.prepare(sw, sh);
             HudManager.invalidate();
             return;
@@ -264,14 +264,14 @@ public class OneConfig implements ClientModInitializer {
         *///?}
     }
 
-    /** Submits the legacy HUDs (unless the OneConfig menu draws them) and the GlHost HUD blit into the vanilla HUD */
+    /** Submits the legacy HUDs (unless the OneConfig menu draws them as previews) and the GlHost HUD blit into the vanilla HUD */
     //~ if = 1.8.9 '(GuiGraphicsExtractor graphics)' -> '()'
     public static void submitHud(GuiGraphicsExtractor graphics) {
-        if (!HudManager.isConfigUiOpen || !GlHost.INSTANCE.getDrawsGuiOverScreen()) {
+        if (!HudManager.INSTANCE.isConfigUiPreviewing() || !GlHost.INSTANCE.getDrawsGuiOverScreen()) {
             //~ if = 1.8.9 '(graphics)' -> '()'
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
         }
-        if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
+        if (GlHost.INSTANCE.unavailableReason() != null || HudManager.INSTANCE.isConfigUiPreviewing()) return;
         //? if >= 1.21.11 {
         BlazeHud.render(graphics, OneConfigComposeHooks.drawHuds);
         //?} else {

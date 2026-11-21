@@ -47,6 +47,8 @@
   "oneconfig.preferences.hud_shortcuts_alt_keybind.description": "A second shortcut for opening the list of keyboard shortcuts in the HUD editor.",
   "oneconfig.preferences.hud_show_keybind_hints.title": "Show Keybind Hints",
   "oneconfig.preferences.hud_show_keybind_hints.description": "Shows the keyboard shortcut next to each action in the HUD editor context menu.",
+  "oneconfig.preferences.hud_previews_in_menu.title": "Edit HUDs From the Menu",
+  "oneconfig.preferences.hud_previews_in_menu.description": "Shows HUDs behind the OneConfig menu as previews you can move. Turn off to show them live, and only edit them in the HUD editor.",
   "oneconfig.preferences.hud_marquee_anim.title": "Selection Box Animation",
   "oneconfig.preferences.hud_marquee_anim.description": "Fades the selection rectangle in and out when drag-selecting HUDs in the editor.",
   "oneconfig.preferences.hud_marquee_anim_duration.title": "Selection Box Animation Duration (ms)",
