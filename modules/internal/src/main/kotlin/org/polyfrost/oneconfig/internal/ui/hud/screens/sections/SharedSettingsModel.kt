@@ -175,6 +175,9 @@ internal fun drawsAppearance(hud: Hud): Boolean = hud !is LegacyHudMarker
 
 private fun mergesBackground(hud: Hud): Boolean = hud !is LegacyHudMarker && hud.canMergeBackground()
 
+private fun hasBorderOptions(hud: Hud): Boolean =
+    hud !is LegacyHudMarker && hud.hasBuiltInBorderOptions && hud.tree?.getProp("borderEnabled") != null
+
 private inline fun <reified E : Enum<E>> enumChoice(
     id: String,
     label: String,
@@ -262,6 +265,23 @@ internal object SharedOptions {
             { it.keepBgWhenHidden }, { h, v -> h.keepBgWhenHidden = v },
             appliesTo = ::mergesBackground, shownWhen = { it.showBackground && it.mergeBackground },
         ),
+        SharedToggle(
+            "borderEnabled", "Border", SharedSection.Background,
+            { it.borderEnabled }, { h, v -> h.borderEnabled = v },
+            appliesTo = ::hasBorderOptions,
+        ),
+        SharedAmount(
+            "borderSize", "Border size", SharedSection.Background, 0f, 10f, 0.5f,
+            { it.borderSize }, { h, v -> h.borderSize = v },
+            appliesTo = ::hasBorderOptions, shownWhen = { it.borderEnabled },
+        ),
+        SharedColor(
+            "borderColor", "Border color", SharedSection.Background,
+            { it.borderColor }, { h, v -> h.borderColor = v },
+            { it.borderChroma }, { h, v -> h.borderChroma = v },
+            { it.borderChromaSpeed }, { h, v -> h.borderChromaSpeed = v },
+            appliesTo = ::hasBorderOptions, shownWhen = { it.borderEnabled },
+        ),
         SharedToggle("showInF3", "Show in F3 Screen", SharedSection.Visibility, { it.showInF3 }, { h, v -> h.showInF3 = v }),
         SharedToggle("showInTab", "Show in Tab List", SharedSection.Visibility, { it.showInTab }, { h, v -> h.showInTab = v }),
         SharedToggle("showInScreens", "Show in GUIs", SharedSection.Visibility, { it.showInScreens }, { h, v -> h.showInScreens = v }),
@@ -334,7 +354,7 @@ internal object SharedProperties {
 
     /** Everything the built-in options already cover, in case a HUD does not hide its own copy */
     private val BUILT_IN_OPTIONS: Set<String> by lazy {
-        SharedOptions.all.mapTo(HashSet()) { it.id } + listOf("textBold", "textItalic", "textUnderline", "showShadow", "fullShadow", "mergeBackground", "mergeDiagonally")
+        SharedOptions.all.mapTo(HashSet()) { it.id } + listOf("textBold", "textItalic", "textUnderline", "showShadow", "fullShadow", "mergeBackground", "mergeDiagonally", "borderChroma", "borderChromaSpeed")
     }
 
     private fun visualizerClass(prop: Property<*>): Class<*>? = when (val raw = prop.getMetadata<Any?>("visualizer")) {
