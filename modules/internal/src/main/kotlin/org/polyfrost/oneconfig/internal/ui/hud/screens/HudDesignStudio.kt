@@ -666,7 +666,7 @@ private fun selectedGroupsIn(selected: Set<Hud>, entered: HudGroup?): List<HudGr
 private fun groupableCount(units: List<Collection<Hud>>): Int = units.count { unit -> unit.all(HudGroups::groupable) }
 
 /** [selected] split into what a click would pick: each fully selected group as a block and every other HUD alone */
-private fun selectionUnits(selected: Set<Hud>, entered: HudGroup?): List<Collection<Hud>> {
+internal fun selectionUnits(selected: Set<Hud>, entered: HudGroup?): List<Collection<Hud>> {
     val groups = selectedGroupsIn(selected, entered)
     val out = ArrayList<Collection<Hud>>(groups.size + selected.size)
     for (group in groups) out.add(group.huds)

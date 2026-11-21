@@ -74,7 +74,7 @@ object HudDesignSession {
         if (!HudManager.isEditorOpen) return false
         val huds = activeSelection
         if (huds.isEmpty()) return false
-        if (huds.any { it.locked }) return false
+        if (selectionUnits(huds.toSet(), enteredGroup).any { unit -> unit.all { it.locked } }) return false
         if (huds.none(::canDuplicateHud)) return false
         val dups = duplicateHudGroup(huds)
         if (dups.isEmpty()) return false
