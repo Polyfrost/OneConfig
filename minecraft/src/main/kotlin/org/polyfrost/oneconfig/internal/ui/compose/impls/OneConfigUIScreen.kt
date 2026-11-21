@@ -34,6 +34,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.PolyCompose
 import org.polyfrost.compose.host.LocalComposeOptions
+import org.polyfrost.compose.minecraft.mc.McItemIcons
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
@@ -476,6 +477,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
+            McItemIcons.renderPending()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //? if > 1.8.9 {
