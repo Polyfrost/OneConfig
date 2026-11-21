@@ -46,9 +46,12 @@
     "polycompose": ">=${polycompose_version}"
   },
   "breaks": {
+    "autotext": "<0.1.1",
     "chattweaks": "<1.2.3",
     "crashpatch": "<2.3.0",
     "evergreenhud": "<3.10.0",
+    "hybedwars": "<1.2.1",
+    "legacyskyblock": "<2.10.1",
     "polydium": "<1.2.0",
     "polyplus": "<2.3.0",
     "vanillahud": "<3.5.11"
