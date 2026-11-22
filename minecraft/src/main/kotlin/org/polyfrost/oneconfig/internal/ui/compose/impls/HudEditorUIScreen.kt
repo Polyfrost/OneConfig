@@ -19,6 +19,7 @@ import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.BackdropUsers
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
+import org.polyfrost.compose.minecraft.mc.McItemIcons
 import org.polyfrost.compose.minecraft.screen.ComposeScreen
 import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks
 //? if >= 1.21.11
@@ -73,7 +74,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen(options = OneConfi
         HudManager.inWorld = false
         HudManager.guiScreenWidth = sw
         HudManager.guiScreenHeight = sh
-        return HudManager.beginFrame(sw, sh, null, true, true)
+        return HudManager.beginFrame(sw, sh, McItemIcons::renderPending, true, true)
     }
 
     // in a world the game's HUD pass draws the HUDs before the blur, so off it they're drawn the same way here

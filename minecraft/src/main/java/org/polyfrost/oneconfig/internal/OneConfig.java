@@ -67,6 +67,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks;
 //? if >= 1.21.11
 import org.polyfrost.compose.minecraft.render.blaze.BlazeHud;
 import org.polyfrost.compose.minecraft.render.gl.GlHost;
+import org.polyfrost.compose.minecraft.mc.McItemIcons;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
@@ -252,14 +253,15 @@ public class OneConfig implements ClientModInitializer {
 
         if (HudManager.isConfigUiOpen) {
             HudManager.INSTANCE.prepare(sw, sh);
+            McItemIcons.renderPending();
             HudManager.invalidate();
             return;
         }
         //? if >= 1.21.11 {
-        if (HudManager.INSTANCE.beginFrame(sw, sh, null, true, true)) BlazeHud.markDirty();
+        if (HudManager.INSTANCE.beginFrame(sw, sh, McItemIcons::renderPending, true, true)) BlazeHud.markDirty();
         //?} else {
         /*//~ if = 1.8.9 'GlHost.vanillaPipeline' -> 'true'
-        if (HudManager.INSTANCE.beginFrame(sw, sh, null, false, GlHost.vanillaPipeline)) {
+        if (HudManager.INSTANCE.beginFrame(sw, sh, McItemIcons::renderPending, false, GlHost.vanillaPipeline)) {
             GlHost.INSTANCE.drawHudGl((ctx, volatileCtx) -> {
                 HudManager.INSTANCE.render(ctx, sw, sh, volatileCtx);
                 return Unit.INSTANCE;

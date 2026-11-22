@@ -40,6 +40,7 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.composables.border
+import org.polyfrost.compose.host.LocalContentScale
 import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.runtime.PolyComposeRuntime
@@ -1777,7 +1778,7 @@ public abstract class Hud(
         get() = _runtime ?: PolyComposeRuntime().also {
             _runtime = it
             it.setContent {
-                CompositionLocalProvider(LocalHud provides this) {
+                CompositionLocalProvider(LocalHud provides this, LocalContentScale provides effectiveScale) {
                     Content()
                 }
             }
