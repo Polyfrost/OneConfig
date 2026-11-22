@@ -3,8 +3,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -135,13 +133,11 @@ public fun TooltipPopup(text: String, placement: TooltipPlacement, maxWidth: Dp)
 
 @Composable
 internal fun rememberTooltipShown(wanted: Boolean, delayMillis: Long = TooltipDefaults.delayMillis): Boolean {
-    var shown by remember { mutableStateOf(false) }
-    LaunchedEffect(wanted, delayMillis) {
-        if (wanted) {
+    var shown by remember(wanted) { mutableStateOf(false) }
+    if (wanted) {
+        LaunchedEffect(delayMillis) {
             if (delayMillis > 0L) delay(delayMillis)
             shown = true
-        } else {
-            shown = false
         }
     }
     return shown && wanted
@@ -257,8 +253,8 @@ private fun TooltipHost(
     hideWhileChildHovered: Boolean,
     content: @Composable () -> Unit,
 ) {
-    val source = remember { MutableInteractionSource() }
-    val hovered by source.collectIsHoveredAsState()
+    val source = remember { InteractionStateSource() }
+    val hovered = source.hovered
     var focused by remember { mutableStateOf(false) }
     val keyboard = isKeyboardMode()
     val outer = LocalTooltipChildren.current

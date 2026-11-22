@@ -4,9 +4,6 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -221,10 +218,10 @@ internal fun IconButtonFrame(
     glyph: @Composable (Color) -> Unit,
 ) {
     val theme = OneConfigTheme.current
-    val source = interactionSource ?: remember { MutableInteractionSource() }
-    val hovered by source.collectIsHoveredAsState()
-    val pressed by source.collectIsPressedAsState()
-    val focused by source.collectIsFocusedAsState()
+    val source = interactionSource ?: remember { InteractionStateSource() }
+    val hovered = source.observeHovered()
+    val pressed = source.observePressed()
+    val focused = source.observeFocused()
     val keyboard = isKeyboardMode()
     val lit = enabled && (hovered || active)
     val held = enabled && active

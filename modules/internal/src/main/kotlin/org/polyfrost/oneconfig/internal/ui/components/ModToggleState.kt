@@ -2,14 +2,13 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 import org.polyfrost.oneconfig.api.ui.v1.ModToggles
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
@@ -21,7 +20,7 @@ import java.util.function.Predicate
 internal fun rememberModEnabled(toggle: ModToggle?): MutableState<Boolean> {
     val revision = ModToggles.revision
     val flips = ModToggleFlips.count
-    val state = remember(toggle, revision, flips) { mutableStateOf(toggle?.isEnabled() ?: true) }
+    val state = remember(toggle, revision, flips) { ModEnabledState(toggle) }
     // a switch that is one of the mod's own options changes without ModToggles hearing of it
     val property = if (LocalShell.current.warming) null else (toggle as? PropertyModToggle)?.property
     DisposableEffect(System.identityHashCode(property), state) {
@@ -29,10 +28,34 @@ internal fun rememberModEnabled(toggle: ModToggle?): MutableState<Boolean> {
         property?.addCallback(listener)
         onDispose { property?.removeCallback(listener) }
     }
-    LaunchedEffect(toggle, state) {
-        snapshotFlow { toggle?.isEnabled() ?: true }.collect { state.value = it }
-    }
     return state
+}
+
+@Stable
+private class ModEnabledState(toggle: ModToggle?) : MutableState<Boolean> {
+    private val observed = derivedStateOf { toggle?.isEnabled() ?: true }
+    private var written by mutableIntStateOf(pack(observed.value, observed.value))
+
+    override var value: Boolean
+        get() {
+            val current = observed.value
+            val bits = written
+            return if (current != ((bits and OBSERVED_BIT) != 0)) current else (bits and VALUE_BIT) != 0
+        }
+        set(value) {
+            written = pack(value, observed.value)
+        }
+
+    override fun component1(): Boolean = value
+
+    override fun component2(): (Boolean) -> Unit = { value = it }
+
+    private companion object {
+        const val VALUE_BIT = 1
+        const val OBSERVED_BIT = 2
+
+        fun pack(value: Boolean, observed: Boolean): Int = (if (value) VALUE_BIT else 0) or (if (observed) OBSERVED_BIT else 0)
+    }
 }
 
 internal object ModToggleFlips {

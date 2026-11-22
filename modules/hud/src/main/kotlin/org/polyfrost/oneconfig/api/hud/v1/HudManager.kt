@@ -686,8 +686,8 @@ public object HudManager {
                 if (s > 0f) s * scale else return false
             }
         }
-        out[offset] = hud.x
-        out[offset + 1] = hud.y
+        out[offset] = hud.frameX
+        out[offset + 1] = hud.frameY
         out[offset + 2] = w
         out[offset + 3] = h
         return true
@@ -706,7 +706,103 @@ public object HudManager {
     @ApiStatus.Internal
     public fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
 
-    internal fun pointerOrder(): List<Hud> = zOrderedByBounds(activeInstances, false)
+    private var pointerHuds = arrayOfNulls<Hud>(0)
+    private var pointerStamps = IntArray(0)
+    private var pointerHas = BooleanArray(0)
+    private var pointerBounds = FloatArray(0)
+    private var pointerOrderHas = BooleanArray(0)
+    private var pointerOrderBounds = FloatArray(0)
+    private var pointerCount = -1
+    private var pointerCache: List<Hud> = emptyList()
+    private val pointerScratch = FloatArray(4)
+
+    internal fun pointerOrder(): List<Hud> {
+        val list = activeInstances
+        val n = list.size
+        if (pointerHuds.size < n) {
+            pointerHuds = arrayOfNulls(n)
+            pointerStamps = IntArray(n)
+            pointerHas = BooleanArray(n)
+            pointerBounds = FloatArray(n * 4)
+            pointerOrderHas = BooleanArray(n)
+            pointerOrderBounds = FloatArray(n * 4)
+            pointerCount = -1
+        }
+        var same = pointerCount == n
+        pointerCount = -1
+        val b = pointerScratch
+        val bounds = pointerBounds
+        for (i in 0 until n) {
+            val hud = list[i]
+            val stamp = if (hud is LegacyHudMarker) -1 else hud.geometryStamp
+            if (same && pointerHuds[i] === hud && stamp != -1 && pointerStamps[i] == stamp) continue
+            val has = fillBounds(hud, b, 0)
+            pointerStamps[i] = stamp
+            val o = i * 4
+            if (same && (pointerHuds[i] !== hud || pointerHas[i] != has || has && (
+                    !bounds[o].sameBound(b[0]) || !bounds[o + 1].sameBound(b[1]) ||
+                    !bounds[o + 2].sameBound(b[2]) || !bounds[o + 3].sameBound(b[3])))
+            ) {
+                same = false
+            }
+            pointerHuds[i] = hud
+            pointerHas[i] = has
+            if (has) {
+                bounds[o] = b[0]
+                bounds[o + 1] = b[1]
+                bounds[o + 2] = b[2]
+                bounds[o + 3] = b[3]
+            }
+        }
+        if (same) {
+            pointerCount = n
+            return pointerCache
+        }
+        val has = pointerHas
+        val depth = IntArray(n)
+        for (i in 0 until n) {
+            if (!has[i]) continue
+            val oi = i * 4
+            for (j in 0 until n) {
+                if (i == j || !has[j]) continue
+                val oj = j * 4
+                if (encloses(bounds, oj, oi) && (!encloses(bounds, oi, oj) || j < i)) depth[i]++
+            }
+        }
+        var max = 0
+        for (i in 0 until n) if (depth[i] > max) max = depth[i]
+        val out = ArrayList<Hud>(n)
+        val orderHas = pointerOrderHas
+        val orderBounds = pointerOrderBounds
+        for (d in 0..max) {
+            for (i in 0 until n) {
+                if (depth[i] != d) continue
+                val k = out.size
+                out.add(list[i])
+                orderHas[k] = has[i]
+                val o = i * 4
+                val ok = k * 4
+                orderBounds[ok] = bounds[o]
+                orderBounds[ok + 1] = bounds[o + 1]
+                orderBounds[ok + 2] = bounds[o + 2]
+                orderBounds[ok + 3] = bounds[o + 3]
+            }
+        }
+        pointerCache = out
+        pointerCount = n
+        return out
+    }
+
+    internal fun pointerBody(index: Int, out: FloatArray): Boolean {
+        if (index >= pointerCache.size || !pointerOrderHas[index]) return false
+        val o = index * 4
+        val bounds = pointerOrderBounds
+        out[0] = bounds[o]
+        out[1] = bounds[o + 1]
+        out[2] = bounds[o + 2]
+        out[3] = bounds[o + 3]
+        return true
+    }
 
     private fun zOrdered(list: List<Hud>, bounds: (Hud) -> FloatArray?): List<Hud> {
         val n = list.size

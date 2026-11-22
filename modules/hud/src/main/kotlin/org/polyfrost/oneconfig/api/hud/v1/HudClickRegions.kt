@@ -344,7 +344,7 @@ public object HudClickInput {
         val byHud = snapshot() ?: return null
         val bit = 1 shl button.ordinal
         val order = HudManager.pointerOrder()
-        val body = FloatArray(4)
+        val body = bodyScratch
         for (i in order.size - 1 downTo 0) {
             val hud = order[i]
             val list = byHud[hud]
@@ -354,7 +354,7 @@ public object HudClickInput {
                     if (region.consumes && region.buttons and bit != 0 && hits(region)) return region
                 }
             }
-            if (coversPointer(hud, body)) return null
+            if (coversPointer(hud, i, body)) return null
         }
         return null
     }
@@ -363,7 +363,7 @@ public object HudClickInput {
         val byHud = snapshot() ?: return null
         var found: MutableSet<Region>? = null
         val order = HudManager.pointerOrder()
-        val body = FloatArray(4)
+        val body = bodyScratch
         for (i in order.size - 1 downTo 0) {
             val hud = order[i]
             val list = byHud[hud]
@@ -377,7 +377,7 @@ public object HudClickInput {
                     if (region.consumes) blocked = true
                 }
             }
-            if (blocked || coversPointer(hud, body)) break
+            if (blocked || coversPointer(hud, i, body)) break
         }
         return found
     }
@@ -399,9 +399,11 @@ public object HudClickInput {
         return false
     }
 
-    private fun coversPointer(hud: Hud, bounds: FloatArray): Boolean {
+    private val bodyScratch = FloatArray(4)
+
+    private fun coversPointer(hud: Hud, index: Int, bounds: FloatArray): Boolean {
         if (!hud.isVisible.value) return false
-        if (!HudManager.bodyBounds(hud, bounds)) return false
+        if (!HudManager.pointerBody(index, bounds)) return false
         val px = pointerX
         val py = pointerY
         if (px.isNaN() || py.isNaN()) return false

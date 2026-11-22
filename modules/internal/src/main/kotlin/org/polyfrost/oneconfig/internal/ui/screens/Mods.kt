@@ -4,9 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.interaction.InteractionSource
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -84,6 +81,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.InteractionStateSource
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
@@ -596,7 +594,7 @@ fun ModCard(
     hoverHint: Boolean = true,
     interactive: Boolean = true,
 ) {
-    val interactionSource = rememberInteractionSource()
+    val interactionSource = remember { InteractionStateSource() }
     val footerInteractions = rememberInteractionSource()
     val theme = LocalTheme.current
 
@@ -836,13 +834,13 @@ fun ModCard(
 private fun FavoriteStar(
     mod: ConfigData,
     favorite: Boolean,
-    cardInteractions: InteractionSource,
+    cardInteractions: InteractionStateSource,
     hoverHint: Boolean,
     interactive: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val theme = LocalTheme.current
-    val cardHovered by cardInteractions.collectIsHoveredAsState()
+    val cardHovered = cardInteractions.hovered
     val color by Motion.animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
     CardCornerToggle(
         icon = if (favorite) "star-filled" else "star",
@@ -860,12 +858,12 @@ private fun FavoriteStar(
 @Composable
 private fun HideToggle(
     mod: ConfigData,
-    cardInteractions: InteractionSource,
+    cardInteractions: InteractionStateSource,
     interactive: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val hidden = ModHidden.isHidden(mod.id)
-    val cardHovered by cardInteractions.collectIsHoveredAsState()
+    val cardHovered = cardInteractions.hovered
     CardCornerToggle(
         icon = if (hidden) "eye-off" else "eye",
         label = if (hidden) translated("oneconfig.mods.menu.show", "Show mod") else translated("oneconfig.mods.menu.hide", "Hide mod"),
@@ -889,8 +887,8 @@ private fun CardCornerToggle(
     shape: Shape = IconButtonDefaults.shape(IconButtonStyle.Ghost),
     onClick: () -> Unit,
 ) {
-    val source = remember { MutableInteractionSource() }
-    val hovered by source.collectIsHoveredAsState()
+    val source = remember { InteractionStateSource() }
+    val hovered = source.hovered
     val emphasis by Motion.animateFloatAsState(if (emphasized || hovered) 1f else CardToggleHintAlpha)
     val toggleModifier = modifier
         .size(CardToggleSize)
@@ -926,6 +924,7 @@ private fun cardCornerShape(): Shape {
     val corner = (outer - CardToggleInset).coerceAtLeast(inner)
     return remember(corner, inner) { RoundedCornerShape(topStart = corner, topEnd = inner, bottomEnd = inner, bottomStart = inner) }
 }
+
 
 private val CardToggleInset = 4.dp
 private val CardToggleSize = 24.dp
