@@ -59,6 +59,15 @@ class HudEditorUIScreen private constructor() : ComposeScreen(options = OneConfi
             screen.enteredFromOneConfig = fromOneConfig
             return screen
         }
+
+        /**
+         * Makes the editor build its scene anew at its next open, as the one it keeps is of the HUD kinds it was
+         * built with
+         */
+        @JvmStatic
+        fun forgetScene() {
+            instance?.disposeRetainedScene()
+        }
     }
 
     @Volatile private var everOpened = false

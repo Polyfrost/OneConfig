@@ -357,7 +357,7 @@ class HudProfileIsolationTest {
 
             ConfigManager.openProfile(PROFILE);
             putBack.run();
-            HudManager.INSTANCE.reloadForNewProviders();
+            HudManager.INSTANCE.syncWithMods(id -> false);
 
             assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size());
             assertFalse(switched().getHidden(), "it must get this profile's settings, not the ones it went off with");
@@ -369,6 +369,45 @@ class HudProfileIsolationTest {
         } finally {
             HudManager.INSTANCE.unregister(provider, true, true);
         }
+    }
+
+    @Test
+    void hudPutBackIsDisposedAndLoadedFromItsFile() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+
+            Runnable putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+            int disposed = SwitchedHud.disposed;
+            putBack.run();
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertEquals(disposed + 1, SwitchedHud.disposed, "nothing else disposes what the HUD put back last drew with");
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size());
+            assertTrue(switched().getHidden(), "it must come back with the settings it went off with");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void wrappedHudIsTakenOutWhileItsModIsOff() throws Exception {
+        launch();
+        new ModWrapper().register();
+        Hud hud = HudManager.INSTANCE.getActiveInstances().stream()
+                .filter(h -> ModWrapper.MOD.equals(h.getConfigId())).findFirst().orElseThrow();
+
+        HudManager.INSTANCE.syncWithMods(ModWrapper.MOD::equals);
+        assertFalse(HudManager.INSTANCE.getActiveInstances().contains(hud),
+                "a HUD that draws through a mod that is off must not stay active");
+
+        HudManager.INSTANCE.syncWithMods(id -> false);
+        assertTrue(HudManager.INSTANCE.getActiveInstances().contains(hud),
+                "only the mod's compat could make it again, so the same HUD must come back");
     }
 
     @Test
@@ -591,6 +630,19 @@ class HudProfileIsolationTest {
         }
     }
 
+    static class ModWrapper extends TestWrapper {
+        static final String MOD = "test-wrapped-mod";
+
+        ModWrapper() {
+            setId("test-wrapped-mod-hud");
+        }
+
+        @Override
+        public String getModId() {
+            return MOD;
+        }
+    }
+
     static class CallbackHud extends TextHud {
         static int positionCallbacks = 0;
 
@@ -714,9 +766,16 @@ class HudProfileIsolationTest {
     static class SwitchedHud extends TextHud {
         static int made = 0;
 
+        static int disposed = 0;
+
         SwitchedHud() {
             super("test-switched", "Test Switched HUD", Hud.Category.getINFO(), "", "");
             made++;
+        }
+
+        @Override
+        public void remove() {
+            disposed++;
         }
 
         @Override

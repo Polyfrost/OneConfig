@@ -63,6 +63,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
+import java.util.function.Predicate
 
 internal fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
 
@@ -73,7 +74,10 @@ public object HudManager {
     private val unsupportedHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
     // classes registered and not unregistered here, which still names a provider that Hotwire took out of hudProviders
     private val registeredHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
-    private var loadedProviders: Set<Class<out Hud>> = emptySet()
+    // by name, as Hotwire takes the classes of a mod it turns off out of any collection
+    private var loadedProviders: Set<String> = emptySet()
+    // wrapped HUDs of mods that Hotwire turned off, kept as only their mod's compat could make them again
+    private val parked = ArrayList<Hud>()
 
     /**
      * The name a HUD's class is saved under, which is not its own while Hotwire runs an update of a mod as a copy
@@ -494,29 +498,6 @@ public object HudManager {
         for (hud in huds) register(hud)
     }
 
-    @JvmStatic
-    public fun register(hud: Hud, configId: String) {
-        hud.configId = configId
-        register(hud)
-    }
-
-    /**
-     * Registers a HUD under [configId] and associates a menu [icon] with that id
-     *
-     * The icon is used for the HUD library per-mod icon column
-     *
-     * [icon] is either an OC icon name such as `"combat"` resolved under `assets/oneconfig/ico/`
-     * or a classpath or absolute resource path such as `"/assets/yourmod/icon.svg"`
-     *
-     * Lets HUD-only mods set a menu icon without registering a matching
-     * [org.polyfrost.oneconfig.api.config.v1.Config]
-     */
-    @JvmStatic
-    public fun register(hud: Hud, configId: String, icon: String) {
-        hudIcons[configId] = icon
-        register(hud, configId)
-    }
-
     @ExperimentalOneConfigUiApi
     @JvmStatic
     public fun register(hud: Hud, configId: String? = null, icon: String? = null, supported: () -> Boolean = { true }) {
@@ -546,6 +527,29 @@ public object HudManager {
                 }
             }
         }
+    }
+
+    @JvmStatic
+    public fun register(hud: Hud, configId: String) {
+        hud.configId = configId
+        register(hud)
+    }
+
+    /**
+     * Registers a HUD under [configId] and associates a menu [icon] with that id
+     *
+     * The icon is used for the HUD library per-mod icon column
+     *
+     * [icon] is either an OC icon name such as `"combat"` resolved under `assets/oneconfig/ico/`
+     * or a classpath or absolute resource path such as `"/assets/yourmod/icon.svg"`
+     *
+     * Lets HUD-only mods set a menu icon without registering a matching
+     * [org.polyfrost.oneconfig.api.config.v1.Config]
+     */
+    @JvmStatic
+    public fun register(hud: Hud, configId: String, icon: String) {
+        hudIcons[configId] = icon
+        register(hud, configId)
     }
 
     @ExperimentalOneConfigUiApi
@@ -2002,17 +2006,38 @@ public object HudManager {
     }
 
     /**
-     * Reloads the active profile's HUDs if providers are registered that its last load did not see, which is how
-     * Hotwire leaves the ones of a mod it turned back on after the profile changed
+     * Brings the HUDs in line with the mods that Hotwire turned off or on. It takes a mod's providers and HUDs out of
+     * the collections here and puts the same ones back, so the active profile's HUDs are loaded again when the
+     * providers are not the ones its last load saw, which also disposes what a HUD that was put back last drew with
      *
-     * The instances put back with them belong to the profile the mod went off in and are dropped without being saved
+     * A HUD that wraps something of a mod is not Hotwire's to take out, and is kept aside while [isOff] holds for
+     * its mod
+     *
+     * @return whether any HUD changed
      */
     @ApiStatus.Internal
-    public fun reloadForNewProviders() {
-        if (!init || loadedProviders.containsAll(hudProviders.keys)) return
-        pendingProfileReload.set(ProfileReload(ConfigManager.activeProfile(), saveCurrent = true))
-        applyPendingProfileReload()
+    public fun syncWithMods(isOff: Predicate<String>): Boolean {
+        if (!init) return false
+        val leaving = activeInstances.filter { it is LegacyHudMarker && it.configId?.let(isOff::test) == true }
+        val returning = parked.filter { it.configId?.let(isOff::test) != true }
+        activeInstances.removeAll(leaving.toSet())
+        parked.addAll(leaving)
+        parked.removeAll(returning.toSet())
+        activeInstances.addAll(returning)
+        if (loadedProviders != providerNames()) {
+            pendingProfileReload.set(ProfileReload(ConfigManager.activeProfile(), saveCurrent = true))
+            applyPendingProfileReload()
+        } else if (leaving.isNotEmpty() || returning.isNotEmpty()) {
+            instancesRevision.intValue++
+            revision++
+            invalidate()
+        } else {
+            return false
+        }
+        return true
     }
+
+    private fun providerNames(): Set<String> = hudProviders.keys.mapTo(HashSet()) { it.name }
 
     private fun teardownForProfile(profile: String) {
         val kept = ArrayList<Hud>(activeInstances.size)
@@ -2272,7 +2297,7 @@ public object HudManager {
         }
 
         if (registryChanged) saveRegistry()
-        loadedProviders = HashSet(hudProviders.keys)
+        loadedProviders = providerNames()
 
         try {
             HudGroups.applyDefaults()

@@ -30,8 +30,10 @@ import dev.moon.hotwire.api.HotwireApi;
 import dev.moon.hotwire.api.ModLifecycleListener;
 import dev.moon.hotwire.api.ModState;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
@@ -40,11 +42,13 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImpl;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
+import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 
 /**
  * OneConfig's part in Hotwire turning mods off and on, adding and updating them while the game runs. Hotwire takes a
  * mod's objects out of OneConfig's collections and puts the same ones back itself, so what is left is what needs to
- * know about profiles and about when new configs are initialized. Every call comes on the game thread.
+ * know about profiles, about when new configs are initialized, and what is worked out from the mods that are there.
+ * Every call comes on the game thread, and none while OneConfig itself is off.
  * <br>
  * This is the only class that names Hotwire's types, so it must only be loaded when Hotwire is installed.
  */
@@ -75,14 +79,20 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         }
     }
 
-    // by what is out of place rather than by which mods came back, as their objects only are if the profile changed
+    // Hotwire leaves the HUDs and mod cards alone after an off once OneConfig's listener has this method
+    @Override
+    public void finishOff(List<String> ids) {
+        try {
+            sync(false);
+        } catch (Throwable t) {
+            LOGGER.error("Failed to take out what was left of {} after Hotwire turned them off", ids, t);
+        }
+    }
+
     @Override
     public void finishOn(List<String> ids) {
         try {
-            refreshMods();
-            ConfigManager.rebindDetached();
-            HudManager.INSTANCE.reloadForNewProviders();
-            ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
+            sync(true);
         } catch (Throwable t) {
             LOGGER.error("Failed to bind {} to the active profile after Hotwire turned them on", ids, t);
         }
@@ -128,12 +138,25 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         }
     }
 
-    private static void refreshMods() {
+    // by what is out of place rather than by which mods changed, as their objects only are if the profile changed, and
+    // Hotwire may have switched other mods while OneConfig itself was off
+    private static void sync(boolean rebind) {
+        Set<String> off = refreshMods();
+        if (rebind) ConfigManager.rebindDetached();
+        if (HudManager.INSTANCE.syncWithMods(off::contains)) HudEditorUIScreen.forgetScene();
+        ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
+    }
+
+    // returns the mods that are off
+    private static Set<String> refreshMods() {
         Map<String, String> copies = new HashMap<>();
+        Set<String> off = new HashSet<>();
         for (ModState mod : HotwireApi.getInstance().getMods()) {
             if (mod.copyOf() != null) copies.put(mod.id(), mod.copyOf());
+            if (!mod.on()) off.add(mod.id());
         }
         CompatibilityPlatformImpl.liveCopies = copies;
         CompatLoader.INSTANCE.refreshMods();
+        return off;
     }
 }
