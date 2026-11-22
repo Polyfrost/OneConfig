@@ -2160,7 +2160,7 @@ public abstract class Hud(
             (tree["showInScreens"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             (tree["showInChat"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             addToSerialized(tree)
-            tree["hudClass"] = simple(value = out::class.java.name).apply {
+            tree["hudClass"] = simple(value = HudManager.savedName(out::class.java)).apply {
                 addDisplayCondition { Property.Display.HIDDEN }
             }
             addCallbacks(tree)

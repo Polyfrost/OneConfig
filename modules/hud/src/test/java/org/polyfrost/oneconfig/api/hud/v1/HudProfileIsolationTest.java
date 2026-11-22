@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
 import kotlin.Pair;
+import kotlin.jvm.functions.Function1;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -367,6 +368,34 @@ class HudProfileIsolationTest {
             assertTrue(switched().getHidden(), "the profile it went off in must keep its settings");
         } finally {
             HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void hudWhoseClassRunsUnderAnotherNameKeepsItsFile() throws Exception {
+        Function1<? super Class<?>, String> savedName = HudManager.INSTANCE.getSavedName();
+        Function1<? super String, ? extends Class<?>> runningClass = HudManager.INSTANCE.getRunningClass();
+        // as Hotwire does for the classes of a mod it runs as a copy
+        HudManager.INSTANCE.setSavedName(type -> type == SwitchedHud.class ? "own.SwitchedHud" : savedName.invoke(type));
+        HudManager.INSTANCE.setRunningClass(name -> name.equals("own.SwitchedHud") ? SwitchedHud.class : runningClass.invoke(name));
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+            assertEquals("own.SwitchedHud", switched().getTree().getProp("hudClass").get());
+
+            ConfigManager.createProfile(PROFILE);
+            ConfigManager.openProfile("");
+
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size(),
+                    "the file must be loaded into the class that runs now, without a second default HUD next to it");
+            assertTrue(switched().getHidden());
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+            HudManager.INSTANCE.setSavedName(savedName);
+            HudManager.INSTANCE.setRunningClass(runningClass);
         }
     }
 

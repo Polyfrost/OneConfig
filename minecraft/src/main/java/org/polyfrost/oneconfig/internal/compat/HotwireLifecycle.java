@@ -55,7 +55,13 @@ public final class HotwireLifecycle implements ModLifecycleListener {
     }
 
     public static void register() {
-        HotwireApi.getInstance().addLifecycleListener(new HotwireLifecycle());
+        HotwireApi api = HotwireApi.getInstance();
+        // older builds cannot tell the classes of a copy from the ones in its mod's jar
+        if (api.hasRevision(2)) {
+            HudManager.INSTANCE.setSavedName(api::findOwnName);
+            HudManager.INSTANCE.setRunningClass(name -> api.findRunningClass(name).orElse(null));
+        }
+        api.addLifecycleListener(new HotwireLifecycle());
     }
 
     // the whole profile rather than what these mods own, which Hotwire decides in ways OneConfig cannot mirror

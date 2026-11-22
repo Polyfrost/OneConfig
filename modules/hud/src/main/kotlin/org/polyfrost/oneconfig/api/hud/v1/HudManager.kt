@@ -74,6 +74,18 @@ public object HudManager {
     // classes registered and not unregistered here, which still names a provider that Hotwire took out of hudProviders
     private val registeredHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private var loadedProviders: Set<Class<out Hud>> = emptySet()
+
+    /**
+     * The name a HUD's class is saved under, which is not its own while Hotwire runs an update of a mod as a copy
+     * with its classes renamed
+     */
+    @ApiStatus.Internal
+    public var savedName: (Class<*>) -> String = { it.name }
+
+    /** The class that a name from [savedName] runs as now, or null if there is none */
+    @ApiStatus.Internal
+    public var runningClass: (String) -> Class<*>? = { Class.forName(it, true, HudManager::class.java.classLoader) }
+
     private val pendingUnsupported: MutableSet<Class<out Hud>> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
@@ -414,7 +426,7 @@ public object HudManager {
 
     @JvmStatic
     public fun markProviderKnown(hud: Hud) {
-        if (knownProviders.add(hud::class.java.name)) saveRegistry()
+        if (knownProviders.add(savedName(hud::class.java))) saveRegistry()
     }
 
     /**
@@ -456,8 +468,8 @@ public object HudManager {
 
     @JvmStatic
     public fun register(hud: Hud) {
-        unsupportedHuds.remove(hud::class.java.name)
-        registeredHuds.add(hud::class.java.name)
+        unsupportedHuds.remove(savedName(hud::class.java))
+        registeredHuds.add(savedName(hud::class.java))
         HudStyles.captureBuiltIn(hud)
         hudProviders[hud::class.java] = hud
         revision++
@@ -518,7 +530,7 @@ public object HudManager {
             }
             if (!ok) {
                 if (hud::class.java !in hudProviders) {
-                    unsupportedHuds.add(hud::class.java.name)
+                    unsupportedHuds.add(savedName(hud::class.java))
                     pendingUnsupported.add(hud::class.java)
                 }
                 LOGGER.info("HUD ${hud.title} is not supported here and was not registered")
@@ -603,7 +615,7 @@ public object HudManager {
     public fun providers(): Collection<Hud> = hudProviders.values
 
     public fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
-        registeredHuds.remove(hud::class.java.name)
+        registeredHuds.remove(savedName(hud::class.java))
         if (hudProviders.remove(hud::class.java) != null) {
             revision++
             notifyRegistrationChanged()
@@ -2051,7 +2063,7 @@ public object HudManager {
         val classes = pendingUnsupported.toList()
         pendingUnsupported.removeAll(classes.toSet())
         for (cls in classes) {
-            if (cls in hudProviders || cls.name !in unsupportedHuds) continue
+            if (cls in hudProviders || savedName(cls) !in unsupportedHuds) continue
             for (hud in activeInstances.filter { it.javaClass == cls }) {
                 LOGGER.info("Removing loaded HUD ${hud.title} because it is not supported here")
                 removeHud(hud, delete = false)
@@ -2140,7 +2152,6 @@ public object HudManager {
 
     @Suppress("UNCHECKED_CAST")
     private fun loadHuds(now: Long, prefetched: Collection<Tree>?) {
-        val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)
         val failedProviders = HashSet<Class<Hud>>()
         val failed = HashMap<String, Int>(8)
@@ -2176,8 +2187,8 @@ public object HudManager {
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
                 if (clsName in unsupportedHuds) return@forEach
                 // its mod is off, so its class must not be instantiated and its file stays as it is
-                if (clsName in registeredHuds && hudProviders.keys.none { it.name == clsName }) return@forEach
-                val cls = Class.forName(clsName, true, loader) as? Class<Hud>
+                if (clsName in registeredHuds && hudProviders.keys.none { savedName(it) == clsName }) return@forEach
+                val cls = (runningClass(clsName) ?: throw ClassNotFoundException(clsName)) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 providerClass = cls
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
@@ -2226,14 +2237,14 @@ public object HudManager {
         }
 
         var registryChanged = false
-        for (cls in used) registryChanged = knownProviders.add(cls.name) or registryChanged
+        for (cls in used) registryChanged = knownProviders.add(savedName(cls)) or registryChanged
 
         hudProviders.forEach { (cls, h) ->
             var candidate: Hud? = null
             try {
                 if (cls in used || cls in failedProviders) return@forEach
                 if (h.isReal) return@forEach
-                val known = cls.name in knownProviders
+                val known = savedName(cls) in knownProviders
                 val deletable = h.deletable()
                 // A HUD the user cannot delete has no legitimate "deleted" state, so a missing
                 // instance always means its config was lost. Restore it instead of stranding it.
@@ -2251,7 +2262,7 @@ public object HudManager {
                 candidate = hud
                 hud.setAbsolutePosition(dx, dy)
                 addInstance(hud)
-                registryChanged = knownProviders.add(cls.name) or registryChanged
+                registryChanged = knownProviders.add(savedName(cls)) or registryChanged
                 LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
             } catch (e: Throwable) {
                 rollback(candidate)
