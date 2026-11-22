@@ -4,19 +4,14 @@ package org.polyfrost.oneconfig.api.ui.v1.platform
 
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.screens.ChatScreen
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.compose.minecraft.hud.HudLayer
+import org.polyfrost.compose.minecraft.hud.HudInput
 import org.polyfrost.oneconfig.api.hud.v1.HudClickInput
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudMouseButton
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
-
-//? if = 1.8.9 {
-/*import org.lwjgl.input.Mouse
-*///?}
 
 internal object HudFrameHooks {
     private val LOGGER = LogManager.getLogger("OneConfig/HudFrame")
@@ -49,27 +44,13 @@ internal object HudFrameHooks {
         )
 
     private fun feedPointer() {
-        val screen = Platform.screen()
-        val mc = Minecraft.getInstance()
-        val current = if (mc.isWindowActive) currentScreen(screen) else null
-        val allowed = current is ChatScreen || current is HudLayer.InputScreen
-        //? if > 1.8.9 {
-        val mouse = mc.mouseHandler
-        val windowX = mouse.xpos().toFloat()
-        val windowY = mouse.ypos().toFloat()
-        //?} else {
-        /*val pixelRatio = screen.pixelRatio()
-        val windowX = Mouse.getX() / pixelRatio
-        val windowY = (screen.viewportHeight() - Mouse.getY() - 1) / pixelRatio
-        *///?}
-        val guiX = windowX * screen.guiWidth() / screen.windowWidth().coerceAtLeast(1)
-        val guiY = windowY * screen.guiHeight() / screen.windowHeight().coerceAtLeast(1)
-        HudClickInput.updatePointer(guiX, guiY, allowed, current != null)
+        val anyScreen = Minecraft.getInstance().isWindowActive && currentScreen() != null
+        HudClickInput.updatePointer(HudInput.pointerX, HudInput.pointerY, HudInput.pointerAllowed, anyScreen)
     }
 
-    private fun currentScreen(screen: ScreenPlatform): Any? =
+    private fun currentScreen(): Any? =
         try {
-            screen.current<Any?>()
+            Platform.screen().current<Any?>()
         } catch (_: Throwable) {
             null
         }
