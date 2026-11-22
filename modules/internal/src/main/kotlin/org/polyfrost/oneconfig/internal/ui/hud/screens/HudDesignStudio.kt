@@ -261,7 +261,6 @@ private const val MARQUEE_FILL_ALPHA = 0.15f
 
 private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
 
-// a group draws one box around its HUDs while the HUDs inside keep a faint one
 private const val GROUP_MEMBER_BOX_ALPHA = 0.45f
 private const val ENTERED_GROUP_BOX_ALPHA = 0.35f
 private val groupHoverDashEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 3f), 0f)
@@ -1364,9 +1363,7 @@ fun HudDesignStudio(visible: Boolean = true) {
     var resizeCorner by remember { mutableStateOf<ResizeCorner?>(null) }
     var resizeStartBounds by remember { mutableStateOf<HudBounds?>(null) }
     var resizeStartScale by remember { mutableStateOf(1f) }
-    // set instead of resizedHud while a group selected on its own is scaled from its corner handles
     var groupScaling by remember { mutableStateOf<HudGroups.Scaling?>(null) }
-    // the group the user double-clicked into, clicks then pick the HUDs and sub-groups inside it
     var enteredGroup by remember { mutableStateOf<HudGroup?>(null) }
     var lastClickHud by remember { mutableStateOf<Hud?>(null) }
     val lastClickTime = remember { LongArray(1) }
@@ -1452,7 +1449,6 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     fun ungroup(groups: Collection<HudGroup>) {
         if (groups.isEmpty()) return
-        // stepping out first keeps a click from picking inside a group that no longer exists
         if (enteredGroup?.let { entered -> groups.any { it == entered || entered in it } } == true) enteredGroup = null
         groups.forEach(HudGroups::ungroup)
         UiSounds.play(UiSoundEvent.CLICK)
@@ -1467,7 +1463,6 @@ fun HudDesignStudio(visible: Boolean = true) {
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
     val panelVisible = panelHud != null
     val panelGroup: HudGroup? = if (panelOpen) soleGroup() else null
-    // several HUDs that are not one group have no panel of their own so the panel shows what they share
     val panelHuds: List<Hud> = if (panelOpen && panelGroup == null && selectedHuds.size > 1) selectedHuds.toList() else emptyList()
 
     fun clearTransientEditorState() {
@@ -1940,7 +1935,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                     val menuUnits = selectionUnits(targetSet, enteredGroup)
                     val menuLoose = targets.filter { hud -> menuGroups.none { hud in it } }
                     val menuInGroup = menuGroups.any { it.parent != null } || menuLoose.any { it.group != null }
-                    // a group already holding every target directly is no place to add them, and a group can never go inside itself
                     val menuGroupable = menuLoose.filter(HudGroups::groupable)
                     val addToTargets = HudGroups.all().filter { target ->
                         menuGroups.none { it == target || target in it } &&
@@ -1951,7 +1945,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                         targets = targets,
                         onSettings = { settingsHud ->
                             Snapshot.withMutableSnapshot {
-                                // several HUDs or groups keep the whole selection so the panel shows what they share
                                 selectedHuds = if (menuUnits.size > 1) targetSet else unitOf(settingsHud, enteredGroup)
                                 panelOpen = true
                             }
@@ -1968,7 +1961,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 Snapshot.withMutableSnapshot {
                                     menuLoose.forEach(HudGroups::removeFromGroup)
                                     menuGroups.forEach(HudGroups::removeFromGroup)
-                                    // the targets may have just left the group the user stepped into
                                     if (enteredGroup?.let { entered -> targets.none { it in entered } } == true) enteredGroup = null
                                 }
                                 UiSounds.play(UiSoundEvent.CLICK)
@@ -2064,7 +2056,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                     return@safePointerEvent
                 }
                 UiSounds.play(UiSoundEvent.HUD_RESIZE_START)
-                // the corner opposite the handle stays put while the group scales
                 val pivotX = if (groupHandle.isLeft) groupBounds.x + groupBounds.width else groupBounds.x
                 val pivotY = if (groupHandle.isTop) groupBounds.y + groupBounds.height else groupBounds.y
                 Snapshot.withMutableSnapshot {
@@ -2121,14 +2112,10 @@ fun HudDesignStudio(visible: Boolean = true) {
                     ?: stack.lastOrNull { it in selectedHuds && !unitLocked(it, enteredGroup) }
             }
             var hit = held ?: pickHudAt(pos.x, pos.y, primaryHud(), enteredGroup)
-            // a click outside the group the user stepped into steps back out of it
             if (hit == null && !actionPressed && !shift || hit != null && enteredGroup?.let { it !in HudGroups.chainOf(hit) } == true) {
                 enteredGroup = null
             }
-            // a second click on a grouped HUD steps into the group and picks what is under the cursor inside it,
-            // which has to work on locked HUDs too or the only way to reach one to unlock it would be to ungroup
             val now = System.currentTimeMillis()
-            // overlapping HUDs take turns under repeated clicks, so two clicks on one group count even when the HUD differs
             val lastHud = lastClickHud
             val sameTarget = hit != null && lastHud != null && (lastHud === hit ||
                 unitGroupOf(hit, enteredGroup)?.let { it == unitGroupOf(lastHud, enteredGroup) } == true)
@@ -2215,7 +2202,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                     if (press.detachIntent && press.hud !in selectedHuds) selectedHuds = press.selectionBefore + press.unit
                     if (press.hud !in selectedHuds || press.unit.all { it.locked }) return@safePointerEvent
                     UiSounds.play(UiSoundEvent.HUD_DRAG_START)
-                    // a locked HUD in a group rides along with the group
                     val movable = selectionUnits(selectedHuds, enteredGroup)
                         .filterNot { unit -> unit.all { it.locked } }
                         .flatMapTo(LinkedHashSet()) { it }
@@ -2302,7 +2288,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                     gridEnabled = HudEditorViewport.gridEnabled,
                 )
                 Snapshot.withMutableSnapshot {
-                    // only the HUDs holding their own place move, the ones anchored to them follow on their own
                     applyHudTargets(HudGroups.roots(draggedGroup).mapNotNull { member ->
                         val ms = starts[member] ?: return@mapNotNull null
                         Triple(member, ms.first + dx, ms.second + dy)
@@ -2349,7 +2334,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                 } == true
                 val next = when {
                     overActionBar -> hovered
-                    // moving between HUDs of the same group keeps the group's bar where it is
                     hit != null && hovered != null && hit !== hovered &&
                         unitGroupOf(hit, enteredGroup)?.let { it == unitGroupOf(hovered, enteredGroup) } == true -> hovered
                     hit != null -> hit
@@ -2636,7 +2620,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                     }
                     return@onKeyEvent true
                 }
-                // escape climbs out of a group the user stepped into one level at a time
                 if (keyEvent.key == Key.Escape && enteredGroup != null) {
                     stepOutOfGroup()
                     return@onKeyEvent true
@@ -2685,7 +2668,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                 }
                 lastNudgeAt[0] = System.currentTimeMillis()
                 Snapshot.withMutableSnapshot {
-                    // HUDs anchored to another selected HUD follow it, so nudging them too would move them twice
                     applyHudTargets(HudGroups.roots(selectedHuds).map { Triple(it, it.x + dx, it.y + dy) })
                 }
                 true
@@ -2728,7 +2710,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                         val sh = bounds.height * mcToScreen
                         val isSelected = hud in selectedHuds
                         val isPrimary = hud === primaryHud()
-                        // a hovered group gets one box around it rather than a box on the HUD under the cursor
                         val isHovered = hud === hoveredHud && hoveredGroup == null
                         // every HUD carried by the drag reads as being dragged so a fused shape shows the
                         // whole shape moving
@@ -3000,7 +2981,6 @@ fun HudDesignStudio(visible: Boolean = true) {
                     onDelete = { deleteHuds(unit) },
                 ) {
                     Snapshot.withMutableSnapshot {
-                        // part of a larger selection opens the settings of all of it
                         val inLargerSelection = selectedHuds.size > unit.size && selectedHuds.containsAll(unit)
                         if (!inLargerSelection) selectedHuds = unit
                         panelOpen = true
@@ -3483,7 +3463,6 @@ internal fun duplicateHudGroup(
     } else {
         Offset(minX + 32f, minY + 32f)
     }
-    // copying a whole group makes a new group of the copies instead of adding them to the original
     val groupPaths = HudGroups.pathsForCopies(viable)
     val pasted = mutableListOf<Hud>()
     for ((i, hud) in viable.withIndex()) {
@@ -3520,7 +3499,6 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
     var dragOffsetX by remember { mutableStateOf(0f) }
     var dragOffsetY by remember { mutableStateOf(0f) }
     val dragSnapper = remember { HudDragSnapper() }
-    // a grouped HUD carries its whole group so the group keeps its shape
     var dragSet by remember { mutableStateOf<Set<Hud>>(emptySet()) }
     var dragStarts by remember { mutableStateOf<Map<Hud, Pair<Float, Float>>>(emptyMap()) }
     var lockedPressHud by remember { mutableStateOf<Hud?>(null) }
@@ -3778,7 +3756,6 @@ private fun DesignStudioPanel(
     val categories = remember(selectedHud, selectedGroup, sharedHuds, legacyHasOptions) {
         StudioCategory.entries.filter {
             when {
-                // a group or several HUDs only have the style options all of them share
                 sharing != null -> it != StudioCategory.Style || SharedOptions.anyShared(SharedTab.Style, sharing)
                 // hide settings tab for legacy HUDs that would leave it empty
                 it == StudioCategory.Settings -> selectedHud !is LegacyHud || legacyHasOptions
@@ -3790,9 +3767,7 @@ private fun DesignStudioPanel(
     val shownCategory = activeCategory.takeIf { it in categories } ?: categories.first()
     LaunchedEffect(shownCategory) { onCategoryChange(shownCategory) }
     val query = searchText.trim()
-    // what the panel is showing the settings of, so scrolling starts over when it changes
     val view: Any? = selectedGroup ?: if (shared) "shared" else selectedHud
-    // a group's label and member count follow its HUDs, which the group itself cannot tell has changed
     val instancesRevision = HudManager.instancesRevision.intValue
     val titleText = remember(selectedHud, selectedGroup, sharedHuds, instancesRevision) {
         when {

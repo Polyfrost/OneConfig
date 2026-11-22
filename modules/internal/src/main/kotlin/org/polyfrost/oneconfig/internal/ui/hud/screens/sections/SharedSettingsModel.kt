@@ -249,7 +249,6 @@ internal object SharedOptions {
             { it.bgChromaSpeed }, { h, v -> h.bgChromaSpeed = v },
             shownWhen = { it.showBackground },
         ),
-        // HUDs drawing their own background opt out of merging so this has nothing to control
         SharedChoice(
             "merge", "Merge with neighbours", SharedSection.Background, MergeMode.entries, { it.title }, null,
             { if (!it.mergeBackground) MergeMode.Off else if (it.mergeDiagonally) MergeMode.Diagonal else MergeMode.Normal },
