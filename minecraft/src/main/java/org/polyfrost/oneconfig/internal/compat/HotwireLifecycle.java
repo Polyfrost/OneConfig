@@ -55,6 +55,9 @@ import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 public final class HotwireLifecycle implements ModLifecycleListener {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Hotwire");
 
+    // whether prepareStart opened a window for new configs that no finishStart has closed yet
+    private boolean starting;
+
     private HotwireLifecycle() {
     }
 
@@ -107,8 +110,10 @@ public final class HotwireLifecycle implements ModLifecycleListener {
             LOGGER.error("Failed to read the mods again before Hotwire starts {}", ids, t);
         }
         ConfigManager.reopenInitialization();
+        starting = true;
     }
 
+    // a start that fails after it was told as fine is told again as failed, once its mods are out
     @Override
     public void finishStart(List<String> ids, boolean ok) {
         try {
@@ -116,15 +121,19 @@ public final class HotwireLifecycle implements ModLifecycleListener {
                 ConfigEntrypoints.registerStarted(ids);
             } else {
                 ConfigManager.pendingConfigs().forEach(ConfigManager::cancelInitialization);
+                ConfigEntrypoints.forgetStarted(ids);
+                sync(false);
             }
         } catch (Throwable t) {
             LOGGER.error("Failed to set up the configs of {}, which Hotwire started", ids, t);
         } finally {
-            // also what closes the window prepareStart opened
-            try {
-                ConfigManager.initialize();
-            } finally {
-                if (ok) ConfigEntrypoints.finishStarted();
+            if (starting) {
+                starting = false;
+                try {
+                    ConfigManager.initialize();
+                } finally {
+                    if (ok) ConfigEntrypoints.finishStarted();
+                }
             }
         }
     }

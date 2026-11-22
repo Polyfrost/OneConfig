@@ -199,6 +199,18 @@ public final class ConfigEntrypoints {
         });
     }
 
+    /**
+     * Lets the entrypoints of mods run again whose start Hotwire took back, for when they are started once more
+     */
+    public static void forgetStarted(Collection<String> modIds) {
+        for (String id : modIds) {
+            // a mod that is still there only failed to start what an update added to it
+            if (FabricLoader.getInstance().isModLoaded(id)) continue;
+            undecided.remove(id);
+            forgetDecision(id);
+        }
+    }
+
     private static synchronized void forgetDecision(String modId) {
         succeeded.remove(modId);
         failed.remove(modId);
