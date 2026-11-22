@@ -82,8 +82,14 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         }
     }
 
+    // the mods are in the loader's list by now, which compat goes by to tell whose config an initializer builds
     @Override
     public void prepareStart(List<String> ids) {
+        try {
+            refreshMods();
+        } catch (Throwable t) {
+            LOGGER.error("Failed to read the mods again before Hotwire starts {}", ids, t);
+        }
         ConfigManager.reopenInitialization();
     }
 
@@ -91,7 +97,6 @@ public final class HotwireLifecycle implements ModLifecycleListener {
     public void finishStart(List<String> ids, boolean ok) {
         try {
             if (ok) {
-                refreshMods();
                 ConfigEntrypoints.registerStarted(ids);
             } else {
                 ConfigManager.pendingConfigs().forEach(ConfigManager::cancelInitialization);
@@ -103,7 +108,7 @@ public final class HotwireLifecycle implements ModLifecycleListener {
             try {
                 ConfigManager.initialize();
             } finally {
-                if (ok) ConfigEntrypoints.finishRegistration();
+                if (ok) ConfigEntrypoints.finishStarted();
             }
         }
     }

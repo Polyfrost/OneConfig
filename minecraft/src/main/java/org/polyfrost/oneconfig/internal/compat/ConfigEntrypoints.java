@@ -170,8 +170,11 @@ public final class ConfigEntrypoints {
 
     /**
      * Runs the entrypoints of mods that Hotwire started after the game did, to be decided by the next
-     * {@link #finishRegistration()} like those of {@link #registerAll()}. A mod that was already decided is left
-     * alone, as it only gained other entrypoints, unless it is a copy, which starts over what it stands in for.
+     * {@link #finishStarted()}. A mod that was already decided is left alone, as it only gained other entrypoints,
+     * unless it is a copy, which starts over what it stands in for.
+     * <br>
+     * shortcut: a second config entrypoint that an update adds to a decided mod only runs at the next launch, track
+     * which definitions ran if a mod ever does that
      */
     public static void registerStarted(Collection<String> modIds) {
         // registerAll has not run yet and will find them itself
@@ -215,8 +218,20 @@ public final class ConfigEntrypoints {
      * Decides for each mod that ran an entrypoint whether to keep its configs or extract its original. Called after
      * {@link ConfigManager#initialize()}, as a config only counts once its tree was built and registered.
      */
-    // compat waits for this, so it always ends by releasing it even if deciding a mod threw
     public static void finishRegistration() {
+        finishRegistration(true);
+    }
+
+    /**
+     * As {@link #finishRegistration()} for {@link #registerStarted}, where a provider that has not run is left alone,
+     * as it may be of a mod that Hotwire is yet to start
+     */
+    public static void finishStarted() {
+        finishRegistration(false);
+    }
+
+    // compat waits for this, so it always ends by releasing it even if deciding a mod threw
+    private static void finishRegistration(boolean all) {
         try {
             Map<String, Boolean> pending = new LinkedHashMap<>(undecided);
             undecided.clear();
@@ -235,7 +250,7 @@ public final class ConfigEntrypoints {
             });
             // providers registerAll never reached, such as when it threw partway, would otherwise stay skipped forever
             for (String modId : providerIds()) {
-                if (pending.containsKey(modId) || isDecided(modId)) continue;
+                if (!all || pending.containsKey(modId) || isDecided(modId)) continue;
                 LOGGER.warn("The OneConfig config entrypoint of {} never ran, extracting its original config instead", modId);
                 try {
                     fallBackToOriginal(modId);
