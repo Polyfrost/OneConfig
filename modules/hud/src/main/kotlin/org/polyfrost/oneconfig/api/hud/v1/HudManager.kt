@@ -1965,8 +1965,8 @@ public object HudManager {
             var candidate: Hud? = null
             var providerClass: Class<Hud>? = null
             try {
-                val clsName = data.getProp("hudClass").get() as? String
-                    ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name")
+                // mods (e.g. VanillaHUD) pre-seed settings without hudClass; the default HUD of that ID adopts them below
+                val clsName = data.getProp("hudClass")?.get() as? String ?: return@forEach
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
                 if (clsName in unsupportedHuds) return@forEach
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
