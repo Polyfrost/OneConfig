@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudGroupsTest {
@@ -55,6 +56,27 @@ class HudGroupsTest {
         @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(100f, 50f); }
     }
 
+    static class ArrangeOne extends BoxHud {
+        ArrangeOne() { super("group-arrange-one"); }
+        @Override public boolean showByDefault() { return false; }
+    }
+
+    static class ArrangeTwo extends BoxHud {
+        ArrangeTwo() { super("group-arrange-two"); }
+        @Override public boolean showByDefault() { return false; }
+    }
+
+    static class SlotBase extends BoxHud {
+        SlotBase(String id) { super(id); }
+        SlotBase() { this("group-slot-base"); }
+        @Override public boolean showByDefault() { return false; }
+    }
+
+    static class SlotDerived extends SlotBase { SlotDerived() { super("group-slot-derived"); } }
+
+    private static final List<Hud> received = new ArrayList<>();
+    private static final HudPresetAction STACK = new HudPresetAction("stack", "Stack", huds ->
+        huds.get(1).anchorTo(huds.get(0), HudAnchor.BottomLeft, HudAnchor.TopLeft));
     private static final String DEFAULT_ID = "test.defaults";
     private static HudPreset multiPreset;
     private static final String PRESET_ID = "test.preset";
@@ -71,7 +93,17 @@ class HudGroupsTest {
         ConfigManager.active();
         ConfigManager.openProfile("");
         if (!registered) {
-            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB());
+            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB(), new ArrangeOne(), new ArrangeTwo(), new SlotBase(), new SlotDerived());
+            HudGroups.registerPreset("test.recording", "Recording", Arrays.asList(HudB.class, HudA.class), null, null, null,
+                Collections.singletonList(new HudPresetAction("record", "Record", huds -> { received.clear(); received.addAll(huds); })), null);
+            HudGroups.registerPreset("test.arranged", "Arranged", Arrays.asList(ArrangeTwo.class, ArrangeOne.class), null, null, null,
+                Collections.singletonList(STACK), "stack");
+            HudGroups.registerPreset("test.throwing", "Throwing", Arrays.asList(ArrangeTwo.class, ArrangeOne.class), null, null, null,
+                Collections.singletonList(new HudPresetAction("boom", "Boom", huds -> { throw new IllegalStateException("boom"); })), "boom");
+            HudGroups.registerPreset("test.slots", "Slots", Arrays.asList(SlotBase.class, SlotDerived.class), null, null, null,
+                Collections.singletonList(new HudPresetAction("record", "Record", huds -> { received.clear(); received.addAll(huds); })), null);
+            HudGroups.registerPreset(DEFAULT_ID, "Defaults", Arrays.asList(DefaultOne.class, DefaultTwo.class), null, null, null,
+                Collections.singletonList(STACK), "stack");
             multiPreset = HudGroups.registerPreset("test.preset.multi", "Multi", Arrays.asList(PresetMultiB.class, PresetMulti.class));
             preset = HudGroups.registerPreset(PRESET_ID, "Preset", Arrays.asList(PresetSingle.class, PresetMulti.class));
             HudGroups.registerDefault(DEFAULT_ID, "Defaults", DefaultOne.class, DefaultTwo.class);
@@ -455,15 +487,7 @@ class HudGroupsTest {
 
     @Test
     void defaultGroupsApplyOnceAndUngroupingSticks() throws Exception {
-        // start as if the group had never been applied, earlier runs may have saved it as known
-        ((Set<?>) get("knownGroups")).remove(DEFAULT_ID);
-        only(DefaultOne.class).setGroupPath("");
-        only(DefaultTwo.class).setGroupPath("");
-        Method save = HudManager.class.getDeclaredMethod("saveRegistry");
-        save.setAccessible(true);
-        save.invoke(HudManager.INSTANCE);
-        ConfigManager.active().saveAll();
-        relaunch();
+        relaunchBeforeDefaultsApplied();
 
         assertEquals(DEFAULT_ID, only(DefaultOne.class).getGroupPath(), "the default group is applied on load");
         assertEquals(DEFAULT_ID, only(DefaultTwo.class).getGroupPath());
@@ -475,6 +499,17 @@ class HudGroupsTest {
 
         assertEquals("", only(DefaultOne.class).getGroupPath(), "an ungrouped default group stays ungrouped");
         assertEquals("", only(DefaultTwo.class).getGroupPath());
+    }
+
+    private static void relaunchBeforeDefaultsApplied() throws Exception {
+        ((Set<?>) get("knownGroups")).remove(DEFAULT_ID);
+        only(DefaultOne.class).setGroupPath("");
+        only(DefaultTwo.class).setGroupPath("");
+        Method save = HudManager.class.getDeclaredMethod("saveRegistry");
+        save.setAccessible(true);
+        save.invoke(HudManager.INSTANCE);
+        ConfigManager.active().saveAll();
+        relaunch();
     }
 
     private static void removeAll(Class<? extends Hud> cls) {
@@ -555,5 +590,122 @@ class HudGroupsTest {
             removeAll(PresetSingle.class);
             removeAll(PresetMulti.class);
         }
+    }
+
+    @Test
+    void aGroupIsMadeFromAPresetByItsIdOrTheIdBeforeTheSeparator() {
+        HudPreset recording = HudGroups.presets().stream().filter(p -> p.getId().equals("test.recording")).findFirst().get();
+        assertEquals(recording, HudGroups.presetOf(new HudGroup("test.recording")));
+        assertEquals(recording, HudGroups.presetOf(new HudGroup("outer/test.recording#x1")));
+        assertNull(HudGroups.presetOf(new HudGroup("test.recordingx")));
+        assertNull(HudGroups.presetOf(new HudGroup("other#test.recording")));
+    }
+
+    @Test
+    void aPresetActionOnlyReceivesThePresetMembersInMemberOrder() {
+        a.setGroupPath("test.recording#x1");
+        b.setGroupPath("test.recording#x1");
+        c.setGroupPath("test.recording#x1");
+        HudGroup group = a.getGroup();
+        HudPreset preset = HudGroups.presetOf(group);
+        assertNotNull(preset);
+        assertEquals(Arrays.asList(b, a), HudGroups.presetMembers(group, preset));
+
+        HudGroups.runPresetAction(group, preset.getActions().get(0));
+
+        assertEquals(Arrays.asList(b, a), received);
+    }
+
+    @Test
+    void aPresetActionGetsNullForAMissingMemberAndOnlyTheFirstHudOfEachClass() {
+        Hud second = HudManager.INSTANCE.getProvider(HudA.class).make(null);
+        HudManager.addInstance(second);
+        try {
+            a.setGroupPath("test.recording#x1");
+            second.setGroupPath("test.recording#x1");
+            HudGroup group = a.getGroup();
+            HudPreset preset = HudGroups.presetOf(group);
+            assertNotNull(preset);
+
+            HudGroups.runPresetAction(group, preset.getActions().get(0));
+
+            assertEquals(Arrays.asList(null, a), received);
+            assertEquals(Collections.singletonList(a), HudGroups.presetMembers(group, preset));
+        } finally {
+            HudManager.INSTANCE.removeHud(second, true);
+        }
+    }
+
+    @Test
+    void aMemberTypeTakesItsExactClassBeforeASubclassInstance() {
+        Hud base = HudManager.INSTANCE.getProvider(SlotBase.class).make(null);
+        Hud derived = HudManager.INSTANCE.getProvider(SlotDerived.class).make(null);
+        HudManager.addInstance(derived);
+        HudManager.addInstance(base);
+        try {
+            derived.setGroupPath("test.slots#x1");
+            base.setGroupPath("test.slots#x1");
+            HudGroup group = base.getGroup();
+            HudGroups.runPresetAction(group, HudGroups.presetOf(group).getActions().get(0));
+
+            assertEquals(Arrays.asList(base, derived), received);
+        } finally {
+            HudManager.INSTANCE.removeHud(base, true);
+            HudManager.INSTANCE.removeHud(derived, true);
+        }
+    }
+
+    @Test
+    void aPresetsDefaultActionRunsWhenItIsAdded() {
+        try {
+            HudGroup group = HudGroups.addPreset(HudGroups.presets().stream().filter(p -> p.getId().equals("test.arranged")).findFirst().get());
+            assertNotNull(group);
+            assertSame(only(ArrangeTwo.class), only(ArrangeOne.class).getAnchorParent());
+        } finally {
+            removeAll(ArrangeOne.class);
+            removeAll(ArrangeTwo.class);
+        }
+    }
+
+    @Test
+    void aFailingDefaultActionDoesNotStopThePresetBeingAdded() {
+        try {
+            HudGroup group = HudGroups.addPreset(HudGroups.presets().stream().filter(p -> p.getId().equals("test.throwing")).findFirst().get());
+            assertNotNull(group);
+            assertEquals(2, group.getHuds().size());
+            assertNull(only(ArrangeOne.class).getAnchorParent());
+        } finally {
+            removeAll(ArrangeOne.class);
+            removeAll(ArrangeTwo.class);
+        }
+    }
+
+    @Test
+    void aDefaultGroupsPresetActionRunsOnceUnlessTheMembersAreAlreadyAnchored() throws Exception {
+        Hud one = only(DefaultOne.class);
+        Hud two = only(DefaultTwo.class);
+        one.clearAnchor();
+        two.clearAnchor();
+        relaunchBeforeDefaultsApplied();
+        assertSame(only(DefaultOne.class), only(DefaultTwo.class).getAnchorParent());
+
+        only(DefaultOne.class).setGroupPath("");
+        only(DefaultTwo.class).setGroupPath("");
+        only(DefaultTwo.class).clearAnchor();
+        only(DefaultOne.class).anchorTo(only(DefaultTwo.class), HudAnchor.Right, HudAnchor.Left);
+        relaunchBeforeDefaultsApplied();
+
+        assertSame(only(DefaultTwo.class), only(DefaultOne.class).getAnchorParent(), "the user's own anchor is kept");
+        assertNull(only(DefaultTwo.class).getAnchorParent());
+
+        only(DefaultOne.class).setGroupPath("");
+        only(DefaultTwo.class).setGroupPath("");
+        only(DefaultOne.class).clearAnchor();
+        only(DefaultTwo.class).clearAnchor();
+        only(DefaultTwo.class).anchorTo(only(HudC.class), HudAnchor.Right, HudAnchor.Left);
+        relaunchBeforeDefaultsApplied();
+
+        assertSame(only(HudC.class), only(DefaultTwo.class).getAnchorParent(), "an anchor to any other HUD also stops the action");
+        assertNull(only(DefaultOne.class).getAnchorParent());
     }
 }

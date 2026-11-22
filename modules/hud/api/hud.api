@@ -369,16 +369,21 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudGroups {
 	public static final fun nameOf (Ljava/lang/String;)Ljava/lang/String;
 	public static final fun of (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
 	public static final fun outermostOf (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
+	public static final fun presetMembers (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;)Ljava/util/List;
+	public static final fun presetOf (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
 	public static final fun presets ()Ljava/util/List;
 	public static final fun registerDefault (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Class;)V
 	public static final fun registerPreset (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
 	public static final fun registerPreset (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
 	public static final fun registerPreset (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
 	public static final fun registerPreset (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetLayout;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
-	public static synthetic fun registerPreset$default (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetLayout;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
+	public static final fun registerPreset (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetLayout;Ljava/util/List;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
+	public static final fun registerPreset (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetLayout;Ljava/util/List;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
+	public static synthetic fun registerPreset$default (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetLayout;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/HudPreset;
 	public static final fun removeFromGroup (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun removeFromGroup (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)V
 	public static final fun roots (Ljava/util/Collection;)Ljava/util/List;
+	public static final fun runPresetAction (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetAction;)V
 	public static final fun scalable (Ljava/util/Collection;)Ljava/util/List;
 	public static final fun scaleOf (Ljava/util/Collection;)F
 	public static final fun scaleRange (Ljava/util/Collection;)Lkotlin/ranges/ClosedFloatingPointRange;
@@ -468,7 +473,9 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudMouseButton : java/lang
 public final class org/polyfrost/oneconfig/api/hud/v1/HudPreset {
 	public static final field $stable I
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActions ()Ljava/util/List;
 	public final fun getConfigId ()Ljava/lang/String;
+	public final fun getDefaultAction ()Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetAction;
 	public final fun getIcon ()Ljava/lang/String;
 	public final fun getId ()Ljava/lang/String;
 	public final fun getLayout ()Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetLayout;
@@ -476,6 +483,21 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudPreset {
 	public final fun getName ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudPresetAction {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetArrangement;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetArrangement;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetArrangement;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getArrangement ()Lorg/polyfrost/oneconfig/api/hud/v1/HudPresetArrangement;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/hud/v1/HudPresetArrangement {
+	public abstract fun arrange (Ljava/util/List;)V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/hud/v1/HudPresetLayout {

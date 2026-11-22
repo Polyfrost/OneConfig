@@ -40,6 +40,27 @@ public fun interface HudPresetLayout {
 }
 
 /**
+ * Arranges the HUDs of a group made from a [HudPreset], typically by anchoring them to one another
+ */
+@ApiStatus.Experimental
+public fun interface HudPresetArrangement {
+    /** Rearranges [huds], which line up with [HudPreset.members] and are `null` where the group has no such HUD */
+    public fun arrange(huds: List<Hud?>)
+}
+
+/** A named way of arranging the HUDs of a [HudPreset] that the user can pick in the settings of its group */
+@ApiStatus.Experimental
+public class HudPresetAction @JvmOverloads constructor(
+    /** Identifies the action within its preset */
+    public val id: String,
+    /** The name shown to the user, which is looked up as a translation key first */
+    public val name: String,
+    public val arrangement: HudPresetArrangement,
+    /** What the action does, shown as a tooltip */
+    public val description: String? = null,
+)
+
+/**
  * A set of HUDs the library adds to the screen together as one group
  *
  * Two presets are equal when they have the same [id]
@@ -55,6 +76,10 @@ public class HudPreset internal constructor(
     public val icon: String?,
     /** Where the members sit, or each member's [Hud.defaultPosition] when `null` */
     public val layout: HudPresetLayout?,
+    /** The arrangements the user can pick in the settings of a group made from this preset */
+    public val actions: List<HudPresetAction>,
+    /** The action applied when the preset is added, or `null` to leave the members where [layout] puts them */
+    public val defaultAction: HudPresetAction?,
 ) {
     override fun equals(other: Any?): Boolean = other is HudPreset && other.id == id
 

@@ -373,6 +373,11 @@ public object HudGroups {
             if (!default.members.all { type -> members.any(type::isInstance) }) continue
             val added = members.filter { it.groupPath.isEmpty() }
             Snapshot.withMutableSnapshot { for (hud in added) hud.groupPath = default.id }
+            val preset = presetNamed(default.id)
+            val action = preset?.defaultAction
+            if (preset != null && action != null && members.none { it.isAnchored }) {
+                arrangeSafely(action, alignedMembers(preset, members))
+            }
             if (!saveTrees(members)) continue
             HudManager.markGroupKnown(default.id)
             HudManager.LOGGER.info("Grouped {} HUDs into default group {}", members.size, default.id)
@@ -409,6 +414,8 @@ public object HudGroups {
         configId: String? = null,
         icon: String? = null,
         layout: HudPresetLayout? = null,
+        actions: List<HudPresetAction> = emptyList(),
+        defaultAction: String? = null,
     ): HudPreset {
         require(id.isNotEmpty() && SEPARATOR !in id && PRESET_SEPARATOR !in id) {
             "HUD preset id '$id' must be non-empty and contain neither '$SEPARATOR' nor '$PRESET_SEPARATOR'"
@@ -416,7 +423,11 @@ public object HudGroups {
         require(name.isNotBlank()) { "HUD preset '$id' needs a name" }
         val distinct = members.distinct()
         require(distinct.size >= 2) { "HUD preset '$id' needs at least two different HUDs" }
-        val preset = HudPreset(id, name, distinct, configId, icon, layout)
+        require(actions.map { it.id }.distinct().size == actions.size) { "HUD preset '$id' has actions with the same id" }
+        val default = defaultAction?.let { wanted ->
+            requireNotNull(actions.firstOrNull { it.id == wanted }) { "HUD preset '$id' has no action '$wanted'" }
+        }
+        val preset = HudPreset(id, name, distinct, configId, icon, layout, actions.toList(), default)
         synchronized(presets) { presets[id] = preset }
         HudManager.notifyRegistrationChanged()
         return preset
@@ -472,6 +483,8 @@ public object HudGroups {
                 if (hud !in made && hud !in HudManager.activeInstances) addedReal.add(hud)
                 HudManager.addInstance(hud)
             }
+            val defaultAction = preset.defaultAction
+            if (defaultAction != null && instances.none { it.isAnchored }) arrangeSafely(defaultAction, alignedMembers(preset, instances))
             HudManager.invalidate()
             saveTrees(instances)
             if (preset.id in defaults) HudManager.markGroupKnown(preset.id)
@@ -485,6 +498,42 @@ public object HudGroups {
             HudManager.LOGGER.error("Failed to add HUD preset ${preset.id}", e)
             return null
         }
+    }
+
+    /** The preset a group was made from, which is the one registered under its id or under the part of its id before [PRESET_SEPARATOR] */
+    @JvmStatic
+    public fun presetOf(group: HudGroup): HudPreset? = presetNamed(group.id.substringBefore(PRESET_SEPARATOR))
+
+    /** The HUDs of [group] that are members of [preset], in the order the preset lists them */
+    @JvmStatic
+    public fun presetMembers(group: HudGroup, preset: HudPreset): List<Hud> = presetSlots(group, preset).filterNotNull()
+
+    private fun presetSlots(group: HudGroup, preset: HudPreset): List<Hud?> =
+        alignedMembers(preset, group.huds.filter { hud -> chainOf(hud).none { it in group && presetOf(it) != null } })
+
+    /** Applies [action] to the members of [group] as a single undo step, doing nothing if it fails */
+    @JvmStatic
+    public fun runPresetAction(group: HudGroup, action: HudPresetAction) {
+        val preset = presetOf(group) ?: return
+        val slots = presetSlots(group, preset)
+        if (!arrangeSafely(action, slots)) return
+        HudManager.invalidate()
+        saveTrees(slots.filterNotNull())
+    }
+
+    private fun alignedMembers(preset: HudPreset, huds: List<Hud>): List<Hud?> {
+        val taken = identitySet(emptyList())
+        val exact = preset.members.map { type -> huds.firstOrNull { it.javaClass == type && taken.add(it) } }
+        return preset.members.mapIndexed { i, type -> exact[i] ?: huds.firstOrNull { type.isInstance(it) && taken.add(it) } }
+    }
+
+    private fun arrangeSafely(action: HudPresetAction, huds: List<Hud?>): Boolean = try {
+        Snapshot.withMutableSnapshot { action.arrangement.arrange(huds) }
+        true
+    } catch (e: Throwable) {
+        if (e.isFatalHudFailure()) throw e
+        HudManager.LOGGER.error("HUD preset action ${action.id} failed", e)
+        false
     }
 
     private fun placementRestorer(hud: Hud): () -> Unit {
