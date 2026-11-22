@@ -1608,12 +1608,15 @@ public abstract class Hud(
     private fun staticSizeChanged(): Boolean =
         hasTrait(TRAIT_EXTERNAL_STATIC_SIZE) && (staticW != geomStaticW || staticH != geomStaticH)
 
+    private val frameUseGuiScale: Boolean
+        get() = if (!hasExternalGeometry && refreshFrameFlags()) flagUseGuiScale else useGuiScale
+
     private fun guiScaleInput(): Float =
-        if (!useGuiScale || anyParentIgnoresGuiScale()) Platform.compatibility().options().guiScale else 0f
+        if (!frameUseGuiScale || anyParentIgnoresGuiScale()) Platform.compatibility().options().guiScale else 0f
 
     private fun anyParentIgnoresGuiScale(): Boolean {
         val parents = chainParents
-        for (i in parents.indices) if (!parents[i].useGuiScale) return true
+        for (i in parents.indices) if (!parents[i].frameUseGuiScale) return true
         return false
     }
 
@@ -1672,7 +1675,7 @@ public abstract class Hud(
         geomStaticW = staticW
         geomStaticH = staticH
         geomGuiScale = guiScaleInput()
-        geomScaleFromOption = !useGuiScale || anyParentIgnoresGuiScale()
+        geomScaleFromOption = !frameUseGuiScale || anyParentIgnoresGuiScale()
         cachedScale = effectiveScale
         cachedX = x
         cachedY = y
