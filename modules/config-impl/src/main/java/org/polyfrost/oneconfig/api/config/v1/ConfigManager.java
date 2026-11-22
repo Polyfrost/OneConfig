@@ -538,6 +538,12 @@ public final class ConfigManager {
         try {
             for (Config config : new ArrayList<>(initializedConfigs.values())) {
                 if (mgr.tracks(config.tree)) continue;
+                // Hotwire also resets the field of a config it took out, and on the same profile puts its tree back here,
+                // where registering it again would merge it into itself, which clears it
+                if (config.tree == null && mgr.backend.exists(config.id)) {
+                    config.tree = mgr.backend.get(config.id);
+                    continue;
+                }
                 try {
                     config.rebindToActiveProfile(!Files.exists(mgr.getFolder().resolve(config.id)));
                 } catch (Throwable t) {

@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -149,6 +150,26 @@ class DetachedRebindTest {
         assertSame(tree, config.getTree());
         assertSame(tree, ConfigManager.active().get(CONFIG));
         assertTrue(config.enabled);
+    }
+
+    // a KtConfig builds its tree once, so binding it again by registering that tree over itself would clear it
+    @Test
+    void ktConfigWhoseTreeWasResetKeepsItsValues() throws Exception {
+        DetachedKtConfig config = new DetachedKtConfig(CONFIG);
+        config.initialize(false);
+        config.setEnabled(true);
+        config.save();
+        Tree tree = config.getTree();
+        Off off = turnOff(config);
+        config.tree = null;
+        off.turnOn();
+        ConfigManager.rebindDetached();
+
+        assertSame(tree, config.getTree());
+        assertNotNull(tree.getProp("enabled"), "the tree kept its options");
+        ConfigManager.createProfile(PROFILE_A);
+        ConfigManager.openProfile("");
+        assertEquals(true, ConfigManager.active().get(CONFIG).getProp("enabled").get(), "and so did its file");
     }
 
     @Test
