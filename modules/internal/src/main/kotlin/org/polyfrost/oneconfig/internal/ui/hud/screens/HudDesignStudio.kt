@@ -1560,10 +1560,10 @@ fun HudDesignStudio(visible: Boolean = true) {
             if (step.focus == HudTourFocus.Library || step.interactive) libraryVisible = true
         }
         if (step.interactive && !tourTaskDone) {
-            var stillMerged = HudManager.activeInstances.filter { it.bgMerged }
+            var stillMerged = HudManager.activeInstances.filter { it.bgFused }
             snapshotFlow {
                 val huds = HudManager.instancesRevision.intValue.let { HudManager.activeInstances.toList() }
-                isDragging to huds.filter { it.bgMerged }
+                isDragging to huds.filter { it.bgFused }
             }.first { (dragging, merged) ->
                 stillMerged = stillMerged.filter { hud -> merged.any { it === hud } }
                 !dragging && merged.any { hud -> stillMerged.none { it === hud } }
@@ -2202,7 +2202,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         origin = pos,
                         wasSelected = wasSelected,
                         narrowsSelection = wasSelected && !actionPressed && !shift && newSelection.size > unit.size,
-                        detachIntent = actionPressed && hit.bgMerged && !hit.locked,
+                        detachIntent = actionPressed && hit.bgFused && !hit.locked,
                         selectionBefore = selectionBefore,
                         cyclesOnClick = held != null && stepInto == null && !actionPressed && !shift,
                     )
@@ -3052,7 +3052,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                 translated("oneconfig.hud.hint.group", "Drag to move the group  ·  Drag a corner to scale it  ·  Double-click to edit inside it")
             enteredGroup != null && hoveredHud == null ->
                 translated("oneconfig.hud.hint.group_editing", "Editing inside a group  ·  Esc to step out")
-            hoveredHud?.let { it.bgMerged && !unitLocked(it, enteredGroup) } == true ->
+            hoveredHud?.let { it.bgFused && !unitLocked(it, enteredGroup) } == true ->
                 translated("oneconfig.hud.hint.merged", "Drag to move the merged HUDs together  ·  Hold %s and drag to pull this one out", hudActionKeyName)
             else -> (hoveredHud ?: selectedHuds.singleOrNull())?.let(::mergeBlockerFor)
         }
@@ -3540,6 +3540,7 @@ internal fun duplicateHudGroup(
     }
     val groupPaths = HudGroups.pathsForCopies(viable)
     val pasted = mutableListOf<Hud>()
+    val pastedFrom = mutableListOf<Hud>()
     for ((i, hud) in viable.withIndex()) {
         if (!canDuplicateHud(hud)) continue
         val bounds = hudBounds(hud) ?: continue
@@ -3557,7 +3558,9 @@ internal fun duplicateHudGroup(
             fresh.setAbsolutePosition(nx, ny)
         }
         pasted.add(fresh)
+        pastedFrom.add(hud)
     }
+    Snapshot.withMutableSnapshot { HudGroups.remapCopies(pastedFrom, pasted) }
     return pasted
 }
 
@@ -4004,7 +4007,7 @@ private fun DesignStudioPanel(
                                         else -> Settings(selectedHud, query)
                                     }
                                     StudioCategory.Style -> when {
-                                        selectedGroup != null -> SharedStyle(selectedGroup.huds, query)
+                                        selectedGroup != null -> SharedStyle(selectedGroup.huds, query, selectedGroup)
                                         shared -> SharedStyle(sharedHuds, query)
                                         else -> Style(selectedHud, query)
                                     }

@@ -841,6 +841,7 @@
   "oneconfig.profiles.delete.text": "The profile \"%s\" and all its settings will be deleted.",
   "oneconfig.profiles.delete.confirm": "Delete profile",
   "oneconfig.hud.panel.arrange": "Arrange",
+  "oneconfig.hud.panel.group_background": "One background for the group",
   "oneconfig.hud.panel.text": "Text",
   "oneconfig.hud.panel.font": "Font",
   "oneconfig.hud.panel.size": "Size",

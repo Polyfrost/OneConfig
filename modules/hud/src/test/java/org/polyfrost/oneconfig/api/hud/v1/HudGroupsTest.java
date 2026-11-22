@@ -897,4 +897,194 @@ class HudGroupsTest {
         assertSame(only(HudC.class), only(DefaultTwo.class).getAnchorParent(), "an anchor to any other HUD also stops the action");
         assertNull(only(DefaultOne.class).getAnchorParent());
     }
+
+    private static void updateBackgroundGroups(Hud... huds) throws Exception {
+        Method update = HudManager.class.getDeclaredMethod("updateBackgroundGroups", List.class, float.class, float.class, float.class);
+        update.setAccessible(true);
+        update.invoke(HudManager.INSTANCE, Arrays.asList(huds), 960f, 540f, 1f);
+    }
+
+    private static void forgetFrame() throws Exception {
+        set("lastMergeKey", null);
+        set("frameGroups", Collections.emptyList());
+        set("mergeCheckHuds", new Hud[0]);
+        set("mergeCheckStamps", new int[0]);
+        ((Map<?, ?>) get("frameDrawn")).clear();
+    }
+
+    @Test
+    void aGroupsSingleBackgroundSurvivesARelaunchAndEndsWhenAHudLeaves() throws Exception {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        assertFalse(HudGroups.hasSingleBackground(group));
+        HudGroups.setSingleBackground(group, true);
+        assertTrue(HudGroups.hasSingleBackground(group));
+        ConfigManager.active().saveAll();
+
+        relaunch();
+
+        HudGroup restored = only(HudA.class).getGroup();
+        assertTrue(HudGroups.hasSingleBackground(restored));
+
+        HudGroups.removeFromGroup(only(HudB.class));
+        assertEquals("", only(HudB.class).getGroupBackground());
+        assertEquals(group.getId(), only(HudA.class).getGroupBackground());
+
+        HudGroups.ungroup(only(HudA.class).getGroup());
+        assertEquals("", only(HudA.class).getGroupBackground());
+    }
+
+    @Test
+    void copiesOfAGroupKeepItsSingleBackgroundUnderTheNewId() {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        List<Hud> originals = Arrays.asList(a, b);
+        List<String> paths = HudGroups.pathsForCopies(originals);
+        List<Hud> copies = Arrays.asList(a.clone(), b.clone());
+        for (int i = 0; i < copies.size(); i++) copies.get(i).setGroupPath(paths.get(i));
+
+        HudGroups.remapCopies(originals, copies);
+
+        HudGroup copied = copies.get(0).getGroup();
+        assertNotEquals(group, copied);
+        assertEquals(copied.getId(), copies.get(0).getGroupBackground());
+        assertEquals(copied.getId(), copies.get(1).getGroupBackground());
+        assertEquals(group.getId(), a.getGroupBackground());
+    }
+
+    @Test
+    void membersOfASingleBackgroundAreDrawnByOneConfigButNotFused() throws Exception {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        HudManager.isConfigUiOpen = true;
+        try {
+            updateBackgroundGroups(a, b, c);
+
+            assertTrue(a.getBgMerged());
+            assertTrue(b.getBgMerged());
+            assertFalse(a.getBgFused());
+            assertFalse(b.getBgFused());
+            assertFalse(c.getBgMerged());
+        } finally {
+            HudManager.isConfigUiOpen = false;
+            forgetFrame();
+        }
+    }
+
+    @Test
+    void theOutermostSingleBackgroundWinsAndTurningItOffLeavesTheInnerOneEmpty() {
+        HudGroup outer = HudGroups.group(Collections.singletonList(c), Collections.singletonList(HudGroups.group(Arrays.asList(a, b))));
+        assertNotNull(outer);
+        HudGroup inner = a.getGroup();
+        HudGroups.setSingleBackground(inner, true);
+        assertTrue(HudGroups.hasSingleBackground(inner));
+        assertFalse(HudGroups.isBackgroundTakenOver(inner));
+
+        HudGroups.setSingleBackground(outer, true);
+
+        assertEquals(outer.getId(), a.getGroupBackground());
+        assertEquals(outer.getId(), c.getGroupBackground());
+        assertTrue(HudGroups.isBackgroundTakenOver(inner));
+        assertTrue(HudGroups.hasSingleBackground(inner));
+
+        HudGroups.setSingleBackground(inner, true);
+        HudGroups.setSingleBackground(inner, false);
+        assertEquals(outer.getId(), a.getGroupBackground(), "the inner group cannot change what the outer one draws");
+
+        HudGroups.setSingleBackground(outer, false);
+        assertEquals("", a.getGroupBackground());
+        assertEquals("", c.getGroupBackground());
+        assertFalse(HudGroups.hasSingleBackground(inner));
+    }
+
+    @Test
+    void turningAnOuterBackgroundOffKeepsAnInnerOneItDidNotOwn() {
+        HudGroup outer = HudGroups.group(Collections.singletonList(c), Collections.singletonList(HudGroups.group(Arrays.asList(a, b))));
+        assertNotNull(outer);
+        HudGroup inner = a.getGroup();
+        HudGroups.setSingleBackground(inner, true);
+        c.setGroupBackground(outer.getId());
+
+        HudGroups.setSingleBackground(outer, false);
+
+        assertEquals(inner.getId(), a.getGroupBackground());
+        assertEquals("", c.getGroupBackground());
+    }
+
+    @Test
+    void aHudJoiningAGroupWithASingleBackgroundDrawsOnIt() {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+
+        assertTrue(HudGroups.addTo(group, Collections.singletonList(c)));
+
+        assertEquals(group.getId(), c.getGroupBackground());
+        assertTrue(HudGroups.hasSingleBackground(group));
+
+        HudGroups.removeFromGroup(c);
+        assertEquals("", c.getGroupBackground());
+    }
+
+    @Test
+    void aHudGroupedIntoAGroupWithASingleBackgroundTakesItOver() {
+        HudGroup outer = HudGroups.group(Collections.singletonList(c), Collections.singletonList(HudGroups.group(Arrays.asList(a, b))));
+        assertNotNull(outer);
+        HudGroup inner = a.getGroup();
+        HudGroups.setSingleBackground(outer, true);
+        Hud extra = HudManager.INSTANCE.getProvider(HudA.class).make(null);
+        HudManager.INSTANCE.getActiveInstances().add(extra);
+        HudManager.INSTANCE.getInstancesRevision().setIntValue(HudManager.INSTANCE.getInstancesRevision().getIntValue() + 1);
+        try {
+            assertTrue(HudGroups.addTo(inner, Collections.singletonList(extra)));
+            assertEquals(outer.getId(), extra.getGroupBackground());
+        } finally {
+            HudManager.INSTANCE.removeHud(extra, true);
+        }
+    }
+
+    @Test
+    void aHiddenHudThatKeepsItsBackgroundStaysInTheGroupBackground() throws Exception {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        b.setHidden(true);
+        b.setKeepBgWhenHidden(true);
+        HudManager.isConfigUiOpen = true;
+        try {
+            updateBackgroundGroups(a, b);
+            assertTrue(b.getBgMerged());
+
+            b.setKeepBgWhenHidden(false);
+            forgetFrame();
+            updateBackgroundGroups(a, b);
+            assertFalse(b.getBgMerged());
+        } finally {
+            b.setHidden(false);
+            b.setKeepBgWhenHidden(false);
+            HudManager.isConfigUiOpen = false;
+            forgetFrame();
+        }
+    }
+
+    @Test
+    void aBorderedHudStaysOutOfTheGroupBackgroundAndDrawsItsOwn() throws Exception {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        a.setBorderEnabled(true);
+        HudManager.isConfigUiOpen = true;
+        try {
+            updateBackgroundGroups(a, b);
+
+            assertFalse(a.getBgMerged());
+            assertTrue(b.getBgMerged());
+        } finally {
+            a.setBorderEnabled(false);
+            HudManager.isConfigUiOpen = false;
+            forgetFrame();
+        }
+    }
 }

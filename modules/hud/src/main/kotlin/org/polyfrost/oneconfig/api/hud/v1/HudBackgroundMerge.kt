@@ -207,6 +207,21 @@ internal object HudBackgroundMerge {
         return out
     }
 
+    fun wholeGroup(members: List<Hud>): Group? {
+        val box = HudGroups.bounds(members) ?: return null
+        val style = members.firstOrNull { it.showBackground && it.hasBackground() } ?: return null
+        val loops = outlines(listOf(box), floatArrayOf(style.bgRadius * style.effectiveScale))
+        if (loops.isEmpty()) return null
+        return Group(
+            huds = emptyList(),
+            links = emptyList(),
+            bgColor = style.bgColor,
+            chroma = style.bgChroma,
+            chromaSpeed = style.bgChromaSpeed,
+            loops = loops,
+        )
+    }
+
     @OptIn(ExperimentalOneConfigUiApi::class)
     fun canMerge(hud: Hud): Boolean =
         hud !is LegacyHudMarker && hud.canMergeBackground() && !hud.isCollapsed &&
@@ -804,6 +819,8 @@ internal object HudBackgroundMerge {
             key = key * 31 + hud.effectiveGrowthAnchor.ordinal
             key = key * 31 + hud.effectiveSelfAnchorPoint.ordinal
             key = key * 31 + (if (hud.isCollapsed) 1 else 0)
+            key = key * 31 + hud.groupBackground.hashCode()
+            key = key * 31 + hud.groupPath.hashCode()
         }
         return key
     }

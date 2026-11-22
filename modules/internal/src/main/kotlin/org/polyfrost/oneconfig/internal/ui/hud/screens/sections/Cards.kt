@@ -165,12 +165,12 @@ internal fun ControlRow(label: String, content: @Composable RowScope.() -> Unit)
 
 @Composable
 internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    SwitchRow(label, checked, false, onCheckedChange)
+    SwitchRow(label, checked, mixed = false, onCheckedChange = onCheckedChange)
 }
 
 @Composable
-internal fun SwitchRow(label: String, checked: Boolean, mixed: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    ControlRow(label) { Switch(checked, onCheckedChange, label = label, stateLabel = true, mixed = mixed) }
+internal fun SwitchRow(label: String, checked: Boolean, mixed: Boolean, enabled: Boolean = true, onCheckedChange: (Boolean) -> Unit) {
+    ControlRow(label) { Switch(checked, onCheckedChange, enabled = enabled, label = label, stateLabel = true, mixed = mixed) }
 }
 
 /**
