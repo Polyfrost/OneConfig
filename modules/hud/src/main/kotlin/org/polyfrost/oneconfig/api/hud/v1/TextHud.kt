@@ -31,6 +31,7 @@ package org.polyfrost.oneconfig.api.hud.v1
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
 import org.jetbrains.annotations.ApiStatus
@@ -84,10 +85,27 @@ public abstract class TextHud(
     @Volatile @Transient private var displayRuns: List<List<TextRun>>? = null
     @Transient private var runMode = mutableStateOf(false)
 
-    private fun casedText(case: Int): String = when (case) {
-        1 -> displayText.uppercase()
-        2 -> displayText.lowercase()
-        else -> displayText
+    private inner class DisplayTextProvider(
+        private val head: String,
+        private val case: Int,
+        private val tail: String,
+    ) : () -> String {
+        private var source: String? = null
+        private var built = ""
+
+        override fun invoke(): String {
+            val text = displayText
+            if (text !== source) {
+                val cased = when (case) {
+                    1 -> text.uppercase()
+                    2 -> text.lowercase()
+                    else -> text
+                }
+                built = if (head.isEmpty() && tail.isEmpty()) cased else head + cased + tail
+                source = text
+            }
+            return built
+        }
     }
 
     @Composable
@@ -125,7 +143,7 @@ public abstract class TextHud(
                     shadowOffsetY,
                     textScale,
                 )
-                val provider = { casedText(case) }
+                val provider = remember(case) { DisplayTextProvider("", case, "") }
                 ComposeNode<PoppinsTextNode, PolyApplier>(
                     factory = { PoppinsTextNode() },
                     update = {
@@ -141,7 +159,7 @@ public abstract class TextHud(
                     if (textUnderline) append("§n")
                 }
                 val tail = if (textBold || textItalic || textUnderline) "§r" else ""
-                val provider = { head + casedText(case) + tail }
+                val provider = remember(head, case, tail) { DisplayTextProvider(head, case, tail) }
 
                 NodeMcText(
                     text = provider,
@@ -163,6 +181,14 @@ public abstract class TextHud(
             value?.takeIf { it.isNotEmpty() },
             suffix.takeIf { it.isNotEmpty() }
         ).fastFilterNotNull().fastJoinToString(concatString)
+    }
+
+    private fun joinPlain(prefix: String, value: String?, suffix: String): String {
+        val v = value ?: ""
+        if (prefix.isEmpty() && suffix.isEmpty()) return v
+        if (v.isEmpty() && suffix.isEmpty()) return prefix
+        if (prefix.isEmpty() && v.isEmpty()) return suffix
+        return prefix + v + suffix
     }
 
     /**
@@ -245,12 +271,13 @@ public abstract class TextHud(
         val value = getText()
         val p = prefix
         val sfx = suffix
-        if (lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && value == lastValue && plainConcat.get(javaClass)) return true
+        val plain = plainConcat.get(javaClass)
+        if (lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && value == lastValue && plain) return true
         lastValue = value
         lastPrefix = p
         lastSuffix = sfx
         lastBrackets = brackets
-        val text = decorate(concat(p, value, sfx))
+        val text = decorate(if (plain) joinPlain(p, value, sfx) else concat(p, value, sfx))
         if (text != displayText) {
             displayText = text
             contentChanged()
@@ -258,8 +285,15 @@ public abstract class TextHud(
         return true
     }
 
-    override fun minimumSize(): Pair<Float, Float> =
-        (padLeft + padRight + 2f) to (padTop + padBottom + 2f)
+    @Transient private var minimumSizeCache: Pair<Float, Float>? = null
+
+    override fun minimumSize(): Pair<Float, Float> {
+        val w = padLeft + padRight + 2f
+        val h = padTop + padBottom + 2f
+        val cached = minimumSizeCache
+        if (cached != null && cached.first == w && cached.second == h) return cached
+        return (w to h).also { minimumSizeCache = it }
+    }
 
     override fun setup() {
         super.setup()
@@ -407,8 +441,9 @@ private class PoppinsTextNode : PolyNode() {
         val underlineThick = metrics.underlineThickness
         val shadowCol = s.shadow
         val outline = s.outline
-        lines.forEachIndexed { index, lineText ->
-            if (lineText.isEmpty()) return@forEachIndexed
+        for (index in lines.indices) {
+            val lineText = lines[index]
+            if (lineText.isEmpty()) continue
             val baseline = y + index * metrics.spacing - metrics.ascent
             val lineW = font.measureTextWidth(lineText)
             if (shadowCol != null && s.fullShadow) {

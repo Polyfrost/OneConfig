@@ -47,7 +47,13 @@ object LegacyHudRenderer {
 
     /** [renderLive], or null when it has nothing to draw */
     internal val liveDraw: GuiDraw?
-        get() = drawLive.takeIf { CompatOverlayRenderer.hasHooks() || HudManager.activeInstances.any { it is LegacyHud } }
+        get() = drawLive.takeIf { CompatOverlayRenderer.hasHooks() || hasLegacyHud() }
+
+    private fun hasLegacyHud(): Boolean {
+        val instances = HudManager.activeInstances
+        for (i in instances.indices) if (instances[i] is LegacyHud) return true
+        return false
+    }
 
     //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
     fun renderLive(graphics: GuiGraphicsExtractor) {
@@ -60,7 +66,9 @@ object LegacyHudRenderer {
     //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
     private fun renderLiveHuds(graphics: GuiGraphicsExtractor) {
         frame.clear()
-        for (hud in HudManager.activeInstances) {
+        val instances = HudManager.activeInstances
+        for (i in instances.indices) {
+            val hud = instances[i]
             if (hud !is LegacyHud) continue
             if (!HudManager.isEditing) {
                 if (hud.hidden) continue
@@ -75,7 +83,8 @@ object LegacyHudRenderer {
             }
             frame.add(hud)
         }
-        for (hud in frame) {
+        for (i in frame.indices) {
+            val hud = frame[i]
             try {
                 HudManager.updateIfDue(hud)
                 if (!HudManager.isEditing && !hud.shouldShow()) continue

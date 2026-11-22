@@ -35,11 +35,31 @@ public interface MinecraftCompat {
     }
 
     default GameProfile getGameProfile() {
-        return ((Minecraft) (Object) this).getSession().getProfile();
+        SessionCache.refresh((Minecraft) (Object) this);
+        return SessionCache.profile;
     }
 
     default User getUser() {
-        return new User(((Minecraft) (Object) this).getSession().getProfile());
+        SessionCache.refresh((Minecraft) (Object) this);
+        return SessionCache.user;
+    }
+
+    final class SessionCache {
+        private static Object session;
+        private static GameProfile profile;
+        private static User user;
+
+        private SessionCache() {
+        }
+
+        static void refresh(Minecraft minecraft) {
+            Object current = minecraft.getSession();
+            if (user != null && current == session) return;
+            GameProfile fresh = minecraft.getSession().getProfile();
+            profile = fresh;
+            user = new User(fresh);
+            session = current;
+        }
     }
 
     default boolean isLocalServer() {

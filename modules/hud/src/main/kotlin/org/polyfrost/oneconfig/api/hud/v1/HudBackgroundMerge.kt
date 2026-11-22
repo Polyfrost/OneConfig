@@ -106,9 +106,11 @@ internal object HudBackgroundMerge {
             PolyPath().also { pb -> for (loop in loops) emitLoop(pb, loop) }
         }
 
+        private val fill by lazy(LazyThreadSafetyMode.NONE) { PolyColor(bgColor, chroma, chromaSpeed) }
+
         fun draw(ctx: RenderContext) {
             val shading = shading
-            if (shading == null) ctx.fillPath(path, PolyColor(bgColor, chroma, chromaSpeed)) else shading.draw(ctx, path)
+            if (shading == null) ctx.fillPath(path, fill) else shading.draw(ctx, path)
         }
     }
 
@@ -723,7 +725,8 @@ internal object HudBackgroundMerge {
     @OptIn(ExperimentalOneConfigUiApi::class)
     fun layoutKey(huds: List<Hud>): Int {
         var key = huds.size
-        for (hud in huds) {
+        for (i in huds.indices) {
+            val hud = huds[i]
             key = key * 31 + (hud.x * 4f).roundToInt()
             key = key * 31 + (hud.y * 4f).roundToInt()
             key = key * 31 + (hud.renderedW * 4f).roundToInt()

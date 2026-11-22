@@ -54,6 +54,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notification;
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.compat.CompatLoader;
 import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
@@ -229,8 +230,9 @@ public class OneConfig implements ClientModInitializer {
     public static void prepareHud() {
         if (GlHost.INSTANCE.unavailableReason() != null) return;
 
-        float sw = Platform.screen().guiWidth();
-        float sh = Platform.screen().guiHeight();
+        ScreenPlatform screen = Platform.screen();
+        float sw = screen.guiWidth();
+        float sh = screen.guiHeight();
         // guiWidth()/guiHeight() are already GUI-scaled so do not divide by guiScale again
         HudManager.guiScreenWidth = sw;
         HudManager.guiScreenHeight = sh;
@@ -242,11 +244,12 @@ public class OneConfig implements ClientModInitializer {
         *///? }
         HudManager.isDebugScreenVisible = isDebugScreenVisible();
         HudManager.isTabListVisible = isTabListVisible();
-        HudManager.isGuiScreenOpen = Platform.screen().current() != null;
-        HudManager.isChatScreenOpen = Platform.screen().current() instanceof ChatScreen;
+        Object current = screen.current();
+        HudManager.isGuiScreenOpen = current != null;
+        HudManager.isChatScreenOpen = current instanceof ChatScreen;
         HudManager.inWorld = true;
-        HudManager.targetPixelWidth = Platform.screen().viewportWidth();
-        HudManager.targetPixelHeight = Platform.screen().viewportHeight();
+        HudManager.targetPixelWidth = screen.viewportWidth();
+        HudManager.targetPixelHeight = screen.viewportHeight();
 
         if (HudManager.isConfigUiOpen) {
             HudManager.INSTANCE.prepare(sw, sh);
@@ -257,7 +260,8 @@ public class OneConfig implements ClientModInitializer {
         //? if >= 1.21.11 {
         if (HudManager.INSTANCE.beginFrame(sw, sh, McItemIcons::renderPending, true, true)) BlazeHud.markDirty();
         //?} else {
-        /*if (HudManager.INSTANCE.beginFrame(sw, sh, McItemIcons::renderPending, false)) {
+        /*//~ if = 1.8.9 'GlHost.vanillaPipeline' -> 'true'
+        if (HudManager.INSTANCE.beginFrame(sw, sh, McItemIcons::renderPending, false, GlHost.vanillaPipeline)) {
             GlHost.INSTANCE.drawHudGl((ctx, volatileCtx) -> {
                 HudManager.INSTANCE.render(ctx, sw, sh, volatileCtx);
                 return Unit.INSTANCE;
