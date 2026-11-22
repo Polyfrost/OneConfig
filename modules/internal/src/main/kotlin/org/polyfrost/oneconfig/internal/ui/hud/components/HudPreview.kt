@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -144,23 +145,29 @@ internal fun hudPreviewScale(naturalW: Float, naturalH: Float, availableW: Float
 }
 
 @Composable
+private fun rememberRedrawTick(alwaysRedraw: Boolean): State<Int> {
+    val revision = remember { mutableIntStateOf(0) }
+    LaunchedEffect(alwaysRedraw) {
+        if (!alwaysRedraw) return@LaunchedEffect
+        while (true) {
+            withFrameNanos { revision.intValue++ }
+        }
+    }
+    return revision
+}
+
+@Composable
 internal fun HudPreviewCanvas(
     state: HudPreviewState,
     scale: Float,
     alwaysRedraw: Boolean,
     modifier: Modifier = Modifier
 ) {
-    var animationRevision by remember { mutableIntStateOf(0) }
-    LaunchedEffect(alwaysRedraw) {
-        if (!alwaysRedraw) return@LaunchedEffect
-        while (true) {
-            withFrameNanos { animationRevision++ }
-        }
-    }
+    val tick = rememberRedrawTick(alwaysRedraw)
 
     Canvas(modifier) {
         HudManager.previewRevision.intValue
-        if (alwaysRedraw) animationRevision
+        if (alwaysRedraw) tick.value
         val w = size.width
         val h = size.height
         drawPoly { ctx ->
@@ -169,6 +176,39 @@ internal fun HudPreviewCanvas(
             r.clipRect(0f, 0f, w, h)
             r.scale(scale, scale)
             Snapshot.withoutReadObservation { state.runtime.root.render(ctx) }
+            r.restore()
+        }
+    }
+}
+
+internal class HudPresetPart(val state: HudPreviewState, val x: Float, val y: Float, val scale: Float)
+
+@Composable
+internal fun HudPresetPreviewCanvas(
+    parts: List<HudPresetPart>,
+    scale: Float,
+    alwaysRedraw: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val tick = rememberRedrawTick(alwaysRedraw)
+
+    Canvas(modifier) {
+        HudManager.previewRevision.intValue
+        if (alwaysRedraw) tick.value
+        val w = size.width
+        val h = size.height
+        drawPoly { ctx ->
+            val r = ctx.renderer
+            r.save()
+            r.clipRect(0f, 0f, w, h)
+            r.scale(scale, scale)
+            for (part in parts) {
+                r.save()
+                r.translate(part.x, part.y)
+                r.scale(part.scale, part.scale)
+                Snapshot.withoutReadObservation { part.state.runtime.root.render(ctx) }
+                r.restore()
+            }
             r.restore()
         }
     }

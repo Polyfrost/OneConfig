@@ -703,6 +703,8 @@
   "oneconfig.hud.library.evergreen_action": "Get EvergreenHUD",
   "oneconfig.hud.library.other": "Other",
   "oneconfig.hud.library.add": "Add to screen",
+  "oneconfig.hud.library.add_preset": "Add all to screen",
+  "oneconfig.hud.library.preset_count": "%d HUDs",
   "oneconfig.hud.library.mod_settings": "Open mod settings",
   "oneconfig.hud.legacy": "Legacy HUD",
   "oneconfig.mods.category.all": "All",

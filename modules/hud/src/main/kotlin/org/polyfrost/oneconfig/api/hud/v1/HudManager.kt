@@ -61,7 +61,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
-private fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
+internal fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
 
 public object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
@@ -399,7 +399,7 @@ public object HudManager {
         registrationListeners.add(listener)
     }
 
-    private fun notifyRegistrationChanged() = registrationListeners.forEach(Runnable::run)
+    internal fun notifyRegistrationChanged() = registrationListeners.forEach(Runnable::run)
 
     @JvmStatic
     public fun register(hud: Hud) {
@@ -578,6 +578,17 @@ public object HudManager {
             }
         }
         return out
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun addInstance(hud: Hud) {
+        if (hud in activeInstances) return
+        activeInstances.add(hud)
+        instancesRevision.intValue++
+        hud.setup()
+        hud.captureStaticSizeDefaults()
+        hud.capturePositionDefaults()
     }
 
     public fun hasHudOfType(hudClass: Class<out Hud>): Boolean = activeInstances.any { it::class.java == hudClass }
@@ -2030,11 +2041,7 @@ public object HudManager {
                     hud.setAbsolutePosition(absX, absY)
                 }
                 migrateLoaded(hud, data)
-                activeInstances.add(hud)
-                instancesRevision.intValue++
-                hud.setup()
-                hud.captureStaticSizeDefaults()
-                hud.capturePositionDefaults()
+                addInstance(hud)
                 used.add(cls)
                 i++
             } catch (e: ClassNotFoundException) {
@@ -2080,11 +2087,7 @@ public object HudManager {
                 val hud = h.make()
                 candidate = hud
                 hud.setAbsolutePosition(dx, dy)
-                activeInstances.add(hud)
-                instancesRevision.intValue++
-                hud.setup()
-                hud.captureStaticSizeDefaults()
-                hud.capturePositionDefaults()
+                addInstance(hud)
                 registryChanged = knownProviders.add(cls.name) or registryChanged
                 LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
             } catch (e: Throwable) {

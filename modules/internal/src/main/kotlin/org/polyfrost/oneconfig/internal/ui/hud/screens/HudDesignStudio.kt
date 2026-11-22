@@ -77,6 +77,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudGroup
 import org.polyfrost.oneconfig.api.hud.v1.HudGroups
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.HudPreset
 import org.polyfrost.oneconfig.api.hud.v1.HudResize
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
@@ -115,11 +116,14 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.components.*
 import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
 import org.polyfrost.oneconfig.internal.ui.hud.HudCanvasResetMenu
+import org.polyfrost.oneconfig.internal.ui.hud.components.HudPresetPart
+import org.polyfrost.oneconfig.internal.ui.hud.components.HudPresetPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewCanvas
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewState
 import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasMenuEntries
 import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasPasteMenuEntries
+import org.polyfrost.oneconfig.internal.ui.hud.libraryConfigId
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.GroupSettings
@@ -1307,28 +1311,9 @@ private fun tourMenuRect(hud: Rect, menu: IntSize, root: IntSize, gap: Float): R
 private fun placeHudCentered(provider: Hud): Hud? = try {
     val instance = if (provider.isReal) provider else provider.make()
     HudManager.markProviderKnown(instance)
-    val screenW = HudManager.guiScreenWidth
-    val screenH = HudManager.guiScreenHeight
-    val scale = instance.effectiveScale
-    val (minW, minH) = instance.minimumSize()
-    val w = if (instance.staticWidth) {
-        instance.staticW.takeIf { it > 0f }?.times(scale)
-    } else {
-        instance.renderedW.takeIf { it > 0f } ?: minW.takeIf { it > 0f }?.times(scale) ?: instance.staticW.takeIf { it > 0f }?.times(scale)
-    } ?: 60f
-    val h = if (instance.staticWidth) {
-        instance.staticH.takeIf { it > 0f }?.times(scale)
-    } else {
-        instance.renderedH.takeIf { it > 0f } ?: minH.takeIf { it > 0f }?.times(scale) ?: instance.staticH.takeIf { it > 0f }?.times(scale)
-    } ?: 20f
-    instance.setAbsolutePosition((screenW - w) / 2f, (screenH - h) / 2f)
-    if (instance !in HudManager.activeInstances) {
-        HudManager.activeInstances.add(instance)
-        HudManager.instancesRevision.intValue++
-        instance.setup()
-        instance.captureStaticSizeDefaults()
-        instance.capturePositionDefaults()
-    }
+    val (w, h) = HudGroups.estimatedSize(instance, null)
+    instance.setAbsolutePosition((HudManager.guiScreenWidth - w) / 2f, (HudManager.guiScreenHeight - h) / 2f)
+    HudManager.addInstance(instance)
     instance
 } catch (e: Throwable) {
     LOGGER.error("Failed to place HUD ${provider.title}", e)
@@ -1621,8 +1606,10 @@ fun HudDesignStudio(visible: Boolean = true) {
     }
 
     val providers = remember { HudManager.providers().toList() }
+    val addablePresets = HudManager.instancesRevision.intValue.let { HudGroups.presets().filter(HudGroups::canAdd) }
     fun libraryHuds() = providers.filter { it.addableToLibrary }
-    fun libraryModIds(huds: List<Hud> = libraryHuds()) = huds.mapNotNull { it.configId }.distinct()
+    fun libraryModIds(huds: List<Hud> = libraryHuds()) =
+        (addablePresets.mapNotNull { it.libraryConfigId } + huds.mapNotNull { it.configId }).distinct()
     val addable = libraryHuds()
     val modIds = libraryModIds(addable)
 
@@ -1746,11 +1733,17 @@ fun HudDesignStudio(visible: Boolean = true) {
 
     val modNames = remember(modIds) { modIds.associateWith { modNameFor(it) ?: it } }
     val searchHits = rememberHudSearchResults(providers, searchText)
-    val groupedHuds = searchHits?.map { (modId, huds) -> modId to huds.filter { it.addableToLibrary } }
-        ?: addable.groupBy { it.configId }.map { (modId, huds) -> modId to huds }
-    val librarySections = remember(groupedHuds, modNames) {
-        groupedHuds.mapNotNull { (modId, huds) ->
-            huds.takeIf { it.isNotEmpty() }
+    val groupedEntries = searchHits?.map { (modId, entries) -> modId to entries.filter { it.addable } }
+        ?: run {
+            val singles = addable.groupBy { it.configId }
+            val presets = addablePresets.groupBy { it.libraryConfigId }
+            (singles.keys + presets.keys).map { modId ->
+                modId to presets[modId].orEmpty().map(::presetEntry) + singles[modId].orEmpty().map { HudLibraryEntry.Single(it) }
+            }
+        }
+    val librarySections = remember(groupedEntries, modNames) {
+        groupedEntries.mapNotNull { (modId, entries) ->
+            entries.takeIf { it.isNotEmpty() }
                 ?.let { HudLibrarySection(modId, modId?.let { id -> modNames[id] } ?: translated("oneconfig.hud.library.other", "Other"), it) }
         }
     }
@@ -3236,13 +3229,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 val initX = cursorX * s - offX
                                 val initY = cursorY * s - offY
                                 instance.setAbsolutePosition(initX, initY)
-                                if (instance !in HudManager.activeInstances) {
-                                    HudManager.activeInstances.add(instance)
-                                    HudManager.instancesRevision.intValue++
-                                    instance.setup()
-                                    instance.captureStaticSizeDefaults()
-                                    instance.capturePositionDefaults()
-                                }
+                                HudManager.addInstance(instance)
                                 UiSounds.play(UiSoundEvent.HUD_DRAG_START)
                                 instance.onEditorDragStart()
                                 beginHudSnap(dragSnapper, setOf(instance), instance)
@@ -3265,6 +3252,46 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 UiSounds.play(UiSoundEvent.HUD_SELECT)
                                 Snapshot.withMutableSnapshot {
                                     selectedHuds = setOf(instance)
+                                    panelOpen = true
+                                    closeLibrary()
+                                }
+                            }
+                        },
+                        onPresetDragStart = { preset, naturalSize, sx, sy, localX, localY ->
+                            try {
+                                val huds = HudGroups.addPreset(preset, naturalSize)?.huds ?: return@HudLibraryPanel
+                                val box = HudGroups.bounds(huds) ?: return@HudLibraryPanel
+                                val s = Platform.screen().screenToMcScale()
+                                val cursorX = if (lastPointerPos[0] > 0f) lastPointerPos[0] else sx
+                                val cursorY = if (lastPointerPos[1] > 0f) lastPointerPos[1] else sy
+                                val startPositions = huds.associateWith { it.x to it.y }
+                                HudGroups.moveFrom(huds, startPositions, cursorX * s - localX - box[0], cursorY * s - localY - box[1])
+                                val grabbed = HudGroups.roots(huds).firstOrNull() ?: huds.first()
+                                val dragged = huds.toSet()
+                                UiSounds.play(UiSoundEvent.HUD_DRAG_START)
+                                for (hud in dragged) hud.onEditorDragStart()
+                                beginHudSnap(dragSnapper, dragged, grabbed)
+                                Snapshot.withMutableSnapshot {
+                                    dragOffsetX = cursorX * s - grabbed.x
+                                    dragOffsetY = cursorY * s - grabbed.y
+                                    isDragging = true
+                                    draggedHud = grabbed
+                                    draggedGroup = dragged
+                                    dragStarts = dragged.associateWith { it.x to it.y }
+                                    selectedHuds = dragged
+                                    hoveredHud = grabbed
+                                    closeLibrary()
+                                }
+                            } catch (e: Throwable) {
+                                LOGGER.error("Failed to drag HUD preset ${preset.id} out of the library", e)
+                            }
+                        },
+                        onPresetClick = { preset, naturalSize ->
+                            val group = HudGroups.addPreset(preset, naturalSize)
+                            if (group != null) {
+                                UiSounds.play(UiSoundEvent.HUD_SELECT)
+                                Snapshot.withMutableSnapshot {
+                                    selectedHuds = group.huds.toSet()
                                     panelOpen = true
                                     closeLibrary()
                                 }
@@ -3425,13 +3452,9 @@ internal fun duplicateHud(
             val source = anchor ?: copied
             fresh.setAbsolutePosition(source.x + offset, source.y + offset)
         }
-        HudManager.activeInstances.add(fresh)
-        HudManager.instancesRevision.intValue++
     }
+    HudManager.addInstance(fresh)
     HudManager.markProviderKnown(fresh)
-    fresh.setup()
-    fresh.captureStaticSizeDefaults()
-    fresh.capturePositionDefaults()
     HudManager.invalidate()
     return fresh
 }
@@ -3985,20 +4008,28 @@ private fun SearchToggle(modifier: Modifier, onClick: () -> Unit) {
 }
 
 @Composable
-private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<Pair<String?, List<Hud>>>? {
-    var results by remember { mutableStateOf<List<Pair<String?, List<Hud>>>?>(null) }
+private fun rememberHudSearchResults(providers: List<Hud>, query: String): List<Pair<String?, List<HudLibraryEntry>>>? {
+    var results by remember { mutableStateOf<List<Pair<String?, List<HudLibraryEntry>>>?>(null) }
     LaunchedEffect(providers, query) {
         results = if (query.isBlank()) null
         else withContext(Dispatchers.Default) {
             val known = providers.toHashSet()
-            SearchCorpus.searchGrouped(query, setOf(SearchScope.Huds)) { (it.payload as? Hud)?.configId }
+            SearchCorpus.searchGrouped(query, setOf(SearchScope.Huds)) { libraryEntryOf(it.payload)?.configId }
                 .map { (modId, documents) ->
-                    modId to documents.mapNotNull { document -> (document.payload as? Hud)?.takeIf { it in known } }
+                    modId to documents.mapNotNull { document ->
+                        libraryEntryOf(document.payload)?.takeIf { it !is HudLibraryEntry.Single || it.hud in known }
+                    }
                 }
-                .filter { (_, huds) -> huds.isNotEmpty() }
+                .filter { (_, entries) -> entries.isNotEmpty() }
         }
     }
     return results.takeUnless { query.isBlank() }
+}
+
+private fun libraryEntryOf(payload: Any?): HudLibraryEntry? = when (payload) {
+    is Hud -> HudLibraryEntry.Single(payload)
+    is HudPreset -> presetEntry(payload)
+    else -> null
 }
 
 /** One mod's worth of addable HUDs as shown in the continuous library list */
@@ -4037,7 +4068,29 @@ private fun SectionStack(modifier: Modifier, content: @Composable () -> Unit) {
     }
 }
 
-private class HudLibrarySection(val modId: String?, val title: String, val huds: List<Hud>)
+private class HudLibrarySection(val modId: String?, val title: String, val entries: List<HudLibraryEntry>)
+
+private sealed interface HudLibraryEntry {
+    data class Single(val hud: Hud) : HudLibraryEntry
+    data class Preset(val preset: HudPreset, val members: List<Hud>) : HudLibraryEntry
+}
+
+private fun presetEntry(preset: HudPreset) =
+    HudLibraryEntry.Preset(preset, HudGroups.providersOf(preset))
+
+private val HudLibraryEntry.configId: String?
+    get() = when (this) {
+        is HudLibraryEntry.Single -> hud.configId
+        is HudLibraryEntry.Preset -> preset.libraryConfigId
+    }
+
+private val HudLibraryEntry.addable: Boolean
+    get() = when (this) {
+        is HudLibraryEntry.Single -> hud.addableToLibrary
+        is HudLibraryEntry.Preset -> HudGroups.canAdd(preset)
+    }
+
+private val HudLibraryEntry.Preset.alwaysRedraw: Boolean get() = members.any { it.alwaysRedraw }
 
 /** Map key for a section since the catch-all section has no mod id */
 private fun librarySectionKey(modId: String?): String = modId ?: ""
@@ -4047,8 +4100,8 @@ private fun libraryIconFor(modId: String?): String =
 
 private val LIBRARY_HEADER_HEIGHT = 16.dp
 
-private data class HudLibraryRowKey(val section: String, val firstHud: Hud)
-private data class HudLibraryRow(val huds: List<Hud>, val height: Int, val widths: List<Int>)
+private data class HudLibraryRowKey(val section: String, val first: HudLibraryEntry)
+private data class HudLibraryRow(val entries: List<HudLibraryEntry>, val height: Int, val widths: List<Int>)
 
 private data class HudLibraryItem(
     val section: HudLibrarySection,
@@ -4056,18 +4109,23 @@ private data class HudLibraryItem(
     val height: Int,
     val bottomPadding: Dp = 0.dp,
 ) {
-    val key: Any = row?.let { HudLibraryRowKey(librarySectionKey(section.modId), it.huds.first()) }
+    val key: Any = row?.let { HudLibraryRowKey(librarySectionKey(section.modId), it.entries.first()) }
         ?: "header:${librarySectionKey(section.modId)}"
 }
 
-private data class HudPreviewGeometry(val size: DpSize, val scale: Float, val cardSize: DpSize)
+private data class HudPreviewGeometry(
+    val size: DpSize,
+    val scale: Float,
+    val cardSize: DpSize,
+    val parts: List<HudPresetPart> = emptyList(),
+)
 
 private data class HudLibraryLayout(
     val items: List<HudLibraryItem>,
     val sectionIndexes: Map<String, Int>,
     val measured: Boolean,
     val previews: Map<Hud, HudPreviewState>,
-    val geometry: Map<Hud, HudPreviewGeometry>,
+    val geometry: Map<HudLibraryEntry, HudPreviewGeometry>,
 )
 
 private data class HudLibraryScrollMetrics(
@@ -4137,23 +4195,26 @@ private fun HudLibraryHeader(section: HudLibrarySection, active: Boolean) {
 private const val ROW_HEIGHT_TOLERANCE = 0.6f
 private const val MAX_CARD_STRETCH = 1.35f
 
-private fun packHudLibraryRows(huds: List<Hud>, sizes: Map<Hud, IntSize>, availableWidth: Int, spacing: Int): List<HudLibraryRow> {
-    val rows = ArrayList<MutableList<Hud>>()
+private fun packHudLibraryRows(
+    entries: List<HudLibraryEntry>,
+    sizes: Map<HudLibraryEntry, IntSize>,
+    availableWidth: Int,
+    spacing: Int,
+): List<HudLibraryRow> {
+    val rows = ArrayList<MutableList<HudLibraryEntry>>()
     val rowWidths = ArrayList<Int>()
     val rowHeights = ArrayList<Int>()
-    // Tallest first, each HUD takes the first row with room, so small ones fill gaps left in earlier rows.
-    // A row only takes HUDs close to its height to keep cards from stretching much vertically.
-    for (hud in huds.filter { it in sizes }.sortedByDescending { sizes.getValue(it).height }) {
-        val size = sizes.getValue(hud)
+    for (entry in entries.filter { it in sizes }.sortedByDescending { sizes.getValue(it).height }) {
+        val size = sizes.getValue(entry)
         val index = rows.indices.firstOrNull {
             rowWidths[it] + spacing + size.width <= availableWidth && size.height >= rowHeights[it] * ROW_HEIGHT_TOLERANCE
         }
         if (index == null) {
-            rows.add(mutableListOf(hud))
+            rows.add(mutableListOf(entry))
             rowWidths.add(size.width)
             rowHeights.add(size.height)
         } else {
-            rows[index].add(hud)
+            rows[index].add(entry)
             rowWidths[index] += spacing + size.width
         }
     }
@@ -4169,45 +4230,42 @@ private fun rememberHudLibraryLayout(sections: List<HudLibrarySection>, maxCardW
     val density = LocalDensity.current
     // Create preview state up front for packing, only visible cards are composed
     val previews = HashMap<Hud, HudPreviewState>()
-    for (section in sections) {
-        for (hud in section.huds) {
-            if (hud !is LegacyHud) previews[hud] = key(hud) { rememberHudPreview(hud) }
+    val providers = sections.flatMap { it.entries }.flatMapTo(LinkedHashSet()) { entry ->
+        when (entry) {
+            is HudLibraryEntry.Single -> listOf(entry.hud)
+            is HudLibraryEntry.Preset -> entry.members
         }
+    }
+    for (hud in providers) {
+        if (hud !is LegacyHud) previews[hud] = key(hud) { rememberHudPreview(hud) }
     }
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = OneConfigTheme.typography.caption.fontSize, fontFamily = LocalTheme.current.typography.family)
     // Preview dimensions can arrive after composition, repack only when sizes or layout inputs change
     return remember(sections, previews, maxCardWidth, density, textMeasurer, labelStyle) {
         derivedStateOf {
-            val sizes = HashMap<Hud, IntSize>()
-            val geometry = HashMap<Hud, HudPreviewGeometry>()
+            val sizes = HashMap<HudLibraryEntry, IntSize>()
+            val geometry = HashMap<HudLibraryEntry, HudPreviewGeometry>()
+            fun textWidth(text: String) = with(density) { textMeasurer.measure(text, labelStyle).size.width.toDp() }
             for (section in sections) {
-                for (hud in section.huds) {
-                    val (naturalW, naturalH) = if (hud is LegacyHud) {
-                        val (minW, minH) = hud.minimumSize()
-                        (if (minW > 0f) minW else LEGACY_PREVIEW_FALLBACK_SIZE) to
-                                (if (minH > 0f) minH else LEGACY_PREVIEW_FALLBACK_SIZE)
-                    } else previews.getValue(hud).let { it.naturalWidth to it.naturalHeight }
-                    if (naturalW > 0f && naturalH > 0f) {
-                        val scale = previewScaleFor(naturalW, naturalH, maxCardWidth, density.density)
-                        val size = previewCardSize(naturalW, naturalH, scale, maxCardWidth, density.density, hud is LegacyHud)
-                        val cardSize = if (hud is LegacyHud) size else {
-                            val labelWidth = with(density) { textMeasurer.measure(hudLabel(hud), labelStyle).size.width.toDp() }
-                            DpSize(
-                                maxOf(size.width, labelWidth + PREVIEW_CARD_PADDING * 2).coerceAtMost(maxCardWidth),
-                                size.height + HUD_LABEL_HEIGHT,
-                            )
+                for (entry in section.entries) {
+                    val built = when (entry) {
+                        is HudLibraryEntry.Single -> singleGeometry(entry.hud, previews, maxCardWidth, density.density) { textWidth(hudLabel(entry.hud)) }
+                        is HudLibraryEntry.Preset -> presetGeometry(entry, previews, maxCardWidth, density.density) {
+                            textWidth(entry.preset.name) + textWidth(presetCountLabel(entry)) + PRESET_LABEL_EXTRA
                         }
-                        geometry[hud] = HudPreviewGeometry(size, scale, cardSize)
-                        sizes[hud] = with(density) { IntSize(cardSize.width.roundToPx(), cardSize.height.roundToPx()) }
-                    }
+                    } ?: continue
+                    geometry[entry] = built
+                    sizes[entry] = with(density) { IntSize(built.cardSize.width.roundToPx(), built.cardSize.height.roundToPx()) }
                 }
             }
             val items = with(density) {
                 buildList {
                     sections.forEachIndexed { sectionIndex, section ->
                         add(HudLibraryItem(section, null, LIBRARY_HEADER_HEIGHT.roundToPx()))
-                        val rows = packHudLibraryRows(section.huds, sizes, maxCardWidth.roundToPx(), 10.dp.roundToPx())
+                        val (presets, singles) = section.entries.partition { it is HudLibraryEntry.Preset }
+                        val rows = packHudLibraryRows(presets, sizes, maxCardWidth.roundToPx(), 10.dp.roundToPx()) +
+                            packHudLibraryRows(singles, sizes, maxCardWidth.roundToPx(), 10.dp.roundToPx())
                         rows.forEachIndexed { rowIndex, row ->
                             val padding = if (rowIndex == rows.lastIndex && sectionIndex < sections.lastIndex) 6.dp else 0.dp
                             add(HudLibraryItem(section, row, row.height + padding.roundToPx(), padding))
@@ -4221,6 +4279,56 @@ private fun rememberHudLibraryLayout(sections: List<HudLibrarySection>, maxCardW
             HudLibraryLayout(items, indexes, previews.values.all { it.measured }, previews, geometry)
         }
     }.value
+}
+
+private fun singleGeometry(
+    hud: Hud,
+    previews: Map<Hud, HudPreviewState>,
+    maxCardWidth: Dp,
+    density: Float,
+    labelWidth: () -> Dp,
+): HudPreviewGeometry? {
+    val (naturalW, naturalH) = if (hud is LegacyHud) {
+        val (minW, minH) = hud.minimumSize()
+        (if (minW > 0f) minW else LEGACY_PREVIEW_FALLBACK_SIZE) to
+                (if (minH > 0f) minH else LEGACY_PREVIEW_FALLBACK_SIZE)
+    } else previews.getValue(hud).let { it.naturalWidth to it.naturalHeight }
+    if (naturalW <= 0f || naturalH <= 0f) return null
+    val scale = previewScaleFor(naturalW, naturalH, maxCardWidth, density)
+    val size = previewCardSize(naturalW, naturalH, scale, maxCardWidth, density, hud is LegacyHud)
+    val cardSize = if (hud is LegacyHud) size else {
+        DpSize(
+            maxOf(size.width, labelWidth() + PREVIEW_CARD_PADDING * 2).coerceAtMost(maxCardWidth),
+            size.height + HUD_LABEL_HEIGHT,
+        )
+    }
+    return HudPreviewGeometry(size, scale, cardSize)
+}
+
+private fun presetGeometry(
+    entry: HudLibraryEntry.Preset,
+    previews: Map<Hud, HudPreviewState>,
+    maxCardWidth: Dp,
+    density: Float,
+    labelWidth: () -> Dp,
+): HudPreviewGeometry? {
+    val states = entry.members.map { previews.getValue(it) }
+    if (states.any { !it.ready }) return null
+    val scales = entry.members.map { it.effectiveScale }
+    val sizes = states.indices.map { states[it].naturalWidth * scales[it] to states[it].naturalHeight * scales[it] }
+    val positions = HudGroups.presetLayout(entry.preset, entry.members, sizes)
+    val left = positions.minOf { it.first }
+    val top = positions.minOf { it.second }
+    val width = positions.indices.maxOf { positions[it].first + sizes[it].first } - left
+    val height = positions.indices.maxOf { positions[it].second + sizes[it].second } - top
+    val scale = previewScaleFor(width, height, maxCardWidth, density)
+    val size = previewCardSize(width, height, scale, maxCardWidth, density, false)
+    val cardSize = DpSize(
+        maxOf(size.width, labelWidth() + PREVIEW_CARD_PADDING * 2).coerceAtMost(maxCardWidth),
+        size.height + HUD_LABEL_HEIGHT,
+    )
+    val parts = states.indices.map { HudPresetPart(states[it], positions[it].first - left, positions[it].second - top, scales[it]) }
+    return HudPreviewGeometry(size, scale, cardSize, parts)
 }
 
 @Composable
@@ -4240,6 +4348,8 @@ private fun HudLibraryPanel(
     onScrollComplete: (target: String, interrupted: Boolean) -> Unit,
     onDragStart: (Hud, Float, Float, Float, Float) -> Unit = { _, _, _, _, _ -> },
     onCardClick: (Hud) -> Unit = {},
+    onPresetDragStart: (HudPreset, (Hud) -> Pair<Float, Float>?, Float, Float, Float, Float) -> Unit = { _, _, _, _, _, _ -> },
+    onPresetClick: (HudPreset, (Hud) -> Pair<Float, Float>?) -> Unit = { _, _ -> },
 ) {
     val theme = LocalTheme.current
     Column(
@@ -4335,14 +4445,26 @@ private fun HudLibraryPanel(
                                             .height(with(density) { row.height.toDp() }),
                                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     ) {
-                                        row.huds.forEachIndexed { i, hud ->
-                                            key(hud) {
-                                                val hudGeometry = geometry.getValue(hud)
+                                        row.entries.forEachIndexed { i, entry ->
+                                            key(entry) {
+                                                val entryGeometry = geometry.getValue(entry)
                                                 val cardModifier = Modifier.width(with(density) { row.widths[i].toDp() }).fillMaxHeight()
-                                                if (hud is LegacyHud) {
-                                                    LegacyHudCardContent(hud, hudGeometry, onDragStart, onCardClick, cardModifier)
-                                                } else {
-                                                    ComposeHudCardContent(hud, previews.getValue(hud), hudGeometry, onDragStart, onCardClick, cardModifier)
+                                                when (entry) {
+                                                    is HudLibraryEntry.Preset -> {
+                                                        val natural = { hud: Hud -> previews[hud]?.takeIf { it.ready }?.let { it.naturalWidth to it.naturalHeight } }
+                                                        PresetCardContent(
+                                                            entry,
+                                                            entryGeometry,
+                                                            { sx, sy, lx, ly -> onPresetDragStart(entry.preset, natural, sx, sy, lx, ly) },
+                                                            { onPresetClick(entry.preset, natural) },
+                                                            cardModifier,
+                                                        )
+                                                    }
+                                                    is HudLibraryEntry.Single -> if (entry.hud is LegacyHud) {
+                                                        LegacyHudCardContent(entry.hud, entryGeometry, onDragStart, onCardClick, cardModifier)
+                                                    } else {
+                                                        ComposeHudCardContent(entry.hud, previews.getValue(entry.hud), entryGeometry, onDragStart, onCardClick, cardModifier)
+                                                    }
                                                 }
                                             }
                                         }
@@ -4406,16 +4528,15 @@ private fun ModIconColumn(
 
 private const val PREVIEW_SCALE = 2f
 
-private fun libraryCardMenu(hud: Hud, onAdd: (Hud) -> Unit): List<MenuEntry> = buildList {
-    add(MenuAction(translated("oneconfig.hud.library.add", "Add to screen"), { onAdd(hud) }, icon = "plus"))
-    val modId = hud.configId ?: return@buildList
-    val config = ConfigRegistry.findById(modId) ?: return@buildList
+private fun libraryCardMenu(configId: String?, addLabel: String, onAdd: () -> Unit): List<MenuEntry> = buildList {
+    add(MenuAction(addLabel, onAdd, icon = "plus"))
+    val config = ConfigRegistry.findById(configId ?: return@buildList) ?: return@buildList
     val onOpen = config.onOpen
     if (onOpen == null && config.source != ConfigSource.OC) return@buildList
     add(
         MenuAction(
             translated("oneconfig.hud.library.mod_settings", "Open mod settings"),
-            { if (onOpen != null) onOpen() else OneConfigUI.open(OneConfigDestination.ModConfig(OneConfigPages.modConfig(modId))) },
+            { if (onOpen != null) onOpen() else OneConfigUI.open(OneConfigDestination.ModConfig(OneConfigPages.modConfig(configId))) },
             icon = "settings",
         ),
     )
@@ -4441,6 +4562,12 @@ private fun BoxScope.HudCardAddOverlay(visible: Boolean) {
 
 private val PREVIEW_CARD_PADDING = 12.dp
 private val HUD_LABEL_HEIGHT = 20.dp
+private val PRESET_ICON_SIZE = 12.dp
+private val PRESET_LABEL_GAP = 4.dp
+private val PRESET_LABEL_EXTRA = PRESET_ICON_SIZE + PRESET_LABEL_GAP * 2
+
+private fun presetCountLabel(entry: HudLibraryEntry.Preset): String =
+    translated("oneconfig.hud.library.preset_count", "%d HUDs", entry.members.size)
 
 private fun hudLabel(hud: Hud): String = localizedLabel(hud.title) ?: hud.title
 private val PREVIEW_MAX_CARD_HEIGHT = 160.dp
@@ -4466,12 +4593,12 @@ private fun previewCardSize(naturalW: Float, naturalH: Float, scale: Float, maxC
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun HudLibraryCard(
-    hud: Hud,
     label: String,
+    menu: () -> List<MenuEntry>,
     dragArea: DpSize,
     previewScale: Float,
-    onDragStart: (Hud, Float, Float, Float, Float) -> Unit,
-    onCardClick: (Hud) -> Unit,
+    onDragStart: (Float, Float, Float, Float) -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -4494,7 +4621,7 @@ private fun HudLibraryCard(
             .onSizeChanged { cardSize = it }
             .background(backgroundColor, shape)
             .border(1.dp, theme.borderColor, shape)
-            .contextMenu { libraryCardMenu(hud, onCardClick) }
+            .contextMenu { menu() }
             .safePointerEvent(PointerEventType.Enter) { isHovered = true }
             .safePointerEvent(PointerEventType.Exit) {
                 isHovered = false
@@ -4522,7 +4649,7 @@ private fun HudLibraryCard(
                         val insetY = (cardSize.height - dragArea.height.value * density) / 2f + paddingPx
                         val hudLocalX = ((start.x - insetX) / previewScale).coerceAtLeast(0f)
                         val hudLocalY = ((start.y - insetY) / previewScale).coerceAtLeast(0f)
-                        onDragStart(hud, pos.x, pos.y, hudLocalX, hudLocalY)
+                        onDragStart(pos.x, pos.y, hudLocalX, hudLocalY)
                         pressPos = null
                         isHovered = false
                     }
@@ -4534,7 +4661,7 @@ private fun HudLibraryCard(
             }
             .oneConfigClickable(
                 label,
-                { if (!dragStarted) onCardClick(hud) },
+                { if (!dragStarted) onClick() },
                 role = A11yRole.Button,
                 shape = shape,
                 indication = false,
@@ -4557,7 +4684,15 @@ private fun LegacyHudCardContent(
     modifier: Modifier,
 ) {
     val label = localizedLabel(hud.title) ?: translated("oneconfig.hud.legacy", "Legacy HUD")
-    HudLibraryCard(hud, label, geometry.size, geometry.scale, onDragStart, onCardClick, modifier) {
+    HudLibraryCard(
+        label,
+        { libraryCardMenu(hud.configId, translated("oneconfig.hud.library.add", "Add to screen")) { onCardClick(hud) } },
+        geometry.size,
+        geometry.scale,
+        { sx, sy, lx, ly -> onDragStart(hud, sx, sy, lx, ly) },
+        { onCardClick(hud) },
+        modifier,
+    ) {
         Text(
             label,
             color = LocalTheme.current.textColor.copy(0.85f),
@@ -4578,7 +4713,15 @@ private fun ComposeHudCardContent(
 ) {
     val (size, previewScale) = geometry
     val label = hudLabel(hud)
-    HudLibraryCard(hud, label, DpSize(size.width, size.height + HUD_LABEL_HEIGHT), previewScale, onDragStart, onCardClick, modifier) {
+    HudLibraryCard(
+        label,
+        { libraryCardMenu(hud.configId, translated("oneconfig.hud.library.add", "Add to screen")) { onCardClick(hud) } },
+        DpSize(size.width, size.height + HUD_LABEL_HEIGHT),
+        previewScale,
+        { sx, sy, lx, ly -> onDragStart(hud, sx, sy, lx, ly) },
+        { onCardClick(hud) },
+        modifier,
+    ) {
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                 HudPreviewCanvas(
@@ -4596,6 +4739,59 @@ private fun ComposeHudCardContent(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+@Composable
+private fun PresetCardContent(
+    entry: HudLibraryEntry.Preset,
+    geometry: HudPreviewGeometry,
+    onDragStart: (Float, Float, Float, Float) -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier,
+) {
+    val theme = LocalTheme.current
+    val preset = entry.preset
+    HudLibraryCard(
+        preset.name,
+        { libraryCardMenu(entry.configId, translated("oneconfig.hud.library.add_preset", "Add all to screen"), onClick) },
+        DpSize(geometry.size.width, geometry.size.height + HUD_LABEL_HEIGHT),
+        geometry.scale,
+        onDragStart,
+        onClick,
+        modifier,
+    ) {
+        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                HudPresetPreviewCanvas(
+                    geometry.parts,
+                    geometry.scale,
+                    entry.alwaysRedraw,
+                    modifier = Modifier.size(geometry.size).padding(PREVIEW_CARD_PADDING),
+                )
+            }
+            Row(
+                Modifier.height(HUD_LABEL_HEIGHT).padding(horizontal = PREVIEW_CARD_PADDING),
+                horizontalArrangement = Arrangement.spacedBy(PRESET_LABEL_GAP, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(preset.icon ?: "group", modifier = Modifier.size(PRESET_ICON_SIZE), color = theme.textColorSecondary)
+                Text(
+                    preset.name,
+                    modifier = Modifier.weight(1f, fill = false),
+                    color = theme.textColor,
+                    fontSize = OneConfigTheme.typography.caption.fontSize,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    presetCountLabel(entry),
+                    color = theme.textColorSecondary,
+                    fontSize = OneConfigTheme.typography.caption.fontSize,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }

@@ -36,7 +36,29 @@ class HudGroupsTest {
     static class DefaultOne extends BoxHud { DefaultOne() { super("group-default-one"); } }
     static class DefaultTwo extends BoxHud { DefaultTwo() { super("group-default-two"); } }
 
+    static class PresetSingle extends BoxHud {
+        PresetSingle() { super("group-preset-single"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public boolean multipleInstancesAllowed() { return false; }
+        @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(100f, 50f); }
+    }
+
+    static class PresetMulti extends BoxHud {
+        PresetMulti() { super("group-preset-multi"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(200f, 50f); }
+    }
+
+    static class PresetMultiB extends BoxHud {
+        PresetMultiB() { super("group-preset-multi-b"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(100f, 50f); }
+    }
+
     private static final String DEFAULT_ID = "test.defaults";
+    private static HudPreset multiPreset;
+    private static final String PRESET_ID = "test.preset";
+    private static HudPreset preset;
     private static boolean registered = false;
 
     private Hud a;
@@ -49,7 +71,9 @@ class HudGroupsTest {
         ConfigManager.active();
         ConfigManager.openProfile("");
         if (!registered) {
-            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo());
+            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB());
+            multiPreset = HudGroups.registerPreset("test.preset.multi", "Multi", Arrays.asList(PresetMultiB.class, PresetMulti.class));
+            preset = HudGroups.registerPreset(PRESET_ID, "Preset", Arrays.asList(PresetSingle.class, PresetMulti.class));
             HudGroups.registerDefault(DEFAULT_ID, "Defaults", DefaultOne.class, DefaultTwo.class);
             registered = true;
         }
@@ -451,5 +475,85 @@ class HudGroupsTest {
 
         assertEquals("", only(DefaultOne.class).getGroupPath(), "an ungrouped default group stays ungrouped");
         assertEquals("", only(DefaultTwo.class).getGroupPath());
+    }
+
+    private static void removeAll(Class<? extends Hud> cls) {
+        for (Hud hud : HudManager.INSTANCE.getHudsOfType(cls)) HudManager.INSTANCE.removeHud(hud, true);
+    }
+
+    @Test
+    void aPresetAddsOneNamedGroupAtTheDefaultPositions() throws Exception {
+        try {
+            HudGroup group = HudGroups.addPreset(preset);
+            assertNotNull(group);
+            assertTrue(group.getPath().startsWith(PRESET_ID + "#"));
+            assertEquals("Preset", group.getName());
+            assertEquals(2, group.getHuds().size());
+            Hud single = only(PresetSingle.class);
+            Hud multi = only(PresetMulti.class);
+            assertEquals(100f, single.getX(), 0.001f);
+            assertEquals(50f, single.getY(), 0.001f);
+            assertEquals(200f, multi.getX(), 0.001f);
+
+            ConfigManager.active().saveAll();
+            relaunch();
+
+            HudGroup restored = only(PresetSingle.class).getGroup();
+            assertEquals(group, restored);
+            assertEquals(group, only(PresetMulti.class).getGroup());
+            assertEquals("Preset", restored.getName(), "the name comes back from the preset after a restart");
+        } finally {
+            removeAll(PresetSingle.class);
+            removeAll(PresetMulti.class);
+        }
+    }
+
+    @Test
+    void addingAPresetRepeatedlyMakesSeparateGroupsThatDoNotOverlap() {
+        try {
+            List<HudGroup> groups = new ArrayList<>();
+            List<float[]> boxes = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                HudGroup group = HudGroups.addPreset(multiPreset);
+                assertNotNull(group);
+                assertFalse(groups.contains(group));
+                groups.add(group);
+                float[] box = HudGroups.bounds(group.getHuds());
+                assertNotNull(box);
+                boxes.add(box);
+            }
+            for (int i = 0; i < boxes.size(); i++) {
+                for (int j = i + 1; j < boxes.size(); j++) {
+                    float[] a = boxes.get(i);
+                    float[] b = boxes.get(j);
+                    boolean overlap = a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
+                    assertFalse(overlap, "copy " + j + " covers copy " + i);
+                }
+            }
+        } finally {
+            removeAll(PresetMulti.class);
+            removeAll(PresetMultiB.class);
+        }
+    }
+
+    @Test
+    void aPresetIsUnavailableWhileASingleInstanceMemberIsPlaced() {
+        try {
+            assertTrue(HudGroups.canAdd(preset));
+            Hud single = HudManager.INSTANCE.getProvider(PresetSingle.class).make(null);
+            HudManager.addInstance(single);
+
+            assertFalse(HudGroups.canAdd(preset));
+            int before = HudManager.INSTANCE.getActiveInstances().size();
+            assertNull(HudGroups.addPreset(preset));
+            assertEquals(before, HudManager.INSTANCE.getActiveInstances().size());
+            assertEquals("", single.getGroupPath(), "a HUD already on screen is never pulled into the preset's group");
+
+            HudManager.INSTANCE.removeHud(single, true);
+            assertTrue(HudGroups.canAdd(preset));
+        } finally {
+            removeAll(PresetSingle.class);
+            removeAll(PresetMulti.class);
+        }
     }
 }

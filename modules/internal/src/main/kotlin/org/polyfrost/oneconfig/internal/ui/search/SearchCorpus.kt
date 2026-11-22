@@ -46,6 +46,7 @@ object SearchCorpus {
         registerSource(ConfigDocumentSource)
         registerSource(KeybindDocumentSource)
         registerSource(HudDocumentSource)
+        registerSource(HudPresetDocumentSource)
         registerSource(HudModCardDocumentSource)
     }
 
