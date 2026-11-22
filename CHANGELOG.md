@@ -5,6 +5,18 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.2] - 2026-11-22
+
+### Changed
+- PolyCompose 3.0.3 or newer is required
+- HUDs do less work each frame: per-HUD lookups are cached, hover checks are skipped while no screen is open, text HUDs only rebuild their text when it changes, and chat and sound events are skipped when nothing listens for them
+- On 1.8.9, a HUD with chroma no longer forces every HUD to redraw each frame
+- The mods list does far less work per card while scrolling
+
+### Fixed
+- New HUD item icons now show on their first frame
+- Sprites from protected server resource packs now load
+
 ## [1.9.1] - 2026-11-22
 
 ### Added
