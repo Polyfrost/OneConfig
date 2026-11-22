@@ -537,13 +537,10 @@ public final class ConfigManager {
         REBINDING_PROFILES.set(Boolean.TRUE);
         try {
             for (Config config : new ArrayList<>(initializedConfigs.values())) {
+                // Hotwire also resets the field of a config it took out. Without its tree a config would be registered
+                // twice, and one that builds its tree only once would merge it into itself, which clears it
+                if (config.tree == null) config.tree = mgr.findPutBack(config.id);
                 if (mgr.tracks(config.tree)) continue;
-                // Hotwire also resets the field of a config it took out, and on the same profile puts its tree back here,
-                // where registering it again would merge it into itself, which clears it
-                if (config.tree == null && mgr.backend.exists(config.id)) {
-                    config.tree = mgr.backend.get(config.id);
-                    continue;
-                }
                 try {
                     config.rebindToActiveProfile(!Files.exists(mgr.getFolder().resolve(config.id)));
                 } catch (Throwable t) {
@@ -564,6 +561,15 @@ public final class ConfigManager {
             if (wasRebinding) REBINDING_PROFILES.set(Boolean.TRUE);
             else REBINDING_PROFILES.remove();
         }
+    }
+
+    // the tree under this id in this backend, or else in one that a profile switch closed
+    private @Nullable Tree findPutBack(String id) {
+        if (backend.exists(id)) return backend.get(id);
+        for (ConfigManager closed : retired) {
+            if (closed.backend.exists(id)) return closed.backend.get(id);
+        }
+        return null;
     }
 
     private boolean tracks(@Nullable Tree tree) {

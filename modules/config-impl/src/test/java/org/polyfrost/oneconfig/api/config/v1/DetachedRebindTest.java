@@ -173,6 +173,24 @@ class DetachedRebindTest {
     }
 
     @Test
+    void ktConfigWhoseTreeWasResetGetsItsDefaultsOnAProfileWithoutItsFile() throws Exception {
+        DetachedKtConfig config = new DetachedKtConfig(CONFIG);
+        config.initialize(false);
+        config.setEnabled(true);
+        config.save();
+        Off off = turnOff(config);
+        config.tree = null;
+        ConfigManager.createProfile(PROFILE_A);
+        off.turnOn();
+        ConfigManager.rebindDetached();
+
+        assertNotNull(config.getTree().getProp("enabled"), "the tree kept its options");
+        assertEquals(false, config.getTree().getProp("enabled").get());
+        ConfigManager.openProfile("");
+        assertEquals(true, config.getTree().getProp("enabled").get(), "the profile it went off in keeps its own value");
+    }
+
+    @Test
     void compatTreePutBackAfterASwitchGetsTheNewProfilesValues() throws Exception {
         Property<Integer> value = Properties.simple("value", "Value", "", 1);
         Tree tree = CompatSnapshots.register(Tree.tree(COMPAT).put(value));
