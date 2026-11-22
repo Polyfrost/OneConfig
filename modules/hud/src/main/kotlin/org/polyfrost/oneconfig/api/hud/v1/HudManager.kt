@@ -1105,6 +1105,13 @@ public object HudManager {
 
     private var liveChroma = false
 
+    private fun collapsesWhenNotShown(hud: Hud): Boolean = try {
+        hud.collapsesWhenNotShown()
+    } catch (e: Throwable) {
+        LOGGER.error("Failed to check whether HUD ${hud.title} collapses when not shown", e)
+        false
+    }
+
     private fun collectFrameOrder(): Boolean {
         frameOrder.clear()
         layoutOrder.clear()
@@ -1129,6 +1136,7 @@ public object HudManager {
             }
             hud.setVisible(visible)
         }
+        for (hud in activeInstances) hud.setCollapsed(!isEditing && hud !in frameDrawn && collapsesWhenNotShown(hud))
         val writes = hudStateWrites.get()
         val guiScale = prepareScale
         geometrySkip = geometryStable && !isEditing && writes == geometryWrites && drawnKey == geometryDrawn &&

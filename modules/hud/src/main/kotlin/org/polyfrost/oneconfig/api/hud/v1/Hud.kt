@@ -545,6 +545,7 @@ public abstract class Hud(
     }
 
     public open val scaledWidth: Float get() {
+        if (isCollapsed) return 0f
         val scale = effectiveScale
         val w = if (staticWidth || renderedW <= 0f) staticW * scale else renderedW
         val (minW, _) = frameMinimumSize()
@@ -552,6 +553,7 @@ public abstract class Hud(
     }
 
     public open val scaledHeight: Float get() {
+        if (isCollapsed) return 0f
         val scale = effectiveScale
         val h = if (staticWidth || renderedH <= 0f) staticH * scale else renderedH
         val (_, minH) = frameMinimumSize()
@@ -1073,11 +1075,11 @@ public abstract class Hud(
         anchorParent?.let { parent ->
             val self = selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
             val offset = if (axis == MergeAxis.X) anchorOffsetX else anchorOffsetY
-            return ResolvedAnchor(parent, anchorPoint, self, offset, false)
+            return ResolvedAnchor(parent, anchorPoint, self, if (parent.isCollapsed) 0f else offset, false)
         }
         val link = mergeLink(axis) ?: return null
         if (link.parent === this) return null
-        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, link.offset, true)
+        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, if (link.parent.isCollapsed) 0f else link.offset, true)
     }
 
     private class ResolvedAnchor(
@@ -1204,6 +1206,17 @@ public abstract class Hud(
         anchorOffsetY = 0f
         selfAnchorPoint = HudAnchor.Auto
         setAbsolutePosition(absX, absY)
+    }
+
+    @Transient
+    private var _collapsed: MutableState<Boolean> = mutableStateOf(false)
+
+    /** Whether this HUD currently measures 0 by 0 because it is not being drawn, which needs [collapsesWhenNotShown] */
+    @get:ApiStatus.Experimental
+    public val isCollapsed: Boolean get() = _collapsed.value
+
+    internal fun setCollapsed(collapsed: Boolean) {
+        _collapsed.put(collapsed)
     }
 
     private var _groupPath: MutableState<String> = mutableStateOf("")
@@ -1988,6 +2001,10 @@ public abstract class Hud(
      */
     public open fun canMergeBackground(): Boolean = this is TextHud
 
+    /** Whether this HUD takes no space while it is not being drawn outside the editor, so HUDs anchored to it close up the gap */
+    @ApiStatus.Experimental
+    public open fun collapsesWhenNotShown(): Boolean = false
+
     @JvmOverloads
     public fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier {
         if (!showBackground || !hasBackground() || bgMerged) return modifier
@@ -2088,6 +2105,7 @@ public abstract class Hud(
         _anchorOffsetX = mutableStateOf(this@Hud.anchorOffsetX)
         _anchorOffsetY = mutableStateOf(this@Hud.anchorOffsetY)
         _groupPath = mutableStateOf(this@Hud.groupPath)
+        _collapsed = mutableStateOf(false)
         _padTop = mutableStateOf(this@Hud.padTop)
         _padBottom = mutableStateOf(this@Hud.padBottom)
         _padLeft = mutableStateOf(this@Hud.padLeft)

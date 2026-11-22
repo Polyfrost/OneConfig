@@ -408,7 +408,8 @@ public object HudGroups {
         return floatArrayOf(minX, minY, maxX - minX, maxY - minY)
     }
 
-    private fun boxOf(hud: Hud): FloatArray = floatArrayOf(hud.x, hud.y, hud.scaledWidth, hud.scaledHeight)
+    private fun boxOf(hud: Hud): FloatArray? =
+        if (hud.isCollapsed) null else floatArrayOf(hud.x, hud.y, hud.scaledWidth, hud.scaledHeight)
 
     /**
      * The HUDs of [huds] that hold their own place on screen
