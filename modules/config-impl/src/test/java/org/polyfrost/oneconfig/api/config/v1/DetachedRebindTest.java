@@ -54,6 +54,7 @@ class DetachedRebindTest {
     private static final String PROFILE_A = "oc_detached_profile_a";
     private static final String PROFILE_B = "oc_detached_profile_b";
     private static final String CONFIG = "detached_rebind_test.json";
+    private static final String SPACED_CONFIG = "detached rebind test.json";
     private static final String COMPAT = "detached_rebind_compat";
 
     @BeforeEach
@@ -152,6 +153,24 @@ class DetachedRebindTest {
         assertTrue(config.enabled);
     }
 
+    // a tree's id is its config's with what does not belong in a file name replaced, which is what both are stored under
+    @Test
+    void configWhoseTreeGoesByAnotherSpellingOfItsIdKeepsItsValues() throws Exception {
+        DetachedConfig config = new DetachedConfig(SPACED_CONFIG);
+        config.initialize(false);
+        config.enabled = true;
+        config.save();
+        Tree tree = config.getTree();
+        assertEquals(CONFIG, tree.getID());
+        Off off = turnOff(config);
+        config.tree = null;
+        off.turnOn();
+        ConfigManager.rebindDetached();
+
+        assertSame(tree, config.getTree());
+        assertTrue(config.enabled);
+    }
+
     // a KtConfig builds its tree once, so binding it again by registering that tree over itself would clear it
     @Test
     void ktConfigWhoseTreeWasResetKeepsItsValues() throws Exception {
@@ -228,7 +247,7 @@ class DetachedRebindTest {
     }
 
     private static DetachedConfig configWith(boolean enabled) {
-        DetachedConfig config = new DetachedConfig();
+        DetachedConfig config = new DetachedConfig(CONFIG);
         config.initialize(false);
         config.enabled = enabled;
         config.save();
@@ -241,7 +260,7 @@ class DetachedRebindTest {
         ConfigManager manager = ConfigManager.active();
         Tree tree = config.tree;
         configs().remove(config.id);
-        manager.unregister(config.id);
+        manager.unregister(tree.getID());
         return () -> {
             configs().put(config.id, config);
             trees(manager).put(tree.getID(), tree);
@@ -287,6 +306,7 @@ class DetachedRebindTest {
 
     private static void cleanup() throws Exception {
         configs().remove(CONFIG);
+        configs().remove(SPACED_CONFIG);
         ConfigManager.active().delete(CONFIG);
         ConfigManager.active().unregister(COMPAT);
         CompatSnapshots.untrack(COMPAT);
@@ -308,8 +328,8 @@ class DetachedRebindTest {
         @Switch(title = "Enabled")
         boolean enabled = false;
 
-        private DetachedConfig() {
-            super(CONFIG, "Detached Rebind Test", Category.OTHER);
+        private DetachedConfig(String id) {
+            super(id, "Detached Rebind Test", Category.OTHER);
             addCallback("enabled", () -> {
             });
         }

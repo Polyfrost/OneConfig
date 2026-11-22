@@ -541,8 +541,9 @@ public final class ConfigManager {
                 // twice, and one that builds its tree only once would merge it into itself, which clears it
                 if (config.tree == null) config.tree = mgr.findPutBack(config.id);
                 if (mgr.tracks(config.tree)) continue;
+                String file = config.tree == null ? config.id : config.tree.getID();
                 try {
-                    config.rebindToActiveProfile(!Files.exists(mgr.getFolder().resolve(config.id)));
+                    config.rebindToActiveProfile(!Files.exists(mgr.getFolder().resolve(file)));
                 } catch (Throwable t) {
                     LOGGER.error("Failed to rebind config {} onto the active profile", config.id, t);
                 }
@@ -563,11 +564,16 @@ public final class ConfigManager {
         }
     }
 
-    // the tree under this id in this backend, or else in one that a profile switch closed
-    private @Nullable Tree findPutBack(String id) {
-        if (backend.exists(id)) return backend.get(id);
-        for (ConfigManager closed : retired) {
-            if (closed.backend.exists(id)) return closed.backend.get(id);
+    // the tree of the config with this id in this backend, or else in one that a profile switch closed
+    private @Nullable Tree findPutBack(String configId) {
+        // a KtConfig's tree goes by the id as it is, any other by how Node.setID spells it
+        Tree spelled = Tree.tree();
+        spelled.setID(configId);
+        for (String id : new String[]{configId, spelled.getID()}) {
+            if (backend.exists(id)) return backend.get(id);
+            for (ConfigManager closed : retired) {
+                if (closed.backend.exists(id)) return closed.backend.get(id);
+            }
         }
         return null;
     }
