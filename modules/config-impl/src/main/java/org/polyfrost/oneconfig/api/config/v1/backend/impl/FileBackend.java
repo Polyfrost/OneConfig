@@ -215,8 +215,12 @@ public class FileBackend extends Backend {
             LOGGER.error("No serializer found for saving file {}", p);
             return false;
         }
-        write(p, serializer.serialize(tree));
-        dodge(p.getFileName().toString());
+        // saves come from both the game thread and a worker; serializing and writing under one lock keeps them
+        // from sharing the .tmp file and makes the last save the one that lands on disk
+        synchronized (this) {
+            write(p, serializer.serialize(tree));
+            dodge(p.getFileName().toString());
+        }
         return true;
     }
 
