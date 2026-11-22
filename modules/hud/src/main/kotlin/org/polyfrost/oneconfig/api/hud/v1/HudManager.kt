@@ -268,6 +268,8 @@ public object HudManager {
 
     private val prepareOrder = ArrayList<Hud>()
 
+    private val backgroundOrder = ArrayList<Hud>()
+
     private val frameDrawn = IdentityHashMap<Hud, Boolean>()
 
     private var frameGroups: List<HudBackgroundMerge.Group> = emptyList()
@@ -275,10 +277,12 @@ public object HudManager {
 
     private val renderable = ArrayList<Hud>()
     private var zOrderCache: List<Hud> = emptyList()
+    private var zOrderFrame = Long.MIN_VALUE
     private var zOrderHuds = arrayOfNulls<Hud>(0)
     private var zOrderBounds = FloatArray(0)
     private var zOrderDrawn = BooleanArray(0)
     private var zOrderStamps = IntArray(0)
+    private val boundsScratch = FloatArray(4)
 
     private const val REGISTRY_ID = "hud-registry.json"
     private const val KNOWN_HUDS = "knownHuds"
@@ -568,8 +572,10 @@ public object HudManager {
 
     /** The live HUD whose config tree has this [id] used to resolve [Hud.anchorTargetId] */
     public fun instanceById(id: String): Hud? {
-        for (it in activeInstances) {
-            if (it.tree?.id == id) return it
+        val instances = activeInstances
+        for (i in instances.indices) {
+            val hud = instances[i]
+            if (hud.tree?.id == id) return hud
         }
         return null
     }
@@ -648,18 +654,43 @@ public object HudManager {
     internal fun bodyBounds(hud: Hud): FloatArray? = screenBounds(hud)
 
     private fun screenBounds(hud: Hud): FloatArray? {
+        val out = FloatArray(4)
+        return if (fillBounds(hud, out, 0)) out else null
+    }
+
+    internal fun bodyBounds(hud: Hud, out: FloatArray): Boolean = fillBounds(hud, out, 0)
+
+    private fun fillBounds(hud: Hud, out: FloatArray, offset: Int): Boolean {
         val scale = hud.frameEffectiveScale
         val w = if (hud.staticWidth) {
-            hud.staticW.takeIf { it > 0f }?.times(scale)
+            val s = hud.staticW
+            if (s > 0f) s * scale else return false
         } else {
-            hud.renderedW.takeIf { it > 0f } ?: hud.staticW.takeIf { it > 0f }?.times(scale)
-        } ?: return null
+            val r = hud.renderedW
+            if (r > 0f) {
+                r
+            } else {
+                val s = hud.staticW
+                if (s > 0f) s * scale else return false
+            }
+        }
         val h = if (hud.staticWidth) {
-            hud.staticH.takeIf { it > 0f }?.times(scale)
+            val s = hud.staticH
+            if (s > 0f) s * scale else return false
         } else {
-            hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f }?.times(scale)
-        } ?: return null
-        return floatArrayOf(hud.x, hud.y, w, h)
+            val r = hud.renderedH
+            if (r > 0f) {
+                r
+            } else {
+                val s = hud.staticH
+                if (s > 0f) s * scale else return false
+            }
+        }
+        out[offset] = hud.x
+        out[offset + 1] = hud.y
+        out[offset + 2] = w
+        out[offset + 3] = h
+        return true
     }
 
     private fun encloses(outer: FloatArray, inner: FloatArray): Boolean =
@@ -667,8 +698,15 @@ public object HudManager {
             inner[0] + inner[2] <= outer[0] + outer[2] &&
             inner[1] + inner[3] <= outer[1] + outer[3]
 
+    private fun encloses(b: FloatArray, outer: Int, inner: Int): Boolean =
+        b[inner] >= b[outer] && b[inner + 1] >= b[outer + 1] &&
+            b[inner] + b[inner + 2] <= b[outer] + b[outer + 2] &&
+            b[inner + 1] + b[inner + 3] <= b[outer + 1] + b[outer + 3]
+
     @ApiStatus.Internal
     public fun zOrderedInstances(bounds: (Hud) -> FloatArray? = ::screenBounds): List<Hud> = zOrdered(activeInstances, bounds)
+
+    internal fun pointerOrder(): List<Hud> = zOrderedByBounds(activeInstances, false)
 
     private fun zOrdered(list: List<Hud>, bounds: (Hud) -> FloatArray?): List<Hud> {
         val n = list.size
@@ -684,7 +722,40 @@ public object HudManager {
                 if (encloses(bj, bi) && (!encloses(bi, bj) || j < i)) depth[i]++
             }
         }
-        return list.indices.sortedBy { depth[it] }.map { list[it] }
+        return byDepth(list, depth, n)
+    }
+
+    private fun zOrderedByBounds(list: List<Hud>, drawnOnly: Boolean): List<Hud> {
+        val n = list.size
+        if (n <= 1) return list
+        val b = FloatArray(n * 4)
+        val has = BooleanArray(n)
+        for (i in 0 until n) {
+            val hud = list[i]
+            if (drawnOnly && hud !in frameDrawn) continue
+            has[i] = fillBounds(hud, b, i * 4)
+        }
+        val depth = IntArray(n)
+        for (i in 0 until n) {
+            if (!has[i]) continue
+            val oi = i * 4
+            for (j in 0 until n) {
+                if (i == j || !has[j]) continue
+                val oj = j * 4
+                if (encloses(b, oj, oi) && (!encloses(b, oi, oj) || j < i)) depth[i]++
+            }
+        }
+        return byDepth(list, depth, n)
+    }
+
+    private fun byDepth(list: List<Hud>, depth: IntArray, n: Int): List<Hud> {
+        var max = 0
+        for (i in 0 until n) if (depth[i] > max) max = depth[i]
+        val out = ArrayList<Hud>(n)
+        for (d in 0..max) {
+            for (i in 0 until n) if (depth[i] == d) out.add(list[i])
+        }
+        return out
     }
 
     private fun updateAndAdvance() {
@@ -797,19 +868,12 @@ public object HudManager {
 
     private fun isOwnerShown(hud: Hud): Boolean = !hud.frameHidden && isShown(hud) && hud !in notShowing
 
-    private val declaresReplacements = object : ClassValue<Boolean>() {
-        override fun computeValue(type: Class<*>): Boolean = try {
-            type.getMethod("getReplacesIds").declaringClass != Hud::class.java
-        } catch (_: ReflectiveOperationException) {
-            true
-        }
-    }
-
     private fun refreshSuppressed() {
         if (suppressions.isEmpty()) {
             var any = false
-            for (hud in activeInstances) {
-                if (declaresReplacements.get(hud.javaClass)) {
+            val instances = activeInstances
+            for (i in instances.indices) {
+                if (instances[i].overridesReplacesIds) {
                     any = true
                     break
                 }
@@ -831,7 +895,7 @@ public object HudManager {
             claims.add(s)
         }
         for (hud in activeInstances) {
-            if (!declaresReplacements.get(hud.javaClass) || hud.hidden || !isOwnerShown(hud)) continue
+            if (!hud.overridesReplacesIds || hud.hidden || !isOwnerShown(hud)) continue
             val ids = try {
                 hud.replacesIds
             } catch (e: Throwable) {
@@ -936,8 +1000,10 @@ public object HudManager {
         layoutOrder.clear()
         frameDrawn.clear()
         var volatileContent = false
-        var drawnKey = activeInstances.size.toLong()
-        for (hud in activeInstances) {
+        val instances = activeInstances
+        var drawnKey = instances.size.toLong()
+        for (i in instances.indices) {
+            val hud = instances[i]
             if (hud is LegacyHudMarker) continue
             val visible = shouldDraw(hud)
             val backgroundOnly = !visible && keepsBackgroundOnly(hud)
@@ -970,17 +1036,24 @@ public object HudManager {
         geometryW = guiScreenWidth
         geometryH = guiScreenHeight
         geometryScale = guiScale
-        for (hud in if (geometrySkip) zOrderCache else orderedForRender()) {
+        if (geometrySkip) zOrderFrame = frameId
+        val ordered = if (geometrySkip) zOrderCache else orderedForRender()
+        val backgroundOnly = backgroundOrder
+        backgroundOnly.clear()
+        for (i in ordered.indices) {
+            val hud = ordered[i]
             val visible = frameDrawn[hud] ?: continue
             if (visible) {
                 frameOrder.add(hud)
                 if (hud.frameAlwaysRedraw && !(liveChroma && !isEditing && liveRedraw(hud))) volatileContent = true
             } else {
-                layoutOrder.add(hud)
+                backgroundOnly.add(hud)
                 if (hud.bgChroma) volatileContent = true
             }
         }
-        layoutOrder.addAll(0, frameOrder)
+        for (i in frameOrder.indices) layoutOrder.add(frameOrder[i])
+        for (i in backgroundOnly.indices) layoutOrder.add(backgroundOnly[i])
+        backgroundOnly.clear()
         return volatileContent
     }
 
@@ -1036,7 +1109,7 @@ public object HudManager {
             volatileContent = collectFrameOrder()
             layoutOrder
         }, beforeDirtyCheck)
-        if (liveChroma && frameGroups.any { it.chroma }) volatileContent = true
+        if (liveChroma && anyChromaGroup()) volatileContent = true
 
         val key = frameKey()
         val keyChanged = key != lastFrameKey ||
@@ -1054,8 +1127,15 @@ public object HudManager {
         return dirty
     }
 
+    private fun anyChromaGroup(): Boolean {
+        val groups = frameGroups
+        for (i in groups.indices) if (groups[i].chroma) return true
+        return false
+    }
+
     private fun layoutAll(huds: List<Hud>, screenWidth: Float, screenHeight: Float, scale: Float) {
-        for (hud in huds) {
+        for (i in huds.indices) {
+            val hud = huds[i]
             try {
                 layoutOnce(hud, screenWidth, screenHeight, scale)
             } catch (e: Throwable) {
@@ -1130,7 +1210,8 @@ public object HudManager {
     }
 
     private var mergeExclusions: List<Hud> = emptyList()
-    private var prepareScale = Float.NaN
+    internal var prepareScale = Float.NaN
+        private set
     private var geometrySkip = false
     private var geometryStable = false
     private var geometryWrites = -1
@@ -1253,7 +1334,8 @@ public object HudManager {
         var key = activeInstances.size.toLong() * 31L + frameOrder.size
         key = key * 31L + layoutOrder.size
         // one HUD hiding while another appears must not leave the cached frame in place
-        for (hud in layoutOrder) key = key * 31L + System.identityHashCode(hud)
+        val order = layoutOrder
+        for (i in order.indices) key = key * 31L + System.identityHashCode(order[i])
         key = key * 31L + (if (isDebugScreenVisible) 1 else 0)
         key = key * 31L + (if (isTabListVisible) 1 else 0)
         key = key * 31L + (if (isGuiScreenOpen) 1 else 0)
@@ -1283,6 +1365,7 @@ public object HudManager {
             zOrderStamps = IntArray(n)
         }
         var same = zOrderCache.size == n
+        val b = boundsScratch
         for (i in 0 until n) {
             val hud = list[i]
             val drawn = hud in frameDrawn
@@ -1290,11 +1373,11 @@ public object HudManager {
             if (same && zOrderHuds[i] === hud && zOrderDrawn[i] == drawn && stamp != -1 && zOrderStamps[i] == stamp) continue
             zOrderDrawn[i] = drawn
             zOrderStamps[i] = stamp
-            val b = if (drawn) screenBounds(hud) else null
-            val x = b?.get(0) ?: Float.NaN
-            val y = b?.get(1) ?: Float.NaN
-            val w = b?.get(2) ?: Float.NaN
-            val h = b?.get(3) ?: Float.NaN
+            val bounded = drawn && fillBounds(hud, b, 0)
+            val x = if (bounded) b[0] else Float.NaN
+            val y = if (bounded) b[1] else Float.NaN
+            val w = if (bounded) b[2] else Float.NaN
+            val h = if (bounded) b[3] else Float.NaN
             val o = i * 4
             if (same && (zOrderHuds[i] !== hud ||
                     !zOrderBounds[o].sameBound(x) || !zOrderBounds[o + 1].sameBound(y) ||
@@ -1310,16 +1393,19 @@ public object HudManager {
         }
         var stable = true
         polled.clear()
-        for (hud in frameDrawn.keys) {
+        for (i in 0 until n) {
+            if (!zOrderDrawn[i]) continue
+            val hud = list[i]
             if (hud.geometryStateOnly) continue
             if (hud.geometryPollable) polled.add(hud) else stable = false
         }
         if (polledStamps.size < polled.size) polledStamps = IntArray(polled.size)
         for (i in polled.indices) polledStamps[i] = polled[i].geometryStamp
         geometryStable = stable
+        zOrderFrame = frameId
         if (same) return zOrderCache
         contentDirty = true
-        zOrderCache = zOrdered(list, ::drawnBounds)
+        zOrderCache = zOrderedByBounds(list, true)
         return zOrderCache
     }
 
@@ -1331,8 +1417,6 @@ public object HudManager {
         return true
     }
 
-    private fun drawnBounds(hud: Hud): FloatArray? = if (hud in frameDrawn) screenBounds(hud) else null
-
     private fun Float.sameBound(other: Float): Boolean =
         this == other || (this.isNaN() && other.isNaN())
 
@@ -1341,12 +1425,14 @@ public object HudManager {
     public fun prepare(screenWidth: Float, screenHeight: Float) {
         prepareFrame(screenWidth, screenHeight, {
             prepareOrder.clear()
-            for (hud in activeInstances) {
+            val instances = activeInstances
+            for (i in instances.indices) {
+                val hud = instances[i]
                 val visible = hud !is LegacyHudMarker
                 hud.setVisible(visible)
                 if (visible) prepareOrder.add(hud)
             }
-            for (hud in prepareOrder) updateIfDue(hud)
+            for (i in prepareOrder.indices) updateIfDue(prepareOrder[i])
             prepareOrder
         })
     }
@@ -1397,79 +1483,27 @@ public object HudManager {
         }
         val volatileCacheNodes = volatileCtx?.cacheNodes ?: false
         volatileCtx?.cacheNodes = split
-        val mergedBackgrounds = {
-            if (cr == null || frameGroups.any { it.chroma }) {
-                drawMergedBackgrounds(ctx)
-            } else {
-                val cached = mergedDraw
-                if (cached != null && cached.first === frameGroups && cr.sameState(cached.second) && cr.valid(cached.third)) {
-                    cr.append(cached.third)
-                } else {
-                    val key = cr.stateKey()
-                    val mark = cr.mark()
-                    drawMergedBackgrounds(ctx)
-                    mergedDraw = Triple(frameGroups, key, cr.since(mark))
-                }
-            }
-        }
-        val huds = {
-            try {
-                for (i in frameOrder.indices) {
-                    val hud = frameOrder[i]
-                    val ctx = if (split && frameVolatile[i]) volatileCtx else ctx
-                    val cr = ctx.renderer as? CapturingRenderer
-                    val hudScale = if (framePositions) framePos[i * 3 + 2] else hud.effectiveScale
-                    val clickPass = HudClickInput.passStart(hud)
-                    val root = try {
-                        layoutOnce(hud, screenWidth, screenHeight, scale)
-                    } catch (e: Throwable) {
-                        LOGGER.error("Failed to lay out HUD ${hud.title}", e)
-                        continue
-                    }
-                    ctx.save()
-                    if (framePositions) ctx.translate(framePos[i * 3], framePos[i * 3 + 1]) else ctx.translate(hud.x, hud.y)
-                    if (hudScale != 1f) ctx.scale(hudScale, hudScale)
-                    val rt = hud.runtimeOrNull
-                    val redraw = if (framePositions) frameRedraw[i] else hud.alwaysRedraw
-                    if (cr == null || rt == null || redraw && hud.redrawOverridden) {
-                        HudClickInput.recorded(hud, clickPass)
-                        drawHud(hud, root, ctx)
-                    } else {
-                        val cached = lastDraw(hud)
-                        if (cached != null && cached.runtime === rt && cached.revision == rt.revision && cached.reads == hud.drawReads &&
-                            cached.epoch == drawEpoch && cached.editing == isEditing && cr.sameState(cached.key) && cr.valid(cached.captured)
-                        ) {
-                            cr.append(cached.captured)
-                            stored(hud, cached)
-                            if (cached.volatile && ++cached.hits > VOLATILE_HITS) cached.volatile = false
-                        } else {
-                            val key = cr.stateKey()
-                            val reads = hud.drawReads
-                            val chroma = PolyColor.chromaReads
-                            val mark = cr.mark()
-                            HudClickInput.recorded(hud, clickPass)
-                            drawReadObserver.observeReads(hud, onHudDrawStateChanged) { drawHud(hud, root, ctx) }
-                            val captured = cr.since(mark)
-                            val volatile = cached != null && (cached.volatile || cached.missFrame == frameId - 1)
-                            if (!redraw || PolyColor.chromaReads == chroma) stored(hud, HudDraw(rt, rt.revision, reads, drawEpoch, isEditing, key, captured, frameId, volatile))
-                        }
-                    }
-                    ctx.restore()
-                }
-            } finally {
-                HudClickInput.passEnd()
-            }
-        }
+        val splitCtx = if (split) volatileCtx else null
         if (framePositions) {
-            drawReadObserver.observeReads(this, onDrawStateChanged, mergedBackgrounds)
-            huds()
+            mergedCtx = ctx
+            mergedCr = cr
+            try {
+                drawReadObserver.observeReads(this, onDrawStateChanged, mergedBackgroundsBlock)
+            } finally {
+                mergedCtx = null
+                mergedCr = null
+            }
+            drawFrameHuds(ctx, cr, splitCtx, true, screenWidth, screenHeight, scale)
         } else {
             drawReadObserver.observeReads(this, onDrawStateChanged) {
-                mergedBackgrounds()
-                huds()
+                drawMergedBackgroundsCached(ctx, cr)
+                drawFrameHuds(ctx, cr, splitCtx, false, screenWidth, screenHeight, scale)
             }
         }
-        for (hud in previous) if (hud.lastDrawRender != renderId) drawReadObserver.clear(hud)
+        for (i in previous.indices) {
+            val hud = previous[i]
+            if (hud.lastDrawRender != renderId) drawReadObserver.clear(hud)
+        }
         nextDrawnHuds = previous
         renderId++
 
@@ -1477,6 +1511,95 @@ public object HudManager {
         ctx.restore()
         volatileCtx?.cacheNodes = volatileCacheNodes
         if (split) volatileCtx.restore()
+    }
+
+    private var mergedCtx: RenderContext? = null
+    private var mergedCr: CapturingRenderer? = null
+
+    private val mergedBackgroundsBlock: () -> Unit = {
+        val ctx = mergedCtx
+        if (ctx != null) drawMergedBackgroundsCached(ctx, mergedCr)
+    }
+
+    private fun drawMergedBackgroundsCached(ctx: RenderContext, cr: CapturingRenderer?) {
+        if (cr == null || anyChromaGroup()) {
+            drawMergedBackgrounds(ctx)
+        } else {
+            val cached = mergedDraw
+            if (cached != null && cached.first === frameGroups && cr.sameState(cached.second) && cr.valid(cached.third)) {
+                cr.append(cached.third)
+            } else {
+                val key = cr.stateKey()
+                val mark = cr.mark()
+                drawMergedBackgrounds(ctx)
+                mergedDraw = Triple(frameGroups, key, cr.since(mark))
+            }
+        }
+    }
+
+    private fun drawFrameHuds(
+        ctx: RenderContext,
+        cr: CapturingRenderer?,
+        splitCtx: RenderContext?,
+        framePositions: Boolean,
+        screenWidth: Float,
+        screenHeight: Float,
+        scale: Float,
+    ) {
+        val splitCr = splitCtx?.renderer as? CapturingRenderer
+        try {
+            for (i in frameOrder.indices) {
+                val hud = frameOrder[i]
+                val hudCtx: RenderContext
+                val hudCr: CapturingRenderer?
+                if (splitCtx != null && frameVolatile[i]) {
+                    hudCtx = splitCtx
+                    hudCr = splitCr
+                } else {
+                    hudCtx = ctx
+                    hudCr = cr
+                }
+                val hudScale = if (framePositions) framePos[i * 3 + 2] else hud.effectiveScale
+                val clickPass = HudClickInput.passStart(hud)
+                val root = try {
+                    layoutOnce(hud, screenWidth, screenHeight, scale)
+                } catch (e: Throwable) {
+                    LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+                    continue
+                }
+                hudCtx.save()
+                if (framePositions) hudCtx.translate(framePos[i * 3], framePos[i * 3 + 1]) else hudCtx.translate(hud.x, hud.y)
+                if (hudScale != 1f) hudCtx.scale(hudScale, hudScale)
+                val rt = hud.runtimeOrNull
+                val redraw = if (framePositions) frameRedraw[i] else hud.alwaysRedraw
+                if (hudCr == null || rt == null || redraw && hud.redrawOverridden) {
+                    HudClickInput.recorded(hud, clickPass)
+                    drawHud(hud, root, hudCtx)
+                } else {
+                    val cached = lastDraw(hud)
+                    if (cached != null && cached.runtime === rt && cached.revision == rt.revision && cached.reads == hud.drawReads &&
+                        cached.epoch == drawEpoch && cached.editing == isEditing && hudCr.sameState(cached.key) && hudCr.valid(cached.captured)
+                    ) {
+                        hudCr.append(cached.captured)
+                        stored(hud, cached)
+                        if (cached.volatile && ++cached.hits > VOLATILE_HITS) cached.volatile = false
+                    } else {
+                        val key = hudCr.stateKey()
+                        val reads = hud.drawReads
+                        val chroma = PolyColor.chromaReads
+                        val mark = hudCr.mark()
+                        HudClickInput.recorded(hud, clickPass)
+                        drawReadObserver.observeReads(hud, onHudDrawStateChanged) { drawHud(hud, root, hudCtx) }
+                        val captured = hudCr.since(mark)
+                        val volatile = cached != null && (cached.volatile || cached.missFrame == frameId - 1)
+                        if (!redraw || PolyColor.chromaReads == chroma) stored(hud, HudDraw(rt, rt.revision, reads, drawEpoch, isEditing, key, captured, frameId, volatile))
+                    }
+                }
+                hudCtx.restore()
+            }
+        } finally {
+            HudClickInput.passEnd()
+        }
     }
 
     private fun splitLayers(): Boolean {
@@ -1597,6 +1720,7 @@ public object HudManager {
         knownGroups.clear()
         registryTree = null
         zOrderCache = emptyList()
+        zOrderFrame = Long.MIN_VALUE
         preparedFrameValid = false
         lastMergeKey = null
         frameOrder.clear()

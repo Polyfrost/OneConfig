@@ -11,6 +11,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudClickInput
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudMouseButton
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 //? if = 1.8.9 {
@@ -49,10 +50,11 @@ internal object HudFrameHooks {
 
     private fun feedPointer() {
         val screen = Platform.screen()
-        val current = if (Minecraft.getInstance().isWindowActive) runCatching { screen.current<Any?>() }.getOrNull() else null
+        val mc = Minecraft.getInstance()
+        val current = if (mc.isWindowActive) currentScreen(screen) else null
         val allowed = current is ChatScreen || current is HudLayer.InputScreen
         //? if > 1.8.9 {
-        val mouse = Minecraft.getInstance().mouseHandler
+        val mouse = mc.mouseHandler
         val windowX = mouse.xpos().toFloat()
         val windowY = mouse.ypos().toFloat()
         //?} else {
@@ -64,4 +66,11 @@ internal object HudFrameHooks {
         val guiY = windowY * screen.guiHeight() / screen.windowHeight().coerceAtLeast(1)
         HudClickInput.updatePointer(guiX, guiY, allowed, current != null)
     }
+
+    private fun currentScreen(screen: ScreenPlatform): Any? =
+        try {
+            screen.current<Any?>()
+        } catch (_: Throwable) {
+            null
+        }
 }

@@ -32,7 +32,7 @@ public fun Hud.clickRegion(
     button: HudMouseButton = HudMouseButton.Left,
     expireAfterMillis: Long = defaultRegionExpiryMillis(),
     onClick: () -> Unit,
-): Boolean = HudClickInput.region(this, id, x, y, w, h, anyScreen, buttonMask(button), true, expireAfterMillis) { onClick() }
+): Boolean = HudClickInput.region(this, id, x, y, w, h, anyScreen, 1 shl button.ordinal, true, expireAfterMillis, null, onClick)
 
 @ExperimentalOneConfigUiApi
 public fun Hud.clickRegion(
@@ -45,7 +45,7 @@ public fun Hud.clickRegion(
     buttons: Set<HudMouseButton>,
     expireAfterMillis: Long = defaultRegionExpiryMillis(),
     onClick: (HudMouseButton) -> Unit,
-): Boolean = HudClickInput.region(this, id, x, y, w, h, anyScreen, buttonMask(*buttons.toTypedArray()), true, expireAfterMillis, onClick)
+): Boolean = HudClickInput.region(this, id, x, y, w, h, anyScreen, buttonMask(buttons), true, expireAfterMillis, onClick, null)
 
 @ExperimentalOneConfigUiApi
 public fun Hud.hoverRegion(
@@ -56,7 +56,7 @@ public fun Hud.hoverRegion(
     h: Float,
     anyScreen: Boolean = false,
     expireAfterMillis: Long = defaultRegionExpiryMillis(),
-): Boolean = HudClickInput.region(this, id, x, y, w, h, anyScreen, 0, false, expireAfterMillis) {}
+): Boolean = HudClickInput.region(this, id, x, y, w, h, anyScreen, 0, false, expireAfterMillis, null, null)
 
 @ExperimentalOneConfigUiApi
 public fun Hud.defaultRegionExpiryMillis(): Long {
@@ -84,9 +84,11 @@ public fun Hud.isClickRegionHovered(id: String): Boolean = HudClickInput.hovered
 @ExperimentalOneConfigUiApi
 public fun Hud.hoveredClickRegion(): String? = HudClickInput.hoveredId(this)
 
-private fun buttonMask(vararg buttons: HudMouseButton): Int {
+private val ALL_BUTTONS = HudMouseButton.values()
+
+private fun buttonMask(buttons: Set<HudMouseButton>): Int {
     var mask = 0
-    for (button in buttons) mask = mask or (1 shl button.ordinal)
+    for (button in ALL_BUTTONS) if (button in buttons) mask = mask or (1 shl button.ordinal)
     return mask
 }
 
@@ -102,7 +104,8 @@ public object HudClickInput {
         @Volatile var anyScreen = false
         @Volatile var buttons = 0
         @Volatile var consumes = true
-        @Volatile var onClick: (HudMouseButton) -> Unit = {}
+        @Volatile var onClick: ((HudMouseButton) -> Unit)? = null
+        @Volatile var onPlainClick: (() -> Unit)? = null
         @Volatile var declaredAt = 0L
         @Volatile var inPass = false
         @Volatile var epoch = 0L
@@ -140,24 +143,29 @@ public object HudClickInput {
         buttons: Int,
         consumes: Boolean,
         expireAfterMillis: Long,
-        onClick: (HudMouseButton) -> Unit,
+        onClick: ((HudMouseButton) -> Unit)?,
+        onPlainClick: (() -> Unit)?,
     ): Boolean {
         val inPass = drawing === hud
         val epoch = lastPassStart
         val region = synchronized(regions) {
-            if (!inPass && (looseEpochs[hud] ?: Long.MIN_VALUE) < epoch) looseEpochs[hud] = epoch
+            if (!inPass) {
+                val loose = looseEpochs[hud]
+                if (loose == null || loose < epoch) looseEpochs[hud] = epoch
+            }
             regions.getOrPut(hud) { LinkedHashMap() }.getOrPut(id) { Region(hud) }
         }
-        region.inPass = inPass
+        if (region.inPass != inPass) region.inPass = inPass
         region.epoch = epoch
-        region.x = x
-        region.y = y
-        region.w = w
-        region.h = h
-        region.anyScreen = anyScreen
-        region.buttons = buttons
-        region.consumes = consumes
-        region.onClick = onClick
+        if (region.x != x) region.x = x
+        if (region.y != y) region.y = y
+        if (region.w != w) region.w = w
+        if (region.h != h) region.h = h
+        if (region.anyScreen != anyScreen) region.anyScreen = anyScreen
+        if (region.buttons != buttons) region.buttons = buttons
+        if (region.consumes != consumes) region.consumes = consumes
+        if (region.onClick !== onClick) region.onClick = onClick
+        if (region.onPlainClick !== onPlainClick) region.onPlainClick = onPlainClick
         region.declaredAt = clock.incrementAndGet()
         region.declaredNanos = System.nanoTime()
         region.lifetime = if (inPass) Long.MAX_VALUE else lifetimeNanos(expireAfterMillis)
@@ -224,41 +232,76 @@ public object HudClickInput {
         this.active = active
         this.anyScreen = anyScreen || active
         pointerAt = System.nanoTime()
-        val changed = ArrayList<Region>(0)
+        if (!this.anyScreen || HudManager.isEditing) {
+            idlePointer()
+            return
+        }
+        var changed: ArrayList<Region>? = null
         synchronized(regions) {
+            hoverCleared = false
             if (regions.isEmpty()) return
-            val iter = regions.entries.iterator()
-            while (iter.hasNext()) {
-                val (hud, byId) = iter.next()
-                if (HudManager.activeInstances.none { it === hud }) {
-                    for (region in byId.values) if (region.hovered.value) changed += region
-                    iter.remove()
-                    recorded.remove(hud)
-                    looseEpochs.remove(hud)
-                    continue
-                }
-                val stale = byId.values.iterator()
-                while (stale.hasNext()) {
-                    val region = stale.next()
-                    if (!stale(region)) continue
-                    if (region.hovered.value) changed += region
-                    stale.remove()
-                }
-                if (byId.isEmpty()) {
-                    iter.remove()
-                    recorded.remove(hud)
-                    looseEpochs.remove(hud)
-                }
-            }
+            changed = sweep()
         }
         val targets = hoverTargets()
         synchronized(regions) {
-            for (byId in regions.values) for (region in byId.values) if (region.hovered.value != (region in targets)) changed += region
+            for (byId in regions.values) for (region in byId.values) if (region.hovered.value != (targets?.contains(region) == true)) changed = changed.with(region)
         }
-        if (changed.isEmpty()) return
+        val flips = changed ?: return
         Snapshot.withMutableSnapshot {
-            for (region in changed) region.hovered.value = !region.hovered.value
+            for (region in flips) region.hovered.value = !region.hovered.value
         }
+    }
+
+    private var hoverCleared = true
+
+    private fun idlePointer() {
+        var cleared: ArrayList<Region>? = null
+        synchronized(regions) {
+            if (regions.isEmpty()) {
+                hoverCleared = true
+                return
+            }
+            cleared = sweep()
+            if (!hoverCleared) {
+                for (byId in regions.values) for (region in byId.values) if (region.hovered.value) cleared = cleared.with(region)
+                hoverCleared = true
+            }
+        }
+        val unhover = cleared ?: return
+        Snapshot.withMutableSnapshot {
+            for (region in unhover) region.hovered.value = false
+        }
+    }
+
+    private fun ArrayList<Region>?.with(region: Region): ArrayList<Region> =
+        (this ?: ArrayList<Region>(2)).also { it.add(region) }
+
+    private fun sweep(): ArrayList<Region>? {
+        var changed: ArrayList<Region>? = null
+        val iter = regions.entries.iterator()
+        while (iter.hasNext()) {
+            val (hud, byId) = iter.next()
+            if (!isActive(hud)) {
+                for (region in byId.values) if (region.hovered.value) changed = changed.with(region)
+                iter.remove()
+                recorded.remove(hud)
+                looseEpochs.remove(hud)
+                continue
+            }
+            val stale = byId.values.iterator()
+            while (stale.hasNext()) {
+                val region = stale.next()
+                if (!stale(region)) continue
+                if (region.hovered.value) changed = changed.with(region)
+                stale.remove()
+            }
+            if (byId.isEmpty()) {
+                iter.remove()
+                recorded.remove(hud)
+                looseEpochs.remove(hud)
+            }
+        }
+        return changed
     }
 
     public fun consumeButton(button: Int, pressed: Boolean): Boolean {
@@ -282,7 +325,8 @@ public object HudClickInput {
 
     private fun click(target: Region, button: HudMouseButton) {
         try {
-            target.onClick(button)
+            val plain = target.onPlainClick
+            if (plain != null) plain() else target.onClick?.invoke(button)
         } catch (e: Throwable) {
             if (e is VirtualMachineError) throw e
             HudManager.LOGGER.error("Click handler of HUD ${target.hud.title} failed", e)
@@ -299,39 +343,41 @@ public object HudClickInput {
     private fun topmostHit(button: HudMouseButton): Region? {
         val byHud = snapshot() ?: return null
         val bit = 1 shl button.ordinal
-        val order = HudManager.zOrderedInstances()
-        for (i in order.indices.reversed()) {
+        val order = HudManager.pointerOrder()
+        val body = FloatArray(4)
+        for (i in order.size - 1 downTo 0) {
             val hud = order[i]
             val list = byHud[hud]
             if (list != null) {
-                for (j in list.indices.reversed()) {
+                for (j in list.size - 1 downTo 0) {
                     val region = list[j]
                     if (region.consumes && region.buttons and bit != 0 && hits(region)) return region
                 }
             }
-            if (coversPointer(hud)) return null
+            if (coversPointer(hud, body)) return null
         }
         return null
     }
 
-    private fun hoverTargets(): Set<Region> {
-        val byHud = snapshot() ?: return emptySet()
-        val found: MutableSet<Region> = Collections.newSetFromMap(IdentityHashMap())
-        val order = HudManager.zOrderedInstances()
-        for (i in order.indices.reversed()) {
+    private fun hoverTargets(): Set<Region>? {
+        val byHud = snapshot() ?: return null
+        var found: MutableSet<Region>? = null
+        val order = HudManager.pointerOrder()
+        val body = FloatArray(4)
+        for (i in order.size - 1 downTo 0) {
             val hud = order[i]
             val list = byHud[hud]
             var blocked = false
             if (list != null) {
-                for (j in list.indices.reversed()) {
+                for (j in list.size - 1 downTo 0) {
                     val region = list[j]
                     if (region.consumes && blocked) continue
                     if (!hits(region)) continue
-                    found += region
+                    (found ?: Collections.newSetFromMap(IdentityHashMap<Region, Boolean>()).also { found = it }).add(region)
                     if (region.consumes) blocked = true
                 }
             }
-            if (blocked || coversPointer(hud)) break
+            if (blocked || coversPointer(hud, body)) break
         }
         return found
     }
@@ -347,9 +393,15 @@ public object HudClickInput {
     private fun expired(region: Region): Boolean =
         region.lifetime != Long.MAX_VALUE && System.nanoTime() - region.declaredNanos > region.lifetime
 
-    private fun coversPointer(hud: Hud): Boolean {
+    private fun isActive(hud: Hud): Boolean {
+        val instances = HudManager.activeInstances
+        for (i in instances.indices) if (instances[i] === hud) return true
+        return false
+    }
+
+    private fun coversPointer(hud: Hud, bounds: FloatArray): Boolean {
         if (!hud.isVisible.value) return false
-        val bounds = HudManager.bodyBounds(hud) ?: return false
+        if (!HudManager.bodyBounds(hud, bounds)) return false
         val px = pointerX
         val py = pointerY
         if (px.isNaN() || py.isNaN()) return false

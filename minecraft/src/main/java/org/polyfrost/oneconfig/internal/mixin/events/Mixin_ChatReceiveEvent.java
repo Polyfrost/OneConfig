@@ -104,6 +104,10 @@ public abstract class Mixin_ChatReceiveEvent {
         ocfg$nativeMessage = message;
         ocfg$postedMessage = null;
 
+        if (!EventManager.INSTANCE.hasListeners(ChatEvent.Receive.class)) {
+            return false;
+        }
+
         net.kyori.adventure.text.Component adventure;
         try {
             adventure = ocfg$toAdventure(message);

@@ -251,7 +251,7 @@ public final class EventManager {
             return;
         }
         Collection<EventHandler<E>> handles = (Collection) handlers.get(event.getClass());
-        if (handles == null) {
+        if (handles == null || handles.isEmpty()) {
             return;
         }
         Event.Cancellable evc = event instanceof Event.Cancellable ? (Event.Cancellable) event : null;

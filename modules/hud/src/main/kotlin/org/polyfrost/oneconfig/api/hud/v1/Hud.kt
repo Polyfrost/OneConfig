@@ -168,6 +168,33 @@ private val stateOnlyMinimumSize = object : ClassValue<Boolean>() {
     }.getOrDefault(false)
 }
 
+private val replacesIdsOverridden = object : ClassValue<Boolean>() {
+    override fun computeValue(type: Class<*>): Boolean = try {
+        type.getMethod("getReplacesIds").declaringClass != Hud::class.java
+    } catch (_: ReflectiveOperationException) {
+        true
+    }
+}
+
+private const val TRAITS_READY = 1
+private const val TRAIT_EXTERNAL_GEOMETRY = 1 shl 1
+private const val TRAIT_EXTERNAL_STATIC_SIZE = 1 shl 2
+private const val TRAIT_EXTERNAL_REDRAW = 1 shl 3
+private const val TRAIT_LIVE_REDRAW_INPUTS = 1 shl 4
+private const val TRAIT_STATE_ONLY_MINIMUM_SIZE = 1 shl 5
+private const val TRAIT_REPLACES_IDS = 1 shl 6
+
+private fun classTraits(type: Class<*>): Int {
+    var traits = TRAITS_READY
+    if (externalGeometry.get(type)) traits = traits or TRAIT_EXTERNAL_GEOMETRY
+    if (externalStaticSize.get(type)) traits = traits or TRAIT_EXTERNAL_STATIC_SIZE
+    if (externalRedraw.get(type)) traits = traits or TRAIT_EXTERNAL_REDRAW
+    if (liveRedrawInputs.get(type)) traits = traits or TRAIT_LIVE_REDRAW_INPUTS
+    if (stateOnlyMinimumSize.get(type)) traits = traits or TRAIT_STATE_ONLY_MINIMUM_SIZE
+    if (replacesIdsOverridden.get(type)) traits = traits or TRAIT_REPLACES_IDS
+    return traits
+}
+
 @Suppress("EqualsOrHashCode", "UnstableApiUsage")
 public abstract class Hud(
     id: String,
@@ -645,7 +672,8 @@ public abstract class Hud(
     public open var x: Float
         get() {
             val a = resolvedAnchorX
-            val w = predictedW.takeUnless { it.isNaN() } ?: scaledWidth
+            val pw = predictedW
+            val w = if (pw.isNaN()) scaledWidth else pw
             val raw = rawX(a, w)
             return if (a != null) raw else keepVisibleX(raw, w)
         }
@@ -654,7 +682,8 @@ public abstract class Hud(
     public open var y: Float
         get() {
             val a = resolvedAnchorY
-            val h = predictedH.takeUnless { it.isNaN() } ?: scaledHeight
+            val ph = predictedH
+            val h = if (ph.isNaN()) scaledHeight else ph
             val raw = rawY(a, h)
             return if (a != null) raw else keepVisibleY(raw, h)
         }
@@ -1499,7 +1528,7 @@ public abstract class Hud(
         fun visit(parent: Hud?) {
             if (parent == null || parent === this || parents.any { it === parent }) return
             parents.add(parent)
-            if (externalGeometry.get(parent.javaClass) || externalStaticSize.get(parent.javaClass)) {
+            if (parent.hasTrait(TRAIT_EXTERNAL_GEOMETRY or TRAIT_EXTERNAL_STATIC_SIZE)) {
                 (external ?: ArrayList<Hud>(1).also { external = it }).add(parent)
             }
         }
@@ -1536,7 +1565,22 @@ public abstract class Hud(
     @Transient private var parentCheckFrame = Long.MIN_VALUE
     @Transient private var parentGeom = FloatArray(0)
 
-    internal val hasExternalGeometry: Boolean get() = externalGeometry.get(javaClass)
+    @Transient private var hudTraitBits = 0
+
+    private val hudTraits: Int
+        get() {
+            val bits = hudTraitBits
+            if (bits != 0) return bits
+            return classTraits(javaClass).also { hudTraitBits = it }
+        }
+
+    private fun hasTrait(mask: Int): Boolean = (hudTraits and mask) != 0
+
+    internal val hasExternalGeometry: Boolean get() = hasTrait(TRAIT_EXTERNAL_GEOMETRY)
+
+    internal val overridesReplacesIds: Boolean get() = hasTrait(TRAIT_REPLACES_IDS)
+
+    private fun frameGuiScale(): Float = Platform.compatibility().options().guiScale
 
     private fun externalParentMoved(): Boolean {
         val ext = chainExternal
@@ -1561,10 +1605,27 @@ public abstract class Hud(
     }
 
     private fun staticSizeChanged(): Boolean =
-        externalStaticSize.get(javaClass) && (staticW != geomStaticW || staticH != geomStaticH)
+        hasTrait(TRAIT_EXTERNAL_STATIC_SIZE) && (staticW != geomStaticW || staticH != geomStaticH)
 
     private fun guiScaleInput(): Float =
-        if (!useGuiScale || chainParents.any { !it.useGuiScale }) Platform.compatibility().options().guiScale else 0f
+        if (!useGuiScale || anyParentIgnoresGuiScale()) Platform.compatibility().options().guiScale else 0f
+
+    private fun anyParentIgnoresGuiScale(): Boolean {
+        val parents = chainParents
+        for (i in parents.indices) if (!parents[i].useGuiScale) return true
+        return false
+    }
+
+    private fun allParentsStateOnly(): Boolean {
+        val parents = chainParents
+        for (i in parents.indices) if (!parents[i].hasTrait(TRAIT_STATE_ONLY_MINIMUM_SIZE)) return false
+        return true
+    }
+
+    private fun measureParents() {
+        val parents = chainParents
+        for (i in parents.indices) parents[i].frameMinimumSize()
+    }
 
     @Transient private var geomWrites = -1
     @Transient private var geomStateOnly = false
@@ -1579,14 +1640,14 @@ public abstract class Hud(
         val writes = hudStateWrites.get()
         if (geomValid && writes == geomWrites && (geomStateOnly || parentCheckFrame == HudManager.frameId) &&
             HudManager.guiScreenWidth == geomW && HudManager.guiScreenHeight == geomH &&
-            (!geomScaleFromOption || Platform.compatibility().options().guiScale == geomGuiScale)
+            (!geomScaleFromOption || frameGuiScale() == geomGuiScale)
         ) return true
         val frame = HudManager.frameId
         var parentMoved = false
         if (parentCheckFrame != frame) {
             parentCheckFrame = frame
             frameMinimumSize()
-            for (p in chainParents) p.frameMinimumSize()
+            measureParents()
             parentMoved = externalParentMoved()
         }
         val sw = HudManager.guiScreenWidth
@@ -1597,9 +1658,9 @@ public abstract class Hud(
         }
         walkChain()
         geomWrites = writes
-        geomStateOnly = chainExternal.isEmpty() && !externalStaticSize.get(javaClass) && stateOnlyMinimumSize.get(javaClass) &&
-            chainParents.all { stateOnlyMinimumSize.get(it.javaClass) }
-        for (p in chainParents) p.frameMinimumSize()
+        geomStateOnly = chainExternal.isEmpty() && !hasTrait(TRAIT_EXTERNAL_STATIC_SIZE) && hasTrait(TRAIT_STATE_ONLY_MINIMUM_SIZE) &&
+            allParentsStateOnly()
+        measureParents()
         val parents = chainParents
         geomValid = true
         geomStamp++
@@ -1610,7 +1671,7 @@ public abstract class Hud(
         geomStaticW = staticW
         geomStaticH = staticH
         geomGuiScale = guiScaleInput()
-        geomScaleFromOption = !useGuiScale || chainParents.any { !it.useGuiScale }
+        geomScaleFromOption = !useGuiScale || anyParentIgnoresGuiScale()
         cachedScale = effectiveScale
         cachedX = x
         cachedY = y
@@ -1648,7 +1709,7 @@ public abstract class Hud(
         val rev = revision.get()
         if (rev != flagRevision) {
             flagRevision = rev
-            if (!liveRedrawInputs.get(javaClass)) flagRedraw = alwaysRedraw
+            if (!hasTrait(TRAIT_LIVE_REDRAW_INPUTS)) flagRedraw = alwaysRedraw
             if (!hasExternalGeometry) {
                 flagHidden = hidden
                 flagUseGuiScale = useGuiScale
@@ -1659,10 +1720,10 @@ public abstract class Hud(
         return true
     }
 
-    internal val redrawOverridden: Boolean get() = externalRedraw.get(javaClass)
+    internal val redrawOverridden: Boolean get() = hasTrait(TRAIT_EXTERNAL_REDRAW)
 
     internal val frameAlwaysRedraw: Boolean
-        get() = if (!liveRedrawInputs.get(javaClass) && refreshFrameFlags()) flagRedraw else alwaysRedraw
+        get() = if (!hasTrait(TRAIT_LIVE_REDRAW_INPUTS) && refreshFrameFlags()) flagRedraw else alwaysRedraw
 
     internal val frameHidden: Boolean
         get() = if (!hasExternalGeometry && refreshFrameFlags()) flagHidden else hidden
