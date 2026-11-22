@@ -92,6 +92,7 @@ class HotwireContractTest {
         registry.getMethod("unregister", String.class);
         card.getMethod("getId");
         type("org.polyfrost.oneconfig.api.ui.v1.OneConfigUI").getMethod("createScreen", Object.class);
+        type(UI + "navigation.graph.ModConfigRoute").getConstructor(String.class, String.class, String.class);
     }
 
     @Test
@@ -101,6 +102,10 @@ class HotwireContractTest {
         fields(manager, "handlers");
         manager.getMethod("register", handler);
         manager.getMethod("unregister", handler);
+        // to run the handlers of a mod it starts late
+        handler.getMethod("getEventClass");
+        handler.getMethod("handle", type("org.polyfrost.oneconfig.api.event.v1.events.Event"));
+        type("org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent").getField("INSTANCE");
     }
 
     // not initialized, as most of these need a running game for that
