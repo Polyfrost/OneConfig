@@ -119,6 +119,9 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         try {
             if (ok) {
                 ConfigEntrypoints.registerStarted(ids);
+                // Mod Menu knows the mods by now, and its classes are only there with it
+                //? modmenu_compat
+                if (CompatLoader.INSTANCE.hasMod("modmenu")) ModMenuCompat.addStarted(ids);
             } else {
                 ConfigManager.pendingConfigs().forEach(ConfigManager::cancelInitialization);
                 ConfigEntrypoints.forgetStarted(ids);

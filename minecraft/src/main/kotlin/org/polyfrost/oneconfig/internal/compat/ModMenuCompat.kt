@@ -38,14 +38,31 @@ object ModMenuCompat {
         postLoad()
     }
 
-    fun postLoad() = CompatLoader.requireTranslations(1000, true) {
-        val nativeCoveredMods = mods.mapNotNull { mod ->
+    fun postLoad() = CompatLoader.requireTranslations(1000, true) { addCards(mods) }
+
+    /**
+     * Gives mods that Hotwire started after the game did what [enable] gave the ones there at launch, which is a card
+     * for their Mod Menu screen and the warm-up of that screen that lets the compat for it run
+     *
+     * Done on a later frame, as a mod may still set its own config up after the call that tells of its start
+     */
+    @JvmStatic
+    fun addStarted(ids: Collection<String>) = CompatLoader.queueScreenWarmup {
+        val started = ModMenu.ROOT_MODS.values.filter { mod ->
+            mod.id in ids && mods.none { it.id == mod.id } && runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)
+        }
+        mods.addAll(started)
+        addCards(started)
+    }
+
+    private fun addCards(added: List<Mod>) {
+        val nativeCoveredMods = added.mapNotNull { mod ->
             val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
             mod.aliasNativeChildConfig(nativeChild)
             mod.id
         }.toSet()
 
-        val foundMods = mods.filterNot {
+        val foundMods = added.filterNot {
             CompatLoader.nativeLoadedConfigs.contains(it.id) ||
                 it.id in nativeCoveredMods ||
                 hasNativeOcConfig(it.id)
