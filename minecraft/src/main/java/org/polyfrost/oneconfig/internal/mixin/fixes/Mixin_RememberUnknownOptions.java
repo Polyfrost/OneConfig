@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.lwjgl.opengl.DisplayMode;
 import org.polyfrost.oneconfig.internal.legacy.LegacyOptionsFormat;
+import org.polyfrost.oneconfig.internal.utils.ArgentumFullscreen;
 import org.polyfrost.oneconfig.internal.utils.LegacyVideoModeFormat;
 import org.polyfrost.oneconfig.internal.utils.MacExclusiveFullscreenReset;
 import pl.tomgirl.pylon.window.DisplaySdl;
@@ -94,8 +95,8 @@ public abstract class Mixin_RememberUnknownOptions {
         }
     }
 
-    @Inject(method = "load", at = @At("RETURN"))
-    private void ocfg$rewriteStaleFormats(CallbackInfo ci) {
+    @Unique
+    private void ocfg$rewriteStaleFormats() {
         for (String line : ocfg$loadedLines) {
             if (!LegacyOptionsFormat.toModernLine(line, ocfg$dataVersion).equals(line)) {
                 save();
@@ -126,10 +127,14 @@ public abstract class Mixin_RememberUnknownOptions {
             MacExclusiveFullscreenReset.reset(file);
         }
         DisplaySdl display = DisplaySdl.instance();
-        if (exclusive != null) display.setExclusiveFullscreen(exclusive);
-        if (size == null) return;
-        if (exclusive == null && !System.getProperty("os.name", "").startsWith("Mac")) display.setExclusiveFullscreen(true);
-        display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
+        if (exclusive != null) {
+            display.setExclusiveFullscreen(exclusive);
+            ArgentumFullscreen.setExclusive(exclusive);
+        } else if (size != null && !System.getProperty("os.name", "").startsWith("Mac")) {
+            display.setExclusiveFullscreen(true);
+        }
+        if (size != null) display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
+        ocfg$rewriteStaleFormats();
     }
 
     @ModifyExpressionValue(
@@ -185,6 +190,8 @@ public abstract class Mixin_RememberUnknownOptions {
             return;
         }
         if (saved.isEmpty()) return;
+        Boolean argentumExclusive = ArgentumFullscreen.isExclusive();
+        if (argentumExclusive != null) saved.put("exclusiveFullscreen", "exclusiveFullscreen:" + argentumExclusive);
 
         Map<String, KeyMapping> mappings = ocfg$mappingsByKey();
         Set<String> mirrors = ocfg$mirrorKeys(mappings);
