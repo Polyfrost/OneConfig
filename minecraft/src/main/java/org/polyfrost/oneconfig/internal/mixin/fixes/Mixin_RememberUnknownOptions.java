@@ -132,6 +132,7 @@ public abstract class Mixin_RememberUnknownOptions {
             ArgentumFullscreen.setExclusive(exclusive);
         } else if (size != null && !System.getProperty("os.name", "").startsWith("Mac")) {
             display.setExclusiveFullscreen(true);
+            ArgentumFullscreen.setExclusive(true);
         }
         if (size != null) display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
         ocfg$rewriteStaleFormats();
