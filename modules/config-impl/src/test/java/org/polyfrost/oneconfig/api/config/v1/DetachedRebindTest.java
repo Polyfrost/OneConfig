@@ -246,6 +246,47 @@ class DetachedRebindTest {
         assertEquals(5, value.get(), "the profile it went off in keeps its own value");
     }
 
+    // a mod switched off on its card has its options hold substitutes, lifted while what the user chose is read
+    @Test
+    void compatTreePutBackWithItsOptionsMaskedGetsItsDefaults() throws Exception {
+        Property<Integer> value = Properties.simple("value", "Value", "", 1);
+        Tree tree = CompatSnapshots.register(Tree.tree(COMPAT).put(value));
+        value.setAs(5);
+        Off off = turnOff(tree);
+        ConfigManager.createProfile(PROFILE_A);
+        int[] chosen = {value.get()};
+        boolean[] masked = {true};
+        value.setAsSilently(0);
+        CompatSnapshots.setLiveValueScope((id, read) -> {
+            if (!masked[0]) {
+                read.run();
+                return;
+            }
+            masked[0] = false;
+            value.setAsSilently(chosen[0]);
+            try {
+                read.run();
+            } finally {
+                chosen[0] = value.get();
+                value.setAsSilently(0);
+                masked[0] = true;
+            }
+        });
+        try {
+            off.turnOn();
+            ConfigManager.rebindDetached();
+        } finally {
+            CompatSnapshots.setLiveValueScope(null);
+        }
+
+        assertEquals(0, value.get(), "the substitute is back");
+        assertEquals(1, chosen[0], "what the mod gets once it is switched on again");
+        value.setAsSilently(chosen[0]);
+        ConfigManager.openProfile("");
+        ConfigManager.openProfile(PROFILE_A);
+        assertEquals(1, value.get(), "and what the profile has stored for it");
+    }
+
     private static DetachedConfig configWith(boolean enabled) {
         DetachedConfig config = new DetachedConfig(CONFIG);
         config.initialize(false);

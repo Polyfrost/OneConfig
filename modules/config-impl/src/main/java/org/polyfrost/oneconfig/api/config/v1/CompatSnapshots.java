@@ -344,8 +344,11 @@ public final class CompatSnapshots implements ConfigManager.ProfileChangeListene
             applyProfile(tree, profile);
             return;
         }
-        restoreDefaults(tree);
-        captureAll(tree, profile);
+        // in one go, as substitutes put back in between would have the reset undone before it is captured
+        liveValueScope.accept(tree.getID(), () -> {
+            restoreDefaults(tree);
+            captureAll0(tree, profile);
+        });
         flushSnapshotThenBaseline(store, profile, baselineStore, BASELINE_BUCKET);
     }
 
