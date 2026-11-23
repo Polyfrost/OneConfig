@@ -195,8 +195,8 @@ public fun Modifier.cardSelection(
         val a = amount.value
         if (a > 0f && style.fillAlpha > 0f) drawOutline(outline.createOutline(size, layoutDirection, this), accent, a * style.fillAlpha)
         drawContent()
-        if (a > 0f && style.ringWidth > 0.dp) {
-            val ring = style.ringWidth.toPx()
+        val ring = style.ringWidth.toPx()
+        if (a > 0f && ring > 0f && size.minDimension >= ring) {
             inset(ring / 2f) {
                 val path = outline.createOutline(size, layoutDirection, this)
                 if (style.ringTone == SelectionRingTone.Text) {
