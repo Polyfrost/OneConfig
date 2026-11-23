@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.4] - 2026-11-23
 
+### Changed
+- The sidebar lays out its entries more tightly and fades its top and bottom edges while you scroll
+
 ### Fixed
 - Setting files that mods write ahead of their HUDs, such as VanillaHUD's migrated settings, no longer log an error on every launch
 - Settings saved while the OneConfig screen was saving on close could fail to save or keep an older value
