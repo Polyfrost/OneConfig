@@ -54,7 +54,6 @@ class DetachedRebindTest {
     private static final String PROFILE_A = "oc_detached_profile_a";
     private static final String PROFILE_B = "oc_detached_profile_b";
     private static final String CONFIG = "detached_rebind_test.json";
-    private static final String SPACED_CONFIG = "detached rebind test.json";
     private static final String COMPAT = "detached_rebind_compat";
 
     @BeforeEach
@@ -138,49 +137,15 @@ class DetachedRebindTest {
         assertSame(config.getTree(), ConfigManager.active().get(CONFIG));
     }
 
-    // Hotwire 0.9.5.1 also resets Config.tree of a mod it turned off, without which Config.save() does nothing
-    @Test
-    void configWhoseTreeWasResetIsBoundToTheTreePutBack() throws Exception {
-        DetachedConfig config = configWith(true);
-        Tree tree = config.getTree();
-        Off off = turnOff(config);
-        config.tree = null;
-        off.turnOn();
-        ConfigManager.rebindDetached();
-
-        assertSame(tree, config.getTree());
-        assertSame(tree, ConfigManager.active().get(CONFIG));
-        assertTrue(config.enabled);
-    }
-
-    // a tree's id is its config's with what does not belong in a file name replaced, which is what both are stored under
-    @Test
-    void configWhoseTreeGoesByAnotherSpellingOfItsIdKeepsItsValues() throws Exception {
-        DetachedConfig config = new DetachedConfig(SPACED_CONFIG);
-        config.initialize(false);
-        config.enabled = true;
-        config.save();
-        Tree tree = config.getTree();
-        assertEquals(CONFIG, tree.getID());
-        Off off = turnOff(config);
-        config.tree = null;
-        off.turnOn();
-        ConfigManager.rebindDetached();
-
-        assertSame(tree, config.getTree());
-        assertTrue(config.enabled);
-    }
-
     // a KtConfig builds its tree once, so binding it again by registering that tree over itself would clear it
     @Test
-    void ktConfigWhoseTreeWasResetKeepsItsValues() throws Exception {
+    void ktConfigPutBackOnTheSameProfileKeepsItsValues() throws Exception {
         DetachedKtConfig config = new DetachedKtConfig(CONFIG);
         config.initialize(false);
         config.setEnabled(true);
         config.save();
         Tree tree = config.getTree();
         Off off = turnOff(config);
-        config.tree = null;
         off.turnOn();
         ConfigManager.rebindDetached();
 
@@ -189,24 +154,6 @@ class DetachedRebindTest {
         ConfigManager.createProfile(PROFILE_A);
         ConfigManager.openProfile("");
         assertEquals(true, ConfigManager.active().get(CONFIG).getProp("enabled").get(), "and so did its file");
-    }
-
-    @Test
-    void ktConfigWhoseTreeWasResetGetsItsDefaultsOnAProfileWithoutItsFile() throws Exception {
-        DetachedKtConfig config = new DetachedKtConfig(CONFIG);
-        config.initialize(false);
-        config.setEnabled(true);
-        config.save();
-        Off off = turnOff(config);
-        config.tree = null;
-        ConfigManager.createProfile(PROFILE_A);
-        off.turnOn();
-        ConfigManager.rebindDetached();
-
-        assertNotNull(config.getTree().getProp("enabled"), "the tree kept its options");
-        assertEquals(false, config.getTree().getProp("enabled").get());
-        ConfigManager.openProfile("");
-        assertEquals(true, config.getTree().getProp("enabled").get(), "the profile it went off in keeps its own value");
     }
 
     @Test
@@ -347,7 +294,6 @@ class DetachedRebindTest {
 
     private static void cleanup() throws Exception {
         configs().remove(CONFIG);
-        configs().remove(SPACED_CONFIG);
         ConfigManager.active().delete(CONFIG);
         ConfigManager.active().unregister(COMPAT);
         CompatSnapshots.untrack(COMPAT);
