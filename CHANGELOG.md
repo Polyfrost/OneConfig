@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- API: `HudManager.viewport` draws the HUDs into one part of the window, for mods that show the game in a smaller frame such as a replay editor's preview
+
 ### Fixed
 - Setting files that mods write ahead of their HUDs, such as VanillaHUD's migrated settings, no longer log an error on every launch
 - Settings saved while the OneConfig screen was saving on close could fail to save or keep an older value

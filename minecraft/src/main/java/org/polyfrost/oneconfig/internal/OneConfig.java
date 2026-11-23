@@ -48,6 +48,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
+import org.polyfrost.oneconfig.api.hud.v1.HudViewport;
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.notifications.v1.Notification;
@@ -231,8 +232,9 @@ public class OneConfig implements ClientModInitializer {
         if (GlHost.INSTANCE.unavailableReason() != null) return;
 
         ScreenPlatform screen = Platform.screen();
-        float sw = screen.guiWidth();
-        float sh = screen.guiHeight();
+        HudViewport viewport = HudManager.viewport;
+        float sw = viewport != null ? viewport.getGuiWidth() : screen.guiWidth();
+        float sh = viewport != null ? viewport.getGuiHeight() : screen.guiHeight();
         // guiWidth()/guiHeight() are already GUI-scaled so do not divide by guiScale again
         HudManager.guiScreenWidth = sw;
         HudManager.guiScreenHeight = sh;
@@ -278,11 +280,36 @@ public class OneConfig implements ClientModInitializer {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
         }
         if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
+        // a HudViewport is in window pixels, so drop the pose the caller drew the vanilla HUD with
         //? if >= 1.21.11 {
-        BlazeHud.render(graphics, OneConfigComposeHooks.drawHuds);
-        //?} else {
-        /*//~ if = 1.8.9 '(graphics)' -> '()'
-        GlHost.INSTANCE.blitHud(graphics);
+        boolean absolute = HudManager.viewport != null;
+        if (absolute) graphics.pose().pushMatrix().identity();
+        try {
+            BlazeHud.render(graphics, OneConfigComposeHooks.drawHuds);
+        } finally {
+            if (absolute) graphics.pose().popMatrix();
+        }
+        //?} elif >= 1.21.8 {
+        /*boolean absolute = HudManager.viewport != null;
+        if (absolute) graphics.pose().pushMatrix().identity();
+        try {
+            GlHost.INSTANCE.blitHud(graphics);
+        } finally {
+            if (absolute) graphics.pose().popMatrix();
+        }
+        *///?} elif > 1.8.9 {
+        /*boolean absolute = HudManager.viewport != null;
+        if (absolute) {
+            graphics.pose().pushPose();
+            graphics.pose().setIdentity();
+        }
+        try {
+            GlHost.INSTANCE.blitHud(graphics);
+        } finally {
+            if (absolute) graphics.pose().popPose();
+        }
+        *///?} else {
+        /*GlHost.INSTANCE.blitHud();
         *///?}
     }
 

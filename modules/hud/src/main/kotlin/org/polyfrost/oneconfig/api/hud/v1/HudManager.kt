@@ -164,6 +164,13 @@ public object HudManager {
 
     @Volatile @JvmField public var overrideShowInScreens: Boolean = false
 
+    /**
+     * The frame HUDs are drawn into, or null for the whole window. The mod that sets it must clear it when its
+     * frame goes away.
+     */
+    @ApiStatus.Experimental
+    @Volatile @JvmField public var viewport: HudViewport? = null
+
     @ApiStatus.Internal
     @Volatile @JvmField public var targetPixelWidth: Int = 0
 
@@ -1164,7 +1171,7 @@ public object HudManager {
         noteScreenSize()
         if (init) HudGroups.applyPendingDefaults()
         migratePositions(screenWidth, screenHeight)
-        val scale = Platform.compatibility().options().guiScale
+        val scale = drawScale()
         prepareScale = scale
 
         frameId++
@@ -1222,6 +1229,8 @@ public object HudManager {
         preparedFrameValid = dirty || alwaysRender
         return dirty
     }
+
+    private fun drawScale(): Float = viewport?.scale ?: Platform.compatibility().options().guiScale
 
     private fun anyChromaGroup(): Boolean {
         val groups = frameGroups
@@ -1442,6 +1451,7 @@ public object HudManager {
         key = key * 31L + (if (inWorld) 1 else 0)
         key = key * 31L + targetPixelWidth
         key = key * 31L + targetPixelHeight
+        key = key * 31L + viewport.hashCode()
         return key
     }
 
@@ -1540,7 +1550,7 @@ public object HudManager {
         val prepared = preparedFrameValid
         preparedFrameValid = false
         val scale = if (prepared) {
-            Platform.compatibility().options().guiScale
+            drawScale()
         } else {
             prepareFrame(screenWidth, screenHeight, {
                 collectFrameOrder()
@@ -1548,7 +1558,9 @@ public object HudManager {
             })
         }
 
+        val vp = viewport
         ctx.save()
+        if (vp != null) ctx.translate(vp.x, vp.y)
         ctx.scale(scale, scale)
 
         val cr = ctx.renderer as? CapturingRenderer
@@ -1575,6 +1587,7 @@ public object HudManager {
         val split = volatileCtx != null && cr != null && volatileCtx.renderer is CapturingRenderer && framePositions && splitLayers()
         if (split) {
             volatileCtx.save()
+            if (vp != null) volatileCtx.translate(vp.x, vp.y)
             volatileCtx.scale(scale, scale)
         }
         val volatileCacheNodes = volatileCtx?.cacheNodes ?: false
