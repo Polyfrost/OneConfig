@@ -5,6 +5,13 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- PolyCompose 3.0.7 or newer is required
+- Player heads use PolyCompose's skin cache, so mods drawing the same player load their skin once
+- API: `PlayerHeads`' skin calls and `PlayerSkinLayers` are deprecated in favour of PolyCompose's `McPlayerFaces`. Mods built against older versions keep working
+
 ## [1.9.4] - 2026-11-23
 
 ### Changed
