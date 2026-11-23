@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Setting files that mods write ahead of their HUDs, such as VanillaHUD's migrated settings, no longer log an error on every launch
 - Settings saved while the OneConfig screen was saving on close could fail to save or keep an older value
+- Selection rings, hover borders and focus outlines on elements too small to fit them no longer close the screen they're on
+- On 1.8.9 with Argentum, the exclusive fullscreen setting now matches the one in options.txt, so it stays the same when you switch versions in OneClient (needs an Argentum release with the new fullscreen API)
 
 ## [1.9.3] - 2026-11-23
 
