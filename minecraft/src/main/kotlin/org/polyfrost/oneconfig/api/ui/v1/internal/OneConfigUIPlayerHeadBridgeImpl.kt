@@ -32,8 +32,8 @@ class OneConfigUIPlayerHeadBridgeImpl : OneConfigUIPlayerHeadBridge {
     override fun skinTexture(id: UUID): String? = runCatching { clientSkinLocation(id) }.getOrNull()?.toString()
 
     override fun skinLayers(id: UUID): PlayerSkinLayers? {
-        if (skinTexture(id) == null) return null
-        return McPlayerFaces.layers(id)?.let(::wrap)
+        val texture = skinTexture(id) ?: return null
+        return McPlayerFaces.layers(id)?.takeIf { it.texture == texture }?.let(::wrap)
     }
 
     override fun skinLayers(texture: String): PlayerSkinLayersResult = when (val result = McPlayerFaces.layers(texture)) {

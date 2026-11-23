@@ -38,17 +38,19 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.playerHeadBridge
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import java.lang.ref.WeakReference
 import java.util.UUID
+import java.util.WeakHashMap
 
 @ExperimentalOneConfigUiApi
 public object PlayerHeads {
     @Deprecated(MOVED, ReplaceWith("McPlayerFaces.face(id)?.asComposeImageBitmap()", FACES, IMAGE))
     @JvmStatic
-    public fun face(id: UUID): ImageBitmap? = head(id)?.asComposeImageBitmap()
+    public fun face(id: UUID): ImageBitmap? = head(id)?.image()
 
     @Deprecated(MOVED, ReplaceWith("McPlayerFaces.defaultLayers(id)?.flattened?.asComposeImageBitmap()", FACES, IMAGE))
     @JvmStatic
-    public fun defaultFace(id: UUID): ImageBitmap? = defaultHead(id)?.asComposeImageBitmap()
+    public fun defaultFace(id: UUID): ImageBitmap? = defaultHead(id)?.image()
 
     @Deprecated(MOVED, ReplaceWith("McPlayerFaces.defaultLayers(id)?.flattened", FACES))
     @JvmStatic
@@ -62,7 +64,7 @@ public object PlayerHeads {
     @Deprecated(MOVED, ReplaceWith("McPlayerFaces.face(id)?.asComposeImageBitmap()", FACES, IMAGE))
     @ExperimentalOneConfigUiApi
     @JvmStatic
-    public fun face(id: UUID, preferLoadedSkin: Boolean): ImageBitmap? = head(id)?.asComposeImageBitmap()
+    public fun face(id: UUID, preferLoadedSkin: Boolean): ImageBitmap? = head(id)?.image()
 
     @Deprecated(MOVED, ReplaceWith("playerId?.let { McPlayerFaces.face(it) }", FACES))
     @ExperimentalOneConfigUiApi
@@ -78,7 +80,7 @@ public object PlayerHeads {
 
     @Deprecated(MOVED, ReplaceWith("McPlayerFaces.face(null)?.asComposeImageBitmap()", FACES, IMAGE))
     @JvmStatic
-    public fun localFace(): ImageBitmap? = localId()?.let { head(it) }?.asComposeImageBitmap()
+    public fun localFace(): ImageBitmap? = localId()?.let { head(it) }?.image()
 
     @Deprecated(MOVED, ReplaceWith("McPlayerFaces.layers(id)?.texture", FACES))
     @JvmStatic
@@ -140,7 +142,7 @@ public fun PlayerHead(
         )
     val revision = runCatching { playerHeadBridge()?.revision }.getOrNull() ?: 0
     val bitmap = remember(playerId, revision) { playerId?.let { head(it) } }
-    if (preferLoadedSkin && playerId != null) {
+    if (playerId != null) {
         LaunchedEffect(playerId) {
             while (true) {
                 delay(LOADED_SKIN_REFRESH_MILLIS)
@@ -149,7 +151,7 @@ public fun PlayerHead(
         }
     }
     if (bitmap != null) {
-        val image = remember(bitmap) { bitmap.asComposeImageBitmap() }
+        val image = remember(bitmap) { bitmap.image() }
         Image(BitmapPainter(image, filterQuality = FilterQuality.None), null, described)
         return
     }
@@ -238,6 +240,12 @@ private const val LOADED_SKIN_REFRESH_MILLIS = 1000L
 private const val MOVED = "Moved to McPlayerFaces in PolyCompose"
 private const val FACES = "org.polyfrost.compose.minecraft.mc.McPlayerFaces"
 private const val IMAGE = "org.polyfrost.compose.backend.asComposeImageBitmap"
+
+private val images = WeakHashMap<PolyBitmap, WeakReference<ImageBitmap>>()
+
+private fun PolyBitmap.image(): ImageBitmap = synchronized(images) {
+    images[this]?.get() ?: asComposeImageBitmap().also { images[this] = WeakReference(it) }
+}
 
 private fun head(id: UUID?): PolyBitmap? = runCatching { playerHeadBridge()?.head(id) }.getOrNull()
 
