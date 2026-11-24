@@ -105,7 +105,7 @@ public abstract class Mixin_RememberUnknownOptions {
         }
     }
 
-    @Inject(method = "load", at = @At("RETURN"))
+    @Inject(method = "<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V", at = @At("RETURN"))
     private void ocfg$applyFullscreenResolution(CallbackInfo ci) {
         int[] size = null;
         Boolean exclusive = null;
@@ -127,6 +127,7 @@ public abstract class Mixin_RememberUnknownOptions {
             MacExclusiveFullscreenReset.reset(file);
         }
         DisplaySdl display = DisplaySdl.instance();
+        if (size != null) display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
         if (exclusive != null) {
             display.setExclusiveFullscreen(exclusive);
             ArgentumFullscreen.setExclusive(exclusive);
@@ -134,7 +135,6 @@ public abstract class Mixin_RememberUnknownOptions {
             display.setExclusiveFullscreen(true);
             ArgentumFullscreen.setExclusive(true);
         }
-        if (size != null) display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
         ocfg$rewriteStaleFormats();
     }
 
