@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -283,5 +284,41 @@ public class ObjectSerializerTest {
         };
 
         abstract String describe();
+    }
+
+    // as Hotwire does for the classes of a mod it runs as a copy, which are gone after a restart
+    @Test
+    @SuppressWarnings("unchecked") // a serialized object is a map by its field names
+    public void classesAreSavedUnderTheNamesTheyAreFoundByLater() {
+        Function<Class<?>, String> savedName = ObjectSerializer.savedName;
+        Function<String, Class<?>> runningClass = ObjectSerializer.runningClass;
+        ObjectSerializer.savedName = type -> type == Renamed.class ? "own.Renamed"
+                : type == RenamedMode.class ? "own.RenamedMode" : savedName.apply(type);
+        ObjectSerializer.runningClass = name -> name.equals("own.Renamed") ? Renamed.class
+                : name.equals("own.RenamedMode") ? RenamedMode.class : runningClass.apply(name);
+        try {
+            Renamed in = new Renamed();
+            in.mode = RenamedMode.FAST;
+
+            Map<String, Object> saved = (Map<String, Object>) objectSerializer.serialize(in, false, false);
+
+            assertEquals("own.Renamed", saved.get("class"));
+            assertEquals("own.RenamedMode", ((Map<String, Object>) saved.get("mode")).get("class"));
+            assertEquals(RenamedMode.FAST, ((Renamed) objectSerializer.deserialize(saved)).mode);
+        } finally {
+            ObjectSerializer.savedName = savedName;
+            ObjectSerializer.runningClass = runningClass;
+        }
+    }
+
+    private enum RenamedMode {
+        SLOW,
+        // with a body, so it has a class of its own
+        FAST {
+        }
+    }
+
+    private static final class Renamed {
+        RenamedMode mode = RenamedMode.SLOW;
     }
 }

@@ -38,6 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImpl;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
@@ -63,8 +64,8 @@ public final class HotwireLifecycle implements ModLifecycleListener {
 
     public static void register() {
         HotwireApi api = HotwireApi.getInstance();
-        HudManager.INSTANCE.setSavedName(api::findOwnName);
-        HudManager.INSTANCE.setRunningClass(name -> api.findRunningClass(name).orElse(null));
+        ObjectSerializer.savedName = api::findOwnName;
+        ObjectSerializer.runningClass = name -> api.findRunningClass(name).orElse(null);
         api.addLifecycleListener(new HotwireLifecycle());
     }
 

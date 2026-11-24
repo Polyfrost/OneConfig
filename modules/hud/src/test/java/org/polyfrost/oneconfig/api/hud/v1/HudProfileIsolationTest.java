@@ -27,12 +27,12 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
 import kotlin.Pair;
-import kotlin.jvm.functions.Function1;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -412,11 +413,11 @@ class HudProfileIsolationTest {
 
     @Test
     void hudWhoseClassRunsUnderAnotherNameKeepsItsFile() throws Exception {
-        Function1<? super Class<?>, String> savedName = HudManager.INSTANCE.getSavedName();
-        Function1<? super String, ? extends Class<?>> runningClass = HudManager.INSTANCE.getRunningClass();
+        Function<Class<?>, String> savedName = ObjectSerializer.savedName;
+        Function<String, Class<?>> runningClass = ObjectSerializer.runningClass;
         // as Hotwire does for the classes of a mod it runs as a copy
-        HudManager.INSTANCE.setSavedName(type -> type == SwitchedHud.class ? "own.SwitchedHud" : savedName.invoke(type));
-        HudManager.INSTANCE.setRunningClass(name -> name.equals("own.SwitchedHud") ? SwitchedHud.class : runningClass.invoke(name));
+        ObjectSerializer.savedName = type -> type == SwitchedHud.class ? "own.SwitchedHud" : savedName.apply(type);
+        ObjectSerializer.runningClass = name -> name.equals("own.SwitchedHud") ? SwitchedHud.class : runningClass.apply(name);
         SwitchedHud provider = new SwitchedHud();
         HudManager.register(provider);
         try {
@@ -433,8 +434,8 @@ class HudProfileIsolationTest {
             assertTrue(switched().getHidden());
         } finally {
             HudManager.INSTANCE.unregister(provider, true, true);
-            HudManager.INSTANCE.setSavedName(savedName);
-            HudManager.INSTANCE.setRunningClass(runningClass);
+            ObjectSerializer.savedName = savedName;
+            ObjectSerializer.runningClass = runningClass;
         }
     }
 

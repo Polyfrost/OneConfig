@@ -46,6 +46,7 @@ import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -78,17 +79,6 @@ public object HudManager {
     private var loadedProviders: Set<String> = emptySet()
     // wrapped HUDs of mods that Hotwire turned off, kept as only their mod's compat could make them again
     private val parked = ArrayList<Hud>()
-
-    /**
-     * The name a HUD's class is saved under, which is not its own while Hotwire runs an update of a mod as a copy
-     * with its classes renamed
-     */
-    @ApiStatus.Internal
-    public var savedName: (Class<*>) -> String = { it.name }
-
-    /** The class that a name from [savedName] runs as now, or null if there is none */
-    @ApiStatus.Internal
-    public var runningClass: (String) -> Class<*>? = { Class.forName(it, true, HudManager::class.java.classLoader) }
 
     private val pendingUnsupported: MutableSet<Class<out Hud>> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
@@ -2039,6 +2029,8 @@ public object HudManager {
 
     private fun providerNames(): Set<String> = hudProviders.keys.mapTo(HashSet()) { it.name }
 
+    private fun savedName(cls: Class<*>): String = ObjectSerializer.savedName.apply(cls)
+
     private fun teardownForProfile(profile: String) {
         val kept = ArrayList<Hud>(activeInstances.size)
         for (hud in ArrayList(activeInstances)) {
@@ -2213,7 +2205,7 @@ public object HudManager {
                 if (clsName in unsupportedHuds) return@forEach
                 // its mod is off, so its class must not be instantiated and its file stays as it is
                 if (clsName in registeredHuds && hudProviders.keys.none { savedName(it) == clsName }) return@forEach
-                val cls = (runningClass(clsName) ?: throw ClassNotFoundException(clsName)) as? Class<Hud>
+                val cls = (ObjectSerializer.runningClass.apply(clsName) ?: throw ClassNotFoundException(clsName)) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
                 providerClass = cls
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()

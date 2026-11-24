@@ -52,6 +52,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -2160,7 +2161,7 @@ public abstract class Hud(
             (tree["showInScreens"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             (tree["showInChat"] as? Property<*>)?.addDisplayCondition(hideFromConfigUi)
             addToSerialized(tree)
-            tree["hudClass"] = simple(value = HudManager.savedName(out::class.java)).apply {
+            tree["hudClass"] = simple(value = ObjectSerializer.savedName.apply(out::class.java)).apply {
                 addDisplayCondition { Property.Display.HIDDEN }
             }
             addCallbacks(tree)
