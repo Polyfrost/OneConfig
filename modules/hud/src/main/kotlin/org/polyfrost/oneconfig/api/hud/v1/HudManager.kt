@@ -75,7 +75,8 @@ public object HudManager {
     private val unsupportedHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
     // classes registered and not unregistered here, which still names a provider that Hotwire took out of hudProviders
     private val registeredHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
-    // by name, as Hotwire takes the classes of a mod it turns off out of any collection
+    // the providers as of the last load or of Hotwire's last word that it would turn mods off, by name, as it takes
+    // the classes of a mod it turns off out of any collection
     private var loadedProviders: Set<String> = emptySet()
     // wrapped HUDs of mods that Hotwire turned off, kept as only their mod's compat could make them again
     private val parked = ArrayList<Hud>()
@@ -467,8 +468,6 @@ public object HudManager {
         registeredHuds.add(savedName(hud::class.java))
         HudStyles.captureBuiltIn(hud)
         hudProviders[hud::class.java] = hud
-        // no load follows for a HUD that was loaded from its file before, and syncWithMods goes by the last load
-        if (init) loadedProviders = loadedProviders + hud::class.java.name
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
         // manager has already performed its first load. Coalesce those registrations into one
@@ -616,8 +615,6 @@ public object HudManager {
     public fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
         registeredHuds.remove(savedName(hud::class.java))
         if (hudProviders.remove(hud::class.java) != null) {
-            // or syncWithMods would take it for one that Hotwire took out, and load its HUDs again
-            loadedProviders = loadedProviders - hud::class.java.name
             revision++
             notifyRegistrationChanged()
         }
@@ -2045,12 +2042,15 @@ public object HudManager {
     }
 
     /**
-     * Notes what the HUDs draw with before Hotwire turns mods off. It takes their HUDs out without disposing that,
-     * which would go on running their effects, so [syncWithMods] does it for the ones that are gone then
+     * Notes what there is before Hotwire turns mods off, for [syncWithMods] to tell what it took out
+     *
+     * That is what the HUDs draw with, which Hotwire leaves undisposed and so running their effects, and the
+     * providers, of which some may have registered or unregistered since the last load
      */
     @ApiStatus.Internal
     public fun beforeModsOff() {
         drawnBeforeOff = drawing()
+        loadedProviders = providerNames()
     }
 
     private fun drawing(): List<PolyComposeRuntime> =

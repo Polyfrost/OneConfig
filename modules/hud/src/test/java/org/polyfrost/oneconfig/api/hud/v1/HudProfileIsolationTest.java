@@ -375,6 +375,32 @@ class HudProfileIsolationTest {
         }
     }
 
+    // as a config does that registers its HUD each time it is bound to a profile
+    @Test
+    void providerRegisteredAgainOnceItIsPutBackStillGetsTheNewProfilesHud() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+            ConfigManager.createProfile(PROFILE);
+            ConfigManager.openProfile("");
+            HudManager.INSTANCE.beforeModsOff();
+            Runnable putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            ConfigManager.openProfile(PROFILE);
+            putBack.run();
+            HudManager.register(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertFalse(switched().getHidden(), "it must get this profile's settings, not the ones it went off with");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
     @Test
     void hudPutBackIsDisposedAndLoadedFromItsFile() throws Exception {
         SwitchedHud provider = new SwitchedHud();
@@ -415,6 +441,7 @@ class HudProfileIsolationTest {
             boolean[] told = {false};
             HudManager.INSTANCE.addRegistrationListener(() -> told[0] = true);
 
+            HudManager.INSTANCE.beforeModsOff();
             putBack = takeOut(provider);
             HudManager.INSTANCE.syncWithMods(id -> false);
 
@@ -433,6 +460,7 @@ class HudProfileIsolationTest {
         ConfigManager.active().saveAll();
         HudManager.INSTANCE.unregister(provider, true, false);
         try {
+            HudManager.INSTANCE.beforeModsOff();
             HudManager.INSTANCE.syncWithMods(id -> false);
 
             assertTrue(HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).isEmpty(),
