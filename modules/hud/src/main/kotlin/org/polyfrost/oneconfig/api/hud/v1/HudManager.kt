@@ -2212,6 +2212,8 @@ public object HudManager {
                 if (clsName in registeredHuds && hudProviders.keys.none { savedName(it) == clsName }) return@forEach
                 val cls = (ObjectSerializer.runningClass.apply(clsName) ?: throw ClassNotFoundException(clsName)) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
+                // only found so far, and initializing it may be what registers its provider
+                Class.forName(cls.name, true, cls.classLoader)
                 providerClass = cls
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
                 // A previous HUD instance may still own this ID when the same backend is reloaded.
