@@ -537,8 +537,9 @@ public final class ConfigManager {
         REBINDING_PROFILES.set(Boolean.TRUE);
         try {
             for (Config config : new ArrayList<>(initializedConfigs.values())) {
-                // one that builds its tree only once would merge it into itself by registering it again, which clears it
-                if (mgr.tracks(config.tree)) continue;
+                // one whose setup failed has no tree, and one that builds its tree only once would merge it into
+                // itself by registering it again, which clears it
+                if (config.tree == null || mgr.tracks(config.tree)) continue;
                 try {
                     // its file goes by the tree's spelling of the id
                     config.rebindToActiveProfile(!Files.exists(mgr.getFolder().resolve(config.tree.getID())));
