@@ -83,7 +83,7 @@ private object HudPreviewCache {
         return cache.getOrPut(hud, build)
     }
 
-    private fun releaseAll() {
+    fun releaseAll() {
         if (cache.isEmpty()) return
         for (state in cache.values) {
             try {
@@ -96,6 +96,12 @@ private object HudPreviewCache {
         cache.clear()
     }
 }
+
+/**
+ * Disposes the previews made so far, for before Hotwire turns mods off: it takes the ones of their HUDs out of the
+ * cache, which could then never dispose them
+ */
+fun releaseHudPreviews() = HudPreviewCache.releaseAll()
 
 @Composable
 internal fun rememberHudPreview(hud: Hud): HudPreviewState {

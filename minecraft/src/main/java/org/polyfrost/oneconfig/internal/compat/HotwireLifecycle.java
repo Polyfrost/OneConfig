@@ -44,6 +44,7 @@ import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImp
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
+import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewKt;
 
 /**
  * OneConfig's part in Hotwire turning mods off and on, adding and updating them while the game runs. Hotwire takes a
@@ -75,9 +76,14 @@ public final class HotwireLifecycle implements ModLifecycleListener {
     @Override
     public void prepareOff(List<String> ids) {
         try {
+            HudManager.INSTANCE.beforeModsOff();
+            HudPreviewKt.releaseHudPreviews();
+        } catch (Throwable t) {
+            LOGGER.error("Failed to note the HUDs there are before Hotwire turns {} off", ids, t);
+        }
+        try {
             ConfigManager.active().saveAll();
             CompatSnapshots.INSTANCE.onProfileSaving(ConfigManager.activeProfile());
-            HudManager.INSTANCE.beforeModsOff();
         } catch (Throwable t) {
             LOGGER.error("Failed to save the settings of {} before Hotwire turns them off", ids, t);
         }
