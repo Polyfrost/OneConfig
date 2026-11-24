@@ -410,6 +410,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field layoutRefWidth F
 	public static field overrideShowInScreens Z
 	public static field partialTick F
+	public static field viewport Lorg/polyfrost/oneconfig/api/hud/v1/HudViewport;
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public static final fun getLayoutReferenceHeight ()F
@@ -546,6 +547,26 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudTextKt {
 	public static final fun HudText (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Ljava/util/List;ZLandroidx/compose/runtime/Composer;II)V
 	public static final fun plainText (Ljava/util/List;)Ljava/lang/String;
 	public static final fun toTextRuns (Lnet/kyori/adventure/text/Component;)Ljava/util/List;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudViewport {
+	public static final field $stable I
+	public fun <init> (FFFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (FFFFF)Lorg/polyfrost/oneconfig/api/hud/v1/HudViewport;
+	public static synthetic fun copy$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudViewport;FFFFFILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/HudViewport;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGuiHeight ()F
+	public final fun getGuiWidth ()F
+	public final fun getScale ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/hud/v1/OneConfigHudWrapper {

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- API: `HudManager.viewport` draws the HUDs into one part of the window, for mods that show the game in a smaller frame such as a replay editor's preview
+
 ### Changed
 - Needs PolyCompose 3.0.7 or newer
 - Player heads use PolyCompose's skin cache, so mods drawing the same player only load the skin once
