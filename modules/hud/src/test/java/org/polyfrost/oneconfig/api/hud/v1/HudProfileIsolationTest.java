@@ -396,6 +396,33 @@ class HudProfileIsolationTest {
     }
 
     @Test
+    void providerRegisteredAfterItsHudWasLoadedIsNoticedGoingOut() throws Exception {
+        LateRegisteredHud first = new LateRegisteredHud();
+        HudManager.register(first);
+        launch();
+        ConfigManager.active().saveAll();
+        // as at a launch that loads the saved HUD before its mod registers the provider
+        HudManager.INSTANCE.unregister(first, true, false);
+        launch();
+        LateRegisteredHud provider = new LateRegisteredHud();
+        HudManager.register(provider);
+        Runnable putBack = null;
+        try {
+            drainPendingProfileReload();
+            boolean[] told = {false};
+            HudManager.INSTANCE.addRegistrationListener(() -> told[0] = true);
+
+            putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertTrue(told[0], "a provider going out must be noticed even if no load has seen it registered");
+        } finally {
+            if (putBack != null) putBack.run();
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
     void wrappedHudIsTakenOutWhileItsModIsOff() throws Exception {
         launch();
         new ModWrapper().register();

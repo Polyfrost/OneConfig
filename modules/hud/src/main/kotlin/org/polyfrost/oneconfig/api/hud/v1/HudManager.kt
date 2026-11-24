@@ -466,6 +466,8 @@ public object HudManager {
         registeredHuds.add(savedName(hud::class.java))
         HudStyles.captureBuiltIn(hud)
         hudProviders[hud::class.java] = hud
+        // no load follows for a HUD that was loaded from its file before, and syncWithMods goes by the last load
+        if (init) loadedProviders = loadedProviders + hud::class.java.name
         revision++
         // Providers are commonly registered by later InitializationEvent handlers, after the
         // manager has already performed its first load. Coalesce those registrations into one
