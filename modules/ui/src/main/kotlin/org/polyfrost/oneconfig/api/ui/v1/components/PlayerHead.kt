@@ -82,7 +82,6 @@ public object PlayerHeads {
     @JvmStatic
     public fun localFace(): ImageBitmap? = localId()?.let { head(it) }?.image()
 
-    @Deprecated(MOVED, ReplaceWith("McPlayerFaces.layers(id)?.texture", FACES))
     @JvmStatic
     public fun skinTexture(id: UUID): String? = runCatching { playerHeadBridge()?.skinTexture(id) }.getOrNull()
 
