@@ -423,6 +423,23 @@ class HudProfileIsolationTest {
     }
 
     @Test
+    void hudThatItsModUnregisteredStaysOutWhenOtherModsAreSwitched() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        launch();
+        ConfigManager.active().saveAll();
+        HudManager.INSTANCE.unregister(provider, true, false);
+        try {
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertTrue(HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).isEmpty(),
+                    "its file is still there, but nothing about the providers changed that would have it loaded");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
     void wrappedHudIsTakenOutWhileItsModIsOff() throws Exception {
         launch();
         new ModWrapper().register();

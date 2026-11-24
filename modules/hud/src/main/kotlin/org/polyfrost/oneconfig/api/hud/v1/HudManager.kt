@@ -615,6 +615,8 @@ public object HudManager {
     public fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
         registeredHuds.remove(savedName(hud::class.java))
         if (hudProviders.remove(hud::class.java) != null) {
+            // or syncWithMods would take it for one that Hotwire took out, and load its HUDs again
+            loadedProviders = loadedProviders - hud::class.java.name
             revision++
             notifyRegistrationChanged()
         }
