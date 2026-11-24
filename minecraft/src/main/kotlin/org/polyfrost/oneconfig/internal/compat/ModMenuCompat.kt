@@ -10,6 +10,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImpl
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
@@ -63,31 +64,32 @@ object ModMenuCompat {
         }.toSet()
 
         val foundMods = added.filterNot {
-            CompatLoader.nativeLoadedConfigs.contains(it.id) ||
+            CompatLoader.nativeLoadedConfigs.contains(it.ownId) ||
                 it.id in nativeCoveredMods ||
-                hasNativeOcConfig(it.id)
+                hasNativeOcConfig(it.ownId)
         }
 
         foundMods
             .forEach { mod ->
                 val modMenuTree = Tree.tree()
+                val ownId = mod.ownId
 
-                modMenuTree.id = mod.id
+                modMenuTree.id = ownId
                 modMenuTree.title = mod.name
                 modMenuTree.description = "(Mod Menu Compat)"
-                ModInfo.loadedMods.firstOrNull { it.id == mod.id }?.extractIconFile()?.let { iconPath ->
+                ModInfo.loadedMods.firstOrNull { it.id == ownId }?.extractIconFile()?.let { iconPath ->
                     modMenuTree.addMetadata("icon_path", iconPath)
                 }
                 modMenuTree.addMetadata("on_click") {
                     val foreignScreen = runCatching {
                         var screen: Screen? = null
-                        CompatLoader.withForcedModId(mod.id) {
+                        CompatLoader.withForcedModId(ownId) {
                             screen = ModMenu.getConfigScreen(mod.id, Platform.screen().current())
                         }
                         screen
                     }.getOrNull()
 
-                    val nativeTree = runCatching { ConfigManager.active().get(mod.id) }.getOrNull()
+                    val nativeTree = runCatching { ConfigManager.active().get(ownId) }.getOrNull()
                     val hasNative = nativeTree != null &&
                         nativeTree !== modMenuTree &&
                         nativeTree.getMetadata<Boolean>(Backend.UI_ONLY_METADATA) != true
@@ -105,8 +107,8 @@ object ModMenuCompat {
 
                     when {
                         showOc && ShellController.shared.navigation.isReady ->
-                            ShellController.shared.navigation.navigate(ModConfigRoute(mod.id))
-                        showOc -> Platform.screen().display(OneConfigUIScreen(initialTreeId = mod.id))
+                            ShellController.shared.navigation.navigate(ModConfigRoute(ownId))
+                        showOc -> Platform.screen().display(OneConfigUIScreen(initialTreeId = ownId))
                         foreignScreen != null -> Platform.screen().display(foreignScreen)
                     }
                 }
@@ -124,13 +126,17 @@ object ModMenuCompat {
     private fun scheduleWarmup(mods: List<Mod>) {
         mods.forEach { mod ->
             CompatLoader.queueScreenWarmup {
-                CompatLoader.withForcedModId(mod.id) {
+                CompatLoader.withForcedModId(mod.ownId) {
                     // the screen is thrown away because building it is what makes the compat mixins fire
                     ModMenu.getConfigScreen(mod.id, Platform.screen().current())
                 }
             }
         }
     }
+
+    // what OneConfig knows a mod by, which for a copy that Hotwire runs is the mod it stands in for, while Mod Menu
+    // knows the copy by an id of its own
+    private val Mod.ownId: String get() = CompatibilityPlatformImpl.liveCopies[id] ?: id
 
     // a mod can ship both a native OneConfig config and a Mod Menu entrypoint
     // the native one registers under its file id "legacyskyblock.json" while Mod Menu uses the bare
