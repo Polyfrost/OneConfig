@@ -25,6 +25,10 @@ private object BuiltinHudConfigData : ConfigData {
 }
 
 object BuiltinHudRegistrar {
+    private fun adoptHuds() = HudManager.providers().forEach { hud ->
+        if (hud.configId == null) hud.configId = BUILTIN_HUD_CONFIG_ID
+    }
+
     private val hudTypeResolver = ModCardTypeResolver { id ->
         if (isHudModCard(id)) HUD_MOD_CARD_TYPE_ID else null
     }
@@ -32,9 +36,9 @@ object BuiltinHudRegistrar {
     @JvmStatic
     fun register() {
         ConfigRegistry.register(BuiltinHudConfigData)
-        HudManager.providers().forEach { hud ->
-            if (hud.configId == null) hud.configId = BUILTIN_HUD_CONFIG_ID
-        }
+        adoptHuds()
+        // also the ones of mods that register theirs later, which would not be listed under any mod
+        HudManager.addRegistrationListener(::adoptHuds)
         SearchCorpus.invalidate(HudDocumentSource, HudModCardDocumentSource)
         ModCardTypes.register(ModCardType(HUD_MOD_CARD_TYPE_ID, "HUDs", "hud", priority = 100))
         ModCardTypes.registerResolver(hudTypeResolver)
