@@ -975,8 +975,9 @@ public abstract class Hud(
 
     @ApiStatus.Internal
     public open fun applyEditorWidth(width: Float) {
+        val scale = effectiveScale
         staticWidth = true
-        staticW = width
+        staticW = maxOf(if (scale > 0f) width / scale else width, frameMinimumSize().first)
     }
 
     // compose state so a composable reading the pivot is invalidated when an editor resize pins or unpins
