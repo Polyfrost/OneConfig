@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Controlify's controls screen has "Open OneConfig" and "Edit HUD" actions, which you can also add to its radial menu
 - On a controller, B goes back a page, X opens an item's options, and Y turns a mod or a settings group on or off
 - The pause menu has a OneConfig button next to Options
-- The first-launch message tells controller players to open OneConfig from the pause menu instead of naming a key
-- API: kit helpers for controller support in custom pages: `isControllerMode`, `Modifier.keyNavigable`, `Modifier.onArrowKeys`, `Modifier.controllerShortcut` and `Modifier.controllerAdjust`. `Modifier.contextMenu` opens on X without changing anything
+- On a controller, the first-launch message points to the pause menu button instead of a key
+- API: kit helpers for controller support in custom pages: `isControllerMode`, `Modifier.keyNavigable`, `Modifier.onArrowKeys`, `Modifier.controllerShortcut` and `Modifier.controllerAdjust`. Existing `Modifier.contextMenu` menus open on X with no code changes
 
 ### Changed
 - Needs PolyCompose 3.1.0 or newer
