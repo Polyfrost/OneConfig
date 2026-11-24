@@ -46,6 +46,8 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntOffset
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.compose.host.controller.ControllerButton
+import org.polyfrost.compose.host.controller.controllerAction
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
@@ -239,20 +241,25 @@ internal fun Modifier.contextMenuTrigger(
     val latestLocals by rememberUpdatedState(currentCompositionLocalContext)
     val anchor = remember { AnchorHolder() }
     val focus = remember { FocusRequester() }
+    fun openAtCenter(): Boolean {
+        if (isRecordingKeybind()) return false
+        val coordinates = anchor.coordinates?.takeIf { it.isAttached } ?: return false
+        val list = latestEntries()
+        if (list.isEmpty()) return false
+        val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+        val restoreFocus = { runCatching { focus.requestFocus() }; Unit }
+        host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus, latestLocals, entriesState, latestPopupSounds))
+        latestOpened?.invoke()
+        return true
+    }
     return this
         .onGloballyPositioned { anchor.coordinates = it }
         .focusRequester(focus)
         .onFocusChanged { anchor.focused = it.hasFocus }
+        .controllerAction(ControllerButton.X, formControlString("oneconfig.controller.options", "Options")) { openAtCenter() }
         .onKeyEvent { event ->
-            if (event.type != KeyEventType.KeyDown || !event.opensContextMenu() || isRecordingKeybind()) return@onKeyEvent false
-            val coordinates = anchor.coordinates?.takeIf { it.isAttached } ?: return@onKeyEvent false
-            val list = latestEntries()
-            if (list.isEmpty()) return@onKeyEvent false
-            val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
-            val restoreFocus = { runCatching { focus.requestFocus() }; Unit }
-            host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus, latestLocals, entriesState, latestPopupSounds))
-            latestOpened?.invoke()
-            true
+            if (event.type != KeyEventType.KeyDown || !event.opensContextMenu()) return@onKeyEvent false
+            openAtCenter()
         }
         .pointerInput(host) {
             awaitPointerEventScope {

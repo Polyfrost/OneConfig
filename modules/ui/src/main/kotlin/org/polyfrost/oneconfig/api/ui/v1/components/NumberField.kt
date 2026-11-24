@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
@@ -276,7 +277,7 @@ public fun NumberField(
                         }
                         Key.Enter, Key.NumPadEnter -> {
                             commitTyped()
-                            focusManager.clearFocus()
+                            if (!Controllers.isActive) focusManager.clearFocus()
                             true
                         }
                         else -> false

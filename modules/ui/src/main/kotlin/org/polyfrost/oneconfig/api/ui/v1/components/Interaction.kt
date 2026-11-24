@@ -12,13 +12,16 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
@@ -29,7 +32,9 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.a11y.a11y
@@ -208,9 +213,13 @@ public fun rememberHoverState(): HoverState {
 
 @ExperimentalOneConfigUiApi
 public fun Modifier.hiddenUntilHover(visible: Boolean): Modifier = composed {
-    val alpha by animateFloatAsState(if (visible) 1f else 0f, Motion.tweenSpec(Motion.standard), label = "hiddenUntilHover")
-    val placed = visible || alpha > 0f
-    focusProperties { canFocus = visible }
+    var focused by remember { mutableStateOf(false) }
+    val reachable = visible || A11y.keyboardMode || Controllers.isActive
+    val shown = visible || focused
+    val alpha by animateFloatAsState(if (shown) 1f else 0f, Motion.tweenSpec(Motion.standard), label = "hiddenUntilHover")
+    val placed = reachable || alpha > 0f
+    onFocusChanged { focused = it.hasFocus }
+        .focusProperties { canFocus = reachable }
         .layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
             layout(placeable.width, placeable.height) {

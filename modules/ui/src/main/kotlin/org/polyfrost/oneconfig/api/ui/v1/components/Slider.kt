@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
@@ -359,6 +360,7 @@ internal fun sliderSteps(step: Float, span: Float): Int =
 
 internal fun sliderKeyTarget(event: KeyEvent, current: Float, min: Float, max: Float, delta: Float): Float? {
     if (event.type != KeyEventType.KeyDown) return null
+    if (event.isFromController && (event.key == Key.DirectionUp || event.key == Key.DirectionDown)) return null
     return when (event.key) {
         Key.DirectionLeft, Key.DirectionDown -> current - delta
         Key.DirectionRight, Key.DirectionUp -> current + delta
