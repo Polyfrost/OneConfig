@@ -94,6 +94,7 @@ import org.polyfrost.oneconfig.test.TestMod_Test;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.scores.DisplaySlot;
 import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
+import org.polyfrost.oneconfig.internal.compat.PauseMenuButton;
 //?}
 
 //? if skyblock
@@ -415,7 +416,9 @@ public class OneConfig implements ClientModInitializer {
         OneConfigConfig.markFirstLaunchShown();
         String keyName = OneConfigConfig.oneConfigKeybind.displayName();
         String title = Platform.i18n().translateString("oneconfig.notification.first_launch.title");
-        String message = Platform.i18n().translateString("oneconfig.notification.first_launch.message", keyName);
+        String message = Controllers.isActive()
+                ? Platform.i18n().translateString("oneconfig.notification.first_launch.message_controller")
+                : Platform.i18n().translateString("oneconfig.notification.first_launch.message", keyName);
         firstLaunchToast = Notifications.builder(title, message)
                 .icon(Notifications.icon("/assets/oneconfig/brand/oneconfig-icon.svg", 64))
                 .persistent()
@@ -483,6 +486,8 @@ public class OneConfig implements ClientModInitializer {
         //? fabric
         ModMenuShimLoader.enable();
         KaleidoCompat.enable();
+        //? if > 1.8.9
+        PauseMenuButton.register();
 
         initialized = true;
         LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);

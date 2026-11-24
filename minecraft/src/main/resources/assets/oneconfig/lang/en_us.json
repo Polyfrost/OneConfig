@@ -243,6 +243,8 @@
 
   "oneconfig.notification.first_launch.title": "Welcome to OneConfig!",
   "oneconfig.notification.first_launch.message": "Press '%s' to open OneConfig and access all your mod settings in one place.",
+  "oneconfig.notification.first_launch.message_controller": "Open OneConfig from the pause menu to change all your mod settings in one place.",
+  "oneconfig.pause_menu.open": "OneConfig",
 
   "oneconfig.hud.tour.menu": "Editor Tour",
   "oneconfig.hud.tour.next": "Next",

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Controller support with [Controlify](https://modrinth.com/mod/controlify) on 1.21.1 and newer. The menu, mod list, settings, dropdowns, sliders, colour pickers and context menus all work with a controller, and Controlify's button guide shows what each button does
 - Controlify's controls screen has "Open OneConfig" and "Edit HUD" actions, which you can also add to its radial menu
 - On a controller, B goes back a page, X opens an item's options, and Y turns a mod or a settings group on or off
+- The pause menu has a OneConfig button next to Options
+- The first-launch message tells controller players to open OneConfig from the pause menu instead of naming a key
 - API: kit helpers for controller support in custom pages: `isControllerMode`, `Modifier.keyNavigable`, `Modifier.onArrowKeys`, `Modifier.controllerShortcut` and `Modifier.controllerAdjust`. `Modifier.contextMenu` opens on X without changing anything
 
 ### Changed
