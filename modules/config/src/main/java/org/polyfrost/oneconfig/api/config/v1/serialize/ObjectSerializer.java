@@ -58,11 +58,11 @@ public class ObjectSerializer {
     @ApiStatus.Internal
     public static volatile Function<Class<?>, String> savedName = Class::getName;
 
-    /** The class that a name from {@link #savedName} runs as now, or null if there is none */
+    /** The class that a name from {@link #savedName} runs as now, not initialized, or null if there is none */
     @ApiStatus.Internal
     public static volatile Function<String, Class<?>> runningClass = name -> {
         try {
-            return Class.forName(name, true, ObjectSerializer.class.getClassLoader());
+            return Class.forName(name, false, ObjectSerializer.class.getClassLoader());
         } catch (ClassNotFoundException e) {
             return null;
         }
@@ -351,7 +351,6 @@ public class ObjectSerializer {
      * @param in the map
      * @return the completed object
      */
-    @SuppressWarnings("unchecked")
     public Object deserialize(Map<String, Object> in) {
         if (in == null) return null;
         String clsName = (String) in.get("class");
@@ -363,6 +362,22 @@ public class ObjectSerializer {
         Class<?> cls = runningClass.apply(clsName);
         if (cls == null) {
             throw new SerializationException("Failed to deserialize object: Class " + clsName + " not found, potential classloading issue?");
+        }
+        return deserialize(in, cls);
+    }
+
+    /**
+     * Deserialize the given complex object map as the class that its class field was found to name, for a caller
+     * that has to look at that class first
+     */
+    @ApiStatus.Internal
+    @SuppressWarnings("unchecked")
+    public Object deserialize(Map<String, Object> in, Class<?> cls) {
+        try {
+            // only found so far, and initializing it may be what registers its adapter
+            Class.forName(cls.getName(), true, cls.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new SerializationException("Failed to deserialize object: Class " + cls.getName() + " not found, potential classloading issue?", e);
         }
         Adapter<Object, Object> ad = (Adapter<Object, Object>) getAdapter(cls);
         if (ad != null) {

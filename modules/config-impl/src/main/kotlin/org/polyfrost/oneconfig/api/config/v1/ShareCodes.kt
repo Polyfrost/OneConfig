@@ -272,13 +272,16 @@ private fun adapterFor(type: Class<*>): Adapter<Any?, Any?>? =
 private fun classTagged(plain: Any): Map<String, Any?>? =
     (plain as? Map<String, Any?>)?.takeIf { it["class"] is String }
 
-private fun taggedClass(map: Map<String, Any?>): Class<*> =
-    Class.forName(map["class"] as String, false, ObjectSerializer::class.java.classLoader)
+private fun taggedClass(map: Map<String, Any?>): Class<*> {
+    val name = map["class"] as String
+    return ObjectSerializer.runningClass.apply(name) ?: throw ClassNotFoundException(name)
+}
 
 private fun deserializeTagged(target: Class<*>, map: Map<String, Any?>, cls: Class<*>): Any {
     val allowed = if (target == Any::class.java) cls.isEnum || adapterFor(cls)?.targetClass == cls else target.isAssignableFrom(cls)
     require(allowed) { "${cls.name} is not a ${target.name}" }
-    return ObjectSerializer.INSTANCE.deserialize(map)
+    // as the class that was checked, which looking its name up again might not give
+    return ObjectSerializer.INSTANCE.deserialize(map, cls)
 }
 
 private fun enumConstant(type: Class<*>, value: Any): Any {
