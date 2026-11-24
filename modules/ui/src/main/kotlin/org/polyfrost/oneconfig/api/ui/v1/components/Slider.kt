@@ -58,6 +58,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.host.controller.ControllerAxes
+import org.polyfrost.compose.host.controller.controllerArrows
 import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
@@ -184,6 +186,7 @@ public fun Slider(
                     latestFinished?.invoke()
                     true
                 }
+                .controllerArrows(ControllerAxes.Horizontal)
                 .focusable(enabled, source)
                 .hoverable(source, enabled)
                 .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)

@@ -25,6 +25,7 @@ import androidx.compose.ui.input.key.type
 import org.polyfrost.compose.host.controller.ControllerButton
 import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.compose.host.controller.controllerAction
+import org.polyfrost.compose.host.controller.controllerArrows
 import org.polyfrost.compose.host.controller.controllerPan
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
@@ -75,6 +76,7 @@ public fun Modifier.controllerAdjust(
     keyNavigable()
         .onFocusChanged { if (!it.isFocused) editing = false }
         .controllerPan(enabled && editing) { delta -> latest(Offset(delta.x, delta.y) * (step / ADJUST_PAN_UNIT)) }
+        .then(if (editing) Modifier.controllerArrows() else Modifier)
         .onKeyEvent { event ->
             if (!enabled || event.isCtrlPressed || event.isAltPressed || event.isMetaPressed) return@onKeyEvent false
             when (event.key) {
