@@ -606,7 +606,9 @@ public object HudManager {
     /** The menu icon associated with [configId] via [register] or `null` if none was set */
     public fun iconFor(configId: String): String? = hudIcons[configId]
 
-    public fun providers(): Collection<Hud> = hudProviders.values
+    // without the wrapped HUDs kept aside, which would be offered for adding while their mod is off
+    public fun providers(): Collection<Hud> =
+        if (parked.isEmpty()) hudProviders.values else hudProviders.values - parked.toSet()
 
     public fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
         registeredHuds.remove(savedName(hud::class.java))
@@ -2024,6 +2026,8 @@ public object HudManager {
         } else {
             return false
         }
+        // Hotwire changes the providers without the calls that tell what lists them, as the search does
+        notifyRegistrationChanged()
         return true
     }
 

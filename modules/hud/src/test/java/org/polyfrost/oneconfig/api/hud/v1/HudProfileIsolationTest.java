@@ -401,14 +401,19 @@ class HudProfileIsolationTest {
         new ModWrapper().register();
         Hud hud = HudManager.INSTANCE.getActiveInstances().stream()
                 .filter(h -> ModWrapper.MOD.equals(h.getConfigId())).findFirst().orElseThrow();
+        boolean[] told = {false};
+        HudManager.INSTANCE.addRegistrationListener(() -> told[0] = true);
 
         HudManager.INSTANCE.syncWithMods(ModWrapper.MOD::equals);
         assertFalse(HudManager.INSTANCE.getActiveInstances().contains(hud),
                 "a HUD that draws through a mod that is off must not stay active");
+        assertFalse(HudManager.INSTANCE.providers().contains(hud), "nor be offered for adding again");
+        assertTrue(told[0], "what lists the HUDs, as the search does, must hear of the change");
 
         HudManager.INSTANCE.syncWithMods(id -> false);
         assertTrue(HudManager.INSTANCE.getActiveInstances().contains(hud),
                 "only the mod's compat could make it again, so the same HUD must come back");
+        assertTrue(HudManager.INSTANCE.providers().contains(hud));
     }
 
     @Test
