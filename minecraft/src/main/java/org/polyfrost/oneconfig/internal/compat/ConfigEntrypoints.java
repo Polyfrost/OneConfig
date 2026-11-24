@@ -208,6 +208,8 @@ public final class ConfigEntrypoints {
             if (FabricLoader.getInstance().isModLoaded(id)) continue;
             undecided.remove(id);
             forgetDecision(id);
+            // or the config of the next jar added under this id would not be extracted
+            CompatLoader.INSTANCE.getNativeLoadedConfigs().remove(id);
         }
     }
 
