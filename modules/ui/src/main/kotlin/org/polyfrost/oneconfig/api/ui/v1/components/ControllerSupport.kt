@@ -59,8 +59,9 @@ public fun Modifier.controllerShortcut(
     labelKey: String,
     fallback: String,
     enabled: Boolean = true,
+    requireFocus: Boolean = true,
     onPress: () -> Unit,
-): Modifier = controllerAction(button, formControlString(labelKey, fallback), enabled, onPress = onPress)
+): Modifier = controllerAction(button, formControlString(labelKey, fallback), enabled, requireFocus, onPress)
 
 @ExperimentalOneConfigUiApi
 public fun Modifier.controllerAdjust(

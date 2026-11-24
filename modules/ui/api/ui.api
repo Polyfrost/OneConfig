@@ -757,8 +757,8 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/ControlStyle : j
 public final class org/polyfrost/oneconfig/api/ui/v1/components/ControllerSupportKt {
 	public static final fun controllerAdjust (Landroidx/compose/ui/Modifier;ZFLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 	public static synthetic fun controllerAdjust$default (Landroidx/compose/ui/Modifier;ZFLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
-	public static final fun controllerShortcut (Landroidx/compose/ui/Modifier;Lorg/polyfrost/compose/host/controller/ControllerButton;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;)Landroidx/compose/ui/Modifier;
-	public static synthetic fun controllerShortcut$default (Landroidx/compose/ui/Modifier;Lorg/polyfrost/compose/host/controller/ControllerButton;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun controllerShortcut (Landroidx/compose/ui/Modifier;Lorg/polyfrost/compose/host/controller/ControllerButton;Ljava/lang/String;Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun controllerShortcut$default (Landroidx/compose/ui/Modifier;Lorg/polyfrost/compose/host/controller/ControllerButton;Ljava/lang/String;Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
 	public static final fun isControllerMode (Landroidx/compose/runtime/Composer;I)Z
 	public static final fun keyNavigable (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 	public static final fun onArrowKeys (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;)Landroidx/compose/ui/Modifier;
