@@ -172,11 +172,11 @@ private fun ringDrawing(shape: Shape?, visible: () -> Boolean): Modifier {
 private fun ContentDrawScope.drawFocusRing(shape: Shape, ring: Color, halo: Color) {
     val ringPx = RING_WIDTH.toPx()
     val haloPx = HALO_WIDTH.toPx()
-    if (size.minDimension >= ringPx) inset(ringPx / 2f) {
-        drawOutline(shape.createOutline(size, layoutDirection, this), ring, style = Stroke(ringPx))
-    }
-    if (size.minDimension >= ringPx * 2f + haloPx) inset(ringPx + haloPx / 2f) {
+    inset(-haloPx / 2f) {
         drawOutline(shape.createOutline(size, layoutDirection, this), halo, style = Stroke(haloPx))
+    }
+    inset(-(haloPx + ringPx / 2f)) {
+        drawOutline(shape.createOutline(size, layoutDirection, this), ring, style = Stroke(ringPx))
     }
 }
 

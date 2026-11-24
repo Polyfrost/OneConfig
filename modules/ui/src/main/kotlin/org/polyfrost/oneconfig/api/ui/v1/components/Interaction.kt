@@ -213,13 +213,9 @@ public fun rememberHoverState(): HoverState {
 
 @ExperimentalOneConfigUiApi
 public fun Modifier.hiddenUntilHover(visible: Boolean): Modifier = composed {
-    var focused by remember { mutableStateOf(false) }
-    val reachable = visible || A11y.keyboardMode || Controllers.isActive
-    val shown = visible || focused
-    val alpha by animateFloatAsState(if (shown) 1f else 0f, Motion.tweenSpec(Motion.standard), label = "hiddenUntilHover")
-    val placed = reachable || alpha > 0f
-    onFocusChanged { focused = it.hasFocus }
-        .focusProperties { canFocus = reachable }
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, Motion.tweenSpec(Motion.standard), label = "hiddenUntilHover")
+    val placed = visible || alpha > 0f
+    focusProperties { canFocus = visible }
         .layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
             layout(placeable.width, placeable.height) {
