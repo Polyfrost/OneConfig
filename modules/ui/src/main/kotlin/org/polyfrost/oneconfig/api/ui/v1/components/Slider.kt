@@ -178,6 +178,7 @@ public fun Slider(
                     val current = latestValue
                     val next = sliderKeyTarget(event, current, min, max, delta) ?: return@onKeyEvent false
                     val snapped = snapSliderValue(next, min, max, step)
+                    if (snapped == current && event.isFromController) return@onKeyEvent false
                     if (snapped != current) {
                         latestChange(snapped)
                         sound?.let(::playUiSound)

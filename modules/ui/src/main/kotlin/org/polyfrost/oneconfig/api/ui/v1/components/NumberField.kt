@@ -264,6 +264,7 @@ public fun NumberField(
                     }
                 }
                 .onPreviewKeyEvent { event ->
+                    if (focused && enabled && event.key != Key.Enter && event.key != Key.NumPadEnter) session.focused = true
                     if (event.type != KeyEventType.KeyDown || !enabled) return@onPreviewKeyEvent false
                     val multiplier = if (event.isShiftPressed) SHIFT_STEP_MULTIPLIER else 1f
                     when (event.key) {
@@ -277,7 +278,14 @@ public fun NumberField(
                         }
                         Key.Enter, Key.NumPadEnter -> {
                             commitTyped()
-                            if (!Controllers.isActive) focusManager.clearFocus()
+                            if (Controllers.isActive) {
+                                if (session.focused) {
+                                    session.focused = false
+                                    latestEditEnd?.invoke()
+                                }
+                            } else {
+                                focusManager.clearFocus()
+                            }
                             true
                         }
                         else -> false

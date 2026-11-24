@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Needs PolyCompose 3.1.0 or newer
-- Focus rings are drawn just outside buttons and fields instead of over their edges, so they no longer cover text
 
 ### Fixed
 - Merged HUDs stay in place when one of them changes size (#1431)

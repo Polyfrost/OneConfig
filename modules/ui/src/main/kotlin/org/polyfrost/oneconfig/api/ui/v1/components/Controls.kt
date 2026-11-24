@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.focusRing
 import org.polyfrost.oneconfig.api.ui.v1.a11y.isKeyboardMode
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
@@ -120,12 +121,13 @@ private fun LegacyIconButtonFrame(
     Box(
         modifier = modifier
             .size(LEGACY_ICON_BUTTON_SIZE)
+            .focusRing(shape)
             .clip(shape)
             .background(fill, shape)
             .border(1.dp, hairline, shape)
             .hoverable(source)
             .onFocusChanged { focused = it.isFocused }
-            .oneConfigClickable(label ?: tooltip, onClick, shape = shape, indication = false, interactionSource = source),
+            .oneConfigClickable(label ?: tooltip, onClick, shape = shape, indication = false, interactionSource = source, focusRing = false),
         contentAlignment = Alignment.Center,
     ) {
         glyph()
@@ -177,6 +179,7 @@ public fun ToggleRow(
     val rowBorder by Motion.animateColorAsState(if (hovered && enabled) theme.textColorSecondary else theme.borderColor, label = "toggleRowBorder")
     val frame = if (framed) {
         Modifier
+            .focusRing(shape)
             .clip(shape)
             .background(theme.componentBackground, shape)
             .border(1.dp, rowBorder, shape)
@@ -200,6 +203,7 @@ public fun ToggleRow(
                 shape = shape,
                 indication = !framed,
                 interactionSource = source,
+                focusRing = !framed,
                 recipe = when {
                     flush -> ControlDefaults.Item
                     else -> ControlDefaults.Framed

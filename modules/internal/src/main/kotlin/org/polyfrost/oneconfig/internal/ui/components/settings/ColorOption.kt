@@ -496,14 +496,14 @@ internal fun ColorPickerPopup(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
-                .clip(LocalTheme.current.shapes.field)
-                .onSizeChanged { sbPaneSize = Size(it.width.toFloat(), it.height.toFloat()) }
-                .controllerAdjust { delta ->
+                .controllerAdjust(shape = LocalTheme.current.shapes.field) { delta ->
                     model.saturation = (model.saturation + delta.x).coerceIn(0f, 1f)
                     model.brightness = (model.brightness - delta.y).coerceIn(0f, 1f)
                     hexText = colorToHex(model.currentColor())
                     save()
                 }
+                .clip(LocalTheme.current.shapes.field)
+                .onSizeChanged { sbPaneSize = Size(it.width.toFloat(), it.height.toFloat()) }
                 .drawWithCache {
                     val hueColor = hsbToColor(hue, 1f, 1f)
                     val horizontalGradient = Brush.horizontalGradient(listOf(Color.White, hueColor))
@@ -556,6 +556,11 @@ internal fun ColorPickerPopup(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(16.dp)
+                .controllerAdjust(shape = LocalTheme.current.shapes.field) { delta ->
+                    model.hue = (model.hue + delta.x * 360f).coerceIn(0f, 360f)
+                    hexText = colorToHex(model.currentColor())
+                    save()
+                }
                 .clip(LocalTheme.current.shapes.field)
                 .drawWithCache {
                     val hueGradient = Brush.horizontalGradient(
@@ -565,11 +570,6 @@ internal fun ColorPickerPopup(
                         )
                     )
                     onDrawBehind { drawRect(hueGradient) }
-                }
-                .controllerAdjust { delta ->
-                    model.hue = (model.hue + delta.x * 360f).coerceIn(0f, 360f)
-                    hexText = colorToHex(model.currentColor())
-                    save()
                 }
                 .pointerInput(Unit) {
                     awaitEachGesture {
@@ -637,6 +637,12 @@ internal fun ColorPickerPopup(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(16.dp)
+                    .controllerAdjust(shape = LocalTheme.current.shapes.field) { delta ->
+                        model.alpha = (model.alpha + delta.x).coerceIn(0f, 1f)
+                        alphaText = (model.alpha * 100f).roundToInt().toString()
+                        hexText = colorToHex(model.currentColor())
+                        save()
+                    }
                     .clip(LocalTheme.current.shapes.field)
                     .transparencyCheckerboard()
                     .drawWithCache {
@@ -647,12 +653,6 @@ internal fun ColorPickerPopup(
                         onDrawBehind {
                             drawRect(alphaGradient)
                         }
-                    }
-                    .controllerAdjust { delta ->
-                        model.alpha = (model.alpha + delta.x).coerceIn(0f, 1f)
-                        alphaText = (model.alpha * 100f).roundToInt().toString()
-                        hexText = colorToHex(model.currentColor())
-                        save()
                     }
                     .pointerInput(Unit) {
                         awaitEachGesture {
@@ -815,17 +815,17 @@ internal fun ColorPickerPopup(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(16.dp)
+                        .controllerAdjust(shape = LocalTheme.current.shapes.field) { delta ->
+                            model.chromaSpeed = (model.chromaSpeed + delta.x * 4f).coerceIn(0.1f, 4f)
+                            speedText = "%.1f".format(model.chromaSpeed)
+                            save()
+                        }
                         .clip(LocalTheme.current.shapes.field)
                         .drawWithCache {
                             val gradient = Brush.horizontalGradient(
                                 listOf(theme.componentBackground, Accent)
                             )
                             onDrawBehind { drawRect(gradient) }
-                        }
-                        .controllerAdjust { delta ->
-                            model.chromaSpeed = (model.chromaSpeed + delta.x * 4f).coerceIn(0.1f, 4f)
-                            speedText = "%.1f".format(model.chromaSpeed)
-                            save()
                         }
                         .pointerInput(Unit) {
                             awaitEachGesture {

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.focusRing
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
@@ -116,6 +117,7 @@ private fun RowScope.ColorSwatch(
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(vertical = 5.dp)
+                .focusRing(shape)
                 .clip(shape)
                 .background(color, shape)
                 .border(1.dp, theme.borderColor, shape)
@@ -125,6 +127,7 @@ private fun RowScope.ColorSwatch(
                     shape = shape,
                     indication = false,
                     interactionSource = interactionSource,
+                    focusRing = false,
                 )
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,

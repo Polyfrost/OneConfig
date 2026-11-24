@@ -14,6 +14,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
@@ -41,7 +42,7 @@ public fun Modifier.keyNavigable(): Modifier = focusProperties { canFocus = A11y
 @ExperimentalOneConfigUiApi
 public fun Modifier.onArrowKeys(enabled: Boolean = true, onArrow: (dx: Int, dy: Int) -> Boolean): Modifier = composed {
     val latest by rememberUpdatedState(onArrow)
-    onKeyEvent { event ->
+    then(if (enabled) Modifier.controllerArrows() else Modifier).onKeyEvent { event ->
         if (!enabled || event.type != KeyEventType.KeyDown) return@onKeyEvent false
         if (event.isCtrlPressed || event.isAltPressed || event.isMetaPressed) return@onKeyEvent false
         when (event.key) {
@@ -68,6 +69,7 @@ public fun Modifier.controllerShortcut(
 public fun Modifier.controllerAdjust(
     enabled: Boolean = true,
     step: Float = ADJUST_STEP,
+    shape: Shape? = null,
     onAdjust: (Offset) -> Unit,
 ): Modifier = composed {
     var editing by remember { mutableStateOf(false) }
@@ -103,7 +105,8 @@ public fun Modifier.controllerAdjust(
                 }
             }
         }
-        .focusRing()
+        .focusRing(shape)
+        .focusRing(shape, editing && Controllers.isActive)
         .focusable(enabled)
 }
 

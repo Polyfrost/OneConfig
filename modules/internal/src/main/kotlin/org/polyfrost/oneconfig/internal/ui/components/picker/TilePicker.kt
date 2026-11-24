@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.focusRing
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
@@ -136,6 +137,7 @@ fun <T : PickerEntry> PickerTile(
         Box(
             modifier = modifier
                 .aspectRatio(1f)
+                .then(if (onClick != null) Modifier.focusRing(shape) else Modifier)
                 .clip(shape)
                 .background(background, shape)
                 .border(1.dp, border, shape)
@@ -151,6 +153,7 @@ fun <T : PickerEntry> PickerTile(
                             shape = shape,
                             indication = false,
                             interactionSource = interaction,
+                            focusRing = false,
                         )
                     } else {
                         Modifier
