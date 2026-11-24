@@ -133,7 +133,7 @@ private class FocusScopeHandle(val isRoot: Boolean) {
                 val forward = direction == FocusDirection.Next
                 for (step in 1 until regions.size) {
                     val target = regions[(if (forward) at + step else at - step).mod(regions.size)]
-                    if (target.requester.requestFocus(direction)) return
+                    if (target.requester.requestFocus(entryDirection(forward))) return
                 }
             }
             FocusDirection.Left, FocusDirection.Right, FocusDirection.Up, FocusDirection.Down -> if (!spatialExit) scope.cancelFocusChange()
@@ -143,9 +143,10 @@ private class FocusScopeHandle(val isRoot: Boolean) {
     fun enterRoot(direction: FocusDirection) {
         if (direction != FocusDirection.Next && direction != FocusDirection.Previous) return
         val regions = node?.let(::regionsUnder) ?: return
-        val ordered = if (direction == FocusDirection.Next) regions else regions.asReversed()
+        val forward = direction == FocusDirection.Next
+        val ordered = if (forward) regions else regions.asReversed()
         for (region in ordered) {
-            if (region.requester.requestFocus(direction)) return
+            if (region.requester.requestFocus(entryDirection(forward))) return
         }
     }
 
@@ -210,3 +211,5 @@ private class FocusScopeNode(handle: FocusScopeHandle) : Modifier.Node(), Traver
         if (handle.node === this) handle.node = null
     }
 }
+
+private fun entryDirection(forward: Boolean): FocusDirection = if (forward) FocusDirection.Down else FocusDirection.Up
