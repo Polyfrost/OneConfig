@@ -176,7 +176,7 @@ private const val DRAG_SLOP_PX = 3f
 /** Longest gap between two clicks on a HUD that still steps into its group */
 private const val DOUBLE_CLICK_MS = 400L
 
-private const val STICK_PAN_PX = 0.35f
+private const val STICK_PAN_PX = 1.4f
 
 private const val STICK_SETTLE_MS = 200L
 
@@ -185,6 +185,8 @@ private const val HUD_SCALE_STEP = 0.25f
 private const val READING_ROW_PX = 16f
 
 private const val PANEL_NUDGE_PX = 24f
+
+private const val CONTROLLER_NUDGE_PX = 4f
 
 private val ARROW_KEYS = setOf(Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown)
 
@@ -3052,7 +3054,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                 if (selectedHuds.isEmpty()) return@onKeyEvent false
                 val key = keyEvent.key
                 primaryHud() ?: return@onKeyEvent false
-                val step = if (keyEvent.isShiftPressed) 10f else 1f
+                val step = if (keyEvent.isShiftPressed) 10f else if (keyEvent.isFromController) CONTROLLER_NUDGE_PX else 1f
                 val (dx, dy) = when (key) {
                     Key.DirectionLeft -> -step to 0f
                     Key.DirectionRight -> step to 0f
