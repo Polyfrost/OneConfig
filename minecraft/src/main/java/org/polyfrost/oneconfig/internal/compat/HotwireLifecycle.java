@@ -104,6 +104,7 @@ public final class HotwireLifecycle implements ModLifecycleListener {
     public void prepareStart(List<String> ids) {
         try {
             refreshMods();
+            ConfigEntrypoints.startOver(ids);
         } catch (Throwable t) {
             LOGGER.error("Failed to read the mods again before Hotwire starts {}", ids, t);
         }

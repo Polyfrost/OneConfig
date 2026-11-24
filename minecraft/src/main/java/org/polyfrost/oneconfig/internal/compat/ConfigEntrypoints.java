@@ -86,6 +86,9 @@ public final class ConfigEntrypoints {
     private static final Map<String, Runnable> defaultOpeners = new ConcurrentHashMap<>();
     // mods whose entrypoints ran but which are only decided once ConfigManager.initialize() built their configs
     private static final Map<String, Boolean> undecided = new LinkedHashMap<>();
+    // by the id of a copy, what gives the mod it stands in for its decision and extraction back if the copy's start
+    // is taken back
+    private static final Map<String, Runnable> takenOver = new HashMap<>();
     // per thread so trees and configs made elsewhere while an entrypoint runs are not claimed by it
     private static final ThreadLocal<String> registeringModId = new ThreadLocal<>();
     // configs of the current call whose constructor may still be running, with where that constructor sits on the stack
@@ -170,8 +173,8 @@ public final class ConfigEntrypoints {
 
     /**
      * Runs the entrypoints of mods that Hotwire started after the game did, to be decided by the next
-     * {@link #finishStarted()}. A mod that was already decided is left alone, as it only gained other entrypoints,
-     * unless it is a copy, which starts over what it stands in for.
+     * {@link #finishStarted()}. A mod that was already decided is left alone, as it only gained other entrypoints.
+     * A copy is not, as {@link #startOver} was called for it.
      * <br>
      * shortcut: a second config entrypoint that an update adds to a decided mod only runs at the next launch, track
      * which definitions ran if a mod ever does that
@@ -180,11 +183,7 @@ public final class ConfigEntrypoints {
         // registerAll has not run yet and will find them itself
         if (!registered.get()) return;
         Set<String> started = new HashSet<>();
-        for (String id : modIds) {
-            String original = CompatibilityPlatformImpl.liveCopies.get(id);
-            if (original != null) forgetDecision(original);
-            started.add(original == null ? id : original);
-        }
+        for (String id : modIds) started.add(CompatibilityPlatformImpl.liveCopies.getOrDefault(id, id));
         Map<String, List<Provider>> byMod = new LinkedHashMap<>();
         for (Provider provider : providers()) {
             if (started.contains(provider.modId) && !isDecided(provider.modId)) byMod.computeIfAbsent(provider.modId, k -> new ArrayList<>()).add(provider);
@@ -200,12 +199,37 @@ public final class ConfigEntrypoints {
     }
 
     /**
+     * Lets the copies among the mods that Hotwire is about to start be decided and extracted anew, as the configs
+     * of the mods they stand in for went out with those
+     */
+    public static void startOver(Collection<String> modIds) {
+        for (String id : modIds) {
+            String original = CompatibilityPlatformImpl.liveCopies.get(id);
+            if (original == null) continue;
+            Set<String> marked = CompatLoader.INSTANCE.getNativeLoadedConfigs();
+            boolean wasMarked = marked.remove(original);
+            Boolean worked = forgetDecision(original);
+            takenOver.put(id, () -> {
+                undecided.remove(original);
+                restoreDecision(original, worked);
+                if (wasMarked) marked.add(original);
+                else marked.remove(original);
+            });
+        }
+    }
+
+    /**
      * Lets the entrypoints of mods run again whose start Hotwire took back, for when they are started once more
      */
     public static void forgetStarted(Collection<String> modIds) {
         for (String id : modIds) {
             // a mod that is still there only failed to start what an update added to it
             if (FabricLoader.getInstance().isModLoaded(id)) continue;
+            Runnable handBack = takenOver.remove(id);
+            if (handBack != null) {
+                handBack.run();
+                continue;
+            }
             undecided.remove(id);
             forgetDecision(id);
             // or the config of the next jar added under this id would not be extracted
@@ -213,9 +237,17 @@ public final class ConfigEntrypoints {
         }
     }
 
-    private static synchronized void forgetDecision(String modId) {
+    // returns whether its entrypoints had worked, or null if that was not decided
+    private static synchronized @Nullable Boolean forgetDecision(String modId) {
+        boolean worked = succeeded.remove(modId);
+        boolean broke = failed.remove(modId);
+        return worked || broke ? worked : null;
+    }
+
+    private static synchronized void restoreDecision(String modId, @Nullable Boolean worked) {
         succeeded.remove(modId);
         failed.remove(modId);
+        if (worked != null) (worked ? succeeded : failed).add(modId);
     }
 
     /**
