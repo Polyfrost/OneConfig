@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - API: `Hud.previewsBehindMenu` lets HUDs that only show now and then stay as they are in game behind the config menu and preview only in Edit HUD (#1423)
+- Controller support with [Controlify](https://modrinth.com/mod/controlify) on 1.21.1 and newer. The menu, mod list, settings, dropdowns, sliders, colour pickers and context menus all work with a controller, and Controlify's button guide shows what each button does
+- Controlify's controls screen has "Open OneConfig" and "Edit HUD" actions, which you can also add to its radial menu
+- On a controller, B goes back a page, X opens an item's options, and Y turns a mod or a settings group on or off
+- API: kit helpers for controller support in custom pages: `isControllerMode`, `Modifier.keyNavigable`, `Modifier.onArrowKeys`, `Modifier.controllerShortcut` and `Modifier.controllerAdjust`. `Modifier.contextMenu` opens on X and `hiddenUntilHover` controls can be reached with a controller or keyboard without changing anything
 
 ### Changed
-- Needs PolyCompose 3.0.9 or newer
+- Needs PolyCompose 3.1.0 or newer
 
 ### Fixed
 - Merged HUDs stay in place when one of them changes size (#1431)
