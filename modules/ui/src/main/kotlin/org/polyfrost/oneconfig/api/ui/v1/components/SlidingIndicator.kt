@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.host.controller.focusEntry
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -133,7 +134,9 @@ internal fun Modifier.choiceGroup(
     activation: TabActivation = TabActivation.Automatic,
     orientation: Orientation = Orientation.Horizontal,
     onPick: (Int) -> Unit,
-): Modifier = semantics { selectableGroup() }.onKeyEvent { event ->
+): Modifier = then(
+    focus.requesters.getOrNull(selectedIndex)?.let { Modifier.focusEntry(it, enabled) } ?: Modifier,
+).semantics { selectableGroup() }.onKeyEvent { event ->
     if (event.type != KeyEventType.KeyDown || !enabled) return@onKeyEvent false
     val manual = activation == TabActivation.Manual
     val horizontal = orientation == Orientation.Horizontal
