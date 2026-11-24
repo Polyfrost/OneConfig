@@ -7,9 +7,11 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.client.resources.sounds.SoundInstance
+import net.minecraft.client.gui.screens.Screen
 import net.minecraft.resources.Identifier
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 
 //? if > 1.8.9 {
 import net.minecraft.core.Holder
@@ -109,7 +111,7 @@ class McUiSoundService : UiSoundService {
                 } catch (_: Throwable) {
                 }
             }
-            playAmbienceInstance(theme, ambienceVolumeFor(theme, volume), fadeIn = !mc.isPaused)
+            playAmbienceInstance(theme, ambienceVolumeFor(theme, volume), fadeIn = !willPause())
             UiSoundDucking.setActive(true)
             driveAmbienceLoop()
             driveMusicDuckFade()
@@ -147,9 +149,9 @@ class McUiSoundService : UiSoundService {
         theme: UiSoundTheme,
         targetVolume: Float,
         fadeIn: Boolean,
-        soundId: String = nextAmbienceSoundId(theme, ambienceSoundIds(theme)),
     ) {
         val soundIds = ambienceSoundIds(theme)
+        val soundId = nextAmbienceSoundId(theme, soundIds)
         //? if > 1.8.9 {
         val event = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("oneconfig", soundId))
         //?} else
@@ -160,7 +162,7 @@ class McUiSoundService : UiSoundService {
         /*val source = SoundSource.MASTER
         *///? }
         //~ if = 1.8.9 '(event, source,' -> '(event,'
-        val instance = FadingLoopSoundInstance(event, source, targetVolume, theme, soundId, soundIds.size == 1, fadeIn)
+        val instance = FadingLoopSoundInstance(event, source, targetVolume, theme, soundIds.size == 1, fadeIn)
         ambience = instance
         mc.soundManager.play(instance)
     }
@@ -199,10 +201,7 @@ class McUiSoundService : UiSoundService {
                             if (current.isStopped || current.isFadingOut || current !== ambience) return@execute
                             if (!isAlive(current)) {
                                 mc.soundManager.stop(current)
-                                playAmbienceInstance(current.theme, current.targetVolume, fadeIn = !mc.isPaused)
-                            } else if (current.isStalledFadeIn) {
-                                mc.soundManager.stop(current)
-                                playAmbienceInstance(current.theme, current.targetVolume, fadeIn = false, soundId = current.soundId)
+                                playAmbienceInstance(current.theme, current.targetVolume, fadeIn = !willPause())
                             }
                         } catch (_: Throwable) {
                         }
@@ -218,16 +217,16 @@ class McUiSoundService : UiSoundService {
         thread.start()
     }
 
-    // 1.8.9 starts streams on Paulscode's threads, so a fresh stream reports inactive until its preload ends.
-    // Stopping it then is lost: preload finishes afterwards and starts the channel untracked.
-    // A zero-volume play is skipped by the engine, so it never starts and gets no grace.
-    private fun isAlive(instance: FadingLoopSoundInstance): Boolean {
-        if (mc.soundManager.isActive(instance)) {
-            instance.seenActive = true
-            return true
-        }
-        return !instance.startedSilent && !instance.seenActive &&
-            System.currentTimeMillis() - instance.startedAt < START_GRACE_MS
+    private fun isAlive(instance: FadingLoopSoundInstance): Boolean =
+        mc.soundManager.isActive(instance) ||
+            !instance.startedSilent && System.currentTimeMillis() - instance.startedAt < START_GRACE_MS
+
+    private fun willPause(): Boolean {
+        if (mc.isPaused) return true
+        val screen = Platform.screen().current<Screen>() ?: return false
+        //~ if = 1.8.9 'singleplayerServer' -> 'server'
+        val integrated = mc.singleplayerServer ?: return false
+        return mc.isLocalServer && screen.isPauseScreen && !integrated.isPublished
     }
 
     private val musicRefreshUntil = AtomicLong(0)
@@ -272,7 +271,6 @@ class McUiSoundService : UiSoundService {
         source: SoundSource,
         @Volatile var targetVolume: Float,
         val theme: UiSoundTheme,
-        val soundId: String,
         private val nativeLoop: Boolean,
         fadeIn: Boolean,
         //~ if = 1.8.9 '(event, source, RandomSource.create())' -> '(event)'
@@ -280,9 +278,6 @@ class McUiSoundService : UiSoundService {
 
         @Volatile
         private var fadingOut = false
-
-        @Volatile
-        private var fadingIn = fadeIn
 
         @Volatile
         private var lastTickAt = System.nanoTime()
@@ -295,19 +290,13 @@ class McUiSoundService : UiSoundService {
 
         val startedAt = System.currentTimeMillis()
 
-        val startedSilent = targetVolume <= 0f
-
-        @Volatile
-        var seenActive = false
+        val startedSilent = !fadeIn && targetVolume <= 0f
 
         val isFadingOut: Boolean
             get() = fadingOut
 
         private val ticksStalled: Boolean
             get() = System.nanoTime() - lastTickAt > STALL_NANOS
-
-        val isStalledFadeIn: Boolean
-            get() = fadingIn && ticksStalled
 
         init {
             looping = nativeLoop
@@ -327,7 +316,6 @@ class McUiSoundService : UiSoundService {
 
         fun beginFadeOut() {
             fadeOutStep = maxOf(volume, FADE_IN_FLOOR) / FADE_TICKS
-            fadingIn = false
             fadingOut = true
         }
 
@@ -375,7 +363,6 @@ class McUiSoundService : UiSoundService {
                 volume > target -> maxOf(target, volume - rampStep)
                 else -> volume
             }
-            if (volume == target) fadingIn = false
         }
     }
 
