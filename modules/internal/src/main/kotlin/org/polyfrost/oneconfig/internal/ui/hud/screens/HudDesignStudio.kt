@@ -74,6 +74,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.drawPoly
 import org.polyfrost.compose.host.controller.ControllerButton
 import org.polyfrost.compose.host.controller.Controllers
+import org.polyfrost.compose.host.controller.controllerArrows
 import org.polyfrost.compose.host.controller.controllerPan
 import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.compose.render.RenderContext
@@ -3381,6 +3382,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                     .focusRequester(cursorFocusRequester)
                     .focusProperties { canFocus = target != null }
                     .onFocusChanged { cursorFocused = it.isFocused }
+                    .then(if (selecting) Modifier.controllerArrows() else Modifier)
                     .controllerShortcut(ControllerButton.LEFT_BUMPER, "oneconfig.hud.controller.previous", "Previous HUD", enabled = !tourBlocksEditor) {
                         cycleSelection(-1)
                     }
