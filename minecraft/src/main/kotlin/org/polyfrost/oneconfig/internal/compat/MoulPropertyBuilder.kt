@@ -9,6 +9,7 @@ import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
@@ -39,7 +40,8 @@ class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
 
     val declaringClass: Class<*>? get() = backingField?.declaringClass
 
-    private val snapshotKey: String? = backingField?.let { "${it.declaringClass.name}#${it.name}" } ?: foreign?.key
+    private val snapshotKey: String? =
+        backingField?.let { "${ObjectSerializer.savedName.apply(it.declaringClass)}#${it.name}" } ?: foreign?.key
 
     fun build(usedIds: MutableSet<String>) = Properties.functional(
         id = uniqueId(usedIds, idPart(foreign?.key ?: path ?: snapshotKey ?: name, "option")),
