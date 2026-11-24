@@ -98,8 +98,6 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override val retainsScene: Boolean get() = this === sharedScreen
 
-    override val drawsControllerFocusRing: Boolean get() = false
-
     // over the blur, legacy HUDs stay as sharp as the HUD previews next to them
     override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null }
 

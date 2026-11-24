@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -165,7 +166,7 @@ private fun ringDrawing(shape: Shape?, visible: () -> Boolean): Modifier {
     val outline = shape ?: theme.buttonShape
     return Modifier.drawWithContent {
         drawContent()
-        if (visible() && A11y.keyboardMode) drawFocusRing(outline, ring, halo)
+        if (visible() && A11y.keyboardMode && !Controllers.isActive) drawFocusRing(outline, ring, halo)
     }
 }
 

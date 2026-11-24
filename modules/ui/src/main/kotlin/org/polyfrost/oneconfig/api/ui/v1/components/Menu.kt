@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.polyfrost.compose.host.controller.controllerArrows
+import org.polyfrost.compose.host.controller.hidesFocusRing
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
@@ -384,6 +385,7 @@ public fun MenuSurface(
                 .onKeyEvent { (tabNavigation && controller.onTab(it)) || controller.onKey(it, rtl) }
                 .focusRequester(focus)
                 .controllerArrows()
+                .hidesFocusRing()
                 .focusable(),
             maxHeight,
             content,
