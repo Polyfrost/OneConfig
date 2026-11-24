@@ -34,6 +34,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.PolyCompose
 import org.polyfrost.compose.host.LocalComposeOptions
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.compose.minecraft.mc.McItemIcons
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
@@ -96,6 +97,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private var initialRoute: Any? = null
 
     override val retainsScene: Boolean get() = this === sharedScreen
+
+    override val drawsControllerFocusRing: Boolean get() = false
 
     // over the blur, legacy HUDs stay as sharp as the HUD previews next to them
     override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null }
@@ -405,6 +408,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key == InputConstants.KEY_ESCAPE) {
+            if (Controllers.isDispatching && !closeRequested && shell.navigation.isReady && !shell.layout.minimal && shell.navigation.canGoBack()) {
+                UiSounds.play(UiSoundEvent.CLICK)
+                shell.navigation.back()
+                return true
+            }
             if (!closeRequested) {
                 beginClose()
                 requestCloseCallback?.invoke()

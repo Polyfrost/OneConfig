@@ -65,6 +65,8 @@ class HudEditorUIScreen private constructor() : ComposeScreen(options = OneConfi
 
     override val retainsScene: Boolean get() = true
 
+    override val drawsControllerFocusRing: Boolean get() = false
+
     override fun wantsBackdrop(): Boolean =
         ThemeConfig.enableBackgroundBlur && !ThemeConfig.reduceTransparency && BackdropUsers.count > 0
 

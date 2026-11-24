@@ -45,6 +45,9 @@
     "fabric-language-kotlin": ">=${flk_version}",
     "polycompose": ">=${polycompose_version}"
   },
+  "suggests": {
+    "controlify": "*"
+  },
   "breaks": {
     "autotext": "<0.1.1",
     "chattweaks": "<1.2.3",
