@@ -280,7 +280,7 @@ public class OneConfig implements ClientModInitializer {
             LegacyHudRenderer.INSTANCE.renderLive(graphics);
         }
         if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
-        // a HudViewport is in window pixels, so drop the pose the caller drew the vanilla HUD with
+        // a HudViewport is in framebuffer pixels, so drop the pose the caller drew the vanilla HUD with
         //? if >= 1.21.11 {
         boolean absolute = HudManager.viewport != null;
         if (absolute) graphics.pose().pushMatrix().identity();

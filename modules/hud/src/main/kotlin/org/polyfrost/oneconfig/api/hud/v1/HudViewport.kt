@@ -31,13 +31,13 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Draws the HUDs into one part of the window, for mods that show the game in a smaller frame such as a
  * replay editor's preview. HUDs are laid out on a [guiWidth] by [guiHeight] screen with its top left corner
- * at [x], [y] and drawn at [scale] window pixels per GUI unit.
+ * at [x], [y] and drawn at [scale] framebuffer pixels per GUI unit.
  *
- * @property x left edge of the frame in window pixels
- * @property y top edge of the frame in window pixels
+ * @property x left edge of the frame in framebuffer pixels
+ * @property y top edge of the frame in framebuffer pixels
  * @property guiWidth width of the frame in GUI units
  * @property guiHeight height of the frame in GUI units
- * @property scale window pixels per GUI unit
+ * @property scale framebuffer pixels per GUI unit
  */
 @ApiStatus.Experimental
 public data class HudViewport(val x: Float, val y: Float, val guiWidth: Float, val guiHeight: Float, val scale: Float)

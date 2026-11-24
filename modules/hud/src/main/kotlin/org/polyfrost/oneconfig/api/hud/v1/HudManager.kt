@@ -264,6 +264,7 @@ public object HudManager {
         private set
     private var preparedFrameValid = false
     private var lastFrameKey = Long.MIN_VALUE
+    private var lastFrameViewport: HudViewport? = null
     private var lastFrameWidth = Float.NaN
     private var lastFrameHeight = Float.NaN
     private var lastFrameScale = Float.NaN
@@ -1215,9 +1216,11 @@ public object HudManager {
         if (liveChroma && anyChromaGroup()) volatileContent = true
 
         val key = frameKey()
-        val keyChanged = key != lastFrameKey ||
+        val vp = viewport
+        val keyChanged = key != lastFrameKey || vp != lastFrameViewport ||
             screenWidth != lastFrameWidth || screenHeight != lastFrameHeight || scale != lastFrameScale
         lastFrameKey = key
+        lastFrameViewport = vp
         lastFrameWidth = screenWidth
         lastFrameHeight = screenHeight
         lastFrameScale = scale
@@ -1451,7 +1454,6 @@ public object HudManager {
         key = key * 31L + (if (inWorld) 1 else 0)
         key = key * 31L + targetPixelWidth
         key = key * 31L + targetPixelHeight
-        key = key * 31L + viewport.hashCode()
         return key
     }
 
