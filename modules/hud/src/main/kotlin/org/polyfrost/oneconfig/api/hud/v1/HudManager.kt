@@ -79,6 +79,7 @@ public object HudManager {
     private var loadedProviders: Set<String> = emptySet()
     // wrapped HUDs of mods that Hotwire turned off, kept as only their mod's compat could make them again
     private val parked = ArrayList<Hud>()
+    private var drawnBeforeOff: List<PolyComposeRuntime> = emptyList()
 
     private val pendingUnsupported: MutableSet<Class<out Hud>> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
@@ -2012,6 +2013,17 @@ public object HudManager {
     @ApiStatus.Internal
     public fun syncWithMods(isOff: Predicate<String>) {
         if (!init) return
+        val drawing = drawing()
+        for (runtime in drawnBeforeOff) {
+            if (runtime in drawing) continue
+            try {
+                runtime.dispose()
+            } catch (failure: Throwable) {
+                if (failure.isFatalHudFailure()) throw failure
+                LOGGER.error("Failed to dispose what a HUD drew with that Hotwire took out", failure)
+            }
+        }
+        drawnBeforeOff = emptyList()
         val leaving = activeInstances.filter { it is LegacyHudMarker && it.configId?.let(isOff::test) == true }
         val returning = parked.filter { it.configId?.let(isOff::test) != true }
         activeInstances.removeAll(leaving.toSet())
@@ -2031,6 +2043,18 @@ public object HudManager {
         // Hotwire changes the providers without the calls that tell what lists them, as the search does
         notifyRegistrationChanged()
     }
+
+    /**
+     * Notes what the HUDs draw with before Hotwire turns mods off. It takes their HUDs out without disposing that,
+     * which would go on running their effects, so [syncWithMods] does it for the ones that are gone then
+     */
+    @ApiStatus.Internal
+    public fun beforeModsOff() {
+        drawnBeforeOff = drawing()
+    }
+
+    private fun drawing(): List<PolyComposeRuntime> =
+        (activeInstances + hudProviders.values).mapNotNull { it._runtime }
 
     private fun providerNames(): Set<String> = hudProviders.keys.mapTo(HashSet()) { it.name }
 

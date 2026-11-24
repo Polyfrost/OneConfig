@@ -77,6 +77,7 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         try {
             ConfigManager.active().saveAll();
             CompatSnapshots.INSTANCE.onProfileSaving(ConfigManager.activeProfile());
+            HudManager.INSTANCE.beforeModsOff();
         } catch (Throwable t) {
             LOGGER.error("Failed to save the settings of {} before Hotwire turns them off", ids, t);
         }

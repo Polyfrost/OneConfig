@@ -27,9 +27,11 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
 import kotlin.Pair;
+import kotlin.Unit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.polyfrost.compose.runtime.PolyComposeRuntime;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
@@ -53,6 +55,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudProfileIsolationTest {
@@ -435,6 +438,28 @@ class HudProfileIsolationTest {
             assertTrue(HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).isEmpty(),
                     "its file is still there, but nothing about the providers changed that would have it loaded");
         } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void whatAHudDrewWithIsDisposedOnceHotwireTookTheHudOut() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        Runnable putBack = null;
+        try {
+            launch();
+            PolyComposeRuntime drawing = new PolyComposeRuntime();
+            switched().set_runtime$hud(drawing);
+
+            HudManager.INSTANCE.beforeModsOff();
+            putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            // only a disposed composition refuses content, and one that is not keeps running its effects
+            assertThrows(IllegalStateException.class, () -> drawing.setContent((composer, changed) -> Unit.INSTANCE));
+        } finally {
+            if (putBack != null) putBack.run();
             HudManager.INSTANCE.unregister(provider, true, true);
         }
     }
