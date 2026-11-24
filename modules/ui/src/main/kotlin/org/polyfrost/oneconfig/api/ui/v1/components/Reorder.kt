@@ -24,9 +24,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.zIndex
@@ -48,6 +48,7 @@ public class ReorderState internal constructor(
 ) {
     internal var onMove: (Int, Int) -> Unit = { _, _ -> }
     internal var onDragEnd: (() -> Unit)? = null
+    internal var sound: UiSound? = UiSound.SliderTick
 
     private class Slot(var index: Int) {
         var rect: Rect? = null
@@ -144,6 +145,7 @@ public class ReorderState internal constructor(
         dragged.index = to
         movedAt = System.nanoTime()
         onMove(from, to)
+        sound?.let(::playUiSound)
     }
 
     internal fun end() {
@@ -176,13 +178,24 @@ public fun rememberReorderState(onMove: (from: Int, to: Int) -> Unit): ReorderSt
 
 @ExperimentalOneConfigUiApi
 @Composable
-public fun rememberReorderState(orientation: Orientation, onMove: (from: Int, to: Int) -> Unit, onDragEnd: (() -> Unit)?): ReorderState {
+public fun rememberReorderState(orientation: Orientation, onMove: (from: Int, to: Int) -> Unit, onDragEnd: (() -> Unit)?): ReorderState =
+    rememberReorderState(orientation, onMove, onDragEnd, UiSound.SliderTick)
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun rememberReorderState(
+    orientation: Orientation,
+    onMove: (from: Int, to: Int) -> Unit,
+    onDragEnd: (() -> Unit)?,
+    sound: UiSound?,
+): ReorderState {
     val scope = rememberCoroutineScope()
     val state = remember(orientation) { ReorderState(orientation, scope) }
     val move by rememberUpdatedState(onMove)
     val end by rememberUpdatedState(onDragEnd)
     state.onMove = { from, to -> move(from, to) }
     state.onDragEnd = { end?.invoke() }
+    state.sound = sound
     return state
 }
 
@@ -201,33 +214,39 @@ public fun Modifier.reorderItem(state: ReorderState, key: Any, index: Int, enabl
             state.place(key, it)
         }
         .then(
-            if (!enabled) {
-                Modifier
-            } else {
-                Modifier.pointerInput(state, key) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
-                        if (down.isConsumed) return@awaitEachGesture
-                        val crossed = awaitSlop(down.id, down.position) ?: return@awaitEachGesture
-                        val coordinates = holder.coordinates?.takeIf { it.isAttached } ?: return@awaitEachGesture
-                        if (!state.start(key, state.main(coordinates.localToRoot(down.position)))) return@awaitEachGesture
-                        try {
-                            state.moveTo(state.main(coordinates.localToRoot(crossed)))
-                            follow(down.id) { at ->
-                                holder.coordinates?.takeIf { it.isAttached }?.let { state.moveTo(state.main(it.localToRoot(at))) }
-                            }
-                        } finally {
-                            state.end()
-                        }
-                    }
-                }
-            },
+            if (!enabled) Modifier else Modifier.reorderDrag(state, key, holder),
         )
         .zIndex(if (dragging) 1f else 0f)
         .graphicsLayer {
             val offset = state.offsetOf(key)
             if (state.isVertical) translationY = offset else translationX = offset
         }
+}
+
+@ExperimentalOneConfigUiApi
+public fun Modifier.reorderHandle(state: ReorderState, key: Any, enabled: Boolean = true): Modifier = if (!enabled) this else composed {
+    val holder = remember { ReorderCoordinates() }
+    this
+        .onGloballyPositioned { holder.coordinates = it }
+        .reorderDrag(state, key, holder)
+}
+
+private fun Modifier.reorderDrag(state: ReorderState, key: Any, holder: ReorderCoordinates): Modifier = pointerInput(state, key) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
+        if (down.isConsumed) return@awaitEachGesture
+        val crossed = awaitSlop(down.id, down.position) ?: return@awaitEachGesture
+        val coordinates = holder.coordinates?.takeIf { it.isAttached } ?: return@awaitEachGesture
+        if (!state.start(key, state.main(coordinates.localToRoot(down.position)))) return@awaitEachGesture
+        try {
+            state.moveTo(state.main(coordinates.localToRoot(crossed)))
+            follow(down.id) { at ->
+                holder.coordinates?.takeIf { it.isAttached }?.let { state.moveTo(state.main(it.localToRoot(at))) }
+            }
+        } finally {
+            state.end()
+        }
+    }
 }
 
 private class ReorderCoordinates {

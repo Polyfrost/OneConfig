@@ -1,11 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.keybind
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Predicate
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -14,7 +8,14 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.BindNotInScreen
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.slf4j.LoggerFactory
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Predicate
 
 object ProfileKeybinds {
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ProfileKeybinds")
@@ -126,11 +127,15 @@ object ProfileKeybinds {
             try {
                 ConfigManager.openProfile(profile)
                 if (OneConfigConfig.profileSwitchToast) {
-                    Notifications.info("Profile switched", "Now using ${profile.ifEmpty { "Default" }}.")
+                    val name = profile.ifEmpty { translated("oneconfig.profiles.default", "Default") }
+                    Notifications.info(
+                        translated("oneconfig.profiles.switched.title", "Profile switched"),
+                        translated("oneconfig.profiles.switched.text", "Now using %s.", name),
+                    )
                 }
             } catch (t: Throwable) {
                 LOGGER.error("Failed to switch to profile {}", profile, t)
-                Notifications.error("Could not switch profile", t.message ?: t::class.java.simpleName)
+                Notifications.error(translated("oneconfig.profiles.switch_failed", "Could not switch profile"), t.message ?: t::class.java.simpleName)
             } finally {
                 switching.set(false)
             }

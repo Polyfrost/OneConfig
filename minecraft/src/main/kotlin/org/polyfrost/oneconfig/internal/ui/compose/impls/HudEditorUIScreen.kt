@@ -14,10 +14,18 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.platform.OneConfigComposeOptions
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import org.polyfrost.oneconfig.internal.ThemeConfig
+import org.polyfrost.oneconfig.internal.ui.components.BackdropUsers
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
-import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
+import org.polyfrost.compose.minecraft.mc.McItemIcons
+import org.polyfrost.compose.minecraft.screen.ComposeScreen
+import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks
+//? if >= 1.21.11
+import org.polyfrost.compose.minecraft.render.blaze.BlazeHud
+//? if < 1.21.11
+//import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
@@ -40,7 +48,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudEditor")
 
-class HudEditorUIScreen private constructor() : ComposeScreen() {
+class HudEditorUIScreen private constructor() : ComposeScreen(options = OneConfigComposeOptions) {
     companion object {
         private var instance: HudEditorUIScreen? = null
 
@@ -55,6 +63,36 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
     @Volatile private var everOpened = false
 
     override val retainsScene: Boolean get() = true
+
+    override fun wantsBackdrop(): Boolean =
+        ThemeConfig.enableBackgroundBlur && !ThemeConfig.reduceTransparency && BackdropUsers.count > 0
+
+    /** Prepares this frame's HUDs when there's no world, whose HUD pass would otherwise do it */
+    private fun prepareHudsOffWorld(): Boolean {
+        val sw = Platform.screen().guiWidth().toFloat()
+        val sh = Platform.screen().guiHeight().toFloat()
+        HudManager.inWorld = false
+        HudManager.guiScreenWidth = sw
+        HudManager.guiScreenHeight = sh
+        return HudManager.beginFrame(sw, sh, McItemIcons::renderPending, true, true)
+    }
+
+    // in a world the game's HUD pass draws the HUDs before the blur, so off it they're drawn the same way here
+    //? if >= 1.21.11 {
+    override fun extractBeneathBlur(ctx: GuiGraphicsExtractor): Boolean {
+        if (client.level != null) return false
+        if (prepareHudsOffWorld()) BlazeHud.markDirty()
+        BlazeHud.render(ctx, OneConfigComposeHooks.drawHuds)
+        return true
+    }
+    //?} else {
+    /*private val drawHuds: (RenderContext) -> Unit = { ctx ->
+        HudManager.render(ctx, HudManager.guiScreenWidth, HudManager.guiScreenHeight)
+    }
+
+    override val beneathBlur: ((RenderContext) -> Unit)?
+        get() = if (client.level != null) null else drawHuds
+    *///?}
 
     @Volatile private var closeRequested = false
     @Volatile private var closeRequestedAt = 0L
@@ -146,7 +184,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
         return false
     }
 
-    override val modifierTapBind: OneConfigKeybind get() = OneConfigConfig.oneConfigKeybind
+    override val modifierTapKeys: Set<Int>? get() = OneConfigComposeHooks.modifierTapKeys
 
     override fun handleModifierTapped() {
         handleOneConfigKeybind(onRelease = true)
@@ -177,15 +215,9 @@ class HudEditorUIScreen private constructor() : ComposeScreen() {
             Platform.screen().close()
             return
         }
-        if (client.level == null) {
-            HudManager.inWorld = false
-            val sw = Platform.screen().guiWidth().toFloat()
-            val sh = Platform.screen().guiHeight().toFloat()
-            HudManager.guiScreenWidth = sw
-            HudManager.guiScreenHeight = sh
-            HudManager.prepare(sw, sh)
-            ItemCatalog.renderHudIcons()
-        }
+        // newer versions prepare them in extractBeneathBlur, as the background is drawn first
+        //? if < 1.21.11
+        //if (client.level == null) prepareHudsOffWorld()
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //? if > 1.8.9 {
         //~ if >= 26.1 'render' -> 'extractRenderState'

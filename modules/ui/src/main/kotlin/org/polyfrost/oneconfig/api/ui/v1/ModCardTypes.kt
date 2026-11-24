@@ -5,10 +5,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.internal.modIdKeys
+import org.polyfrost.oneconfig.api.ui.v1.internal.normaliseModId
 
 public object ModCardTypes {
     private val LOGGER = LogManager.getLogger("OneConfig/ModCardTypes")
     private val lock = Any()
+    private val revisionLock = Any()
 
     @Volatile
     private var typesById: Map<String, ModCardType> = emptyMap()
@@ -42,7 +45,7 @@ public object ModCardTypes {
 
     @JvmStatic
     public fun assign(modId: String, typeId: String) {
-        val key = normalise(modId)
+        val key = normaliseModId(modId)
         if (key.isEmpty() || typeId.isBlank()) {
             LOGGER.warn("Ignoring mod card type assignment with a blank mod id or type id")
             return
@@ -57,7 +60,7 @@ public object ModCardTypes {
             LOGGER.warn("Ignoring mod card type assignment with a blank type id")
             return
         }
-        val keys = modIds.map(::normalise).filter { it.isNotEmpty() }
+        val keys = modIds.map(::normaliseModId).filter { it.isNotEmpty() }
         if (keys.isEmpty()) return
         synchronized(lock) { assignments = assignments + keys.associateWith { typeId } }
         bump()
@@ -72,6 +75,44 @@ public object ModCardTypes {
         bump()
     }
 
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun unregister(typeId: String): Boolean {
+        val removed = synchronized(lock) {
+            if (typesById[typeId] == null) return@synchronized false
+            typesById = typesById - typeId
+            sortedTypes = typesById.values.sortedWith(TypeOrder)
+            true
+        }
+        if (removed) bump()
+        return removed
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun unassign(modId: String): Boolean {
+        val key = normaliseModId(modId)
+        val removed = synchronized(lock) {
+            if (key !in assignments) return@synchronized false
+            assignments = assignments - key
+            true
+        }
+        if (removed) bump()
+        return removed
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun unregisterResolver(resolver: ModCardTypeResolver): Boolean {
+        val removed = synchronized(lock) {
+            if (resolver !in resolvers) return@synchronized false
+            resolvers = resolvers - resolver
+            true
+        }
+        if (removed) bump()
+        return removed
+    }
+
     @JvmStatic
     public fun types(): List<ModCardType> = sortedTypes
 
@@ -80,7 +121,7 @@ public object ModCardTypes {
 
     @JvmStatic
     public fun typeFor(modId: String): ModCardType? {
-        val explicit = keysFor(modId).firstNotNullOfOrNull(assignments::get)
+        val explicit = modIdKeys(modId).firstNotNullOfOrNull(assignments::get)
         val id = explicit ?: resolvers.firstNotNullOfOrNull { safeResolve(it, modId) }
         return id?.let(typesById::get)
     }
@@ -89,15 +130,6 @@ public object ModCardTypes {
         compareByDescending<ModCardType> { it.priority }
             .thenBy(String.CASE_INSENSITIVE_ORDER) { it.title }
             .thenBy { it.id }
-
-    private fun normalise(modId: String) = modId.trim().removeSuffix(".json").lowercase()
-
-    private fun keysFor(modId: String) = sequenceOf(
-        modId,
-        modId.removeSuffix(".json"),
-        modId.substringBefore('/'),
-        modId.substringBefore('/').removeSuffix(".json"),
-    ).map { it.trim().lowercase() }.distinct()
 
     private fun safeResolve(resolver: ModCardTypeResolver, modId: String): String? =
         try {
@@ -109,6 +141,6 @@ public object ModCardTypes {
         }
 
     private fun bump() {
-        Snapshot.withMutableSnapshot { revision++ }
+        synchronized(revisionLock) { Snapshot.global { revision++ } }
     }
 }

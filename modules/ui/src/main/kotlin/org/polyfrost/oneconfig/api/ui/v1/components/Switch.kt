@@ -1,0 +1,152 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
+package org.polyfrost.oneconfig.api.ui.v1.components
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
+import kotlin.math.roundToInt
+
+private const val TRACK_HOVER_ALPHA = 0.15f
+
+internal fun restTrackColor(theme: OneConfigUITheme): Color = theme.controlTrackColor
+
+@ExperimentalOneConfigUiApi
+public object SwitchDefaults {
+    public val trackWidth: Dp = 42.dp
+
+    public val trackHeight: Dp = 21.dp
+
+    public val thumbInset: Dp = 3.dp
+
+    public val trackColor: Color
+        @Composable get() = restTrackColor(OneConfigTheme.current)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+@Deprecated("Kept for binary compatibility, use the overload with mixed", level = DeprecationLevel.HIDDEN)
+public fun Switch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    label: String? = null,
+    trackColor: Color = Color.Unspecified,
+    stateLabel: Boolean = true,
+) {
+    Switch(checked, onCheckedChange, modifier, enabled, interactionSource, label, trackColor, stateLabel, mixed = false)
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun Switch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    label: String? = null,
+    trackColor: Color = Color.Unspecified,
+    stateLabel: Boolean = true,
+    mixed: Boolean = false,
+) {
+    val theme = OneConfigTheme.current
+    val source = interactionSource ?: remember { MutableInteractionSource() }
+    val hovered by source.collectIsHoveredAsState()
+    val state = if (mixed) formMixedLabel() else if (checked) formOnLabel() else formOffLabel()
+    val circle = theme.circleShape
+    Row(
+        modifier = modifier
+            .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
+            .oneConfigClickable(
+                label ?: state,
+                { onCheckedChange(mixed || !checked) },
+                role = A11yRole.Switch,
+                enabled = enabled,
+                checked = checked,
+                shape = if (stateLabel) theme.buttonShape else circle,
+                indication = false,
+                interactionSource = source,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(theme.spacing.m),
+    ) {
+        if (stateLabel) ControlStateLabel(state)
+        SwitchTrack(checked, hovered && enabled, trackColor, Modifier, mixed)
+    }
+}
+
+@Composable
+internal fun ControlStateLabel(text: String) {
+    val theme = OneConfigTheme.current
+    Text(text, Modifier, theme.textColorSecondary, theme.typography.small, 1, TextOverflow.Clip, textAlign = TextAlign.Start)
+}
+
+private fun switchProgress(checked: Boolean, mixed: Boolean): Float = if (mixed) 0.5f else if (checked) 1f else 0f
+
+@Composable
+internal fun SwitchTrack(checked: Boolean, hovered: Boolean, trackColor: Color, modifier: Modifier, mixed: Boolean = false) {
+    val theme = OneConfigTheme.current
+    val shape = theme.circleShape
+    val rest = if (trackColor.isSpecified) trackColor else restTrackColor(theme)
+    val accentAlpha = animateFloatAsState(switchProgress(checked, mixed), Motion.tweenSpec(Motion.standard), label = "switchAccent")
+    val thumbProgress = animateFloatAsState(switchProgress(checked, mixed), Motion.spec(spring()), label = "switchThumb")
+    val border = animateColorAsState(
+        if (hovered) theme.textColor.copy(alpha = TRACK_HOVER_ALPHA) else Color.Transparent,
+        Motion.tweenSpec(Motion.standard),
+        label = "switchBorder",
+    )
+    Box(
+        modifier = modifier
+            .size(SwitchDefaults.trackWidth, SwitchDefaults.trackHeight)
+            .clip(shape)
+            .background(rest)
+            .formFrame(shape, theme.accentBrush, accentAlpha = { accentAlpha.value }, border = { border.value })
+            .padding(SwitchDefaults.thumbInset),
+    ) {
+        Box(
+            modifier = Modifier
+                .layout { measurable, constraints ->
+                    val thumb = measurable.measure(constraints)
+                    val track = if (constraints.hasBoundedWidth) constraints.maxWidth else thumb.width
+                    layout(track, thumb.height) {
+                        thumb.place(((track - thumb.width) * thumbProgress.value).roundToInt(), 0)
+                    }
+                }
+                .fillMaxHeight()
+                .aspectRatio(1f)
+                .background(theme.controlThumbColor, shape),
+        )
+    }
+}

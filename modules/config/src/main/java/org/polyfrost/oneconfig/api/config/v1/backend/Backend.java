@@ -26,9 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1.backend;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BooleanSupplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,6 +35,10 @@ import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 
 /**
  * A backend is a storage system for ConfigTrees
@@ -203,23 +204,7 @@ public abstract class Backend {
         if (id == null) throw new NullPointerException("id cannot be null");
         Tree tree = trees.get(id);
         if (tree == null) throw new IllegalArgumentException("no registered tree with ID " + id);
-        saveGenerations.merge(id, 1L, Long::sum);
-        try {
-            Object customSave = tree.getMetadata("custom_save");
-            if (customSave != null) {
-                if (customSave instanceof Runnable) {
-                    runCustomSave(tree, (Runnable) customSave);
-                }
-                return true;
-            }
-            if (isUiOnly(tree)) return true;
-            return save0(tree);
-        } catch (Exception e) {
-            LOGGER.error("error saving tree with ID {}!", id, e);
-            return false;
-        } finally {
-            saveGenerations.merge(id, 1L, Long::sum);
-        }
+        return save(tree);
     }
 
     /**

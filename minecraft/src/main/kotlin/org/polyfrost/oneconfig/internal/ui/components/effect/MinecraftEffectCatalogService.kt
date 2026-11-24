@@ -104,7 +104,7 @@ class MinecraftEffectCatalogService : EffectCatalogService {
     /*private fun loadAtlas() {
         val texture = NamespacedIdentifiers.from("minecraft", "textures/gui/container/inventory.png")
         val atlas = ResourceManager.client().getResource(texture).orElse(null)
-            ?.open()?.use { PolyBitmap.decode(it.readBytes()) }
+            ?.open()?.use { PolyBitmap.decode(it.readAllBytes()) }
         if (atlas == null) {
             LOG.warn("Failed to read the status effect icon atlas {}", texture)
             return

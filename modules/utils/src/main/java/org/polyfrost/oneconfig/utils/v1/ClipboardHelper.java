@@ -26,6 +26,14 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+
+import javax.imageio.ImageIO;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -39,13 +47,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.ServiceLoader;
-import javax.imageio.ImageIO;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 /**
  * Cross-platform system clipboard access
@@ -181,21 +182,10 @@ public final class ClipboardHelper {
         return (String) method.invoke(null);
     }
 
-    private static boolean invokeMacBoolean(String methodName, Object... args) throws ReflectiveOperationException {
+    private static boolean invokeMacBoolean(String methodName, String... args) throws ReflectiveOperationException {
         Class<?> clazz = Class.forName(MACOS_CLIPBOARD_CLASS);
-        Method method;
-        if (args.length == 0) {
-            method = clazz.getMethod(methodName);
-        } else if (args.length == 1 && args[0] instanceof String) {
-            method = clazz.getMethod(methodName, String.class);
-        } else {
-            Class<?>[] paramTypes = new Class<?>[args.length];
-            for (int i = 0; i < args.length; i++) {
-                paramTypes[i] = args[i].getClass();
-            }
-            method = clazz.getMethod(methodName, paramTypes);
-        }
-        return Boolean.TRUE.equals(method.invoke(null, args));
+        Method method = args.length == 0 ? clazz.getMethod(methodName) : clazz.getMethod(methodName, String.class);
+        return Boolean.TRUE.equals(method.invoke(null, (Object[]) args));
     }
 
     @Nullable

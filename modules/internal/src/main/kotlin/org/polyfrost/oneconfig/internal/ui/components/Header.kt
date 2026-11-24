@@ -2,14 +2,10 @@ package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -17,15 +13,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -36,41 +28,43 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
-import org.polyfrost.oneconfig.internal.ui.components.dropdown.DropdownPositionProvider
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
+import org.polyfrost.oneconfig.internal.ui.search.submenuTrail
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
 import org.polyfrost.oneconfig.internal.ui.shell.SearchFocus
+import org.polyfrost.oneconfig.internal.ui.shell.ShellNavigation
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.api.ui.v1.components.Text as KitText
 
 @Composable
 fun Header(modifier: Modifier = Modifier) {
@@ -97,15 +91,31 @@ fun Header(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton("left-arrow", Modifier.size(32.dp), enabled = canGoBack, hoverBorder = true) { controller.back() }
-                IconButton("right-arrow", Modifier.size(32.dp), enabled = canGoForward, hoverBorder = true) { controller.forward() }
+                IconButton(
+                    "left-arrow",
+                    iconButtonLabel("left-arrow"),
+                    { controller.back() },
+                    Modifier.size(32.dp),
+                    enabled = canGoBack,
+                    style = IconButtonStyle.Ghost,
+                    tint = LocalTheme.current.textColor,
+                )
+                IconButton(
+                    "right-arrow",
+                    iconButtonLabel("right-arrow"),
+                    { controller.forward() },
+                    Modifier.size(32.dp),
+                    enabled = canGoForward,
+                    style = IconButtonStyle.Ghost,
+                    tint = LocalTheme.current.textColor,
+                )
             }
             Spacer(Modifier.size(24.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedContent(
                     title,
                     transitionSpec = {
-                        if (ReducedMotion.enabled) fadeIn() togetherWith fadeOut() using null
+                        if (Motion.reduced) fadeIn() togetherWith fadeOut() using null
                         else fadeIn() togetherWith fadeOut()
                     }
                 ) { headerTitle ->
@@ -114,12 +124,7 @@ fun Header(modifier: Modifier = Modifier) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text(
-                                info.text,
-                                color = LocalTheme.current.textColor,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            TitleBreadcrumb(info.segments, controller)
                             TitleAuthorByline(info.authors)
                             TitleInfoTooltip(info)
                         }
@@ -162,7 +167,7 @@ fun Header(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(26.dp)
         ) {
             GlobalSearchBar()
-            IconButton("close", Modifier.size(32.dp), hoverBorder = true) { closeRequest() }
+            IconButton("close", iconButtonLabel("close"), { closeRequest() }, Modifier.size(32.dp))
         }
     }
 }
@@ -171,8 +176,10 @@ fun Header(modifier: Modifier = Modifier) {
  * The header title and its extra info, resolved purely from the entry currently on top of the back
  * stack.
  */
+private data class TitleSegment(val text: Any, val route: ModConfigRoute? = null)
+
 private data class HeaderTitle(
-    val text: String,
+    val segments: List<TitleSegment>,
     val authors: String? = null,
     val credits: String? = null,
     val version: String? = null,
@@ -184,11 +191,16 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
     val destination = entry.destination
 
     if (destination.hasRoute(ModConfigRoute::class)) {
-        val id = runCatching { entry.toRoute<ModConfigRoute>().id }.getOrNull() ?: return null
-        val config = ConfigRegistry.findById(id) ?: return null
-        val tree = ConfigRegistry.findTree(id)
+        val route = runCatching { entry.toRoute<ModConfigRoute>() }.getOrNull() ?: return null
+        val config = ConfigRegistry.findById(route.id) ?: return null
+        val tree = ConfigRegistry.findTree(route.id)
+        val ids = route.submenu?.split('/').orEmpty()
+        val trail = route.submenu?.let { tree?.submenuTrail(it) }.orEmpty()
         return HeaderTitle(
-            text = config.title.asRenderText(),
+            segments = listOf(TitleSegment(config.title.asRenderText(), ModConfigRoute(route.id))) +
+                trail.mapIndexed { index, tree ->
+                    TitleSegment(tree.localizedTitle().asRenderText(), ModConfigRoute(route.id, submenu = ids.take(index + 1).joinToString("/")))
+                },
             authors = config.authors,
             credits = config.credits,
             version = config.version,
@@ -196,58 +208,64 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
         )
     }
 
-    return entry.currentPageTitle()?.let { HeaderTitle(it) }
+    return entry.currentPageTitle()?.let { HeaderTitle(listOf(TitleSegment(it))) }
 }
 
 @Composable
-private fun OpenOriginalScreenButton(runnable: Runnable) {
+private fun TitleBreadcrumb(segments: List<TitleSegment>, controller: ShellNavigation) {
     val theme = LocalTheme.current
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val accentAlpha = animateFloatAsState(if (isHovered) 0.75f else 1f)
-
-    Tooltip(
-        text = {
-            Text(
-                translated("oneconfig.header.original_menu.tooltip", "Opening the original screen may show options that OneConfig doesn't."),
-                color = theme.textColor,
-                fontSize = 13.sp,
-            )
-        },
-        modifier = Modifier.widthIn(max = 260.dp),
-        anchor = Alignment.BottomCenter,
-    ) {
-        Box(
-            modifier = Modifier
-                .pointerHoverIcon(PointerIcon.Hand)
-                .glassHover(theme.buttonShape)
-                .graphicsLayer {}
-                .liquidGlass(theme.buttonShape)
-                .animatedFrame(theme.buttonShape, accentAlpha = { accentAlpha.value }, border = { theme.borderColor })
-                .onClick(interactionSource) { runnable.run() }
-                .padding(horizontal = 16.dp, vertical = 6.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon("external-link", color = theme.accentTextColor, modifier = Modifier.size(14.dp))
-                Text(translated("oneconfig.header.original_menu", "Original menu"), color = theme.accentTextColor, fontSize = 13.sp)
+    val style = theme.typography.display.copy(fontWeight = FontWeight.Medium)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        segments.forEachIndexed { index, segment ->
+            val route = segment.route.takeIf { index < segments.lastIndex }
+            if (index > 0) {
+                KitText("/", Modifier.padding(horizontal = 6.dp), theme.textColorSecondary, style)
+            }
+            if (route == null) {
+                KitText(segment.text.asRenderText(), color = theme.textColor, style = style, legacyFormatting = true)
+            } else {
+                val interactionSource = rememberInteractionSource()
+                val isHovered by interactionSource.collectIsHoveredAsState()
+                val color by Motion.animateColorAsState(if (isHovered) theme.textColor else theme.textColorSecondary)
+                KitText(
+                    segment.text.asRenderText(),
+                    Modifier.oneConfigClickable(
+                        segment.text.asRenderText(),
+                        { controller.navigate(route) },
+                        role = A11yRole.Link,
+                        indication = false,
+                        interactionSource = interactionSource,
+                    ),
+                    color = color,
+                    style = style,
+                    legacyFormatting = true,
+                )
             }
         }
     }
 }
 
 @Composable
+private fun OpenOriginalScreenButton(runnable: Runnable) {
+    TooltipBox(
+        translated("oneconfig.header.original_menu.tooltip", "Opening the original screen may show options that OneConfig doesn't."),
+        placement = TooltipPlacement.BelowCenter,
+    ) {
+        TextButton(
+            translated("oneconfig.header.original_menu", "Original menu"),
+            "external-link",
+            { runnable.run() },
+            style = ControlStyle.Primary,
+            size = ControlSize.Compact,
+        )
+    }
+}
+
+@Composable
 private fun TitleAuthorByline(authors: String?) {
     val byline = authors?.authorByline() ?: return
-    Text(
-        byline,
-        color = LocalTheme.current.textColorSecondary,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-    )
+    val theme = LocalTheme.current
+    KitText(byline, color = theme.textColorSecondary, style = theme.typography.bodyMedium)
 }
 
 private fun String.authorByline(): String? {
@@ -268,57 +286,48 @@ private fun TitleInfoTooltip(title: HeaderTitle) {
     val authors = title.authors
     val credits = title.credits
     if (version == null && authors == null && credits == null) return
-    val interactionSource = rememberInteractionSource()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val density = LocalDensity.current
+    val theme = LocalTheme.current
 
-    Box(
-        modifier = Modifier.size(22.dp).hoverable(interactionSource),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon("info", color = LocalTheme.current.textColorSecondary, modifier = Modifier.size(14.dp))
-
-        if (isHovered) {
-            // popup so the tooltip takes no layout space in the header Row and is not clipped by its
-            // fixed height
-            Popup(
-                popupPositionProvider = DropdownPositionProvider(DpOffset(0.dp, 6.dp), density),
-                properties = PopupProperties(focusable = false)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .widthIn(max = 260.dp)
-                        .liquidGlass(LocalTheme.current.popupShape, frosted = true)
-                        .background(LocalTheme.current.popupBackground, shape = LocalTheme.current.popupShape)
-                        .border(1.dp, LocalTheme.current.borderColor, shape = LocalTheme.current.popupShape)
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    if (authors != null) {
-                        Text(translated("oneconfig.header.author", "Author: %s", authors), color = LocalTheme.current.textColor, fontSize = 12.sp)
-                    }
-                    if (credits != null) {
-                        Text(translated("oneconfig.header.credits", "Credits: %s", credits), color = LocalTheme.current.textColor, fontSize = 12.sp)
-                    }
-                    if (version != null) {
-                        Text(translated("oneconfig.header.version", "Version: %s", version), color = LocalTheme.current.textColor, fontSize = 12.sp)
-                    }
+    TooltipBox(
+        tooltip = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (authors != null) {
+                    KitText(translated("oneconfig.header.author", "Author: %s", authors), color = theme.textColor, style = theme.typography.small)
+                }
+                if (credits != null) {
+                    KitText(translated("oneconfig.header.credits", "Credits: %s", credits), color = theme.textColor, style = theme.typography.small)
+                }
+                if (version != null) {
+                    KitText(translated("oneconfig.header.version", "Version: %s", version), color = theme.textColor, style = theme.typography.small)
                 }
             }
+        },
+        placement = TooltipPlacement.BelowStart,
+    ) {
+        Box(
+            modifier = Modifier.size(22.dp).focusable(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon("info", color = theme.textColorSecondary, modifier = Modifier.size(14.dp))
         }
     }
 }
 
-private fun searchFieldValue(text: String) = TextFieldValue(text, TextRange(text.length))
-
 @Composable
-fun GlobalSearchBar() {
+fun GlobalSearchBar(
+    /** Replaces the page's own placeholder and stays shown while the empty field is focused */
+    placeholderText: String? = null,
+    /** Replaces the magnifying glass, and with it the bar fills its [modifier] at [fontSize] */
+    leading: (@Composable () -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = TextUnit.Unspecified,
+) {
     val navController = LocalShellNavController.current
     val search = LocalShell.current.search
     val backStackEntry by navController.currentBackStackEntryAsState()
     val placeholder by remember(backStackEntry) { derivedStateOf { searchPlaceholder(backStackEntry) } }
 
-    var searchText by remember { mutableStateOf(searchFieldValue(search.query)) }
+    var searchText by remember { mutableStateOf(TextFieldValue(search.query, TextRange(search.query.length))) }
     val interactionSource = rememberInteractionSource()
     val isFocused by interactionSource.collectIsFocusedAsState()
 
@@ -327,7 +336,7 @@ fun GlobalSearchBar() {
 
     LaunchedEffect(searchText.text) { search.update(searchText.text) }
     LaunchedEffect(search.query) {
-        if (search.query != searchText.text) searchText = searchFieldValue(search.query)
+        if (search.query != searchText.text) searchText = TextFieldValue(search.query, TextRange(search.query.length))
     }
     LaunchedEffect(isFocused) { search.updateFieldFocused(isFocused) }
 
@@ -340,7 +349,6 @@ fun GlobalSearchBar() {
             if (isFocused) focusManager.clearFocus()
         } else {
             if (request == SearchFocus.SelectAll) {
-                // a kept query is selected so typing starts a new search while leaving it alone keeps it
                 searchText = searchText.copy(selection = TextRange(0, searchText.text.length))
             }
             if (!isFocused) {
@@ -353,84 +361,40 @@ fun GlobalSearchBar() {
         search.consumeFocusRequest()
     }
 
-    val searchTextStyle = TextStyle(
-        color = LocalTheme.current.textColorSecondary,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        fontFamily = LocalTheme.current.typography.family,
-        lineHeight = 12.sp,
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Center,
-            trim = LineHeightStyle.Trim.Both,
-        ),
-    )
-
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
+    val fieldModifier = Modifier.trackTextInputFocus().onFocusChanged { searchFocused?.value = it.hasFocus }
+    if (leading != null) {
+        // the kit's search field has no slot for its icon, so the minimal menu's bar is a text field with its own clear button
+        TextField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            modifier = modifier.then(fieldModifier),
+            placeholder = placeholderText ?: placeholder,
+            size = ControlSize.ExtraLarge,
+            leading = leading,
+            trailing = if (searchText.text.isEmpty()) null else ({
+                IconButton(
+                    "close",
+                    translated("oneconfig.ui.search.clear", "Clear search"),
+                    { searchText = TextFieldValue() },
+                    Modifier.size(22.dp),
+                    size = ControlSize.Compact,
+                    tooltip = null,
+                )
+            }),
+            fontSize = fontSize,
+            focusRequester = focusRequester,
+            interactionSource = interactionSource,
+        )
+        return
+    }
+    SearchField(
         value = searchText,
         onValueChange = { searchText = it },
-        singleLine = true,
-        cursorBrush = SolidColor(LocalTheme.current.textColorSecondary),
-        textStyle = searchTextStyle,
+        modifier = Modifier.width(256.dp).then(fieldModifier),
+        placeholder = placeholderText ?: placeholder,
+        size = ControlSize.Regular,
+        focusRequester = focusRequester,
         interactionSource = interactionSource,
-        modifier = Modifier.trackTextInputFocus()
-            .focusRequester(focusRequester)
-            .onFocusChanged { searchFocused?.value = it.isFocused }
-    ) { innerTextField ->
-        Box(
-            modifier = Modifier
-                .width(256.dp).height(32.dp)
-                .liquidGlass(LocalTheme.current.sideBarNavigationEntryShape)
-                .background(
-                    LocalTheme.current.chipBackground,
-                    LocalTheme.current.sideBarNavigationEntryShape
-                )
-                .border(
-                    1.dp,
-                    LocalTheme.current.borderColor,
-                    LocalTheme.current.sideBarNavigationEntryShape
-                ),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxHeight(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        "search",
-                        color = LocalTheme.current.textColorSecondary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    if (searchText.text.isEmpty() && !isFocused) {
-                        Text(
-                            placeholder,
-                            color = LocalTheme.current.textColorSecondary,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 12.sp,
-                            lineHeight = 12.sp,
-                        )
-                    }
-                    innerTextField()
-                }
-                if (searchText.text.isNotEmpty()) {
-                    IconButton("close", modifier = Modifier.size(16.dp)) {
-                        searchText = TextFieldValue()
-                    }
-                }
-            }
-        }
-    }
+        hidePlaceholderWhenFocused = placeholderText == null,
+    )
 }

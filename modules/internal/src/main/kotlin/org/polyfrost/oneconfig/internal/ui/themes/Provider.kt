@@ -1,8 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
 import androidx.compose.foundation.LocalScrollbarStyle
-import androidx.compose.foundation.ScrollbarStyle
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -13,25 +12,38 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontListFontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.floor
-import kotlin.math.round
 import kotlinx.coroutines.delay
+import org.polyfrost.compose.backend.PolyFontSource
+import org.polyfrost.compose.render.FontManager
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationTheme
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.components.themedScrollbarStyle
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
+import org.polyfrost.oneconfig.api.ui.v1.theme.contrastAgainst
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.DESIGN_HEIGHT_DP
 import org.polyfrost.oneconfig.internal.ui.DESIGN_WIDTH_DP
 import org.polyfrost.oneconfig.internal.ui.EDGE_MARGIN_FRACTION
+import java.io.File
+import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.math.round
 
 private var _accent by mutableStateOf(Color(ThemeConfig.accentColor.argb))
 
@@ -39,11 +51,15 @@ private var _chroma by mutableStateOf(ThemeConfig.accentColor.chroma)
 
 private var _accentEnd by mutableStateOf<Color?>(null)
 
-val Accent: Color get() = _accent
+private fun paletteAccent(): Color? = ThemeRegistry.activeTheme?.palette?.let(PaletteAccent::resolve)
 
-val AccentEnd: Color get() = _accentEnd ?: _accent
+val Accent: Color get() = paletteAccent() ?: _accent
 
-val AccentGradient: Boolean get() = _accentEnd != null
+val PlayerAccent: Color get() = _accent
+
+val AccentEnd: Color get() = paletteAccent() ?: _accentEnd ?: _accent
+
+val AccentGradient: Boolean get() = paletteAccent() == null && _accentEnd != null
 
 val AccentBrush: Brush get() = accentHorizontalBrush()
 
@@ -52,7 +68,7 @@ private val SheenBrush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 
 val AccentSheen: Brush? get() = if (ThemeRegistry.activeTheme?.liquidGlass == true) SheenBrush else null
 
 fun accentHorizontalBrush(startX: Float = 0f, endX: Float = Float.POSITIVE_INFINITY): Brush =
-    _accentEnd?.let { Brush.horizontalGradient(listOf(_accent, it), startX, endX) } ?: SolidColor(_accent)
+    paletteAccent()?.let { SolidColor(it) } ?: _accentEnd?.let { Brush.horizontalGradient(listOf(_accent, it), startX, endX) } ?: SolidColor(_accent)
 
 fun updateAccent() {
     val accentColor = ThemeConfig.accentColor
@@ -61,7 +77,16 @@ fun updateAccent() {
     _accentEnd = if (accentColor.gradientEnabled && !accentColor.chroma) Color(accentColor.gradientArgb) else null
 }
 
-val LocalTheme = compositionLocalOf<UITheme> { error("A UI theme is required but was not provided") }
+val LocalTheme = compositionLocalOf<UITheme> {
+    runCatching { ThemeRegistry.activeTheme }.getOrNull()
+        ?: error("The OneConfig UI has not initialised yet, so there is no theme to use. Wait for OneConfig to finish loading before composing OneConfig UI.")
+}
+
+internal val LocalThemeTarget = compositionLocalOf<UITheme?> { null }
+
+private const val TOAST_MIN_ALPHA = 0.92f
+
+private fun Color.withMinAlpha(min: Float): Color = if (alpha >= min) this else copy(alpha = min)
 
 private const val GRID_ANCHOR_SP = 14f
 
@@ -75,16 +100,9 @@ var uiScalePercent by mutableStateOf(100f)
 
 var pixelGridMode by mutableStateOf(0)
 
-private val UITheme.isMinecraft get() = previewImage.startsWith("minecraft")
+private val UITheme.isMinecraft get() = isMinecraftStyle
 
-private fun scrollbarStyle(theme: UITheme) = ScrollbarStyle(
-    minimalHeight = 24.dp,
-    thickness = 8.dp,
-    shape = theme.scrollBarShape,
-    hoverDurationMillis = 300,
-    unhoverColor = theme.textColorSecondary.copy(alpha = 0.40f),
-    hoverColor = theme.textColorSecondary.copy(alpha = 0.70f),
-)
+private fun scrollbarStyle(theme: UITheme) = themedScrollbarStyle(theme.textColorSecondary, theme.scrollBarShape)
 
 private val screenPlatform by lazy { runCatching { Platform.screen() }.getOrNull() }
 
@@ -155,6 +173,15 @@ fun Theme(
     designWidth: Dp = DESIGN_WIDTH_DP.dp,
     designHeight: Dp = DESIGN_HEIGHT_DP.dp,
     content: @Composable () -> Unit,
+) = ThemeWith(null, pixelGrid, designWidth, designHeight, content)
+
+@Composable
+fun ThemeWith(
+    theme: UITheme?,
+    pixelGrid: Boolean,
+    designWidth: Dp = DESIGN_WIDTH_DP.dp,
+    designHeight: Dp = DESIGN_HEIGHT_DP.dp,
+    content: @Composable () -> Unit,
 ) {
     SideEffect { updateAccent() }
 
@@ -165,35 +192,78 @@ fun Theme(
         }
     }
 
-    val target = ThemeRegistry.activeTheme ?: error("No active theme provided")
-    val animated = animateTheme(target)
+    val target = theme ?: ThemeRegistry.activeTheme ?: error("No active theme provided")
+    val accent = Accent
+    val opaque = ReduceTransparency.enabled
+    val shown = target.withAccentText(target.accentTextOn(accent)).let { if (opaque) it.withOpaqueSurfaces() else it }
+    val animated = animateTheme(shown)
 
-    SideEffect { syncNotificationTheme(animated) }
+    LaunchedEffect(target, accent, opaque) { if (theme == null) syncNotificationTheme(target) }
+    if (animated.liquidGlass) GlassTintColor.Drive()
 
     CompositionLocalProvider(
         LocalTheme provides animated,
-        LocalScrollbarStyle provides remember(animated.scrollBarShape) { scrollbarStyle(animated) },
+        LocalThemeTarget provides shown,
+        LocalScrollbarStyle provides remember(animated.scrollBarShape, animated.textColorSecondary) { scrollbarStyle(animated) },
         LocalDensity provides if (pixelGrid) pixelGridDensity(designWidth, designHeight, target) else LocalDensity.current,
         content = content
     )
 }
 
-internal fun syncNotificationTheme(theme: UITheme) {
-    val minecraft = theme.isMinecraft
+internal fun syncNotificationTheme(source: UITheme) {
+    val accent = Accent
+    val theme = if (ReduceTransparency.enabled) source.withOpaqueSurfaces() else source
+    val pixel = theme.style == ThemeStyle.Pixel
+    val unitDensity = Density(1f)
+
+    fun poly(color: Color): PolyColor = PolyColor(color.toArgb())
+
+    fun onFill(fill: Color): Color =
+        if (Color.White.contrastAgainst(fill) >= Color.Black.contrastAgainst(fill)) Color.White else Color.Black
+
+    fun radius(shape: Shape, width: Float, height: Float): Float =
+        (shape as? CornerBasedShape)?.topStart?.toPx(Size(width, height), unitDensity) ?: 0f
+
+    fun fontKey(style: TextStyle): String? {
+        val wanted = (style.fontWeight ?: FontWeight.Normal).weight
+        val font = (style.fontFamily as? FontListFontFamily)?.fonts.orEmpty()
+            .filterIsInstance<PolyFontSource>()
+            .filter { it.style == FontStyle.Normal }
+            .minByOrNull { abs(it.weight.weight - wanted) } ?: return null
+        val key = if (pixel) "${font.key}#pixel" else font.key
+        if (FontManager.fontData(key) != null) return key
+        val loaded = FontManager.fontData(font.key)?.let { runCatching { FontManager.register(key, it, pixel) }.isSuccess }
+            ?: when {
+                font.key.startsWith("res:") -> FontManager.loadFromResource(font.key.removePrefix("res:"), key, pixelAligned = pixel)
+                font.key.startsWith("file:") -> runCatching { FontManager.register(key, File(font.key.removePrefix("file:")).readBytes(), pixel) }.isSuccess
+                else -> false
+            }
+        return key.takeIf { loaded }
+    }
+
     NotificationTheme.set(
-        background = PolyColor(theme.popupBackground.toArgb()),
-        border = PolyColor(theme.borderColor.toArgb()),
-        textPrimary = PolyColor(theme.textColor.toArgb()),
-        textSecondary = PolyColor(theme.textColorSecondary.toArgb()),
-        accent = PolyColor(Accent.toArgb()),
-        subtleButton = PolyColor(theme.componentBackground.toArgb()),
-        actionPrimaryText = PolyColor(theme.accentTextColor.toArgb()),
-        actionSubtleText = PolyColor(theme.textColor.toArgb()),
-        fontTitle = if (minecraft) "minecraft-bold" else "poppins-medium",
-        fontBody = if (minecraft) "minecraft" else null,
-        radiusCard = if (minecraft) 0f else 12f,
-        radiusButton = if (minecraft) 0f else 4f,
-        radiusProgress = if (minecraft) 0f else 3f,
+        background = poly(theme.popupBackground.withMinAlpha(TOAST_MIN_ALPHA)),
+        border = poly(theme.borderColor),
+        textPrimary = poly(theme.textColor),
+        textSecondary = poly(theme.textColorSecondary),
+        accent = poly(accent),
+        subtleButton = poly(theme.componentBackground.withMinAlpha(TOAST_MIN_ALPHA)),
+        actionPrimaryText = poly(theme.accentTextOn(accent)),
+        actionSubtleText = poly(theme.textColor),
+        fontTitle = fontKey(theme.typography.heading),
+        fontBody = fontKey(theme.typography.small),
+        radiusCard = radius(theme.shapes.large, 340f, 72f),
+        radiusButton = radius(theme.shapes.medium, 80f, 26f),
+        radiusProgress = radius(theme.shapes.pill, 312f, 6f),
+        success = poly(theme.success),
+        error = poly(theme.error),
+        warning = poly(theme.warning),
+        info = poly(theme.info),
+        onSuccess = poly(theme.onSuccess),
+        onError = poly(theme.onError),
+        onWarning = poly(onFill(theme.warning)),
+        onInfo = poly(onFill(theme.info)),
     )
-    NotificationTheme.useIconFolder(if (minecraft) "minecraft" else null)
+    NotificationTheme.useIconFolder(if (pixel) "minecraft" else null)
+    NotificationTheme.useDisabledAlpha(theme.disabledAlpha)
 }

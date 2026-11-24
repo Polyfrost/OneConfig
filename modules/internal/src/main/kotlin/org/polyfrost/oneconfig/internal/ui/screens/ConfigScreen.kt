@@ -1,95 +1,142 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import java.util.function.Consumer
-import java.util.function.Predicate
-import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.apache.logging.log4j.LogManager
+import org.polyfrost.compose.backend.asComposeImageBitmap
+import org.polyfrost.compose.render.PolyBitmap
+import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.api.config.v1.enableToggle
+import org.polyfrost.oneconfig.api.config.v1.get
+import org.polyfrost.oneconfig.api.ui.v1.IconSpec
 import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorator
 import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
+import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorator
+import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorators
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionChevron
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
+import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.Switch
+import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
+import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
+import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.Text
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.OneConfigConfig
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.internal.ui.api.isLockExempt
+import org.polyfrost.oneconfig.internal.ui.api.isMarkedSwitch
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.Chip
+import org.polyfrost.oneconfig.internal.ui.components.ContentSlide
+import org.polyfrost.oneconfig.internal.ui.components.ContentSlide.tabSlide
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.asRenderText
-import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
-import org.polyfrost.oneconfig.internal.ui.components.hoverGlow
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.scrollFade
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionEnabled
 import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidth
+import org.polyfrost.oneconfig.internal.ui.components.settings.LocalOptionWidthOrNull
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionActionButton
-import org.polyfrost.oneconfig.internal.ui.components.settings.OptionContextMenu
-import org.polyfrost.oneconfig.internal.ui.components.settings.SwitchControl
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionControlHeight
+import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
+import org.polyfrost.oneconfig.internal.ui.components.settings.asPlainLabel
+import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
+import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
 import org.polyfrost.oneconfig.internal.ui.components.translated
-import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.search.CategoryGroup
 import org.polyfrost.oneconfig.internal.ui.search.ConfigListEntry
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
@@ -103,17 +150,37 @@ import org.polyfrost.oneconfig.internal.ui.search.buildSearchIndex
 import org.polyfrost.oneconfig.internal.ui.search.filterHiddenNodes
 import org.polyfrost.oneconfig.internal.ui.search.flattenEntries
 import org.polyfrost.oneconfig.internal.ui.search.flattenSearchEntries
+import org.polyfrost.oneconfig.internal.ui.search.hasVisualizer
+import org.polyfrost.oneconfig.internal.ui.search.isBooleanHead
+import org.polyfrost.oneconfig.internal.ui.search.isSubmenu
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.search.searchNode
+import org.polyfrost.oneconfig.internal.ui.search.submenuContent
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.util.LayoutRef
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
+import java.util.function.Predicate
+import javax.imageio.ImageIO
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.min
+import kotlin.math.roundToInt
+
+/** The id of the config whose page is showing or null where a submenu row has no page of its config to open */
+internal val LocalConfigId = staticCompositionLocalOf<String?> { null }
+
+internal val LocalSearchExpands = staticCompositionLocalOf { false }
 
 /**
  * @param locked shows every option but [lockExempt] dimmed and out of reach, for a mod that is switched off
+ * @param configId the config [tree] belongs to
+ * @param submenu where [tree] sits among the submenus when it is one
  */
 @Composable
 fun ConfigScreen(
@@ -123,9 +190,13 @@ fun ConfigScreen(
     locked: Boolean = false,
     lockExempt: Property<*>? = null,
     header: (@Composable () -> Unit)? = null,
+    configId: String? = null,
+    submenu: String? = null,
 ) {
     key(System.identityHashCode(tree)) {
-        ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt, header)
+        CompositionLocalProvider(LocalConfigId provides configId) {
+            ConfigScreenContent(tree, initialCategory, pageKey, locked, lockExempt, header, submenu)
+        }
     }
 }
 
@@ -137,12 +208,23 @@ private fun ConfigScreenContent(
     locked: Boolean,
     lockExempt: Property<*>?,
     header: (@Composable () -> Unit)?,
+    submenu: String?,
 ) {
-    val categories = remember(tree) { buildCategories(tree) }
+    val categories = remember(tree, submenu) {
+        if (tree.isSubmenu()) submenuContent(tree, submenu) else buildCategories(tree)
+    }
     val localSearchQuery = pageSearchQuery().trim()
     val navigation = LocalShell.current.navigation
+    val groupOff = rememberSwitchValue(tree.takeIf { it.isSubmenu() }?.enableToggle) == false
+    val locksAll = locked && lockExempt?.isMarkedSwitch() != false && !tree.isLockExempt()
 
-    val savedCategory = navigation.selectedCategory(pageKey) ?: initialCategory
+    // an option jumped to from search opens on its own tab, kept once the jump is done
+    val jump = navigation.pendingJump
+    val jumpCategory = remember(jump, categories) {
+        jump?.let { target -> categories.firstOrNull { c -> c.subcategories.any { s -> s.nodes.any { it.holds(target) } } } }
+    }
+    SideEffect { jumpCategory?.let { navigation.rememberCategory(pageKey, it.name) } }
+    val savedCategory = jumpCategory?.name ?: navigation.selectedCategory(pageKey) ?: initialCategory
     val selectedCategory = categories.firstOrNull { it.name.equals(savedCategory, ignoreCase = true) }
         ?: categories.firstOrNull()
 
@@ -152,81 +234,217 @@ private fun ConfigScreenContent(
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         if (localSearchQuery.isBlank() && categories.size > 1) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = PageGutter),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                categories.forEach { category ->
-                    Chip(
-                        label = category.name,
-                        selected = selectedCategory == category,
-                        onClick = { selectCategory(category) }
-                    )
-                }
-            }
+            CategoryTabs(categories, selectedCategory, Modifier.padding(horizontal = PageGutter), ::selectCategory)
         }
 
         val revision = rememberDisplayRevision(categories)
         val index = remember(categories) { buildSearchIndex(categories) }
-        val search = rememberSearchResults(index, localSearchQuery, pageKey)
+        val search = rememberSearchResults(index, localSearchQuery, LocalConfigId.current ?: pageKey, pageKey)
         val results = search.results
-        val entries = remember(index, selectedCategory, localSearchQuery, revision, results) {
-            when {
-                localSearchQuery.isBlank() ->
-                    selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
-                results == null -> emptyList()
-                else -> flattenSearchEntries(searchCategories(results))
+
+        // a search lists every category at once so only switching categories slides
+        val shown = updateTransition(selectedCategory.takeIf { localSearchQuery.isBlank() }, label = "category")
+        shown.AnimatedContent(
+            // keeps the sliding options inside the page instead of drawing over its edges
+            modifier = Modifier.clipToBounds(),
+            transitionSpec = { EnterTransition.None togetherWith ExitTransition.KeepUntilTransitionsFinished using null },
+            contentKey = { it?.name },
+        ) { category ->
+            val from = shown.currentState
+            val to = shown.targetState
+            val direction = when {
+                from == null || to == null || from == to -> 0
+                categories.indexOf(to) > categories.indexOf(from) -> 1
+                else -> -1
             }
-        }
-
-        val lazyListState = rememberRestorableLazyListState(pageKey, localSearchQuery, search.query)
-
-        val emptyMessage = when {
-            entries.isNotEmpty() -> null
-            localSearchQuery.isBlank() -> translated("oneconfig.search.no_settings", "No settings available.")
-            results == null -> translated("oneconfig.search.searching", "Searching...")
-            else -> translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery)
-        }
-
-        if (emptyMessage != null && header == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+            val leaving = transition.targetState != EnterExitState.Visible
+            val progress = transition.animateFloat({ ContentSlide.tabProgressSpec(direction != 0) }, label = "slide") {
+                if (it == EnterExitState.Visible) 1f else 0f
             }
-            return@Column
-        }
+            // the page header stays put while the options under it slide
+            val slide = Modifier.tabSlide({ progress.value }, leaving, direction, fade = !leaving)
 
-        ScrollbarBox(lazyListState, PageGutter, Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = lazyListState,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = PageGutter),
-            ) {
-                if (header != null) {
-                    item(key = "header") {
-                        Box(Modifier.layout { measurable, constraints ->
-                            val gutter = PageGutter.roundToPx() * 2
-                            val placeable = measurable.measure(
-                                constraints.copy(minWidth = constraints.minWidth + gutter, maxWidth = constraints.maxWidth + gutter)
-                            )
-                            layout(placeable.width - gutter, placeable.height) { placeable.place(-gutter / 2, 0) }
-                        }) { header() }
-                    }
+            val entries = remember(index, category, localSearchQuery, revision, results) {
+                when {
+                    localSearchQuery.isBlank() ->
+                        category?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
+                    results == null -> emptyList()
+                    else -> flattenSearchEntries(searchCategories(results))
                 }
-                if (emptyMessage != null) {
-                    item(key = "empty") {
-                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                            Text(emptyMessage, color = LocalTheme.current.textColorSecondary)
+            }
+
+            // each category keeps its own place in the list
+            val lazyListState = rememberRestorableLazyListState(
+                category?.let { "$pageKey/${it.name}" } ?: pageKey,
+                localSearchQuery,
+                search.query,
+            )
+
+            val jumpHighlight = remember { JumpHighlight() }
+            val highlightScope = rememberCoroutineScope()
+            LaunchedEffect(jump, entries) {
+                val target = jump ?: return@LaunchedEffect
+                val at = entries.indexOfFirst { (it as? ConfigListEntry.Item)?.node?.holds(target) == true }
+                if (at < 0) return@LaunchedEffect
+                // clearing the jump restarts this effect, so the scroll and highlight run in a scope that outlives it
+                highlightScope.launch {
+                    try {
+                        // the list has no size until its first layout, and the row ends a third of the way down
+                        // rather than at the top
+                        val viewport = snapshotFlow { lazyListState.layoutInfo.viewportSize.height }.first { it > 0 }
+                        lazyListState.scrollToItem(at + if (header != null) 1 else 0)
+                        lazyListState.scrollBy(-viewport / 3f)
+                    } catch (e: CancellationException) {
+                        // scrolling by hand stops the jump, which should still leave the highlight
+                        if (!isActive) throw e
+                    } catch (t: Throwable) {
+                        LOGGER.warn("Failed to scroll to the option jumped to on {}", pageKey, t)
+                    }
+                    jumpHighlight.play(target)
+                }
+                navigation.consumeJump(target)
+            }
+
+            val empty = when {
+                entries.isNotEmpty() -> null
+                localSearchQuery.isBlank() -> ConfigEmpty(translated("oneconfig.search.no_settings", "No settings available."), "settings")
+                results == null -> ConfigEmpty(translated("oneconfig.search.searching", "Searching..."), null, LoadState.Loading)
+                else -> ConfigEmpty(translated("oneconfig.search.no_settings_match", "No settings match \"%s\"", localSearchQuery), "search")
+            }
+
+            if (empty != null && header == null) {
+                Box(Modifier.fillMaxSize().then(slide), contentAlignment = Alignment.Center) {
+                    EmptyState(empty.title, icon = empty.icon, state = empty.state)
+                }
+                return@AnimatedContent
+            }
+
+            ScrollContainer(
+                lazyListState,
+                Modifier.fillMaxSize().then(if (leaving) Modifier.graphicsLayer { alpha = progress.value } else Modifier),
+                gutter = PageGutter,
+            ) {
+                CompositionLocalProvider(LocalJumpHighlight provides jumpHighlight) {
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier.scrollFade(lazyListState),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = PageGutter),
+                    ) {
+                    if (header != null) {
+                        item(key = "header") {
+                            Box(
+                                Modifier
+                                    .then(if (leaving) Modifier.alpha(0f) else Modifier)
+                                    .layout { measurable, constraints ->
+                                        val gutter = PageGutter.roundToPx() * 2
+                                        val placeable = measurable.measure(
+                                            constraints.copy(minWidth = constraints.minWidth + gutter, maxWidth = constraints.maxWidth + gutter)
+                                        )
+                                        layout(placeable.width - gutter, placeable.height) { placeable.place(-gutter / 2, 0) }
+                                    }
+                            ) { header() }
                         }
                     }
-                }
-                items(entries) { entry ->
-                    val option = ((entry as? ConfigListEntry.Item)?.node as? SettingNode.Leaf)?.prop
-                    val lock = locked && (option == null || option !== lockExempt)
-                    Box(Modifier.alpha(if (lock) 0.45f else 1f).blockInteraction(lock, keyboard = true)) { ConfigListRow(entry) }
+                    if (empty != null) {
+                        item(key = "empty") {
+                            Box(Modifier.fillMaxWidth().then(slide), contentAlignment = Alignment.Center) {
+                                EmptyState(empty.title, icon = empty.icon, state = empty.state)
+                            }
+                        }
+                    }
+                    items(entries) { entry ->
+                        val lock = locksAll && !entry.isLockExempt(lockExempt)
+                        CompositionLocalProvider(
+                            LocalOptionEnabled provides !(lock || groupOff),
+                            LocalSearchExpands provides localSearchQuery.isNotBlank(),
+                        ) {
+                            Box(slide) { ConfigListRow(entry) }
+                        }
+                    }
+                    }
                 }
             }
         }
+    }
+}
+
+private val LOGGER = LogManager.getLogger("OneConfig/UI")
+
+private const val JUMP_HIGHLIGHT_IN_MS = 150
+private const val JUMP_HIGHLIGHT_HOLD_MS = 700
+private const val JUMP_HIGHLIGHT_OUT_MS = 900
+
+/** The option or group a page was jumped to from search, and how strongly it is highlighted right now */
+private class JumpHighlight {
+    var target: Any? by mutableStateOf(null)
+        private set
+    val strength = Animatable(0f)
+
+    suspend fun play(target: Any) {
+        this.target = target
+        try {
+            strength.snapTo(0f)
+            strength.animateTo(1f, tween(JUMP_HIGHLIGHT_IN_MS))
+            strength.animateTo(0f, tween(JUMP_HIGHLIGHT_OUT_MS, delayMillis = JUMP_HIGHLIGHT_HOLD_MS))
+        } finally {
+            this.target = null
+        }
+    }
+}
+
+private val LocalJumpHighlight = staticCompositionLocalOf<JumpHighlight?> { null }
+
+/** Whether this node's row is [target] or holds it, such as an accordion holding an option */
+private fun SettingNode.holds(target: Any): Boolean = when (this) {
+    is SettingNode.Leaf -> prop === target
+    is SettingNode.Accordion -> tree === target || head === target || body.any { it === target }
+    is SettingNode.Submenu -> tree === target || head === target
+}
+
+/** An accent tint and outline in the card's own shape over a row that was jumped to and stands for one of [anchors] */
+@Composable
+private fun Modifier.jumpHighlightOf(vararg anchors: Any?): Modifier {
+    val jump = LocalJumpHighlight.current ?: return this
+    val target = jump.target ?: return this
+    if (anchors.none { it === target }) return this
+    val shape = LocalTheme.current.modCardShape
+    return drawWithContent {
+        drawContent()
+        val a = jump.strength.value
+        if (a <= 0f) return@drawWithContent
+        val outline = shape.createOutline(size, layoutDirection, this)
+        drawOutline(outline, Accent.copy(alpha = 0.14f * a))
+        drawOutline(outline, Accent.copy(alpha = 0.7f * a), style = Stroke(1.5.dp.toPx()))
+    }
+}
+
+@Composable
+private fun CategoryTabs(
+    categories: List<CategoryGroup>,
+    selected: CategoryGroup?,
+    modifier: Modifier,
+    onSelect: (CategoryGroup) -> Unit,
+) {
+    val tabs = remember(categories) { categories.map { TabItem(it.name, it.name.asPlainLabel()) } }
+    TabRow(
+        tabs = tabs,
+        selected = selected?.name.orEmpty(),
+        onSelect = { name -> categories.firstOrNull { it.name == name }?.let(onSelect) },
+        modifier = modifier,
+        style = TabStyle.Chips,
+        size = ChipDefaults.size,
+    )
+}
+
+private class ConfigEmpty(val title: String, val icon: String?, val state: LoadState = LoadState.Idle)
+
+private fun ConfigListEntry.isLockExempt(ownSwitch: Property<*>?): Boolean {
+    val node = (this as? ConfigListEntry.Item)?.node ?: return false
+    return when (node) {
+        is SettingNode.Leaf -> node.prop === ownSwitch || node.prop.isLockExempt()
+        is SettingNode.Accordion -> node.tree.isLockExempt()
+        is SettingNode.Submenu -> node.tree.isLockExempt()
     }
 }
 
@@ -237,6 +455,7 @@ private fun categoryProperties(categories: List<CategoryGroup>): List<Property<*
                 when (node) {
                     is SettingNode.Leaf -> listOf(node.prop)
                     is SettingNode.Accordion -> node.body + listOfNotNull(node.head)
+                    is SettingNode.Submenu -> listOfNotNull(node.head) + categoryProperties(node.content)
                 }
             }
         }
@@ -268,13 +487,14 @@ private class LocalSearchResults(
 private fun rememberSearchResults(
     index: Map<Node, SearchRow>,
     query: String,
+    scopeId: String,
     pageKey: String,
 ): LocalSearchResults {
     var results by remember(pageKey) { mutableStateOf<Map<SearchRow?, List<SearchDocument<*>>>?>(null) }
     var searchedQuery by remember(pageKey) { mutableStateOf<String?>(null) }
     LaunchedEffect(index, query, pageKey) {
         results = if (query.isBlank()) emptyMap() else withContext(Dispatchers.Default) {
-            SearchCorpus.searchGrouped(query, setOf(SearchScope.Config(pageKey))) { document ->
+            SearchCorpus.searchGrouped(query, setOf(SearchScope.Config(scopeId))) { document ->
                 (document.payload as? Node)?.let(index::get)
             }
         }
@@ -328,22 +548,30 @@ private fun filterSettingNode(
 
             if (body.isEmpty()) null else node.copy(body = body)
         }
+        is SettingNode.Submenu -> {
+            val submenuMatches = groupMatches || node.tree.matchesLocalSearch(category, subcategory, query) ||
+                node.head?.matchesLocalSearch(category, subcategory, query) == true
+            if (submenuMatches) node else {
+                val content = filterCategories(node.content, query)
+                if (content.isEmpty()) null else node.copy(content = content)
+            }
+        }
     }
 }
 
 private fun Property<*>.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
     return listOfNotNull(localizedTitle(), id, localizedDescription(), category, subcategory)
-        .any { searchMatches(it.asRenderText(), query) }
+        .any { searchMatches(it.asPlainLabel(), query) }
 }
 
 private fun Tree.matchesLocalSearch(category: String, subcategory: String, query: String): Boolean {
     return listOfNotNull(localizedTitle(), id, localizedDescription(), category, subcategory)
-        .any { searchMatches(it.asRenderText(), query) }
+        .any { searchMatches(it.asPlainLabel(), query) }
 }
 
 /** Width a slider-style control needs beside its track, or null when the control is compact */
 private fun sliderTrailingWidth(prop: Property<*>): Dp? {
-    return when (prop.getMetadata<Any?>("visualizer")) {
+    return when (prop[MetaKeys.VISUALIZER]) {
         Visualizer.SliderVisualizer::class.java, is Visualizer.SliderVisualizer -> SLIDER_SPINNER_WIDTH
         // two spinners, or a spinner plus the inherit chip
         Visualizer.RangeSliderVisualizer::class.java, is Visualizer.RangeSliderVisualizer,
@@ -352,7 +580,15 @@ private fun sliderTrailingWidth(prop: Property<*>): Dp? {
     }
 }
 
-private fun isFullWidth(prop: Property<*>): Boolean = prop.getMetadata<Boolean>("fullWidth") == true
+private fun isFullWidth(prop: Property<*>): Boolean = prop[MetaKeys.FULL_WIDTH] == true || hidesLabel(prop)
+
+private fun hidesLabel(prop: Property<*>): Boolean = prop[MetaKeys.HIDE_LABEL] == true
+
+private fun Node.nodeIcon(): Any? = when (val icon = this[MetaKeys.ICON]) {
+    is IconSpec -> icon
+    is String -> icon.takeIf { it.isNotBlank() }
+    else -> null
+}
 
 private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop) != null || isFullWidth(prop)
 
@@ -363,9 +599,10 @@ private fun isWideControl(prop: Property<*>): Boolean = sliderTrailingWidth(prop
  */
 @Composable
 internal fun ConfigListRow(entry: ConfigListEntry, compact: (SettingNode) -> Boolean = { false }) {
+    val headerModifier = if (LocalOptionEnabled.current) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
     when (entry) {
-        is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title)
-        is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title)
+        is ConfigListEntry.CategoryHeader -> CategoryHeader(entry.title, headerModifier)
+        is ConfigListEntry.SubcategoryHeader -> SubcategoryHeader(entry.title, headerModifier)
         is ConfigListEntry.Item -> SettingEntryRow(entry.node, compact(entry.node))
     }
 }
@@ -377,143 +614,484 @@ internal fun SettingEntryRow(node: SettingNode, compact: Boolean = false) {
         is SettingNode.Accordion -> key(System.identityHashCode(node.tree)) {
             AccordionRow(node, compact = compact)
         }
+        is SettingNode.Submenu -> key(System.identityHashCode(node.tree)) {
+            SubmenuRow(node, compact = compact)
+        }
     }
 }
 
 @Composable
-private fun CategoryHeader(title: String) {
-    Text(
-        title,
-        color = LocalTheme.current.textColorSecondary,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+private fun CategoryHeader(title: String, modifier: Modifier = Modifier) {
+    SectionHeader(
+        title.asPlainLabel(),
+        modifier,
+        contentPadding = PaddingValues(top = 8.dp, bottom = 2.dp),
+        textStyle = SectionHeaderDefaults.labelStyle,
+        color = OneConfigTheme.current.textColorSecondary,
+        uppercase = false,
     )
 }
 
 @Composable
-private fun SubcategoryHeader(title: String) {
+private fun SubcategoryHeader(title: String, modifier: Modifier = Modifier) {
+    val theme = LocalTheme.current
     Text(
         title,
-        color = LocalTheme.current.textColor,
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+        modifier = modifier.padding(top = 8.dp, bottom = 2.dp),
+        color = theme.textColor,
+        style = theme.typography.titleLarge,
+        legacyFormatting = true,
     )
 }
 
 @Composable
 private fun AccordionRow(node: SettingNode.Accordion, compact: Boolean = false) {
-    val theme = LocalTheme.current
-    val shape = theme.modCardShape
+    val head = node.head
+    val toggle = head?.takeIf { it === node.tree.enableToggle }
+    val searching = LocalSearchExpands.current
+    var expanded by remember(node, searching) {
+        mutableStateOf(searching || (node.tree[MetaKeys.COLLAPSED] != true && node.head?.shown() != false))
+    }
+    var headOn by remember(node) { mutableStateOf(head?.shown() == true) }
+    if (head != null && head.isBooleanHead()) {
+        DisposableEffect(head, searching) {
+            val boolHead = Property.recast<Boolean>(head)
+            val listener = Predicate<Boolean> { value ->
+                headOn = value == true
+                if (head.hasVisualizer() || toggle != null) expanded = value == true || searching
+                false
+            }
+            boolHead.addCallback(listener)
+            onDispose { boolHead.removeCallback(listener) }
+        }
+    }
+    val headDisplay = head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
+    val switchHead = head != null && isSwitchHead(node.tree, head)
+    if (switchHead && headDisplay == Property.Display.HIDDEN) return
+    val enabled = !switchHead || (headOn && headDisplay != Property.Display.DISABLED)
+    val jumpTarget = LocalJumpHighlight.current?.target
+    LaunchedEffect(jumpTarget) {
+        if (jumpTarget != null && node.body.any { it === jumpTarget }) expanded = true
+    }
 
-    var expanded by remember(node) {
-        mutableStateOf(
-            if (node.tree.getMetadata<Boolean>("collapsed") == true) false
-            else node.head?.shown() != false
+    GroupCard(Modifier.jumpHighlightOf(node.tree, node.head)) {
+        GroupHeader(
+            tree = node.tree,
+            head = head,
+            expanded = expanded,
+            compact = compact,
+            onHeadChange = { expanded = it || searching; headOn = it },
+            onClick = { expanded = !expanded },
+        )
+
+        AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                AccordionOptionsGrid(node.body, compact = compact, enabled = enabled)
+            }
+        }
+    }
+}
+
+private const val FOLD_STIFFNESS = Spring.StiffnessMediumLow
+
+private fun foldEnter() = Motion.enter(
+    expandVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
+)
+
+private fun foldExit() = Motion.exit(
+    shrinkVertically(spring(stiffness = FOLD_STIFFNESS, visibilityThreshold = IntSize.VisibilityThreshold))
+)
+
+/**
+ * A card whose header folds [body] open and closed, or which follows [expanded] alone with no arrow when
+ * [onExpandedChange] is null
+ *
+ * [titleActions] sit just after the title
+ */
+@Composable
+internal fun Accordion(
+    title: Any,
+    expanded: Boolean,
+    onExpandedChange: ((Boolean) -> Unit)?,
+    checked: Boolean? = null,
+    onCheckedChange: (Boolean) -> Unit = {},
+    mixed: Boolean = false,
+    headEnabled: Boolean = true,
+    description: Any? = null,
+    icon: String? = null,
+    titleActions: @Composable RowScope.() -> Unit = {},
+    body: @Composable (enabled: Boolean) -> Unit,
+) {
+    Column(Modifier.optionCard()) {
+        CardHeader(
+            title,
+            expanded,
+            onExpandedChange?.let { change -> { change(!expanded) } },
+            description,
+            icon,
+            titleActions,
+            dimmed = !headEnabled,
+        ) {
+            if (checked != null) Switch(checked, onCheckedChange, enabled = headEnabled, stateLabel = true, mixed = mixed)
+        }
+        AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
+            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body((checked != false || mixed) && headEnabled) }
+        }
+    }
+}
+
+@Composable
+private fun CardHeader(
+    title: Any,
+    expanded: Boolean,
+    onToggle: (() -> Unit)?,
+    description: Any? = null,
+    icon: String? = null,
+    titleActions: @Composable RowScope.() -> Unit = {},
+    modifier: Modifier = Modifier,
+    dimmed: Boolean = false,
+    trailing: @Composable () -> Unit = {},
+) {
+    val labelAlpha = if (dimmed) LocalTheme.current.disabledAlpha else 1f
+    SectionHeader(
+        title.asPlainLabel(),
+        modifier,
+        eyebrow = false,
+        onToggle = onToggle,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        title = { _, _ ->
+            HeaderLabel(title, description, Modifier.weight(1f).alpha(labelAlpha), titleActions) {
+                icon?.let { Icon(it, color = LocalTheme.current.textColor, modifier = Modifier.size(32.dp)) }
+            }
+        },
+        trailing = {
+            Row(
+                Modifier.padding(start = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                trailing()
+                if (onToggle != null) SectionChevron(expanded)
+            }
+        },
+    )
+}
+
+@Composable
+private fun HeaderLabel(
+    title: Any,
+    description: Any?,
+    modifier: Modifier,
+    titleActions: @Composable RowScope.() -> Unit = {},
+    icon: @Composable () -> Unit,
+) {
+    val theme = LocalTheme.current
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        icon()
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(title.asStyledLabel(), color = theme.textColor, style = rememberTitleStyle())
+                titleActions()
+            }
+            description?.let { Text(it.asStyledLabel(), color = theme.textColorSecondary, style = descriptionStyle()) }
+        }
+    }
+}
+
+@Composable
+private fun SubmenuRow(node: SettingNode.Submenu, compact: Boolean = false) {
+    val configId = LocalConfigId.current
+    if (configId == null) {
+        SubmenuAccordionRow(node, compact)
+        return
+    }
+
+    val navigation = LocalShell.current.navigation
+    GroupCard(Modifier.jumpHighlightOf(node.tree, node.head)) {
+        GroupHeader(
+            tree = node.tree,
+            head = node.head,
+            expanded = false,
+            compact = compact,
+            onHeadChange = {},
+            onClick = { navigation.navigate(ModConfigRoute(configId, submenu = node.path)) },
         )
     }
-    val headerInteraction = rememberInteractionSource()
-    val chevronRotation by animateFloatAsState(if (expanded) 180f else 90f)
-    val headDisplay = node.head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
+}
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .hoverGlow(shape)
-            .background(theme.modCardBackground, shape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, shape)
-            .drawWithCache {
-                val color = theme.textColor
-                val gradient = Brush.radialGradient(
-                    colors = listOf(color.copy(0f), color.copy(0.02f), color.copy(0.05f)),
-                    center = Offset(size.width / 2f, 0f),
-                    radius = size.width * 0.8f,
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .onClick(headerInteraction) { expanded = !expanded }
-                .alpha(displayAlpha(headDisplay))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                node.tree.getMetadata<String>("icon")?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp)) }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        node.tree.localizedTitle(),
-                        color = theme.textColor,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    node.tree.localizedDescription()?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = 13.sp)
-                    }
-                }
-            }
+/** A submenu without a config page to open, which expands in place with everything nested inside it */
+@Composable
+private fun SubmenuAccordionRow(node: SettingNode.Submenu, compact: Boolean) {
+    val toggle = node.head?.takeIf { it === node.tree.enableToggle }
+    val searching = LocalSearchExpands.current
+    var expanded by remember(node, searching) { mutableStateOf(searching || node.head?.shown() != false) }
+    val groupOff = rememberSwitchValue(toggle) == false
+    val revision = rememberDisplayRevision(node.content)
+    val entries = remember(node, revision) {
+        node.content.mapNotNull(::filterHiddenNodes).flatMap(::flattenEntries)
+    }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (node.head != null) {
-                    var headChecked by remember(node) { mutableStateOf(node.head.shown() == true) }
-                    DisposableEffect(node.head) {
-                        val listener = Predicate<Boolean> { value -> headChecked = value == true; false }
-                        node.head.addCallback(listener)
-                        onDispose { node.head.removeCallback(listener) }
-                    }
-                    Box(Modifier.blockInteraction(headDisplay == Property.Display.DISABLED)) {
-                        SwitchControl(headChecked) {
-                            headChecked = it
-                            node.head.set(it)
-                            expanded = it
-                        }
-                    }
-                }
-                Icon(
-                    "up",
-                    color = theme.textColorSecondary,
-                    modifier = Modifier
-                        .size(12.dp)
-                        .rotate(chevronRotation),
-                )
-            }
-        }
+    GroupCard(Modifier.jumpHighlightOf(node.tree, node.head)) {
+        GroupHeader(
+            tree = node.tree,
+            head = node.head,
+            expanded = expanded,
+            compact = compact,
+            onHeadChange = { if (toggle != null) expanded = it || searching },
+            onClick = { expanded = !expanded },
+        )
 
-        AnimatedVisibility(
-            visible = expanded,
-            enter = ReducedMotion.enter(expandVertically()),
-            exit = ReducedMotion.exit(shrinkVertically()),
-        ) {
-            Box(
+        AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
-                        brush = remember(theme.borderColor) {
-                            Brush.verticalGradient(listOf(theme.borderColor.copy(0f), theme.borderColor))
-                        },
-                        shape = shape
-                    )
-                    .padding(bottom = 12.dp)
+                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP),
             ) {
-                AccordionOptionsGrid(node.body, compact = compact)
+                CompositionLocalProvider(LocalOptionEnabled provides (LocalOptionEnabled.current && !groupOff)) {
+                    entries.forEach { ConfigListRow(it) { compact } }
+                }
             }
         }
     }
+}
+
+@Composable
+private fun GroupCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.optionCard().then(modifier), content = content)
+}
+
+/**
+ * The header row of an accordion or submenu
+ *
+ * [onHeadChange] is told what a switch of an old style head was flipped to
+ */
+@Composable
+private fun GroupHeader(
+    tree: Tree,
+    head: Property<*>?,
+    expanded: Boolean,
+    compact: Boolean,
+    onHeadChange: (Boolean) -> Unit,
+    onClick: () -> Unit,
+) {
+    DecoratedGroupHeader(TreeHeaderDecorators.all(), 0, tree) {
+        GroupHeaderContent(tree, head, expanded, compact, onHeadChange, onClick)
+    }
+}
+
+@Composable
+private fun DecoratedGroupHeader(decorators: List<TreeHeaderDecorator>, index: Int, tree: Tree, content: @Composable () -> Unit) {
+    val decorator = decorators.getOrNull(index) ?: return content()
+    decorator.Decorate(tree) { DecoratedGroupHeader(decorators, index + 1, tree, content) }
+}
+
+private fun isSwitchHead(tree: Tree, head: Property<*>): Boolean =
+    !head.hasVisualizer() || head === tree.enableToggle
+
+@Composable
+private fun rememberSwitchValue(prop: Property<*>?): Boolean? {
+    if (prop == null || !prop.isBooleanHead()) return null
+    return key(System.identityHashCode(prop)) {
+        var on by remember { mutableStateOf(prop.shown() == true) }
+        DisposableEffect(Unit) {
+            val bool = Property.recast<Boolean>(prop)
+            val listener = Predicate<Boolean> { value -> on = value == true; false }
+            bool.addCallback(listener)
+            onDispose { bool.removeCallback(listener) }
+        }
+        on
+    }
+}
+
+@Composable
+private fun GroupHeaderContent(
+    tree: Tree,
+    head: Property<*>?,
+    expanded: Boolean,
+    compact: Boolean,
+    onHeadChange: (Boolean) -> Unit,
+    onClick: () -> Unit,
+) {
+    val interaction = rememberInteractionSource()
+    val headDisplay = head?.let { rememberDisplay(it) } ?: Property.Display.SHOWN
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
+    val optionWidth = LocalOptionWidth.current
+    val titleStyle = rememberTitleStyle()
+
+    val isHovered by interaction.collectIsHoveredAsState()
+    val groupEnabled = LocalOptionEnabled.current
+    val headLocked = headDisplay == Property.Display.DISABLED || !groupEnabled
+    val labelModifier = if (groupEnabled) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
+    val showActionButton = OneConfigConfig.showOptionActionButtons && !headLocked
+    val menu = head?.let { rememberOptionMenu(it) }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .hoverable(interaction)
+            .then(if (menu != null) Modifier.optionContextMenu(menu, enabled = !headLocked) else Modifier)
+            .oneConfigClickable(tree.localizedTitle().asPlainLabel(), onClick, indication = false, interactionSource = interaction)
+    ) {
+        val switch = head != null && isSwitchHead(tree, head)
+        val control = head?.takeIf { switch || headDisplay != Property.Display.HIDDEN }
+        val stacked = control != null && !switch && (compact || isFullWidth(control) || run {
+            val iconWidth = if (tree.nodeIcon() != null) OPTION_ICON_WIDTH else 0.dp
+            val reserved = optionReservedWidth(control, optionWidth) + iconWidth + GROUP_CHEVRON_WIDTH
+            measurer.titleWidth(tree, titleStyle, density) + reserved > maxWidth
+        })
+        val headControl = @Composable {
+            if (control != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (showActionButton && menu != null) OptionMoreButton(menu, visible = isHovered)
+                    HeadControl(control, !headLocked, switch, onHeadChange)
+                }
+            }
+        }
+
+        if (stacked) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    GroupLabel(tree, Modifier.weight(1f).then(labelModifier))
+                    SectionChevron(expanded)
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { headControl() }
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                GroupLabel(tree, Modifier.weight(1f).then(labelModifier))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    headControl()
+                    SectionChevron(expanded)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupLabel(tree: Tree, modifier: Modifier) {
+    HeaderLabel(tree.localizedTitle(), tree.localizedDescription(), modifier) {
+        tree.nodeIcon()?.let { NodeIcon(it, Modifier.size(32.dp)) }
+    }
+}
+
+@Composable
+private fun NodeIcon(icon: Any, modifier: Modifier) {
+    if (icon is IconSpec) SpriteIcon(icon, modifier)
+    else Icon(icon.toString(), color = LocalTheme.current.textColor, modifier = modifier)
+}
+
+private object SpriteSheets {
+    private class Entry(val bitmap: ImageBitmap?)
+
+    private val cache = ConcurrentHashMap<String, Entry>()
+
+    fun peek(path: String): ImageBitmap? = cache[path]?.bitmap
+
+    fun load(path: String, loader: ClassLoader?): ImageBitmap? = cache.getOrPut(path) {
+        Entry(runCatching { read(path, loader)?.let(::decode) }.getOrNull())
+    }.bitmap
+
+    private fun read(path: String, loader: ClassLoader?): ByteArray? {
+        File(path).takeIf { it.isAbsolute && it.isFile }?.let { return it.readBytes() }
+        val stream = loader?.getResourceAsStream(path.removePrefix("/"))
+            ?: SpriteSheets::class.java.getResourceAsStream(if (path.startsWith("/")) path else "/$path")
+        return stream?.use { it.readBytes() }
+    }
+
+    private fun decode(bytes: ByteArray): ImageBitmap? {
+        val buffered = runCatching { ImageIO.read(ByteArrayInputStream(bytes)) }.getOrNull()
+            ?: return PolyBitmap.decode(bytes)?.asComposeImageBitmap()
+        return PolyBitmap.fromAwt(buffered).asComposeImageBitmap()
+    }
+}
+
+@Composable
+private fun SpriteIcon(spec: IconSpec, modifier: Modifier) {
+    val loader = remember { Thread.currentThread().contextClassLoader ?: SpriteSheets::class.java.classLoader }
+    val bitmap by produceState(SpriteSheets.peek(spec.path), spec.path) {
+        value = SpriteSheets.peek(spec.path)
+        if (value == null) value = withContext(Dispatchers.IO) { SpriteSheets.load(spec.path, loader) }
+    }
+    Canvas(modifier) {
+        val image = bitmap ?: return@Canvas
+        val scaleX = if (spec.sheetWidth > 0) image.width.toFloat() / spec.sheetWidth else 1f
+        val scaleY = if (spec.sheetHeight > 0) image.height.toFloat() / spec.sheetHeight else 1f
+        val srcX = (spec.x * scaleX).roundToInt()
+        val srcY = (spec.y * scaleY).roundToInt()
+        val srcW = min((spec.width * scaleX).roundToInt(), image.width - srcX)
+        val srcH = min((spec.height * scaleY).roundToInt(), image.height - srcY)
+        if (srcW <= 0 || srcH <= 0) return@Canvas
+        val fit = min(size.width / srcW, size.height / srcH)
+        val dstW = (srcW * fit).roundToInt()
+        val dstH = (srcH * fit).roundToInt()
+        drawImage(
+            image,
+            srcOffset = IntOffset(srcX, srcY),
+            srcSize = IntSize(srcW, srcH),
+            dstOffset = IntOffset(((size.width - dstW) / 2).roundToInt(), ((size.height - dstH) / 2).roundToInt()),
+            dstSize = IntSize(dstW, dstH),
+            filterQuality = if (spec.pixelated) FilterQuality.None else FilterQuality.Medium,
+        )
+    }
+}
+
+@Composable
+private fun HeadControl(head: Property<*>, enabled: Boolean, switch: Boolean, onHeadChange: (Boolean) -> Unit) {
+    CompositionLocalProvider(LocalOptionEnabled provides enabled) {
+        when {
+            switch -> HeadSwitch(Property.recast(head), enabled, onHeadChange)
+            isFullWidth(head) -> BoxWithConstraints(Modifier.fillMaxWidth()) {
+                CompositionLocalProvider(LocalOptionWidth provides maxWidth, LocalOptionWidthOrNull provides maxWidth) { Option(head) }
+            }
+            else -> Option(head)
+        }
+    }
+}
+
+@Composable
+private fun HeadSwitch(head: Property<Boolean>, enabled: Boolean, onHeadChange: (Boolean) -> Unit) {
+    var checked by remember(head) { mutableStateOf(head.shown() == true) }
+    DisposableEffect(head) {
+        val listener = Predicate<Boolean> { value -> checked = value == true; false }
+        head.addCallback(listener)
+        onDispose { head.removeCallback(listener) }
+    }
+    Switch(
+        checked,
+        {
+            checked = it
+            head.set(it)
+            onHeadChange(it)
+        },
+        enabled = enabled,
+        stateLabel = true,
+    )
 }
 
 @Composable
@@ -534,40 +1112,30 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         return
     }
 
-    val theme = LocalTheme.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(displayAlpha(display))
-            .hoverGlow(theme.modCardShape)
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, remember(theme.borderColor) {
-                Brush.verticalGradient(listOf(theme.borderColor, theme.borderColor.copy(0f)))
-            }, theme.modCardShape)
-    ) {
-        val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f)
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
+    Box(Modifier.optionCard().jumpHighlightOf(prop)) {
         SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
     }
 }
 
+/** The card behind an option or accordion */
 @Composable
-private fun AccordionSettingRow(prop: Property<*>, display: Property.Display, modifier: Modifier, compact: Boolean = false) {
-    Box(modifier.alpha(displayAlpha(display))) {
-        SettingContent(prop, nested = true, compact = compact, enabled = display != Property.Display.DISABLED)
+private fun Modifier.optionCard(): Modifier = fillMaxWidth().cardSurface(LocalTheme.current.modCardShape)
+
+@Composable
+private fun AccordionSettingRow(
+    prop: Property<*>,
+    display: Property.Display,
+    groupEnabled: Boolean,
+    modifier: Modifier,
+    compact: Boolean = false,
+) {
+    val requester = remember { BringIntoViewRequester() }
+    val jumpTarget = LocalJumpHighlight.current?.target
+    LaunchedEffect(jumpTarget) {
+        if (jumpTarget === prop) requester.bringIntoView()
+    }
+    Box(modifier.bringIntoViewRequester(requester).jumpHighlightOf(prop)) {
+        SettingContent(prop, nested = true, compact = compact, enabled = groupEnabled && display != Property.Display.DISABLED)
     }
 }
 
@@ -585,11 +1153,13 @@ private val OPTION_ROW_GAP = 8.dp
 
 private val OPTION_CHROME_WIDTH = 108.dp
 private val OPTION_ICON_WIDTH = 44.dp
-private val OPTION_ACTION_WIDTH = 24.dp + 16.dp
+private val OPTION_ACTION_WIDTH = ControlDefaults.metrics(ControlSize.Compact).height + 16.dp
 
 private val OPTION_ROW_CHROME = 32.dp + 16.dp
 
 private val SLIDER_SPINNER_WIDTH = 80.dp + 16.dp
+
+private val GROUP_CHEVRON_WIDTH = 12.dp + 12.dp
 
 /**
  * Space a control needs beside its label. Custom visualizers wider than a default control
@@ -600,8 +1170,23 @@ private fun optionReservedWidth(prop: Property<*>, optionWidth: Dp): Dp {
         ?: prop.getMetadata<Number>("controlWidth")?.let { it.toFloat().dp + OPTION_ROW_CHROME }
         ?: (if (prop.getMetadata<Any>("swatch").let { it != null && it != false }) 24.dp + OPTION_ROW_CHROME else null)
         ?: OPTION_CHROME_WIDTH
-    return control + (if (prop.getMetadata<String>("icon") != null) OPTION_ICON_WIDTH else 0.dp) +
+    return control + (if (prop.nodeIcon() != null) OPTION_ICON_WIDTH else 0.dp) +
         (if (OneConfigConfig.showOptionActionButtons) OPTION_ACTION_WIDTH else 0.dp)
+}
+
+@Composable
+private fun rememberTitleStyle(): TextStyle = LocalTheme.current.typography.headingMedium
+
+@Composable
+private fun descriptionStyle(): TextStyle = LocalTheme.current.typography.labelRegular
+
+private fun Node.rowTitle(): Any =
+    if (title == null && getMetadata<String>("titleKey").isNullOrBlank()) "" else localizedTitle()
+
+private fun TextMeasurer.titleWidth(node: Node, style: TextStyle, density: Density): Dp {
+    return with(density) {
+        measure(node.rowTitle().asStyledLabel(), style = style, softWrap = false, maxLines = 1).size.width.toDp()
+    }
 }
 
 private sealed interface OptionRow {
@@ -628,7 +1213,7 @@ private inline fun buildOptionRows(body: List<Property<*>>, isWide: (Property<*>
 }
 
 @Composable
-private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
+private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean, enabled: Boolean) {
     val visible = rememberVisibleOptions(body)
     val displays = remember(visible) { visible.toMap() }
     val visibleProps = remember(visible) { visible.map { it.first } }
@@ -636,32 +1221,21 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
     if (compact) {
         Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
             visible.forEach { (prop, display) ->
-                AccordionSettingRow(prop, display, Modifier.fillMaxWidth(), compact = true)
+                AccordionSettingRow(prop, display, enabled, Modifier.fillMaxWidth(), compact = isWideControl(prop))
             }
         }
         return
     }
 
-    val theme = LocalTheme.current
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
     val optionWidth = LocalOptionWidth.current
+    val titleStyle = rememberTitleStyle()
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val columnWidth = (maxWidth - OPTION_ROW_GAP) / 2
-        val titleStyle = remember(theme) {
-            TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
-        }
         val rows = remember(visibleProps, columnWidth, optionWidth, titleStyle, OneConfigConfig.showOptionActionButtons) {
             buildOptionRows(visibleProps) { prop ->
-                val titleWidth = with(density) {
-                    measurer.measure(
-                        prop.localizedTitle().asRenderText(),
-                        style = titleStyle,
-                        softWrap = false,
-                        maxLines = 1,
-                    ).size.width.toDp()
-                }
-                titleWidth + optionReservedWidth(prop, optionWidth) > columnWidth
+                measurer.titleWidth(prop, titleStyle, density) + optionReservedWidth(prop, optionWidth) > columnWidth
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
@@ -669,17 +1243,17 @@ private fun AccordionOptionsGrid(body: List<Property<*>>, compact: Boolean) {
                 when (row) {
                     is OptionRow.Single -> {
                         if (row.wide) {
-                            AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.fillMaxWidth())
+                            AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.fillMaxWidth())
                         } else {
                             Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                                AccordionSettingRow(row.prop, displays.getValue(row.prop), Modifier.weight(1f))
+                                AccordionSettingRow(row.prop, displays.getValue(row.prop), enabled, Modifier.weight(1f))
                                 Spacer(Modifier.weight(1f))
                             }
                         }
                     }
                     is OptionRow.Pair -> Row(horizontalArrangement = Arrangement.spacedBy(OPTION_ROW_GAP)) {
-                        AccordionSettingRow(row.first, displays.getValue(row.first), Modifier.weight(1f))
-                        AccordionSettingRow(row.second, displays.getValue(row.second), Modifier.weight(1f))
+                        AccordionSettingRow(row.first, displays.getValue(row.first), enabled, Modifier.weight(1f))
+                        AccordionSettingRow(row.second, displays.getValue(row.second), enabled, Modifier.weight(1f))
                     }
                 }
             }
@@ -702,137 +1276,147 @@ internal fun rememberDisplay(prop: Property<*>): Property.Display {
     }
 }
 
+@Composable
 internal fun displayAlpha(display: Property.Display): Float {
-    return if (display == Property.Display.DISABLED) 0.65f else 1f
+    return if (display == Property.Display.DISABLED) LocalTheme.current.disabledAlpha else 1f
 }
 
 @Composable
 private fun SettingContent(prop: Property<*>, nested: Boolean = false, compact: Boolean = false, enabled: Boolean = true) {
-    val theme = LocalTheme.current
-    val verticalPadding = if (nested) 0.dp else 12.dp
+    val active = enabled && LocalOptionEnabled.current
+    CompositionLocalProvider(LocalOptionEnabled provides active) {
+        SettingContentBody(prop, nested, compact, active)
+    }
+}
 
-    val visualizer = prop.getMetadata<Any?>("visualizer")
+@Composable
+private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Boolean, enabled: Boolean) {
+    val verticalPadding = if (nested) 0.dp else 12.dp
+    val labelModifier = if (enabled) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
+
+    val visualizer = prop[MetaKeys.VISUALIZER]
     if (visualizer == Visualizer.InfoVisualizer::class.java || visualizer is Visualizer.InfoVisualizer) {
-        Row(modifier = Modifier.fillMaxWidth().blockInteraction(!enabled).padding(horizontal = 16.dp, vertical = verticalPadding)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = verticalPadding)) {
             Option(prop)
         }
         return
     }
 
-    var menuOpen by remember(System.identityHashCode(prop)) { mutableStateOf(false) }
-    var menuOffset by remember(System.identityHashCode(prop)) { mutableStateOf(IntOffset.Zero) }
-    val rowOrigin = remember(System.identityHashCode(prop)) { LayoutRef(Offset.Zero) }
-    val actionMenuOffset = remember(System.identityHashCode(prop)) { LayoutRef(IntOffset.Zero) }
+    val menu = rememberOptionMenu(prop)
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons && enabled
-    LaunchedEffect(enabled) { if (!enabled) menuOpen = false }
-    fun openMenuFromActionButton() {
-        menuOffset = actionMenuOffset.value
-        menuOpen = true
-    }
 
-    val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    val optionWidth = LocalOptionWidth.current
-    val titleStyle = remember(theme) {
-        TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = theme.typography.family)
-    }
+    val titleStyle = rememberTitleStyle()
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(rowInteraction)
-            .onGloballyPositioned { rowOrigin.value = it.positionInRoot() }
-            .pointerInput(prop, enabled) {
-                if (!enabled) return@pointerInput
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed && !KeybindRecordingBus.isRecording) {
-                            val pos = event.changes.first().position
-                            menuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
-                            menuOpen = true
-                            event.changes.forEach { it.consume() }
-                        }
-                    }
-                }
-            }
+            .optionContextMenu(menu, enabled)
     ) {
         val actionButton = @Composable {
-            if (showActionButton) {
-                OptionActionButton(
-                    visible = isRowHovered || menuOpen,
-                    modifier = Modifier.onGloballyPositioned {
-                        val pos = it.positionInRoot() - rowOrigin.value
-                        actionMenuOffset.value = IntOffset(pos.x.roundToInt(), (pos.y + it.size.height).roundToInt())
-                    },
-                    onClick = ::openMenuFromActionButton,
-                )
-            }
+            if (showActionButton) OptionMoreButton(menu, visible = isRowHovered)
         }
-        val fullWidth = isFullWidth(prop)
-        val stacked = compact || fullWidth || run {
-            val titleWidth = with(density) {
-                measurer.measure(
-                    prop.localizedTitle().asRenderText(),
-                    style = titleStyle,
-                    softWrap = false,
-                    maxLines = 1,
-                ).size.width.toDp()
+        if (isFullWidth(prop)) {
+            val fullControl = @Composable { modifier: Modifier ->
+                BoxWithConstraints(modifier) {
+                    CompositionLocalProvider(LocalOptionWidth provides maxWidth, LocalOptionWidthOrNull provides maxWidth) { Option(prop) }
+                }
             }
-            titleWidth + optionReservedWidth(prop, optionWidth) > maxWidth
-        }
-
-        if (stacked) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .blockInteraction(!enabled)
                     .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                if (fullWidth) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f))
+                if (hidesLabel(prop)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        fullControl(Modifier.weight(1f))
                         actionButton()
-                    }
-                    BoxWithConstraints(Modifier.fillMaxWidth()) {
-                        CompositionLocalProvider(LocalOptionWidth provides maxWidth) { Option(prop) }
                     }
                 } else {
-                    SettingLabel(prop, nested = nested)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingLabel(prop, nested = nested, modifier = Modifier.weight(1f).then(labelModifier))
                         actionButton()
-                        Option(prop)
                     }
+                    fullControl(Modifier.fillMaxWidth())
                 }
             }
         } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .blockInteraction(!enabled)
-                    .padding(horizontal = 16.dp, vertical = verticalPadding),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                SettingLabel(
-                    prop = prop,
-                    nested = nested,
-                    modifier = Modifier.weight(1f),
-                )
+            val title = prop.rowTitle().asStyledLabel()
+            val titleWidth = remember(title, titleStyle, measurer) {
+                measurer.measure(title, style = titleStyle, softWrap = false, maxLines = 1).size.width
+            }
+            LabelledOptionRow(
+                titleWidth = titleWidth,
+                leading = if (prop.nodeIcon() != null) OPTION_ICON_WIDTH else 0.dp,
+                stack = compact,
+                verticalPadding = verticalPadding,
+                bottomPadding = if (nested) 8.dp else verticalPadding,
+                modifier = Modifier.fillMaxWidth(),
+                label = { SettingLabel(prop, nested = nested, modifier = labelModifier) },
+                actionButton = actionButton,
+                control = { Option(prop) },
+            )
+        }
+    }
+}
 
-                actionButton()
-                Option(prop)
+/**
+ * An option's [label] beside its [control], or above it when the title would not fit on one line next to the
+ * control as it is actually laid out, or whenever [stack] asks for it
+ *
+ * [titleWidth] is the title's width on one line in pixels and [leading] what the label puts before it, such as an icon
+ */
+@Composable
+private fun LabelledOptionRow(
+    titleWidth: Int,
+    leading: Dp,
+    stack: Boolean,
+    verticalPadding: Dp,
+    bottomPadding: Dp,
+    modifier: Modifier,
+    label: @Composable () -> Unit,
+    actionButton: @Composable () -> Unit,
+    control: @Composable () -> Unit,
+) {
+    Layout(listOf(label, actionButton, control), modifier) { (labels, actions, controls), constraints ->
+        val side = 16.dp.roundToPx()
+        val top = verticalPadding.roundToPx()
+        val width = constraints.maxWidth
+        val inner = (width - side * 2).coerceAtLeast(0)
+        val loose = Constraints(maxWidth = inner)
+        val ctrl = controls.firstOrNull()?.measure(loose)
+        val action = actions.firstOrNull()?.measure(loose)
+        val ctrlWidth = ctrl?.width ?: 0
+
+        val besideGap = 16.dp.roundToPx()
+        val beside = inner - ctrlWidth - besideGap - (action?.let { it.width + besideGap } ?: 0)
+        if (!stack && titleWidth + leading.roundToPx() <= beside) {
+            val lbl = labels.first().measure(Constraints.fixedWidth(beside.coerceAtLeast(0)))
+            // as tall as a dropdown even when the control is a smaller switch or checkbox
+            val rowHeight = maxOf(lbl.height, action?.height ?: 0, ctrl?.height ?: 0, OptionControlHeight.roundToPx())
+            layout(width, rowHeight + top * 2) {
+                fun Placeable.center(x: Int) = place(x, top + (rowHeight - height) / 2)
+                lbl.center(side)
+                action?.center(side + beside + besideGap)
+                ctrl?.center(width - side - ctrlWidth)
+            }
+        } else {
+            val lbl = labels.first().measure(loose)
+            val belowGap = 10.dp.roundToPx()
+            val controlsGap = 12.dp.roundToPx()
+            val rowHeight = maxOf(action?.height ?: 0, ctrl?.height ?: 0)
+            val rowTop = top + lbl.height + belowGap
+            layout(width, rowTop + rowHeight + bottomPadding.roundToPx()) {
+                lbl.place(side, top)
+                val ctrlX = width - side - ctrlWidth
+                ctrl?.place(ctrlX, rowTop + (rowHeight - ctrl.height) / 2)
+                action?.place(ctrlX - (if (ctrl != null) controlsGap else 0) - action.width, rowTop + (rowHeight - action.height) / 2)
             }
         }
-
-        OptionContextMenu(prop, menuOpen, menuOffset, onDismiss = { menuOpen = false })
     }
 }
 
@@ -848,28 +1432,16 @@ private fun SettingLabel(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        prop.getMetadata<String>("icon")?.let {
-            Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
-        }
+        prop.nodeIcon()?.let { NodeIcon(it, Modifier.size(32.dp)) }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            val titleStyle = rememberTitleStyle()
             val title = @Composable {
-                Text(
-                    prop.localizedTitle(),
-                    color = theme.textColor,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+                Text(prop.rowTitle().asStyledLabel(), color = theme.textColor, style = titleStyle)
             }
             val description = prop.localizedDescription()?.takeUnless { it.isEmptyText() }
 
             if (nested && description != null) {
-                Tooltip(
-                    text = {
-                        Text(description, color = theme.textColor, fontSize = 12.sp)
-                    },
-                    modifier = Modifier.widthIn(max = 260.dp),
-                    anchor = Alignment.TopCenter,
-                ) {
+                TooltipBox(description.asStyledLabel(), maxWidth = TooltipDefaults.descriptionMaxWidth) {
                     title()
                 }
             } else {
@@ -877,10 +1449,18 @@ private fun SettingLabel(
             }
 
             if (!nested) {
-                description?.let { Text(it, color = theme.textColorSecondary, fontSize = 13.sp) }
+                description?.let { Text(it.asStyledLabel(), color = theme.textColorSecondary, style = descriptionStyle()) }
             }
         }
     }
+}
+
+/** Whether [tree] has any custom options besides the built-in ones */
+@Composable
+internal fun rememberHasHudOptions(tree: Tree?): Boolean {
+    val categories = remember(tree) { tree?.let(::buildCategories).orEmpty() }
+    val revision = rememberDisplayRevision(categories)
+    return remember(categories, revision) { categories.any { filterHiddenNodes(it) != null } }
 }
 
 @Composable
@@ -888,60 +1468,68 @@ fun HudConfigScreen(tree: Tree, searchQuery: String) {
     key(System.identityHashCode(tree)) { HudConfigScreenContent(tree, searchQuery) }
 }
 
+/** One option laid out the way [HudConfigScreen] lays out the options of a HUD */
+@Composable
+fun HudOptionRow(prop: Property<*>) {
+    CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
+        SettingRow(prop, compact = isWideControl(prop))
+    }
+}
+
 @Composable
 private fun HudConfigScreenContent(tree: Tree, searchQuery: String) {
-    val categories = remember(tree) { buildCategories(tree) { !isHudInternal(it) } }
-    var selectedCategory by remember(tree) { mutableStateOf(categories.firstOrNull()) }
+    val categories = remember(tree) { buildCategories(tree) }
+    HudCategoryList(categories, searchQuery)
+}
 
+/**
+ * The category chips and rows of [categories], laid out the way the HUD editor lays out the options of a HUD
+ *
+ * [row] draws one entry, which a caller replaces to draw its own options
+ */
+@Composable
+internal fun HudCategoryList(
+    categories: List<CategoryGroup>,
+    searchQuery: String,
+    row: @Composable (ConfigListEntry) -> Unit = { ConfigListRow(it, ::hasWideControl) },
+) {
     val revision = rememberDisplayRevision(categories)
-    val entries = remember(categories, selectedCategory, searchQuery, revision) {
+    val visibleCategories = remember(categories, revision) { categories.filter { filterHiddenNodes(it) != null } }
+    var chosenCategory by remember(categories) { mutableStateOf<CategoryGroup?>(null) }
+    val selectedCategory = chosenCategory?.takeIf { it in visibleCategories } ?: visibleCategories.firstOrNull()
+    val entries = remember(visibleCategories, selectedCategory, searchQuery, revision) {
         if (searchQuery.isEmpty()) {
             selectedCategory?.let(::filterHiddenNodes)?.let(::flattenEntries).orEmpty()
         } else {
-            flattenSearchEntries(filterCategories(categories, searchQuery).mapNotNull(::filterHiddenNodes))
+            flattenSearchEntries(filterCategories(visibleCategories, searchQuery).mapNotNull(::filterHiddenNodes))
         }
     }
-    // the panel's built-in sections may still match so an empty search result here stays silent
-    if (entries.isEmpty() && searchQuery.isNotEmpty()) return
+    // empty draws nothing but stays composed, so the display listeners above notice hidden options appearing
+    if (entries.isEmpty()) return
 
-    CompositionLocalProvider(LocalOptionWidth provides 220.dp) {
+    CompositionLocalProvider(
+        LocalOptionWidth provides 210.dp,
+        LocalOptionWidthOrNull provides 210.dp,
+        LocalSearchExpands provides searchQuery.isNotEmpty(),
+    ) {
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
-        if (searchQuery.isEmpty() && categories.size > 1) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                categories.forEach { category ->
-                    Chip(
-                        label = category.name,
-                        selected = selectedCategory == category,
-                        onClick = { selectedCategory = category }
-                    )
-                }
-            }
-        }
-
-        if (entries.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No settings available.", color = LocalTheme.current.textColorSecondary)
-            }
-            return@Column
+        if (searchQuery.isEmpty() && visibleCategories.size > 1) {
+            CategoryTabs(visibleCategories, selectedCategory, Modifier) { chosenCategory = it }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            entries.forEach { entry -> ConfigListRow(entry, ::hasWideControl) }
+            entries.forEach { entry -> row(entry) }
         }
     }
     }
 }
 
-private fun isHudInternal(node: Node): Boolean {
-    return node.getMetadata<Any?>("hudInternal") != null
-}
-
-/** The HUD editor's column is narrow so any row holding a wide control stacks its label above it */
+/**
+ * The HUD editor's column is narrow so any row holding a wide control stacks its label above it, and an accordion
+ * holding one lists its options in a single column where only those rows stack
+ */
 private fun hasWideControl(node: SettingNode): Boolean = when (node) {
     is SettingNode.Leaf -> isWideControl(node.prop)
-    is SettingNode.Accordion -> node.body.any(::isWideControl)
+    is SettingNode.Accordion -> node.body.any(::isWideControl) || node.head?.let(::isWideControl) == true
+    is SettingNode.Submenu -> node.head?.let(::isWideControl) == true
 }

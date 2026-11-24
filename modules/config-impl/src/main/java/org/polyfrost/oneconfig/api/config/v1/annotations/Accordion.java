@@ -78,4 +78,6 @@ public @interface Accordion {
     String subcategoryKey() default "";
 
     int index() default -1;
+
+    boolean collapsed() default false;
 }

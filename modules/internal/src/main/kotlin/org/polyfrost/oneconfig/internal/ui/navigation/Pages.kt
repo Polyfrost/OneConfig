@@ -1,14 +1,20 @@
 package org.polyfrost.oneconfig.internal.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import java.util.Locale
 import kotlinx.serialization.Serializable
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.ui.v1.page.ModConfigTarget
@@ -34,6 +40,9 @@ import org.polyfrost.oneconfig.internal.ui.screens.Preferences
 import org.polyfrost.oneconfig.internal.ui.screens.Profiles
 import org.polyfrost.oneconfig.internal.ui.screens.Themes
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 @Serializable
 data class PageRoute(val pageId: String)
@@ -111,13 +120,92 @@ fun resolveOpenTarget(target: Any?): Any? = when (target) {
     }
     is OneConfigPage -> {
         BuiltinPages.register()
-        if (OneConfigPages.byId(target.id) === target) pageRoute(target) else {
-            LOGGER.error("Cannot open OneConfig page {} because it is not registered, opening the mods page instead", target.id)
-            ModsGraph
+        val registered = OneConfigPages.byId(target.id)
+        when {
+            registered === target -> pageRoute(target)
+            registered != null -> {
+                LOGGER.warn("OneConfig page {} was opened through an instance that is not the registered one, opening the registered page", target.id)
+                pageRoute(registered)
+            }
+            else -> {
+                LOGGER.error("Cannot open OneConfig page {} because it is not registered, opening the mods page instead", target.id)
+                ModsGraph
+            }
         }
     }
     is ModConfigTarget -> ModConfigRoute(target.modId, target.category)
     else -> target
+}
+
+object PageArguments {
+    private class Delivery(val pageId: String, val argument: Any) {
+        val offeredAt: Long = System.nanoTime()
+    }
+
+    private val PENDING_TTL_NANOS = TimeUnit.SECONDS.toNanos(10)
+
+    private var revision by mutableIntStateOf(0)
+
+    @Volatile
+    private var pending: Delivery? = null
+
+    private val retained = ConcurrentHashMap<String, Delivery>()
+    private val live = ConcurrentHashMap<String, Int>()
+    private val scope = ThreadLocal<String?>()
+
+    fun offer(pageId: String, argument: Any) {
+        pending = Delivery(pageId, argument)
+        Snapshot.withMutableSnapshot { revision++ }
+    }
+
+    fun clear(pageId: String) {
+        val wasPending = pending?.pageId == pageId
+        if (wasPending) pending = null
+        if (retained.remove(pageId) != null || wasPending) Snapshot.withMutableSnapshot { revision++ }
+    }
+
+    fun retained(pageId: String): Any? = retained[pageId]?.argument
+
+    fun take(): Any? {
+        val pageId = scope.get() ?: live.keys.singleOrNull() ?: return null
+        return retained[pageId]?.argument
+    }
+
+    private fun claim(pageId: String): Delivery? {
+        val offered = pending ?: return null
+        if (System.nanoTime() - offered.offeredAt > PENDING_TTL_NANOS) {
+            pending = null
+            return null
+        }
+        if (offered.pageId != pageId) return null
+        pending = null
+        retained[pageId] = offered
+        return offered
+    }
+
+    private class Latest(var delivery: Delivery?)
+
+    @Composable
+    fun Deliver(pageId: String, content: @Composable () -> Unit) {
+        val round = revision
+        val delivered = remember(pageId, round) { claim(pageId) }
+        val latest = remember(pageId) { Latest(null) }
+        if (delivered != null) latest.delivery = delivered
+        else if (latest.delivery != null && retained[pageId] == null) latest.delivery = null
+        DisposableEffect(pageId) {
+            live.merge(pageId, 1, Int::plus)
+            onDispose {
+                live.compute(pageId) { _, count -> if (count == null || count <= 1) null else count - 1 }
+                latest.delivery?.let { retained.remove(pageId, it) }
+            }
+        }
+        key(latest.delivery) {
+            val previous = scope.get()
+            scope.set(pageId)
+            content()
+            scope.set(previous)
+        }
+    }
 }
 
 fun NavGraphBuilder.pageDestinations() {
@@ -125,7 +213,7 @@ fun NavGraphBuilder.pageDestinations() {
         val id = entry.toRoute<PageRoute>().pageId
         val page = OneConfigPages.byId(id)
         if (page != null) {
-            page.Content()
+            PageArguments.Deliver(id) { page.Content() }
             return@composable
         }
         val shell = LocalShell.current
@@ -154,16 +242,18 @@ fun NavBackStackEntry?.currentPage(): OneConfigPage? {
     return registeredPages().firstOrNull { it is BuiltinPage && entry.isOn(it.route) }
 }
 
+val OneConfigPage.inAboutMenu: Boolean get() = this is BuiltinPage && group == PageGroup.ONECONFIG
+
 class SidebarEntry(val icon: String, val label: String, val route: Any)
 
-class SidebarSection(val title: String, val entries: List<SidebarEntry>)
+class SidebarSection(val id: String, val title: String, val entries: List<SidebarEntry>)
 
 fun sidebarSections(): List<SidebarSection> {
     val pages = registeredPages()
-    val groups = pages.map { it.group }.distinct()
     return NavigationGroups.map { group ->
         SidebarSection(
-            groups.firstOrNull { it.title.fallback == group.id }?.title?.resolve() ?: group.id,
+            group.id,
+            group.title.resolve(),
             group.routes.map { def ->
                 val page = pages.firstOrNull { pageRoute(it) == def.route }
                 val label = page?.title?.resolve()

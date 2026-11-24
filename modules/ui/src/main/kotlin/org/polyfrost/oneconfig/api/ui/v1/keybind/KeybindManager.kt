@@ -1,12 +1,5 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
-import java.util.Collections
-import java.util.ServiceLoader
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.BooleanSupplier
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -16,6 +9,13 @@ import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.keybindBridge
+import org.polyfrost.oneconfig.api.ui.v1.internal.loadBridge
+import java.util.Collections
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.BooleanSupplier
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
 
 @Suppress("UnstableApiUsage")
 public object KeybindManager {
@@ -28,13 +28,7 @@ public object KeybindManager {
      * Bridge into Minecraft's native Controls menu if present
      */
     private val bridge: MinecraftKeybindBridge? by lazy {
-        try {
-            ServiceLoader.load(MinecraftKeybindBridge::class.java, MinecraftKeybindBridge::class.java.classLoader)
-                .iterator().let { if (it.hasNext()) it.next() else null }
-        } catch (t: Throwable) {
-            LOGGER.warn("Failed to load MinecraftKeybindBridge; OneConfig keybinds will not appear in the Controls menu", t)
-            null
-        }
+        loadBridge(MinecraftKeybindBridge::class.java, "OneConfig keybinds will not appear in the Controls menu")
     }
 
     /** Listeners notified when a keybind is rebound from Minecraft's Controls menu */
@@ -87,10 +81,11 @@ public object KeybindManager {
         }
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     @JvmStatic
     public fun register(bind: OneConfigKeybind): OneConfigKeybind {
         if (bind !in binds) binds.add(bind)
-        bridge?.register(bind)
+        if (bind.mirrorToVanilla) bridge?.register(bind)
         return bind
     }
 
@@ -110,9 +105,11 @@ public object KeybindManager {
      * Use after mutating a keybind's [OneConfigKeybind.name]/[OneConfigKeybind.category] so the vanilla
      * mapping picks up the new metadata
      */
+    @OptIn(ExperimentalOneConfigUiApi::class)
     @JvmStatic
     public fun refreshMinecraftBinding(bind: OneConfigKeybind) {
-        if (bind in binds) bridge?.register(bind)
+        if (bind !in binds) return
+        if (bind.mirrorToVanilla) bridge?.register(bind) else bridge?.unregister(bind)
     }
 
     /**
@@ -123,12 +120,14 @@ public object KeybindManager {
      *
      * Nothing happens if [old] was never registered
      */
+    @OptIn(ExperimentalOneConfigUiApi::class)
     @JvmStatic
     public fun replace(old: OneConfigKeybind?, new: OneConfigKeybind): OneConfigKeybind {
         if (old != null && new !== old) {
             if (new.name == null) new.name = old.name
             if (new.category == null) new.category = old.category
             if (new.defaultKeybind == null) new.defaultKeybind = old.defaultKeybind
+            if (!old.mirrorToVanilla) new.mirrorToVanilla = false
         }
         if (old === new) {
             bridge?.sync(new)
@@ -238,12 +237,14 @@ public object KeybindManager {
     @JvmStatic
     public fun builder(): KeybindHelper = KeybindHelper()
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     private fun checkBinds() {
         val typing = TextInputFocus.isTyping
+        val captured = isInputCaptured()
         for (bind in binds) {
             @Suppress("SENSELESS_COMPARISON")
             if (bind.action == null) continue
-            val triggered = (!typing || bind.firesWhileTyping) && bind.test(downKeys, downMouse, mods)
+            val triggered = !captured && (!typing || bind.firesWhileTyping) && bind.test(downKeys, downMouse, mods)
             val wasActive = bind in activeBinds
             try {
                 if (triggered && !wasActive) {

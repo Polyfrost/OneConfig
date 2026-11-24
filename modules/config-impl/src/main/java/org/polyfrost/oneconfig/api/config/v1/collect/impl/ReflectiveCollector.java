@@ -26,14 +26,15 @@
 
 package org.polyfrost.oneconfig.api.config.v1.collect.impl;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public abstract class ReflectiveCollector implements PropertyCollector {
     protected static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
@@ -84,7 +85,7 @@ public abstract class ReflectiveCollector implements PropertyCollector {
             }
             superClass = superClass.getSuperclass();
         }
-        for (Class<?> sub : cls.getDeclaredClasses()) {
+        for (Class<?> sub : depth >= maxDepth ? cls.getDeclaredClasses() : DeclarationOrder.sort(cls.getDeclaredClasses())) {
             if (depth >= maxDepth) {
                 LOGGER.warn("Reached max depth for tree {} ignoring further subclasses!", tree.getID());
                 return;

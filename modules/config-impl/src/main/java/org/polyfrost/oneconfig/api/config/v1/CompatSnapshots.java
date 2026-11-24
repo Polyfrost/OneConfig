@@ -26,6 +26,12 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.compose.render.PolyColor;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
+
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -43,11 +49,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jetbrains.annotations.ApiStatus;
-import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
-import org.polyfrost.compose.render.PolyColor;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 
 @ApiStatus.Internal
 public final class CompatSnapshots implements ConfigManager.ProfileChangeListener {

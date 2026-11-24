@@ -1,14 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusProperties
 import androidx.compose.ui.focus.FocusPropertiesModifierNode
 import androidx.compose.ui.focus.focusProperties
@@ -24,26 +21,9 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.unit.IntSize
-import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
-import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 
 @Composable
 fun rememberInteractionSource() = remember { MutableInteractionSource() }
-
-fun Modifier.onClick(interactionSource: MutableInteractionSource, onClick: () -> Unit) =
-    onClick(interactionSource, true, onClick)
-
-fun Modifier.onClick(interactionSource: MutableInteractionSource, enabled: Boolean, onClick: () -> Unit) =
-    // when disabled it would apply to focusable children instead
-    (if (enabled) keepSearchFocus() else this).clickable(
-        interactionSource = interactionSource,
-        indication = null,
-        enabled = enabled,
-        onClick = {
-            UiSounds.play(UiSoundEvent.CLICK)
-            onClick()
-        }
-    )
 
 val LocalSearchFieldFocused = staticCompositionLocalOf<MutableState<Boolean>?> { null }
 

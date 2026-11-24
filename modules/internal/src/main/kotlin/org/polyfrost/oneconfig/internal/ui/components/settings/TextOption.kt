@@ -3,22 +3,24 @@ package org.polyfrost.oneconfig.internal.ui.components.settings
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.internal.ui.api.settings.TextOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-
-val LocalOptionWidth = compositionLocalOf { 300.dp }
+import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 
 @Composable
 fun TextOption(data: TextOptionData) {
+    TextOption(data, true)
+}
+
+@Composable
+fun TextOption(data: TextOptionData, enabled: Boolean) {
     var text by remember(data.prop) { mutableStateOf(data.strProp.shown() ?: "") }
     val regex = remember(data.regex) { data.regex?.takeIf { it.isNotBlank() }?.let { runCatching { Regex(it) }.getOrNull() } }
     val valid = regex == null || text.isEmpty() || regex.matches(text)
@@ -26,20 +28,12 @@ fun TextOption(data: TextOptionData) {
     TextField(
         text,
         { text = it; if (regex == null || it.isEmpty() || regex.matches(it)) data.strProp.set(it) },
-        Modifier.width(LocalOptionWidth.current).then(if (data.multiline) Modifier.heightIn(min = 96.dp) else Modifier),
-        data.placeholder,
-        "text-input",
-        Int.MAX_VALUE,
-        !valid,
-        true,
-        !data.multiline,
-        true,
-        14.sp,
-        null,
-        false,
-        null,
-        null,
-        null,
-        null,
+        Modifier.width(LocalOptionWidth.current).heightIn(min = if (data.multiline) 96.dp else OptionControlHeight),
+        placeholder = data.placeholder,
+        enabled = enabled,
+        invalid = !valid,
+        singleLine = !data.multiline,
+        leadingIcon = "text-input",
+        fontSize = LocalTheme.current.typography.body.fontSize,
     )
 }

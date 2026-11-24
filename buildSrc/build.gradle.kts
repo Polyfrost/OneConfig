@@ -11,7 +11,7 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
+    maven(url = "https://maven-central.storage-download.googleapis.com/maven2/")
     gradlePluginPortal()
     maven("https://maven.fabricmc.net/")
     maven("https://maven.ornithemc.net/releases")
@@ -54,7 +54,6 @@ detekt {
 gradlePlugin {
     mapOf(
         "oneconfig-bridge" to "OneConfigBridgePlugin",
-        "oneconfig-compose-bundle-publish" to "OneConfigComposeBundlePublishPlugin",
         "oneconfig-fabric" to "OneConfigFabricPlugin",
         "oneconfig-lint" to "OneConfigLintPlugin",
         "oneconfig-setup" to "OneConfigSetupPlugin",

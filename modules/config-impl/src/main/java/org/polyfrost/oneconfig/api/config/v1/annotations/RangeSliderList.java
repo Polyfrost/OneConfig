@@ -26,10 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import java.lang.annotation.*;
 import org.polyfrost.oneconfig.api.config.v1.SliderBounds;
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
+
+import java.lang.annotation.*;
 
 /**
  * Renders a user-editable list of ranges with each row being a two-handle slider with a value field for each end

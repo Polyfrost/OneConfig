@@ -7,7 +7,7 @@ pluginManagement {
         mavenLocal()
 
         gradlePluginPortal()
-        mavenCentral()
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
     }
 
     plugins {
@@ -118,7 +118,6 @@ project(":modules").apply {
 listOf(
     "config",
     "config-impl",
-    "commands",
     "hud",
     "events",
     "notifications",
@@ -127,8 +126,6 @@ listOf(
     "utils",
     "mod-toggles",
     "relocator",
-    "poly-compose",
-    "compose-bundle",
 ).forEach { module ->
     include(":modules:$module")
 }

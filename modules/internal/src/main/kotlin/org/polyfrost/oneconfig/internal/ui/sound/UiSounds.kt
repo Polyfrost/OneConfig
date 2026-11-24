@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.sound
 
-import java.util.ServiceLoader
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import java.util.ServiceLoader
 
 object UiSounds {
     private val service: UiSoundService? by lazy { loadService() }
@@ -17,9 +17,9 @@ object UiSounds {
         null
     }
 
-    private fun soundVolume(): Float = OneConfigConfig.uiSoundVolume.coerceIn(0f, 1f)
+    private fun soundVolume(): Float = (OneConfigConfig.uiSoundVolume / 100f).coerceIn(0f, 1f)
 
-    private fun ambienceVolume(): Float = OneConfigConfig.uiAmbienceVolume.coerceIn(0f, 1f)
+    private fun ambienceVolume(): Float = (OneConfigConfig.uiAmbienceVolume / 100f).coerceIn(0f, 1f)
 
     fun play(event: UiSoundEvent) {
         if (!OneConfigConfig.enableUISounds) return

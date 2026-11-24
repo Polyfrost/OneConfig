@@ -1,10 +1,11 @@
 package org.polyfrost.oneconfig.internal.ui.components.effect;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.internal.ui.api.settings.EffectListOptionData;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;

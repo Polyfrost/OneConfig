@@ -26,7 +26,14 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import java.lang.ref.WeakReference;
+import kotlin.OverloadResolutionByLambdaReturnType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
+
 import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,14 +48,6 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import kotlin.OverloadResolutionByLambdaReturnType;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 public abstract class Config {
     protected Tree tree;
@@ -78,11 +77,18 @@ public abstract class Config {
     }
 
     public final void addAliases(String... aliases) {
-        whenInitialized(() -> tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
+        whenInitialized(() -> appendAliases(tree, aliases));
     }
 
     public final void addAliases(String option, String... aliases) {
-        whenInitialized(() -> getProperty(option).getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases)));
+        whenInitialized(() -> appendAliases(getProperty(option), aliases));
+    }
+
+    private static void appendAliases(Node node, String[] aliases) {
+        Collection<String> existing = node.getMetadata("aliases");
+        List<String> merged = existing == null ? new ArrayList<>(aliases.length) : new ArrayList<>(existing);
+        merged.addAll(Arrays.asList(aliases));
+        node.addMetadata("aliases", merged);
     }
 
     private void whenInitialized(Runnable action) {
@@ -240,8 +246,13 @@ public abstract class Config {
             Node node = entry.getValue();
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
+                if (hasNoValue(p)) continue;
                 Object value = p.get();
-                if (value == null) continue;
+                if (value == null) {
+                    if (p.getMetadata("default") == null) p.addMetadata("defaultNull", true);
+                    if (out != null) out.put(prefix + entry.getKey(), null);
+                    continue;
+                }
                 Object def = p.getOrPutMetadata("default", () -> copyDefault(p.type, value));
                 if (out != null) out.put(prefix + entry.getKey(), def);
             } else if (node instanceof Tree) {
@@ -255,13 +266,22 @@ public abstract class Config {
             Node node = entry.getValue();
             if (node instanceof Property) {
                 Property<?> p = (Property<?>) node;
-                Object def = snapshot.get(prefix + entry.getKey());
-                if (def == null) continue;
+                if (hasNoValue(p)) continue;
+                String key = prefix + entry.getKey();
+                Object def = snapshot.get(key);
+                if (def == null) {
+                    if (snapshot.containsKey(key)) p.addMetadata("defaultNull", true);
+                    continue;
+                }
                 p.addMetadata("default", copyDefault(p.type, def));
             } else if (node instanceof Tree) {
                 applyDefaultSnapshot((Tree) node, prefix + entry.getKey() + ".", snapshot);
             }
         }
+    }
+
+    private static boolean hasNoValue(Property<?> p) {
+        return p.type == void.class || p.type == Void.class;
     }
 
     @ApiStatus.Internal
@@ -363,15 +383,14 @@ public abstract class Config {
         whenInitialized(() -> {
             Property<?> opt = getProperty(option).addDisplayCondition(condition);
             if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
-            WeakReference<Property<?>> ref = new WeakReference<>(opt);
-            tree.onAllProps((s, p) -> {
-                if (p == opt) return;
-                p.addCallback(t -> {
-                    Property<?> self = ref.get();
-                    if (self != null) self.revaluateDisplay();
-                    return false;
-                });
-            });
+            watchAll(tree, opt);
+        });
+    }
+
+    private static void watchAll(Tree tree, Property<?> dependent) {
+        tree.onAll((id, node) -> {
+            if (node instanceof Tree) watchAll((Tree) node, dependent);
+            else if (node instanceof Property && node != dependent) ((Property<?>) node).addDependent(dependent);
         });
     }
 

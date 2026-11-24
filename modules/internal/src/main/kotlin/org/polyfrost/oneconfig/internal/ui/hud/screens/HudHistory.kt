@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.hud.screens
 
 import androidx.compose.runtime.snapshots.Snapshot
-import kotlin.math.abs
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -13,6 +12,8 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.components.settings.bumpResetEpoch
 import org.polyfrost.oneconfig.internal.ui.hud.bumpHudUiEpoch
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils
+import java.util.Objects
+import kotlin.math.abs
 
 private val LOGGER = LogManager.getLogger("OneConfig/HudHistory")
 
@@ -43,8 +44,15 @@ private class Entry(val hudClass: Class<out Hud>, val values: Map<String, Value>
 
 private class Layout(val owner: ConfigManager, val huds: Map<String, Entry>)
 
-private fun sameValue(a: Any?, b: Any?): Boolean =
-    if (a is Float && b is Float) abs(a - b) < FLOAT_TOLERANCE else a == b
+internal fun sameValue(a: Any?, b: Any?): Boolean = when {
+    a is Float && b is Float -> abs(a - b) < FLOAT_TOLERANCE
+    a is Map<*, *> && b is Map<*, *> ->
+        a.size == b.size && a.all { (key, value) -> b.containsKey(key) && sameValue(value, b[key]) }
+    a is List<*> && b is List<*> -> a.size == b.size && a.zip(b).all { (x, y) -> sameValue(x, y) }
+    a is Array<*> && b is Array<*> -> sameValue(a.asList(), b.asList())
+    a != null && b != null && a.javaClass.isArray && b.javaClass.isArray -> Objects.deepEquals(a, b)
+    else -> a == b
+}
 
 private fun sameLayout(a: Layout, b: Layout): Boolean {
     if (a.owner !== b.owner || a.huds.size != b.huds.size) return false
@@ -73,7 +81,7 @@ private fun forEachOption(tree: Tree, prefix: String = "", action: (String, Prop
     }
 }
 
-private fun comparable(prop: Property<*>): Any? {
+internal fun comparable(prop: Property<*>): Any? {
     val value = prop.get()
     if (value == null || WrappingUtils.isSimpleClass(prop.type)) return value
     return try {
@@ -188,12 +196,15 @@ internal class HudHistory {
     private val redoStack = ArrayDeque<Layout>()
     private var recorded: Layout? = null
     private var settling: Layout? = null
+    private var pending: Layout? = null
+    private var wasBusy = false
 
     private fun reset(now: Layout) {
         undoStack.clear()
         redoStack.clear()
         recorded = now
         settling = null
+        pending = null
     }
 
     private fun record(now: Layout) {
@@ -202,6 +213,7 @@ internal class HudHistory {
         redoStack.clear()
         recorded = now
         settling = null
+        pending = null
     }
 
     private fun unrecorded(): Boolean = recorded?.let { !sameLayout(it, capture()) } == true
@@ -218,10 +230,17 @@ internal class HudHistory {
             reset(now)
             return
         }
+        val gestureStarted = busy && !wasBusy
+        wasBusy = busy
+        if (gestureStarted) {
+            pending?.let(::record)
+        }
         if (busy || sameLayout(last, now)) {
+            if (!busy) pending = null
             settling = null
             return
         }
+        pending = now
         val previous = settling
         if (previous != null && sameLayout(previous, now)) record(now) else settling = now
     }
@@ -244,6 +263,7 @@ internal class HudHistory {
         val revived = restore(target)
         recorded = capture()
         settling = null
+        pending = null
         return revived
     }
 }

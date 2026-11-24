@@ -1,7 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
-import kotlin.math.abs
 import org.polyfrost.oneconfig.internal.OneConfigConfig
+import kotlin.math.abs
 
 internal object DefaultSearchProvider : SearchProvider {
     override val priority: Int = 0
@@ -78,16 +78,27 @@ private fun levenshtein(a: String, b: String, max: Int): Int {
     return prev[b.length]
 }
 
+private val camelCaseBoundary = Regex("(?<=\\p{Ll})(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}\\p{Ll})")
+
 /**
  * Whether [text] matches [query] as a substring or by a fuzzy Levenshtein match against the whole string
  * or any of its words when "Search Distance" is above 0
  */
-internal fun searchMatches(text: String, query: String): Boolean {
+internal fun searchMatches(text: String, query: String): Boolean = searchMatches(text, query, OneConfigConfig.searchDistance)
+
+internal fun searchMatches(text: String, query: String, dist: Int): Boolean {
     val q = query.lowercase()
     val t = text.lowercase()
     if (t.contains(q)) return true
-    val dist = OneConfigConfig.searchDistance
     if (dist <= 0) return false
     if (levenshtein(t, q, dist) <= dist) return true
-    return t.split(' ', '.', '_', '-', '/').any { it.isNotEmpty() && levenshtein(it, q, dist) <= dist }
+    return text.splitToSequence(' ', '.', '_', '-', '/').any { word ->
+        if (word.isEmpty()) return@any false
+        if (levenshtein(word.lowercase(), q, dist) <= dist) return@any true
+        val parts = word.split(camelCaseBoundary)
+        parts.size > 1 && parts.any {
+            val partDist = minOf(dist, it.length / 4)
+            partDist > 0 && levenshtein(it.lowercase(), q, partDist) <= partDist
+        }
+    }
 }

@@ -2,6 +2,8 @@ package org.polyfrost.oneconfig.internal.mixin.fixes;
 
 //? if = 1.8.9 {
 /*import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
@@ -9,7 +11,9 @@ import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
 import org.lwjgl.opengl.DisplayMode;
 import org.polyfrost.oneconfig.internal.legacy.LegacyOptionsFormat;
+import org.polyfrost.oneconfig.internal.utils.ArgentumFullscreen;
 import org.polyfrost.oneconfig.internal.utils.LegacyVideoModeFormat;
+import org.polyfrost.oneconfig.internal.utils.MacExclusiveFullscreenReset;
 import pl.tomgirl.pylon.window.DisplaySdl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -91,8 +95,8 @@ public abstract class Mixin_RememberUnknownOptions {
         }
     }
 
-    @Inject(method = "load", at = @At("RETURN"))
-    private void ocfg$rewriteStaleFormats(CallbackInfo ci) {
+    @Unique
+    private void ocfg$rewriteStaleFormats() {
         for (String line : ocfg$loadedLines) {
             if (!LegacyOptionsFormat.toModernLine(line, ocfg$dataVersion).equals(line)) {
                 save();
@@ -105,18 +109,33 @@ public abstract class Mixin_RememberUnknownOptions {
     private void ocfg$applyFullscreenResolution(CallbackInfo ci) {
         int[] size = null;
         Boolean exclusive = null;
-        for (String line : ocfg$loadedLines) {
+        int exclusiveLine = -1;
+        for (int i = 0; i < ocfg$loadedLines.size(); i++) {
+            String line = ocfg$loadedLines.get(i);
             if (line.startsWith(LegacyVideoModeFormat.OPTION_PREFIX)) {
                 size = LegacyVideoModeFormat.toSize(line.substring(LegacyVideoModeFormat.OPTION_PREFIX.length()));
             } else if (line.startsWith("exclusiveFullscreen:")) {
                 exclusive = "true".equals(line.substring("exclusiveFullscreen:".length()).trim());
+                exclusiveLine = i;
             }
         }
+        if (MacExclusiveFullscreenReset.pending(file)) {
+            if (Boolean.TRUE.equals(exclusive)) {
+                exclusive = false;
+                ocfg$loadedLines.set(exclusiveLine, "exclusiveFullscreen:false");
+            }
+            MacExclusiveFullscreenReset.reset(file);
+        }
         DisplaySdl display = DisplaySdl.instance();
-        if (exclusive != null) display.setExclusiveFullscreen(exclusive);
-        if (size == null) return;
-        if (exclusive == null) display.setExclusiveFullscreen(true);
-        display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
+        if (exclusive != null) {
+            display.setExclusiveFullscreen(exclusive);
+            ArgentumFullscreen.setExclusive(exclusive);
+        } else if (size != null && !System.getProperty("os.name", "").startsWith("Mac")) {
+            display.setExclusiveFullscreen(true);
+            ArgentumFullscreen.setExclusive(true);
+        }
+        if (size != null) display.setFullscreenDisplayMode(new DisplayMode(size[0], size[1], 0, size[2]));
+        ocfg$rewriteStaleFormats();
     }
 
     @ModifyExpressionValue(
@@ -128,6 +147,17 @@ public abstract class Mixin_RememberUnknownOptions {
         if (line.startsWith(ocfg$LEGACY_PACKS_PREFIX)) return line.substring(ocfg$LEGACY_PACKS_PREFIX.length());
         if (ocfg$legacyPackKeys.contains(ocfg$keyOf(line))) return "";
         return LegacyOptionsFormat.toLegacyLine(line);
+    }
+
+    @WrapOperation(
+        method = "load",
+        at = @At(value = "INVOKE", target = "Ljava/lang/String;split(Ljava/lang/String;)[Ljava/lang/String;", remap = false)
+    )
+    private String[] ocfg$splitKeyOnLastColon(String line, String regex, Operation<String[]> original) {
+        if (!line.startsWith(ocfg$KEY_PREFIX) || !":".equals(regex)) return original.call(line, regex);
+        int colon = line.lastIndexOf(':');
+        if (colon < 0) return original.call(line, regex);
+        return new String[]{line.substring(0, colon), line.substring(colon + 1)};
     }
 
     @WrapWithCondition(
@@ -161,6 +191,8 @@ public abstract class Mixin_RememberUnknownOptions {
             return;
         }
         if (saved.isEmpty()) return;
+        Boolean argentumExclusive = ArgentumFullscreen.isExclusive();
+        if (argentumExclusive != null) saved.put("exclusiveFullscreen", "exclusiveFullscreen:" + argentumExclusive);
 
         Map<String, KeyMapping> mappings = ocfg$mappingsByKey();
         Set<String> mirrors = ocfg$mirrorKeys(mappings);
@@ -232,7 +264,7 @@ public abstract class Mixin_RememberUnknownOptions {
 
     @Unique
     private static String ocfg$keyOf(String line) {
-        int colon = line.indexOf(':');
+        int colon = line.startsWith(ocfg$KEY_PREFIX) ? line.lastIndexOf(':') : line.indexOf(':');
         return colon > 0 ? line.substring(0, colon) : null;
     }
 }

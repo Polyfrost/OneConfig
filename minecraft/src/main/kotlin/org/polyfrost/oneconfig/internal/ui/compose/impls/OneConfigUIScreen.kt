@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.compose.impls
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,8 @@ import net.minecraft.client.Minecraft
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.PolyCompose
+import org.polyfrost.compose.host.LocalComposeOptions
+import org.polyfrost.compose.minecraft.mc.McItemIcons
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
 import org.polyfrost.compose.render.PolyRenderer
@@ -40,22 +43,26 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.releaseFeedback
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
+import org.polyfrost.oneconfig.api.ui.v1.platform.OneConfigComposeOptions
 import org.polyfrost.oneconfig.internal.ClassPreloader
 import org.polyfrost.oneconfig.internal.MainMenuFpsSampler
 import org.polyfrost.oneconfig.internal.OneConfig
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
-import org.polyfrost.oneconfig.internal.ui.PlayerHeadLoader
+import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
-import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport
-import org.polyfrost.oneconfig.internal.ui.compose.sceneDensity
+import org.polyfrost.compose.minecraft.screen.ComposeScreen
+import org.polyfrost.compose.minecraft.screen.ComposeSupport
+import org.polyfrost.compose.minecraft.screen.sceneDensity
+import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
@@ -85,7 +92,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
     private val initialTreeId: String? = null,
     private val initialCategory: String? = null,
     private val initialTree: Tree? = null,
-) : ComposeScreen() {
+) : ComposeScreen(options = OneConfigComposeOptions) {
     private var initialRoute: Any? = null
 
     override val retainsScene: Boolean get() = this === sharedScreen
@@ -94,7 +101,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
     override val underlay get() = LegacyHudRenderer.liveDraw.takeIf { client.level != null }
 
     override fun blurAlpha(): Float {
-        if (!ThemeConfig.enableBackgroundBlur) return 0f
+        if (!ThemeConfig.enableBackgroundBlur || ThemeConfig.reduceTransparency) return 0f
+        if (!ThemeConfig.animations) return if (closeRequested) 0f else 1f
         val now = System.currentTimeMillis()
         val progress = if (closeRequested) {
             if (closeAnimationMs <= 0L) 0f
@@ -119,20 +127,20 @@ class OneConfigUIScreen @JvmOverloads constructor(
         fun forRoute(route: Any?): OneConfigUIScreen = shared().also {
             it.initialRoute = route
             it.resumeNext = false
+            it.minimalNext = false
         }
 
+        /** Opens as a search bar only, which expands into the full menu once a result navigates */
         @JvmStatic
-        fun open(): OneConfigUIScreen = shared().also {
-            it.initialRoute = null
-            it.resumeNext = false
-        }
+        fun minimal(): OneConfigUIScreen = forRoute(ModsGraph).also { it.minimalNext = true }
+
+        @JvmStatic
+        fun open(): OneConfigUIScreen = forRoute(null)
 
         /** For returning from a HUD editor opened from the OneConfig menu */
         @JvmStatic
-        fun resume(): OneConfigUIScreen = shared().also {
-            it.initialRoute = null
-            it.resumeNext = true
-        }
+        fun resume(): OneConfigUIScreen =
+            if (shell.layout.minimal) minimal() else forRoute(null).also { it.resumeNext = true }
 
         private const val OPEN_ANIMATION_MS = 250L
 
@@ -276,6 +284,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     private var resumeNext = false
 
+    private var minimalNext = false
+
     private var openRevision by mutableIntStateOf(0)
 
     @Volatile private var everOpened = false
@@ -293,6 +303,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         val isResume = resumeNext
         resumeNext = false
+        shell.layout.updateMinimal(minimalNext)
+        minimalNext = false
         val (target, targetRestoring) = when {
             isResume -> (shell.navigation.lastRoute?.takeIf { it !== HudEditorRoute } ?: ModsGraph) to true
             initialRoute != null -> initialRoute to false
@@ -306,36 +318,22 @@ class OneConfigUIScreen @JvmOverloads constructor(
         route = target
         restoring = targetRestoring
         openRevision++
-        shell.navigation.recordLastRoute(target)
+        if (!shell.layout.minimal) shell.navigation.recordLastRoute(target)
 
         try {
             shell.session.updatePlayerName(Minecraft.getInstance().user.name)
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            UiErrors.warn("Failed to read the player name for the OneConfig UI", t)
             shell.session.updatePlayerName("Player")
         }
         val keepFocus = if (shell.search.fieldFocused) SearchFocus.Focus else SearchFocus.Unfocus
         shell.search.requestFocus(when {
+            shell.layout.minimal -> SearchFocus.SelectAll
             isResume -> keepFocus
             OneConfigConfig.instantSearch -> SearchFocus.SelectAll
             targetRestoring -> keepFocus
             else -> SearchFocus.Unfocus
         })
-        val client = Minecraft.getInstance()
-        val cachedHead = PlayerHeadLoader.cachedLocalPlayerHeadPng(client)
-        if (cachedHead != null) {
-            shell.session.updatePlayerHead(cachedHead)
-        } else {
-            Thread {
-                runCatching {
-                    val head = PlayerHeadLoader.loadLocalPlayerHeadPng(client) ?: return@runCatching
-                    client.execute { shell.session.updatePlayerHead(head) }
-                }.onFailure { LOGGER.warn("Failed to load player head", it) }
-            }.apply {
-                isDaemon = true
-                name = "OneConfig-PlayerHead"
-                start()
-            }
-        }
         try {
             val loaderStr = Platform.loader().loaderString
             val parts = loaderStr.split("-", limit = 2)
@@ -344,7 +342,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
             } else {
                 shell.session.updateVersionLabel(loaderStr)
             }
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            UiErrors.warn("Failed to build the version label for the OneConfig UI", t)
             shell.session.updateVersionLabel("OneConfig")
         }
 
@@ -389,6 +388,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     private fun handleOneConfigKeybind(onRelease: Boolean = false): Boolean {
         if (closeRequested) return cancelClose()
+        // the minimal menu's footer advertises this keybind as opening the HUD editor
+        if (shell.layout.minimal) {
+            HudManager.openEditor()
+            return true
+        }
         if (OneConfigConfig.keybindClosesGui) {
             if (!onRelease) OneConfigConfig.notifyKeybindClosedGui()
             beginClose()
@@ -414,7 +418,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         return false
     }
 
-    override val modifierTapBind: OneConfigKeybind get() = OneConfigConfig.oneConfigKeybind
+    override val modifierTapKeys: Set<Int>? get() = OneConfigComposeHooks.modifierTapKeys
 
     override fun handleModifierTapped() {
         handleOneConfigKeybind(onRelease = true)
@@ -430,7 +434,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         ) {
             return handleOneConfigKeybind()
         }
-        if (!closeRequested && shell.navigation.isReady) {
+        if (!closeRequested && shell.navigation.isReady && !shell.layout.minimal) {
             when (button) {
                 //~ if < 1.21.11 && > 1.8.9 'InputConstants.MOUSE_BUTTON_4' -> 'GLFW.GLFW_MOUSE_BUTTON_4'
                 InputConstants.MOUSE_BUTTON_4 -> {
@@ -473,7 +477,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
             HudManager.guiScreenWidth = sw
             HudManager.guiScreenHeight = sh
             HudManager.prepare(sw, sh)
-            ItemCatalog.renderHudIcons()
+            McItemIcons.renderPending()
         }
         HudEditorViewport.update(Platform.screen().windowWidth(), Platform.screen().windowHeight())
         //? if > 1.8.9 {
@@ -536,7 +540,7 @@ private class WarmScene(w: Int, h: Int, density: Float, private val surface: Flo
             }
         }
         PolyCompose.install()
-        recomposer = FrameRecomposer(dispatcher + CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }) {}
+        recomposer = FrameRecomposer(dispatcher + AnimationsMotionScale + CoroutineExceptionHandler { _, t -> failure.compareAndSet(null, t) }) {}
         scene = try {
             CanvasLayersComposeScene(
                 frameRecomposer = recomposer,
@@ -553,7 +557,11 @@ private class WarmScene(w: Int, h: Int, density: Float, private val surface: Flo
             scene.size = IntSize(w, h)
             shell.session.resume()
             if (OneConfigConfig.instantSearch) shell.search.requestFocus(SearchFocus.SelectAll)
-            scene.setContent { OneConfigInterface(w.toFloat(), h.toFloat(), shell = shell) }
+            scene.setContent {
+                CompositionLocalProvider(LocalComposeOptions provides OneConfigComposeOptions) {
+                    OneConfigComposeOptions.Decorate(this@WarmScene) { OneConfigInterface(w.toFloat(), h.toFloat(), shell = shell) }
+                }
+            }
         } catch (t: Throwable) {
             close()
             throw t
@@ -574,12 +582,14 @@ private class WarmScene(w: Int, h: Int, density: Float, private val surface: Flo
         frames++
     }
 
+    @OptIn(ExperimentalOneConfigUiApi::class)
     fun close() {
         try {
             scene.close()
             recomposer.close()
             shell.session.stop()
             drain()
+            releaseFeedback(this)
         } catch (t: Throwable) {
             LogManager.getLogger("OneConfig/UI").debug("Ignoring failure while closing the OneConfig UI warm-up scene", t)
         }

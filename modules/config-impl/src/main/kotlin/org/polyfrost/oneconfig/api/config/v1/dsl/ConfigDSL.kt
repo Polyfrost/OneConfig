@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.api.config.v1.dsl
 
-import kotlin.jvm.java
+import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Properties
@@ -9,7 +9,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
-import org.apache.logging.log4j.LogManager
+import kotlin.jvm.java
 
 private val LOGGER = LogManager.getLogger("OneConfig/Config")
 

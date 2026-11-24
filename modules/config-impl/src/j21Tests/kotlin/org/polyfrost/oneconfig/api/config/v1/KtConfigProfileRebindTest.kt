@@ -26,9 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.Comparator
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -36,6 +33,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.Comparator
 
 class KtConfigProfileRebindTest {
     private class RebindConfig : KtConfig("kt_profile_rebind.json", "Kt Rebind", Category.OTHER) {

@@ -1,15 +1,18 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.keybind.ConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 
 @ExperimentalOneConfigUiApi
+@InternalOneConfigUiApi
 public interface OneConfigUIKeybindBridge {
     public fun configKeybinds(): List<ConfigKeybind>
 }
 
 @ExperimentalOneConfigUiApi
+@InternalOneConfigUiApi
 public object KeybindInterop {
     @JvmStatic
     public fun configKeybind(keybind: OneConfigKeybind, title: String, path: String, modId: String, modTitle: String): ConfigKeybind =

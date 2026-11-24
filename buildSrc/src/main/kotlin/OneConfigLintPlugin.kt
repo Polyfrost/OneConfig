@@ -15,6 +15,7 @@ class OneConfigLintPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
         pluginManager.apply("dev.detekt")
         pluginManager.apply("net.ltgt.errorprone")
+        pluginManager.apply("checkstyle")
 
         dependencies {
             "errorprone"(rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs").findLibrary("errorprone-core").get())

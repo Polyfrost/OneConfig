@@ -3,17 +3,18 @@ package org.polyfrost.oneconfig.test
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyMcText
-import org.polyfrost.compose.composables.PolyRow
+import org.polyfrost.compose.composables.NodeBox
+import org.polyfrost.compose.composables.NodeMcText
+import org.polyfrost.compose.composables.NodeRow
 import org.polyfrost.compose.composables.padding
 import org.polyfrost.compose.layout.PolyInsets
+import org.polyfrost.compose.minecraft.mc.NodeMcItemIcon
 import org.polyfrost.oneconfig.api.config.v1.annotations.ItemList
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.hud.v1.Hud
-import org.polyfrost.oneconfig.api.ui.v1.item.PolyItemIcon
 import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog
+import org.polyfrost.oneconfig.internal.ui.components.item.MinecraftItemCatalogService
 
 class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
 
@@ -40,16 +41,16 @@ class TestItemHud_Test : Hud("test-item-hud", "Item List Hud", Category.INFO) {
         val ids = displayItems.value
         val scale = textScale
         val padding = PolyInsets(padLeft * scale, padTop * scale, padRight * scale, padBottom * scale)
-        PolyBox(modifier = hudBackground().padding(padding)) {
-            PolyRow(gap = 3f * scale) {
+        NodeBox(modifier = hudBackground().padding(padding)) {
+            NodeRow(gap = 3f * scale) {
                 if (ids.isEmpty()) {
-                    PolyMcText(text = "§7No items", scale = scale)
+                    NodeMcText(text = "§7No items", scale = scale)
                 } else {
                     ids.forEach { id ->
-                        PolyRow(gap = 2f * scale) {
-                            PolyItemIcon(id, iconSize * scale)
+                        NodeRow(gap = 2f * scale) {
+                            MinecraftItemCatalogService.item(id)?.let { NodeMcItemIcon(it, iconSize * scale) }
                             if (showNames) {
-                                PolyMcText(text = displayName(id), scale = scale)
+                                NodeMcText(text = displayName(id), scale = scale)
                             }
                         }
                     }

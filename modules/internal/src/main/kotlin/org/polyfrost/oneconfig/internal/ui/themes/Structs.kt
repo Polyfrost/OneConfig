@@ -1,13 +1,17 @@
 package org.polyfrost.oneconfig.internal.ui.themes
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import java.util.concurrent.ConcurrentHashMap
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTypography
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
+import java.util.concurrent.ConcurrentHashMap
 
 /** Sets a panel background color's alpha from an opacity percentage between 0 and 100 */
 fun Color.withOpacityPercent(percent: Float): Color =
@@ -63,18 +67,64 @@ data class UITheme(
     override val circleShape: Shape,
 
     val branding: UIBranding,
-    val typography: UITypography,
+    override val typography: UITypography,
     val iconOverrides: Map<String, String> = emptyMap(),
 ) : OneConfigUITheme() {
     override val fontFamily: FontFamily get() = typography.family
 
     override val logoPath: String get() = brandedLogoPath(this)
 
-    var controlTrackColor: Color = DefaultControlTrackColor
+    override var controlTrackColor: Color = DefaultControlTrackColor
         private set
 
+    override val style: ThemeStyle
+        get() = when {
+            isMinecraftStyle -> ThemeStyle.Pixel
+            liquidGlass -> ThemeStyle.Glass
+            else -> ThemeStyle.Flat
+        }
+
+    override val focusRingColor: Color
+        get() = if (isMinecraftStyle) (if (isLight) Color.Black else Color.White) else Accent
+
+    override val accentBrush: Brush get() = AccentBrush
+
+    private var lightMode: Boolean? = null
+
+    override val isLight: Boolean get() = lightMode ?: super.isLight
+
     fun withControlTrackColor(color: Color): UITheme =
-        copy().also { it.controlTrackColor = color }
+        copy().also {
+            it.controlTrackColor = color
+            it.lightMode = lightMode
+        }
+
+    internal fun withLightMode(light: Boolean): UITheme =
+        if (light == isLight) this else copy().also {
+            it.controlTrackColor = controlTrackColor
+            it.lightMode = light
+        }
+
+    internal fun withAccentText(color: Color): UITheme =
+        if (color == accentTextColor) this else copy(accentTextColor = color).also {
+            it.controlTrackColor = controlTrackColor
+            it.lightMode = lightMode
+        }
+
+    internal fun withOpaqueSurfaces(): UITheme {
+        val page = pageBackground.copy(alpha = 1f)
+        return copy(
+            pageBackground = page,
+            sidebarBackground = sidebarBackground.compositeOver(page),
+            chipBackground = chipBackground.compositeOver(page),
+            modCardBackground = modCardBackground.compositeOver(page),
+            componentBackground = componentBackground.compositeOver(page),
+            popupBackground = popupBackground.compositeOver(page),
+        ).also {
+            it.controlTrackColor = controlTrackColor
+            it.lightMode = lightMode
+        }
+    }
 
     // The shapes below are kept out of the constructor. PolyPlus calls the generated copy() with the
     // exact signature it was compiled against, so a new constructor parameter crashes every released
@@ -96,7 +146,7 @@ data class UITheme(
     fun withInsetModFooter(): UITheme =
         also { insetFooterThemes += previewImage }
 
-    val translucentSelection: Boolean get() = previewImage in translucentSelectionThemes
+    override val translucentSelection: Boolean get() = previewImage in translucentSelectionThemes
 
     fun withTranslucentSelection(): UITheme =
         also { translucentSelectionThemes += previewImage }
@@ -106,10 +156,21 @@ data class UITheme(
     fun withLiquidGlass(): UITheme =
         also { liquidGlassThemes += previewImage }
 
+    internal fun withoutGlassEffects(): UITheme =
+        also {
+            liquidGlassThemes -= previewImage
+            cursorEffectThemes -= previewImage
+        }
+
     val cursorEffects: Boolean get() = previewImage in cursorEffectThemes
 
     fun withCursorEffects(): UITheme =
         also { cursorEffectThemes += previewImage }
+
+    val isMinecraftStyle: Boolean get() = previewImage in minecraftStyleThemes
+
+    fun withMinecraftStyle(): UITheme =
+        also { minecraftStyleThemes += previewImage }
 
     companion object {
         val DefaultControlTrackColor = Color(0xFF74777F)
@@ -127,6 +188,25 @@ data class UITheme(
         private val liquidGlassThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
         private val cursorEffectThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val minecraftStyleThemes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        private val keyedFlags: List<MutableSet<String>>
+            get() = listOf(glowlessThemes, insetFooterThemes, translucentSelectionThemes, liquidGlassThemes, cursorEffectThemes, minecraftStyleThemes)
+
+        internal fun copyExtras(from: String, to: String) {
+            if (from == to) return
+            for (set in keyedFlags) {
+                if (from in set) set += to else set -= to
+            }
+            val shapes = extraShapes[from]
+            if (shapes != null) extraShapes[to] = shapes else extraShapes.remove(to)
+        }
+
+        internal fun clearExtras(id: String) {
+            for (set in keyedFlags) set -= id
+            extraShapes.remove(id)
+        }
     }
 }
 
@@ -136,6 +216,6 @@ data class UIBranding(
 
 data class UITypography(
     val family: FontFamily,
-)
+) : OneConfigTypography(family)
 
 private fun brandedLogoPath(theme: UITheme): String = OneConfigTheme.logoOverride ?: theme.branding.logoPath

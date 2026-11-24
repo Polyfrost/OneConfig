@@ -460,4 +460,484 @@ public final class TestConfig_Test extends Config {
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
         public static boolean cbogw = false;
     }
+
+    @Accordion(title = "Switch primary", description = "Expands and collapses the accordion when toggled", category = "Accordions", subcategory = "Every primary type")
+    public static class SwitchPrimary {
+        @Primary
+        @Switch(title = "Enabled")
+        public static boolean on = true;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 50;
+
+        @Text(title = "Text")
+        public static String text = "Hello world!";
+    }
+
+    @Accordion(title = "Checkbox primary", description = "Starts collapsed and expands when ticked", category = "Accordions", subcategory = "Every primary type", collapsed = true)
+    public static class CheckboxPrimary {
+        @Primary
+        @Checkbox(title = "Enabled")
+        public static boolean on = false;
+
+        @Number(title = "Number", unit = "px", min = 0f)
+        public static int number = 12;
+
+        @Dropdown(title = "Dropdown", options = {"A", "B", "C"})
+        public static int dropdown = 0;
+    }
+
+    @Accordion(title = "Number primary", description = "Never changes whether the accordion is open", category = "Accordions", subcategory = "Every primary type")
+    public static class NumberPrimary {
+        @Primary
+        @Number(title = "Amount", unit = "px", min = 0f)
+        public static int amount = 24;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Color(title = "Color")
+        public static int color = 0xFF55AAFF;
+    }
+
+    @Accordion(title = "Text primary", description = "A text box on the header row", category = "Accordions", subcategory = "Every primary type")
+    public static class TextPrimary {
+        @Primary
+        @Text(title = "Label")
+        public static String label = "Hello world!";
+
+        @Checkbox(title = "Checkbox")
+        public static boolean box = false;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 50;
+    }
+
+    @Accordion(title = "Full width text primary", description = "Stacks the text box on its own row below the title", category = "Accordions", subcategory = "Every primary type")
+    public static class FullWidthTextPrimary {
+        @Primary
+        @Text(title = "Notes", fullWidth = true)
+        public static String notes = "Hello world!";
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Dropdown(title = "Dropdown", options = {"A", "B", "C"})
+        public static int dropdown = 0;
+    }
+
+    @Accordion(title = "Color primary", description = "A color picker on the header row", category = "Accordions", subcategory = "Every primary type")
+    public static class ColorPrimary {
+        @Primary
+        @Color(title = "Color")
+        public static int color = 0xFFFF0064;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Number(title = "Number", unit = "px", min = 0f)
+        public static int number = 8;
+    }
+
+    @Accordion(title = "Keybind primary", description = "A keybind on the header row", category = "Accordions", subcategory = "Every primary type")
+    public static class KeybindPrimary {
+        @Primary
+        @Keybind(title = "Shortcut")
+        public static OneConfigKeybind shortcut = KeybindHelper.builder().key(InputConstants.KEY_J).build();
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @RadioButton(title = "Radio", options = {"Option A", "Option B"})
+        public static int radio = 0;
+    }
+
+    @Accordion(title = "Radio button primary", description = "Radio buttons on the header row", category = "Accordions", subcategory = "Every primary type")
+    public static class RadioPrimary {
+        @Primary
+        @RadioButton(title = "Choice", options = {"Option A", "Option B"})
+        public static int choice = 0;
+
+        @Checkbox(title = "Checkbox")
+        public static boolean box = false;
+
+        @Text(title = "Text")
+        public static String text = "Hello world!";
+    }
+
+    @Accordion(title = "Dropdown primary", description = "A dropdown on the header row", category = "Accordions", subcategory = "Every primary type")
+    public static class DropdownPrimary {
+        @Primary
+        @Dropdown(title = "Preset", options = {"Low", "Medium", "High"})
+        public static int preset = 1;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Color(title = "Color")
+        public static int color = 0xFF00AAFF;
+
+        @Keybind(title = "Keybind")
+        public static OneConfigKeybind bind = KeybindHelper.builder().key(InputConstants.KEY_L).build();
+    }
+
+    @Accordion(title = "Slider primary", description = "A slider on the header row", category = "Accordions", subcategory = "Every primary type")
+    public static class SliderPrimary {
+        @Primary
+        @Slider(title = "Level", min = 0f, max = 100f, formatter = Percent.class)
+        public static int level = 60;
+
+        @Keybind(title = "Keybind")
+        public static OneConfigKeybind bind = KeybindHelper.builder().key(InputConstants.KEY_B).build();
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+    }
+
+    @Accordion(title = "Button primary", description = "A button on the header row", category = "Accordions", subcategory = "Every primary type")
+    public static class ButtonPrimary {
+        @Primary
+        @Button(title = "Run", text = "Run")
+        private void run() {
+            Notifications.info("Button primary", "The header button was clicked.");
+        }
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 50;
+
+        @Text(title = "Text")
+        public static String text = "Hello world!";
+    }
+
+    @Accordion(title = "Legacy head", description = "The switch on the header comes from a legacy @Include boolean", category = "Accordions", subcategory = "States")
+    public static class LegacyInclude {
+        @Include
+        public static boolean enabled = true;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 50;
+    }
+
+    @Accordion(title = "Collapsed without a primary", description = "Starts closed and has no control on the header", category = "Accordions", subcategory = "States", collapsed = true)
+    public static class CollapsedPlain {
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Text(title = "Text")
+        public static String text = "Hello world!";
+    }
+
+    @Accordion(title = "Disabled primary", description = "Disabled while the root switch under Dependencies is off", category = "Accordions", subcategory = "States")
+    public static class DisabledPrimary {
+        @Primary
+        @Switch(title = "Enabled")
+        @DependsOn("dependencyMaster")
+        public static boolean on = true;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 50;
+    }
+
+    @Accordion(title = "Dependent children", description = "Children are disabled while the primary is off", category = "Accordions", subcategory = "States")
+    public static class DependentChildren {
+        @Primary
+        @Switch(title = "Active")
+        public static boolean active = true;
+
+        @Switch(title = "Dependent switch")
+        @DependsOn("active")
+        public static boolean childSwitch = false;
+
+        @Slider(title = "Dependent slider", min = 0f, max = 100f)
+        @DependsOn("active")
+        public static int childSlider = 25;
+
+        @Text(title = "Dependent text")
+        @DependsOn("active")
+        public static String childText = "Cannot type here while disabled";
+    }
+
+    @Accordion(title = "Explicit primary wins", description = "A Primary dropdown takes the header over a legacy @Include boolean", category = "Accordions", subcategory = "States")
+    public static class ExplicitOverLegacy {
+        @Include
+        public static boolean enabled = true;
+
+        @Primary
+        @Dropdown(title = "Mode", options = {"Automatic", "Manual"})
+        public static int mode = 0;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+    }
+
+    @Submenu(title = "Showcase", description = "Many option types across two categories, with an accordion and nested pages", icon = "assets/oneconfig/ico/layers.svg", category = "Submenus", subcategory = "Pages")
+    public static class Showcase {
+        @Switch(title = "Showcase switch", category = "First", subcategory = "Toggles")
+        public static boolean flag = false;
+
+        @Keybind(title = "Keybind", category = "First", subcategory = "Toggles")
+        public static OneConfigKeybind bind = KeybindHelper.builder().key(InputConstants.KEY_F).build();
+
+        @Checkbox(title = "Checkbox", category = "First", subcategory = "Toggles")
+        public static boolean checkbox = false;
+
+        @Number(title = "Number", unit = "ms", min = 100f, max = 2000f, category = "First", subcategory = "Values")
+        public static int number = 500;
+
+        @Slider(title = "Slider", formatter = Percent.class, category = "First", subcategory = "Values")
+        public static int slider = 40;
+
+        @Color(title = "Color", category = "First", subcategory = "Values")
+        public static int color = 0xFFFFB347;
+
+        @Dropdown(title = "Dropdown", options = {"One", "Two", "Three"}, category = "First", subcategory = "Choices")
+        public static int dropdown = 0;
+
+        @RadioButton(title = "Radio button", options = {"One", "Two", "Three"}, category = "First", subcategory = "Choices")
+        public static int radio = 1;
+
+        @Text(title = "Text", category = "Second", subcategory = "Inputs")
+        public static String text = "Hello world!";
+
+        @File(title = "File", types = {".png", ".jpg"}, filterName = "Images", category = "Second", subcategory = "Inputs")
+        public static String file = "";
+
+        @TextList(title = "Text list", placeholder = "Entry", category = "Second", subcategory = "Inputs")
+        public static String[] entries = {"One", "Two"};
+
+        @Info(title = "Info", description = "Read-only information", category = "Second", subcategory = "Actions")
+        public static String info = "";
+
+        @Button(title = "Button", category = "Second", subcategory = "Actions")
+        private void click() {
+            Notifications.info("Showcase", "The button was clicked.");
+        }
+
+        @Accordion(title = "Slider accordion", description = "An accordion with a slider primary inside a page", category = "First", subcategory = "Values")
+        public static class SliderAccordion {
+            @Primary
+            @Slider(title = "Slider", formatter = Percent.class)
+            public static int level = 50;
+
+            @Switch(title = "Switch")
+            public static boolean flag = true;
+
+            @Dropdown(title = "Dropdown", options = {"One", "Two", "Three"})
+            public static int dropdown = 0;
+        }
+
+        @Submenu(title = "Nested page", description = "A page with a dropdown primary opened from another page", icon = "assets/oneconfig/ico/maximise.svg", category = "First", subcategory = "Choices")
+        public static class NestedPage {
+            @Primary
+            @Dropdown(title = "Dropdown", options = {"One", "Two", "Three"})
+            public static int choice = 0;
+
+            @Number(title = "Number", min = 0f, max = 500f)
+            public static int number = 100;
+
+            @Switch(title = "Switch")
+            public static boolean flag = true;
+        }
+
+        @Submenu(title = "Deeper page", description = "A page that opens a third level", icon = "assets/oneconfig/ico/cog.svg", category = "Second", subcategory = "Actions")
+        public static class DeeperPage {
+            @Info(title = "Info", description = "Pages can nest up to three levels")
+            public static String information = "";
+
+            @Switch(title = "Switch")
+            public static boolean flag = false;
+
+            @Submenu(title = "Deepest page", description = "The third level", icon = "assets/oneconfig/ico/refresh.svg")
+            public static class DeepestPage {
+                @Primary
+                @Dropdown(title = "Dropdown", options = {"One", "Two", "Three"})
+                public static int choice = 1;
+
+                @Switch(title = "Switch")
+                public static boolean flag = true;
+
+                @Info(title = "Info", description = "Opened from the second level")
+                public static String note = "";
+            }
+        }
+    }
+
+    @Submenu(title = "Switch primary", description = "A switch on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class SwitchPrimarySubmenu {
+        @Primary
+        @Switch(title = "Switch")
+        public static boolean on = true;
+        @Checkbox(title = "Checkbox")
+        public static boolean checkbox = true;
+
+        @Text(title = "Text")
+        public static String text = "Hello world!";
+    }
+
+    @Submenu(title = "Checkbox primary", description = "A checkbox on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class CheckboxPrimarySubmenu {
+        @Primary
+        @Checkbox(title = "Checkbox")
+        public static boolean on = true;
+        @Switch(title = "Switch")
+        public static boolean flag = false;
+
+        @Dropdown(title = "Dropdown", options = {"One", "Two", "Three"})
+        public static int dropdown = 1;
+    }
+
+    @Submenu(title = "Number primary", description = "A number field on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class NumberPrimarySubmenu {
+        @Primary
+        @Number(title = "Number", min = 0f)
+        public static int value = 50;
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Slider(title = "Slider")
+        public static int slider = 25;
+    }
+
+    @Submenu(title = "Text primary", description = "A text box on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class TextPrimarySubmenu {
+        @Primary
+        @Text(title = "Text")
+        public static String value = "Hello world!";
+        @Color(title = "Color")
+        public static int color = 0xFF8855FF;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+    }
+
+    @Submenu(title = "Color primary", description = "A color picker on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class ColorPrimarySubmenu {
+        @Primary
+        @Color(title = "Color")
+        public static int value = 0xFF0067C0;
+        @Slider(title = "Slider", min = 0f, max = 100f, formatter = Percent.class)
+        public static int slider = 80;
+
+        @Text(title = "Text")
+        public static String text = "Hello world!";
+    }
+
+    @Submenu(title = "Keybind primary", description = "A keybind on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class KeybindPrimarySubmenu {
+        @Primary
+        @Keybind(title = "Keybind")
+        public static OneConfigKeybind value = KeybindHelper.builder().key(InputConstants.KEY_H).build();
+        @Switch(title = "Switch")
+        public static boolean flag = false;
+
+        @Number(title = "Number", unit = "ms", min = 0f, max = 2000f)
+        public static int number = 250;
+    }
+
+    @Submenu(title = "Radio button primary", description = "Radio buttons on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class RadioPrimarySubmenu {
+        @Primary
+        @RadioButton(title = "Radio button", options = {"One", "Two", "Three"})
+        public static int value = 1;
+        @Switch(title = "Switch")
+        public static boolean flag = false;
+
+        @Slider(title = "Slider", min = 0f, max = 100f, formatter = Percent.class)
+        public static int slider = 20;
+    }
+
+    @Submenu(title = "Dropdown primary", description = "A dropdown on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class DropdownPrimarySubmenu {
+        @Primary
+        @Dropdown(title = "Dropdown", options = {"One", "Two", "Three"})
+        public static int value = 1;
+        @Switch(title = "Switch")
+        public static boolean flag = false;
+
+        @Number(title = "Number", unit = "min", min = 0f, max = 240f)
+        public static int number = 60;
+    }
+
+    @Submenu(title = "Slider primary", description = "A slider on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class SliderPrimarySubmenu {
+        @Primary
+        @Slider(title = "Slider", min = 0f, max = 100f, formatter = Percent.class)
+        public static int value = 45;
+        @Switch(title = "Switch")
+        public static boolean flag = false;
+
+        @Dropdown(title = "Dropdown", options = {"One", "Two", "Three"})
+        public static int dropdown = 0;
+    }
+
+    @Submenu(title = "Button primary", description = "A button on the row", category = "Submenus", subcategory = "Every primary type")
+    public static class ButtonPrimarySubmenu {
+        @Primary
+        @Button(title = "Run", text = "Run")
+        private void run() {
+            Notifications.info("Button primary", "The row button was clicked.");
+        }
+        @Checkbox(title = "Checkbox")
+        public static boolean checkbox = true;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 7;
+
+        @Info(title = "Info", description = "Read-only information")
+        public static String info = "";
+    }
+
+    @Submenu(title = "Converted from an accordion", description = "The switch on the row comes from a legacy @Include boolean", category = "Submenus", subcategory = "States")
+    public static class LegacySubmenu {
+        @Include
+        public static boolean enabled = true;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 50;
+    }
+
+    @Submenu(title = "Dependent children", description = "Children follow a sibling switch and the root switch", category = "Submenus", subcategory = "States")
+    public static class DependentSubmenu {
+        @Primary
+        @Switch(title = "Active")
+        public static boolean active = true;
+
+        @Switch(title = "Follows the primary")
+        @DependsOn("active")
+        public static boolean followsPrimary = false;
+
+        @Switch(title = "Follows the root switch")
+        @DependsOn("dependencyMaster")
+        public static boolean followsRoot = false;
+
+        @Slider(title = "Follows both", min = 0f, max = 100f)
+        @DependsOn({"active", "dependencyMaster"})
+        public static int followsBoth = 25;
+    }
+
+    @Submenu(title = "Disabled primary", description = "Disabled while the root switch under Dependencies is off", category = "Submenus", subcategory = "States")
+    public static class DisabledPrimarySubmenu {
+        @Primary
+        @Switch(title = "Enabled")
+        @DependsOn("dependencyMaster")
+        public static boolean on = true;
+
+        @Switch(title = "Switch")
+        public static boolean flag = true;
+
+        @Slider(title = "Slider", min = 0f, max = 100f)
+        public static int slider = 50;
+    }
 }

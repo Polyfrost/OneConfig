@@ -26,9 +26,10 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.api;
 
-import java.nio.file.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
 
 /**
  * API for native file dialogs and message boxes

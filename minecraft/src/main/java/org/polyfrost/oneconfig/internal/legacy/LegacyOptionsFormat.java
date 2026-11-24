@@ -183,7 +183,7 @@ public final class LegacyOptionsFormat {
 
     public static String toLegacyLine(String line) {
         if (line.startsWith(KEY_PREFIX)) {
-            int colon = line.indexOf(':');
+            int colon = line.lastIndexOf(':');
             Integer code = toCode(line.substring(colon + 1));
             return code == null ? line : line.substring(0, colon + 1) + code;
         }
@@ -203,7 +203,7 @@ public final class LegacyOptionsFormat {
     public static String toModernLine(String line, int dataVersion) {
         try {
             if (line.startsWith(KEY_PREFIX) && dataVersion >= NAMED_KEYS_VERSION) {
-                int colon = line.indexOf(':');
+                int colon = line.lastIndexOf(':');
                 return line.substring(0, colon + 1) + toName(Integer.parseInt(line.substring(colon + 1)));
             }
             if (line.startsWith(LANG_PREFIX) && dataVersion >= LOWERCASE_LANG_VERSION) {

@@ -54,6 +54,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.Notification;
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.oneconfig.internal.compat.CompatLoader;
 import org.polyfrost.oneconfig.internal.compat.ConfigEntrypoints;
 import org.polyfrost.oneconfig.internal.compat.KaleidoCompat;
@@ -61,11 +62,12 @@ import org.polyfrost.oneconfig.internal.compat.toggle.ModGates;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
 import org.polyfrost.oneconfig.internal.ui.api.ThirdPartyModCategories;
-import org.polyfrost.oneconfig.internal.ui.components.item.ItemCatalog;
 import org.polyfrost.oneconfig.internal.ui.compose.McFontService;
+import org.polyfrost.oneconfig.internal.ui.compose.OneConfigComposeHooks;
 //? if >= 1.21.11
-import org.polyfrost.oneconfig.internal.ui.compose.BlazeHud;
-import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
+import org.polyfrost.compose.minecraft.render.blaze.BlazeHud;
+import org.polyfrost.compose.minecraft.render.gl.GlHost;
+import org.polyfrost.compose.minecraft.mc.McItemIcons;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
@@ -104,10 +106,15 @@ import org.polyfrost.oneconfig.internal.compat.ModMenuShimLoader;
 import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
 //?}
 
+
 public class OneConfig implements ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     private boolean initialized = false;
+
+    public static boolean isInitialized() {
+        return INSTANCE.initialized;
+    }
 
     private static void registerCommands() {
         Command<FabricClientCommandSource> executor = (c) -> {
@@ -117,14 +124,6 @@ public class OneConfig implements ClientModInitializer {
 
         var node = CommandManager.literal("oneconfig")
                 .executes(executor)
-                .then(CommandManager.literal("delete")
-                        .executes((ctx) -> {
-                            ctx.getSource()
-                                    .sendFeedback(Component.literal(
-                                            "Deleted OneConfig UI. Please make a report if you were having issues!"));
-                            return 1;
-                        })
-                )
                 .then(CommandManager.literal("hud")
                         .executes((ctx) -> {
                             HudManager.INSTANCE.openEditor();
@@ -151,35 +150,38 @@ public class OneConfig implements ClientModInitializer {
     private static void registerKeybinds() {
         // the action lives here rather than on the keybind because it references platform classes and
         // is lost when the keybind is deserialized
-        OneConfigConfig.setOpenAction(pressed -> {
-            if (!pressed) {
-                return true;
-            }
-            // the screen may have closed itself on this very press (see notifyKeybindClosedGui) so
-            // reopening here would make the keybind look like it does nothing
-            if (OneConfigConfig.consumeKeybindClose()) {
-                return true;
-            }
-            Object screen = Platform.screen().current();
-            if (screen != null && !(Platform.compatibility().isDevelopment() && screen instanceof TitleScreen)) {
-                return true;
-            }
-            if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
-                return true;
-            }
-            try {
-                OneConfigUIScreen.openLastSession();
-            } catch (Throwable t) {
-                //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
-                Minecraft.getInstance().gui.hud.getChat()
-                        //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
-                        .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
-                                .withStyle(
-                                        ChatFormatting.RED));
-                throw t;
-            }
+        OneConfigConfig.setOpenAction(pressed -> openFromKeybind(pressed, OneConfigUIScreen::openLastSession));
+        OneConfigConfig.setMinimalOpenAction(pressed -> openFromKeybind(pressed, () -> Platform.screen().display(OneConfigUIScreen.minimal())));
+    }
+
+    private static boolean openFromKeybind(boolean pressed, Runnable open) {
+        if (!pressed) {
             return true;
-        });
+        }
+        // the screen may have closed itself on this very press (see notifyKeybindClosedGui) so
+        // reopening here would make the keybind look like it does nothing
+        if (OneConfigConfig.consumeKeybindClose()) {
+            return true;
+        }
+        Object screen = Platform.screen().current();
+        if (screen != null && !(Platform.compatibility().isDevelopment() && screen instanceof TitleScreen)) {
+            return true;
+        }
+        if (Minecraft.getInstance().level == null && !Platform.compatibility().isDevelopment()) {
+            return true;
+        }
+        try {
+            open.run();
+        } catch (Throwable t) {
+            //~ if >= 26.2 'gui.getChat' -> 'gui.hud.getChat'
+            Minecraft.getInstance().gui.hud.getChat()
+                    //~ if >= 26.1 'addMessage' -> 'addClientSystemMessage'
+                    .addClientSystemMessage(Component.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
+                            .withStyle(
+                                    ChatFormatting.RED));
+            throw t;
+        }
+        return true;
     }
 
     /**
@@ -228,8 +230,9 @@ public class OneConfig implements ClientModInitializer {
     public static void prepareHud() {
         if (GlHost.INSTANCE.unavailableReason() != null) return;
 
-        float sw = Platform.screen().guiWidth();
-        float sh = Platform.screen().guiHeight();
+        ScreenPlatform screen = Platform.screen();
+        float sw = screen.guiWidth();
+        float sh = screen.guiHeight();
         // guiWidth()/guiHeight() are already GUI-scaled so do not divide by guiScale again
         HudManager.guiScreenWidth = sw;
         HudManager.guiScreenHeight = sh;
@@ -241,22 +244,24 @@ public class OneConfig implements ClientModInitializer {
         *///? }
         HudManager.isDebugScreenVisible = isDebugScreenVisible();
         HudManager.isTabListVisible = isTabListVisible();
-        HudManager.isGuiScreenOpen = Platform.screen().current() != null;
-        HudManager.isChatScreenOpen = Platform.screen().current() instanceof ChatScreen;
+        Object current = screen.current();
+        HudManager.isGuiScreenOpen = current != null;
+        HudManager.isChatScreenOpen = current instanceof ChatScreen;
         HudManager.inWorld = true;
-        HudManager.targetPixelWidth = Platform.screen().viewportWidth();
-        HudManager.targetPixelHeight = Platform.screen().viewportHeight();
+        HudManager.targetPixelWidth = screen.viewportWidth();
+        HudManager.targetPixelHeight = screen.viewportHeight();
 
         if (HudManager.isConfigUiOpen) {
             HudManager.INSTANCE.prepare(sw, sh);
-            ItemCatalog.INSTANCE.renderHudIcons();
+            McItemIcons.renderPending();
             HudManager.invalidate();
             return;
         }
         //? if >= 1.21.11 {
-        if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, true, true)) BlazeHud.markDirty();
+        if (HudManager.INSTANCE.beginFrame(sw, sh, McItemIcons::renderPending, true, true)) BlazeHud.markDirty();
         //?} else {
-        /*if (HudManager.INSTANCE.beginFrame(sw, sh, ItemCatalog.INSTANCE::renderHudIcons, false)) {
+        /*//~ if = 1.8.9 'GlHost.vanillaPipeline' -> 'true'
+        if (HudManager.INSTANCE.beginFrame(sw, sh, McItemIcons::renderPending, false, GlHost.vanillaPipeline)) {
             GlHost.INSTANCE.drawHudGl((ctx, volatileCtx) -> {
                 HudManager.INSTANCE.render(ctx, sw, sh, volatileCtx);
                 return Unit.INSTANCE;
@@ -274,7 +279,7 @@ public class OneConfig implements ClientModInitializer {
         }
         if (GlHost.INSTANCE.unavailableReason() != null || HudManager.isConfigUiOpen) return;
         //? if >= 1.21.11 {
-        BlazeHud.render(graphics);
+        BlazeHud.render(graphics, OneConfigComposeHooks.drawHuds);
         //?} else {
         /*//~ if = 1.8.9 '(graphics)' -> '()'
         GlHost.INSTANCE.blitHud(graphics);
@@ -347,23 +352,10 @@ public class OneConfig implements ClientModInitializer {
                 });
         EventManager.register(WorldEvent.Load.class, e -> {
             showFirstLaunchNotification();
-            ItemCatalog.INSTANCE.markIconsAvailable();
         });
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
         EventManager.register(ResourceFinishedLoading.class, e -> CompatLoader.INSTANCE.onResourcesLoaded());
-//        //#if MC < 1.13
-//        // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
-//        AtomicBoolean active = new AtomicBoolean(false);
-//        EventManager.register(TickEvent.End.class, e -> {
-//            boolean current = org.lwjgl.opengl.Display.isActive();
-//            if (current != active.get()) {
-//                active.set(current);
-//                if (current) EventManager.INSTANCE.post(WindowFocusEvent.Gained.INSTANCE);
-//                else EventManager.INSTANCE.post(WindowFocusEvent.Lost.INSTANCE);
-//            }
-//        });
-//        //#endif
     }
 
     private static Notification firstLaunchToast;
@@ -425,6 +417,7 @@ public class OneConfig implements ClientModInitializer {
         String v = self == null ? "LOCAL" : self.getVersion();
         LOGGER.info("Loading OneConfig v{}", v);
         McFontService.INSTANCE.init();
+        OneConfigComposeHooks.INSTANCE.install();
         ThirdPartyModCategories.INSTANCE.init();
         BuiltinPages.register();
         // force class-load so the hello/disconnect handlers are armed before joining any server

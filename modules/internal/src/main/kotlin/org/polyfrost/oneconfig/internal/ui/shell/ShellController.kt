@@ -19,6 +19,9 @@ import androidx.navigation.NavHostController
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
+import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
+import org.polyfrost.oneconfig.internal.ui.navigation.PageArguments
+import org.polyfrost.oneconfig.internal.ui.navigation.PageRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
 
@@ -31,7 +34,7 @@ class ShellController(val warming: Boolean = false) {
     val layout = ShellLayout()
     val transitions = ShellTransitions()
     val scroll = ShellScroll()
-    val navigation = ShellNavigation(search, transitions)
+    val navigation = ShellNavigation(search, transitions, layout)
 
     companion object {
         @JvmStatic
@@ -53,10 +56,6 @@ class ShellSession : LifecycleOwner, ViewModelStoreOwner {
     var playerName by mutableStateOf("Player")
         private set
 
-    /** PNG bytes for the local player's head avatar or null until loaded */
-    var playerHeadPng by mutableStateOf<ByteArray?>(null)
-        private set
-
     var versionLabel by mutableStateOf("")
         private set
 
@@ -66,10 +65,6 @@ class ShellSession : LifecycleOwner, ViewModelStoreOwner {
 
     fun updatePlayerName(name: String) {
         playerName = name
-    }
-
-    fun updatePlayerHead(png: ByteArray?) {
-        playerHeadPng = png
     }
 
     fun updateVersionLabel(label: String) {
@@ -140,9 +135,6 @@ class ShellSearch {
 }
 
 class ShellAppearance {
-    var flipTopOptionOrder by mutableStateOf(false)
-        private set
-
     /** Content-panel background opacity from 0 to 100 mirrored from config so slider changes apply live */
     var pageOpacity by mutableStateOf(88f)
         private set
@@ -155,8 +147,7 @@ class ShellAppearance {
     var glowOpacity by mutableStateOf(25f)
         private set
 
-    fun update(flipTopOptionOrder: Boolean, pageOpacity: Float, sidebarOpacity: Float, glowOpacity: Float) {
-        this.flipTopOptionOrder = flipTopOptionOrder
+    fun update(pageOpacity: Float, sidebarOpacity: Float, glowOpacity: Float) {
         this.pageOpacity = pageOpacity
         this.sidebarOpacity = sidebarOpacity
         this.glowOpacity = glowOpacity
@@ -176,6 +167,14 @@ class ShellLayout {
 
     var shellBounds by mutableStateOf<Rect?>(null)
         private set
+
+    /** True while the menu shows only the search bar and its results, cleared by any navigation */
+    var minimal by mutableStateOf(false)
+        private set
+
+    fun updateMinimal(minimal: Boolean) {
+        this.minimal = minimal
+    }
 
     fun markHudDragging(dragging: Boolean) {
         hudDragging = dragging
@@ -211,7 +210,7 @@ class ShellTransitions {
     var lastNavWasBack: Boolean = false
         private set
 
-    fun animates(): Boolean = !awaitingInitialRoute && animatePages
+    fun animates(): Boolean = !awaitingInitialRoute && animatePages && AnimationsMotionScale.animations
 
     fun beginOpening() {
         awaitingInitialRoute = true
@@ -254,6 +253,7 @@ class ShellScroll {
 class ShellNavigation internal constructor(
     private val search: ShellSearch,
     private val transitions: ShellTransitions,
+    private val layout: ShellLayout,
 ) {
     /**
      * One step of history
@@ -269,6 +269,7 @@ class ShellNavigation internal constructor(
         val categoryKey: String? = null,
         val category: String? = null,
         val searchQuery: String = "",
+        val pageArgument: Any? = null,
     )
 
     private var host: NavHostController? = null
@@ -285,6 +286,23 @@ class ShellNavigation internal constructor(
 
     /** Last selected settings tab per page key restored when a page is reopened or navigated back to */
     private val selectedCategories = mutableStateMapOf<String, String>()
+
+    /**
+     * The option or group the page just opened should scroll to and highlight, see [jumpTo]
+     *
+     * Any other navigation clears it so a row the page could not show is not jumped to later
+     */
+    var pendingJump: Any? by mutableStateOf(null)
+        private set
+
+    /** Has the page opened by the last navigation scroll to and highlight the row for [anchor] */
+    fun jumpTo(anchor: Any) {
+        pendingJump = anchor
+    }
+
+    fun consumeJump(anchor: Any) {
+        if (pendingJump === anchor) pendingJump = null
+    }
 
     /** Last top-level route navigated to used by the "Previous page" and "Smart reset" opening behaviors */
     var lastRoute: Any? = null
@@ -333,19 +351,27 @@ class ShellNavigation internal constructor(
 
     /** [clearSearch] is off when the navigation only restores a page the user was already on */
     fun navigate(route: Any, clearSearch: Boolean = true, animate: Boolean = ThemeConfig.showPageAnimations) {
+        pendingJump = null
+        // the menu's own opening navigation keeps the minimal search bar, anything after it is the user opening a result
+        if (!transitions.awaitingInitialRoute) layout.updateMinimal(false)
         if (route == currentEntry.route) return
         val host = readyHost() ?: return
         val query = if (clearSearch) "" else search.query
         transitions.prepare(animate, back = false)
         host.navigate(route)
         forwardStack.clear()
-        backStack.addLast(currentEntry.withCurrentSearch())
+        backStack.addLast(currentEntry.withCurrentState())
         currentEntry = Entry(route, searchQuery = query)
         lastRoute = route
         seedRouteCategory(route)
         updateArrows()
         search.bind(host.currentBackStackEntry?.id, query)
         if (clearSearch) instantSearch()
+    }
+
+    /** Sets the tab [pageKey] opens on without adding a history step */
+    fun rememberCategory(pageKey: String, category: String) {
+        selectedCategories[pageKey] = category
     }
 
     fun discard(route: Any, fallback: Any) {
@@ -381,11 +407,12 @@ class ShellNavigation internal constructor(
     }
 
     fun back() {
+        pendingJump = null
         val previous = backStack.lastOrNull() ?: return
         // same page with only the tab changed so restore it in place with no screen transition
         if (previous.route == currentEntry.route) {
             backStack.removeLast()
-            forwardStack.addLast(currentEntry.withCurrentSearch())
+            forwardStack.addLast(currentEntry.withCurrentState())
             currentEntry = previous
             applyCategory(previous)
             updateArrows()
@@ -401,12 +428,14 @@ class ShellNavigation internal constructor(
         // instead of animating. The host is rebuilt every time the menu opens, which bounds the growth
         // to one session; this wrapper's stacks are the real history.
         transitions.prepare(ThemeConfig.showPageAnimations, back = true)
+        restoreArgument(previous)
         runCatching { host.navigate(previous.route) }.onFailure {
             LOGGER.error("Failed to navigate back to {}", previous.route, it)
+            (previous.route as? PageRoute)?.let { route -> PageArguments.clear(route.pageId) }
             transitions.prepare(ThemeConfig.showPageAnimations, back = false)
             return
         }
-        forwardStack.addLast(currentEntry.withCurrentSearch())
+        forwardStack.addLast(currentEntry.withCurrentState())
         currentEntry = backStack.removeLast()
         applyCategory(currentEntry)
         search.bind(host.currentBackStackEntry?.id, currentEntry.searchQuery)
@@ -416,11 +445,12 @@ class ShellNavigation internal constructor(
     }
 
     fun forward() {
+        pendingJump = null
         val next = forwardStack.lastOrNull() ?: return
         val samePage = next.route == currentEntry.route
         val host = if (samePage) null else (readyHost() ?: return)
         forwardStack.removeLast()
-        backStack.addLast(currentEntry.withCurrentSearch())
+        backStack.addLast(currentEntry.withCurrentState())
         currentEntry = next
         if (host != null) seedRouteCategory(next.route)
         applyCategory(next)
@@ -431,6 +461,7 @@ class ShellNavigation internal constructor(
         lastRoute = next.route
         transitions.prepare(ThemeConfig.showPageAnimations, back = false)
         updateArrows()
+        restoreArgument(next)
         host.navigate(next.route)
         search.bind(host.currentBackStackEntry?.id, next.searchQuery)
         instantSearch()
@@ -444,7 +475,7 @@ class ShellNavigation internal constructor(
     private fun seedRouteCategory(route: Any) {
         val modConfig = route as? ModConfigRoute ?: return
         val category = modConfig.category ?: return
-        selectedCategories[modConfig.id] = category
+        selectedCategories[modConfig.pageKey] = category
     }
 
     /** Restores the tab an entry was recorded with where a null category means the page default */
@@ -454,11 +485,24 @@ class ShellNavigation internal constructor(
         else selectedCategories[key] = entry.category
     }
 
-    private fun Entry.withCurrentSearch() = copy(searchQuery = search.query)
+    private fun Entry.withCurrentState() =
+        copy(searchQuery = search.query, pageArgument = (route as? PageRoute)?.let { PageArguments.retained(it.pageId) })
+
+    private fun restoreArgument(entry: Entry) {
+        val route = entry.route as? PageRoute ?: return
+        val argument = entry.pageArgument ?: return
+        PageArguments.offer(route.pageId, argument)
+    }
 }
 
 @Composable
 fun pageSearchQuery(): String {
     val entry = LocalLifecycleOwner.current as? NavBackStackEntry
     return LocalShell.current.search.queryFor(entry?.id)
+}
+
+@Composable
+fun pageSearchQueryOrNull(): String? {
+    val entry = LocalLifecycleOwner.current as? NavBackStackEntry ?: return null
+    return LocalShell.current.search.queryFor(entry.id)
 }

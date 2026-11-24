@@ -6,11 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
@@ -30,9 +26,14 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.layout.PolyAlign
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
+import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.cornerRadiusOrNull
 
 private val alignmentGrid: Map<PolyAlign, Pair<Int, Int>> = mapOf(
     PolyAlign.TopLeft     to Pair(0, 0),
@@ -48,6 +49,25 @@ private val alignmentGrid: Map<PolyAlign, Pair<Int, Int>> = mapOf(
 
 private val gridAlignment: Map<Pair<Int, Int>, PolyAlign> =
     alignmentGrid.entries.associate { (k, v) -> v to k }
+
+private val CENTER_INDICATOR_RADIUS = 6.dp
+
+private val alignmentLabels: Map<PolyAlign, String> = mapOf(
+    PolyAlign.TopLeft to "Top left",
+    PolyAlign.Top to "Top",
+    PolyAlign.TopRight to "Top right",
+    PolyAlign.Left to "Left",
+    PolyAlign.Center to "Centre",
+    PolyAlign.Right to "Right",
+    PolyAlign.BottomLeft to "Bottom left",
+    PolyAlign.Bottom to "Bottom",
+    PolyAlign.BottomRight to "Bottom right",
+)
+
+private fun alignmentLabel(align: PolyAlign): String {
+    val key = align.name.replace(Regex("(?<=[a-z])(?=[A-Z])"), "_").lowercase()
+    return translated("oneconfig.hud.alignment.$key", alignmentLabels[align] ?: align.name)
+}
 
 @Composable
 fun AlignmentPicker(
@@ -67,9 +87,9 @@ fun AlignmentPicker(
     Box(
         modifier = Modifier
             .size(totalSize)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFF192126).copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-            .border(1.dp, theme.borderColor, RoundedCornerShape(8.dp))
+            .clip(theme.popupShape)
+            .background(theme.popupBackground, theme.popupShape)
+            .border(1.dp, theme.borderColor, theme.popupShape)
     ) {
         for (row in 0..2) {
             for (col in 0..2) {
@@ -78,6 +98,7 @@ fun AlignmentPicker(
                 val isHovered = hoveredCell == Pair(col, row)
 
                 AlignmentCell(
+                    label = alignmentLabel(cellAlign),
                     col = col,
                     row = row,
                     cellSize = cellSize,
@@ -101,6 +122,7 @@ fun AlignmentPicker(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun AlignmentCell(
+    label: String,
     col: Int,
     row: Int,
     cellSize: Dp,
@@ -120,21 +142,22 @@ private fun AlignmentCell(
 
     val animatedAlpha = remember { Animatable(0f) }
     val animatedScale = remember { Animatable(1f) }
+    val hoverAlpha = LocalTheme.current.hoverOverlayAlpha
 
     LaunchedEffect(isSelected) {
-        if (isSelected && !ReducedMotion.enabled) {
+        if (isSelected && !Motion.reduced) {
             animatedScale.animateTo(
                 1.15f,
                 spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
             )
-            animatedScale.animateTo(1f, tween(150))
+            animatedScale.animateTo(1f, tween(Motion.standard))
         }
     }
 
-    LaunchedEffect(isHovered) {
+    LaunchedEffect(isHovered, hoverAlpha) {
         animatedAlpha.animateTo(
-            if (isHovered && !isSelected) 0.08f else 0f,
-            tween(150)
+            if (isHovered && !isSelected) hoverAlpha else 0f,
+            Motion.tweenSpec()
         )
     }
 
@@ -145,10 +168,14 @@ private fun AlignmentCell(
             .size(cellSize)
             .onPointerEvent(PointerEventType.Enter) { onHover(true) }
             .onPointerEvent(PointerEventType.Exit)  { onHover(false) }
-            .onPointerEvent(PointerEventType.Press) { event ->
-                event.changes.forEach { it.consume() }
-                onClick()
-            }
+            .oneConfigClickable(
+                label,
+                onClick,
+                role = A11yRole.RadioButton,
+                selected = isSelected,
+                indication = false,
+                sound = null,
+            )
     ) {
         if (animatedAlpha.value > 0f) {
             Box(
@@ -180,6 +207,7 @@ private fun CellIndicator(
     color: Color,
     cellSize: Dp
 ) {
+    val indicatorRadius = OneConfigTheme.shape(CENTER_INDICATOR_RADIUS).cornerRadiusOrNull() ?: 0.dp
     val isCenter = col == 1 && row == 1
     val isCorner = (col == 0 || col == 2) && (row == 0 || row == 2)
 
@@ -192,7 +220,7 @@ private fun CellIndicator(
                 val len = (8f * scale).dp.toPx()
 
                 when {
-                    isCenter -> drawCenterPlus(color, s, strokeWidth * 1.2f, len * 1.6f)
+                    isCenter -> drawCenterPlus(color, s, strokeWidth * 1.2f, len * 1.6f, indicatorRadius.toPx())
                     isCorner -> drawCornerBracket(col, row, color, s, strokeWidth, len)
                     else -> drawEdgeTick(col, row, color, s, strokeWidth, len)
                 }
@@ -204,7 +232,8 @@ private fun DrawScope.drawCenterPlus(
     color: Color,
     s: Size,
     strokeWidth: Float,
-    armLen: Float
+    armLen: Float,
+    cornerRadius: Float
 ) {
     val cx = s.width / 2f
     val cy = s.height / 2f
@@ -230,7 +259,7 @@ private fun DrawScope.drawCenterPlus(
         color = color.copy(alpha = 0.13f),
         topLeft = Offset(cx - boxSize / 2f, cy - boxSize / 2f),
         size = Size(boxSize, boxSize),
-        cornerRadius = CornerRadius(6f),
+        cornerRadius = CornerRadius(cornerRadius),
         style = Stroke(width = strokeWidth * 0.8f)
     )
 }

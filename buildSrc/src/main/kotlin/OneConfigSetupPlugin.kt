@@ -45,50 +45,32 @@ class OneConfigSetupPlugin : Plugin<Project> {
         pluginManager.apply(OneConfigLintPlugin::class.java)
 
         repositories {
-            fun scopedMaven(url: String, vararg groups: String, includeSubgroups: Boolean = false) = maven(url) {
-                content { for (group in groups) if (!includeSubgroups) includeGroup(group) else includeGroupAndSubgroups(group) }
+            fun scopedMaven(url: String, vararg groups: String) = maven(url) {
+                content { for (group in groups) includeGroupAndSubgroups(group) }
             }
 
-            maven("https://repo.polyfrost.org/releases")
-            maven("https://repo.polyfrost.org/snapshots")
-            maven("https://repo.hypixel.net/repository/Hypixel/")
-            maven("https://maven.deftu.dev/releases")
-            maven("https://maven.notenoughupdates.org/releases/") {
-                content { includeGroup("org.notenoughupdates.moulconfig") }
-            }
-            maven("https://maven.teamresourceful.com/repository/maven-releases") {
-                content { includeGroup("com.teamresourceful.resourcefulconfig") }
-            }
-            maven("https://maven.isxander.dev/releases") {
-                content { includeGroup("dev.isxander") }
-            }
-            maven("https://api.modrinth.com/maven") {
-                content { includeGroup("maven.modrinth") } // some yacl versions only exist here and not on the official repo
-            }
-            maven("https://jitpack.io") {
-                content { includeGroupAndSubgroups("com.github") }
-            }
-            maven("https://maven.terraformersmc.com/releases") {
-                content { includeGroup("com.terraformersmc") }
-            }
-            maven("https://maven.teamresourceful.com/repository/maven-public/") {
-                content { includeGroupAndSubgroups("me.owdding"); includeGroupAndSubgroups("tech.thatgravyboat") }
-            }
-            maven("https://maven.azureaaron.net/releases") {
-                content { includeGroup("net.azureaaron") }
-            }
-            maven("https://maven.bawnorton.com/releases") {
-                content { includeGroup("com.github.bawnorton.mixinsquared") }
-            }
-            maven("https://redirector.kotlinlang.org/maven/compose-dev")
+            scopedMaven("https://repo.polyfrost.org/releases", "org.polyfrost")
+            scopedMaven("https://repo.polyfrost.org/snapshots", "org.polyfrost")
+            scopedMaven("https://repo.hypixel.net/repository/Hypixel/", "net.hypixel")
+            scopedMaven("https://maven.deftu.dev/releases", "dev.deftu")
+            scopedMaven("https://maven.notenoughupdates.org/releases/", "org.notenoughupdates")
+            scopedMaven("https://maven.teamresourceful.com/repository/maven-releases", "com.teamresourceful")
+            scopedMaven("https://maven.isxander.dev/releases", "dev.isxander")
+            scopedMaven("https://api.modrinth.com/maven", "maven.modrinth") // some yacl versions only exist here and not on the official repo
+            scopedMaven("https://jitpack.io", "com.github")
+            scopedMaven("https://maven.terraformersmc.com/releases", "com.terraformersmc")
+            scopedMaven("https://maven.teamresourceful.com/repository/maven-public/", "me.owdding", "tech.thatgravyboat")
+            scopedMaven("https://maven.azureaaron.net/releases", "net.azureaaron")
+            scopedMaven("https://maven.bawnorton.com/releases", "com.github.bawnorton")
+            scopedMaven("https://redirector.kotlinlang.org/maven/compose-dev", "org.jetbrains")
             scopedMaven("https://central.sonatype.com/repository/maven-snapshots/", "net.kyori")
             scopedMaven("https://maven.azureaaron.net/snapshots", "net.azureaaron")
             google()
+            mavenLocal()
         }
 
         evaluationDependsOn(":modules")
-        // build metadata is ignored by version comparisons anyway
-        val composeBundleVersion = evaluationDependsOn(":modules:compose-bundle").version.toString().substringBefore('+')
+        val polyComposeVersion = versionedCatalog.versions["polycompose"].requiredVersion
 
         // nested into the jar shipped to players by OneConfigDistributionPlugin
         configurations.dependencyScope("bundle")
@@ -137,17 +119,12 @@ class OneConfigSetupPlugin : Plugin<Project> {
             }
         }
 
-        if (stonecutter.eval(stonecutter.current.version, "< 1.21.11")) {
-            tasks.named<ProcessResources>("processResources") {
-                exclude("assets/oneconfig/post_effect/**")
-                exclude("assets/oneconfig/shaders/**")
-            }
-        }
-
         configurations.configureEach {
             exclude(group = "org.jetbrains.skiko")
             exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
             exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
+            exclude(group = "org.jetbrains.compose.ui", module = "ui")
+            exclude(group = "org.jetbrains.compose.ui", module = "ui-desktop")
         }
 
         val skyhanniRelocated = registerRelocationAttribute("relocate-skyhanni-moulconfig") {
@@ -207,16 +184,8 @@ class OneConfigSetupPlugin : Plugin<Project> {
 
             moulConfig(skyhanniRelocatedConfiguration, firmamentRelocatedConfiguration, skysoftRelocatedConfiguration)
 
-            "api"(versionedCatalog["jetbrains.compose.runtime"])
-            "api"(versionedCatalog["jetbrains.compose.foundation"])
-            "api"(versionedCatalog["jetbrains.compose.material"])
-            "api"(versionedCatalog["jetbrains.compose.ui"])
-            "api"(versionedCatalog["jetbrains.compose.ui.util"])
-            "api"(versionedCatalog["jetbrains.compose.ui.backhandler"])
-            "api"(versionedCatalog["jetbrains.compose.navigation"])
-            "api"(versionedCatalog["jetbrains.lifecycle"])
-            "api"(versionedCatalog["jetbrains.viewmodel"])
             "api"(versionedCatalog["commonmark"])
+            "modApi"("org.polyfrost:polycompose-${stonecutter.current.project}:$polyComposeVersion")
             handleApiDep(versionedCatalog.bundles["adventure"])
 
             if (adventurePlatform != null) {
@@ -257,6 +226,9 @@ class OneConfigSetupPlugin : Plugin<Project> {
             }
 
             handleApiDep(versionedCatalog["mixin-squared"])
+            // MixinSquared's API extends ASM types without declaring ASM. Loom's source remapper for dependents only sees
+            // mod dependencies, not Fabric Loader's libraries, and crashes when it can't resolve those supertypes.
+            handleApiDep(versionedCatalog["asm-tree"], transitive = true, bundle = false)
             handleApiDep(versionedCatalog["commonmark"])
 
             if (loader == "fabric") {
@@ -309,12 +281,9 @@ class OneConfigSetupPlugin : Plugin<Project> {
                     "compileOnly"(project(project.path))
                 } else {
                     "api"(project(project.path))
-                    // compose-bundle ships as its own mod
-                    if (project.path != ":modules:compose-bundle") "bundle"(project(project.path))
+                    "bundle"(project(project.path))
                 }
             }
-
-            //api("dev.deftu:enhancedeventbus:2.0.0") // TODO
         }
 
         if (enableMoulRelocatorKsp) {
@@ -351,6 +320,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
                         from(components["java"])
                         groupId = rootProject.group.toString()
                         artifactId = project.name
+                        suppressAllPomMetadataWarnings()
                     }
                 }
             }
@@ -379,7 +349,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 put("fabric_mc_version", range)
                 put("loader_version", versionedCatalog.versions["loader"].requiredVersion)
                 put("flk_version", versionedCatalog.versions["fabric-language-kotlin"].requiredVersion)
-                put("compose_version", composeBundleVersion)
+                put("polycompose_version", polyComposeVersion)
             }
 
             this.inputs.properties(fabricProperties)
@@ -392,8 +362,6 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 eachFile { if (path == "ornithe.mod.json") path = "fabric.mod.json" }
             } else {
                 exclude("ornithe.mod.json")
-                // modern font loading rejects its legacy_unicode provider
-                exclude("assets/oneconfig/font/legacy_default.json")
             }
 
             val mixinCompat = if (
@@ -425,14 +393,20 @@ class OneConfigSetupPlugin : Plugin<Project> {
             jvmToolchain(javaVersion)
         }
 
+        val inCI = providers.environmentVariable("CI").map { it.toBoolean() }.orElse(false).get()
+
+        tasks.named<JavaCompile>("compileJava") {
+            if (!inCI) finalizedBy("checkstyleMain")
+        }
+
         tasks.withType<KotlinCompile>().configureEach {
             // FixedScrollConfig relies on Compose internals, for which there is no public alternative
             compilerOptions.freeCompilerArgs.add("-Xdont-warn-on-error-suppression")
+            compilerOptions.optIn.add("org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi")
         }
 
         tasks.withType<Jar>().configureEach {
-            exclude("**/*_Test.class")
-            exclude("**/*_Test\$*.class")
+            exclude("org/polyfrost/oneconfig/test/**")
         }
     }
 }

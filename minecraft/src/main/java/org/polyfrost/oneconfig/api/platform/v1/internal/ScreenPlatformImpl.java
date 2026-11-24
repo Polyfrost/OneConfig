@@ -36,9 +36,9 @@ import net.minecraft.client.GameNarrator;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeScreen;
-import org.polyfrost.oneconfig.internal.ui.compose.ComposeSupport;
-import org.polyfrost.oneconfig.internal.ui.compose.GlHost;
+import org.polyfrost.compose.minecraft.screen.ComposeScreen;
+import org.polyfrost.compose.minecraft.screen.ComposeSupport;
+import org.polyfrost.compose.minecraft.render.gl.GlHost;
 //? if = 1.8.9
 //import org.polyfrost.oneconfig.internal.legacy.LegacyPanoramaTracker;
 

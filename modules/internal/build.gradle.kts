@@ -32,10 +32,8 @@ plugins {
 dependencies {
     api(project(":modules:hud"))
     api(project(":modules:events"))
-    api(project(":modules:commands"))
     api(project(":modules:notifications"))
-    api(libs.jetbrains.compose.runtime)
-    api(project(":modules:poly-compose"))
+    api(libs.polycompose.core)
     api(libs.jetbrains.compose.navigation)
     api(libs.jetbrains.lifecycle)
     api(libs.jetbrains.viewmodel)
@@ -47,6 +45,12 @@ kotlin {
     jvmToolchain(21)
     compilerOptions {
         optIn.add("org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi")
+    }
+}
+
+tasks.processResources {
+    from(rootProject.file("CHANGELOG.md")) {
+        into("assets/oneconfig")
     }
 }
 

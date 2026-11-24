@@ -26,10 +26,11 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 /**
  * Clipboard of the game window on versions where it runs on SDL

@@ -1,7 +1,12 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.ui.v1
 
-import java.util.ServiceLoader
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.internal.loadBridge
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
 
 /**
  * Utility for opening the OneConfig UI
@@ -29,13 +34,45 @@ public object OneConfigUI {
      * Bridge into the OneConfig UI screen if present
      */
     private val bridge: OneConfigUIBridge? by lazy {
-        try {
-            ServiceLoader.load(OneConfigUIBridge::class.java, OneConfigUIBridge::class.java.classLoader)
-                .iterator().let { if (it.hasNext()) it.next() else null }
-        } catch (t: Throwable) {
-            LOGGER.warn("Failed to load OneConfigUIBridge; the OneConfig UI cannot be opened", t)
-            null
+        loadBridge(OneConfigUIBridge::class.java, "the OneConfig UI cannot be opened")
+    }
+
+    @JvmStatic
+    public fun open() {
+        show(null)
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun open(destination: OneConfigDestination? = null) {
+        show(routeOf(destination))
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    @JvmOverloads
+    public fun open(page: OneConfigPage, argument: Any? = null) {
+        if (argument == null) {
+            open(OneConfigDestination.Custom(page))
+            return
         }
+        val bridge = bridge
+        if (bridge == null) {
+            LOGGER.warn("Cannot open the OneConfig UI: no OneConfigUIBridge is available")
+            return
+        }
+        bridge.openPage(page, argument)
+    }
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public val currentPageArgument: Any?
+        get() = bridge?.takePageArgument()
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun open(pageId: String) {
+        open(OneConfigDestination.Page(pageId))
     }
 
     /**
@@ -47,15 +84,31 @@ public object OneConfigUI {
      *
      * If the UI is already open it navigates to [route] in place
      */
+    @Deprecated("Open a OneConfigDestination, a OneConfigPage or a page id instead")
     @JvmStatic
-    @JvmOverloads
     public fun open(route: Any? = null) {
+        show(normalizeRoute(route))
+    }
+
+    private fun show(route: Any?) {
         val bridge = bridge
         if (bridge == null) {
             LOGGER.warn("Cannot open the OneConfig UI: no OneConfigUIBridge is available")
             return
         }
         bridge.open(route)
+    }
+
+    private fun routeOf(destination: OneConfigDestination?): Any? = when (destination) {
+        null -> null
+        is OneConfigDestination.Page -> destination.id
+        is OneConfigDestination.ModConfig -> destination.target
+        is OneConfigDestination.Custom -> destination.page
+    }
+
+    private fun normalizeRoute(route: Any?): Any? = when (route) {
+        is OneConfigDestination -> routeOf(route)
+        else -> route
     }
 
     /**
@@ -72,9 +125,20 @@ public object OneConfigUI {
      */
     @JvmStatic
     @JvmOverloads
-    public fun createScreen(route: Any? = null): Any? = bridge?.createScreen(route)
+    public fun createScreen(route: Any? = null): Any? = bridge?.createScreen(normalizeRoute(route))
 
     @ExperimentalOneConfigUiApi
     @JvmStatic
     public fun isOneConfigScreen(screen: Any?): Boolean = bridge?.isOneConfigScreen(screen) ?: false
+
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun ensureInitialized() {
+        try {
+            Class.forName(KeybindManager::class.java.name, true, KeybindManager::class.java.classLoader)
+        } catch (t: Throwable) {
+            LOGGER.warn("Failed to arm the OneConfig keybind handlers", t)
+        }
+        bridge?.ensureInitialized()
+    }
 }

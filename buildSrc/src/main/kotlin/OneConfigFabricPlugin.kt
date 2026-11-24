@@ -63,6 +63,7 @@ class OneConfigFabricPlugin : Plugin<Project> {
                 runDirectory = layout.projectDirectory.dir("../../run")
                 systemProperties.put("oneconfig.test", "true")
             }
+            uncompressNestedJars = true
         }
     }
 }

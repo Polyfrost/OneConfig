@@ -29,7 +29,6 @@
 
 package org.polyfrost.oneconfig.api.event.v1
 
-import kotlin.experimental.ExperimentalTypeInference
 import org.polyfrost.oneconfig.api.event.v1.events.ChatEvent
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
@@ -40,6 +39,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
+import kotlin.experimental.ExperimentalTypeInference
 
 /**
  * Kotlin specific API for registering event handlers

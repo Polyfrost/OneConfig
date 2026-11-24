@@ -1,7 +1,5 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,9 +19,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,41 +30,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import kotlin.math.roundToInt
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.api.settings.NumberChainOptionData
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.animatedFrame
-import org.polyfrost.oneconfig.internal.ui.components.onClick
 import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.sound.UiSoundEvent
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
+import kotlin.math.roundToInt
 
-private val ChainShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-
-/** Compose's default text cursor thickness */
-private val CaretWidth = 2.dp
+private val ChainShape @Composable get() = LocalTheme.current.shapes.field
 
 /** One slot in the chain where [id] is stable across reorders so equal values stay distinct rows */
 private data class ChainEntry(val id: Int, val value: Float)
@@ -151,9 +141,9 @@ fun NumberChainOption(data: NumberChainOptionData) {
                         dragTargetIndex < draggingIndex && index in dragTargetIndex until draggingIndex -> baseOffset + stridePx
                         else -> baseOffset
                     }
-                    val animatedOffset = animateFloatAsState(targetOffset, ReducedMotion.spec(spring()))
-                    val bgColor = animateColorAsState(if (isDragging) Accent else theme.chipBackground)
-                    val contentColor = animateColorAsState(
+                    val animatedOffset = Motion.animateFloatAsState(targetOffset, spring())
+                    val bgColor = animateAccentColorAsState(isDragging, if (isDragging) Accent else theme.chipBackground)
+                    val contentColor = Motion.animateColorAsState(
                         when {
                             !movable -> theme.textColorSecondary
                             isDragging || isHovered -> theme.textColor
@@ -223,27 +213,24 @@ fun NumberChainOption(data: NumberChainOptionData) {
                                 data.label(entry.value),
                                 color = Color.Unspecified,
                                 colorProducer = { contentColor.value },
-                                fontSize = 13.sp,
+                                fontSize = theme.typography.label.fontSize,
                                 modifier = Modifier
                                     .weight(1f)
                                     .then(
                                         if (!movable) Modifier else Modifier
-                                            .onClick(rememberInteractionSource()) { editingId = entry.id }
-                                            .pointerHoverIcon(PointerIcon.Hand)
+                                            .oneConfigClickable(data.label(entry.value), { editingId = entry.id }, indication = false)
                                     ),
                             )
                         }
 
                         if (movable) {
-                            val deleteInteraction = rememberInteractionSource()
-                            val deleteHovered by deleteInteraction.collectIsHoveredAsState()
-                            Icon(
+                            IconButton(
                                 "close",
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .onClick(deleteInteraction) { commit(entries.filterNot { it.id == entry.id }) }
-                                    .pointerHoverIcon(PointerIcon.Hand),
-                                color = if (deleteHovered) theme.textColor else theme.textColorSecondary,
+                                translated("oneconfig.list.remove", "Remove"),
+                                { commit(entries.filterNot { it.id == entry.id }) },
+                                tooltip = null,
+                                frameSize = 14.dp,
+                                iconSize = 14.dp,
                             )
                         } else {
                             Spacer(Modifier.size(14.dp))
@@ -254,27 +241,16 @@ fun NumberChainOption(data: NumberChainOptionData) {
         }
 
         if (entries.size < data.maxEntries) {
-            val addInteraction = rememberInteractionSource()
-            val addHovered by addInteraction.collectIsHoveredAsState()
-            val addColor = animateColorAsState(if (addHovered) theme.textColor else theme.textColorSecondary)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(ChainShape)
-                    .graphicsLayer {}
-                    .border(1.dp, theme.borderColor, ChainShape)
-                    .onClick(addInteraction) {
-                        val values = entries.map { it.value }
-                        commit(entries + ChainEntry(idGen[0]++, data.nextValue(values)))
-                    }
-                    .pointerHoverIcon(PointerIcon.Hand)
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Icon("plus", modifier = Modifier.size(14.dp), tint = { addColor.value })
-                Text("Add", color = Color.Unspecified, colorProducer = { addColor.value }, fontSize = 13.sp)
-            }
+            TextButton(
+                translated("oneconfig.list.add", "Add"),
+                "plus",
+                {
+                    val values = entries.map { it.value }
+                    commit(entries + ChainEntry(idGen[0]++, data.nextValue(values)))
+                },
+                size = ControlSize.Compact,
+                fillWidth = true,
+            )
         }
     }
 }
@@ -288,50 +264,23 @@ private fun ChainValueEditor(
     modifier: Modifier,
     onCommit: (Float) -> Unit,
 ) {
-    val theme = LocalTheme.current
-    val density = LocalDensity.current
-    val measurer = rememberTextMeasurer()
     val focusRequester = remember { FocusRequester() }
     var text by remember { mutableStateOf(formatSpinnerValue(initial)) }
     var focused by remember { mutableStateOf(false) }
 
-    val style = remember(theme) {
-        TextStyle(color = theme.textColor, fontSize = 13.sp, fontFamily = theme.typography.family)
-    }
-    // a text field fills whatever width it is given so the unit sits against a field measured to its text
-    // the field keeps room for a caret past the last digit which the unit is shifted back across
-    val fieldWidth = with(density) { measurer.measure(text, style).size.width.toDp() } + CaretWidth
-
     fun commit() = onCommit(text.toFloatOrNull()?.coerceIn(min, max) ?: initial)
 
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
-        value = text,
-        onValueChange = { text = filterNumberInput(it) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { commit() }),
-        textStyle = style,
-        cursorBrush = SolidColor(theme.textColor),
-        decorationBox = { innerTextField ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(fieldWidth)) { innerTextField() }
-                if (unit != null) {
-                    Text(
-                        unit,
-                        color = theme.textColor,
-                        fontSize = 13.sp,
-                        modifier = Modifier.offset(x = -CaretWidth),
-                    )
-                }
-            }
+    TextField(
+        text,
+        { text = filterNumberInput(it) },
+        modifier.onFocusChanged { state ->
+            if (state.isFocused) focused = true else if (focused) commit()
         },
-        modifier = modifier.trackTextInputFocus()
-            .focusRequester(focusRequester)
-            .onFocusChanged { state ->
-                if (state.isFocused) focused = true else if (focused) commit()
-            },
+        framed = false,
+        fontSize = LocalTheme.current.typography.label.fontSize,
+        visualTransformation = rememberUnitSuffix(unit),
+        focusRequester = focusRequester,
+        onSubmit = { commit() },
     )
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }

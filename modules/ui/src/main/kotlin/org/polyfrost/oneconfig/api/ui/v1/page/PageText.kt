@@ -1,5 +1,9 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.ui.v1.page
 
+import androidx.compose.runtime.Composable
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 
 @ExperimentalOneConfigUiApi
@@ -21,4 +25,16 @@ public class PageText internal constructor(public val key: String?, public val f
         @JvmStatic
         public fun literal(text: String): PageText = PageText(null, text)
     }
+}
+
+@ExperimentalOneConfigUiApi
+@Composable
+public fun PageText.resolve(): String = translate()
+
+internal fun PageText.translate(): String {
+    val key = key ?: return fallback
+    return runCatching {
+        val i18n = Platform.i18n()
+        if (i18n.hasTranslation(key)) i18n.translateString(key) else null
+    }.getOrNull() ?: fallback
 }

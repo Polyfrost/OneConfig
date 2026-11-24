@@ -26,10 +26,11 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import java.util.HashSet;
-import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Class used by OneConfig for deprecation related utilities

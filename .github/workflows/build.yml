@@ -73,43 +73,30 @@ jobs:
 
       # checks run after the uploads so that their failures don't withhold the built artifacts
       - name: Build
-        run: ./gradlew -p modules assemble --no-daemon
+        run: ./gradlew -p modules assemble
 
       - name: Test publication
         run: ./gradlew -p modules publishToMavenLocal
-
-      - name: Upload compose-bundle
-        uses: actions/upload-artifact@v7
-        with:
-          path: |
-            modules/compose-bundle/build/libs/*.jar
-            !**/*-javadoc.jar
-            !**/*-sources.jar
-            !**/*-ornithe.jar
-          archive: false
-          if-no-files-found: error
 
       - name: Upload module libs
         uses: actions/upload-artifact@v7
         with:
           name: lib-artifacts-modules
-          # the compose-bundle main jar is uploaded on its own
           path: |
             modules/**/build/libs/
-            !modules/compose-bundle/build/libs/*.jar
-            modules/compose-bundle/build/libs/*-javadoc.jar
-            modules/compose-bundle/build/libs/*-sources.jar
           if-no-files-found: error
 
       - name: Check
-        run: ./gradlew -p modules check --no-daemon
+        run: ./gradlew -p modules check
 
       # buildSrc's Detekt tasks (which also cover the Gradle scripts) aren't part of any project's build
       - name: Lint
-        run: ./gradlew :buildSrc:detekt --no-daemon
+        run: ./gradlew :buildSrc:detekt
 
   minecraft:
-    name: Build ${{ matrix.node }}
+    name: Build ${{ matrix.node || 'minecraft' }}
+
+    needs: [modules]
 
     runs-on: ubuntu-26.04
 
@@ -139,10 +126,10 @@ jobs:
 
       # checks run after the uploads so that their failures don't withhold the built artifacts
       - name: Build
-        run: ./gradlew :minecraft:$NODE:assemble --no-daemon
+        run: ./gradlew ":minecraft:$NODE:assemble"
 
       - name: Test publication
-        run: ./gradlew :minecraft:$NODE:publishToMavenLocal
+        run: ./gradlew ":minecraft:$NODE:publishToMavenLocal"
 
       - name: Upload mod jar
         uses: actions/upload-artifact@v7
@@ -159,7 +146,7 @@ jobs:
           if-no-files-found: error
 
       - name: Check
-        run: ./gradlew :minecraft:$NODE:check --no-daemon
+        run: ./gradlew ":minecraft:$NODE:check"
 
   lib-artifacts:
     name: Merge dev artifacts

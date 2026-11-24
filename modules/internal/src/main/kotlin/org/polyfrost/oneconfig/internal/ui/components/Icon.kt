@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalVersionOverloading::class)
+
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.foundation.Image
@@ -5,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -23,26 +24,28 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.util.concurrent.ConcurrentHashMap
-import javax.imageio.ImageIO
-import kotlin.math.sqrt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.polyfrost.compose.backend.asComposeImageBitmap
+import org.polyfrost.compose.host.LocalUiOversample
+import org.polyfrost.compose.host.OversampledSvgPainter
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentEnd
 import org.polyfrost.oneconfig.internal.ui.themes.AccentGradient
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.utils.v1.Multithreading
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import javax.imageio.ImageIO
+import kotlin.math.sqrt
 
 private object IconResourceMarker
 private const val DefaultIconSize = 18f
@@ -151,22 +154,13 @@ private class RasterIconPainter(private val icon: RasterIcon) : Painter() {
     }
 }
 
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 @Composable
 fun Icon(
     iconName: String,
     color: Color = Color.Unspecified,
     modifier: Modifier = Modifier,
     fitAspectRatio: Boolean = false,
-) = Icon(iconName, color, modifier, fitAspectRatio, null)
-
-@Composable
-fun Icon(
-    iconName: String,
-    color: Color = Color.Unspecified,
-    modifier: Modifier = Modifier,
-    fitAspectRatio: Boolean = false,
-    tint: (() -> Color)? = null,
+    @IntroducedAt("1.6.0") tint: (() -> Color)? = null,
 ) {
     val theme = LocalTheme.current
     val resolvedColor = if (color == Color.Unspecified) theme.textColor else color
@@ -377,7 +371,7 @@ fun IconWithIndicator(
                     .size(8.dp)
                     .background(
                         Accent,
-                        shape = LocalTheme.current.circleShape
+                        shape = LocalTheme.current.shapes.circle
                     )
                     .blur(7.dp)
             )
@@ -387,7 +381,7 @@ fun IconWithIndicator(
                     .size(6.dp)
                     .background(
                         Accent,
-                        shape = LocalTheme.current.circleShape
+                        shape = LocalTheme.current.shapes.circle
                     )
             )
         }

@@ -33,9 +33,9 @@ val skiaStub: SourceSet = sourceSets.create("skiaStub")
 dependencies {
     compileOnly(skiaStub.output)
     api(project(":modules:utils"))
-    api(project(":modules:poly-compose"))
+    api(libs.polycompose.core)
     api(project(":modules:events"))
 
-    compileOnly(libs.jetbrains.compose.runtime)
     compileOnly(libs.kotlinx.coroutines)
+    testImplementation(libs.kotlinx.coroutines)
 }

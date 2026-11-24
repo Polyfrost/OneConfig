@@ -35,12 +35,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyCanvas
-import org.polyfrost.compose.composables.PolyColumn
+import org.polyfrost.compose.composables.NodeBox
+import org.polyfrost.compose.composables.NodeCanvas
+import org.polyfrost.compose.composables.NodeColumn
+import org.polyfrost.compose.composables.NodeRow
+import org.polyfrost.compose.composables.NodeText
 import org.polyfrost.compose.composables.PolyModifier
-import org.polyfrost.compose.composables.PolyRow
-import org.polyfrost.compose.composables.PolyText
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.composables.border
@@ -52,7 +52,6 @@ import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.composables.tag
 import org.polyfrost.compose.composables.width
 import org.polyfrost.compose.layout.PolyAlign
-import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.PolyFont
 
 private const val CARD_WIDTH = 340f
@@ -90,8 +89,8 @@ public fun NotificationToasts() {
     val h = ToastViewport.height
     if (w <= 0f || h <= 0f) return
 
-    PolyBox(modifier = PolyModifier.width(w).height(h)) {
-        PolyColumn(
+    NodeBox(modifier = PolyModifier.width(w).height(h)) {
+        NodeColumn(
             gap = 12f,
             modifier = PolyModifier.align(PolyAlign.BottomRight).margin(16f),
         ) {
@@ -110,50 +109,48 @@ private fun Toast(notification: Notification) {
     val progressValue = remember { mutableStateOf(quantize(notification.progressOrNull() ?: 0f)) }
 
     LaunchedEffect(notification.id) {
-        val tracksProgress = notification.progress != null
-
-        fun sampleProgress(): Float {
-            val p = notification.progressOrNull() ?: 0f
-            progressValue.value = quantize(p)
-            return p
-        }
-
         val enterStart = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }
             val t = ((now - enterStart).coerceAtLeast(0L).toFloat() / ENTER_NANOS).coerceIn(0f, 1f)
             appear = easeOutCubic(t)
-            if (tracksProgress) sampleProgress()
+            notification.progressOrNull()?.let { progressValue.value = quantize(it) }
             if (t >= 1f) break
         }
         appear = 1f
 
-        when {
-            notification.progress != null -> {
-                while (!notification.dismissRequested) {
-                    if (sampleProgress() >= 1f) break
-                    withFrameNanos { }
+        var revision = notification.revision
+        var remaining = durationNanos(notification)
+        var completedAt = -1L
+        var last = withFrameNanos { it }
+        while (!notification.dismissRequested) {
+            val now = withFrameNanos { it }
+            val dt = now - last
+            last = now
+            val state = notification.state
+            if (state.revision != revision) {
+                revision = state.revision
+                remaining = durationNanos(notification)
+                completedAt = -1L
+            }
+            if (notification.tracksProgress(state)) {
+                val progress = notification.progressOrNull(state)
+                if (progress != null) progressValue.value = quantize(progress)
+                if (progress == null || progress < 1f) {
+                    completedAt = -1L
+                } else {
+                    if (completedAt < 0L) completedAt = now
+                    if (now - completedAt >= PROGRESS_LINGER_NANOS) break
                 }
-                val lingerStart = withFrameNanos { it }
-                while (withFrameNanos { it } - lingerStart < PROGRESS_LINGER_NANOS && !notification.dismissRequested) { }
+                continue
             }
-            notification.persistent -> {
-                while (!notification.dismissRequested) withFrameNanos { }
-            }
-            else -> {
-                val durationNanos = (notification.duration * 1_000_000L).toLong().coerceAtLeast(1L)
-                var remaining = durationNanos
-                var last = withFrameNanos { it }
-                while (remaining > 0L && !notification.dismissRequested) {
-                    val now = withFrameNanos { it }
-                    val dt = now - last
-                    last = now
-                    if (!notification.hovered) remaining -= dt
-                    timeFraction.value = quantize((remaining.toFloat() / durationNanos).coerceIn(0f, 1f))
-                }
-                timeFraction.value = 0f
-            }
+            completedAt = -1L
+            if (notification.persistent) continue
+            if (!state.hovered) remaining -= dt
+            timeFraction.value = quantize((remaining.toFloat() / durationNanos(notification)).coerceIn(0f, 1f))
+            if (remaining <= 0L) break
         }
+        timeFraction.value = 0f
 
         val exitStart = withFrameNanos { it }
         while (true) {
@@ -165,10 +162,11 @@ private fun Toast(notification: Notification) {
         NotificationsManager.dismiss(notification)
     }
 
-    val hasProgress = notification.progress != null
-    val bgBase = if (notification.hovered) NotificationTheme.background.lighten(0.06f) else NotificationTheme.background
+    val state = notification.state
+    val hasProgress = notification.tracksProgress(state)
+    val bgBase = if (state.hovered) NotificationTheme.background.lighten(0.06f) else NotificationTheme.background
 
-    PolyColumn(
+    NodeColumn(
         gap = 12f,
         modifier = PolyModifier
             .width(CARD_WIDTH)
@@ -178,16 +176,17 @@ private fun Toast(notification: Notification) {
             .tag(ToastHit.Body(notification))
             .fade(if (opaque) null else ({ appear })),
     ) {
-        PolyRow(gap = ICON_GAP) {
-            ToastIcon(notification)
-            PolyColumn(gap = 4f) {
-                PolyText(notification.title, color = NotificationTheme.accentFor(notification.type), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
+        NodeRow(gap = ICON_GAP) {
+            ToastIcon(notification, state.type)
+            NodeColumn(gap = 4f) {
+                NodeText(state.title, color = NotificationTheme.accentFor(state.type), fontSize = TITLE_SIZE, font = NotificationTheme.fontTitle)
                 val bodyFont = messageFont()
-                val lines = remember(notification.message, bodyFont) {
-                    wrapText(notification.message, TEXT_WIDTH, bodyFont)
+                val message = state.message
+                val lines = remember(message, bodyFont) {
+                    wrapText(message, TEXT_WIDTH, bodyFont)
                 }
                 for (line in lines) {
-                    PolyText(line, color = NotificationTheme.textSecondary, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
+                    NodeText(line, color = NotificationTheme.textSecondary, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontBody)
                 }
             }
         }
@@ -200,14 +199,17 @@ private fun Toast(notification: Notification) {
         }
 
         if (notification.actions.isNotEmpty()) {
-            PolyRow(gap = 16f) {
+            NodeRow(gap = 16f) {
                 for (action in notification.actions) {
-                    ActionButton(notification, action)
+                    ActionButton(notification, action, state.type)
                 }
             }
         }
     }
 }
+
+private fun durationNanos(notification: Notification): Long =
+    notification.durationMillis.coerceIn(1L, Long.MAX_VALUE / 1_000_000L) * 1_000_000L
 
 private fun quantize(value: Float): Float {
     val barPixels = (CONTENT_WIDTH * ToastViewport.scale).coerceAtLeast(1f)
@@ -217,13 +219,13 @@ private fun quantize(value: Float): Float {
 @Composable
 private fun ProgressBar(progress: () -> Float) {
     val accent = NotificationTheme.accent
-    PolyBox(
+    NodeBox(
         modifier = PolyModifier
             .width(CONTENT_WIDTH)
             .height(6f)
-            .background(accent.multiplyAlpha(0.5f), NotificationTheme.radiusProgress),
+            .background(NotificationTheme.progressTrackColor(), NotificationTheme.radiusProgress),
     ) {
-        PolyCanvas(PolyModifier.width(CONTENT_WIDTH).height(6f), live = true) { x, y, _, h ->
+        NodeCanvas(PolyModifier.width(CONTENT_WIDTH).height(6f), live = true) { x, y, _, h ->
             val fillWidth = (CONTENT_WIDTH * progress()).coerceIn(0f, CONTENT_WIDTH)
             if (fillWidth > 0f) rect(x, y, fillWidth, h, accent, NotificationTheme.radiusProgress)
         }
@@ -231,38 +233,42 @@ private fun ProgressBar(progress: () -> Float) {
 }
 
 @Composable
-private fun ActionButton(notification: Notification, action: NotificationAction) {
-    val hovered = ToastInput.hoveredAction === action
-    val base = if (action.primary) NotificationTheme.accent else NotificationTheme.subtleButton
-    val bg = if (hovered) base.lighten(0.12f) else base
-    PolyBox(
+private fun ActionButton(notification: Notification, action: NotificationAction, type: NotificationType) {
+    val hovered = action.enabled && ToastInput.hoveredAction === action
+    val base = if (action.primary) NotificationTheme.actionFillFor(type) else NotificationTheme.subtleButton
+    val fill = if (hovered) base.lighten(0.12f) else base
+    val textColor = if (action.primary) NotificationTheme.onActionFillFor(type) else NotificationTheme.actionSubtleText
+    NodeBox(
         modifier = PolyModifier
-            .background(bg, NotificationTheme.radiusButton)
+            .background(if (action.enabled) fill else fill.multiplyAlpha(NotificationTheme.disabledAlpha), NotificationTheme.radiusButton)
             .padding(horizontal = 12f, vertical = 6f)
             .tag(ToastHit.Action(notification, action)),
     ) {
-        val textColor = if (action.primary) NotificationTheme.actionPrimaryText else NotificationTheme.actionSubtleText
-        PolyText(action.label, color = textColor, fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
+        NodeText(action.label, color = if (action.enabled) textColor else textColor.multiplyAlpha(NotificationTheme.disabledAlpha), fontSize = MESSAGE_SIZE, font = NotificationTheme.fontTitle)
     }
 }
 
 @Composable
-private fun ToastIcon(notification: Notification) {
+private fun ToastIcon(notification: Notification, type: NotificationType) {
     val custom = notification.icon
     if (custom != null) {
-        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
+        NodeCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val s = minOf(w / custom.width, h / custom.height)
             image(custom, x + (w - custom.width * s) / 2f, y + (h - custom.height * s) / 2f, custom.width * s, custom.height * s)
         }
     } else {
-        val accent = NotificationTheme.accentFor(notification.type)
+        val accent = NotificationTheme.accentFor(type)
         val iconFolder = NotificationTheme.iconFolder
-        PolyCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
+        val name = notification.iconName ?: type.iconName
+        NodeCanvas(modifier = PolyModifier.size(ICON_SIZE, ICON_SIZE).align(PolyAlign.Top)) { x, y, w, h ->
             val pixelSize = Math.ceil((w * ToastViewport.scale * ICON_RASTER_SCALE).toDouble()).toInt()
-            val name = notification.type.iconName
             // white masks tinted when drawn, so animating theme colours don't rasterize and cache a mask per colour
-            val img = iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, WHITE) }
-                ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, WHITE)
+            val img = if (name.endsWith(".svg")) {
+                SvgMask.get(if (name.startsWith("/")) name else "/$name", pixelSize, WHITE)
+            } else {
+                iconFolder?.let { SvgMask.get("/assets/oneconfig/ico/$it/$name.svg", pixelSize, WHITE) }
+                    ?: SvgMask.get("/assets/oneconfig/ico/$name.svg", pixelSize, WHITE)
+            }
             if (img != null) image(img, x, y, w, h, 0f, 0f, 1f, 1f, accent)
         }
     }

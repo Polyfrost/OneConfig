@@ -1,17 +1,31 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import androidx.compose.runtime.State
-import androidx.compose.ui.graphics.ImageBitmap
-import java.util.UUID
+import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.PlayerSkinLayers
+import org.polyfrost.oneconfig.api.ui.v1.components.PlayerSkinLayersResult
+import java.util.UUID
 
 @ExperimentalOneConfigUiApi
+@InternalOneConfigUiApi
+@Suppress("DEPRECATION")
 public interface OneConfigUIPlayerHeadBridge {
-    public fun face(id: UUID): ImageBitmap?
+    public val revision: Int
 
-    public fun observe(id: UUID): State<ImageBitmap?>
+    public fun head(id: UUID?): PolyBitmap?
 
-    public fun defaultFace(id: UUID): ImageBitmap?
+    public fun defaultHead(id: UUID): PolyBitmap?
+
+    public fun localPlayerId(): UUID?
+
+    public fun localPlayerName(): String?
+
+    public fun skinTexture(id: UUID): String?
+
+    public fun skinLayers(id: UUID): PlayerSkinLayers?
+
+    public fun skinLayers(texture: String): PlayerSkinLayersResult
 }
 
 @ExperimentalOneConfigUiApi

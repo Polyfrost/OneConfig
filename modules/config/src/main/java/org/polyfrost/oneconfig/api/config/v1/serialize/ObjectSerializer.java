@@ -26,11 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +33,12 @@ import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
 
@@ -385,7 +386,15 @@ public class ObjectSerializer {
                 MHUtils.setAccessible(f);
                 if (value instanceof Map) {
                     Map<String, Object> m = (Map<String, Object>) value;
-                    f.set(theObject, _deserialize(m, f.getType()));
+                    Object adapted = null;
+                    if (m.get("class") instanceof String && getAdapter(f.getType()) != null) {
+                        try {
+                            adapted = deserialize(m);
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to read field {} of {} through its adapter", f.getName(), cls.getName(), e);
+                        }
+                    }
+                    f.set(theObject, adapted != null && f.getType().isInstance(adapted) ? adapted : _deserialize(m, f.getType()));
                 } else {
                     Object out = richCast(value, f.getType());
                     f.set(theObject, out);

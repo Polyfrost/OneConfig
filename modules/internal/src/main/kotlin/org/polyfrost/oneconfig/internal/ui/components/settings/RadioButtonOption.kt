@@ -1,49 +1,25 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.coerceAtLeast
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.ui.v1.components.RadioGroup
 import org.polyfrost.oneconfig.internal.ui.api.settings.RadioButtonOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
-import org.polyfrost.oneconfig.internal.ui.components.ReducedMotion
-import org.polyfrost.oneconfig.internal.ui.components.Text
-import org.polyfrost.oneconfig.internal.ui.components.liquidGlass
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
-import org.polyfrost.oneconfig.internal.ui.themes.Accent
-import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
-import org.polyfrost.oneconfig.internal.ui.themes.concentric
-
-private val RadioPadding = 3.dp
-private val RadioShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
-private val RadioItemShape @Composable get() = RadioShape.concentric(RadioPadding)
-private val RadioItemMinHeight = 32.dp
 
 @Composable
 fun RadioButtonOption(data: RadioButtonOptionData) {
-    val theme = LocalTheme.current
-    val density = LocalDensity.current
+    RadioButtonOption(data, true)
+}
 
+@Composable
+fun RadioButtonOption(data: RadioButtonOptionData, enabled: Boolean) {
     val enumClass = when {
         data.prop.type.isEnum -> data.prop.type
         data.prop.type.superclass?.isEnum == true -> data.prop.type.superclass
@@ -53,12 +29,15 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         enumClass != null -> enumClass.enumConstants.toList()
         else -> emptyList()
     }
-    val options: List<Any> = when {
-        enumClass != null -> values.mapIndexed { index, value ->
-            data.options?.getOrNull(index) ?: (value as Enum<*>).name
+    val languageStamp = languageStamp()
+    val options: List<Any> = remember(data.prop, languageStamp) {
+        when {
+            enumClass != null -> values.mapIndexed { index, value ->
+                data.options?.getOrNull(index) ?: (value as Enum<*>).name
+            }
+            data.options != null -> data.options!!
+            else -> emptyList()
         }
-        data.options != null -> data.options!!
-        else -> emptyList()
     }
 
     val initialValue = data.prop.shown()
@@ -66,87 +45,25 @@ fun RadioButtonOption(data: RadioButtonOptionData) {
         mutableStateOf(if (initialValue is Enum<*>) initialValue.ordinal else initialValue as? Int ?: 0)
     }
 
-    // each item's width is measured so the indicator can slide between them
-    val itemWidths = remember(options.size) { Array(options.size) { mutableIntStateOf(0) } }
-    var rowHeight by remember(options.size) { mutableIntStateOf(0) }
-    val indicatorReady = selectedIdx in itemWidths.indices && itemWidths[selectedIdx].intValue > 0
-
-    Box(
-        modifier = Modifier
-            .widthIn(max = LocalOptionWidth.current)
-            .liquidGlass(RadioShape)
-            .border(1.dp, theme.borderColor, RadioShape)
-            .clip(RadioShape)
-            .background(theme.componentBackground),
-    ) {
-        Box(
-            modifier = Modifier.padding(RadioPadding)
-        ) {
-            if (indicatorReady) {
-                val indicatorOffset = animateDpAsState(
-                    targetValue = with(density) { itemWidths.take(selectedIdx).sumOf { it.intValue }.toDp() },
-                    animationSpec = ReducedMotion.spec(spring()),
-                )
-                val indicatorWidth = animateDpAsState(
-                    targetValue = with(density) { itemWidths[selectedIdx].intValue.toDp() },
-                    animationSpec = ReducedMotion.spec(spring()),
-                )
-                val indicatorHeight = animateDpAsState(
-                    targetValue = with(density) { rowHeight.toDp() }.coerceAtLeast(RadioItemMinHeight),
-                    animationSpec = ReducedMotion.spec(spring()),
-                )
-                Box(
-                    modifier = Modifier
-                        .layout { measurable, _ ->
-                            val w = indicatorWidth.value.roundToPx()
-                            val h = indicatorHeight.value.roundToPx()
-                            val placeable = measurable.measure(Constraints.fixed(w, h))
-                            layout(w, h) { placeable.place(indicatorOffset.value.roundToPx(), 0) }
-                        }
-                        .clip(RadioItemShape)
-                        .background(Accent),
-                )
-            }
-
-            Row(
-                modifier = Modifier.onSizeChanged { rowHeight = it.height },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                options.forEachIndexed { index, option ->
-                    val interactionSource = rememberInteractionSource()
-                    val isHovered by interactionSource.collectIsHoveredAsState()
-                    val selected = index == selectedIdx
-                    val color = animateColorAsState(
-                        if (selected || isHovered) theme.textColor else theme.textColorSecondary
-                    )
-                    Box(
-                        modifier = Modifier
-                            .weight(1f, fill = false)
-                            .onSizeChanged { itemWidths[index].intValue = it.width }
-                            .onClick(interactionSource) {
-                                selectedIdx = index
-                                @Suppress("UNCHECKED_CAST")
-                                if (enumClass != null) {
-                                    (data.prop as Property<Any>).set(values[index])
-                                } else {
-                                    (data.prop as Property<Any>).set(index)
-                                }
-                            }
-                            .hoverable(interactionSource)
-                            .pointerHoverIcon(PointerIcon.Hand)
-                            .heightIn(min = RadioItemMinHeight)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            option,
-                            color = Color.Unspecified,
-                            fontSize = 12.sp,
-                            colorProducer = { color.value },
-                        )
-                    }
-                }
-            }
+    val select: (Int) -> Unit = { index ->
+        selectedIdx = index
+        @Suppress("UNCHECKED_CAST")
+        if (enumClass != null) {
+            (data.prop as Property<Any>).set(values[index])
+        } else {
+            (data.prop as Property<Any>).set(index)
         }
     }
+    val labels = remember(options, languageStamp) { options.map { it.asPlainLabel() } }
+    val styled = remember(options, languageStamp) { options.styledLabelsOrNull() }
+    RadioGroup(
+        selected = selectedIdx,
+        options = labels.indices.toList(),
+        onSelect = select,
+        modifier = Modifier.widthIn(max = LocalOptionWidth.current),
+        label = { labels[it] },
+        orientation = Orientation.Horizontal,
+        enabled = enabled,
+        styledLabel = styled?.let { list -> { list[it] } },
+    )
 }

@@ -26,14 +26,15 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import static org.junit.jupiter.api.Assertions.*;
 

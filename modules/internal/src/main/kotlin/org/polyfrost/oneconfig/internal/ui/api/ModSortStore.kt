@@ -3,16 +3,17 @@ package org.polyfrost.oneconfig.internal.ui.api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.ui.v1.ModSortModes
+import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.slf4j.LoggerFactory
 
 object ModSortStore {
-    const val CUSTOM = "custom"
-    const val ALPHABETICAL = "alphabetical"
+    const val CUSTOM = ModSortModes.CUSTOM
+    const val ALPHABETICAL = ModSortModes.ALPHABETICAL
 
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModSortStore")
     private const val FILE_NAME = "mod-sort"

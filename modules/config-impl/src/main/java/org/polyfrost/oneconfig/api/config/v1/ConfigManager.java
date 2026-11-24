@@ -26,6 +26,24 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
+import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
+import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
+import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
+import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.v1.migrate.MigrationRunner;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
+import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
+import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -51,22 +69,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnmodifiableView;
-import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
-import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
-import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
-import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
-import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.OneConfigKeybindAdapter;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
-import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
-import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
-import org.polyfrost.oneconfig.api.notifications.v1.Notifications;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
@@ -91,6 +93,7 @@ public final class ConfigManager {
     private static final CopyOnWriteArrayList<ProfileChangeListener> profileListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<TreeRegistrationListener> treeListeners = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<ConfigSubmissionListener> submissionListeners = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<ProfileArchiveContributor> archiveContributors = new CopyOnWriteArrayList<>();
 
     public static final String PROFILE_LOCAL_METADATA = "profileLocal";
 
@@ -137,6 +140,13 @@ public final class ConfigManager {
         void onConfigSubmitted(@NotNull Config config);
     }
 
+    @ApiStatus.Internal
+    public interface ProfileArchiveContributor {
+        @NotNull String entryName();
+
+        @Nullable byte[] contribute(@NotNull String profile, @NotNull Path profileDir);
+    }
+
     public static void addProfileChangeListener(ProfileChangeListener listener) {
         profileListeners.add(listener);
     }
@@ -149,6 +159,11 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static void addConfigSubmissionListener(ConfigSubmissionListener listener) {
         submissionListeners.add(listener);
+    }
+
+    @ApiStatus.Internal
+    public static void addProfileArchiveContributor(ProfileArchiveContributor contributor) {
+        archiveContributors.add(contributor);
     }
 
     public static void removeProfileChangeListener(ProfileChangeListener listener) {
@@ -469,6 +484,7 @@ public final class ConfigManager {
             LOGGER.info("opening profile {}", profile);
             active = new ConfigManager(PROFILES_DIR.resolve(profile), serializers).withWatcher();
         }
+        MigrationRunner.profileOpened(active.getFolder());
         boolean wasRebinding = REBINDING_PROFILES.get();
         REBINDING_PROFILES.set(Boolean.TRUE);
         try {
@@ -894,6 +910,7 @@ public final class ConfigManager {
                 } else {
                     zipDirectory(source, source, zip);
                 }
+                writeArchiveContributions(profile, source, zip);
             }
             try {
                 Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
@@ -911,6 +928,25 @@ public final class ConfigManager {
         }
     }
 
+    private static void writeArchiveContributions(String profile, Path source, ZipOutputStream zip) throws IOException {
+        for (ProfileArchiveContributor contributor : archiveContributors) {
+            String name = contributor.entryName();
+            Path existing = source.resolve(name);
+            byte[] data;
+            try {
+                data = contributor.contribute(profile, source);
+            } catch (RuntimeException e) {
+                LOGGER.warn("Failed to add {} to the export of profile {}", name, profile, e);
+                data = null;
+            }
+            if (data == null && Files.isRegularFile(existing, LinkOption.NOFOLLOW_LINKS)) data = Files.readAllBytes(existing);
+            if (data == null) continue;
+            zip.putNextEntry(new ZipEntry(name));
+            zip.write(data);
+            zip.closeEntry();
+        }
+    }
+
     private static void zipDirectory(Path directory, Path root, ZipOutputStream zip) throws IOException {
         if (!Files.exists(directory)) return;
         try (Stream<Path> stream = Files.walk(directory)) {
@@ -924,6 +960,9 @@ public final class ConfigManager {
 
     private static void zipFile(Path file, Path root, ZipOutputStream zip) throws IOException {
         String name = root.relativize(file).toString().replace('\\', '/');
+        for (ProfileArchiveContributor contributor : archiveContributors) {
+            if (name.equals(contributor.entryName())) return;
+        }
         ZipEntry entry = new ZipEntry(name);
         zip.putNextEntry(entry);
         Files.copy(file, zip);
@@ -1352,19 +1391,23 @@ public final class ConfigManager {
     }
 
     public @Nullable Tree load(String id) {
+        runPendingMigrations();
         return backend.load(id);
     }
 
     public Tree get(String id) {
+        runPendingMigrations();
         return backend.get(id);
     }
 
     public boolean exists(String id) {
+        runPendingMigrations();
         return backend.exists(id);
     }
 
     @ApiStatus.Internal
     public Tree getNoRegister(Path p) throws Exception {
+        runPendingMigrations();
         return backend.load0(p, p.getFileName().toString());
     }
 
@@ -1384,7 +1427,23 @@ public final class ConfigManager {
         return backend.folder;
     }
 
+    private void runPendingMigrations() {
+        if (this == active && MigrationRunner.beforeLoad(getFolder())) reloadLoadedTrees();
+    }
+
+    private void reloadLoadedTrees() {
+        for (Tree tree : new ArrayList<>(backend.getTrees())) {
+            if (tree.getID() == null) continue;
+            try {
+                backend.load(tree);
+            } catch (Throwable t) {
+                LOGGER.error("Failed to reload tree {} after config migrations", tree.getID(), t);
+            }
+        }
+    }
+
     public Backend.RegistrationResult register(Tree t) {
+        runPendingMigrations();
         if (this == active && !Boolean.TRUE.equals(t.getMetadata(CompatSnapshots.SNAPSHOT_METADATA))) {
             Config.captureDefaults(t);
         }
@@ -1422,6 +1481,7 @@ public final class ConfigManager {
 
     @ApiStatus.Internal
     public Collection<Tree> gatherAll(String sub) {
+        runPendingMigrations();
         return backend.gatherAll(sub);
     }
 

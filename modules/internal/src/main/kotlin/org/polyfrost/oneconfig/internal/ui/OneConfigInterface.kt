@@ -2,7 +2,6 @@ package org.polyfrost.oneconfig.internal.ui
 
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,8 +11,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
@@ -29,10 +30,13 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.rememberNavController
-import kotlin.math.pow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.components.FeedbackHosts
+import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ThemeConfig
 import org.polyfrost.oneconfig.internal.ui.components.LocalSearchFieldFocused
 import org.polyfrost.oneconfig.internal.ui.components.RetainedVisibility
@@ -44,17 +48,19 @@ import org.polyfrost.oneconfig.internal.ui.shell.Shell
 import org.polyfrost.oneconfig.internal.ui.shell.ShellController
 import org.polyfrost.oneconfig.internal.ui.themes.Theme
 import org.polyfrost.oneconfig.internal.ui.themes.ThemeRegistry
+import kotlin.math.pow
 
 private val LOGGER = LogManager.getLogger("OneConfig/UI")
 
 fun guiCloseAnimationMillis(): Long =
-    if (!ThemeConfig.guiClosingAnimation) 0L
+    if (!ThemeConfig.guiClosingAnimation || !ThemeConfig.animations) 0L
     else (ThemeConfig.animationTime * 1000f).toLong().coerceIn(1L, MAX_CLOSE_ANIMATION_MS)
 
 private const val MAX_CLOSE_ANIMATION_MS = 160L
 
 private const val GRAPH_WAIT_TIMEOUT_MS = 10_000L
 
+@OptIn(InternalOneConfigUiApi::class)
 @Composable
 fun OneConfigInterface(
     windowWidth: Float,
@@ -111,6 +117,7 @@ fun OneConfigInterface(
                 } catch (t: Throwable) {
                     LOGGER.error("Failed to open the OneConfig UI on {}, falling back to the mods page", initialRoute, t)
                     runCatching { shell.navigation.navigate(ModsGraph) }
+                        .onFailure { UiErrors.error("Failed to open the OneConfig UI on the mods page", it) }
                 }
             }
         } finally {
@@ -178,24 +185,28 @@ fun OneConfigInterface(
                         val animMs = (ThemeConfig.animationTime * 1000f).toInt().coerceAtLeast(1)
                         val enterMs = if (ThemeConfig.guiOpenAnimation) animMs else 1
                         val exitMs = guiCloseAnimationMillis().toInt().coerceAtLeast(1)
-                        val dragAlpha by animateFloatAsState(
-                            targetValue = if (shell.layout.hudDragging) ThemeConfig.hudDragUiOpacity.coerceIn(0f, 1f) else 1f,
-                            animationSpec = tween(150),
+                        val dragAlpha by Motion.animateFloatAsState(
+                            target = if (shell.layout.hudDragging) (OneConfigConfig.hudDragUiOpacity / 100f).coerceIn(0f, 1f) else 1f,
                             label = "hudDragShellAlpha"
                         )
 
-                        RetainedVisibility(
-                            visible = visible,
-                            enter = tween(enterMs, easing = EaseOutExpo),
-                            exit = tween(exitMs, easing = EaseOutCubic),
-                            alphaMultiplier = dragAlpha,
-                            openKey = openRevision,
-                            modifier = Modifier.onGloballyPositioned {
-                                shell.layout.updateShellBounds(it.boundsInRoot())
-                            },
-                        ) { _ ->
-                            Shell(windowWidth, windowHeight, shellBackdrop)
+                        val shellContent: @Composable () -> Unit = {
+                            RetainedVisibility(
+                                visible = visible,
+                                enter = tween(enterMs, easing = EaseOutExpo),
+                                exit = tween(exitMs, easing = EaseOutCubic),
+                                alphaMultiplier = dragAlpha,
+                                openKey = openRevision,
+                                modifier = Modifier.onGloballyPositioned {
+                                    shell.layout.updateShellBounds(it.boundsInRoot())
+                                },
+                            ) { _ ->
+                                Shell(windowWidth, windowHeight, shellBackdrop)
+                            }
                         }
+                        val latestShellContent by rememberUpdatedState(shellContent)
+                        val movableShell = remember { movableContentOf { latestShellContent() } }
+                        if (shell.warming) movableShell() else FeedbackHosts(movableShell)
                     }
                 }
             }

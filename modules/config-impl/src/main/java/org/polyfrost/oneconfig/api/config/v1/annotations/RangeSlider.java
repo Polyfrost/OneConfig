@@ -26,10 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import java.lang.annotation.*;
 import org.polyfrost.oneconfig.api.config.v1.SliderBounds;
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
+
+import java.lang.annotation.*;
 
 /**
  * A slider with two handles selecting a start and end pair within {@link #min()} and {@link #max()}

@@ -24,17 +24,19 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package org.polyfrost.oneconfig.api.hud.v1
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.util.fastFilterNotNull
 import androidx.compose.ui.util.fastJoinToString
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.compose.composables.PolyBox
-import org.polyfrost.compose.composables.PolyMcText
+import org.polyfrost.compose.composables.NodeBox
+import org.polyfrost.compose.composables.NodeMcText
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.align
 import org.polyfrost.compose.composables.padding
@@ -44,11 +46,14 @@ import org.polyfrost.compose.layout.PolyInsets
 import org.polyfrost.compose.layout.PolySize
 import org.polyfrost.compose.node.PolyNode
 import org.polyfrost.compose.render.FontManager
+import org.polyfrost.compose.render.PolyColor
+import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.compose.runtime.PolyApplier
-import org.polyfrost.compose.render.PolyFont
-import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
 public abstract class TextHud(
@@ -77,15 +82,38 @@ public abstract class TextHud(
     }
 
     @Volatile private var displayText: String = ""
+    @Volatile @Transient private var displayRuns: List<List<TextRun>>? = null
+    @Transient private var runMode = mutableStateOf(false)
 
-    private fun casedText(case: Int): String = when (case) {
-        1 -> displayText.uppercase()
-        2 -> displayText.lowercase()
-        else -> displayText
+    private inner class DisplayTextProvider(
+        private val head: String,
+        private val case: Int,
+        private val tail: String,
+    ) : () -> String {
+        private var source: String? = null
+        private var built = ""
+
+        override fun invoke(): String {
+            val text = displayText
+            if (text !== source) {
+                val cased = when (case) {
+                    1 -> text.uppercase()
+                    2 -> text.lowercase()
+                    else -> text
+                }
+                built = if (head.isEmpty() && tail.isEmpty()) cased else head + cased + tail
+                source = text
+            }
+            return built
+        }
     }
 
     @Composable
     override fun Content() {
+        if (runMode.value) {
+            HudRunText({ displayRuns.orEmpty() }, alignColumns = false)
+            return
+        }
         val case = caseType
 
         val contentAlign = alignment
@@ -103,7 +131,7 @@ public abstract class TextHud(
             if (isStaticValid) bgModifier.size(staticW, staticH).padding(padInsets)
             else bgModifier.padding(padInsets)
 
-        PolyBox(modifier = outerModifier) {
+        NodeBox(modifier = outerModifier) {
             if (font == Font.Poppins) {
                 val spec = PoppinsTextSpec(
                     PolyFont(getPoppinsFontName(), 8f * textScale),
@@ -115,7 +143,7 @@ public abstract class TextHud(
                     shadowOffsetY,
                     textScale,
                 )
-                val provider = { casedText(case) }
+                val provider = remember(case) { DisplayTextProvider("", case, "") }
                 ComposeNode<PoppinsTextNode, PolyApplier>(
                     factory = { PoppinsTextNode() },
                     update = {
@@ -131,9 +159,9 @@ public abstract class TextHud(
                     if (textUnderline) append("§n")
                 }
                 val tail = if (textBold || textItalic || textUnderline) "§r" else ""
-                val provider = { head + casedText(case) + tail }
+                val provider = remember(head, case, tail) { DisplayTextProvider(head, case, tail) }
 
-                PolyMcText(
+                NodeMcText(
                     text = provider,
                     color = fgColor,
                     shadow = showShadow && !fullShadow,
@@ -155,6 +183,14 @@ public abstract class TextHud(
         ).fastFilterNotNull().fastJoinToString(concatString)
     }
 
+    private fun joinPlain(prefix: String, value: String?, suffix: String): String {
+        val v = value ?: ""
+        if (prefix.isEmpty() && suffix.isEmpty()) return v
+        if (v.isEmpty() && suffix.isEmpty()) return prefix
+        if (prefix.isEmpty() && v.isEmpty()) return suffix
+        return prefix + v + suffix
+    }
+
     /**
      * Wraps the finished line in square brackets when [brackets] is on
      *
@@ -167,17 +203,81 @@ public abstract class TextHud(
     @Transient private var lastPrefix: String? = null
     @Transient private var lastSuffix: String? = null
     @Transient private var lastBrackets = false
+    @Transient private var lastSeparator: String? = null
+    @Transient private var lastRuns: List<TextRun>? = null
+
+    @ExperimentalOneConfigUiApi
+    protected open fun getTextRuns(): List<TextRun>? = null
+
+    private fun updateRuns(runs: List<TextRun>): Boolean {
+        val p = prefix
+        val sfx = suffix
+        if (displayRuns != null && lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && lastSeparator == concatString && runs == lastRuns) return true
+        lastRuns = runs.toList()
+        lastPrefix = p
+        lastSuffix = sfx
+        lastBrackets = brackets
+        lastSeparator = concatString
+        lastValue = null
+
+        val separator = concatString
+        val joined = ArrayList<TextRun>()
+        for (part in listOf(listOf(TextRun(p)), runs, listOf(TextRun(sfx)))) {
+            if (part.all { it.text.isEmpty() }) continue
+            if (joined.isNotEmpty() && separator.isNotEmpty()) joined.add(TextRun(separator))
+            joined.addAll(part)
+        }
+        if (brackets && joined.isNotEmpty()) {
+            joined.add(0, TextRun("["))
+            joined.add(TextRun("]"))
+        }
+
+        val lines = splitLines(joined)
+        if (lines != displayRuns) {
+            displayRuns = lines
+            displayText = joined.plainText()
+            contentChanged()
+        }
+        if (!runMode.value) runMode.value = true
+        return true
+    }
+
+    private fun splitLines(runs: List<TextRun>): List<List<TextRun>> {
+        val lines = ArrayList<List<TextRun>>()
+        var current = ArrayList<TextRun>()
+        for (run in runs) {
+            val parts = run.text.split('\n')
+            for ((i, part) in parts.withIndex()) {
+                if (i > 0) {
+                    lines.add(current)
+                    current = ArrayList()
+                }
+                if (part.isNotEmpty()) current.add(if (parts.size == 1) run else run.copy(text = part))
+            }
+        }
+        lines.add(current)
+        return lines
+    }
 
     override fun update(): Boolean {
+        val runs = getTextRuns()
+        if (runs != null) return updateRuns(runs)
+        if (runMode.value) {
+            runMode.value = false
+            displayRuns = null
+            lastRuns = null
+            lastPrefix = null
+        }
         val value = getText()
         val p = prefix
         val sfx = suffix
-        if (lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && value == lastValue && plainConcat.get(javaClass)) return true
+        val plain = plainConcat.get(javaClass)
+        if (lastPrefix === p && lastSuffix === sfx && lastBrackets == brackets && value == lastValue && plain) return true
         lastValue = value
         lastPrefix = p
         lastSuffix = sfx
         lastBrackets = brackets
-        val text = decorate(concat(p, value, sfx))
+        val text = decorate(if (plain) joinPlain(p, value, sfx) else concat(p, value, sfx))
         if (text != displayText) {
             displayText = text
             contentChanged()
@@ -185,8 +285,15 @@ public abstract class TextHud(
         return true
     }
 
-    override fun minimumSize(): Pair<Float, Float> =
-        (padLeft + padRight + 2f) to (padTop + padBottom + 2f)
+    @Transient private var minimumSizeCache: Pair<Float, Float>? = null
+
+    override fun minimumSize(): Pair<Float, Float> {
+        val w = padLeft + padRight + 2f
+        val h = padTop + padBottom + 2f
+        val cached = minimumSizeCache
+        if (cached != null && cached.first == w && cached.second == h) return cached
+        return (w to h).also { minimumSizeCache = it }
+    }
 
     override fun setup() {
         super.setup()
@@ -205,6 +312,9 @@ public abstract class TextHud(
     override fun clone(): Hud = (super.clone() as TextHud).also {
         it.displayText = ""
         it.lastPrefix = null
+        it.displayRuns = null
+        it.lastRuns = null
+        it.runMode = mutableStateOf(false)
     }
 
     @ApiStatus.Internal
@@ -331,8 +441,9 @@ private class PoppinsTextNode : PolyNode() {
         val underlineThick = metrics.underlineThickness
         val shadowCol = s.shadow
         val outline = s.outline
-        lines.forEachIndexed { index, lineText ->
-            if (lineText.isEmpty()) return@forEachIndexed
+        for (index in lines.indices) {
+            val lineText = lines[index]
+            if (lineText.isEmpty()) continue
             val baseline = y + index * metrics.spacing - metrics.ascent
             val lineW = font.measureTextWidth(lineText)
             if (shadowCol != null && s.fullShadow) {

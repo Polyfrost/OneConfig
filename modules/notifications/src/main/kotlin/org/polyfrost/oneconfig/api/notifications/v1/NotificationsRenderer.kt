@@ -105,15 +105,17 @@ public object NotificationsRenderer {
             top = topHit(root, ToastInput.mouseX * pixelRatio / scale, ToastInput.mouseY * pixelRatio / scale, null)
         }
 
-        val hovered = top?.notification
-        for (notification in NotificationsManager.active) {
-            val isHovered = notification === hovered
-            if (notification.hovered != isHovered) notification.hovered = isHovered
-        }
-
+        updateHovered(top?.notification)
         ToastInput.hoverTarget = top
         val hoveredAction = (top as? ToastHit.Action)?.action
         if (ToastInput.hoveredAction !== hoveredAction) ToastInput.hoveredAction = hoveredAction
+    }
+
+    internal fun updateHovered(hovered: Notification?) {
+        for (notification in NotificationsManager.active) {
+            val isHovered = notification === hovered
+            if (notification.hovered != isHovered) NotificationsManager.mutate { notification.hovered = isHovered }
+        }
     }
 
     internal fun hitNow(): ToastHit? {
@@ -140,16 +142,17 @@ public object NotificationsRenderer {
         }
         when (target) {
             is ToastHit.Action -> {
+                if (!target.action.enabled) return
                 LOGGER.info("Notification #{} action '{}' clicked", target.notification.id, target.action.label)
                 runCatching { target.action.onClick.run() }
                     .onFailure { LOGGER.error("Notification action '${target.action.label}' threw", it) }
-                NotificationsManager.remove(target.notification)
+                if (target.action.dismissOnClick) NotificationsManager.remove(target.notification)
             }
             is ToastHit.Body -> {
                 LOGGER.info("Notification #{} body clicked", target.notification.id)
                 runCatching { target.notification.onClick?.run() }
                     .onFailure { LOGGER.error("Notification onClick threw", it) }
-                target.notification.dismissRequested = true
+                NotificationsManager.mutate { target.notification.dismissRequested = true }
             }
         }
     }

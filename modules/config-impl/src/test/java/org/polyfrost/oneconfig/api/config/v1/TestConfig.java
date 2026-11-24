@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import java.util.Arrays;
-import java.util.List;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Color;
@@ -38,6 +36,9 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
+
+import java.util.Arrays;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class TestConfig extends Config {

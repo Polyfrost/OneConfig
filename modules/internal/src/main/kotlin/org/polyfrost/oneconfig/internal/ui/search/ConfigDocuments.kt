@@ -17,6 +17,7 @@ import org.polyfrost.oneconfig.internal.ui.components.localizedGroup
 import org.polyfrost.oneconfig.internal.ui.components.localizedLabel
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
 import org.polyfrost.oneconfig.internal.ui.hud.HudModCardData
+import org.polyfrost.oneconfig.internal.ui.hud.cardsSupersededByHudCards
 import org.polyfrost.oneconfig.internal.ui.hud.configForHud
 import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
@@ -29,9 +30,10 @@ private const val ID_SEPARATOR = "::"
 object ConfigDocumentSource : SearchDocumentSource {
     override fun documents(): List<SearchDocument<*>> {
         val documents = ArrayList<SearchDocument<*>>()
+        val superseded = cardsSupersededByHudCards(hudModCardConfigs())
         ConfigRegistry.configs.toList().forEach { config ->
             val searchable = ConfigRegistry.shouldShowInSearch(config)
-            if (searchable && ConfigRegistry.shouldShowModCard(config)) {
+            if (searchable && ConfigRegistry.shouldShowModCard(config) && config !in superseded) {
                 documents += modDocument(config)
             }
 
@@ -107,7 +109,7 @@ private fun treeDocuments(
 
     fun walk(node: Node, path: String, category: String, subcategory: String, section: String?) {
         if (!include(node)) return
-        if (node.getMetadata<Any?>("hidden") != null) return
+        if (node.getMetadata<Any?>("hidden").let { it != null && it != false }) return
         if (node is Property<*> && !isRenderableProperty(node)) return
 
         val documentScopes = if (node is Property<*> && node.isKeybindProperty()) scopes + SearchScope.Keybinds

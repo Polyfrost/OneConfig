@@ -1,15 +1,15 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import java.util.concurrent.ConcurrentHashMap
 import org.apache.logging.log4j.LogManager
-import org.polyfrost.oneconfig.api.ui.v1.search.SearchDocument as PublicSearchDocument
-import org.polyfrost.oneconfig.api.ui.v1.search.SearchProvider as PublicSearchProvider
-import org.polyfrost.oneconfig.api.ui.v1.search.SearchScope as PublicSearchScope
 import org.polyfrost.oneconfig.internal.ui.search.SearchCorpus
 import org.polyfrost.oneconfig.internal.ui.search.SearchDocument
 import org.polyfrost.oneconfig.internal.ui.search.SearchProvider
 import org.polyfrost.oneconfig.internal.ui.search.SearchProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.search.SearchScope
+import java.util.concurrent.ConcurrentHashMap
+import org.polyfrost.oneconfig.api.ui.v1.search.SearchDocument as PublicSearchDocument
+import org.polyfrost.oneconfig.api.ui.v1.search.SearchProvider as PublicSearchProvider
+import org.polyfrost.oneconfig.api.ui.v1.search.SearchScope as PublicSearchScope
 
 private val LOGGER = LogManager.getLogger("OneConfig/SearchProviders")
 

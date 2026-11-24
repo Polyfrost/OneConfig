@@ -1,10 +1,11 @@
 package org.polyfrost.oneconfig.internal;
 
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import kotlin.jvm.functions.Function1;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Property;
+import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
@@ -18,9 +19,13 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
-import org.polyfrost.oneconfig.internal.ui.shell.ShellController;
 import org.polyfrost.oneconfig.internal.ui.shell.ShellState;
 import org.polyfrost.oneconfig.internal.ui.sound.UiSounds;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OneConfigConfig extends Config {
     private static final Keys KEYS = Platform.compatibility().keys();
@@ -35,6 +40,14 @@ public class OneConfigConfig extends Config {
     )
     public static OneConfigKeybind oneConfigKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyRightShift()}, null, KeyModifiers.NONE, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.minimal_keybind.title",
+        subcategory = "oneconfig.preferences.category.gui",
+        description = "oneconfig.preferences.minimal_keybind.description"
+    )
+    public static OneConfigKeybind minimalMenuKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyBackslash()}, null, KeyModifiers.NONE, 0L, pressed -> true);
 
     @Switch(
         title = "oneconfig.preferences.keybind_closes_gui.title",
@@ -147,6 +160,22 @@ public class OneConfigConfig extends Config {
     public static OneConfigKeybind hudRedoAltKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyY()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
 
+    @Keybind(
+        title = "oneconfig.preferences.hud_shortcuts_keybind.title",
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        description = "oneconfig.preferences.hud_shortcuts_keybind.description"
+    )
+    public static OneConfigKeybind hudShortcutsKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyF1()}, null, KeyModifiers.NONE, 0L, pressed -> true);
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_shortcuts_alt_keybind.title",
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        description = "oneconfig.preferences.hud_shortcuts_alt_keybind.description"
+    )
+    public static OneConfigKeybind hudShortcutsAltKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeySlash()}, null, HUD_ACTION_MODS, 0L, pressed -> true);
+
     @Switch(
         title = "oneconfig.preferences.hud_show_keybind_hints.title",
         subcategory = "oneconfig.preferences.category.hud_editor",
@@ -170,6 +199,16 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.hud_marquee_anim_duration.description"
     )
     public static float marqueeSelectionAnimDuration = 150f;
+
+    @Slider(
+        title = "oneconfig.preferences.hud_drag_ui_opacity.title",
+        subcategory = "oneconfig.preferences.category.hud_editor",
+        min = 0f,
+        max = 100f,
+        step = 5f,
+        description = "oneconfig.preferences.hud_drag_ui_opacity.description"
+    )
+    public static float hudDragUiOpacity = 60f;
 
     @Switch(
         title = "oneconfig.preferences.pause_game.title",
@@ -201,6 +240,9 @@ public class OneConfigConfig extends Config {
     @Include
     public static boolean hudEditorTourSeen = false;
 
+    @Include
+    public static boolean percentMigrated = false;
+
     @Switch(
         title = "oneconfig.preferences.restore_hud_editor.title",
         subcategory = "oneconfig.preferences.category.gui",
@@ -216,18 +258,18 @@ public class OneConfigConfig extends Config {
     public static boolean showOptionActionButtons = true;
 
     @Switch(
-        title = "oneconfig.preferences.flip_top_option_order.title",
-        subcategory = "oneconfig.preferences.category.gui",
-        description = "oneconfig.preferences.flip_top_option_order.description"
-    )
-    public static boolean flipTopOptionOrder = false;
-
-    @Switch(
         title = "oneconfig.preferences.instant_search.title",
         subcategory = "oneconfig.preferences.category.search",
         description = "oneconfig.preferences.instant_search.description"
     )
     public static boolean instantSearch = true;
+
+    @Switch(
+        title = "oneconfig.preferences.animate_search_results.title",
+        subcategory = "oneconfig.preferences.category.search",
+        description = "oneconfig.preferences.animate_search_results.description"
+    )
+    public static boolean animateSearchResults = false;
 
     @Keybind(
         title = "oneconfig.preferences.search_keybind.title",
@@ -299,21 +341,21 @@ public class OneConfigConfig extends Config {
         title = "oneconfig.preferences.ui_sound_volume.title",
         subcategory = "oneconfig.preferences.category.sounds",
         min = 0f,
-        max = 1f,
-        step = 0.05f,
+        max = 100f,
+        step = 5f,
         description = "oneconfig.preferences.ui_sound_volume.description"
     )
-    public static float uiSoundVolume = 1f;
+    public static float uiSoundVolume = 100f;
 
     @Slider(
         title = "oneconfig.preferences.ui_ambience_volume.title",
         subcategory = "oneconfig.preferences.category.sounds",
         min = 0f,
-        max = 1f,
-        step = 0.05f,
+        max = 100f,
+        step = 5f,
         description = "oneconfig.preferences.ui_ambience_volume.description"
     )
-    public static float uiAmbienceVolume = 1f;
+    public static float uiAmbienceVolume = 100f;
 
     @Switch(
         title = "oneconfig.preferences.show_first_launch_message.title",
@@ -345,6 +387,12 @@ public class OneConfigConfig extends Config {
      * The keybind currently registered with the {@link KeybindManager} rebuilt whenever the keys or action change
      */
     private static OneConfigKeybind registeredKeybind;
+
+    /**
+     * The action run when {@link #minimalMenuKeybind} is pressed and the keybind registered for it
+     */
+    private static Function1<Boolean, Boolean> minimalOpenAction;
+    private static final AtomicReference<OneConfigKeybind> registeredMinimalKeybind = new AtomicReference<>();
 
     /**
      * The keybind registered with the {@link KeybindManager} for duplicating the selected HUD in the design studio
@@ -383,6 +431,10 @@ public class OneConfigConfig extends Config {
         registeredHudRedoKeybind = new AtomicReference<>();
     private static final AtomicReference<OneConfigKeybind>
         registeredHudRedoAltKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudShortcutsKeybind = new AtomicReference<>();
+    private static final AtomicReference<OneConfigKeybind>
+        registeredHudShortcutsAltKeybind = new AtomicReference<>();
 
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
@@ -391,6 +443,14 @@ public class OneConfigConfig extends Config {
 
     @Override
     protected void initialize(boolean byConfigManager) {
+        boolean hadPreferences = false;
+        if (tree == null) {
+            percentMigrated = false;
+            uiSoundVolume = 100f;
+            uiAmbienceVolume = 100f;
+            hudDragUiOpacity = 60f;
+            hadPreferences = Files.exists(ConfigManager.active().getFolder().resolve(id));
+        }
         super.initialize(byConfigManager);
         if (tree == null) {
             return;
@@ -400,27 +460,12 @@ public class OneConfigConfig extends Config {
             "restoreHudEditor",
             "Remember last page",
             () -> rememberLastPage != REMEMBER_NEVER ? Property.Display.SHOWN : Property.Display.DISABLED);
-        addDependency("enableUIMenuSounds", "enableUISounds");
-        addDependency("enableUIClickSounds", "enableUISounds");
-        addDependency("enableUISliderSounds", "enableUISounds");
-        addDependency("enableHudEditorSounds", "enableUISounds");
-        addDependency("enableUIMusicDucking", "enableUIAmbience");
-        addDependency(
-            "uiSoundVolume",
-            "UI Sounds",
-            () -> enableUISounds ? Property.Display.SHOWN : Property.Display.DISABLED);
-        addDependency(
-            "uiAmbienceVolume",
-            "UI Ambience",
-            () -> enableUIAmbience ? Property.Display.SHOWN : Property.Display.DISABLED);
-        ShellController.getShared().getAppearance().update(
-            flipTopOptionOrder, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
-        addCallback(
-            "flipTopOptionOrder", (Boolean v) -> {
-                ShellController.getShared().getAppearance().update(
-                    v, ThemeConfig.pageOpacity, ThemeConfig.sidebarOpacity, ThemeConfig.glowOpacity);
-                return false;
-            });
+        migrateToPercent(hadPreferences);
+        for (String option : SOUND_OPTIONS) hideIf(option, "enableUISounds");
+        hideIf("enableUIMusicDucking", "enableUIAmbience");
+        hideIf("uiAmbienceVolume", "enableUIAmbience");
+        hideIf("marqueeSelectionAnimDuration", "marqueeSelectionAnim");
+        for (String option : KEYBINDS_PAGE_ONLY) getProperty(option).addMetadata("keybindsPageOnly", true);
         addCallback(
             "enableUIAmbience", (Boolean v) -> {
                 UiSounds.refreshAmbience();
@@ -443,6 +488,12 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshKeybind(oneConfigKeybind);
+        addCallback(
+            "minimalMenuKeybind", (OneConfigKeybind kb) -> {
+                refreshMinimalKeybind();
+                return false;
+            });
+        refreshMinimalKeybind();
         addCallback(
             "searchKeybind", (OneConfigKeybind kb) -> {
                 refreshSearchKeybind();
@@ -527,6 +578,60 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudRedoAltKeybind();
+        addCallback(
+            "hudShortcutsKeybind", (OneConfigKeybind kb) -> {
+                refreshHudShortcutsKeybind();
+                return false;
+            });
+        refreshHudShortcutsKeybind();
+        addCallback(
+            "hudShortcutsAltKeybind", (OneConfigKeybind kb) -> {
+                refreshHudShortcutsAltKeybind();
+                return false;
+            });
+        refreshHudShortcutsAltKeybind();
+    }
+
+    private static final String[] SOUND_OPTIONS = {"enableUIMenuSounds", "enableUIClickSounds", "enableUISliderSounds", "enableHudEditorSounds", "uiSoundVolume"};
+
+    private static final String[] KEYBINDS_PAGE_ONLY = {
+        "searchKeybind", "hudSettingsKeybind", "hudVisibilityKeybind", "hudLockKeybind", "hudCopyKeybind", "hudCutKeybind",
+        "hudPasteKeybind", "hudDuplicateKeybind", "hudResetKeybind", "hudDeleteKeybind", "hudSelectAllKeybind",
+        "hudUndoKeybind", "hudRedoKeybind", "hudRedoAltKeybind", "hudShortcutsKeybind", "hudShortcutsAltKeybind"
+    };
+
+    private void migrateToPercent(boolean hadPreferences) {
+        if (percentMigrated) return;
+        Float saved;
+        Float legacy;
+        try {
+            saved = hadPreferences ? storedNumber(id, "hudDragUiOpacity") : null;
+            legacy = storedNumber("themes.json", "hudDragUiOpacity");
+        } catch (Exception e) {
+            return;
+        }
+        if (saved == null || saved <= 1f) {
+            if (legacy != null) hudDragUiOpacity = toPercent(legacy);
+            else if (saved != null) hudDragUiOpacity = toPercent(saved);
+        }
+        uiSoundVolume = toPercent(uiSoundVolume);
+        uiAmbienceVolume = toPercent(uiAmbienceVolume);
+        percentMigrated = true;
+        save();
+    }
+
+    private static float toPercent(float value) {
+        return value <= 1f ? value * 100f : value;
+    }
+
+    private static Float storedNumber(String file, String key) throws Exception {
+        Path path = ConfigManager.active().getFolder().resolve(file);
+        if (!Files.exists(path)) return null;
+        Tree stored = ConfigManager.active().getNoRegister(path);
+        Node value = stored == null ? null : stored.get(key);
+        if (!(value instanceof Property)) return null;
+        Object raw = ((Property<?>) value).getAs();
+        return raw instanceof java.lang.Number ? ((java.lang.Number) raw).floatValue() : null;
     }
 
     private static final int REMEMBER_NEVER = 0;
@@ -596,6 +701,19 @@ public class OneConfigConfig extends Config {
     public static void setOpenAction(Function1<Boolean, Boolean> action) {
         openAction = action;
         refreshKeybind(oneConfigKeybind);
+    }
+
+    /**
+     * Supplies the action run when {@link #minimalMenuKeybind} is pressed, see {@link #setOpenAction}
+     */
+    public static void setMinimalOpenAction(Function1<Boolean, Boolean> action) {
+        minimalOpenAction = action;
+        refreshMinimalKeybind();
+    }
+
+    private static void refreshMinimalKeybind() {
+        if (minimalOpenAction == null) return;
+        refreshHudEditorKeybind(minimalMenuKeybind, registeredMinimalKeybind, minimalOpenAction);
     }
 
     /**
@@ -796,6 +914,20 @@ public class OneConfigConfig extends Config {
             HudDesignSession::handleRedo);
     }
 
+    private static void refreshHudShortcutsKeybind() {
+        refreshHudEditorKeybind(
+            hudShortcutsKeybind,
+            registeredHudShortcutsKeybind,
+            HudDesignSession::handleShortcuts);
+    }
+
+    private static void refreshHudShortcutsAltKeybind() {
+        refreshHudEditorKeybind(
+            hudShortcutsAltKeybind,
+            registeredHudShortcutsAltKeybind,
+            HudDesignSession::handleShortcuts);
+    }
+
     /**
      * Called once after the first-launch message has been shown
      * <p>
@@ -816,6 +948,7 @@ public class OneConfigConfig extends Config {
     }
 
     public static void markHudEditorTourSeen() {
+
         if (hudEditorTourSeen) {
             return;
         }

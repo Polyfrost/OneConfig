@@ -8,6 +8,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
 import org.polyfrost.oneconfig.internal.ui.hud.cardsSupersededByHudCards
@@ -40,6 +41,7 @@ object ConfigRegistry {
         "collective",
         "cloth-config",
         "compose-bundle",
+        "polycompose",
         "trender",
         "libjf-config-core-v2",
         "libjf-config-network-v0",
@@ -142,7 +144,7 @@ object ConfigRegistry {
     ): Boolean {
         MinecraftKeybindRegistrar.scan(tree, force = bumpRevision)
         if (tree.id == null || tree.title == null) return false
-        if (tree.getMetadata<Any?>("hidden") != null) return false
+        if (tree.getMetadata<Any?>("hidden").let { it != null && it != false }) return false
         return upsert(TreeConfigData(tree, source, onOpen), bumpRevision)
     }
 
@@ -157,7 +159,7 @@ object ConfigRegistry {
         }
     }
 
-    fun findById(id: String): ConfigData? = configs.find { it.id == id }
+    fun findById(id: String): ConfigData? = configs.toList().find { it.id == id }
 
     fun findTree(id: String): Tree? = (findById(id) as? TreeConfigData)?.tree
 

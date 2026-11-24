@@ -2,11 +2,11 @@ package org.polyfrost.oneconfig.internal.ui.components.effect
 
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.Locale
-import java.util.ServiceLoader
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.internal.ui.components.picker.PickerEntry
 import org.polyfrost.oneconfig.internal.ui.components.picker.normalizeIds
+import java.util.Locale
+import java.util.ServiceLoader
 
 enum class EffectCategory { BENEFICIAL, NEUTRAL, HARMFUL }
 

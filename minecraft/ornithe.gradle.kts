@@ -10,7 +10,7 @@ repositories {
     }
     // Mojang's library repository only has STB natives for the platforms vanilla ships
     exclusiveContent {
-        forRepository { mavenCentral() }
+        forRepository { maven(url = "https://maven-central.storage-download.googleapis.com/maven2/") }
         filter { includeModule("org.lwjgl", "lwjgl-stb") }
     }
 }

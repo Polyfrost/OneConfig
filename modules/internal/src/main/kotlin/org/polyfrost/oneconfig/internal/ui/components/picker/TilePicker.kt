@@ -1,11 +1,10 @@
 package org.polyfrost.oneconfig.internal.ui.components.picker
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +24,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -34,37 +32,37 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Locale
-import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
-import org.polyfrost.oneconfig.internal.ui.api.Tooltip
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
+import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
+import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.internal.ui.components.Icon
-import org.polyfrost.oneconfig.internal.ui.components.IconButton
-import org.polyfrost.oneconfig.internal.ui.components.ScrollbarBox
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.containVerticalScroll
+import org.polyfrost.oneconfig.internal.ui.components.iconButtonLabel
 import org.polyfrost.oneconfig.internal.ui.components.localizedString
-import org.polyfrost.oneconfig.internal.ui.components.onClick
-import org.polyfrost.oneconfig.internal.ui.components.rememberInteractionSource
 import org.polyfrost.oneconfig.internal.ui.components.wheelScroll
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
+import org.polyfrost.oneconfig.internal.ui.themes.animateAccentColorAsState
+import java.util.Locale
 
 interface PickerEntry {
     val id: String
@@ -73,7 +71,7 @@ interface PickerEntry {
 
 typealias PickerTileIcon<T> = @Composable (entry: T, modifier: Modifier, alpha: Float) -> Unit
 
-val PickerTileShape @Composable get() = LocalTheme.current.sideBarNavigationEntryShape
+val PickerTileShape @Composable get() = LocalTheme.current.shapes.field
 
 val PickerTileSize = 44.dp
 
@@ -85,16 +83,15 @@ fun PickerLabel(
     modifier: Modifier = Modifier,
     nameColor: Color = LocalTheme.current.textColor,
     idColor: Color = LocalTheme.current.textColorSecondary,
-    nameSize: TextUnit = 12.sp,
+    nameStyle: TextStyle = LocalTheme.current.typography.smallMedium,
     idSize: TextUnit = 10.sp,
     unavailableKey: String = PickerStrings.Unavailable,
 ) {
     Column(modifier = modifier) {
         Text(
             entry?.displayName ?: id,
+            nameStyle,
             color = nameColor,
-            fontSize = nameSize,
-            fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -120,29 +117,45 @@ fun <T : PickerEntry> PickerTile(
     onClick: (() -> Unit)? = null,
 ) {
     val theme = LocalTheme.current
-    val interaction = rememberInteractionSource()
+    val shape = PickerTileShape
+    val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val interactive = enabled && onClick != null
-    val background by animateColorAsState(
+    val background by animateAccentColorAsState(
+        listOf(selected, hovered, interactive),
         when {
             selected -> Accent.copy(alpha = 0.18f).compositeOver(theme.modCardBackground)
             hovered && interactive -> theme.componentBackground
             else -> theme.modCardBackground
         }
     )
-    val border by animateColorAsState(if (selected) Accent else theme.borderColor)
+    val border by animateAccentColorAsState(selected, if (selected) Accent else theme.borderColor)
     val contentAlpha = if (enabled) 1f else 0.45f
 
     PickerTooltip(entry, enabled = tooltip) {
         Box(
             modifier = modifier
                 .aspectRatio(1f)
-                .clip(PickerTileShape)
-                .background(background, PickerTileShape)
-                .border(1.dp, border, PickerTileShape)
+                .clip(shape)
+                .background(background, shape)
+                .border(1.dp, border, shape)
                 .hoverable(interaction)
-                .pointerHoverIcon(if (interactive) PointerIcon.Hand else PointerIcon.Default)
-                .then(if (interactive) Modifier.onClick(interaction, onClick) else Modifier)
+                .then(
+                    if (onClick != null) {
+                        Modifier.oneConfigClickable(
+                            entry.displayName,
+                            onClick,
+                            role = A11yRole.Option,
+                            enabled = enabled,
+                            selected = selected,
+                            shape = shape,
+                            indication = false,
+                            interactionSource = interaction,
+                        )
+                    } else {
+                        Modifier
+                    },
+                )
                 .padding(5.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -171,22 +184,34 @@ fun PickerTooltip(
         return
     }
     val theme = LocalTheme.current
-    Tooltip(
-        text = {
+    TooltipBox(
+        tooltip = {
             Column {
                 Text(
                     entry.displayName,
+                    theme.typography.captionMedium,
                     color = theme.textColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
                 )
                 Text(entry.id, color = theme.textColorSecondary, fontSize = 9.sp)
             }
         },
-        modifier = Modifier,
-        anchor = anchor,
+        placement = anchor.toTooltipPlacement(),
         content = content,
     )
+}
+
+private fun Alignment.toTooltipPlacement(): TooltipPlacement {
+    val bias = this as? BiasAlignment
+    val above = (bias?.verticalBias ?: 1f) < 0f
+    val horizontal = bias?.horizontalBias ?: 0f
+    return when {
+        above && horizontal < 0f -> TooltipPlacement.AboveStart
+        above && horizontal > 0f -> TooltipPlacement.AboveEnd
+        above -> TooltipPlacement.AboveCenter
+        horizontal < 0f -> TooltipPlacement.BelowStart
+        horizontal > 0f -> TooltipPlacement.BelowEnd
+        else -> TooltipPlacement.BelowCenter
+    }
 }
 
 /** Adaptive grid of [PickerTile]s where [selected] and [enabled] are queried per entry so selection rules stay with the caller */
@@ -207,9 +232,9 @@ fun <T : PickerEntry> TileGrid(
     val unique = remember(entries) { entries.distinctBy(PickerEntry::id) }
     val scrollbarStyle = LocalScrollbarStyle.current.copy(thickness = TileGridScrollbarThickness)
     CompositionLocalProvider(LocalScrollbarStyle provides scrollbarStyle) {
-        ScrollbarBox(
+        ScrollContainer(
             gridState,
-            gutter,
+            gutter = gutter,
             modifier = modifier.fillMaxWidth().heightIn(max = maxHeight)
                 .containVerticalScroll { gridState.canScrollBackward || gridState.canScrollForward }
                 .wheelScroll(gridState, contain = { gridState.canScrollBackward || gridState.canScrollForward }),
@@ -250,9 +275,6 @@ fun PickerSearchField(
     autoFocus: Boolean = false,
     placeholderKey: String = PickerStrings.Search,
 ) {
-    val theme = LocalTheme.current
-    val interaction = rememberInteractionSource()
-    val focused by interaction.collectIsFocusedAsState()
     val focusRequester = remember { FocusRequester() }
 
     if (autoFocus) {
@@ -261,44 +283,13 @@ fun PickerSearchField(
         }
     }
 
-    // TextFieldState needs its own migration, as it changes how every field hoists its state
-    @Suppress("DEPRECATION")
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        textStyle = TextStyle(color = theme.textColor, fontSize = 12.sp, fontFamily = theme.typography.family),
-        cursorBrush = SolidColor(theme.textColor),
-        interactionSource = interaction,
-        modifier = modifier.trackTextInputFocus().focusRequester(focusRequester),
-        decorationBox = { inner ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .clip(PickerTileShape)
-                    .background(theme.componentBackground, PickerTileShape)
-                    .border(1.dp, if (focused) Accent else theme.borderColor, PickerTileShape)
-                    .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon("search", modifier = Modifier.size(14.dp), color = theme.textColorSecondary)
-                Box(modifier = Modifier.weight(1f)) {
-                    if (value.isEmpty()) {
-                        Text(
-                            localizedString(null, placeholderKey),
-                            color = theme.textColorSecondary,
-                            fontSize = 12.sp,
-                        )
-                    }
-                    inner()
-                }
-                if (value.isNotEmpty()) {
-                    IconButton("close", modifier = Modifier.size(14.dp)) { onValueChange("") }
-                }
-            }
-        },
+    SearchField(
+        value,
+        onValueChange,
+        modifier.fillMaxWidth(),
+        placeholder = localizedString(null, placeholderKey),
+        size = ControlSize.Regular,
+        focusRequester = focusRequester,
     )
 }
 
@@ -354,9 +345,8 @@ fun <T : PickerEntry> TilePicker(
                         if (titleKey != null) {
                             Text(
                                 localizedString(null, titleKey),
+                                theme.typography.heading,
                                 color = theme.textColor,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
                             )
                         }
                         if (maxEntries > 0) {
@@ -368,7 +358,7 @@ fun <T : PickerEntry> TilePicker(
                         }
                     }
                     if (onClose != null) {
-                        IconButton("close", modifier = Modifier.size(18.dp), onClick = onClose)
+                        IconButton("close", iconButtonLabel("close"), onClose, Modifier.size(18.dp), size = ControlSize.Compact, tooltip = null)
                     }
                 }
             }
@@ -435,7 +425,7 @@ fun PickerMessage(key: String, modifier: Modifier = Modifier, height: Dp = 120.d
         Text(
             localizedString(null, key),
             color = LocalTheme.current.textColorSecondary,
-            fontSize = 12.sp,
+            fontSize = LocalTheme.current.typography.small.fontSize,
         )
     }
 }

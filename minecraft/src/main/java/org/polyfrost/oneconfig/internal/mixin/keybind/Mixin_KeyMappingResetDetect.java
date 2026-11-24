@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.mixin.keybind;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.internal.MinecraftKeybindBridgeImpl;
+import org.polyfrost.oneconfig.internal.ui.keybind.VanillaKeyMappingProperties;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,5 +22,12 @@ public class Mixin_KeyMappingResetDetect {
         //~ if = 1.8.9 '!key.equals(self.getDefaultKey())' -> 'keyCode != self.getDefaultKeyCode()'
         if (!key.equals(self.getDefaultKey())) return;
         if (bridge.menuReset(self)) ci.cancel();
+    }
+
+    //~ if = 1.8.9 'setKey' -> 'setKeyCode'
+    @Inject(method = "setKey", at = @At("RETURN"))
+    //~ if = 1.8.9 'InputConstants.Key key' -> 'int keyCode'
+    private void oneconfig$syncVanillaProperty(InputConstants.Key key, CallbackInfo ci) {
+        VanillaKeyMappingProperties.onKeyChanged((KeyMapping) (Object) this);
     }
 }

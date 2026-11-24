@@ -12,5 +12,7 @@ class OneConfigUIExtensionsBridgeImpl : OneConfigUIExtensionsBridge {
 
     override fun modSortModeId(): String = ModSortStore.selectedId
 
+    override fun selectModSortMode(id: String) = ModSortStore.select(id)
+
     override fun refreshOption(property: Property<*>) = bumpResetEpoch(property)
 }

@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.diffplug.gradle.spotless.SpotlessExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -7,6 +8,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("maven-publish")
     id("signing")
+    id("com.diffplug.spotless") version "8.11.0"
 }
 
 val rootModuleProject = project
@@ -18,6 +20,7 @@ subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "oneconfig-lint")
+    apply(plugin = "com.diffplug.spotless")
 
     group = rootProject.group
     version = rootProject.version
@@ -37,6 +40,8 @@ subprojects {
         exclude(group = "org.jetbrains.skiko")
         exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko")
         exclude(group = "org.jetbrains.compose.ui", module = "ui-skiko-desktop")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui")
+        exclude(group = "org.jetbrains.compose.ui", module = "ui-desktop")
     }
 
     dependencies {
@@ -111,7 +116,12 @@ subprojects {
         }
     }
 
-    if (name !in listOf("internal", "compose-bundle")) {
+    val inCI = providers.environmentVariable("CI").map { it.toBoolean() }.orElse(false).get()
+
+    tasks.withType<JavaCompile>().configureEach { if (!inCI) finalizedBy("spotlessJavaCheck") }
+    tasks.withType<KotlinCompile>().configureEach { if (!inCI) finalizedBy("spotlessKotlinCheck") }
+
+    if (name !in listOf("internal", "relocator")) {
         configure<KotlinJvmProjectExtension> {
             explicitApi()
             @OptIn(ExperimentalAbiValidation::class) // no stable alternative as of Kotlin 2.4
@@ -119,18 +129,21 @@ subprojects {
                 filters.exclude {
                     byNames.add("org.polyfrost.oneconfig.api.**.internal.**")
                     annotatedWith.add("org.jetbrains.annotations.ApiStatus.Internal")
+                    annotatedWith.add("org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi")
                 }
             }
         }
         // otherwise the compile finalizer fails the build before updateKotlinAbi gets to run
         tasks.named("checkKotlinAbi") { mustRunAfter("updateKotlinAbi") }
-        tasks.withType<JavaCompile>().configureEach { finalizedBy("checkKotlinAbi") }
-        tasks.withType<KotlinCompile>().configureEach { finalizedBy("checkKotlinAbi") }
+        tasks.withType<JavaCompile>().configureEach { if (!inCI) finalizedBy("checkKotlinAbi") }
+        tasks.withType<KotlinCompile>().configureEach { if (!inCI) finalizedBy("checkKotlinAbi") }
     }
 
     val kotlinModuleName = project.name
+    val seesUiApi = name in listOf("ui", "hud", "internal")
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions.moduleName = kotlinModuleName
+        if (seesUiApi) compilerOptions.optIn.add("org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi")
         if (name.contains("Test")) {
             // JUnit 6's nullable assertion parameters get misread as non-null
             compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=ignore")
@@ -166,6 +179,7 @@ subprojects {
                 from(components["java"])
                 artifactId = project.name
                 groupId = project.group.toString()
+                suppressAllPomMetadataWarnings()
             }
         }
     }
@@ -177,25 +191,6 @@ subprojects {
         }
     }
 
-    /*
-    todo
-    afterEvaluate {
-        publishing {
-            publications {
-                named<MavenPublication>("mavenJava") {
-                    artifactId = project.name
-                    groupId = project.group.toString()
-
-                    signing {
-                        isRequired = providers.gradleProperty("signing.keyId").isPresent
-                        sign(this@named)
-                    }
-                }
-            }
-        }
-    }
-     */
-
     tasks {
         named<Jar>("jar") {
             manifest {
@@ -206,5 +201,17 @@ subprojects {
             archiveBaseName.set(project.name)
         }
     }
-}
 
+    configure<SpotlessExtension> {
+        java {
+            target("**/*.java")
+            importOrder("", "javax|java", "\\#")
+            removeUnusedImports()
+        }
+
+        kotlin {
+            target("**/*.kt", "**/*.kts")
+            ktlint()
+        }
+    }
+}

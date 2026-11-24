@@ -40,7 +40,6 @@ import org.polyfrost.oneconfig.internal.compat.toggle.ToggleHooks;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-//todo import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 //? if moul_compat {
 import kotlin.Unit;
 import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
@@ -74,6 +73,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //? if = 1.8.9 {
         /*mixins.add("command.Mixin_LegacyChatCompletion");
         mixins.add("fixes.Mixin_RememberUnknownOptions");
+        mixins.add("keybind.Mixin_LegacySharedKeyCodes");
         *///?}
 
         //? moul_compat {
@@ -106,7 +106,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //mixins.add("compat.osl.Mixin_OslConfigManager");
 
         mixins.add("Mixin_SimpleReloadInstance");
-        mixins.add("Mixin_MainMenuFpsUncap");
         //? if > 1.8.9
         mixins.add("Mixin_VersionedResourcePacks");
         //? if > 1.8.9
@@ -182,34 +181,26 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         mixins.add("events.Mixin_ModernWindowFocusEvent");
 
-        mixins.add("skia.Mixin_SkiaFrame");
-        //? if >= 26.1 {
-        mixins.add("blaze3d.GpuDeviceAccessor");
-        mixins.add("blaze3d.GlDeviceAccessor");
-        //? }
-        //? if >= 1.21.8 {
-        mixins.add("skia.Mixin_GuiRendererLegacyTarget");
-        mixins.add("render.GameRendererAccessor");
-        mixins.add("render.GuiRendererAccessor");
-        //? }
-        //? if > 1.8.9
-        mixins.add("skia.Mixin_ItemAtlasScissor");
-        //? if < 1.21.8
-        //mixins.add("skia.Mixin_MainTargetRedirect");
-        //? if > 1.8.9 && < 1.21.11
-        //mixins.add("skia.Mixin_GlHostPresent");
-        //? if < 1.21.11
-        //mixins.add("skia.Mixin_DebugOverlayAboveUi");
-        //? if >= 1.21.11 {
-        mixins.add("skia.Mixin_BlazeToasts");
-        mixins.add("render.BufferBuilderAccessor");
-        mixins.add("render.RenderPipelinesAccessor");
-        mixins.add("render.Mixin_GuiRendererKeptMeshes");
-        mixins.add("render.Mixin_GuiRenderStateStacking");
-        mixins.add("render.Mixin_UiBlur");
-        mixins.add("render.PostChainAccessor");
-        mixins.add("render.PostPassAccessor");
+        mixins.add("render.Mixin_HudFrameState");
+        mixins.add("render.Mixin_VanillaHudElements");
+        //? if > 1.8.9 {
+        mixins.add("render.HudSampleAccessor");
+        mixins.add("render.BossHealthOverlayAccessor");
         //?}
+        //? if > 1.8.9 && < 1.21.8
+        //mixins.add("render.Mixin_VanillaHudFootprintImmediate");
+        //? if = 1.8.9 {
+        /*mixins.add("render.LegacyHudSampleAccessor");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyGuiElement");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyTextRenderer");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyItemRenderer");
+        mixins.add("render.Mixin_VanillaHudFootprintLegacyGameGui");
+        *///?}
+        //? if >= 1.21.8 {
+        mixins.add("render.Mixin_VanillaHudFootprint");
+
+
+        //? }
 
         //? if >= 1.21.10 {
         mixins.add("keybind.Mixin_KeybindCategoryLabel");

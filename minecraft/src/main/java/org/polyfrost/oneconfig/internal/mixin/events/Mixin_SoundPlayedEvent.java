@@ -16,6 +16,7 @@ public class Mixin_SoundPlayedEvent {
             argsOnly = true
     )
     private SoundInstance onPlaySoundCallback(SoundInstance value) {
+        if (!EventManager.INSTANCE.hasListeners(SoundPlayedEvent.class)) return value;
         if (value != null && value.getSound() != null) {
             String name = value.getSound().getLocation().toString();
             SoundPlayedEvent event = new SoundPlayedEvent(name, null, value);

@@ -26,12 +26,6 @@
 
 package org.polyfrost.oneconfig.api.config.v1.backend.impl;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -40,6 +34,13 @@ import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FileBackend extends Backend {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
@@ -214,8 +215,12 @@ public class FileBackend extends Backend {
             LOGGER.error("No serializer found for saving file {}", p);
             return false;
         }
-        write(p, serializer.serialize(tree));
-        dodge(p.getFileName().toString());
+        // saves come from both the game thread and a worker; serializing and writing under one lock keeps them
+        // from sharing the .tmp file and makes the last save the one that lands on disk
+        synchronized (this) {
+            write(p, serializer.serialize(tree));
+            dodge(p.getFileName().toString());
+        }
         return true;
     }
 
@@ -224,7 +229,6 @@ public class FileBackend extends Backend {
         Path p = folder.resolve(tree.getID());
         if (!Files.exists(p)) return false;
         Files.delete(p);
-        dodge(p.getFileName().toString());
         return true;
     }
 

@@ -26,9 +26,10 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import java.lang.annotation.*;
 import org.polyfrost.oneconfig.api.config.v1.ValueFormatter;
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
+
+import java.lang.annotation.*;
 
 /**
  * A start and end pair within {@link #min()} and {@link #max()} edited with two number inputs

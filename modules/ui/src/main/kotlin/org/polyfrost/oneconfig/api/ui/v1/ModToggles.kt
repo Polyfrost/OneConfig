@@ -4,9 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import java.util.concurrent.CopyOnWriteArrayList
 import org.apache.logging.log4j.LogManager
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
+import org.polyfrost.oneconfig.api.ui.v1.internal.modIdKeys
+import org.polyfrost.oneconfig.api.ui.v1.internal.normaliseModId
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Registry of the master switches shown on mod cards
@@ -19,6 +22,7 @@ import org.polyfrost.oneconfig.api.toggle.v1.ModToggle
 public object ModToggles {
     private val LOGGER = LogManager.getLogger("OneConfig/ModToggles")
     private val lock = Any()
+    private val revisionLock = Any()
 
     @Volatile
     private var toggles: Map<String, ModToggle> = emptyMap()
@@ -31,6 +35,8 @@ public object ModToggles {
 
     @Volatile
     private var store: Store? = null
+
+    private val handles = HashMap<String, ManagedToggle>()
 
     private val listeners = CopyOnWriteArrayList<Listener>()
 
@@ -55,7 +61,7 @@ public object ModToggles {
      */
     @JvmStatic
     public fun register(modId: String, toggle: ModToggle) {
-        val key = normalise(modId)
+        val key = normaliseModId(modId)
         if (key.isEmpty()) {
             LOGGER.warn("Ignoring mod toggle with a blank mod id")
             return
@@ -70,6 +76,13 @@ public object ModToggles {
     public fun register(modId: String, toggle: org.polyfrost.oneconfig.api.ui.v1.ModToggle): Unit =
         register(modId, toggle as ModToggle)
 
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    @JvmOverloads
+    public fun registerReadOnly(modId: String, isEnabled: () -> Boolean, lockedReason: () -> String? = { null }) {
+        register(modId, LambdaReadOnlyModToggle(isEnabled, lockedReason))
+    }
+
     /**
      * Shows a switch on the cards of [modIds] whose state is stored by OneConfig
      *
@@ -77,7 +90,7 @@ public object ModToggles {
      */
     @JvmStatic
     public fun manage(vararg modIds: String) {
-        val keys = modIds.map(::normalise).filter { it.isNotEmpty() }
+        val keys = modIds.map(::normaliseModId).filter { it.isNotEmpty() }
         if (keys.isEmpty()) return
         synchronized(lock) { managed = managed + keys }
         bump()
@@ -85,10 +98,16 @@ public object ModToggles {
 
     @JvmStatic
     public fun toggleFor(modId: String): ModToggle? {
-        val keys = keysFor(modId).toList()
+        val keys = modIdKeys(modId).toList()
         keys.firstNotNullOfOrNull(toggles::get)?.let { return it }
-        return keys.firstOrNull(managed::contains)?.let(::ManagedToggle)
+        return keys.firstOrNull(managed::contains)?.let(::handleForKey)
     }
+
+    @JvmStatic
+    public fun handle(modId: String): ModToggle = handleForKey(normaliseModId(modId))
+
+    private fun handleForKey(key: String): ModToggle =
+        synchronized(lock) { handles.getOrPut(key) { ManagedToggle(key, key !in disabled) } }
 
     /**
      * Whether the [manage]d mod [modId] is switched on
@@ -99,25 +118,48 @@ public object ModToggles {
     @JvmStatic
     public fun isEnabled(modId: String): Boolean {
         val off = disabled
-        return off.isEmpty() || modId !in off
+        return off.isEmpty() || normaliseModId(modId) !in off
     }
 
     @JvmStatic
     public fun setEnabled(modId: String, enabled: Boolean) {
-        val key = keysFor(modId).firstOrNull(managed::contains) ?: normalise(modId)
+        setKey(modIdKeys(modId).firstOrNull(managed::contains) ?: normaliseModId(modId), enabled)
+    }
+
+    private fun setKey(key: String, enabled: Boolean) {
         if (key.isEmpty()) return
-        val snapshot = synchronized(lock) {
+        synchronized(lock) {
             val next = if (enabled) disabled - key else disabled + key
             if (next == disabled) return
             disabled = next
-            next
+            handles[key]?.enabled = enabled
+            try {
+                store?.save(next)
+            } catch (t: Throwable) {
+                LOGGER.error("Failed to persist the disabled mods", t)
+            }
         }
         bump()
-        try {
-            store?.save(snapshot)
-        } catch (t: Throwable) {
-            LOGGER.error("Failed to persist the disabled mods", t)
+        notifyListeners(key, enabled)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun replaceDisabled(transform: (Set<String>) -> Set<String>) {
+        val changed = synchronized(lock) {
+            val previous = disabled
+            val next = transform(previous).mapTo(HashSet(), ::normaliseModId).apply { remove("") }
+            if (next == previous) return
+            disabled = next
+            val changed = (previous - next).associateWith { true } + (next - previous).associateWith { false }
+            changed.forEach { (key, enabled) -> handles[key]?.enabled = enabled }
+            changed
         }
+        bump()
+        changed.forEach(::notifyListeners)
+    }
+
+    private fun notifyListeners(key: String, enabled: Boolean) {
         listeners.forEach {
             try {
                 it.onToggle(key, enabled)
@@ -140,7 +182,7 @@ public object ModToggles {
     @JvmStatic
     public fun setStore(store: Store) {
         val loaded = try {
-            store.load().mapTo(HashSet(), ::normalise)
+            store.load().mapTo(HashSet(), ::normaliseModId)
         } catch (t: Throwable) {
             LOGGER.error("Failed to load the disabled mods", t)
             emptySet()
@@ -148,26 +190,18 @@ public object ModToggles {
         synchronized(lock) {
             this.store = store
             disabled = disabled + loaded
+            loaded.forEach { handles[it]?.enabled = false }
         }
         bump()
     }
 
-    private class ManagedToggle(private val key: String) : ModToggle {
-        override fun isEnabled() = ModToggles.isEnabled(key)
+    private class ManagedToggle(private val key: String, @JvmField @Volatile var enabled: Boolean) : ModToggle {
+        override fun isEnabled() = enabled
 
-        override fun setEnabled(enabled: Boolean) = ModToggles.setEnabled(key, enabled)
+        override fun setEnabled(enabled: Boolean) = setKey(key, enabled)
     }
 
-    private fun normalise(modId: String) = modId.trim().removeSuffix(".json").lowercase()
-
-    private fun keysFor(modId: String) = sequenceOf(
-        modId,
-        modId.removeSuffix(".json"),
-        modId.substringBefore('/'),
-        modId.substringBefore('/').removeSuffix(".json"),
-    ).map { it.trim().lowercase() }.distinct()
-
     private fun bump() {
-        Snapshot.withMutableSnapshot { revision++ }
+        synchronized(revisionLock) { Snapshot.global { revision++ } }
     }
 }
