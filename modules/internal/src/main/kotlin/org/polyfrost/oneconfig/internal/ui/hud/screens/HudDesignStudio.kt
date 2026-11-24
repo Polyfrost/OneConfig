@@ -331,6 +331,7 @@ private class PendingPress(
     val narrowsSelection: Boolean,
     val detachIntent: Boolean,
     val selectionBefore: Set<Hud>,
+    val cyclesOnClick: Boolean,
 )
 
 private fun HudBounds.toRect() = Rect(x, y, x + width, y + height)
@@ -812,8 +813,13 @@ private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?, entered: Hu
     val stack = hudStackAt(screenX, screenY, entered)
     if (stack.isEmpty()) return null
     val index = stack.indexOfFirst { it === current }
-    if (index < 0) return stack.last()
-    return stack[(index - 1 + stack.size) % stack.size]
+    if (index < 0 || current == null) return stack.last()
+    val unit = unitOf(current, entered)
+    for (step in 1 until stack.size) {
+        val next = stack[(index - step + stack.size) % stack.size]
+        if (next !in unit) return next
+    }
+    return current
 }
 
 /** Screen-space rectangle of the whole action bar including the backdrop */
@@ -2108,7 +2114,12 @@ fun HudDesignStudio(visible: Boolean = true) {
             val s = Platform.screen().screenToMcScale()
             val actionPressed = KeybindUtils.isActionModifierPressed(event.keyboardModifiers)
             val shift = event.keyboardModifiers.isShiftPressed
-            val hit = pickHudAt(pos.x, pos.y, primaryHud(), enteredGroup)
+            val held = if (actionPressed || shift) null else {
+                val stack = hudStackAt(pos.x, pos.y, enteredGroup)
+                primaryHud()?.takeIf { it in stack && !unitLocked(it, enteredGroup) }
+                    ?: stack.lastOrNull { it in selectedHuds && !unitLocked(it, enteredGroup) }
+            }
+            var hit = held ?: pickHudAt(pos.x, pos.y, primaryHud(), enteredGroup)
             // a click outside the group the user stepped into steps back out of it
             if (hit == null && !actionPressed && !shift || hit != null && enteredGroup?.let { it !in HudGroups.chainOf(hit) } == true) {
                 enteredGroup = null
@@ -2122,7 +2133,11 @@ fun HudDesignStudio(visible: Boolean = true) {
                 unitGroupOf(hit, enteredGroup)?.let { it == unitGroupOf(lastHud, enteredGroup) } == true)
             val doubleClick = sameTarget && !actionPressed && !shift && now - lastClickTime[0] <= DOUBLE_CLICK_MS
             val stepInto = if (doubleClick) unitGroupOf(hit, enteredGroup) else null
-            if (stepInto != null) enteredGroup = stepInto
+            if (stepInto != null) {
+                enteredGroup = stepInto
+                val members = orderedInstances().filter { it in stepInto && hitTestHud(it, pos.x, pos.y) }
+                hit = members.lastOrNull { !unitLocked(it, stepInto) } ?: members.lastOrNull() ?: hit
+            }
             lastClickHud = if (doubleClick) null else hit
             lastClickTime[0] = now
             if (hit != null && unitLocked(hit, enteredGroup)) {
@@ -2158,6 +2173,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         narrowsSelection = wasSelected && !actionPressed && !shift && newSelection.size > unit.size,
                         detachIntent = actionPressed && hit.bgMerged && !hit.locked,
                         selectionBefore = selectionBefore,
+                        cyclesOnClick = held != null && stepInto == null && !actionPressed && !shift,
                     )
                     dragOffsetX = pos.x * s - hit.x
                     dragOffsetY = pos.y * s - hit.y
@@ -2373,10 +2389,21 @@ fun HudDesignStudio(visible: Boolean = true) {
             val click = pendingPress
             if (click != null) {
                 val narrowsSelection = click.narrowsSelection && click.hud in selectedHuds
-                if (!click.wasSelected || narrowsSelection) UiSounds.play(UiSoundEvent.HUD_SELECT)
+                val next = if (click.cyclesOnClick && !narrowsSelection) {
+                    pickHudAt(click.origin.x, click.origin.y, click.hud, enteredGroup)?.takeIf { it !== click.hud }
+                } else {
+                    null
+                }
+                if (!click.wasSelected || narrowsSelection || next != null) UiSounds.play(UiSoundEvent.HUD_SELECT)
                 Snapshot.withMutableSnapshot {
                     pendingPress = null
                     if (narrowsSelection) selectedHuds = click.unit
+                    if (next != null) {
+                        if (enteredGroup?.let { it !in HudGroups.chainOf(next) } == true) enteredGroup = null
+                        selectedHuds = unitOf(next, enteredGroup)
+                        hoveredHud = next
+                        lastClickHud = next
+                    }
                 }
                 return@safePointerEvent
             }
