@@ -119,17 +119,18 @@ private fun Navigation(modifier: Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Branding()
-        Column(Modifier.fillMaxWidth().weight(1f, fill = false)) {
+        Column(Modifier.fillMaxWidth().weight(1f, fill = false).padding(bottom = 12.dp)) {
             ScrollContainer(
                 scroll,
                 Modifier.fillMaxWidth().weight(1f, fill = false)
                     .onGloballyPositioned { overflow.viewportBottom = it.positionInRoot().y + it.size.height },
+                fadingEdges = true,
             ) {
                 CompositionLocalProvider(LocalNavOverflow provides overflow) {
                     Box(Modifier.padding(start = (SidebarWidth - SidebarEntryWidth) / 2, top = 4.dp, bottom = 4.dp)) { NavigationEntries() }
                 }
             }
-            Box(Modifier.fillMaxWidth().height(EditHudGap)) {
+            Box(Modifier.fillMaxWidth().height(MoreRowHeight)) {
                 val hidden = if (scroll.canScrollForward) overflow.hidden() else 0
                 if (hidden > 0) {
                     val source = rememberInteractionSource()
@@ -158,7 +159,7 @@ private fun Navigation(modifier: Modifier) {
     }
 }
 
-private val EditHudGap = 74.dp
+private val MoreRowHeight = 28.dp
 
 private val SidebarEntryWidth = 225.dp
 

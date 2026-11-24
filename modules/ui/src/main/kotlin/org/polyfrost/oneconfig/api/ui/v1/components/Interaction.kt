@@ -152,8 +152,8 @@ private fun Modifier.interactionLayers(
         drawContent()
         if (!behind && outline != null && amount > 0f) drawOutline(outline, tone.copy(alpha = amount * tone.alpha))
         val b = ring.value
-        if (b > 0f) {
-            val px = width.toPx()
+        val px = width.toPx()
+        if (b > 0f && size.minDimension >= px) {
             inset(px / 2f) {
                 drawOutline(shape.createOutline(size, layoutDirection, this), borderColor.copy(alpha = borderColor.alpha * b), style = Stroke(px))
             }

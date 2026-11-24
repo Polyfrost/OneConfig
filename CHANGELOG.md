@@ -10,9 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - API: `HudManager.viewport` draws the HUDs into one part of the window, for mods that show the game in a smaller frame such as a replay editor's preview
 
+### Changed
+- Needs PolyCompose 3.0.7 or newer
+- Player heads use PolyCompose's skin cache, so mods drawing the same player only load the skin once
+- Player heads update when a skin finishes loading late
+- API: `PlayerHeads`' skin calls, `PlayerSkinLayers` and `PlayerSkinLayersResult` are deprecated in favour of PolyCompose's `McPlayerFaces`. Mods built against older versions keep working
+
+## [1.9.4] - 2026-11-23
+
+### Changed
+- The sidebar lays out its entries more tightly and fades its top and bottom edges while you scroll
+
 ### Fixed
 - Setting files that mods write ahead of their HUDs, such as VanillaHUD's migrated settings, no longer log an error on every launch
 - Settings saved while the OneConfig screen was saving on close could fail to save or keep an older value
+- Selection rings, hover borders and focus outlines on elements too small to fit them no longer close the screen they're on
+- On 1.8.9 with Argentum, the exclusive fullscreen setting now matches the one in options.txt, so it stays the same when you switch versions in OneClient (needs an Argentum release with the new fullscreen API)
 
 ## [1.9.3] - 2026-11-23
 

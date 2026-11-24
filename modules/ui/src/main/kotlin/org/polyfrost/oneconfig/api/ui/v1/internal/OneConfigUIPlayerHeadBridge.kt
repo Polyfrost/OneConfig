@@ -1,7 +1,5 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import androidx.compose.runtime.State
-import androidx.compose.ui.graphics.ImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
@@ -11,20 +9,13 @@ import java.util.UUID
 
 @ExperimentalOneConfigUiApi
 @InternalOneConfigUiApi
+@Suppress("DEPRECATION")
 public interface OneConfigUIPlayerHeadBridge {
-    public fun face(id: UUID): ImageBitmap?
+    public val revision: Int
 
-    public fun observe(id: UUID): State<ImageBitmap?>
+    public fun head(id: UUID?): PolyBitmap?
 
-    public fun defaultFace(id: UUID): ImageBitmap?
-
-    public fun defaultBitmap(id: UUID): PolyBitmap? = null
-
-    public fun bitmap(id: UUID): PolyBitmap?
-
-    public fun loadedFace(id: UUID): ImageBitmap?
-
-    public fun loadedBitmap(id: UUID): PolyBitmap?
+    public fun defaultHead(id: UUID): PolyBitmap?
 
     public fun localPlayerId(): UUID?
 
