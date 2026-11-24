@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Player heads update when a skin finishes loading late
 - API: `PlayerHeads`' skin calls, `PlayerSkinLayers` and `PlayerSkinLayersResult` are deprecated in favour of PolyCompose's `McPlayerFaces`. Mods built against older versions keep working
 
+### Fixed
+- On 1.8.9, chat messages that OneConfig converts keep their click events and text hovers (item and entity hovers are still dropped)
+
 ## [1.9.4] - 2026-11-23
 
 ### Changed
