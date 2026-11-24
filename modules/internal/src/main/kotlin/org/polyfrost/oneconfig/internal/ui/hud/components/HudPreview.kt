@@ -97,16 +97,22 @@ private object HudPreviewCache {
     }
 }
 
+// counts the releases, so that what remembers a preview makes a new one instead of showing a disposed one
+private var released by mutableIntStateOf(0)
+
 /**
  * Disposes the previews made so far, for before Hotwire turns mods off: it takes the ones of their HUDs out of the
  * cache, which could then never dispose them
  */
-fun releaseHudPreviews() = HudPreviewCache.releaseAll()
+fun releaseHudPreviews() {
+    HudPreviewCache.releaseAll()
+    released++
+}
 
 @Composable
 internal fun rememberHudPreview(hud: Hud): HudPreviewState {
     val revision = HudManager.revision
-    val state = remember(hud, revision) {
+    val state = remember(hud, revision, released) {
         HudPreviewCache.get(hud, revision) {
             hud.updateForPreview()
             HudPreviewState(
