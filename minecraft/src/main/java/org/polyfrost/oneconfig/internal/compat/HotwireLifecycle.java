@@ -66,6 +66,8 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         HotwireApi api = HotwireApi.getInstance();
         ObjectSerializer.savedName = api::findOwnName;
         ObjectSerializer.runningClass = name -> api.findRunningClass(name).orElse(null);
+        // its kept scene would still draw the HUDs of before, and its undo would delete the ones that came since
+        HudManager.INSTANCE.addRegistrationListener(HudEditorUIScreen::forgetScene);
         api.addLifecycleListener(new HotwireLifecycle());
     }
 
@@ -154,7 +156,7 @@ public final class HotwireLifecycle implements ModLifecycleListener {
     private static void sync(boolean rebind) {
         Set<String> off = refreshMods();
         if (rebind) ConfigManager.rebindDetached();
-        if (HudManager.INSTANCE.syncWithMods(off::contains)) HudEditorUIScreen.forgetScene();
+        HudManager.INSTANCE.syncWithMods(off::contains);
         ConfigRegistry.INSTANCE.loadFrom(ConfigManager.active(), ConfigSource.OC);
     }
 

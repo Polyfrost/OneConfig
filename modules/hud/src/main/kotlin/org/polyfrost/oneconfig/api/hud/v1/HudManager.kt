@@ -2006,12 +2006,10 @@ public object HudManager {
      *
      * A HUD that wraps something of a mod is not Hotwire's to take out, and is kept aside while [isOff] holds for
      * its mod
-     *
-     * @return whether any HUD changed
      */
     @ApiStatus.Internal
-    public fun syncWithMods(isOff: Predicate<String>): Boolean {
-        if (!init) return false
+    public fun syncWithMods(isOff: Predicate<String>) {
+        if (!init) return
         val leaving = activeInstances.filter { it is LegacyHudMarker && it.configId?.let(isOff::test) == true }
         val returning = parked.filter { it.configId?.let(isOff::test) != true }
         activeInstances.removeAll(leaving.toSet())
@@ -2026,11 +2024,10 @@ public object HudManager {
             revision++
             invalidate()
         } else {
-            return false
+            return
         }
         // Hotwire changes the providers without the calls that tell what lists them, as the search does
         notifyRegistrationChanged()
-        return true
     }
 
     private fun providerNames(): Set<String> = hudProviders.keys.mapTo(HashSet()) { it.name }

@@ -62,7 +62,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen(options = OneConfi
 
         /**
          * Makes the editor build its scene anew at its next open, as the one it keeps is of the HUD kinds it was
-         * built with
+         * built with, as is what it can undo
          */
         @JvmStatic
         fun forgetScene() {
