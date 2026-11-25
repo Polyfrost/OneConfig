@@ -70,24 +70,15 @@ object LegacyHudRenderer {
         for (i in instances.indices) {
             val hud = instances[i]
             if (hud !is LegacyHud) continue
-            if (!HudManager.isEditing) {
-                if (hud.hidden) continue
-                if (HudManager.isGuiHidden) continue
-                if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
-                if (HudManager.isTabListVisible && !hud.showInTab) continue
-                if (!HudManager.overrideShowInScreens) {
-                    if (HudManager.isChatScreenOpen) {
-                        if (!hud.showInChat) continue
-                    } else if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
-                }
-            }
-            frame.add(hud)
+            if (passesFilters(hud)) frame.add(hud) else setShown(hud, false)
         }
         for (i in frame.indices) {
             val hud = frame[i]
             try {
                 HudManager.updateIfDue(hud)
-                if (!HudManager.isEditing && !hud.shouldShow()) continue
+                val shown = HudManager.isPreviewing(hud) || hud.shouldShow()
+                setShown(hud, shown)
+                if (!shown) continue
                 val hudScale = hud.frameScale
                 val (mw, mh) = hud.frameMinimumSize()
                 val w = mw * hudScale
@@ -134,5 +125,21 @@ object LegacyHudRenderer {
             }
         }
         frame.clear()
+    }
+
+    private fun passesFilters(hud: LegacyHud): Boolean {
+        if (HudManager.isPreviewing(hud)) return true
+        if (hud.hidden || HudManager.isGuiHidden) return false
+        if (HudManager.isDebugScreenVisible && !hud.showInF3) return false
+        if (HudManager.isTabListVisible && !hud.showInTab) return false
+        if (!HudManager.overrideShowInScreens && !HudManager.isConfigUiOpen) {
+            if (HudManager.isChatScreenOpen) return hud.showInChat
+            if (HudManager.isGuiScreenOpen) return hud.showInScreens
+        }
+        return true
+    }
+
+    private fun setShown(hud: LegacyHud, shown: Boolean) {
+        if (hud.isVisible.value != shown) Snapshot.withMutableSnapshot { hud.isVisible.value = shown }
     }
 }

@@ -585,8 +585,7 @@ internal fun alignHuds(units: List<Collection<Hud>>, align: HudAlign) {
 }
 
 private fun hudBounds(hud: Hud): HudBounds? {
-    // a legacy HUD draws itself, so there is no visible flag to say whether it has anything up
-    if (!HudManager.isPreviewing(hud) && (hud is LegacyHud || !hud.isVisible.value)) return null
+    if (!HudManager.isPreviewing(hud) && !hud.isVisible.value) return null
     val scale = hud.effectiveScale
     if (hud is LegacyHud) {
         if (!HudManager.inWorld) return null

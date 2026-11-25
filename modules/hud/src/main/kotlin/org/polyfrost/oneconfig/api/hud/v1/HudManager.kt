@@ -100,7 +100,8 @@ public object HudManager {
      *
      * That is while either the HUD editor or the main OneConfig UI is open
      *
-     * HUDs should render example content when this is set
+     * Use [isPreviewing] to decide whether a HUD should render example content, since HUDs that turn off
+     * [Hud.previewsBehindMenu] stay live while the main OneConfig UI is open
      */
     @get:JvmName("isEditing")
     public val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
@@ -191,6 +192,7 @@ public object HudManager {
     @Volatile @JvmField public var pendingAdd: Hud? = null
 
     private var wasEditing = false
+    private var wasEditorOpen = false
 
     private val showingPreviews get() = isConfigUiOpen || isEditorOpen
 
@@ -1082,7 +1084,7 @@ public object HudManager {
         if (isGuiHidden) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
-        if (!overrideShowInScreens) {
+        if (!overrideShowInScreens && !isConfigUiOpen) {
             // chat has its own toggle so it is never governed by "Show in GUIs"
             if (isChatScreenOpen) {
                 if (!hud.showInChat) return false
@@ -1117,16 +1119,7 @@ public object HudManager {
             val backgroundOnly = !visible && keepsBackgroundOnly(hud)
             if (visible || backgroundOnly) {
                 updateIfDue(hud)
-                val previewing = isPreviewing(hud)
-                val show = previewing || try {
-                    hud.shouldShow()
-                } catch (e: Throwable) {
-                    LOGGER.error("Failed to check whether HUD ${hud.title} should show", e)
-                    true
-                }
-                if (!previewing) {
-                    if (show) notShowing.remove(hud) else notShowing.add(hud)
-                }
+                val show = isPreviewing(hud) || showsLive(hud)
                 if (!show) {
                     hud.setVisible(false)
                     continue
@@ -1166,6 +1159,17 @@ public object HudManager {
         return volatileContent
     }
 
+    private fun showsLive(hud: Hud): Boolean {
+        val show = try {
+            hud.shouldShow()
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to check whether HUD ${hud.title} should show", e)
+            true
+        }
+        if (show) notShowing.remove(hud) else notShowing.add(hud)
+        return show
+    }
+
     private inline fun prepareFrame(
         screenWidth: Float,
         screenHeight: Float,
@@ -1182,10 +1186,11 @@ public object HudManager {
 
         frameId++
 
-        // opening or closing the editor swaps between preview and live content, so every HUD gets
+        // opening or closing the menu or editor swaps between preview and live content, so every HUD gets
         // one immediate update on the edge instead of waiting out its remaining interval
-        if (wasEditing != isEditing) {
+        if (wasEditing != isEditing || wasEditorOpen != isEditorOpen) {
             wasEditing = isEditing
+            wasEditorOpen = isEditorOpen
             previewSessionId++
             for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
         }
@@ -1541,11 +1546,20 @@ public object HudManager {
             val instances = activeInstances
             for (i in instances.indices) {
                 val hud = instances[i]
-                val visible = hud !is LegacyHudMarker
-                hud.setVisible(visible)
-                if (visible) prepareOrder.add(hud)
+                if (hud is LegacyHudMarker) continue
+                val previewing = isPreviewing(hud)
+                val visible = previewing || inWorld && shouldDraw(hud)
+                val backgroundOnly = !visible && inWorld && keepsBackgroundOnly(hud)
+                if (visible || backgroundOnly) {
+                    updateIfDue(hud)
+                    if (previewing || showsLive(hud)) {
+                        hud.setVisible(visible)
+                        prepareOrder.add(hud)
+                        continue
+                    }
+                }
+                hud.setVisible(false)
             }
-            for (i in prepareOrder.indices) updateIfDue(prepareOrder[i])
             prepareOrder
         })
     }

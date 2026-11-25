@@ -97,7 +97,7 @@ internal class HudModCardData(
         }
 
     override val preview: (@Composable (Modifier) -> Unit)? =
-        if (hud is LegacyHudMarker) null else ({ modifier -> HudPreview(hud, modifier) })
+        if (hud is LegacyHudMarker || !hud.previewsBehindMenu) null else ({ modifier -> HudPreview(hud, modifier) })
 
     override val authors: String? = owner?.authors
 
