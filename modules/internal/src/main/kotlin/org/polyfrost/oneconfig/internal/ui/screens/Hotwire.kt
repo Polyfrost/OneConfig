@@ -659,8 +659,12 @@ private fun HotwireTile(
     // mods Hotwire has turned off are greyed out but stay selectable so they can be turned back on
     val contentAlpha = if (mod.on) 1f else 0.4f
     val nameColor = if (mod.on) theme.textColor else theme.textColorSecondary
-    // the dimming that shows a mod is off is read out too
-    val label = if (mod.on) mod.name else translated("oneconfig.page.hotwire.tile.off", "%s, turned off", mod.name)
+    // what the dimming and the update dot show is read out too
+    val label = listOfNotNull(
+        mod.name,
+        translated("oneconfig.page.hotwire.tile.off", "turned off").takeUnless { mod.on },
+        translated("oneconfig.page.hotwire.update_available", "Update available").takeIf { hasUpdate },
+    ).joinToString(", ")
     Card(Modifier.fillMaxWidth().height(if (list) 56.dp else 124.dp), onClick = onSelect, label = label, selected = selected) {
         if (list) {
             Row(
