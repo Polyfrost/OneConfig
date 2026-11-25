@@ -80,8 +80,11 @@ class TreeConfigData(
         get() {
             val mods = ModInfo.loadedMods
             resolved?.takeIf { it.first === mods }?.let { return it.second }
-            // a mod Hotwire turned off leaves the list but keeps its card's details until it is back
-            return (findModInfo(mods) ?: resolved?.second).also { resolved = mods to it }
+            // the mod found before is looked up again by its id, so an update shows and a mod Hotwire turned off keeps its
+            // card's details, rather than another mod of the same name taking them
+            val before = resolved?.second
+            val found = if (before != null) mods.firstOrNull { it.id == before.id } ?: before else findModInfo(mods)
+            return found.also { resolved = mods to it }
         }
 
     private fun findModInfo(mods: Set<ModInfo>): ModInfo? {

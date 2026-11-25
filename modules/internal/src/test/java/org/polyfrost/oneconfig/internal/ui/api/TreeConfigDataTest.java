@@ -59,6 +59,17 @@ class TreeConfigDataTest {
     }
 
     @Test
+    void aCardKeepsItsOwnModWhileItIsOffEvenIfAnotherHasItsName() {
+        installed("1.0");
+        TreeConfigData card = new TreeConfigData(Tree.tree("probe"), ConfigSource.OC, null);
+        assertEquals("1.0", card.getVersion());
+
+        TestCompatibilityPlatform.mods = Set.of(new ModInfo("other", "probe", "9.0", null, null));
+        ModInfo.forgetLoadedMods();
+        assertEquals("1.0", card.getVersion());
+    }
+
+    @Test
     void aCardKeepsItsVersionWhileItsModIsTurnedOff() {
         installed("1.0");
         TreeConfigData card = new TreeConfigData(Tree.tree("probe"), ConfigSource.OC, null);

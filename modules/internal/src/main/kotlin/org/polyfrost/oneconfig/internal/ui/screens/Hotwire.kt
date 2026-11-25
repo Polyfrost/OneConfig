@@ -29,7 +29,6 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -52,6 +51,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
 import org.polyfrost.oneconfig.api.ui.v1.components.Card
 import org.polyfrost.oneconfig.api.ui.v1.components.Checkbox
@@ -219,6 +219,7 @@ object HotwireUpdates {
             }
             val summary = bridge.applied(now, nextLaunch)
             accepted.onDone((now + nextLaunch).toSet())
+            A11y.announce(listOf(summary, problems.joinToString(" ")).filter { it.isNotBlank() }.joinToString(" "))
             if (problems.isEmpty()) {
                 Notifications.success("Hotwire", summary.ifBlank { translated("oneconfig.page.hotwire.updates.done", "Updates finished.") })
             } else {
@@ -240,6 +241,8 @@ val openHotwireScreen = Runnable { HotwireBridge.instance?.openScreen() }
 /** Reports what Hotwire says came of a change */
 internal fun notifyHotwireResult(bridge: HotwireBridge, result: HotwireBridge.Result) {
     val message = bridge.describe(result)
+    // read out too, as notifications aren't
+    A11y.announce(message)
     when {
         result.ok -> Notifications.success("Hotwire", message)
         result.needsReopen -> Notifications.info("Hotwire", message)
@@ -476,6 +479,8 @@ internal fun OpeningPromptCard(prompt: HotwireBridge.OpeningPrompt, onDone: () -
             wait--
         }
     }
+    // read out when it shows, as the narrator reads only controls, which wait out the delay
+    Announce((listOf(prompt.title) + prompt.lines).joinToString(" "))
     Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
         Card(Modifier.widthIn(max = 560.dp), contentPadding = PaddingValues(24.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -543,7 +548,9 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     // a plan rather than a switch, as only a plan says what goes along and can save and reopen the world around it;
     // remembered with what it was made for, so one for another selection or from before Hotwire changed mods is never offered
     val planState = remember(turnOff, turnOn, HotwireBridge.revision) { mutableStateOf<Result<HotwireBridge.Plan>?>(null) }
-    LaunchedEffect(planState) {
+    val tooMany = picked.size > MaxSwitchedMods
+    LaunchedEffect(planState, tooMany) {
+        if (tooMany) return@LaunchedEffect
         planState.value = HotwireBridge.catching { bridge.plan(HotwireBridge.Change(off = turnOff, on = turnOn)).await() }
     }
     val planned = planState.value
@@ -557,19 +564,18 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     var fraction by remember { mutableFloatStateOf(0f) }
     // also what isn't OneConfig's, as a change made elsewhere can end without telling anyone
     var busy by remember { mutableStateOf(false) }
+    // on a timer rather than every frame, so an idle bar doesn't keep the page redrawing
     LaunchedEffect(Unit) {
         while (true) {
-            withFrameNanos {
-                val progress = bridge.progress()
-                fraction = progress ?: 0f
-                busy = progress != null
-            }
+            val progress = bridge.progress()
+            fraction = progress ?: 0f
+            busy = progress != null
+            delay(DOWNLOAD_POLL_MILLIS)
         }
     }
     // planning is what downloads the jars, so that's what there is to show until a plan is ready
     val download = rememberDownloadWatch(bridge, HotwireUpdates.planTag, planning)
 
-    val tooMany = picked.size > MaxSwitchedMods
     val label = when {
         plan?.needsReopen == true -> translated("oneconfig.page.hotwire.switch.reopen", "Save and switch %s", picked.size)
         mixed -> translated("oneconfig.page.hotwire.switch.mixed", "Switch %s", picked.size)
@@ -587,7 +593,13 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         else -> planned.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() }
     }
     // read out once the plan is known, refusals included, as the narrator reads only controls
-    Announce(planned?.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() })
+    Announce(
+        if (tooMany) {
+            translated("oneconfig.page.hotwire.switch.too_many", "Only %s mods can be switched at once.", MaxSwitchedMods)
+        } else {
+            planned?.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() }
+        },
+    )
     val canSwitch = !running && !tooMany && plan?.canApply == true && !busy
 
     fun start(plan: HotwireBridge.Plan) {
@@ -656,8 +668,9 @@ private fun HotwireTile(
     onSelect: () -> Unit,
 ) {
     val theme = LocalTheme.current
-    // mods Hotwire has turned off are greyed out but stay selectable so they can be turned back on
-    val contentAlpha = if (mod.on) 1f else 0.4f
+    // the icon of a mod Hotwire turned off is greyed out, while its name stays readable, and it stays selectable so it can
+    // be turned back on
+    val iconAlpha = if (mod.on) 1f else 0.4f
     val nameColor = if (mod.on) theme.textColor else theme.textColorSecondary
     // what the dimming and the update dot show is read out too
     val label = listOfNotNull(
@@ -668,12 +681,12 @@ private fun HotwireTile(
     Card(Modifier.fillMaxWidth().height(if (list) 56.dp else 124.dp), onClick = onSelect, label = label, selected = selected) {
         if (list) {
             Row(
-                modifier = Modifier.fillMaxSize().alpha(contentAlpha).padding(horizontal = 14.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Checkbox(selected, { onSelect() })
-                ModIcon(bridge, mod.id, mod.version, 36)
+                Box(Modifier.alpha(iconAlpha)) { ModIcon(bridge, mod.id, mod.version, 36) }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(mod.name, color = nameColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     mod.authors?.takeIf { it.isNotBlank() }?.let {
@@ -685,11 +698,11 @@ private fun HotwireTile(
             }
         } else {
             Column(
-                modifier = Modifier.fillMaxSize().alpha(contentAlpha).padding(10.dp),
+                modifier = Modifier.fillMaxSize().padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ModIcon(bridge, mod.id, mod.version, 56)
+                Box(Modifier.alpha(iconAlpha)) { ModIcon(bridge, mod.id, mod.version, 56) }
                 Text(mod.name, Modifier.fillMaxWidth(), nameColor, fontSize = 13.sp, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Box(Modifier.align(Alignment.TopStart).padding(8.dp)) {
