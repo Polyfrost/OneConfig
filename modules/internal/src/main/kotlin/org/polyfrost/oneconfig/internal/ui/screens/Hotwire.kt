@@ -52,6 +52,7 @@ import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
 import org.polyfrost.oneconfig.api.ui.v1.components.Card
 import org.polyfrost.oneconfig.api.ui.v1.components.Checkbox
 import org.polyfrost.oneconfig.api.ui.v1.components.Chip
@@ -132,7 +133,7 @@ object HotwireUpdates {
             if (check != checks) return@whenComplete
             // a failed check keeps the last list shown, and the next use tries again
             if (error != null) checkedAt = null
-            if (error == null || found == null) found = if (error == null) Result.success(updates) else Result.failure(error.cause ?: error)
+            if (error == null || found?.isSuccess != true) found = if (error == null) Result.success(updates) else Result.failure(error.cause ?: error)
         }
     }
 
@@ -446,14 +447,17 @@ private fun UpdateReviewDialog(review: HotwireUpdates.Review) {
             }
         },
     ) {
-        review.plans.forEach { (name, plan) ->
-            Text(name, color = theme.textColorSecondary, fontSize = 13.sp)
+        val shown = review.plans.map { (name, plan) ->
             val lines = plan.getOrNull()?.lines.orEmpty()
             // a refusal comes as the plan's own lines, so only a reason of another kind is added to them
             val reason = HotwireBridge.skipReason(plan)?.takeIf { it != lines.joinToString(" ") }
-            (lines + listOfNotNull(reason)).forEach {
-                Text("• $it", color = theme.textColor, fontSize = 13.sp)
-            }
+            name to lines + listOfNotNull(reason)
+        }
+        // the narrator reads only controls, so what the review says, refusals included, is read out when it opens
+        Announce(shown.flatMap { (name, lines) -> listOf(name) + lines }.joinToString(" "))
+        shown.forEach { (name, lines) ->
+            Text(name, color = theme.textColorSecondary, fontSize = 13.sp)
+            lines.forEach { Text("• $it", color = theme.textColor, fontSize = 13.sp) }
         }
     }
 }
@@ -582,6 +586,8 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         planned == null -> translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
         else -> planned.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() }
     }
+    // read out once the plan is known, refusals included, as the narrator reads only controls
+    Announce(planned?.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() })
     val canSwitch = !running && !tooMany && plan?.canApply == true && !busy
 
     fun start(plan: HotwireBridge.Plan) {

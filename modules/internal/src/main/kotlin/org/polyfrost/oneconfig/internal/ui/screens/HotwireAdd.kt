@@ -40,6 +40,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Announce
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Card
 import org.polyfrost.oneconfig.api.ui.v1.components.Chip
@@ -115,6 +116,8 @@ fun HotwireAdd() {
 
     /** Loads a plan and its icon off the UI thread, since they can wait on a dialog, a download or Modrinth */
     fun review(name: String, icon: () -> String?, load: (String) -> CompletableFuture<HotwireBridge.JarPlan>?) {
+        // only a second click before the page redraws gets here with a preview already up
+        if (reading || plan != null) return
         leavePreview()
         val id = request
         val planTag = HotwireBridge.newTag()
@@ -253,6 +256,9 @@ private class ModrinthBrowse {
     /** Where the next page starts once Load more is pressed, and where the last page [hits] hold started */
     var offset by mutableIntStateOf(0)
     var loadedFrom = -1
+
+    /** How many results Modrinth gave so far, which [hits] can be fewer than once a project showed on two pages */
+    var fetched by mutableIntStateOf(0)
     var list by mutableStateOf(LazyListState())
 }
 
@@ -284,7 +290,8 @@ private fun ModrinthSource(
                 delay(350)
                 val page = HotwireBridge.catching { bridge.searchStore(query, browse.category, 0).await() }
                 browse.total = page.getOrNull()?.total ?: 0
-                browse.hits = page.map { it.hits }
+                browse.hits = page.map { it.hits.distinctBy { hit -> hit.projectId } }
+                browse.fetched = page.getOrNull()?.hits?.size ?: 0
                 browse.list = LazyListState()
                 browse.loadedFrom = 0
                 // a failed search is tried again once the tab is back
@@ -294,7 +301,8 @@ private fun ModrinthSource(
                 val earlier = browse.hits?.getOrNull().orEmpty()
                 val page = HotwireBridge.catching { bridge.searchStore(query, browse.category, browse.offset).await() }
                 browse.total = page.getOrNull()?.total ?: 0
-                browse.hits = page.map { earlier + it.hits }
+                browse.hits = page.map { HotwireBridge.appendPage(earlier, it.hits) }
+                browse.fetched = browse.offset + (page.getOrNull()?.hits?.size ?: 0)
                 browse.loadedFrom = browse.offset
             }
         }
@@ -336,7 +344,7 @@ private fun ModrinthSource(
                     if (update == null && hit.installed) null else hit to update
                 }
             }
-            val loaded = current.getOrThrow().size
+            val loaded = browse.fetched
             // what is already installed is left out, so a search can come back with nothing to show
             if (shown.isEmpty() && loaded >= browse.total) {
                 EmptyState(translated("oneconfig.page.hotwire.modrinth.none", "Nothing to add here. Mods you already have are left out."), Modifier.fillMaxWidth(), icon = "search")
@@ -512,6 +520,8 @@ private fun PlanCard(
             PlanLoading(bridge, tag, onCancel = onBack)
             return@AddCard
         }
+        // read out once the plan is known, refusals included, as the narrator reads only controls
+        Announce((listOf(plan.title, plan.detail) + plan.lines).filter { it.isNotBlank() }.joinToString(" "))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             if (icon != null) Icon(icon, color = theme.textColor, modifier = Modifier.size(48.dp))
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

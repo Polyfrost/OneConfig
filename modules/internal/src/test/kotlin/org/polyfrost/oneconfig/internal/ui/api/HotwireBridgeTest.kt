@@ -178,6 +178,13 @@ class HotwireBridgeTest {
         assertEquals(listOf("plan [a]", "update hotwire"), calls)
     }
 
+    @Test
+    fun aProjectModrinthMovedToTheNextPageIsListedOnce() {
+        fun hit(id: String) = HotwireBridge.StoreHit(id, id, id, "", "", 0, null, installed = false, hasUpdate = false)
+        val listed = HotwireBridge.appendPage(listOf(hit("a"), hit("b")), listOf(hit("b"), hit("c")))
+        assertEquals(listOf("a", "b", "c"), listed.map { it.projectId })
+    }
+
     private fun download(id: Int, done: Long, over: Boolean = false, paused: Boolean = false) =
         HotwireBridge.Download(id, "mod.jar", done, 100, over, paused, !paused && !over)
 

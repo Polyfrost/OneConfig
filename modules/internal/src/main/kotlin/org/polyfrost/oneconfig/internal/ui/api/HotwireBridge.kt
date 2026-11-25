@@ -286,6 +286,9 @@ abstract class HotwireBridge {
             else -> (plan.exceptionOrNull()?.let { it.cause ?: it }?.message ?: plan.getOrNull()?.lines?.joinToString(" ")).orEmpty()
         }
 
+        /** [earlier] results followed by [page]'s, where a project Modrinth moved to the next page between the two shows once */
+        fun appendPage(earlier: List<StoreHit>, page: List<StoreHit>): List<StoreHit> = (earlier + page).distinctBy { it.projectId }
+
         fun downloadProgress(downloads: List<Download>): DownloadProgress? {
             val running = downloads.filterNot { it.over }.ifEmpty { return null }
             return DownloadProgress(
