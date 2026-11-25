@@ -152,6 +152,8 @@ public final class HotwireLifecycle implements ModLifecycleListener {
                     if (ok) ConfigEntrypoints.finishStarted();
                 }
             }
+            // a mod added from Hotwire's own screen ends no switch, which the Hotwire page otherwise goes by
+            HotwireBridge.invalidate();
         }
     }
 
@@ -162,6 +164,7 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         } catch (Throwable t) {
             LOGGER.error("Failed to read the mods again after Hotwire updated {}", ids, t);
         }
+        HotwireBridge.invalidate();
     }
 
     // by what is out of place rather than by which mods changed, as their objects only are if the profile changed, and

@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -111,7 +112,7 @@ fun HotwireAdd() {
             if (id == request) planIcon = iconPath
         }
         scope.launch {
-            val loaded = runCatching { withContext(Dispatchers.IO) { load(planTag) }?.await() }
+            val loaded = HotwireBridge.catching { withContext(Dispatchers.IO) { load(planTag) }?.await() }
             if (id != request) {
                 loaded.getOrNull()?.onCancel?.invoke()
                 return@launch
@@ -158,7 +159,11 @@ fun HotwireAdd() {
 /** A row's icon, loaded off the UI thread so scrolling never waits on a jar or the network */
 @Composable
 private fun RowIcon(key: Any, load: () -> String?) {
-    val path by produceState<String?>(null, key) { value = withContext(Dispatchers.IO) { runCatching(load).getOrNull() } }
+    val path by produceState<String?>(null, key) {
+        // a row reused for another item mustn't keep the last one's icon while this one loads
+        value = null
+        value = withContext(Dispatchers.IO) { runCatching(load).getOrNull() }
+    }
     // keeps names lined up while an icon loads or when a mod has none
     Box(Modifier.size(36.dp)) {
         path?.let { Icon(it, color = LocalTheme.current.textColor, modifier = Modifier.fillMaxSize()) }
@@ -166,7 +171,7 @@ private fun RowIcon(key: Any, load: () -> String?) {
 }
 
 @Composable
-private fun AddCard(content: @Composable () -> Unit) {
+private fun AddCard(content: @Composable ColumnScope.() -> Unit) {
     Card(Modifier.padding(horizontal = PageGutter).fillMaxWidth(), contentPadding = PaddingValues(24.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) { content() }
     }
@@ -238,12 +243,12 @@ private fun ModrinthSource(
         // waits out typing so each keystroke doesn't hit Modrinth
         if (offset == 0) delay(350)
         val earlier = if (offset == 0) emptyList() else hits?.getOrNull().orEmpty()
-        val page = runCatching { bridge.searchStore(query, category, offset).await() }
+        val page = HotwireBridge.catching { bridge.searchStore(query, category, offset).await() }
         total = page.getOrNull()?.total ?: 0
         hits = page.map { earlier + it.hits }
         searched = query to category
     }
-    LaunchedEffect(Unit) { HotwireUpdates.ensure() }
+    LaunchedEffect(HotwireBridge.revision) { HotwireUpdates.ensure() }
 
     Row(Modifier.padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         categories.forEach {
@@ -316,8 +321,9 @@ private fun ModrinthSource(
 @Composable
 private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreUpdate) -> Unit) {
     val theme = LocalTheme.current
-    LaunchedEffect(Unit) { HotwireUpdates.ensure() }
+    LaunchedEffect(HotwireBridge.revision) { HotwireUpdates.ensure() }
 
+    val query = pageSearchQuery().trim()
     val current = HotwireUpdates.found
     when {
         current == null -> EmptyState(translated("oneconfig.page.hotwire.updates.checking", "Checking for updates…"), Modifier.fillMaxWidth(), state = LoadState.Loading)
@@ -327,7 +333,7 @@ private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreU
             icon = "alert-circle",
         )
         current.getOrThrow().isEmpty() -> EmptyState(translated("oneconfig.page.hotwire.updates.none", "Everything is up to date."), Modifier.fillMaxWidth(), icon = "check-circle")
-        else -> ResultList(current.getOrThrow()) { update ->
+        else -> ResultList(current.getOrThrow().filter { query.isEmpty() || it.name.contains(query, true) || it.modId.contains(query, true) }) { update ->
             RowIcon(update.modId) { bridge.icon(update.modId) }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(update.name, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -398,8 +404,9 @@ private fun PlanCard(bridge: HotwireBridge, reading: Boolean, plan: HotwireBridg
     var outcome by remember(plan) { mutableStateOf<HotwireBridge.Result?>(null) }
     var working by remember { mutableStateOf(false) }
     var fraction by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(started) {
-        while (started) {
+    LaunchedEffect(started, outcome) {
+        working = false
+        while (started && outcome == null) {
             withFrameNanos {
                 val progress = bridge.progress()
                 working = progress != null
@@ -420,13 +427,17 @@ private fun PlanCard(bridge: HotwireBridge, reading: Boolean, plan: HotwireBridg
                 if (plan.detail.isNotBlank()) Text(plan.detail, color = theme.textColorSecondary, fontSize = 13.sp)
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            plan.lines.forEach { Text("• $it", color = theme.textColor, fontSize = 13.sp) }
+        // scrolls on its own, so a plan with many lines can't push its buttons out of the card
+        ScrollContainer(modifier = Modifier.weight(1f, fill = false)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                plan.lines.forEach { Text("• $it", color = theme.textColor, fontSize = 13.sp) }
+            }
         }
         if (started) {
+            val done = outcome
             Text(
                 when {
-                    outcome != null -> outcome!!.message
+                    done != null -> bridge.describe(done)
                     working -> translated("oneconfig.page.hotwire.add.working", "Hotwire is working on it… %s%%", (fraction * 100).toInt())
                     else -> translated("oneconfig.page.hotwire.add.waiting", "Waiting for Hotwire…")
                 },
@@ -444,7 +455,7 @@ private fun PlanCard(bridge: HotwireBridge, reading: Boolean, plan: HotwireBridg
                         action.attempt().whenComplete { result, _ ->
                             Platform.screen().runOnUiThread {
                                 outcome = result
-                                notifyHotwireResult(result)
+                                notifyHotwireResult(bridge, result)
                                 HotwireUpdates.refreshWhenDone()
                             }
                         }

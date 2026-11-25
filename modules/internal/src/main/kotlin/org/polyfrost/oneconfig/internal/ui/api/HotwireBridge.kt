@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.internal.ui.components.translated
@@ -31,9 +32,6 @@ abstract class HotwireBridge {
         val switchable: Boolean,
         val offSinceStart: Boolean,
     )
-
-    /** [switched] is every mod the change would move, including the ones Hotwire switches along with those asked for */
-    class Preview(val possible: Boolean, val message: String, val switched: List<String> = emptyList())
 
     /**
      * [needsReopen] means nothing failed but the change only finishes once the world is reopened, and [refused] that
@@ -111,10 +109,6 @@ abstract class HotwireBridge {
     /** A file holding the mod's icon, or null when its jar has none */
     abstract fun icon(modId: String): String?
 
-    abstract fun preview(ids: Collection<String>, on: Boolean): Preview
-
-    abstract fun switch(ids: Collection<String>, on: Boolean): CompletableFuture<Result>
-
     abstract fun plan(change: Change): CompletableFuture<Plan>
 
     /** How far the running switch, add or update is, from 0 to 1, or null while nothing runs */
@@ -143,8 +137,8 @@ abstract class HotwireBridge {
 
     abstract fun searchStore(words: String, category: String, offset: Int): CompletableFuture<StorePage>
 
-    /** Saves the newest version that fits this game, or with [anyVersion] the newest for this loader, to Downloads */
-    abstract fun saveToDownloads(idOrSlug: String, anyVersion: Boolean): CompletableFuture<Result>
+    /** Saves the newest version that fits this game to Downloads */
+    abstract fun saveToDownloads(idOrSlug: String): CompletableFuture<Result>
 
     /** Completes exceptionally with Hotwire's reason when it couldn't ask Modrinth */
     abstract fun checkUpdates(): CompletableFuture<List<StoreUpdate>>
@@ -174,9 +168,9 @@ abstract class HotwireBridge {
 
     /** What adding [hit] would do, including what Hotwire adds along with it, downloading under [tag] */
     fun storePlan(hit: StoreHit, tag: String): CompletableFuture<JarPlan> = plan(Change(add = hit.projectId, tag = tag)).thenApply { plan ->
-        // a refused add may only be one that doesn't fit this game, which can still be saved for another
+        // offered even when Hotwire refuses the add, so the mod can still be added by hand
         val save = JarAction(translated("oneconfig.page.hotwire.add.save", "Save to Downloads"), false) {
-            saveToDownloads(hit.slug.ifBlank { hit.projectId }, anyVersion = !plan.canApply)
+            saveToDownloads(hit.slug.ifBlank { hit.projectId })
         }
         plan.toJarPlan("add", hit.title, extra = listOf(save))
     }
@@ -210,7 +204,7 @@ abstract class HotwireBridge {
      * which fetches the jars again, so the others can still go
      */
     suspend fun planUpdates(updates: List<StoreUpdate>, tag: String): List<Pair<String, kotlin.Result<JarPlan>>> {
-        suspend fun plan(group: List<StoreUpdate>) = group.joinToString(", ") { it.name } to runCatching { planUpdate(group, tag).await() }
+        suspend fun plan(group: List<StoreUpdate>) = group.joinToString(", ") { it.name } to catching { planUpdate(group, tag).await() }
         val (self, mods) = updates.partition(::isSelf)
         val together = mods.takeIf { it.isNotEmpty() }?.let { plan(it) }
         if (together != null && mods.size > 1 && together.second.isSuccess && skipReason(together.second) != null) {
@@ -218,6 +212,28 @@ abstract class HotwireBridge {
             return self.map { plan(listOf(it)) } + mods.map { plan(listOf(it)) }
         }
         return self.map { plan(listOf(it)) } + listOfNotNull(together)
+    }
+
+    /** Names the mods a change applied now and at the next launch, or is blank when it applied none */
+    fun applied(now: List<String>, nextLaunch: List<String>): String {
+        if (now.isEmpty() && nextLaunch.isEmpty()) return ""
+        val names = mods().associate { it.id to it.name }
+        fun named(ids: List<String>) = ids.distinct().joinToString(", ") { names[it] ?: it }
+        return listOfNotNull(
+            now.takeIf { it.isNotEmpty() }?.let { translated("oneconfig.page.hotwire.applied.now", "Applied now: %s.", named(it)) },
+            nextLaunch.takeIf { it.isNotEmpty() }?.let { translated("oneconfig.page.hotwire.applied.next_start", "Applies at next launch: %s.", named(it)) },
+        ).joinToString(" ")
+    }
+
+    /** What came of a change, naming what waits for the next launch or went through before a failure, which Hotwire's message doesn't */
+    fun describe(result: Result): String {
+        val applied = applied(result.appliedNow, result.atNextStart)
+        return when {
+            result.ok && result.atNextStart.isNotEmpty() -> applied
+            result.ok -> result.message.ifBlank { translated("oneconfig.page.hotwire.result.done", "Done.") }
+            result.needsReopen -> result.message.ifBlank { translated("oneconfig.page.hotwire.result.reopen", "Reopen your world to finish this.") }
+            else -> listOf(applied, result.message.ifBlank { translated("oneconfig.page.hotwire.result.failed", "That didn't work.") }).filter { it.isNotBlank() }.joinToString(" ")
+        }
     }
 
     /** How far the running downloads of [tag] are together, or null while none is running */
@@ -239,7 +255,7 @@ abstract class HotwireBridge {
         @JvmStatic
         var instance: HotwireBridge? = null
 
-        /** Bumped whenever Hotwire finishes a switch, whoever started it, or [invalidate] is called */
+        /** Bumped by [invalidate], which runs whenever Hotwire finishes switching, starting, or updating mods, whoever asked */
         var revision by mutableIntStateOf(0)
             private set
 
@@ -271,6 +287,15 @@ abstract class HotwireBridge {
                 (running.firstOrNull { it.getting } ?: running.first()).name,
                 running.mapTo(HashSet()) { it.id },
             )
+        }
+
+        /** [runCatching] for a wait, where a cancelled wait ends the coroutine rather than coming back as a failure */
+        internal inline fun <T> catching(block: () -> T): kotlin.Result<T> = try {
+            kotlin.Result.success(block())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            kotlin.Result.failure(e)
         }
 
         private fun failure(error: Throwable): Result {

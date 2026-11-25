@@ -78,7 +78,6 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 
 /** Whether mods show as full-width rows rather than tiles, kept for the session */
@@ -106,6 +105,9 @@ object HotwireUpdates {
     // the revision the last check saw, so one made before Hotwire switched mods is made again
     private var checkedAt: Int? = null
 
+    // so a check that answers after a later one doesn't replace its answer
+    private var checks = 0
+
     /** Checks on first use, and again once Hotwire changed mods since the last check */
     fun ensure() {
         if (checkedAt != HotwireBridge.revision) refresh()
@@ -122,7 +124,9 @@ object HotwireUpdates {
     private fun refresh() {
         val bridge = HotwireBridge.instance ?: return
         checkedAt = HotwireBridge.revision
+        val check = ++checks
         bridge.checkUpdates().whenComplete { updates, error ->
+            if (check != checks) return@whenComplete
             // a failed check keeps the last list shown, and the next use tries again
             if (error != null) checkedAt = null
             if (error == null || found == null) found = if (error == null) Result.success(updates) else Result.failure(error.cause ?: error)
@@ -195,12 +199,7 @@ object HotwireUpdates {
                 updating = null
                 refreshWhenDone()
             }
-            val names = bridge.mods().associate { it.id to it.name }
-            fun named(ids: List<String>) = ids.distinct().joinToString(", ") { names[it] ?: it }
-            val summary = listOfNotNull(
-                now.takeIf { it.isNotEmpty() }?.let { translated("oneconfig.page.hotwire.updates.done.now", "Updated now: %s.", named(it)) },
-                nextLaunch.takeIf { it.isNotEmpty() }?.let { translated("oneconfig.page.hotwire.updates.done.next_start", "Updates at next launch: %s.", named(it)) },
-            ).joinToString(" ")
+            val summary = bridge.applied(now, nextLaunch)
             if (problems.isEmpty()) {
                 Notifications.success("Hotwire", summary.ifBlank { translated("oneconfig.page.hotwire.updates.done", "Updates finished.") })
                 accepted.onDone()
@@ -221,15 +220,12 @@ fun hotwireInfo(): ModInfo? = ModInfo.loadedMods.firstOrNull { it.id == "hotwire
 val openHotwireScreen = Runnable { HotwireBridge.instance?.openScreen() }
 
 /** Reports what Hotwire says came of a change */
-internal fun notifyHotwireResult(result: HotwireBridge.Result) {
+internal fun notifyHotwireResult(bridge: HotwireBridge, result: HotwireBridge.Result) {
+    val message = bridge.describe(result)
     when {
-        result.ok -> Notifications.success("Hotwire", result.message.ifBlank { translated("oneconfig.page.hotwire.result.done", "Done.") })
-        result.needsReopen -> Notifications.info(
-            "Hotwire",
-            result.message.ifBlank { translated("oneconfig.page.hotwire.result.reopen", "Reopen your world to finish this.") },
-        )
+        result.ok -> Notifications.success("Hotwire", message)
+        result.needsReopen -> Notifications.info("Hotwire", message)
         else -> {
-            val message = result.message.ifBlank { translated("oneconfig.page.hotwire.result.failed", "That didn't work.") }
             Notifications.builder("Hotwire", message).type(NotificationType.ERROR).apply {
                 // it stays up so there's time to press the button, which dismisses it
                 if (!result.refused) {
@@ -310,7 +306,7 @@ fun Hotwire() {
     val revision = HotwireBridge.revision
     val states = remember(revision) { bridge.mods() }
     if (states.isEmpty()) return HotwireUnavailable(translated("oneconfig.page.hotwire.switch.starting", "Hotwire is still starting, so mods can't be switched yet."))
-    LaunchedEffect(Unit) { HotwireUpdates.ensure() }
+    LaunchedEffect(revision) { HotwireUpdates.ensure() }
     // a plan only holds for now, so it doesn't wait for the page to be opened again
     DisposableEffect(Unit) { onDispose { HotwireUpdates.dismissReview() } }
     val availableUpdates = HotwireUpdates.modIds
@@ -347,7 +343,7 @@ fun Hotwire() {
             Text(
                 translated(
                     "oneconfig.page.hotwire.hint",
-                    "Mods turned off here are unloaded for every profile until you turn them back on. The switch on a mod's card only pauses it for the current profile.",
+                    "Mods turned off here are unloaded for every profile. The switch on a mod's card only pauses it for the current profile.",
                 ),
                 Modifier.padding(horizontal = PageGutter),
                 theme.textColorSecondary,
@@ -484,28 +480,12 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     val turnOff = remember(picked) { picked.filter { it.on }.map { it.id } }
     val turnOn = remember(picked) { picked.filterNot { it.on }.map { it.id } }
     val mixed = turnOff.isNotEmpty() && turnOn.isNotEmpty()
-    // only a plan can tell whether a mod turned on needs one going off, and a switch can't be planned that way
-    var together by remember(turnOff, turnOn) { mutableStateOf<HotwireBridge.Preview?>(null) }
-    LaunchedEffect(turnOff, turnOn) {
-        if (!mixed) return@LaunchedEffect
-        together = runCatching {
-            val plan = bridge.plan(HotwireBridge.Change(off = turnOff, on = turnOn)).await()
-            plan.cancel()
-            HotwireBridge.Preview(plan.canApply, plan.lines.joinToString(" "))
-        }.getOrElse {
-            HotwireBridge.Preview(false, translated("oneconfig.page.hotwire.switch.conflict", "Some of these mods need others you're turning off. Switch them separately."))
-        }
-    }
-    val previews = remember(turnOff, turnOn, together) {
-        if (mixed) {
-            listOfNotNull(together)
-        } else {
-            listOfNotNull(
-                turnOff.takeIf { it.isNotEmpty() }?.let { bridge.preview(it, false) },
-                turnOn.takeIf { it.isNotEmpty() }?.let { bridge.preview(it, true) },
-            )
-        }
-    }
+    // a plan rather than a switch, as only a plan says what goes along and can save and reopen the world around it
+    val planned = produceState<Result<HotwireBridge.Plan>?>(null, turnOff, turnOn) {
+        value = null
+        value = HotwireBridge.catching { bridge.plan(HotwireBridge.Change(off = turnOff, on = turnOn)).await() }
+    }.value
+    val plan = planned?.getOrNull()
     val pickedIds = picked.mapTo(HashSet()) { it.id }
     val updates = HotwireUpdates.found?.getOrNull().orEmpty().filter { it.modId in pickedIds }
     val updating = HotwireUpdates.updating
@@ -521,6 +501,7 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
 
     val tooMany = picked.size > MaxSwitchedMods
     val label = when {
+        plan?.needsReopen == true -> translated("oneconfig.page.hotwire.switch.reopen", "Save and switch %s", picked.size)
         mixed -> translated("oneconfig.page.hotwire.switch.mixed", "Switch %s", picked.size)
         turnOff.isNotEmpty() -> translated("oneconfig.page.hotwire.switch.off", "Turn off %s", turnOff.size)
         else -> translated("oneconfig.page.hotwire.switch.on", "Turn on %s", turnOn.size)
@@ -532,30 +513,19 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
             ?: translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
         running -> translated("oneconfig.page.hotwire.switch.running", "Switching… %s%%", (fraction * 100).toInt())
         tooMany -> translated("oneconfig.page.hotwire.switch.too_many", "Only %s mods can be switched at once.", MaxSwitchedMods)
-        mixed && together == null -> translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
-        else -> previews.joinToString(" ") { it.message }
+        planned == null -> translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
+        else -> planned.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() }
     }
-    val canSwitch = !running && !tooMany && previews.isNotEmpty() && previews.all { it.possible } && bridge.progress() == null
+    val canSwitch = !running && !tooMany && plan?.canApply == true && bridge.progress() == null
 
-    fun start() {
+    fun start(plan: HotwireBridge.Plan) {
         switching = true
         // Hotwire answers for these before it has added them back, so the grid has to look again once it's done
         val bringsBack = picked.any { !it.on && it.offSinceStart }
-        val off = if (turnOff.isEmpty()) CompletableFuture.completedFuture(HotwireBridge.Result(true, "")) else bridge.switch(turnOff, false)
-        off.thenCompose { first ->
-            if (!first.ok || turnOn.isEmpty()) return@thenCompose CompletableFuture.completedFuture(first)
-            bridge.switch(turnOn, true).thenApply { second ->
-                HotwireBridge.Result(
-                    second.ok,
-                    listOf(first.message, second.message).filter { it.isNotBlank() }.joinToString(" "),
-                    second.needsReopen,
-                    second.refused,
-                )
-            }
-        }.whenComplete { result, error ->
+        plan.accept().whenComplete { result, error ->
             Platform.screen().runOnUiThread {
                 switching = false
-                notifyHotwireResult(result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: ""))
+                notifyHotwireResult(bridge, result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: ""))
                 if (result?.ok == true) onClear()
                 if (bringsBack) HotwireUpdates.refreshWhenDone()
             }
@@ -588,7 +558,7 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         if (!running && updates.isNotEmpty()) {
             TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), { HotwireUpdates.reviewUpdates(updates, onClear) })
         }
-        if (canSwitch) TextButton(label, ::start, style = ControlStyle.Primary)
+        if (canSwitch) TextButton(label, { start(plan) }, style = ControlStyle.Primary)
     }
 }
 

@@ -41,13 +41,6 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
         return file.toAbsolutePath().toString()
     }
 
-    override fun preview(ids: Collection<String>, on: Boolean): Preview {
-        val preview = if (on) api.previewOn(ids) else api.previewOff(ids)
-        return Preview(preview.possible(), preview.message(), preview.switched())
-    }
-
-    override fun switch(ids: Collection<String>, on: Boolean) = (if (on) api.turnOn(ids) else api.turnOff(ids)).thenApply(::result)
-
     override fun plan(change: Change): CompletableFuture<Plan> {
         var request = ChangeRequest().off(change.off).on(change.on).update(change.update).tag(change.tag)
         change.jars.forEach { request = request.jar(it) }
@@ -119,10 +112,7 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
             )
         }
 
-    override fun saveToDownloads(idOrSlug: String, anyVersion: Boolean): CompletableFuture<Result> {
-        val query = StoreQuery.of("")
-        return api.saveToDownloads(if (anyVersion) query.withBrowsing("", "fabric") else query, idOrSlug).thenApply(::result)
-    }
+    override fun saveToDownloads(idOrSlug: String) = api.saveToDownloads(StoreQuery.of(""), idOrSlug).thenApply(::result)
 
     override fun checkUpdates() = api.checkUpdates().thenApply { found ->
         // without an answer from Modrinth there may still be updates, so this mustn't read as none

@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.api
 
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -32,24 +34,23 @@ class HotwireBridgeTest {
         }
     }
 
-    /** Hotwire with only planning and saving, which answers each plan from [plans] by the mods it updates */
-    private inner class FakeHotwire(val plans: (HotwireBridge.Change) -> HotwireBridge.Plan) : HotwireBridge() {
+    /** Hotwire with only planning and saving, which answers each plan from [plans] by the mods it updates, or with [answer] */
+    private inner class FakeHotwire(
+        val answer: ((HotwireBridge.Change) -> CompletableFuture<HotwireBridge.Plan>)? = null,
+        val plans: (HotwireBridge.Change) -> HotwireBridge.Plan = { FakePlan() },
+    ) : HotwireBridge() {
         override fun plan(change: Change): CompletableFuture<Plan> {
             calls += "plan ${change.update + listOfNotNull(change.add)}"
-            return CompletableFuture.completedFuture(plans(change))
+            return answer?.invoke(change) ?: CompletableFuture.completedFuture(plans(change))
         }
 
-        override fun saveToDownloads(idOrSlug: String, anyVersion: Boolean) = done().also { calls += "save $idOrSlug any=$anyVersion" }
+        override fun saveToDownloads(idOrSlug: String) = done().also { calls += "save $idOrSlug" }
 
         override fun updateHotwire() = done().also { calls += "update hotwire" }
 
-        override fun mods() = TODO()
+        override fun mods() = listOf(ModState("a", "Alpha", "1", null, on = true, switchable = true, offSinceStart = false))
 
         override fun icon(modId: String) = TODO()
-
-        override fun preview(ids: Collection<String>, on: Boolean) = TODO()
-
-        override fun switch(ids: Collection<String>, on: Boolean) = TODO()
 
         override fun progress() = TODO()
 
@@ -98,19 +99,26 @@ class HotwireBridgeTest {
     }
 
     @Test
-    fun anAddHotwireRefusedCanStillBeSavedForAnyVersion() {
+    fun anAddHotwireRefusedCanStillBeSaved() {
         val plan = FakeHotwire { FakePlan(canApply = false) }.storePlan(hit, "tag").join()
         assertEquals(1, plan.actions.size)
         plan.actions.single().attempt().join()
         plan.onCancel()
-        assertEquals(listOf("plan [project]", "cancel plan", "save slug any=true"), calls)
+        assertEquals(listOf("plan [project]", "cancel plan", "save slug"), calls)
     }
 
     @Test
-    fun anAddHotwireAllowsIsSavedForThisGame() {
-        val plan = FakeHotwire { FakePlan() }.storePlan(hit, "tag").join()
-        plan.actions.last().attempt().join()
-        assertEquals("save slug any=false", calls.last())
+    fun aChangeThatWaitsForTheNextLaunchSaysSo() {
+        val said = FakeHotwire().describe(HotwireBridge.Result(true, "All done.", atNextStart = listOf("a")))
+        assertTrue("Alpha" in said)
+        assertFalse("All done." in said)
+    }
+
+    @Test
+    fun aChangeThatFailedPartwaySaysWhatWentThrough() {
+        val said = FakeHotwire().describe(HotwireBridge.Result(false, "Beta failed.", appliedNow = listOf("a")))
+        assertTrue("Alpha" in said)
+        assertTrue("Beta failed." in said)
     }
 
     @Test
@@ -137,6 +145,19 @@ class HotwireBridgeTest {
     }
 
     @Test
+    fun aBatchGivenUpOnComesBackWithNothing() {
+        val hotwire = FakeHotwire(answer = { CompletableFuture() })
+        var plans: Any? = null
+        runBlocking {
+            val planning = launch(start = CoroutineStart.UNDISPATCHED) { plans = hotwire.planUpdates(listOf(update("a"), update("b")), "tag") }
+            planning.cancel()
+            planning.join()
+        }
+        assertNull(plans)
+        assertEquals(listOf("plan [a, b]"), calls)
+    }
+
+    @Test
     fun aBatchHotwireAllowsStaysOnePlan() {
         val plans = runBlocking { FakeHotwire { FakePlan() }.planUpdates(listOf(update("a"), update("b")), "tag") }
         assertEquals(listOf("A, B"), plans.map { it.first })
@@ -160,20 +181,20 @@ class HotwireBridgeTest {
 
     @Test
     fun progressCoversEveryRunningJar() {
-        val progress = HotwireBridge.downloadProgress(listOf(download(1, 100, over = true), download(2, 10), download(3, 30, paused = true)))!!
-        assertEquals(0.2f, progress.fraction)
-        assertFalse(progress.paused)
+        val progress = HotwireBridge.downloadProgress(listOf(download(1, 100, over = true), download(2, 10), download(3, 30, paused = true)))
+        assertEquals(0.2f, progress?.fraction)
+        assertEquals(false, progress?.paused)
     }
 
     @Test
     fun aFinishedJarLeavingDoesNotPullTheBarBack() {
         val before = HotwireBridge.downloadProgress(listOf(download(1, 90), download(2, 90)))
-        assertEquals(0.9f, HotwireBridge.downloadProgress(listOf(download(2, 50)))!!.shownAfter(before, 0.9f))
+        assertEquals(0.9f, HotwireBridge.downloadProgress(listOf(download(2, 50)))?.shownAfter(before, 0.9f))
     }
 
     @Test
     fun aNewJarStartsTheBarOver() {
         val before = HotwireBridge.downloadProgress(listOf(download(1, 100)))
-        assertEquals(0.1f, HotwireBridge.downloadProgress(listOf(download(2, 10)))!!.shownAfter(before, 1f))
+        assertEquals(0.1f, HotwireBridge.downloadProgress(listOf(download(2, 10)))?.shownAfter(before, 1f))
     }
 }
