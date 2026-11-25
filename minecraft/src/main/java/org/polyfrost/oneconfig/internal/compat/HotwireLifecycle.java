@@ -43,6 +43,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImpl;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry;
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource;
+import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewKt;
 
@@ -52,7 +53,8 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.HudPreviewKt;
  * know about profiles, about when new configs are initialized, and what is worked out from the mods that are there.
  * Every call comes on the game thread, and none while OneConfig itself is off.
  * <br>
- * This is the only class that names Hotwire's types, so it must only be loaded when Hotwire is installed.
+ * This and {@link HotwireBridgeImpl} are the only classes that name Hotwire's types, so they must only be loaded when
+ * Hotwire is installed.
  */
 public final class HotwireLifecycle implements ModLifecycleListener {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Hotwire");
@@ -70,6 +72,7 @@ public final class HotwireLifecycle implements ModLifecycleListener {
         // its kept scene would still draw the HUDs of before, and its undo would delete the ones that came since
         HudManager.INSTANCE.addRegistrationListener(HudEditorUIScreen::forgetScene);
         api.addLifecycleListener(new HotwireLifecycle());
+        HotwireBridge.setInstance(new HotwireBridgeImpl(api));
     }
 
     // the whole profile rather than what these mods own, which Hotwire decides in ways OneConfig cannot mirror
