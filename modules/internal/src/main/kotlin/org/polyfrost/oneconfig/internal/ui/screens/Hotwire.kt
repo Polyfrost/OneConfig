@@ -58,6 +58,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Chip
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.DialogTitle
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
 import org.polyfrost.oneconfig.api.ui.v1.components.ModalDialog
 import org.polyfrost.oneconfig.api.ui.v1.components.ProgressBar
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
@@ -135,8 +136,8 @@ object HotwireUpdates {
         }
     }
 
-    /** Update plans waiting to be confirmed, each with the name of what it updates */
-    class Review(val plans: List<Pair<String, Result<HotwireBridge.JarPlan>>>, val onDone: () -> Unit)
+    /** Update plans waiting to be confirmed, each with the name of what it updates, and what to do with the mods they changed */
+    class Review(val plans: List<Pair<String, Result<HotwireBridge.JarPlan>>>, val onDone: (Set<String>) -> Unit)
 
     var review by mutableStateOf<Review?>(null)
         private set
@@ -155,7 +156,7 @@ object HotwireUpdates {
     private var reviewedAt = 0
 
     /** Plans [updates] for a [review], since a plan can change more mods than were picked */
-    fun reviewUpdates(updates: List<HotwireBridge.StoreUpdate>, onDone: () -> Unit) {
+    fun reviewUpdates(updates: List<HotwireBridge.StoreUpdate>, onDone: (Set<String>) -> Unit) {
         val bridge = HotwireBridge.instance ?: return
         val tag = HotwireBridge.newTag()
         planTag = tag
@@ -211,9 +212,9 @@ object HotwireUpdates {
                 refreshWhenDone()
             }
             val summary = bridge.applied(now, nextLaunch)
+            accepted.onDone((now + nextLaunch).toSet())
             if (problems.isEmpty()) {
                 Notifications.success("Hotwire", summary.ifBlank { translated("oneconfig.page.hotwire.updates.done", "Updates finished.") })
-                accepted.onDone()
             } else {
                 if (summary.isNotBlank()) Notifications.success("Hotwire", summary)
                 Notifications.error("Hotwire", problems.joinToString(" "))
@@ -369,7 +370,16 @@ fun Hotwire() {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (mods.isEmpty()) {
                     Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
-                        EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), icon = "search")
+                        // with only updates shown, an empty grid can also mean the updates aren't known yet
+                        val checked = HotwireUpdates.found
+                        when {
+                            !onlyUpdates || checked?.isSuccess == true -> EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), icon = "search")
+                            checked == null -> EmptyState(translated("oneconfig.page.hotwire.updates.checking", "Checking for updates…"), state = LoadState.Loading)
+                            else -> EmptyState(
+                                translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates: %s", checked.exceptionOrNull()?.message ?: ""),
+                                icon = "alert-circle",
+                            )
+                        }
                     }
                 }
                 ScrollContainer(gridState, Modifier.fillMaxSize(), gutter = PageGutter) {
@@ -520,8 +530,16 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     val planning = HotwireUpdates.planning
     val running = switching || updating != null || planning
     var fraction by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(running) {
-        while (running) withFrameNanos { fraction = bridge.progress() ?: 0f }
+    // also what isn't OneConfig's, as a change made elsewhere can end without telling anyone
+    var busy by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            withFrameNanos {
+                val progress = bridge.progress()
+                fraction = progress ?: 0f
+                busy = progress != null
+            }
+        }
     }
     // planning is what downloads the jars, so that's what there is to show until a plan is ready
     val download = rememberDownloadWatch(bridge, HotwireUpdates.planTag, planning)
@@ -543,9 +561,11 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         planned == null -> translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
         else -> planned.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() }
     }
-    val canSwitch = !running && !tooMany && plan?.canApply == true && bridge.progress() == null
+    val canSwitch = !running && !tooMany && plan?.canApply == true && !busy
 
     fun start(plan: HotwireBridge.Plan) {
+        // a second click before the bar redraws mustn't switch again
+        if (switching) return
         switching = true
         // mods picked while this runs stay picked
         val started = pickedIds.toSet()
@@ -590,10 +610,7 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
             onDeselect(pickedIds)
         })
         if (!running && updates.isNotEmpty()) {
-            TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), {
-                val asked = updates.mapTo(HashSet()) { it.modId }
-                HotwireUpdates.reviewUpdates(updates) { onDeselect(asked) }
-            })
+            TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), { HotwireUpdates.reviewUpdates(updates, onDeselect) })
         }
         if (canSwitch) TextButton(label, { start(plan) }, style = ControlStyle.Primary)
     }
@@ -614,7 +631,9 @@ private fun HotwireTile(
     // mods Hotwire has turned off are greyed out but stay selectable so they can be turned back on
     val contentAlpha = if (mod.on) 1f else 0.4f
     val nameColor = if (mod.on) theme.textColor else theme.textColorSecondary
-    Card(Modifier.fillMaxWidth().height(if (list) 56.dp else 124.dp), onClick = onSelect, label = mod.name, selected = selected) {
+    // the dimming that shows a mod is off is read out too
+    val label = if (mod.on) mod.name else translated("oneconfig.page.hotwire.tile.off", "%s, turned off", mod.name)
+    Card(Modifier.fillMaxWidth().height(if (list) 56.dp else 124.dp), onClick = onSelect, label = label, selected = selected) {
         if (list) {
             Row(
                 modifier = Modifier.fillMaxSize().alpha(contentAlpha).padding(horizontal = 14.dp),

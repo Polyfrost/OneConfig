@@ -279,7 +279,7 @@ fun searchPlaceholder(entry: NavBackStackEntry?): String {
     if (entry?.destination?.hasRoute(ModConfigRoute::class) == true) return translated("oneconfig.header.filter.mod", "Filter this mod")
     // the add page's search goes to Modrinth, not the Hotwire page it belongs to
     if (entry?.destination?.hasRoute(HotwireAddRoute::class) == true) {
-        return translated("oneconfig.page.hotwire.modrinth.search", "Search Modrinth...")
+        return translated("oneconfig.page.hotwire.add.search", "Search mods...")
     }
     return searchPlaceholder(entry.currentPage(), entry.currentPageTitle())
 }

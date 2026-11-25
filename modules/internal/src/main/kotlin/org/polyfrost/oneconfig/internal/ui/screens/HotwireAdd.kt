@@ -155,7 +155,13 @@ fun HotwireAdd() {
         fun reviewUpdate(update: HotwireBridge.StoreUpdate, icon: () -> String?) = review(update.name, icon) { bridge.planUpdate(listOf(update), it) }
 
         if (reading || plan != null) {
-            PlanCard(bridge, reading, plan, planIcon, tag, started, onStart = { started = true }, onBack = ::leavePreview)
+            // read from the state, so a second click before the card redraws starts nothing
+            val start = {
+                val first = !started
+                started = true
+                first
+            }
+            PlanCard(bridge, reading, plan, planIcon, tag, started, onStart = start, onBack = ::leavePreview)
         } else {
             when (source) {
                 AddSource.File -> FileSource { jar -> review("", { null }) { jar()?.let(bridge::planFor) } }
@@ -458,7 +464,8 @@ private fun PlanCard(
     icon: String?,
     tag: String,
     started: Boolean,
-    onStart: () -> Unit,
+    // false once an action was started, when another mustn't be
+    onStart: () -> Boolean,
     onBack: () -> Unit,
 ) {
     val theme = LocalTheme.current
@@ -513,7 +520,7 @@ private fun PlanCard(
             if (!started) {
                 plan.actions.forEach { action ->
                     TextButton(action.label, {
-                        onStart()
+                        if (!onStart()) return@TextButton
                         action.attempt().whenComplete { result, _ ->
                             Platform.screen().runOnUiThread {
                                 outcome = result
