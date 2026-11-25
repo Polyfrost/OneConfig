@@ -263,6 +263,9 @@ private class ModrinthBrowse {
 
     /** Bumped to search again after a failure */
     var retries by mutableIntStateOf(0)
+
+    /** Why the last Load more failed, or null */
+    var moreFailed by mutableStateOf<String?>(null)
 }
 
 /** Modrinth mods matching the header search, or Modrinth's own listing while it is empty */
@@ -297,16 +300,23 @@ private fun ModrinthSource(
                 browse.fetched = page.getOrNull()?.hits?.size ?: 0
                 browse.list = LazyListState()
                 browse.loadedFrom = 0
+                browse.moreFailed = null
                 // a failed search is tried again once the tab is back
                 browse.searched = search.takeIf { page.isSuccess }
             }
             browse.offset > browse.loadedFrom -> {
                 val earlier = browse.hits?.getOrNull().orEmpty()
-                val page = HotwireBridge.catching { bridge.searchStore(query, browse.category, browse.offset).await() }
-                browse.total = page.getOrNull()?.total ?: 0
-                browse.hits = page.map { HotwireBridge.appendPage(earlier, it.hits) }
-                browse.fetched = browse.offset + (page.getOrNull()?.hits?.size ?: 0)
-                browse.loadedFrom = browse.offset
+                HotwireBridge.catching { bridge.searchStore(query, browse.category, browse.offset).await() }.fold({ page ->
+                    browse.total = page.total
+                    browse.hits = Result.success(HotwireBridge.appendPage(earlier, page.hits))
+                    browse.fetched = browse.offset + page.hits.size
+                    browse.loadedFrom = browse.offset
+                    browse.moreFailed = null
+                }) {
+                    // the pages already shown stay, and Load more comes back to try again
+                    browse.moreFailed = (it.cause ?: it).message.orEmpty()
+                    browse.offset = browse.loadedFrom
+                }
             }
         }
     }
@@ -360,7 +370,12 @@ private fun ModrinthSource(
             }
             val footer: @Composable () -> Unit = {
                 if (browse.searched == search && browse.offset == browse.loadedFrom && loaded < browse.total) {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        browse.moreFailed?.let {
+                            val failed = translated("oneconfig.page.hotwire.modrinth.more_failed", "Couldn't load more: %s", it)
+                            Announce(failed)
+                            Text(failed, color = theme.textColorSecondary, fontSize = 12.sp)
+                        }
                         TextButton(translated("oneconfig.page.hotwire.modrinth.more", "Load more"), { browse.offset = loaded })
                     }
                 }
@@ -570,7 +585,7 @@ private fun PlanCard(
                                 HotwireUpdates.refreshWhenDone()
                             }
                         }
-                    }, style = if (action.primary) ControlStyle.Primary else ControlStyle.Secondary, contentDescription = spokenWith(action.label, listOf(plan.title) + plan.lines))
+                    }, style = if (action.primary) ControlStyle.Primary else ControlStyle.Secondary, contentDescription = spokenWith(action.label, listOf(plan.title) + plan.lines.takeIf { action.primary }.orEmpty()))
                 }
             }
         }

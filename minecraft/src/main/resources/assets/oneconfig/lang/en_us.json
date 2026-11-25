@@ -367,6 +367,7 @@
   "oneconfig.page.hotwire.modrinth.install_named": "Install %s",
   "oneconfig.page.hotwire.modrinth.loading": "Searching Modrinth…",
   "oneconfig.page.hotwire.modrinth.more": "Load more",
+  "oneconfig.page.hotwire.modrinth.more_failed": "Couldn't load more: %s",
   "oneconfig.page.hotwire.modrinth.none": "Nothing to add here. Mods you already have are left out.",
   "oneconfig.page.hotwire.modrinth.update": "Update",
   "oneconfig.page.hotwire.modrinth.update_named": "Update %s",

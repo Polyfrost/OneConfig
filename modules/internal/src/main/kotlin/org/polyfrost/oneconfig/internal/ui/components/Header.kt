@@ -55,7 +55,6 @@ import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireAddRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.isOn
@@ -193,7 +192,8 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
     }
 
     if (entry.isOn(HotwireGraph)) {
-        val hotwire = TitleSegment(entry.currentPageTitle() ?: "Hotwire", HotwireRoute)
+        // the graph, as the sidebar opens, so going back to it from either doesn't open the page twice
+        val hotwire = TitleSegment(entry.currentPageTitle() ?: "Hotwire", HotwireGraph)
         val segments = if (destination.hasRoute(HotwireAddRoute::class)) {
             listOf(hotwire, TitleSegment(translated("oneconfig.page.hotwire.add_mods", "Add mods")))
         } else {

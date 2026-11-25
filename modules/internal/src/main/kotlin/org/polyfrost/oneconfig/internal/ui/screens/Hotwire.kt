@@ -392,20 +392,22 @@ fun Hotwire() {
                             )
                         }
                     }
-                }
-                ScrollContainer(gridState, Modifier.fillMaxSize(), gutter = PageGutter) {
-                    LazyVerticalGrid(
-                        state = gridState,
-                        columns = if (listLayout) GridCells.Fixed(1) else GridCells.Adaptive(140.dp),
-                        verticalArrangement = Arrangement.spacedBy(if (listLayout) 8.dp else 19.dp),
-                        horizontalArrangement = Arrangement.spacedBy(19.dp),
-                        // the last row can still scroll clear of the bar drawn over the grid
-                        contentPadding = PaddingValues(start = PageGutter, end = PageGutter, bottom = SwitchBarHeight + 38.dp),
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        items(mods, key = { it.id }) { mod ->
-                            HotwireTile(bridge, mod, mod.id in availableUpdates, listLayout, mod.id in selected) {
-                                if (!selected.remove(mod.id)) selected.add(mod.id)
+                } else {
+                    // only when there are tiles, as an empty grid would still take the clicks meant for the state above
+                    ScrollContainer(gridState, Modifier.fillMaxSize(), gutter = PageGutter) {
+                        LazyVerticalGrid(
+                            state = gridState,
+                            columns = if (listLayout) GridCells.Fixed(1) else GridCells.Adaptive(140.dp),
+                            verticalArrangement = Arrangement.spacedBy(if (listLayout) 8.dp else 19.dp),
+                            horizontalArrangement = Arrangement.spacedBy(19.dp),
+                            // the last row can still scroll clear of the bar drawn over the grid
+                            contentPadding = PaddingValues(start = PageGutter, end = PageGutter, bottom = SwitchBarHeight + 38.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            items(mods, key = { it.id }) { mod ->
+                                HotwireTile(bridge, mod, mod.id in availableUpdates, listLayout, mod.id in selected) {
+                                    if (!selected.remove(mod.id)) selected.add(mod.id)
+                                }
                             }
                         }
                     }
