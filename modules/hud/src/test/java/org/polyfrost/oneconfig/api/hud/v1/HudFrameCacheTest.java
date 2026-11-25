@@ -107,7 +107,7 @@ class HudFrameCacheTest {
     }
 
     @Test
-    void cacheStaysOnWithScreenOpenUntilEditing() {
+    void cacheStaysOnWithScreenOpenUntilEditing() throws Exception {
         ConfigManager.active();
         HudManager.guiScreenWidth = 960f;
         HudManager.guiScreenHeight = 540f;
@@ -123,7 +123,16 @@ class HudFrameCacheTest {
         assertEquals(hud.getX(), hud.getFrameX());
 
         HudManager.isConfigUiOpen = true;
-        assertEquals(-1, hud.getGeometryStamp$hud(), "editing turns the cache off");
+        assertNotEquals(-1, hud.getGeometryStamp$hud(), "the config menu alone keeps live HUDs cached");
+        HudManager.isConfigUiOpen = false;
+        Field editorOpen = HudManager.class.getDeclaredField("isEditorOpen");
+        editorOpen.setAccessible(true);
+        editorOpen.setBoolean(null, true);
+        try {
+            assertEquals(-1, hud.getGeometryStamp$hud(), "editing turns the cache off");
+        } finally {
+            editorOpen.setBoolean(null, false);
+        }
     }
 
     @Test

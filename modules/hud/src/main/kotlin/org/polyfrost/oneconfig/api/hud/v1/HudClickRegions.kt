@@ -232,7 +232,7 @@ public object HudClickInput {
         this.active = active
         this.anyScreen = anyScreen || active
         pointerAt = System.nanoTime()
-        if (!this.anyScreen || HudManager.isEditing) {
+        if (!this.anyScreen || HudManager.isEditing || HudManager.isConfigUiOpen) {
             idlePointer()
             return
         }
@@ -316,7 +316,7 @@ public object HudClickInput {
         }
         pressedRegion[button] = null
         consumedPress[button] = false
-        if (!(active || anyScreen) || HudManager.isEditing) return false
+        if (!(active || anyScreen) || HudManager.isEditing || HudManager.isConfigUiOpen) return false
         val target = topmostHit(kind) ?: return false
         consumedPress[button] = true
         pressedRegion[button] = target
@@ -413,7 +413,7 @@ public object HudClickInput {
     }
 
     private fun hits(region: Region): Boolean {
-        if (!(if (region.anyScreen) anyScreen else active) || HudManager.isEditing) return false
+        if (!(if (region.anyScreen) anyScreen else active) || HudManager.isEditing || HudManager.isConfigUiOpen) return false
         if (System.nanoTime() - pointerAt > STALE_NANOS) return false
         if (region.w <= 0f || region.h <= 0f) return false
         val hud = region.hud

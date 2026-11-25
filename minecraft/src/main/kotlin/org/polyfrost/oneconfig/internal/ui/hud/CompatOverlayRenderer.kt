@@ -23,7 +23,7 @@ object CompatOverlayRenderer {
     fun hasHooks(): Boolean = hooks.isNotEmpty()
 
     @JvmStatic
-    fun oneConfigScreenOpen(): Boolean = HudManager.isEditing
+    fun oneConfigScreenOpen(): Boolean = HudManager.isEditing || HudManager.isConfigUiOpen
 
     @JvmStatic
     //~ if = 1.8.9 '(ctx: GuiGraphicsExtractor)' -> '()'
