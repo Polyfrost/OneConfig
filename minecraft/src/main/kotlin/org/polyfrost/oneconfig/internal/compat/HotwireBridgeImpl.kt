@@ -106,7 +106,7 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
         api.searchStore(StoreQuery.of(words).withCategory(category).withOffset(offset)).thenApply { page ->
             StorePage(
                 page.mods().map {
-                    StoreHit(it.id(), it.slug(), it.name(), it.author(), it.description(), it.downloads(), it.iconUrl().ifBlank { null }, it.installed(), it.hasUpdate())
+                    StoreHit(it.id(), it.name(), it.author(), it.description(), it.downloads(), it.iconUrl().ifBlank { null }, it.installed(), it.hasUpdate())
                 },
                 page.total(),
             )

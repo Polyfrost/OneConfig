@@ -386,8 +386,9 @@ fun Hotwire() {
                             !onlyUpdates || checked?.isSuccess == true -> EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), icon = "search")
                             checked == null -> EmptyState(translated("oneconfig.page.hotwire.updates.checking", "Checking for updates…"), state = LoadState.Loading)
                             else -> EmptyState(
-                                translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates: %s", checked.exceptionOrNull()?.message ?: ""),
-                                icon = "alert-circle",
+                                translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates"),
+                                state = LoadState.Error(checked.exceptionOrNull()?.message.orEmpty()),
+                                onRetry = HotwireUpdates::ensure,
                             )
                         }
                     }

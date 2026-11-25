@@ -79,7 +79,7 @@ class HotwireBridgeTest {
         override fun awaitIdle() = TODO()
     }
 
-    private val hit = HotwireBridge.StoreHit("project", "slug", "Mod", "", "", 0, null, installed = false, hasUpdate = false)
+    private val hit = HotwireBridge.StoreHit("project", "Mod", "", "", 0, null, installed = false, hasUpdate = false)
 
     private fun update(id: String) = HotwireBridge.StoreUpdate(id, "p-$id", id.uppercase(), "1", "2")
 
@@ -104,7 +104,7 @@ class HotwireBridgeTest {
         assertEquals(1, plan.actions.size)
         plan.actions.single().attempt().join()
         plan.onCancel()
-        assertEquals(listOf("plan [project]", "cancel plan", "save slug"), calls)
+        assertEquals(listOf("plan [project]", "cancel plan", "save project"), calls)
     }
 
     @Test
@@ -180,7 +180,7 @@ class HotwireBridgeTest {
 
     @Test
     fun aProjectModrinthMovedToTheNextPageIsListedOnce() {
-        fun hit(id: String) = HotwireBridge.StoreHit(id, id, id, "", "", 0, null, installed = false, hasUpdate = false)
+        fun hit(id: String) = HotwireBridge.StoreHit(id, id, "", "", 0, null, installed = false, hasUpdate = false)
         val listed = HotwireBridge.appendPage(listOf(hit("a"), hit("b")), listOf(hit("b"), hit("c")))
         assertEquals(listOf("a", "b", "c"), listed.map { it.projectId })
     }

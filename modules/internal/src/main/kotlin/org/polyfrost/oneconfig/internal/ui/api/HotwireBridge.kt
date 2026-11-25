@@ -90,7 +90,6 @@ abstract class HotwireBridge {
 
     class StoreHit(
         val projectId: String,
-        val slug: String,
         val title: String,
         val author: String,
         val description: String,
@@ -171,7 +170,8 @@ abstract class HotwireBridge {
     fun storePlan(hit: StoreHit, tag: String): CompletableFuture<JarPlan> = plan(Change(add = hit.projectId, tag = tag)).thenApply { plan ->
         // offered even when Hotwire refuses the add, so the mod can still be added by hand
         val save = JarAction(translated("oneconfig.page.hotwire.add.save", "Save to Downloads"), false) {
-            saveToDownloads(hit.slug.ifBlank { hit.projectId })
+            // by id, which stays the same if the project's slug changes
+            saveToDownloads(hit.projectId)
         }
         plan.toJarPlan("add", hit.title, extra = listOf(save))
     }
@@ -260,7 +260,6 @@ abstract class HotwireBridge {
         var revision by mutableIntStateOf(0)
             private set
 
-        @JvmStatic
         fun invalidate() {
             revision++
         }

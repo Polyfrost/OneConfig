@@ -260,6 +260,9 @@ private class ModrinthBrowse {
     /** How many results Modrinth gave so far, which [hits] can be fewer than once a project showed on two pages */
     var fetched by mutableIntStateOf(0)
     var list by mutableStateOf(LazyListState())
+
+    /** Bumped to search again after a failure */
+    var retries by mutableIntStateOf(0)
 }
 
 /** Modrinth mods matching the header search, or Modrinth's own listing while it is empty */
@@ -281,7 +284,7 @@ private fun ModrinthSource(
     val categories = remember { bridge.storeCategories() }
     // what is installed decides what shows, so a change Hotwire made searches again
     val search = listOf(query, browse.category, HotwireBridge.revision)
-    LaunchedEffect(search, browse.offset) {
+    LaunchedEffect(search, browse.offset, browse.retries) {
         when {
             // a new search starts the list over, which runs this again
             browse.searched != search && browse.offset != 0 -> browse.offset = 0
@@ -334,7 +337,12 @@ private fun ModrinthSource(
         current == null -> EmptyState(translated("oneconfig.page.hotwire.modrinth.loading", "Searching Modrinth…"), Modifier.fillMaxWidth(), state = LoadState.Loading)
         current.isFailure -> {
             val reason = current.exceptionOrNull()?.let { it.cause ?: it }
-            EmptyState(translated("oneconfig.page.hotwire.modrinth.failed", "Couldn't reach Modrinth: %s", reason?.message ?: ""), Modifier.fillMaxWidth(), icon = "alert-circle")
+            EmptyState(
+                translated("oneconfig.page.hotwire.modrinth.failed", "Couldn't reach Modrinth"),
+                Modifier.fillMaxWidth(),
+                state = LoadState.Error(reason?.message.orEmpty()),
+                onRetry = { browse.retries++ },
+            )
         }
         else -> {
             val updates = HotwireUpdates.found?.getOrNull().orEmpty()
@@ -358,7 +366,7 @@ private fun ModrinthSource(
                 }
             }
             ResultList(shown, { it.first.projectId }, footer, browse.list) { (hit, update) ->
-                RowIcon(hit.projectId) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }
+                RowIcon(hit.iconUrl ?: hit.projectId) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(hit.title, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
@@ -401,9 +409,10 @@ private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreU
     when {
         current == null -> EmptyState(translated("oneconfig.page.hotwire.updates.checking", "Checking for updates…"), Modifier.fillMaxWidth(), state = LoadState.Loading)
         current.isFailure -> EmptyState(
-            translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates: %s", current.exceptionOrNull()?.message ?: ""),
+            translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates"),
             Modifier.fillMaxWidth(),
-            icon = "alert-circle",
+            state = LoadState.Error(current.exceptionOrNull()?.message.orEmpty()),
+            onRetry = HotwireUpdates::ensure,
         )
         current.getOrThrow().isEmpty() -> EmptyState(translated("oneconfig.page.hotwire.updates.none", "Everything is up to date."), Modifier.fillMaxWidth(), icon = "check-circle")
         else -> {
