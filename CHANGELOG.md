@@ -5,7 +5,7 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.9.5] - 2026-11-25
 
 ### Added
 - API: `HudManager.viewport` draws the HUDs into one part of the window, for mods that show the game in a smaller frame such as a replay editor's preview
@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - On 1.8.9, chat messages that OneConfig converts keep their click events and text hovers (item and entity hovers are still dropped)
+- In the HUD editor, pressing on a selected HUD that overlaps others keeps it selected so you can drag it; clicking again without dragging cycles to the HUD underneath
+- Mods with compat HUDs no longer show up twice in search
+- On 1.8.9, the fullscreen resolution and exclusive fullscreen settings are only restored at startup, so reloading options no longer resets them
+- On 1.8.9, turning off UI ambience or closing the menu stops the ambience music instead of leaving a second copy playing
 
 ## [1.9.4] - 2026-11-23
 
