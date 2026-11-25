@@ -85,6 +85,10 @@ fun HotwireAdd() {
     var request by remember { mutableIntStateOf(0) }
     // the tag of the downloads the plan being read starts, which are the ones its wait shows and stops
     var tag by remember { mutableStateOf("") }
+    // whether one of the plan's actions was picked, after which the card shows how it went
+    var started by remember { mutableStateOf(false) }
+    val revision = HotwireBridge.revision
+    var planRevision by remember { mutableIntStateOf(revision) }
 
     fun dropPending() {
         if (reading) bridge.stopDownloads(tag)
@@ -99,6 +103,13 @@ fun HotwireAdd() {
         dropPending()
         reading = false
         plan = null
+        started = false
+    }
+
+    // a plan only holds for the mods there were when it was made, so one not acted on is left once Hotwire changed mods
+    LaunchedEffect(revision) {
+        if (revision != planRevision && !started && (reading || plan != null)) leavePreview()
+        planRevision = revision
     }
 
     /** Loads a plan and its icon off the UI thread, since they can wait on a dialog, a download or Modrinth */
@@ -107,6 +118,7 @@ fun HotwireAdd() {
         val id = request
         val planTag = HotwireBridge.newTag()
         tag = planTag
+        planRevision = HotwireBridge.revision
         reading = true
         planIcon = null
         scope.launch {
@@ -143,7 +155,7 @@ fun HotwireAdd() {
         fun reviewUpdate(update: HotwireBridge.StoreUpdate, icon: () -> String?) = review(update.name, icon) { bridge.planUpdate(listOf(update), it) }
 
         if (reading || plan != null) {
-            PlanCard(bridge, reading, plan, planIcon, tag, onBack = ::leavePreview)
+            PlanCard(bridge, reading, plan, planIcon, tag, started, onStart = { started = true }, onBack = ::leavePreview)
         } else {
             when (source) {
                 AddSource.File -> FileSource { jar -> review("", { null }) { jar()?.let(bridge::planFor) } }
@@ -153,7 +165,7 @@ fun HotwireAdd() {
                     onInstall = { hit -> review(hit.title, { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }) { bridge.storePlan(hit, it) } },
                     onUpdate = { update, hit -> reviewUpdate(update) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } } },
                 )
-                AddSource.Updates -> UpdatesSource(bridge) { update -> reviewUpdate(update) { bridge.icon(update.modId) } }
+                AddSource.Updates -> UpdatesSource(bridge) { update -> reviewUpdate(update) { modIconPath(bridge, update.modId, update.installedVersion) } }
             }
         }
     }
@@ -286,7 +298,9 @@ private fun ModrinthSource(
     Row(Modifier.padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         categories.forEach {
             val single = it.parts.singleOrNull()
-            Chip(if (single != null) categoryLabel(single) else categoryLabel(it.name, section = true), group?.name == it.name, {
+            // only a group of several categories is a section, while one of none or one is a category itself
+            val label = if (it.parts.size > 1) categoryLabel(it.name, section = true) else categoryLabel(single ?: it.name)
+            Chip(label, group?.name == it.name, {
                 browse.group = it.name
                 browse.category = it.parts.firstOrNull() ?: it.name
             })
@@ -374,7 +388,7 @@ private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreU
                 return
             }
             ResultList(matching) { update ->
-                RowIcon(update.modId) { bridge.icon(update.modId) }
+                RowIcon(update.modId to update.installedVersion) { modIconPath(bridge, update.modId, update.installedVersion) }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(update.name, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${update.installedVersion} → ${update.newVersion}", color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -437,9 +451,17 @@ private fun PlanLoading(bridge: HotwireBridge, tag: String, onCancel: () -> Unit
 
 /** What Hotwire would do with the chosen jar and the choices it offers, then its progress once one is picked */
 @Composable
-private fun PlanCard(bridge: HotwireBridge, reading: Boolean, plan: HotwireBridge.JarPlan?, icon: String?, tag: String, onBack: () -> Unit) {
+private fun PlanCard(
+    bridge: HotwireBridge,
+    reading: Boolean,
+    plan: HotwireBridge.JarPlan?,
+    icon: String?,
+    tag: String,
+    started: Boolean,
+    onStart: () -> Unit,
+    onBack: () -> Unit,
+) {
     val theme = LocalTheme.current
-    var started by remember(plan) { mutableStateOf(false) }
     // the outcome of the chosen action once Hotwire reports it
     var outcome by remember(plan) { mutableStateOf<HotwireBridge.Result?>(null) }
     var working by remember { mutableStateOf(false) }
@@ -491,7 +513,7 @@ private fun PlanCard(bridge: HotwireBridge, reading: Boolean, plan: HotwireBridg
             if (!started) {
                 plan.actions.forEach { action ->
                     TextButton(action.label, {
-                        started = true
+                        onStart()
                         action.attempt().whenComplete { result, _ ->
                             Platform.screen().runOnUiThread {
                                 outcome = result

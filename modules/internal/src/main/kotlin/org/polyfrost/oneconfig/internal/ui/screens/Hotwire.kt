@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,6 +79,7 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 
 /** Whether mods show as full-width rows rather than tiles, kept for the session */
@@ -149,11 +151,15 @@ object HotwireUpdates {
     var planTag by mutableStateOf("")
         private set
 
+    // the revision the review's plans were made at
+    private var reviewedAt = 0
+
     /** Plans [updates] for a [review], since a plan can change more mods than were picked */
     fun reviewUpdates(updates: List<HotwireBridge.StoreUpdate>, onDone: () -> Unit) {
         val bridge = HotwireBridge.instance ?: return
         val tag = HotwireBridge.newTag()
         planTag = tag
+        reviewedAt = HotwireBridge.revision
         planningJob = uiScope.launch {
             planning = true
             try {
@@ -162,6 +168,11 @@ object HotwireUpdates {
                 planning = false
             }
         }
+    }
+
+    /** Drops a review planned before Hotwire changed mods, whose plans no longer hold */
+    fun dropStaleReview() {
+        if ((review != null || planning) && reviewedAt != HotwireBridge.revision) dismissReview()
     }
 
     fun dismissReview() {
@@ -269,15 +280,18 @@ private fun copyHotwireReport(reason: String) {
     }
 }
 
-/** Icon files per mod id and version, kept across scrolling so each jar is only read once */
-private val iconPaths = HashMap<Pair<String, String>, String?>()
+/** Icon files per mod id and version, blank for none, so each jar is read once and each icon is one file wherever it shows */
+private val iconPaths = ConcurrentHashMap<Pair<String, String>, String>()
+
+/** The file holding a mod's icon, or null when its jar has none; reads the jar the first time, so not on the UI thread */
+internal fun modIconPath(bridge: HotwireBridge, id: String, version: String): String? =
+    iconPaths.getOrPut(id to version) { runCatching { bridge.icon(id) }.getOrNull().orEmpty() }.ifEmpty { null }
 
 @Composable
 internal fun ModIcon(bridge: HotwireBridge, id: String, version: String, size: Int) {
     val key = id to version
-    val path by produceState(iconPaths[key], key) {
-        if (key !in iconPaths) iconPaths[key] = withContext(Dispatchers.IO) { runCatching { bridge.icon(id) }.getOrNull() }
-        value = iconPaths[key]
+    val path by produceState(iconPaths[key]?.ifEmpty { null }, key) {
+        value = withContext(Dispatchers.IO) { modIconPath(bridge, id, version) }
     }
     // keeps names lined up while an icon loads or when a mod has none
     Box(Modifier.size(size.dp)) {
@@ -306,7 +320,10 @@ fun Hotwire() {
     val revision = HotwireBridge.revision
     val states = remember(revision) { bridge.mods() }
     if (states.isEmpty()) return HotwireUnavailable(translated("oneconfig.page.hotwire.switch.starting", "Hotwire is still starting, so mods can't be switched yet."))
-    LaunchedEffect(revision) { HotwireUpdates.ensure() }
+    LaunchedEffect(revision) {
+        HotwireUpdates.ensure()
+        HotwireUpdates.dropStaleReview()
+    }
     // a plan only holds for now, so it doesn't wait for the page to be opened again
     DisposableEffect(Unit) { onDispose { HotwireUpdates.dismissReview() } }
     val availableUpdates = HotwireUpdates.modIds
@@ -538,7 +555,8 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
             Platform.screen().runOnUiThread {
                 switching = false
                 notifyHotwireResult(bridge, result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: ""))
-                if (result?.ok == true) onDeselect(started)
+                // a change that failed partway leaves picked only what it didn't switch
+                if (result?.ok == true) onDeselect(started) else result?.let { onDeselect(it.appliedNow.toSet()) }
                 if (bringsBack) HotwireUpdates.refreshWhenDone()
             }
         }
@@ -560,7 +578,8 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
             if (message.isNotBlank()) {
                 // the whole of a long plan shows on hovering it
                 TooltipBox(message) {
-                    Text(message, color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    // focusable, so the whole plan can be read from a keyboard or controller too
+                    Text(message, Modifier.focusable(), theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
             if (running) ProgressBar(if (planning) download.fraction else fraction, Modifier.fillMaxWidth())
@@ -572,7 +591,7 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         })
         if (!running && updates.isNotEmpty()) {
             TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), {
-                val asked = pickedIds.toSet()
+                val asked = updates.mapTo(HashSet()) { it.modId }
                 HotwireUpdates.reviewUpdates(updates) { onDeselect(asked) }
             })
         }

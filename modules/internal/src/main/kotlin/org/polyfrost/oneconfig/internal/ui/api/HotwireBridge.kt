@@ -265,6 +265,12 @@ abstract class HotwireBridge {
             revision++
         }
 
+        /** [invalidate] once Hotwire is idle, so a change it is still recording shows whole */
+        @JvmStatic
+        fun invalidateWhenIdle() {
+            instance?.awaitIdle()?.whenComplete { _, _ -> invalidate() } ?: invalidate()
+        }
+
         private val tags = AtomicInteger()
 
         /** A tag for the downloads of one plan, so pausing or stopping them leaves everyone else's alone */
