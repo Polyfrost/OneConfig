@@ -289,8 +289,12 @@ private fun ModrinthSource(
     val search = listOf(query, browse.category, HotwireBridge.revision)
     LaunchedEffect(search, browse.offset, browse.retries) {
         when {
-            // a new search starts the list over, which runs this again
-            browse.searched != search && browse.offset != 0 -> browse.offset = 0
+            // a new search starts the list over, which runs this again; both, so a search undone before it answered offers
+            // Load more again for the results still shown
+            browse.searched != search && browse.offset != 0 -> {
+                browse.offset = 0
+                browse.loadedFrom = 0
+            }
             browse.searched != search -> {
                 // waits out typing so each keystroke doesn't hit Modrinth
                 delay(350)
@@ -351,7 +355,11 @@ private fun ModrinthSource(
                 translated("oneconfig.page.hotwire.modrinth.failed", "Couldn't reach Modrinth"),
                 Modifier.fillMaxWidth(),
                 state = LoadState.Error(reason?.message.orEmpty()),
-                onRetry = { browse.retries++ },
+                onRetry = {
+                    // shows the search running again, rather than the error and its button
+                    browse.hits = null
+                    browse.retries++
+                },
             )
         }
         else -> {

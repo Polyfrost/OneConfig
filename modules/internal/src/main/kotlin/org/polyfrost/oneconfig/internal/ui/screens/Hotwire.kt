@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -640,8 +641,16 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
             if (message.isNotBlank()) {
                 // the whole of a long plan shows on hovering it
                 TooltipBox(message) {
-                    // focusable, so the whole plan can be read from a keyboard or controller too
-                    Text(message, Modifier.focusable(), theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    // focusable, so the whole plan can be read from a keyboard or controller too, and read out on focus, as a
+                    // refused plan has no button that carries it
+                    Text(
+                        message,
+                        Modifier.onFocusChanged { if (it.isFocused && A11y.keyboardMode) A11y.say(message, true) }.focusable(),
+                        theme.textColorSecondary,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
             if (running) ProgressBar(if (planning) download.fraction else fraction, Modifier.fillMaxWidth())
