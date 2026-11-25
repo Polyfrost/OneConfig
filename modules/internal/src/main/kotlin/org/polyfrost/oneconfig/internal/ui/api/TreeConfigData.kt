@@ -71,13 +71,22 @@ class TreeConfigData(
     override val toggle: ModToggle?
         get() = ModToggles.toggleFor(id) ?: tree.findMasterSwitch()?.let(::PropertyModToggle)
 
+    // the list it was found in, which the loader replaces when a mod is added or updated while the game runs
+    private var resolvedFrom: Set<ModInfo>? = null
+
     private var resolvedModInfo: ModInfo? = null
 
     private val modInfo: ModInfo?
-        get() = resolvedModInfo ?: findModInfo()?.also { resolvedModInfo = it }
+        get() {
+            val mods = ModInfo.loadedMods
+            if (mods !== resolvedFrom) {
+                resolvedModInfo = findModInfo(mods)
+                resolvedFrom = mods
+            }
+            return resolvedModInfo
+        }
 
-    private fun findModInfo(): ModInfo? {
-        val mods = ModInfo.loadedMods
+    private fun findModInfo(mods: Set<ModInfo>): ModInfo? {
         if (mods.isEmpty()) return null
         val ids = listOfNotNull(
             id.nonBlankOrNull(),

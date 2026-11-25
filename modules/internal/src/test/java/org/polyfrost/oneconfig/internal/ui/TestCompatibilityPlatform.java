@@ -36,13 +36,16 @@ import org.polyfrost.oneconfig.api.platform.v1.Options;
 import java.util.Set;
 
 public final class TestCompatibilityPlatform implements CompatibilityPlatform {
+    /** What the loader lists, which a test can change to stand for mods added or updated while the game runs */
+    public static Set<ModInfo> mods = Set.of();
+
     @Override
     public void displayChatMessage(Component text) {
     }
 
     @Override
     public Set<ModInfo> getMods() {
-        return Set.of();
+        return mods;
     }
 
     @Override
