@@ -163,3 +163,4 @@ jobs:
           pattern: lib-artifacts-*
           separate-directories: true
           delete-merged: true
+        continue-on-error: true
