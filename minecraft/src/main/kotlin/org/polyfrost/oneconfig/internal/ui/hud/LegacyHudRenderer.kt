@@ -70,17 +70,7 @@ object LegacyHudRenderer {
         for (i in instances.indices) {
             val hud = instances[i]
             if (hud !is LegacyHud) continue
-            if (!HudManager.isEditing) {
-                if (hud.hidden) continue
-                if (HudManager.isGuiHidden) continue
-                if (HudManager.isDebugScreenVisible && !hud.showInF3) continue
-                if (HudManager.isTabListVisible && !hud.showInTab) continue
-                if (!HudManager.overrideShowInScreens) {
-                    if (HudManager.isChatScreenOpen) {
-                        if (!hud.showInChat) continue
-                    } else if (HudManager.isGuiScreenOpen && !hud.showInScreens) continue
-                }
-            }
+            if (!HudManager.isLegacyShown(hud)) continue
             frame.add(hud)
         }
         for (i in frame.indices) {

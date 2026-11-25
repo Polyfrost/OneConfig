@@ -99,7 +99,7 @@ public object HudManager {
      * HUDs should render example content when this is set
      */
     @get:JvmName("isEditing")
-    public val isEditing: Boolean get() = isEditorOpen
+    public val isEditing: Boolean get() = isEditorOpen || isRenderingPreview
 
     /** `true` only while the HUD editor screen itself is open */
     @Volatile public var isEditorOpen: Boolean = false
@@ -109,6 +109,20 @@ public object HudManager {
     @Volatile @JvmField public var isSamplingVanilla: Boolean = false
 
     @Volatile @JvmField public var isConfigUiOpen: Boolean = false
+
+    @ApiStatus.Internal
+    @JvmField public var isRenderingPreview: Boolean = false
+
+    @ApiStatus.Internal
+    public inline fun <T> asPreview(block: () -> T): T {
+        val was = isRenderingPreview
+        isRenderingPreview = true
+        try {
+            return block()
+        } finally {
+            isRenderingPreview = was
+        }
+    }
 
     @ExperimentalOneConfigUiApi
     @Volatile @JvmField public var partialTick: Float = 1f
@@ -182,6 +196,8 @@ public object HudManager {
     @Volatile @JvmField public var pendingAdd: Hud? = null
 
     private var wasEditing = false
+
+    private var wasShowingPreviews = false
 
     private val showingPreviews get() = isConfigUiOpen || isEditorOpen
 
@@ -268,8 +284,6 @@ public object HudManager {
 
     /** [frameOrder] plus the hidden HUDs which still contribute their background to a fused shape */
     private val layoutOrder = ArrayList<Hud>()
-
-    private val prepareOrder = ArrayList<Hud>()
 
     private val backgroundOrder = ArrayList<Hud>()
 
@@ -869,7 +883,7 @@ public object HudManager {
             if (showingPreviews) renderRevision.intValue++
         }
         if (showingPreviews) {
-            PolyComposeHost.previews.frame(notify = false)
+            asPreview { PolyComposeHost.previews.frame(notify = false) }
             if (PolyComposeHost.previews.appliedChange || providerContent) previewRevision.intValue++
         }
     }
@@ -1067,6 +1081,9 @@ public object HudManager {
 
     internal val previewSession: Int get() = previewSessionId
 
+    @ApiStatus.Internal
+    public fun isLegacyShown(hud: Hud): Boolean = (isEditing || !hud.hidden) && isShown(hud)
+
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
         if (isEditing) return true
@@ -1178,6 +1195,10 @@ public object HudManager {
             wasEditing = isEditing
             previewSessionId++
             for (hud in activeInstances) hud.lastUpdate = Long.MIN_VALUE
+        }
+        if (wasShowingPreviews != showingPreviews) {
+            wasShowingPreviews = showingPreviews
+            previewSessionId++
         }
         refreshSuppressed()
 
@@ -1527,16 +1548,8 @@ public object HudManager {
     @InternalOneConfigUiApi
     public fun prepare(screenWidth: Float, screenHeight: Float) {
         prepareFrame(screenWidth, screenHeight, {
-            prepareOrder.clear()
-            val instances = activeInstances
-            for (i in instances.indices) {
-                val hud = instances[i]
-                val visible = hud !is LegacyHudMarker
-                hud.setVisible(visible)
-                if (visible) prepareOrder.add(hud)
-            }
-            for (i in prepareOrder.indices) updateIfDue(prepareOrder[i])
-            prepareOrder
+            collectFrameOrder()
+            layoutOrder
         })
     }
 

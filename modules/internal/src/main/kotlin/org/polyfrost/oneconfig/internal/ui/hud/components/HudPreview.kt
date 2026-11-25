@@ -48,7 +48,7 @@ private fun Throwable.isFatalPreviewFailure(): Boolean = this is VirtualMachineE
 
 private fun Hud.updateForPreview() {
     try {
-        update()
+        if (isReal) update() else HudManager.asPreview { update() }
     } catch (failure: Throwable) {
         if (failure.isFatalPreviewFailure()) throw failure
         LOGGER.error("Failed to update HUD preview for $title", failure)
@@ -104,7 +104,7 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
             hud.updateForPreview()
             HudPreviewState(
                 PolyComposeRuntime(PolyComposeHost.previews).also { rt ->
-                    rt.setContent { hud.Content() }
+                    HudManager.asPreview { rt.setContent { hud.Content() } }
                 }
             )
         }
@@ -114,11 +114,11 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
         if (!state.ready) {
             hud.updateForPreview()
             if (static) {
-                state.runtime.frame(hud.staticW, hud.staticH)
+                HudManager.asPreview { state.runtime.frame(hud.staticW, hud.staticH) }
                 state.naturalWidth = hud.staticW
                 state.naturalHeight = hud.staticH
             } else {
-                state.runtime.frame(MEASURE_BOUNDS, MEASURE_BOUNDS)
+                HudManager.asPreview { state.runtime.frame(MEASURE_BOUNDS, MEASURE_BOUNDS) }
                 state.naturalWidth = state.runtime.root.width
                 state.naturalHeight = state.runtime.root.height
             }
@@ -129,8 +129,8 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
         // whenever a value flips between digit counts.
         snapshotFlow { HudManager.previewRevision.intValue }.collect {
             // text is read outside composition, so even fixed-size previews need a layout pass to pick up new values
-            if (static) return@collect state.runtime.layout(hud.staticW, hud.staticH)
-            state.runtime.layout(MEASURE_BOUNDS, MEASURE_BOUNDS)
+            if (static) return@collect HudManager.asPreview { state.runtime.layout(hud.staticW, hud.staticH) }
+            HudManager.asPreview { state.runtime.layout(MEASURE_BOUNDS, MEASURE_BOUNDS) }
             state.naturalWidth = maxOf(state.naturalWidth, state.runtime.root.width)
             state.naturalHeight = maxOf(state.naturalHeight, state.runtime.root.height)
         }
@@ -168,7 +168,7 @@ internal fun HudPreviewCanvas(
             r.save()
             r.clipRect(0f, 0f, w, h)
             r.scale(scale, scale)
-            Snapshot.withoutReadObservation { state.runtime.root.render(ctx) }
+            Snapshot.withoutReadObservation { HudManager.asPreview { state.runtime.root.render(ctx) } }
             r.restore()
         }
     }

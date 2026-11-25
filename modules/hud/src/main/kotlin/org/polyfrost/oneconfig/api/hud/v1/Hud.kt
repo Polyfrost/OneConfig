@@ -429,7 +429,7 @@ public abstract class Hud(
     }
 
     private fun notePositionWrite() {
-        if (positionKeep > 0 || HudManager.systemReposition || !HudManager.isEditing || tree == null) return
+        if (positionKeep > 0 || HudManager.systemReposition || !(HudManager.isEditing || HudManager.isConfigUiOpen) || tree == null) return
         if (positionBatch > 0) positionMovePending = true else markMovedByPlayer()
     }
 

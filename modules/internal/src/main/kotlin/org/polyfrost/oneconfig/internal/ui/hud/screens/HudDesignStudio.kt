@@ -770,7 +770,7 @@ private fun drawHudContents(ctx: RenderContext, mcToScreen: Float) {
     HudManager.drawMergedBackgrounds(ctx)
     sk.restore()
     for (hud in HudManager.activeInstances) {
-        if (hud is LegacyHud) continue
+        if (hud is LegacyHud || !shownLive(hud)) continue
         val root = hud.runtimeOrNull?.root ?: continue
         val bounds = hudBounds(hud) ?: continue
         val contentScale = hud.effectiveScale * mcToScreen
@@ -782,6 +782,12 @@ private fun drawHudContents(ctx: RenderContext, mcToScreen: Float) {
         if (hud.hidden) sk.restore()
         sk.restore()
     }
+}
+
+private fun shownLive(hud: Hud): Boolean = when {
+    HudManager.isEditorOpen -> true
+    hud is LegacyHud -> HudManager.isLegacyShown(hud) && runCatching { hud.shouldShow() }.getOrDefault(false)
+    else -> hud.isVisible.value
 }
 
 private fun orderedInstances(): List<Hud> = HudManager.zOrderedInstances { hud ->
@@ -801,13 +807,13 @@ private fun hitTestHud(hud: Hud, screenX: Float, screenY: Float): Boolean {
  *
  * Locked huds are only considered when nothing unlocked is under the cursor
  */
-private fun hudStackAt(screenX: Float, screenY: Float, entered: HudGroup?): List<Hud> {
-    val stack = orderedInstances().filter { hitTestHud(it, screenX, screenY) }
+private fun hudStackAt(screenX: Float, screenY: Float, entered: HudGroup?, shown: (Hud) -> Boolean = { true }): List<Hud> {
+    val stack = orderedInstances().filter { shown(it) && hitTestHud(it, screenX, screenY) }
     return stack.filter { !unitLocked(it, entered) }.ifEmpty { stack }
 }
 
-private fun topHudAt(screenX: Float, screenY: Float, entered: HudGroup? = null): Hud? =
-    hudStackAt(screenX, screenY, entered).lastOrNull()
+private fun topHudAt(screenX: Float, screenY: Float, entered: HudGroup? = null, shown: (Hud) -> Boolean = { true }): Hud? =
+    hudStackAt(screenX, screenY, entered, shown).lastOrNull()
 
 private fun pickHudAt(screenX: Float, screenY: Float, current: Hud?, entered: HudGroup?): Hud? {
     val stack = hudStackAt(screenX, screenY, entered)
@@ -3567,10 +3573,10 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     ) return@safePointerEvent
                 }
                 val s = Platform.screen().screenToMcScale()
-                val hit = orderedInstances().lastOrNull { !unitLocked(it, null) && hitTestHud(it, pos.x, pos.y) }
+                val hit = orderedInstances().lastOrNull { shownLive(it) && !unitLocked(it, null) && hitTestHud(it, pos.x, pos.y) }
                 val unit = hit?.let { unitOf(it, null) }
                 if (hit == null || unit == null) {
-                    orderedInstances().lastOrNull { hitTestHud(it, pos.x, pos.y) }?.let {
+                    orderedInstances().lastOrNull { shownLive(it) && hitTestHud(it, pos.x, pos.y) }?.let {
                         Snapshot.withMutableSnapshot {
                             lockedPressHud = it
                             lockedPressOrigin = pos
@@ -3624,7 +3630,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     }
                     // locked HUDs are hoverable so their lock toggle stays reachable but they never steal
                     // the hover from an unlocked HUD
-                    val hit = if (overShell(pos.x, pos.y)) null else topHudAt(pos.x, pos.y)
+                    val hit = if (overShell(pos.x, pos.y)) null else topHudAt(pos.x, pos.y, shown = ::shownLive)
                     val hovered = hoveredHud
                     val mcToScreen = Platform.screen().mcToScreenScale()
                     val hoveredBar = hovered?.let { hoverBar(it, mcToScreen) }
@@ -3664,6 +3670,7 @@ fun HudDragLayer(modifier: Modifier = Modifier) {
                     val sh = bounds.height * mcToScreen
                     val isBeingDragged = isDragging && hud in dragSet
                     val isHovered = hud === hoveredHud
+                    if (!isHovered && !isBeingDragged && !HudManager.isEditorOpen) continue
                     if (hud.locked && !isBeingDragged) {
                         if (isHovered) {
                             drawRect(
