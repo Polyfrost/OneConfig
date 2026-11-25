@@ -53,10 +53,16 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.trackTextInputFocus
 import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireAddRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.isOn
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
 import org.polyfrost.oneconfig.internal.ui.screens.ModSortControl
+import org.polyfrost.oneconfig.internal.ui.screens.hotwireInfo
+import org.polyfrost.oneconfig.internal.ui.screens.openHotwireScreen
 import org.polyfrost.oneconfig.internal.ui.search.submenuTrail
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
@@ -152,7 +158,7 @@ fun Header(modifier: Modifier = Modifier) {
  * The header title and its extra info, resolved purely from the entry currently on top of the back
  * stack.
  */
-private data class TitleSegment(val text: Any, val route: ModConfigRoute? = null)
+private data class TitleSegment(val text: Any, val route: Any? = null)
 
 private data class HeaderTitle(
     val segments: List<TitleSegment>,
@@ -184,6 +190,17 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
             openOriginalScreen = tree?.getMetadata<Runnable>("open_original_screen"),
             configId = route.id,
         )
+    }
+
+    if (entry.isOn(HotwireGraph)) {
+        val hotwire = TitleSegment(entry.currentPageTitle() ?: "Hotwire", HotwireRoute)
+        val segments = if (destination.hasRoute(HotwireAddRoute::class)) {
+            listOf(hotwire, TitleSegment(translated("oneconfig.page.hotwire.add_mods", "Add mods")))
+        } else {
+            listOf(hotwire)
+        }
+        val info = hotwireInfo()
+        return HeaderTitle(segments, info?.authors, info?.credits, info?.version, openHotwireScreen)
     }
 
     return entry.currentPageTitle()?.let { HeaderTitle(listOf(TitleSegment(it))) }

@@ -103,6 +103,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.reorderableItem
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge
 import org.polyfrost.oneconfig.internal.ui.api.ModCardTypeCollapseStore
 import org.polyfrost.oneconfig.internal.ui.api.ModFavorites
 import org.polyfrost.oneconfig.internal.ui.api.ModGridEntry
@@ -132,6 +133,7 @@ import org.polyfrost.oneconfig.internal.ui.components.scrollFade
 import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetTree
 import org.polyfrost.oneconfig.internal.ui.components.translated
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.HotwireGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
 import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
@@ -447,6 +449,8 @@ private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
 private fun openModCard(mod: ConfigData, navigation: ShellNavigation) {
     val onOpen = mod.onOpen
     when {
+        // Hotwire's card would open its own screen, but OneConfig has a page for it
+        mod.id == "hotwire" && HotwireBridge.instance != null -> navigation.navigate(HotwireGraph)
         onOpen != null -> onOpen()
         mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
     }
@@ -634,13 +638,7 @@ fun ModCard(
     )
     val glowStrength by Motion.animateFloatAsState(if (enabled) 0.5f else 0f)
     val navigation = LocalShell.current.navigation
-    val open = {
-        val onOpen = mod.onOpen
-        when {
-            onOpen != null -> onOpen()
-            mod.source == ConfigSource.OC -> navigation.navigate(ModConfigRoute(mod.id))
-        }
-    }
+    val open = { openModCard(mod, navigation) }
 
     Card(
         modifier = modifier.fillMaxWidth().height(140.dp)
