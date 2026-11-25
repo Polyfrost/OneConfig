@@ -256,6 +256,7 @@ object WWaypointsCompat {
             ).defaults("Label")
         )
 
+        if (WWaypointsBridge.enumClass("DefaultsMode") == null) return
         tree.put(
             defaultsSwitch(
                 field = "blockThroughWalls",
@@ -295,7 +296,7 @@ object WWaypointsCompat {
      */
     private fun defaultLabelPreset(): Property<String>? {
         val presets = WWaypointsBridge.visiblePresets()
-        if (presets.isEmpty()) return null
+        if (presets.isEmpty() || WWaypointsBridge.enumClass("DefaultsMode") == null) return null
         val values = presets.map { it.first } + LABEL_OFF
         val labels = presets.map { it.second } + "Label Off"
 
