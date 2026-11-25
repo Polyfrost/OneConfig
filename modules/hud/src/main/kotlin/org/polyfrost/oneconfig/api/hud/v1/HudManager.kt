@@ -105,6 +105,10 @@ public object HudManager {
     @get:JvmName("isEditing")
     public val isEditing: Boolean get() = isEditorOpen || isConfigUiOpen
 
+    /** Whether [hud] should render example content right now, see [isEditing] and [Hud.previewsBehindMenu] */
+    @JvmStatic
+    public fun isPreviewing(hud: Hud): Boolean = isEditorOpen || isConfigUiOpen && hud.previewsBehindMenu
+
     /** `true` only while the HUD editor screen itself is open */
     @Volatile public var isEditorOpen: Boolean = false
         private set
@@ -931,12 +935,12 @@ public object HudManager {
     }
 
     private fun shouldDraw(hud: Hud): Boolean {
-        if (!isEditing && (hud.frameHidden || isSuppressed(hud))) return false
+        if (!isPreviewing(hud) && (hud.frameHidden || isSuppressed(hud))) return false
         return isShown(hud)
     }
 
     private fun keepsBackgroundOnly(hud: Hud): Boolean =
-        !isEditing && hud.frameHidden && !isSuppressed(hud) && hud.keepsHiddenBackground && isShown(hud)
+        !isPreviewing(hud) && hud.frameHidden && !isSuppressed(hud) && hud.keepsHiddenBackground && isShown(hud)
 
     private class Suppression(owner: Hud, val target: String, val reason: String) : AutoCloseable {
         private val ownerRef = WeakReference(owner)
@@ -1074,7 +1078,7 @@ public object HudManager {
 
     /** Everything [shouldDraw] checks apart from the HUD's own hidden flag */
     private fun isShown(hud: Hud): Boolean {
-        if (isEditing) return true
+        if (isPreviewing(hud)) return true
         if (isGuiHidden) return false
         if (isDebugScreenVisible && !hud.showInF3) return false
         if (isTabListVisible && !hud.showInTab) return false
@@ -1113,13 +1117,14 @@ public object HudManager {
             val backgroundOnly = !visible && keepsBackgroundOnly(hud)
             if (visible || backgroundOnly) {
                 updateIfDue(hud)
-                val show = isEditing || try {
+                val previewing = isPreviewing(hud)
+                val show = previewing || try {
                     hud.shouldShow()
                 } catch (e: Throwable) {
                     LOGGER.error("Failed to check whether HUD ${hud.title} should show", e)
                     true
                 }
-                if (!isEditing) {
+                if (!previewing) {
                     if (show) notShowing.remove(hud) else notShowing.add(hud)
                 }
                 if (!show) {
@@ -1742,7 +1747,7 @@ public object HudManager {
     }
 
     private fun drawHud(hud: Hud, root: RootNode, ctx: RenderContext) {
-        if (isEditing && (hud.hidden || isSuppressed(hud))) {
+        if (isPreviewing(hud) && (hud.hidden || isSuppressed(hud))) {
             ctx.saveLayerAlpha(HIDDEN_HUD_ALPHA)
             root.render(ctx)
             ctx.restore()

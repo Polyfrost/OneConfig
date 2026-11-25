@@ -99,6 +99,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun getPivotFractionY ()F
 	public final fun getPoppinsFontName ()Ljava/lang/String;
 	public final fun getPosSchema ()I
+	public fun getPreviewsBehindMenu ()Z
 	public fun getRelativeX ()F
 	public fun getRelativeY ()F
 	public fun getRenderedH ()F
@@ -424,6 +425,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final fun invalidate ()V
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z
+	public static final fun isPreviewing (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
 	public static final fun isSuppressed (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
 	public static final fun isSystemPosition ()Z
 	public static final fun markProviderKnown (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V

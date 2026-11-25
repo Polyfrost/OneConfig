@@ -32,6 +32,6 @@ private object HeldPreviews {
 
 @ExperimentalOneConfigUiApi
 public fun <T> Hud.previewValue(key: String, live: () -> T?, demo: T): T? {
-    if (!HudManager.isEditing) return if (isReal) live() else live() ?: demo
+    if (!HudManager.isPreviewing(this)) return if (isReal) live() else live() ?: demo
     return HeldPreviews.hold(this, key, live) ?: demo
 }

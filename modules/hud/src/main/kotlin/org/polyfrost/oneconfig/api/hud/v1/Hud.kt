@@ -1957,6 +1957,12 @@ public abstract class Hud(
      */
     public open fun shouldShow(): Boolean = true
 
+    /**
+     * Return `false` for HUDs that only show up in game now and then (titles, tab list, chat), so the OneConfig
+     * menu leaves them as they are in game. The HUD editor still previews them
+     */
+    public open val previewsBehindMenu: Boolean get() = true
+
     public open fun showByDefault(): Boolean = false
     public open fun hasBackground(): Boolean = true
 
