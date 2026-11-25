@@ -158,15 +158,18 @@ object HotwireUpdates {
     /** Plans [updates] for a [review], since a plan can change more mods than were picked */
     fun reviewUpdates(updates: List<HotwireBridge.StoreUpdate>, onDone: (Set<String>) -> Unit) {
         val bridge = HotwireBridge.instance ?: return
+        // set before planning starts, so a second click before the bar redraws plans nothing more
+        if (planning || review != null) return
+        planning = true
         val tag = HotwireBridge.newTag()
         planTag = tag
         reviewedAt = HotwireBridge.revision
         planningJob = uiScope.launch {
-            planning = true
             try {
                 review = Review(bridge.planUpdates(updates, tag), onDone)
             } finally {
-                planning = false
+                // a planning that was dismissed mustn't end one started since
+                if (planTag == tag) planning = false
             }
         }
     }
@@ -180,6 +183,8 @@ object HotwireUpdates {
         // planning is what downloads the jars, which nothing would use now
         if (planning) HotwireBridge.instance?.stopDownloads(planTag)
         planningJob?.cancel()
+        // not left to the job, which may be cancelled before it ever runs
+        planning = false
         review?.plans?.forEach { it.second.getOrNull()?.onCancel() }
         review = null
     }
@@ -286,7 +291,7 @@ private val iconPaths = ConcurrentHashMap<Pair<String, String>, String>()
 
 /** The file holding a mod's icon, or null when its jar has none; reads the jar the first time, so not on the UI thread */
 internal fun modIconPath(bridge: HotwireBridge, id: String, version: String): String? =
-    iconPaths.getOrPut(id to version) { runCatching { bridge.icon(id) }.getOrNull().orEmpty() }.ifEmpty { null }
+    iconPaths.computeIfAbsent(id to version) { runCatching { bridge.icon(id) }.getOrNull().orEmpty() }.ifEmpty { null }
 
 @Composable
 internal fun ModIcon(bridge: HotwireBridge, id: String, version: String, size: Int) {
@@ -312,7 +317,8 @@ internal fun HotwireUnavailable(text: String = translated("oneconfig.page.hotwir
 fun Hotwire() {
     val bridge = HotwireBridge.instance ?: return HotwireUnavailable()
 
-    var prompt by remember { mutableStateOf(bridge.openingPrompt()) }
+    // read again once Hotwire changed anything, as it may have been accepted in Hotwire's own screen
+    var prompt by remember(HotwireBridge.revision) { mutableStateOf(bridge.openingPrompt()) }
     prompt?.let {
         OpeningPromptCard(it) { prompt = null }
         return
@@ -427,7 +433,16 @@ private fun UpdateReviewDialog(review: HotwireUpdates.Review) {
         buttons = {
             TextButton(translated("oneconfig.page.hotwire.add.back", "Back"), HotwireUpdates::dismissReview)
             if (review.plans.any { (_, plan) -> HotwireBridge.skipReason(plan) == null }) {
-                TextButton(translated("oneconfig.page.hotwire.modrinth.update", "Update"), HotwireUpdates::acceptReview, style = ControlStyle.Primary)
+                TextButton(
+                    translated("oneconfig.page.hotwire.modrinth.update", "Update"),
+                    HotwireUpdates::acceptReview,
+                    style = ControlStyle.Primary,
+                    // the narrator reads only controls, so the one that confirms carries what it confirms
+                    contentDescription = spokenWith(
+                        translated("oneconfig.page.hotwire.modrinth.update", "Update"),
+                        review.plans.flatMap { (name, plan) -> listOf(name) + plan.getOrNull()?.lines.orEmpty() },
+                    ),
+                )
             }
         },
     ) {
@@ -442,6 +457,9 @@ private fun UpdateReviewDialog(review: HotwireUpdates.Review) {
         }
     }
 }
+
+/** A control's [label] followed by the [details] it acts on, for the narrator */
+internal fun spokenWith(label: String, details: List<String>): String = (listOf("$label:") + details.filter { it.isNotBlank() }).joinToString(" ")
 
 /** Hotwire's warning, which it requires be shown before it takes requests, with its reading delay */
 @Composable
@@ -468,6 +486,8 @@ internal fun OpeningPromptCard(prompt: HotwireBridge.OpeningPrompt, onDone: () -
                         },
                         style = ControlStyle.Primary,
                         enabled = wait == 0,
+                        // the narrator reads only controls, so the warning is read with the button that accepts it
+                        contentDescription = spokenWith(prompt.acceptText, listOf(prompt.title) + prompt.lines),
                     )
                     TextButton(
                         prompt.openHotwireText,
@@ -476,6 +496,7 @@ internal fun OpeningPromptCard(prompt: HotwireBridge.OpeningPrompt, onDone: () -
                             onDone()
                         },
                         enabled = wait == 0,
+                        contentDescription = spokenWith(prompt.openHotwireText, listOf(prompt.title) + prompt.lines),
                     )
                 }
             }
@@ -612,7 +633,8 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         if (!running && updates.isNotEmpty()) {
             TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), { HotwireUpdates.reviewUpdates(updates, onDeselect) })
         }
-        if (canSwitch) TextButton(label, { start(plan) }, style = ControlStyle.Primary)
+        // the narrator reads only controls, so the button carries the plan it switches by
+        if (canSwitch) TextButton(label, { start(plan) }, style = ControlStyle.Primary, contentDescription = spokenWith(label, listOf(message)))
     }
 }
 

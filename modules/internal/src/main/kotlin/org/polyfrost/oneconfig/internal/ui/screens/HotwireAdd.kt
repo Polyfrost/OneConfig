@@ -69,7 +69,8 @@ private enum class AddSource { File, Modrinth, Updates }
 fun HotwireAdd() {
     val bridge = HotwireBridge.instance ?: return HotwireUnavailable()
     // planning a change is refused until the prompt was shown, and this page can be reached without the Hotwire page
-    var prompt by remember { mutableStateOf(bridge.openingPrompt()) }
+    // read again once Hotwire changed anything, as it may have been accepted in Hotwire's own screen
+    var prompt by remember(HotwireBridge.revision) { mutableStateOf(bridge.openingPrompt()) }
     prompt?.let {
         OpeningPromptCard(it) { prompt = null }
         return
@@ -264,7 +265,7 @@ private fun ModrinthSource(
     onUpdate: (HotwireBridge.StoreUpdate, HotwireBridge.StoreHit) -> Unit,
 ) {
     // Hotwire refuses a download from Modrinth until its warning was read
-    var warning by remember { mutableStateOf(bridge.downloadsWarning()) }
+    var warning by remember(HotwireBridge.revision) { mutableStateOf(bridge.downloadsWarning()) }
     warning?.let {
         OpeningPromptCard(it) { warning = null }
         return
@@ -348,7 +349,7 @@ private fun ModrinthSource(
                     }
                 }
             }
-            ResultList(shown, footer, browse.list) { (hit, update) ->
+            ResultList(shown, { it.first.projectId }, footer, browse.list) { (hit, update) ->
                 RowIcon(hit.projectId) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(hit.title, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -362,9 +363,19 @@ private fun ModrinthSource(
                 }
                 Text(translated("oneconfig.page.hotwire.modrinth.downloads", "%s downloads", "%,d".format(hit.downloads)), color = theme.textColorSecondary, fontSize = 12.sp)
                 if (update != null) {
-                    TextButton(translated("oneconfig.page.hotwire.modrinth.update", "Update"), { onUpdate(update, hit) }, style = ControlStyle.Primary)
+                    TextButton(
+                        translated("oneconfig.page.hotwire.modrinth.update", "Update"),
+                        { onUpdate(update, hit) },
+                        style = ControlStyle.Primary,
+                        contentDescription = translated("oneconfig.page.hotwire.modrinth.update_named", "Update %s", hit.title),
+                    )
                 } else {
-                    TextButton(translated("oneconfig.page.hotwire.modrinth.install", "Install"), { onInstall(hit) }, style = ControlStyle.Primary)
+                    TextButton(
+                        translated("oneconfig.page.hotwire.modrinth.install", "Install"),
+                        { onInstall(hit) },
+                        style = ControlStyle.Primary,
+                        contentDescription = translated("oneconfig.page.hotwire.modrinth.install_named", "Install %s", hit.title),
+                    )
                 }
             }
         }
@@ -393,13 +404,18 @@ private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreU
                 EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), Modifier.fillMaxWidth(), icon = "search")
                 return
             }
-            ResultList(matching) { update ->
+            ResultList(matching, { it.modId }) { update ->
                 RowIcon(update.modId to update.installedVersion) { modIconPath(bridge, update.modId, update.installedVersion) }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(update.name, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${update.installedVersion} → ${update.newVersion}", color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                TextButton(translated("oneconfig.page.hotwire.modrinth.update", "Update"), { onUpdate(update) }, style = ControlStyle.Primary)
+                TextButton(
+                    translated("oneconfig.page.hotwire.modrinth.update", "Update"),
+                    { onUpdate(update) },
+                    style = ControlStyle.Primary,
+                    contentDescription = translated("oneconfig.page.hotwire.modrinth.update_named", "Update %s", update.name),
+                )
             }
         }
     }
@@ -407,7 +423,13 @@ private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreU
 
 /** A scrolling column of rows styled like the Hotwire page's list view */
 @Composable
-private fun <T> ResultList(items: List<T>, footer: @Composable () -> Unit = {}, listState: LazyListState = rememberLazyListState(), row: @Composable RowScope.(T) -> Unit) {
+private fun <T> ResultList(
+    items: List<T>,
+    key: (T) -> Any,
+    footer: @Composable () -> Unit = {},
+    listState: LazyListState = rememberLazyListState(),
+    row: @Composable RowScope.(T) -> Unit,
+) {
     ScrollContainer(listState, Modifier.fillMaxSize(), gutter = PageGutter) {
         LazyColumn(
             state = listState,
@@ -415,7 +437,8 @@ private fun <T> ResultList(items: List<T>, footer: @Composable () -> Unit = {}, 
             contentPadding = PaddingValues(horizontal = PageGutter),
             modifier = Modifier.fillMaxSize(),
         ) {
-            items(items) { item ->
+            // keyed, so a row keeps its focus and icon when the list above it changes
+            items(items, key = key) { item ->
                 Card(Modifier.fillMaxWidth().height(56.dp)) {
                     Row(
                         Modifier.fillMaxSize().padding(horizontal = 14.dp),
@@ -519,7 +542,7 @@ private fun PlanCard(
             TextButton(translated("oneconfig.page.hotwire.add.back", "Back"), onBack)
             if (!started) {
                 plan.actions.forEach { action ->
-                    TextButton(action.label, {
+                    TextButton(action.label, onClick = {
                         if (!onStart()) return@TextButton
                         action.attempt().whenComplete { result, _ ->
                             Platform.screen().runOnUiThread {
@@ -528,7 +551,7 @@ private fun PlanCard(
                                 HotwireUpdates.refreshWhenDone()
                             }
                         }
-                    }, style = if (action.primary) ControlStyle.Primary else ControlStyle.Secondary)
+                    }, style = if (action.primary) ControlStyle.Primary else ControlStyle.Secondary, contentDescription = spokenWith(action.label, listOf(plan.title) + plan.lines))
                 }
             }
         }
