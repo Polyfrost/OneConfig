@@ -34,9 +34,9 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
 
     override fun icon(modId: String): String? {
         val bytes = api.findIcon(modId).orElse(null) ?: return null
-        val dir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-hotwire", "mod-icons"))
-        // so no id can name a path outside the folder
-        val file = dir.resolve("${modId.replace(Regex("[^a-z0-9_.-]"), "_")}.png")
+        // a new file each time, as a mod updated since must not show its old icon from a path already loaded
+        val file = Files.createTempFile(iconDir, "mod-icon-", ".png")
+        file.toFile().deleteOnExit()
         Files.write(file, bytes)
         return file.toAbsolutePath().toString()
     }

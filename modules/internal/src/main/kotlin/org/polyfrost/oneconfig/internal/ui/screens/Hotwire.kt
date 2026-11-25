@@ -350,6 +350,11 @@ fun Hotwire() {
                 fontSize = 12.sp,
             )
             Box(Modifier.weight(1f).fillMaxWidth()) {
+                if (mods.isEmpty()) {
+                    Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
+                        EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), icon = "search")
+                    }
+                }
                 ScrollContainer(gridState, Modifier.fillMaxSize(), gutter = PageGutter) {
                     LazyVerticalGrid(
                         state = gridState,
@@ -374,7 +379,7 @@ fun Hotwire() {
                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                 ) {
                     val picked = states.filter { it.id in selected }
-                    if (picked.isNotEmpty()) SwitchBar(bridge, picked, Modifier.weight(1f), onClear = { selected.clear() })
+                    if (picked.isNotEmpty()) SwitchBar(bridge, picked, Modifier.weight(1f), onDeselect = { selected.removeAll(it) })
                     TextButton(translated("oneconfig.page.hotwire.add_mods", "Add mods"), "plus", { navigation.navigate(HotwireAddRoute) }, style = ControlStyle.Primary)
                 }
             }
@@ -401,7 +406,10 @@ private fun UpdateReviewDialog(review: HotwireUpdates.Review) {
     ) {
         review.plans.forEach { (name, plan) ->
             Text(name, color = theme.textColorSecondary, fontSize = 13.sp)
-            (plan.getOrNull()?.lines.orEmpty() + listOfNotNull(HotwireBridge.skipReason(plan))).distinct().forEach {
+            val lines = plan.getOrNull()?.lines.orEmpty()
+            // a refusal comes as the plan's own lines, so only a reason of another kind is added to them
+            val reason = HotwireBridge.skipReason(plan)?.takeIf { it != lines.joinToString(" ") }
+            (lines + listOfNotNull(reason)).forEach {
                 Text("• $it", color = theme.textColor, fontSize = 13.sp)
             }
         }
@@ -475,16 +483,18 @@ internal const val DOWNLOAD_POLL_MILLIS = 100L
 
 /** The picked mods and what switching them does, with the button that does it, as Hotwire's own screen offers */
 @Composable
-private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState>, modifier: Modifier = Modifier, onClear: () -> Unit) {
+private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState>, modifier: Modifier = Modifier, onDeselect: (Set<String>) -> Unit) {
     val theme = LocalTheme.current
     val turnOff = remember(picked) { picked.filter { it.on }.map { it.id } }
     val turnOn = remember(picked) { picked.filterNot { it.on }.map { it.id } }
     val mixed = turnOff.isNotEmpty() && turnOn.isNotEmpty()
-    // a plan rather than a switch, as only a plan says what goes along and can save and reopen the world around it
-    val planned = produceState<Result<HotwireBridge.Plan>?>(null, turnOff, turnOn) {
-        value = null
-        value = HotwireBridge.catching { bridge.plan(HotwireBridge.Change(off = turnOff, on = turnOn)).await() }
-    }.value
+    // a plan rather than a switch, as only a plan says what goes along and can save and reopen the world around it;
+    // remembered with what it was made for, so one for another selection or from before Hotwire changed mods is never offered
+    val planState = remember(turnOff, turnOn, HotwireBridge.revision) { mutableStateOf<Result<HotwireBridge.Plan>?>(null) }
+    LaunchedEffect(planState) {
+        planState.value = HotwireBridge.catching { bridge.plan(HotwireBridge.Change(off = turnOff, on = turnOn)).await() }
+    }
+    val planned = planState.value
     val plan = planned?.getOrNull()
     val pickedIds = picked.mapTo(HashSet()) { it.id }
     val updates = HotwireUpdates.found?.getOrNull().orEmpty().filter { it.modId in pickedIds }
@@ -520,13 +530,15 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
 
     fun start(plan: HotwireBridge.Plan) {
         switching = true
+        // mods picked while this runs stay picked
+        val started = pickedIds.toSet()
         // Hotwire answers for these before it has added them back, so the grid has to look again once it's done
         val bringsBack = picked.any { !it.on && it.offSinceStart }
         plan.accept().whenComplete { result, error ->
             Platform.screen().runOnUiThread {
                 switching = false
                 notifyHotwireResult(bridge, result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: ""))
-                if (result?.ok == true) onClear()
+                if (result?.ok == true) onDeselect(started)
                 if (bringsBack) HotwireUpdates.refreshWhenDone()
             }
         }
@@ -546,17 +558,23 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(translated("oneconfig.page.hotwire.switch.selected", "%s selected", picked.size), color = theme.textColor, fontSize = 14.sp)
             if (message.isNotBlank()) {
-                Text(message, color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                // the whole of a long plan shows on hovering it
+                TooltipBox(message) {
+                    Text(message, color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
             if (running) ProgressBar(if (planning) download.fraction else fraction, Modifier.fillMaxWidth())
         }
         TextButton(translated("oneconfig.page.hotwire.switch.clear", "Clear"), {
             // the bar goes with the selection, so nothing would show the plan still coming
             if (planning) HotwireUpdates.dismissReview()
-            onClear()
+            onDeselect(pickedIds)
         })
         if (!running && updates.isNotEmpty()) {
-            TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), { HotwireUpdates.reviewUpdates(updates, onClear) })
+            TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), {
+                val asked = pickedIds.toSet()
+                HotwireUpdates.reviewUpdates(updates) { onDeselect(asked) }
+            })
         }
         if (canSwitch) TextButton(label, { start(plan) }, style = ControlStyle.Primary)
     }

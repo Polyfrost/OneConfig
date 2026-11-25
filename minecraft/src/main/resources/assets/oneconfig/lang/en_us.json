@@ -368,6 +368,7 @@
   "oneconfig.page.hotwire.modrinth.none": "Nothing to add here. Mods you already have are left out.",
   "oneconfig.page.hotwire.modrinth.search": "Search Modrinth...",
   "oneconfig.page.hotwire.modrinth.update": "Update",
+  "oneconfig.page.hotwire.no_match": "Nothing matches.",
   "oneconfig.page.hotwire.report.copied": "Bug report copied. Paste it wherever you're asking for help.",
   "oneconfig.page.hotwire.report.copy": "Copy bug report",
   "oneconfig.page.hotwire.report.failed": "The bug report couldn't be written: %s",

@@ -13,6 +13,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.Result as KotlinResult
 
 /**
  * Hotwire's API as OneConfig's Hotwire pages use it
@@ -203,7 +204,7 @@ abstract class HotwireBridge {
      * Hotwire refuses a whole plan for one mod it can't update, so a refused batch is planned again one mod at a time,
      * which fetches the jars again, so the others can still go
      */
-    suspend fun planUpdates(updates: List<StoreUpdate>, tag: String): List<Pair<String, kotlin.Result<JarPlan>>> {
+    suspend fun planUpdates(updates: List<StoreUpdate>, tag: String): List<Pair<String, KotlinResult<JarPlan>>> {
         suspend fun plan(group: List<StoreUpdate>) = group.joinToString(", ") { it.name } to catching { planUpdate(group, tag).await() }
         val (self, mods) = updates.partition(::isSelf)
         val together = mods.takeIf { it.isNotEmpty() }?.let { plan(it) }
@@ -231,7 +232,7 @@ abstract class HotwireBridge {
         return when {
             result.ok && result.atNextStart.isNotEmpty() -> applied
             result.ok -> result.message.ifBlank { translated("oneconfig.page.hotwire.result.done", "Done.") }
-            result.needsReopen -> result.message.ifBlank { translated("oneconfig.page.hotwire.result.reopen", "Reopen your world to finish this.") }
+            result.needsReopen -> listOf(applied, result.message.ifBlank { translated("oneconfig.page.hotwire.result.reopen", "Reopen your world to finish this.") }).filter { it.isNotBlank() }.joinToString(" ")
             else -> listOf(applied, result.message.ifBlank { translated("oneconfig.page.hotwire.result.failed", "That didn't work.") }).filter { it.isNotBlank() }.joinToString(" ")
         }
     }
@@ -272,7 +273,7 @@ abstract class HotwireBridge {
         fun isSelf(update: StoreUpdate) = update.modId == "hotwire"
 
         /** Why a planned update won't be applied with the others, or null when it will */
-        fun skipReason(plan: kotlin.Result<JarPlan>): String? = when {
+        fun skipReason(plan: KotlinResult<JarPlan>): String? = when {
             plan.getOrNull()?.reopens == true -> translated("oneconfig.page.hotwire.updates.reopen", "It has to save and reopen your world, so update it on its own.")
             plan.getOrNull()?.actions?.any { it.primary } == true -> null
             // the refusal can come after lines saying what would have gone fine, so all of them are the reason
@@ -290,12 +291,12 @@ abstract class HotwireBridge {
         }
 
         /** [runCatching] for a wait, where a cancelled wait ends the coroutine rather than coming back as a failure */
-        internal inline fun <T> catching(block: () -> T): kotlin.Result<T> = try {
-            kotlin.Result.success(block())
+        internal inline fun <T> catching(block: () -> T): KotlinResult<T> = try {
+            KotlinResult.success(block())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
-            kotlin.Result.failure(e)
+            KotlinResult.failure(e)
         }
 
         private fun failure(error: Throwable): Result {
@@ -341,12 +342,16 @@ abstract class HotwireBridge {
             return JarPlan(title, detail, lines, actions + others, onCancel = { if (!acted) cancel() }, reopens = needsReopen)
         }
 
-        /** Downloads a Modrinth icon once and keeps it on disk for later opens; blocks on the network */
+        /** Where icons are written for the pages to show, a folder only this process can use, so no one can plant a file or link there */
+        val iconDir: Path by lazy {
+            Files.createTempDirectory("oneconfig-hotwire").also { it.toFile().deleteOnExit() }
+        }
+
+        /** Downloads a Modrinth icon once per session; blocks on the network */
         fun iconFor(url: String): Path {
-            val dir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir"), "oneconfig-hotwire", "icons"))
             // named by the url so a remote path can never pick where the file lands
             val ext = url.substringAfterLast('.').lowercase().takeIf { it.length in 3..4 && it.all(Char::isLetter) } ?: "png"
-            val file = dir.resolve("${Integer.toHexString(url.hashCode())}-${url.length}.$ext")
+            val file = iconDir.resolve("${Integer.toHexString(url.hashCode())}-${url.length}.$ext")
             if (!Files.exists(file)) {
                 val uri = URI(url)
                 require(uri.scheme == "https") { "Icons only load over https." }
@@ -356,10 +361,11 @@ abstract class HotwireBridge {
                 }
                 val bytes = connection.getInputStream().use { it.readNBytes(MAX_ICON_BYTES) }
                 // moved into place whole, so an icon fetched twice at once is never read half-written
-                val temp = Files.createTempFile(dir, file.fileName.toString(), ".tmp")
+                val temp = Files.createTempFile(iconDir, file.fileName.toString(), ".tmp")
                 try {
                     Files.write(temp, bytes)
                     Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+                    file.toFile().deleteOnExit()
                 } finally {
                     Files.deleteIfExists(temp)
                 }

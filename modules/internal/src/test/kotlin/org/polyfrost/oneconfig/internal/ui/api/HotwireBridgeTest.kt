@@ -115,6 +115,13 @@ class HotwireBridgeTest {
     }
 
     @Test
+    fun aChangeStoppedForAReopenSaysWhatWentThrough() {
+        val said = FakeHotwire().describe(HotwireBridge.Result(false, "Reopen the world.", needsReopen = true, appliedNow = listOf("a")))
+        assertTrue("Alpha" in said)
+        assertTrue("Reopen the world." in said)
+    }
+
+    @Test
     fun aChangeThatFailedPartwaySaysWhatWentThrough() {
         val said = FakeHotwire().describe(HotwireBridge.Result(false, "Beta failed.", appliedNow = listOf("a")))
         assertTrue("Alpha" in said)

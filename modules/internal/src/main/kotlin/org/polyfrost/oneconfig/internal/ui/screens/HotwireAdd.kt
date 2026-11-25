@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -76,6 +77,7 @@ fun HotwireAdd() {
 
     val scope = rememberCoroutineScope()
     var source by remember { mutableStateOf(AddSource.Modrinth) }
+    val browse = remember { ModrinthBrowse() }
     var reading by remember { mutableStateOf(false) }
     var plan by remember { mutableStateOf<HotwireBridge.JarPlan?>(null) }
     var planIcon by remember { mutableStateOf<String?>(null) }
@@ -147,6 +149,7 @@ fun HotwireAdd() {
                 AddSource.File -> FileSource { jar -> review("", { null }) { jar()?.let(bridge::planFor) } }
                 AddSource.Modrinth -> ModrinthSource(
                     bridge,
+                    browse,
                     onInstall = { hit -> review(hit.title, { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }) { bridge.storePlan(hit, it) } },
                     onUpdate = { update, hit -> reviewUpdate(update) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } } },
                 )
@@ -211,16 +214,34 @@ private fun FileSource(onPicked: (() -> Path?) -> Unit) {
     }
 }
 
-/** A category's name from Hotwire's own translations, or the tag made readable, where a blank tag means every category */
-private fun categoryLabel(tag: String): String {
+/** A category's or [section]'s name from Hotwire's own translations, or the tag made readable, where a blank tag means every category */
+private fun categoryLabel(tag: String, section: Boolean = false): String {
     val key = tag.ifBlank { "all" }
-    return translated("hotwire.store.category.$key", key.replace('-', ' ').replaceFirstChar { it.uppercase() })
+    return translated("hotwire.store.${if (section) "section" else "category"}.$key", key.replace('-', ' ').replaceFirstChar { it.uppercase() })
+}
+
+/** What the Modrinth tab found and where it was, kept while a plan takes its place */
+private class ModrinthBrowse {
+    /** The name of the chosen group of categories, or null for the first */
+    var group by mutableStateOf<String?>(null)
+    var category by mutableStateOf("")
+    var hits by mutableStateOf<Result<List<HotwireBridge.StoreHit>>?>(null)
+    var total by mutableIntStateOf(0)
+
+    /** The search [hits] answer, or null until one has */
+    var searched by mutableStateOf<List<Any>?>(null)
+
+    /** Where the next page starts once Load more is pressed, and where the last page [hits] hold started */
+    var offset by mutableIntStateOf(0)
+    var loadedFrom = -1
+    var list by mutableStateOf(LazyListState())
 }
 
 /** Modrinth mods matching the header search, or Modrinth's own listing while it is empty */
 @Composable
 private fun ModrinthSource(
     bridge: HotwireBridge,
+    browse: ModrinthBrowse,
     onInstall: (HotwireBridge.StoreHit) -> Unit,
     onUpdate: (HotwireBridge.StoreUpdate, HotwireBridge.StoreHit) -> Unit,
 ) {
@@ -233,40 +254,53 @@ private fun ModrinthSource(
 
     val query = pageSearchQuery().trim()
     val categories = remember { bridge.storeCategories() }
-    var group by remember { mutableStateOf(categories.firstOrNull()) }
-    var category by remember { mutableStateOf("") }
-    var hits by remember { mutableStateOf<Result<List<HotwireBridge.StoreHit>>?>(null) }
-    var total by remember { mutableIntStateOf(0) }
-    var searched by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var offset by remember(query, category) { mutableIntStateOf(0) }
-    LaunchedEffect(query, category, offset) {
-        // waits out typing so each keystroke doesn't hit Modrinth
-        if (offset == 0) delay(350)
-        val earlier = if (offset == 0) emptyList() else hits?.getOrNull().orEmpty()
-        val page = HotwireBridge.catching { bridge.searchStore(query, category, offset).await() }
-        total = page.getOrNull()?.total ?: 0
-        hits = page.map { earlier + it.hits }
-        searched = query to category
+    // what is installed decides what shows, so a change Hotwire made searches again
+    val search = listOf(query, browse.category, HotwireBridge.revision)
+    LaunchedEffect(search, browse.offset) {
+        when {
+            // a new search starts the list over, which runs this again
+            browse.searched != search && browse.offset != 0 -> browse.offset = 0
+            browse.searched != search -> {
+                // waits out typing so each keystroke doesn't hit Modrinth
+                delay(350)
+                val page = HotwireBridge.catching { bridge.searchStore(query, browse.category, 0).await() }
+                browse.total = page.getOrNull()?.total ?: 0
+                browse.hits = page.map { it.hits }
+                browse.list = LazyListState()
+                browse.loadedFrom = 0
+                // a failed search is tried again once the tab is back
+                browse.searched = search.takeIf { page.isSuccess }
+            }
+            browse.offset > browse.loadedFrom -> {
+                val earlier = browse.hits?.getOrNull().orEmpty()
+                val page = HotwireBridge.catching { bridge.searchStore(query, browse.category, browse.offset).await() }
+                browse.total = page.getOrNull()?.total ?: 0
+                browse.hits = page.map { earlier + it.hits }
+                browse.loadedFrom = browse.offset
+            }
+        }
     }
     LaunchedEffect(HotwireBridge.revision) { HotwireUpdates.ensure() }
 
+    val group = categories.firstOrNull { it.name == browse.group } ?: categories.firstOrNull()
     Row(Modifier.padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         categories.forEach {
-            Chip(categoryLabel(it.parts.singleOrNull() ?: it.name), group === it, {
-                group = it
-                category = it.parts.firstOrNull() ?: it.name
+            val single = it.parts.singleOrNull()
+            Chip(if (single != null) categoryLabel(single) else categoryLabel(it.name, section = true), group?.name == it.name, {
+                browse.group = it.name
+                browse.category = it.parts.firstOrNull() ?: it.name
             })
         }
     }
     // only a group of several categories has anything to choose between
     group?.parts?.takeIf { it.size > 1 }?.let { parts ->
         Row(Modifier.padding(horizontal = PageGutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            parts.forEach { Chip(categoryLabel(it), category == it, { category = it }) }
+            parts.forEach { Chip(categoryLabel(it), browse.category == it, { browse.category = it }) }
         }
     }
 
     val theme = LocalTheme.current
-    val current = hits
+    val current = browse.hits
     when {
         current == null -> EmptyState(translated("oneconfig.page.hotwire.modrinth.loading", "Searching Modrinth…"), Modifier.fillMaxWidth(), state = LoadState.Loading)
         current.isFailure -> {
@@ -283,18 +317,18 @@ private fun ModrinthSource(
             }
             val loaded = current.getOrThrow().size
             // what is already installed is left out, so a search can come back with nothing to show
-            if (shown.isEmpty() && loaded >= total) {
+            if (shown.isEmpty() && loaded >= browse.total) {
                 EmptyState(translated("oneconfig.page.hotwire.modrinth.none", "Nothing to add here. Mods you already have are left out."), Modifier.fillMaxWidth(), icon = "search")
                 return
             }
             val footer: @Composable () -> Unit = {
-                if (searched == query to category && offset < loaded && loaded < total) {
+                if (browse.searched == search && browse.offset == browse.loadedFrom && loaded < browse.total) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        TextButton(translated("oneconfig.page.hotwire.modrinth.more", "Load more"), { offset = loaded })
+                        TextButton(translated("oneconfig.page.hotwire.modrinth.more", "Load more"), { browse.offset = loaded })
                     }
                 }
             }
-            ResultList(shown, footer) { (hit, update) ->
+            ResultList(shown, footer, browse.list) { (hit, update) ->
                 RowIcon(hit.projectId) { hit.iconUrl?.let { HotwireBridge.iconFor(it).toString() } }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(hit.title, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -333,21 +367,27 @@ private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreU
             icon = "alert-circle",
         )
         current.getOrThrow().isEmpty() -> EmptyState(translated("oneconfig.page.hotwire.updates.none", "Everything is up to date."), Modifier.fillMaxWidth(), icon = "check-circle")
-        else -> ResultList(current.getOrThrow().filter { query.isEmpty() || it.name.contains(query, true) || it.modId.contains(query, true) }) { update ->
-            RowIcon(update.modId) { bridge.icon(update.modId) }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(update.name, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${update.installedVersion} → ${update.newVersion}", color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        else -> {
+            val matching = current.getOrThrow().filter { query.isEmpty() || it.name.contains(query, true) || it.modId.contains(query, true) }
+            if (matching.isEmpty()) {
+                EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), Modifier.fillMaxWidth(), icon = "search")
+                return
             }
-            TextButton(translated("oneconfig.page.hotwire.modrinth.update", "Update"), { onUpdate(update) }, style = ControlStyle.Primary)
+            ResultList(matching) { update ->
+                RowIcon(update.modId) { bridge.icon(update.modId) }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(update.name, color = theme.textColor, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${update.installedVersion} → ${update.newVersion}", color = theme.textColorSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                TextButton(translated("oneconfig.page.hotwire.modrinth.update", "Update"), { onUpdate(update) }, style = ControlStyle.Primary)
+            }
         }
     }
 }
 
 /** A scrolling column of rows styled like the Hotwire page's list view */
 @Composable
-private fun <T> ResultList(items: List<T>, footer: @Composable () -> Unit = {}, row: @Composable RowScope.(T) -> Unit) {
-    val listState = rememberLazyListState()
+private fun <T> ResultList(items: List<T>, footer: @Composable () -> Unit = {}, listState: LazyListState = rememberLazyListState(), row: @Composable RowScope.(T) -> Unit) {
     ScrollContainer(listState, Modifier.fillMaxSize(), gutter = PageGutter) {
         LazyColumn(
             state = listState,
