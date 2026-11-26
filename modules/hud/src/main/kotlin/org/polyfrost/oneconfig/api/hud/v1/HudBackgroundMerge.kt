@@ -207,9 +207,11 @@ internal object HudBackgroundMerge {
         return out
     }
 
-    fun wholeGroup(members: List<Hud>): Group? {
-        val box = HudGroups.bounds(members) ?: return null
-        val style = members.firstOrNull { it.showBackground && it.hasBackground() } ?: return null
+    fun wholeGroup(members: List<Hud>, styled: List<Hud> = members): Group? {
+        val box = HudGroups.bounds(members) {
+            if (it.renderedW > 0f && it.renderedH > 0f) floatArrayOf(it.x, it.y, it.renderedW, it.renderedH) else null
+        } ?: return null
+        val style = styled.firstOrNull { it.showBackground && it.hasBackground() } ?: return null
         val loops = outlines(listOf(box), floatArrayOf(style.bgRadius * style.effectiveScale))
         if (loops.isEmpty()) return null
         return Group(
@@ -813,6 +815,7 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.mergeDiagonally) 1 else 0)
             key = key * 31 + (if (hud.mergeAcrossColours) 1 else 0)
             key = key * 31 + (if (hud.bgChroma) 1 else 0)
+            key = key * 31 + hud.bgChromaSpeed.toRawBits()
             key = key * 31 + (if (hud.hidden) 1 else 0)
             key = key * 31 + (if (hud.keepBgWhenHidden) 1 else 0)
             key = key * 31 + (if (hud.borderEnabled) 1 else 0)

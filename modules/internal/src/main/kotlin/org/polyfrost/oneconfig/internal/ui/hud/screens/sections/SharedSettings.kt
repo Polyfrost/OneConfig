@@ -164,6 +164,7 @@ private fun SharedCard(section: SharedSection, huds: List<Hud>, query: String, e
     val groupBackgroundLabel = hudPanelText("group_background", "One background for the group")
     val singleBackground = section == SharedSection.Background && group != null && HudGroups.hasSingleBackground(group)
     val backgroundTakenOver = group != null && HudGroups.isBackgroundTakenOver(group)
+    val canShareBackground = group != null && group.huds.all { mergesBackground(it) && !it.borderEnabled }
     CardSection(
         section.title, query, *options.map { it.label }.toTypedArray(),
         *if (section == SharedSection.Background && group != null) arrayOf(groupBackgroundLabel) else emptyArray(),
@@ -188,7 +189,7 @@ private fun SharedCard(section: SharedSection, huds: List<Hud>, query: String, e
         }
 
         if (section == SharedSection.Background && group != null) {
-            SwitchRow(groupBackgroundLabel, singleBackground, false, enabled = !backgroundTakenOver) {
+            SwitchRow(groupBackgroundLabel, singleBackground, false, enabled = !backgroundTakenOver && (singleBackground || canShareBackground)) {
                 HudGroups.setSingleBackground(group, it)
                 edits.bump()
             }
@@ -197,6 +198,7 @@ private fun SharedCard(section: SharedSection, huds: List<Hud>, query: String, e
         for (option in options) {
             if (option === cardSwitch || !SharedOptions.isShown(option, huds)) continue
             if (singleBackground && option.id in SINGLE_BACKGROUND_HIDDEN) continue
+            if (singleBackground && option.id == "borderEnabled" && huds.none { it.borderEnabled }) continue
             when {
                 option is SharedToggle -> {
                     flush()

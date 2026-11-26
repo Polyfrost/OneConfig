@@ -1418,7 +1418,7 @@ public abstract class Hud(
     public var bgChroma: Boolean get() = _bgChroma.value; set(v) { _bgChroma.put(v) }
 
     private var _bgChromaSpeed: MutableState<Float> = mutableStateOf(1f)
-    public var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.value = v }
+    public var bgChromaSpeed: Float get() = _bgChromaSpeed.value; set(v) { _bgChromaSpeed.put(v) }
 
     private var _bgRadius: MutableState<Float> = mutableStateOf(4f)
     public var bgRadius: Float get() = _bgRadius.value; set(v) { _bgRadius.put(v) }
@@ -1440,7 +1440,8 @@ public abstract class Hud(
     public var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.put(v) }
 
     internal val keepsHiddenBackground: Boolean
-        get() = hidden && keepBgWhenHidden && showBackground && mergeBackground &&
+        get() = hidden && keepBgWhenHidden && showBackground &&
+            (mergeBackground || HudGroups.wholeGroupBackgroundOf(this) != null) &&
             hasBackground() && canMergeBackground() && this !is LegacyHudMarker
 
     /**

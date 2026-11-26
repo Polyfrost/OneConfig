@@ -669,7 +669,10 @@ public object HudManager {
         } else if (delete && treeId != null) {
             cleanup { ConfigManager.active().delete(treeId) }
             cleanup { CompatSnapshots.untrack(treeId) }
-            cleanup { hud.groupPath = "" }
+            cleanup {
+                hud.groupPath = ""
+                hud.groupBackground = ""
+            }
         }
         // back to being a plain provider so a single-instance HUD can be made again later
         cleanup { hud.detachTree() }
@@ -1329,9 +1332,12 @@ public object HudManager {
         // so the cached frame is no longer good
         contentDirty = true
 
-        val wholeGroups = wholeGroupMembers(huds)
+        val wholeShapes = ArrayList<HudBackgroundMerge.Group>()
         val inWholeGroup = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
-        for (members in wholeGroups.values) inWholeGroup.addAll(members)
+        for ((members, styled) in wholeGroupMembers(huds).values) {
+            wholeShapes.add(HudBackgroundMerge.wholeGroup(members, styled) ?: continue)
+            inWholeGroup.addAll(members)
+        }
         val mergeable = if (mergeExclusions.isEmpty() && inWholeGroup.isEmpty()) {
             huds
         } else {
@@ -1339,7 +1345,6 @@ public object HudManager {
         }
         val refW = if (layoutRefWidth > 0f) layoutRefWidth else screenWidth
         val refH = if (layoutRefHeight > 0f) layoutRefHeight else screenHeight
-        val wholeShapes = wholeGroups.values.mapNotNull(HudBackgroundMerge::wholeGroup)
         val collapsed = activeInstances.filter { it.isCollapsed && !isMergeExcluded(it) }
         for (hud in collapsed) {
             if (hud.renderedW > 0f && hud.renderedH > 0f) continue
@@ -1363,12 +1368,10 @@ public object HudManager {
         frameGroups = wholeShapes + fusedGroups
         val merged = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         for (group in fusedGroups) merged.addAll(group.huds)
-        val grouped = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
-        for (hud in inWholeGroup) if (hud.canMergeBackground() && hud !is LegacyHudMarker) grouped.add(hud)
 
         var changed = false
         for (hud in activeInstances) {
-            if (hud.bgFused != (hud in merged) || hud.bgGrouped != (hud in grouped)) {
+            if (hud.bgFused != (hud in merged) || hud.bgGrouped != (hud in inWholeGroup)) {
                 changed = true
                 break
             }
@@ -1378,7 +1381,7 @@ public object HudManager {
         Snapshot.withMutableSnapshot {
             for (hud in activeInstances) {
                 hud.bgFused = hud in merged
-                hud.bgGrouped = hud in grouped
+                hud.bgGrouped = hud in inWholeGroup
             }
         }
         // the flag is read during composition so recompose and re-lay out now
@@ -1407,14 +1410,18 @@ public object HudManager {
     internal var prepareScale = Float.NaN
         private set
 
-    private fun wholeGroupMembers(huds: List<Hud>): Map<String, List<Hud>> {
-        val members = LinkedHashMap<String, MutableList<Hud>>()
-        for (hud in huds) {
-            if (hud is LegacyHudMarker || hud.borderEnabled || hud.isCollapsed || (hud.hidden && !hud.keepBgWhenHidden) || !(isEditing || hud in frameDrawn)) continue
+    private fun wholeGroupMembers(huds: List<Hud>): Map<String, Pair<List<Hud>, List<Hud>>> {
+        val members = LinkedHashMap<String, Pair<MutableList<Hud>, MutableList<Hud>>>()
+        val drawn = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>()).apply { addAll(huds) }
+        for (hud in activeInstances) {
+            if (hud is LegacyHudMarker || !hud.canMergeBackground() || hud.borderEnabled) continue
             val id = HudGroups.wholeGroupBackgroundOf(hud) ?: continue
-            members.getOrPut(id) { ArrayList() }.add(hud)
+            val (shown, styled) = members.getOrPut(id) { ArrayList<Hud>() to ArrayList() }
+            styled.add(hud)
+            if (hud in drawn && !hud.isCollapsed && (!hud.hidden || hud.keepBgWhenHidden) && (isEditing || hud in frameDrawn)) shown.add(hud)
         }
-        return members.entries.sortedBy { (id, huds) -> huds.first().groupPath.split(HudGroups.SEPARATOR).indexOf(id) }
+        return members.entries.filter { it.value.first.isNotEmpty() }
+            .sortedBy { (id, value) -> value.first.first().groupPath.split(HudGroups.SEPARATOR).indexOf(id) }
             .associate { it.key to it.value }
     }
     private var geometrySkip = false

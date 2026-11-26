@@ -7,6 +7,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudGroups
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.hud.v1.Weight
 import org.polyfrost.oneconfig.internal.ui.hud.screens.comparable
@@ -173,7 +174,10 @@ internal class SharedChoice<E : Any>(
 /** Legacy HUDs draw their own content so the single HUD panel leaves out everything about how it looks */
 internal fun drawsAppearance(hud: Hud): Boolean = hud !is LegacyHudMarker
 
-private fun mergesBackground(hud: Hud): Boolean = hud !is LegacyHudMarker && hud.canMergeBackground()
+internal fun onGroupBackground(hud: Hud): Boolean =
+    hud.groupBackground.isNotEmpty() && hud.groupBackground in hud.groupPath.split(HudGroups.SEPARATOR)
+
+internal fun mergesBackground(hud: Hud): Boolean = hud !is LegacyHudMarker && hud.canMergeBackground()
 
 private fun hasBorderOptions(hud: Hud): Boolean =
     hud !is LegacyHudMarker && hud.hasBuiltInBorderOptions && hud.tree?.getProp("borderEnabled") != null
@@ -262,7 +266,8 @@ internal object SharedOptions {
         SharedToggle(
             "keepBgWhenHidden", "Keep hidden", SharedSection.Background,
             { it.keepBgWhenHidden }, { h, v -> h.keepBgWhenHidden = v },
-            appliesTo = ::mergesBackground, shownWhen = { it.showBackground && it.mergeBackground },
+            appliesTo = ::mergesBackground,
+            shownWhen = { it.showBackground && (it.mergeBackground || onGroupBackground(it)) },
         ),
         SharedToggle(
             "borderEnabled", "Border", SharedSection.Background,

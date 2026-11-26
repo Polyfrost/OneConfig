@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -36,6 +37,11 @@ class HudGroupsTest {
     static class HudC extends BoxHud { HudC() { super("group-c"); } }
     static class DefaultOne extends BoxHud { DefaultOne() { super("group-default-one"); } }
     static class DefaultTwo extends BoxHud { DefaultTwo() { super("group-default-two"); } }
+    static class NoMergeHud extends BoxHud {
+        NoMergeHud() { super("group-no-merge"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public boolean canMergeBackground() { return false; }
+    }
 
     static class CollapsingHud extends BoxHud {
         CollapsingHud() { super("group-collapsing"); }
@@ -132,7 +138,7 @@ class HudGroupsTest {
         ConfigManager.active();
         ConfigManager.openProfile("");
         if (!registered) {
-            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB(), new ArrangeOne(), new ArrangeTwo(), new SlotBase(), new SlotDerived(), new OffOne(), new OffTwo(), new Undeletable(), new BrokenSetup(), new CollapsingHud());
+            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB(), new ArrangeOne(), new ArrangeTwo(), new SlotBase(), new SlotDerived(), new OffOne(), new OffTwo(), new Undeletable(), new BrokenSetup(), new CollapsingHud(), new NoMergeHud());
             HudGroups.registerPreset("test.recording", "Recording", Arrays.asList(HudB.class, HudA.class), null, null, null,
                 Collections.singletonList(new HudPresetAction("record", "Record", huds -> { received.clear(); received.addAll(huds); })), null);
             HudGroups.registerPreset("test.arranged", "Arranged", Arrays.asList(ArrangeTwo.class, ArrangeOne.class), null, null, null,
@@ -1085,6 +1091,147 @@ class HudGroupsTest {
             a.setBorderEnabled(false);
             HudManager.isConfigUiOpen = false;
             forgetFrame();
+        }
+    }
+
+    @Test
+    void aHiddenHudKeepsItsPlaceInTheGroupBackgroundWithoutMerging() throws Exception {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        a.setMergeBackground(false);
+        a.setKeepBgWhenHidden(true);
+        a.setHidden(true);
+        try {
+            assertTrue(keepsHiddenBackground(a));
+            HudGroups.setSingleBackground(group, false);
+            assertFalse(keepsHiddenBackground(a));
+        } finally {
+            a.setHidden(false);
+            a.setKeepBgWhenHidden(false);
+            a.setMergeBackground(true);
+        }
+    }
+
+    private static boolean keepsHiddenBackground(Hud hud) throws Exception {
+        for (Method m : Hud.class.getDeclaredMethods()) {
+            if (m.getName().startsWith("getKeepsHiddenBackground")) {
+                m.setAccessible(true);
+                return (boolean) m.invoke(hud);
+            }
+        }
+        throw new NoSuchMethodException("getKeepsHiddenBackground");
+    }
+
+    private static Hud spawn(Class<? extends Hud> cls) {
+        Hud hud = HudManager.INSTANCE.getProvider(cls).make(null);
+        HudManager.INSTANCE.getActiveInstances().add(hud);
+        HudManager.INSTANCE.getInstancesRevision().setIntValue(HudManager.INSTANCE.getInstancesRevision().getIntValue() + 1);
+        return hud;
+    }
+
+    private static Object groupField(Object group, String name) throws Exception {
+        Field f = HudBackgroundMerge.Group.class.getDeclaredField(name);
+        f.setAccessible(true);
+        return f.get(group);
+    }
+
+    @Test
+    void aHudThatCannotMergeJoiningAGroupEndsItsSingleBackground() {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        Hud extra = spawn(NoMergeHud.class);
+        try {
+            assertTrue(HudGroups.addTo(group, Collections.singletonList(extra)));
+            assertEquals("", extra.getGroupBackground());
+            assertEquals("", a.getGroupBackground());
+            assertEquals("", b.getGroupBackground());
+            assertFalse(HudGroups.hasSingleBackground(extra.getGroup()));
+        } finally {
+            HudManager.INSTANCE.removeHud(extra, true);
+        }
+    }
+
+    @Test
+    void deletingAHudForgetsItsGroupBackground() {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        Hud extra = spawn(HudA.class);
+        assertTrue(HudGroups.addTo(group, Collections.singletonList(extra)));
+        assertEquals(group.getId(), extra.getGroupBackground());
+
+        HudManager.INSTANCE.removeHud(extra, true);
+
+        assertEquals("", extra.getGroupPath());
+        assertEquals("", extra.getGroupBackground());
+    }
+
+    @Test
+    void theGroupBackgroundStyleDoesNotFollowWhichMembersAreShown() throws Exception {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        a.setBgColor(0xFFFF0000);
+        b.setBgColor(0xFF0000FF);
+        HudManager.isConfigUiOpen = true;
+        Hud styleSource = null;
+        try {
+            updateBackgroundGroups(a, b);
+            Object shown = groupField(((List<?>) get("frameGroups")).get(0), "bgColor");
+            styleSource = shown.equals(a.getBgColor()) ? a : b;
+
+            styleSource.setHidden(true);
+            forgetFrame();
+            updateBackgroundGroups(a, b);
+            assertEquals(shown, groupField(((List<?>) get("frameGroups")).get(0), "bgColor"));
+        } finally {
+            if (styleSource != null) styleSource.setHidden(false);
+            HudManager.isConfigUiOpen = false;
+            forgetFrame();
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void inGameTheGroupBackgroundKeepsTheStyleOfAHiddenMember() throws Exception {
+        HudGroup group = HudGroups.group(Arrays.asList(a, b));
+        assertNotNull(group);
+        HudGroups.setSingleBackground(group, true);
+        a.setBgColor(0xFFFF0000);
+        b.setBgColor(0xFF0000FF);
+        Map<Hud, Boolean> drawn = (Map<Hud, Boolean>) get("frameDrawn");
+        Hud styleSource = null;
+        try {
+            forgetFrame();
+            drawn.put(a, true);
+            drawn.put(b, true);
+            updateBackgroundGroups(a, b);
+            Object shown = groupField(((List<?>) get("frameGroups")).get(0), "bgColor");
+            styleSource = shown.equals(a.getBgColor()) ? a : b;
+            Hud other = styleSource == a ? b : a;
+
+            styleSource.setHidden(true);
+            forgetFrame();
+            drawn.put(other, true);
+            updateBackgroundGroups(other);
+            assertEquals(shown, groupField(((List<?>) get("frameGroups")).get(0), "bgColor"));
+        } finally {
+            if (styleSource != null) styleSource.setHidden(false);
+            forgetFrame();
+        }
+    }
+
+    @Test
+    void aZeroSizedMemberDoesNotStretchTheGroupBackground() throws Exception {
+        c.setRenderedW(0f);
+        c.setRenderedH(0f);
+        List<?> without = (List<?>) groupField(HudBackgroundMerge.INSTANCE.wholeGroup(Arrays.asList(a, b), Arrays.asList(a, b)), "loops");
+        List<?> with = (List<?>) groupField(HudBackgroundMerge.INSTANCE.wholeGroup(Arrays.asList(a, b, c), Arrays.asList(a, b, c)), "loops");
+        assertEquals(without.size(), with.size());
+        for (int i = 0; i < with.size(); i++) {
+            assertArrayEquals(((HudBackgroundMerge.Loop) without.get(i)).getPoints(), ((HudBackgroundMerge.Loop) with.get(i)).getPoints());
         }
     }
 }

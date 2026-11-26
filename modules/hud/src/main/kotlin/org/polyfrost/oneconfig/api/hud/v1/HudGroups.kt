@@ -272,7 +272,14 @@ public object HudGroups {
     private fun joinGroup(hud: Hud, path: String, moving: Set<Hud>) {
         hud.groupPath = path
         val inherited = inheritedBackground(hud, moving)
-        if (inherited != null) hud.groupBackground = inherited else dropStaleBackground(hud)
+        when {
+            inherited == null -> dropStaleBackground(hud)
+            hud is LegacyHudMarker || !hud.canMergeBackground() -> {
+                hud.groupBackground = ""
+                for (other in HudManager.activeInstances) if (other.groupBackground == inherited) other.groupBackground = ""
+            }
+            else -> hud.groupBackground = inherited
+        }
     }
 
     private fun inheritedBackground(hud: Hud, moving: Set<Hud>): String? {
