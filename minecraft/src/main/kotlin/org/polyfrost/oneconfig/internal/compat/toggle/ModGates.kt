@@ -289,7 +289,6 @@ internal object ModGates {
             .filter { gate ->
                 if (gate.id in provided) {
                     // a gate switched off before the mod shipped its own switch would keep its hooks off for good
-                    if (!ModToggles.isEnabled(gate.id)) ModToggles.setEnabled(gate.id, true)
                     ModToggleStore.keepEnabled(gate.id)
                     ModToggles.toggleFor(gate.id)?.let { toggle -> gate.cards.forEach { ModToggles.register(it, toggle) } }
                     return@filter false
@@ -297,7 +296,6 @@ internal object ModGates {
                 val problem = unusable(gate) ?: return@filter true
                 LOGGER.warn("Not giving {} a switch: {}", gate.id, problem)
                 // what does fit of its hooks would otherwise keep it half off with nothing to switch it back on
-                if (!ModToggles.isEnabled(gate.id)) ModToggles.setEnabled(gate.id, true)
                 ModToggleStore.keepEnabled(gate.id)
                 false
             }

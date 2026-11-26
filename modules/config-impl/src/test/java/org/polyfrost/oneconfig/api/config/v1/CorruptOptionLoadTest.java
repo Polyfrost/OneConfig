@@ -95,4 +95,26 @@ public class CorruptOptionLoadTest {
         assertEquals(0xFFFF0064, h.col.getRawArgb());
         assertTrue(h.flag, "the valid sibling option must still load from disk");
     }
+
+    @Test
+    void savingKeepsAStoredObjectThatDoesNotFitTheOption() throws Exception {
+        Path dir = Files.createTempDirectory("oc706-keep");
+        Path file = dir.resolve("706test.json");
+        Files.write(file, "{ \"flag\": { \"on\": true } }".getBytes(StandardCharsets.UTF_8));
+
+        Holder h = new Holder();
+        Tree code = codeTree(h);
+        FileBackend backend = backend(dir);
+
+        Tree.beginFailureCollection();
+        backend.register(code);
+        List<String> failures = Tree.endFailureCollection();
+        assertEquals(List.of("flag"), failures);
+        assertFalse(h.flag);
+
+        backend.save(code);
+        Tree saved = backend.load("706test.json");
+        assertInstanceOf(Tree.class, saved.get("flag"), "the unreadable value must be written back as it was");
+        assertEquals(true, ((Tree) saved.get("flag")).getProp("on").get());
+    }
 }

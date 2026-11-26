@@ -87,8 +87,17 @@ public class ConfigResetOnCorruptTest {
         assertFalse(config.loadedFalse, "valid option must load its stored value");
 
         assertTrue(Files.exists(backup), "a backup of the problematic file must be created");
-        String rewritten = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
-        assertFalse(rewritten.contains("not_a_bool"), "the bad value must be scrubbed from the live file");
+
+        ConfigManager.active().save(ID);
+        String saved = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        assertTrue(saved.contains("not_a_bool"), "saving must keep the stored value that could not be applied");
+        assertTrue(saved.contains("\"loadedTrue\": true"), "saving must still write the loaded options");
+
+        config.getTree().getProp("broken").setAs(false);
+        ConfigManager.active().save(ID);
+        String changed = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        assertFalse(changed.contains("not_a_bool"), "a value set after loading must replace the stored one");
+        assertTrue(changed.contains("\"broken\": false"));
     }
 
     private static final String LEGACY_ID = "legacy_format_test.json";

@@ -65,6 +65,8 @@ public abstract class Property<T> extends Node implements Serializable {
     private transient List<Supplier<Display>> conditions = null;
     private transient boolean conditionFailed = false;
     private transient List<WeakReference<Property<?>>> dependents = null;
+    private transient Node unappliedStored = null;
+    private transient Object unappliedFallback = null;
 
     protected Property(@Nullable String id, @Nullable Object title, @Nullable Object description, @NotNull Class<T> type) {
         super(id, title, description);
@@ -362,6 +364,8 @@ public abstract class Property<T> extends Node implements Serializable {
      * Use this method with caution
      */
     public boolean setReferential(@Nullable T value) {
+        unappliedStored = null;
+        unappliedFallback = null;
         boolean cancelled = false;
         if (callbacks != null) {
             T prev = get();
@@ -384,6 +388,21 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     protected abstract void set0(@Nullable T value);
+
+    @ApiStatus.Internal
+    @Nullable
+    public final Node getUnappliedStoredValue() {
+        if (unappliedStored != null && !Objects.deepEquals(get(), unappliedFallback)) {
+            unappliedStored = null;
+            unappliedFallback = null;
+        }
+        return unappliedStored;
+    }
+
+    final void keepUnappliedStoredValue(@NotNull Node stored) {
+        unappliedStored = stored;
+        unappliedFallback = get();
+    }
 
     @Override
     public final String toString() {

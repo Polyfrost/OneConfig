@@ -329,9 +329,7 @@ public final class ConfigManager {
         } catch (IOException e) {
             LOGGER.error("failed to back up problematic config {}", id, e);
         }
-        // persist the reset values so the incompatible entries are scrubbed from the file
-        mgr.save(id);
-        LOGGER.warn("reset {} incompatible option(s) in config {}: {}", options.size(), id, options);
+        LOGGER.warn("using defaults for {} incompatible option(s) in config {}, their stored values are kept: {}", options.size(), id, options);
         notifyResetOptions(config, options);
     }
 
@@ -339,8 +337,8 @@ public final class ConfigManager {
         try {
             String name = config.title != null ? config.title : config.id;
             String message = options.size() == 1
-                    ? "The option '" + options.get(0) + "' could not be loaded and was reset to its default. A backup was saved as " + config.getTree().getID() + ".corrupted."
-                    : options.size() + " options could not be loaded and were reset to their defaults (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
+                    ? "The option '" + options.get(0) + "' could not be loaded and is using its default until you change it. A backup was saved as " + config.getTree().getID() + ".corrupted."
+                    : options.size() + " options could not be loaded and are using their defaults until you change them (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
             Notifications.error(name + ": options reset", message);
         } catch (Throwable t) {
             LOGGER.error("failed to notify about reset options for config {}", config.id, t);
