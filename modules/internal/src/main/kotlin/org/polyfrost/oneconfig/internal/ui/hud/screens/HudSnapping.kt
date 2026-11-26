@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
 import org.polyfrost.oneconfig.api.hud.v1.HudSnapEdge
 import kotlin.math.abs
@@ -281,6 +282,8 @@ internal class HudDragSnapper {
     private var snapped = false
     private var delta = Offset.Zero
 
+    var startEdges: Map<Hud, Pair<HudSnapEdge, HudSnapEdge>> = emptyMap()
+
     var result by mutableStateOf(HudSnapResult.NONE)
         private set
 
@@ -315,6 +318,7 @@ internal class HudDragSnapper {
         if (ctx == null || start == null) return Offset(rawDx, rawDy)
         snapped = snapping
         if (!snapping) {
+            delta = Offset(rawDx, rawDy)
             result = ctx.feedback(start.translate(rawDx, rawDy), false)
             return Offset(rawDx, rawDy)
         }
@@ -363,21 +367,33 @@ internal class HudDragSnapper {
     }
 
     /**
-     * The edges the last move snapped for a HUD that began the drag at [startRect], favouring those of [prefer]
+     * The edges a HUD that began the drag at [startRect] with [start] edges ends up with, decided from where the
+     * drag left it: an axis on a guide takes that guide's edge, an axis back where it began keeps its start edge
+     * and any other axis has none. [prefer] breaks ties when several edges sit on guides
      *
      * Measured from where the drag aimed the HUD because HUDs sit on whole pixels and can land half a pixel
      * off the guide
      */
-    fun edges(startRect: Rect, prefer: HudAnchor): Pair<HudSnapEdge, HudSnapEdge> {
+    fun edges(startRect: Rect, prefer: HudAnchor, start: Pair<HudSnapEdge, HudSnapEdge>): Pair<HudSnapEdge, HudSnapEdge> {
         val ctx = context
-        if (ctx == null || !snapped) return HudSnapEdge.None to HudSnapEdge.None
         val aimed = startRect.translate(delta)
-        return ctx.edge(aimed, true, prefer.edgeX) to ctx.edge(aimed, false, prefer.edgeY)
+        fun axis(h: Boolean, offset: Float, prefer: HudSnapEdge, start: HudSnapEdge): HudSnapEdge {
+            val guide = if (ctx != null && snapped) {
+                ctx.edge(aimed, h, start.takeUnless { it == HudSnapEdge.None } ?: prefer)
+            } else HudSnapEdge.None
+            return when {
+                guide != HudSnapEdge.None -> guide
+                offset == 0f -> start
+                else -> HudSnapEdge.None
+            }
+        }
+        return axis(true, delta.x, prefer.edgeX, start.first) to axis(false, delta.y, prefer.edgeY, start.second)
     }
 
     fun end() {
         snapped = false
         delta = Offset.Zero
+        startEdges = emptyMap()
         context = null
         startRect = null
         grabbedRect = null

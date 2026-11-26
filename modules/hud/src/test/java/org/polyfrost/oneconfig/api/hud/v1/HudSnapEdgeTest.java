@@ -8,6 +8,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class HudSnapEdgeTest {
     static class GrowHud extends TextHud {
@@ -123,16 +124,45 @@ class HudSnapEdgeTest {
         assertEquals(120f, hud.getY(), 0.01f);
     }
 
+    static class DefaultHud extends GrowHud {
+        DefaultHud() { super(100f); }
+        @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(700f, 300f); }
+    }
+
+    private static final String[] POSITION_IDS = {"section", "relativeX", "relativeY"};
+
     @Test
     void positionDefaultsIgnoreTheSnap() throws Exception {
-        GrowHud plain = hud(100f);
-        plain.setAbsolutePosition(700f, 300f);
-        GrowHud snapped = hud(100f);
+        DefaultHud provider = new DefaultHud();
+        Hud plain = provider.make(null);
+        plain.capturePositionDefaults();
+
+        Hud snapped = provider.make(null);
         snapped.setAbsolutePosition(700f, 300f);
-        snapped.setSnapEdgesKeepingPosition(HudSnapEdge.Start, HudSnapEdge.Start);
+        snapped.setSnapEdgesKeepingPosition(HudSnapEdge.Start, HudSnapEdge.End);
+        float x = snapped.getX();
+        float y = snapped.getY();
+        float relX = snapped.getRelativeX();
+        float relY = snapped.getRelativeY();
         snapped.capturePositionDefaults();
+
+        for (String id : POSITION_IDS) {
+            Object expected = plain.getTree().getProp(id).getMetadata("default");
+            assertNotNull(expected, id);
+            assertEquals(expected, snapped.getTree().getProp(id).getMetadata("default"), id);
+        }
         assertEquals(HudSnapEdge.Start, snapped.getSnapEdgeX());
-        assertEquals(plain.getX(), snapped.getX(), 0.01f);
-        assertEquals(plain.getY(), snapped.getY(), 0.01f);
+        assertEquals(HudSnapEdge.End, snapped.getSnapEdgeY());
+        assertEquals(relX, snapped.getRelativeX(), 0.0001f);
+        assertEquals(relY, snapped.getRelativeY(), 0.0001f);
+        assertEquals(x, snapped.getX(), 0.01f);
+        assertEquals(y, snapped.getY(), 0.01f);
+
+        snapped.setSnapEdgesKeepingPosition(HudSnapEdge.None, HudSnapEdge.None);
+        snapped.setSection((Section) snapped.getTree().getProp("section").getMetadata("default"));
+        snapped.setRelativeX(((Number) snapped.getTree().getProp("relativeX").getMetadata("default")).floatValue());
+        snapped.setRelativeY(((Number) snapped.getTree().getProp("relativeY").getMetadata("default")).floatValue());
+        assertEquals(700f, snapped.getX(), 0.01f);
+        assertEquals(300f, snapped.getY(), 0.01f);
     }
 }

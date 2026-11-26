@@ -936,7 +936,7 @@ public abstract class Hud(
      * The edge the HUD editor last snapped to a guide on the horizontal axis
      *
      * While set, this edge holds still when the HUD changes width, taking priority over [growthAnchor].
-     * Moving the HUD on this axis or picking a growth anchor clears it
+     * Moving the HUD on this axis or [setGrowthAnchorKeepingPosition] clears it, writing [growthAnchor] does not
      */
     public var snapEdgeX: HudSnapEdge
         get() = _snapEdgeX.value
@@ -949,14 +949,16 @@ public abstract class Hud(
         get() = _snapEdgeY.value
         private set(v) { _snapEdgeY.put(v) }
 
-    /** Sets the snapped edges without moving the HUD */
+    /** Sets the snapped edges without moving the HUD, leaving an axis held by a merge link alone */
     @ApiStatus.Internal
     public fun setSnapEdgesKeepingPosition(edgeX: HudSnapEdge, edgeY: HudSnapEdge) {
-        if (edgeX == snapEdgeX && edgeY == snapEdgeY) return
+        val newX = if (mergeLinkX != null) snapEdgeX else edgeX
+        val newY = if (mergeLinkY != null) snapEdgeY else edgeY
+        if (this is LegacyHudMarker || (newX == snapEdgeX && newY == snapEdgeY)) return
         val absX = rawX
         val absY = rawY
-        snapEdgeX = edgeX
-        snapEdgeY = edgeY
+        snapEdgeX = newX
+        snapEdgeY = newY
         keepingPosition {
             updateRelativeX(absX)
             updateRelativeY(absY)

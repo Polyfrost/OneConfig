@@ -19,6 +19,8 @@ import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
+import org.polyfrost.oneconfig.api.hud.v1.HudSnapEdge
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Icon
@@ -138,6 +140,7 @@ private fun hudIsAtDefaultPosition(hud: Hud): Boolean {
     val section = hudProperty(hud, "section")?.getMetadata<Any?>("default") ?: return true
     val x = (hudProperty(hud, "relativeX")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
     val y = (hudProperty(hud, "relativeY")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
+    if (hud.snapEdgeX != HudSnapEdge.None || hud.snapEdgeY != HudSnapEdge.None) return false
     return section == hud.section && abs(x - hud.relativeX) < 1e-4f && abs(y - hud.relativeY) < 1e-4f
 }
 
@@ -178,6 +181,10 @@ private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String)
         }
         "staticH" -> {
             if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticHeight()
+        }
+        "growthAnchor" -> {
+            val def = prop.getMetadata<Any?>("default") as? HudAnchor
+            if (def != null) hud.setGrowthAnchorKeepingPosition(def) else resetOption(prop)
         }
         else -> {
             if (optionId in POSITION_OPTIONS) hud.dropMergeLinks()

@@ -56,4 +56,13 @@ class HudSnapEdgesTest {
         assertEquals(HudSnapEdge.End, right.second.first)
         assertEquals(HudSnapEdge.Center, unrelated.second.first)
     }
+
+    @Test
+    fun `a HUD left where it began keeps its start edges`() {
+        val start = rect(430f, 260f)
+        val snapper = HudDragSnapper()
+        snapper.begin(listOf(start), start, listOf(listOf(start)), screenW, screenH)
+        val startEdges = HudSnapEdge.End to HudSnapEdge.Start
+        assertEquals(startEdges, snapper.edges(start, HudAnchor.TopLeft, startEdges))
+    }
 }

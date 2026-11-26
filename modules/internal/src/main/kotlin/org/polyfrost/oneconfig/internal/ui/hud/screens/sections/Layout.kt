@@ -179,11 +179,7 @@ fun Layout(hud: Hud?, query: String) {
                         },
                     )
 
-                    // a snapped edge outranks the anchor, so resetting only the anchor would change nothing
-                    HudSettingTarget(
-                        hud, if (staticWidth) "alignment" else "growthAnchor",
-                        *if (staticWidth) emptyArray() else arrayOf("snapEdgeX", "snapEdgeY"),
-                    ) {
+                    HudSettingTarget(hud, if (staticWidth) "alignment" else "growthAnchor") {
                         LabeledControl(if (staticWidth) hudPanelText("content_alignment", "Content alignment") else hudPanelText("anchor", "Anchor")) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
