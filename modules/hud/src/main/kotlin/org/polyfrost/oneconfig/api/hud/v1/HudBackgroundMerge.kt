@@ -330,7 +330,7 @@ internal object HudBackgroundMerge {
 
         if (childFx.isNaN()) {
             if (axis == MergeAxis.X) {
-                childFx = childPivot
+                childFx = crossSide(child.x, child.right, parent.x, parent.right, childPivot, parentPivot)
                 parentFx = parentPivot
             } else {
                 // when stacked line the link up with whichever side edges are flush else their middles
@@ -341,7 +341,7 @@ internal object HudBackgroundMerge {
         }
         if (childFy.isNaN()) {
             if (axis == MergeAxis.Y) {
-                childFy = childPivot
+                childFy = crossSide(child.y, child.bottom, parent.y, parent.bottom, childPivot, parentPivot)
                 parentFy = parentPivot
             } else {
                 val side = alignedSide(child.y, child.bottom, parent.y, parent.bottom)
@@ -356,6 +356,25 @@ internal object HudBackgroundMerge {
         abs(aMin - bMin) <= TOUCH_TOLERANCE -> 0f
         abs(aMax - bMax) <= TOUCH_TOLERANCE -> 1f
         else -> 0.5f
+    }
+
+    private fun crossSide(
+        cMin: Float,
+        cMax: Float,
+        pMin: Float,
+        pMax: Float,
+        childPivot: Float,
+        parentPivot: Float,
+    ): Float {
+        val minFlush = abs(cMin - pMin) <= TOUCH_TOLERANCE
+        val maxFlush = abs(cMax - pMax) <= TOUCH_TOLERANCE
+        return when {
+            minFlush && parentPivot == 0f -> 0f
+            maxFlush && parentPivot == 1f -> 1f
+            minFlush -> 0f
+            maxFlush -> 1f
+            else -> childPivot
+        }
     }
 
     private fun fraction(anchor: HudAnchor, axis: MergeAxis): Float = if (axis == MergeAxis.X) {
@@ -782,6 +801,8 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.hidden) 1 else 0)
             key = key * 31 + (if (hud.keepBgWhenHidden) 1 else 0)
             key = key * 31 + (if (hud.borderEnabled) 1 else 0)
+            key = key * 31 + hud.effectiveGrowthAnchor.ordinal
+            key = key * 31 + hud.effectiveSelfAnchorPoint.ordinal
         }
         return key
     }
