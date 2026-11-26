@@ -28,12 +28,6 @@
     "client": [
       "org.polyfrost.oneconfig.internal.OneConfig"
     ],
-    "modmenu": [
-      {
-        "adapter": "kotlin",
-        "value": "org.polyfrost.oneconfig.internal.compat.ModMenuEntrypoint"
-      }
-    ],
     "preLaunch": [
       "org.polyfrost.oneconfig.internal.OneConfigPreLaunch"
     ]
