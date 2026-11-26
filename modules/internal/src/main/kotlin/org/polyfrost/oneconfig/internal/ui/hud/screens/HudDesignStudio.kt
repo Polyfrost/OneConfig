@@ -3830,7 +3830,7 @@ private fun DesignStudioPanel(
             when {
                 sharing != null -> it != StudioCategory.Style || SharedOptions.anyShared(SharedTab.Style, sharing)
                 // hide settings tab for legacy HUDs that would leave it empty
-                it == StudioCategory.Settings -> selectedHud !is LegacyHud || legacyHasOptions
+                it == StudioCategory.Settings -> selectedHud !is LegacyHud || legacyHasOptions || selectedHud.hasVisibilityKeyMode()
                 it == StudioCategory.Style -> selectedHud !is LegacyHud
                 else -> true
             }

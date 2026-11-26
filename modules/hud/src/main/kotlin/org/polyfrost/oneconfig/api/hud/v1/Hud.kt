@@ -550,10 +550,10 @@ public abstract class Hud(
      * [visibilityKeybind] does this on its own, so call it only for a HUD driven by another input (see
      * [hasVisibilityKeybind]). Repeated calls with the same [down] change nothing
      *
-     * Ignored while the editor is open
+     * Presses are ignored while the editor is open, releases still count so a held key never sticks
      */
     public fun visibilityKeyInput(down: Boolean) {
-        if (HudManager.isEditing) return
+        if (HudManager.isEditing && down) return
         visibilityKeyState.input(down, visibilityKeyMode, visibilityKeyHoldThreshold.toLong())
         _visibilityKeyActive.put(visibilityKeyState.active)
     }

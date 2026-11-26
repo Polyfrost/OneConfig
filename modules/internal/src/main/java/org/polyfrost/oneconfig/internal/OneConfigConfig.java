@@ -636,7 +636,7 @@ public class OneConfigConfig extends Config {
         refreshHudToggleAllKeybind();
         addCallback(
             "hudToggleAllKeyMode", (KeyPressMode mode) -> {
-                HudManager.resetVisibilityKeys();
+                HudManager.resetAllHudsKey();
                 return false;
             });
         addDependency(
@@ -655,7 +655,7 @@ public class OneConfigConfig extends Config {
             KeybindManager.unregister(registeredHudToggleAllKeybind);
             registeredHudToggleAllKeybind = null;
         }
-        HudManager.resetVisibilityKeys();
+        HudManager.resetAllHudsKey();
         OneConfigKeybind src = hudToggleAllKeybind;
         if (src == null || !src.isBound()) {
             return;

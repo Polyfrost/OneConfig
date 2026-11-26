@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -89,22 +90,23 @@ fun Settings(hud: Hud?, query: String) {
 private fun VisibilityKeyCard(hud: Hud, query: String) {
     val keyProp = hudProperty(hud, "visibilityKeybind")
     if (hudProperty(hud, "visibilityKeyMode") == null) return
-    var mode by remember { mutableStateOf(hud.visibilityKeyMode) }
-    var holdThreshold by remember { mutableStateOf(hud.visibilityKeyHoldThreshold.toFloat()) }
+    val mode = hud.visibilityKeyMode
     // a HUD without its own key is driven by some other input so its mode always applies
     val bound = keyProp == null || hud.visibilityKeybind.isBound
 
     CardSection("Visibility Keybind", query, "Visibility Keybind", "Key Mode", "Hold Threshold") {
         if (keyProp != null) {
             HudSettingTarget(hud, "visibilityKeybind") {
-                ControlRow("Key") { KeybindOption(KeybindOptionData(keyProp)) }
+                key(hud.visibilityKeybind) {
+                    ControlRow("Key") { KeybindOption(KeybindOptionData(keyProp)) }
+                }
             }
         }
         if (bound) {
             HudSettingTarget(hud, "visibilityKeyMode") {
                 ControlRow("Key Mode") {
                     Dropdown(KeyPressMode.entries.map { it.name }, mode.ordinal, onSelect = {
-                        Snapshot.withMutableSnapshot { mode = KeyPressMode.entries[it]; hud.visibilityKeyMode = mode }
+                        Snapshot.withMutableSnapshot { hud.visibilityKeyMode = KeyPressMode.entries[it] }
                     }, width = 176.dp)
                 }
             }
@@ -112,11 +114,8 @@ private fun VisibilityKeyCard(hud: Hud, query: String) {
                 HudSettingTarget(hud, "visibilityKeyHoldThreshold") {
                     ControlRow("Hold Threshold") {
                         NumberField(
-                            holdThreshold,
-                            {
-                                holdThreshold = it
-                                Snapshot.withMutableSnapshot { hud.visibilityKeyHoldThreshold = it.toInt() }
-                            },
+                            hud.visibilityKeyHoldThreshold.toFloat(),
+                            { Snapshot.withMutableSnapshot { hud.visibilityKeyHoldThreshold = it.toInt() } },
                             range = 50f..1000f,
                             step = 50f,
                             unit = "ms",

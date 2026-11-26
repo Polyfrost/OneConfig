@@ -185,12 +185,12 @@ public object HudManager {
     /**
      * Feeds the global HUD visibility keybind
      *
-     * Ignored while the editor is open
+     * Presses are ignored while the editor is open, releases still count so a held key never sticks
      */
     @ApiStatus.Internal
     @JvmStatic
     public fun allHudsKeyInput(down: Boolean, mode: KeyPressMode, holdThresholdMs: Long) {
-        if (isEditing) return
+        if (isEditing && down) return
         allHudsKeyState.input(down, mode, holdThresholdMs)
         allHudsHiddenByKey = allHudsKeyState.active
     }
@@ -1062,7 +1062,7 @@ public object HudManager {
             claims.add(s)
         }
         for (hud in activeInstances) {
-            if (!hud.overridesReplacesIds || hud.hidden || !isOwnerShown(hud)) continue
+            if (!hud.overridesReplacesIds || hud.effectivelyHidden || !isOwnerShown(hud)) continue
             val ids = try {
                 hud.replacesIds
             } catch (e: Throwable) {
