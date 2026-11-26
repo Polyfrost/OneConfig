@@ -398,7 +398,7 @@ class OneConfigSetupPlugin : Plugin<Project> {
         tasks.withType<JavaCompile>().configureEach {
             if (inCI) return@configureEach
             val sourceSetName = sourceSets.find { it.compileJavaTaskName == name }!!.name
-            finalizedBy("checkstyle${sourceSetName.capitalize()}")
+            finalizedBy("checkstyle${sourceSetName.replaceFirstChar(Char::uppercaseChar)}")
         }
 
         tasks.withType<KotlinCompile>().configureEach {
