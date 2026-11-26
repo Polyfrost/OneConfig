@@ -250,8 +250,13 @@ internal object HudBackgroundMerge {
             return false
         }
 
+        val pivot = HashMap<Int, Float>(component.size * 2)
         val seen = HashSet<Int>(component.size * 2)
-        for (i in component) if (items[i].hud.isAnchored) seen.add(i)
+        for (i in component) {
+            if (!items[i].hud.isAnchored) continue
+            seen.add(i)
+            pivot[i] = fraction(items[i].hud.effectiveSelfAnchorPoint, axis)
+        }
 
         while (true) {
             var bestParent = -1
@@ -272,12 +277,18 @@ internal object HudBackgroundMerge {
             if (bestChild == -1) {
                 val next = component.firstOrNull { it !in seen } ?: break
                 seen.add(next)
+                pivot[next] = fraction(items[next].hud.effectiveGrowthAnchor, axis)
                 continue
             }
             seen.add(bestChild)
             parentOf[bestChild] = bestParent
-            val (childPoint, parentPoint) = contactPoints(items[bestChild], items[bestParent])
-            out.add(Link(items[bestChild].hud, items[bestParent].hud, childPoint, parentPoint, axis))
+            val child = items[bestChild]
+            val (childPoint, parentPoint) = contactPoints(
+                child, items[bestParent], axis,
+                fraction(child.hud.effectiveGrowthAnchor, axis), pivot.getValue(bestParent),
+            )
+            pivot[bestChild] = fraction(childPoint, axis)
+            out.add(Link(child.hud, items[bestParent].hud, childPoint, parentPoint, axis))
         }
         return out
     }
@@ -290,7 +301,13 @@ internal object HudBackgroundMerge {
      *
      * So a HUD stacked flush under another links its top-left to the parent's bottom-left
      */
-    private fun contactPoints(child: Item, parent: Item): Pair<HudAnchor, HudAnchor> {
+    private fun contactPoints(
+        child: Item,
+        parent: Item,
+        axis: MergeAxis,
+        childPivot: Float,
+        parentPivot: Float,
+    ): Pair<HudAnchor, HudAnchor> {
         var childFx = Float.NaN
         var parentFx = Float.NaN
         var childFy = Float.NaN
@@ -312,15 +329,25 @@ internal object HudBackgroundMerge {
         }
 
         if (childFx.isNaN()) {
-            // when stacked line the link up with whichever side edges are flush else their middles
-            val side = alignedSide(child.x, child.right, parent.x, parent.right)
-            childFx = side
-            parentFx = side
+            if (axis == MergeAxis.X) {
+                childFx = childPivot
+                parentFx = parentPivot
+            } else {
+                // when stacked line the link up with whichever side edges are flush else their middles
+                val side = alignedSide(child.x, child.right, parent.x, parent.right)
+                childFx = side
+                parentFx = side
+            }
         }
         if (childFy.isNaN()) {
-            val side = alignedSide(child.y, child.bottom, parent.y, parent.bottom)
-            childFy = side
-            parentFy = side
+            if (axis == MergeAxis.Y) {
+                childFy = childPivot
+                parentFy = parentPivot
+            } else {
+                val side = alignedSide(child.y, child.bottom, parent.y, parent.bottom)
+                childFy = side
+                parentFy = side
+            }
         }
         return anchorAt(childFx, childFy) to anchorAt(parentFx, parentFy)
     }
@@ -329,6 +356,20 @@ internal object HudBackgroundMerge {
         abs(aMin - bMin) <= TOUCH_TOLERANCE -> 0f
         abs(aMax - bMax) <= TOUCH_TOLERANCE -> 1f
         else -> 0.5f
+    }
+
+    private fun fraction(anchor: HudAnchor, axis: MergeAxis): Float = if (axis == MergeAxis.X) {
+        when (anchor) {
+            HudAnchor.TopLeft, HudAnchor.Left, HudAnchor.BottomLeft -> 0f
+            HudAnchor.TopRight, HudAnchor.Right, HudAnchor.BottomRight -> 1f
+            else -> 0.5f
+        }
+    } else {
+        when (anchor) {
+            HudAnchor.TopLeft, HudAnchor.Top, HudAnchor.TopRight -> 0f
+            HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight -> 1f
+            else -> 0.5f
+        }
     }
 
     private fun anchorAt(fx: Float, fy: Float): HudAnchor = when (fy) {
