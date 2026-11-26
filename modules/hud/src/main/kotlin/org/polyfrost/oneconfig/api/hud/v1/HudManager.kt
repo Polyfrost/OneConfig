@@ -1136,7 +1136,7 @@ public object HudManager {
             }
             hud.setVisible(visible)
         }
-        for (hud in activeInstances) hud.setCollapsed(!isEditing && hud !in frameDrawn && collapsesWhenNotShown(hud))
+        for (hud in activeInstances) hud.setCollapsed(!isEditing && hud !is LegacyHudMarker && hud !in frameDrawn && collapsesWhenNotShown(hud))
         val writes = hudStateWrites.get()
         val guiScale = prepareScale
         geometrySkip = geometryStable && !isEditing && writes == geometryWrites && drawnKey == geometryDrawn &&
@@ -1283,7 +1283,21 @@ public object HudManager {
         val skip = geometrySkip && lastMergeKey != null && writes == mergeWrites
         mergeWrites = writes
         if (skip) return
-        var stable = lastMergeKey != null && huds.size == mergeCheckHuds.size
+        var collapsedKey = 0
+        var collapsedStable = true
+        for (hud in activeInstances) {
+            if (!hud.isCollapsed) continue
+            val stamp = try {
+                hud.geometryStamp
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to read the geometry of HUD ${hud.title}", e)
+                -1
+            }
+            if (stamp == -1) collapsedStable = false
+            collapsedKey = (collapsedKey * 31 + System.identityHashCode(hud)) * 31 + stamp
+        }
+        var stable = collapsedStable && lastMergeKey != null && huds.size == mergeCheckHuds.size && collapsedKey == mergeCollapsedKey
+        mergeCollapsedKey = collapsedKey
         if (mergeCheckHuds.size != huds.size) {
             mergeCheckHuds = arrayOfNulls(huds.size)
             mergeCheckStamps = IntArray(huds.size)
@@ -1296,7 +1310,7 @@ public object HudManager {
             mergeCheckStamps[i] = stamp
         }
         if (stable) return
-        val key = HudBackgroundMerge.layoutKey(huds)
+        val key = HudBackgroundMerge.layoutKey(huds) * 31 + collapsedKey
         if (key == lastMergeKey) return
         lastMergeKey = key
         // the fused outline can change without anything else asking for a redraw
@@ -1307,11 +1321,28 @@ public object HudManager {
         val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
         val refW = if (layoutRefWidth > 0f) layoutRefWidth else screenWidth
         val refH = if (layoutRefHeight > 0f) layoutRefHeight else screenHeight
-        frameGroups = HudBackgroundMerge.computeGroups(mergeable, refW, refH)
-        if (releaseStaleMergeLinks()) frameGroups = HudBackgroundMerge.computeGroups(mergeable, refW, refH)
+        val collapsed = activeInstances.filter { it.isCollapsed && !isMergeExcluded(it) }
+        for (hud in collapsed) {
+            if (hud.renderedW > 0f && hud.renderedH > 0f) continue
+            try {
+                layoutOnce(hud, screenWidth, screenHeight, scale)
+            } catch (e: Throwable) {
+                LOGGER.error("Failed to lay out HUD ${hud.title}", e)
+            }
+        }
+        val linkGroups = withCollapseIgnored {
+            val linkable = if (collapsed.isEmpty()) mergeable
+            else zOrdered(activeInstances.filter { it in mergeable || it in collapsed }) {
+                floatArrayOf(it.x, it.y, it.scaledWidth, it.scaledHeight)
+            }
+            var groups = HudBackgroundMerge.computeGroups(linkable, refW, refH)
+            if (releaseStaleMergeLinks(groups)) groups = HudBackgroundMerge.computeGroups(linkable, refW, refH)
+            updateMergeLinks(groups)
+            groups
+        }
+        frameGroups = if (collapsed.isEmpty()) linkGroups else HudBackgroundMerge.computeGroups(mergeable, refW, refH)
         val merged = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         for (group in frameGroups) merged.addAll(group.huds)
-        updateMergeLinks()
 
         var changed = false
         for (hud in activeInstances) {
@@ -1336,6 +1367,18 @@ public object HudManager {
     }
 
     private var mergeExclusions: List<Hud> = emptyList()
+
+    internal var ignoreCollapse = false
+        private set
+
+    private inline fun <T> withCollapseIgnored(block: () -> T): T {
+        ignoreCollapse = true
+        try {
+            return block()
+        } finally {
+            ignoreCollapse = false
+        }
+    }
     internal var prepareScale = Float.NaN
         private set
     private var geometrySkip = false
@@ -1348,6 +1391,7 @@ public object HudManager {
     private val polled = ArrayList<Hud>()
     private var polledStamps = IntArray(0)
     private var mergeWrites = -1
+    private var mergeCollapsedKey = 0
     private var mergeCheckHuds = arrayOfNulls<Hud>(0)
     private var mergeCheckStamps = IntArray(0)
 
@@ -1404,22 +1448,22 @@ public object HudManager {
      *
      * A HUD which stops being merged is let go and stays where it was left
      */
-    private fun updateMergeLinks() {
+    private fun updateMergeLinks(groups: List<HudBackgroundMerge.Group>) {
         Snapshot.withMutableSnapshot {
-            for (group in frameGroups) {
+            for (group in groups) {
                 for (link in group.links) {
                     link.child.applyMergeLink(link.parent, link.childPoint, link.parentPoint, link.axis)
                 }
             }
-            releaseStaleMergeLinks()
+            releaseStaleMergeLinks(groups)
             for (hud in activeInstances) hud.keepMergedPosition()
         }
     }
 
-    private fun releaseStaleMergeLinks(): Boolean {
+    private fun releaseStaleMergeLinks(groups: List<HudBackgroundMerge.Group>): Boolean {
         val linkedX = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
         val linkedY = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
-        for (group in frameGroups) {
+        for (group in groups) {
             for (link in group.links) (if (link.axis == MergeAxis.X) linkedX else linkedY).add(link.child)
         }
         var released = false

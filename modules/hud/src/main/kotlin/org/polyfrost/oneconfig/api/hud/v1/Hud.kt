@@ -1075,11 +1075,17 @@ public abstract class Hud(
         anchorParent?.let { parent ->
             val self = selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
             val offset = if (axis == MergeAxis.X) anchorOffsetX else anchorOffsetY
-            return ResolvedAnchor(parent, anchorPoint, self, if (parent.isCollapsed) 0f else offset, false)
+            return ResolvedAnchor(parent, anchorPoint, self, offsetPastCollapsed(parent, anchorPoint, self, offset, axis), false)
         }
         val link = mergeLink(axis) ?: return null
         if (link.parent === this) return null
-        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, if (link.parent.isCollapsed) 0f else link.offset, true)
+        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, offsetPastCollapsed(link.parent, link.targetPoint, link.selfPoint, link.offset, axis), true)
+    }
+
+    private fun offsetPastCollapsed(parent: Hud, target: HudAnchor, self: HudAnchor, offset: Float, axis: MergeAxis): Float {
+        if (!parent.isCollapsed) return offset
+        val stacked = if (axis == MergeAxis.X) parent.fracX(target) != pinnedFracX(self) else parent.fracY(target) != pinnedFracY(self)
+        return if (stacked) 0f else offset
     }
 
     private class ResolvedAnchor(
@@ -1213,7 +1219,7 @@ public abstract class Hud(
 
     /** Whether this HUD currently measures 0 by 0 because it is not being drawn, which needs [collapsesWhenNotShown] */
     @get:ApiStatus.Experimental
-    public val isCollapsed: Boolean get() = _collapsed.value
+    public val isCollapsed: Boolean get() = _collapsed.value && !HudManager.ignoreCollapse
 
     internal fun setCollapsed(collapsed: Boolean) {
         _collapsed.put(collapsed)

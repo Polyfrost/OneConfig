@@ -476,17 +476,21 @@ class HudGroupsTest {
         parent.setAbsolutePosition(100f, 100f);
         a.anchorTo(parent, HudAnchor.TopRight, HudAnchor.TopLeft);
         a.setAnchorOffsetX(10f);
+        a.setAnchorOffsetY(5f);
         try {
             assertEquals(150f, a.getX(), 0.001f);
+            assertEquals(105f, a.getY(), 0.001f);
 
             setCollapsed(parent, true);
             assertTrue(parent.isCollapsed());
             assertEquals(0f, parent.getScaledWidth(), 0f);
             assertEquals(0f, parent.getScaledHeight(), 0f);
             assertEquals(parent.getX(), a.getX(), 0.001f, "the offset is dropped so no gap is left");
+            assertEquals(parent.getY() + 5f, a.getY(), 0.001f, "the offset across the stack is kept");
 
             setCollapsed(parent, false);
             assertEquals(150f, a.getX(), 0.001f);
+            assertEquals(105f, a.getY(), 0.001f);
         } finally {
             setCollapsed(parent, false);
         }
