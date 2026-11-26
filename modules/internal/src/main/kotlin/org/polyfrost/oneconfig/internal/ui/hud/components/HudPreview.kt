@@ -104,7 +104,7 @@ internal fun rememberHudPreview(hud: Hud): HudPreviewState {
             hud.updateForPreview()
             HudPreviewState(
                 PolyComposeRuntime(PolyComposeHost.previews).also { rt ->
-                    rt.setContent { hud.Content() }
+                    rt.setContent { hud.RootContent() }
                 }
             )
         }

@@ -37,7 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
-import org.polyfrost.compose.composables.PolyBox
+import org.polyfrost.compose.composables.NodeBox
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.background
 import org.polyfrost.compose.composables.border
@@ -52,6 +52,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.runtime.PolyComposeRuntime
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.Properties.functional
 import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
 import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Property
@@ -148,6 +149,8 @@ private const val SNAP_HOLD = 0.01f
 private const val MAX_ANCHOR_DEPTH = 16
 
 private const val MIN_VISIBLE = 12f
+
+private const val PENDING_FIX = -1f
 
 private val REDRAW_GETTERS = arrayOf("getAlwaysRedraw", "getBorderEnabled", "getBorderChroma")
 
@@ -252,28 +255,45 @@ public abstract class Hud(
 
     private var _minW: MutableState<Float> = mutableStateOf(0f)
     /** The narrowest this HUD may get, where 0 means no minimum */
-    public var minW: Float get() = _minW.value; set(v) { _minW.put(v); if (maxW > 0f && maxW < v) _maxW.put(v) }
+    public var minW: Float get() = settledW ?: readMin(_minW.value, _maxW.value); set(v) { _minW.put(v) }
 
     private var _maxW: MutableState<Float> = mutableStateOf(0f)
-    /** The widest this HUD may get, where 0 means no maximum */
-    public var maxW: Float get() = _maxW.value; set(v) { _maxW.put(if (v > 0f && minW > 0f) maxOf(v, minW) else v) }
+    /** The widest this HUD may get, where 0 means no maximum, never below [minW] */
+    public var maxW: Float get() = settledW ?: readMax(_minW.value, _maxW.value); set(v) { _maxW.put(v) }
 
     private var _minH: MutableState<Float> = mutableStateOf(0f)
     /** The shortest this HUD may get, where 0 means no minimum */
-    public var minH: Float get() = _minH.value; set(v) { _minH.put(v); if (maxH > 0f && maxH < v) _maxH.put(v) }
+    public var minH: Float get() = settledH ?: readMin(_minH.value, _maxH.value); set(v) { _minH.put(v) }
 
     private var _maxH: MutableState<Float> = mutableStateOf(0f)
-    /** The tallest this HUD may get, where 0 means no maximum */
-    public var maxH: Float get() = _maxH.value; set(v) { _maxH.put(if (v > 0f && minH > 0f) maxOf(v, minH) else v) }
+    /** The tallest this HUD may get, where 0 means no maximum, never below [minH] */
+    public var maxH: Float get() = settledH ?: readMax(_minH.value, _maxH.value); set(v) { _maxH.put(v) }
 
     private var _fitContent: MutableState<Boolean> = mutableStateOf(false)
     public var fitContent: Boolean get() = _fitContent.value; set(v) { _fitContent.put(v) }
 
     private var _measuringNatural: MutableState<Boolean> = mutableStateOf(false)
 
-    // a legacy fixed size requested before the content could be measured, applied by the first render
-    private var pendingFixW = false
-    private var pendingFixH = false
+    // stored in the minimum so it is saved and reset like any other limit, a maximum overrides it
+    private val pendingFixW: Boolean get() = _minW.value < 0f && _maxW.value <= 0f
+    private val pendingFixH: Boolean get() = _minH.value < 0f && _maxH.value <= 0f
+
+    private val settledW: Float? get() =
+        if (pendingFixW && renderedW > 0f) maxOf(renderedW / effectiveScale, minimumSize().first) else null
+    private val settledH: Float? get() =
+        if (pendingFixH && renderedH > 0f) maxOf(renderedH / effectiveScale, minimumSize().second) else null
+
+    private fun readMin(min: Float, max: Float): Float = if (min < 0f && max > 0f) 0f else min
+
+    private fun readMax(min: Float, max: Float): Float = if (max > 0f && min > 0f) maxOf(max, min) else max.coerceAtLeast(0f)
+
+    private fun markPendingW() {
+        _minW.put(PENDING_FIX); _maxW.put(0f); _staticW.put(PENDING_FIX)
+    }
+
+    private fun markPendingH() {
+        _minH.put(PENDING_FIX); _maxH.put(0f); _staticH.put(PENDING_FIX)
+    }
 
     public val isFixedW: Boolean get() = minW > 0f && minW == maxW
 
@@ -284,7 +304,7 @@ public abstract class Hud(
     /** Both axes pinned to one size, kept for HUDs written before sizes had a minimum and maximum */
     @Deprecated("Limit the axes independently with minW, maxW, minH and maxH")
     public var staticWidth: Boolean
-        get() = isFixedW && isFixedH
+        get() = (isFixedW || pendingFixW) && (isFixedH || pendingFixH)
         set(v) {
             fixWidth(v)
             fixHeight(v)
@@ -297,26 +317,24 @@ public abstract class Hud(
      * once the first render reports it
      */
     public fun fixWidth(fixed: Boolean) {
-        pendingFixW = false
         if (!fixed) {
             _minW.put(0f); _maxW.put(0f)
             seedRenderedWidth()
             return
         }
         val size = currentWidth().takeIf { it > 0f } ?: staticW.takeIf { it > 0f }
-        if (size != null) pinWidth(size) else pendingFixW = true
+        if (size != null) pinWidth(size) else markPendingW()
     }
 
     /** Pins the height at its current size, or removes every height limit, see [fixWidth] */
     public fun fixHeight(fixed: Boolean) {
-        pendingFixH = false
         if (!fixed) {
             _minH.put(0f); _maxH.put(0f)
             seedRenderedHeight()
             return
         }
         val size = currentHeight().takeIf { it > 0f } ?: staticH.takeIf { it > 0f }
-        if (size != null) pinHeight(size) else pendingFixH = true
+        if (size != null) pinHeight(size) else markPendingH()
     }
 
     private fun pinWidth(size: Float) {
@@ -376,8 +394,8 @@ public abstract class Hud(
     @ApiStatus.Internal
     public fun boundsSize(scale: Float): Pair<Float, Float>? {
         val (floorW, floorH) = frameMinimumSize()
-        val fallbackW = (if (isFixedW) minW else staticW).takeIf { it > 0f }?.let { maxOf(it, floorW) * scale }
-        val fallbackH = (if (isFixedH) minH else staticH).takeIf { it > 0f }?.let { maxOf(it, floorH) * scale }
+        val fallbackW = staticW.takeIf { it > 0f }?.let { maxOf(it, floorW) * scale }
+        val fallbackH = staticH.takeIf { it > 0f }?.let { maxOf(it, floorH) * scale }
         val w = if (isFixedW) fallbackW else renderedW.takeIf { it > 0f } ?: fallbackW
         val h = if (isFixedH) fallbackH else renderedH.takeIf { it > 0f } ?: fallbackH
         return if (w != null && h != null) w to h else null
@@ -390,9 +408,12 @@ public abstract class Hud(
      */
     internal fun migrateLegacySize(data: Tree) {
         if (data.getProp("minW") != null || data.getProp("minH") != null) return
-        if (data.getProp("staticWidth")?.getAs<Boolean?>() != true) return
-        if (staticW > 0f) pinWidth(staticW) else pendingFixW = true
-        if (staticH > 0f) pinHeight(staticH) else pendingFixH = true
+        val legacyFixed = data.getProp("staticWidth")?.getAs<Boolean?>() ?: return
+        if (!legacyFixed) { fixWidth(false); fixHeight(false); return }
+        val savedW = _staticW.value
+        val savedH = _staticH.value
+        if (savedW > 0f) pinWidth(savedW) else markPendingW()
+        if (savedH > 0f) pinHeight(savedH) else markPendingH()
     }
 
     protected fun measureNaturalContentSize(): Pair<Float, Float>? {
@@ -410,16 +431,12 @@ public abstract class Hud(
         }
     }
 
-    /**
-     * Fills in [staticW]/[staticH] when their axis is fixed but the dimension is unset or invalid
-     *
-     * One such invalid value is [TextHud]'s unmeasured sentinel of {@code -1f}
-     *
-     * Safe to call after a reset-to-default
-     */
     public fun reseedStaticSizeIfNeeded() {
-        if (isFixedW && staticW <= 0f) reseedStaticWidth()
-        if (isFixedH && staticH <= 0f) reseedStaticHeight()
+        if (!pendingFixW && !pendingFixH) return
+        val (naturalW, naturalH) = measureNaturalContentSize() ?: return
+        val (floorW, floorH) = minimumSize()
+        if (pendingFixW && naturalW > 0f) pinWidth(maxOf(naturalW, floorW))
+        if (pendingFixH && naturalH > 0f) pinHeight(maxOf(naturalH, floorH))
     }
 
     /** Re-measures content and applies a new static width */
@@ -657,16 +674,10 @@ public abstract class Hud(
         set(v) { if (v > 0f) HudManager.layoutRefHeight = v }
 
     private var _renderedW: MutableState<Float> = mutableStateOf(0f)
-    public open var renderedW: Float get() = _renderedW.value; set(v) {
-        _renderedW.put(v)
-        if (pendingFixW && v > 0f) { pendingFixW = false; pinWidth(maxOf(v / effectiveScale, minimumSize().first)) }
-    }
+    public open var renderedW: Float get() = _renderedW.value; set(v) { _renderedW.put(v) }
 
     private var _renderedH: MutableState<Float> = mutableStateOf(0f)
-    public open var renderedH: Float get() = _renderedH.value; set(v) {
-        _renderedH.put(v)
-        if (pendingFixH && v > 0f) { pendingFixH = false; pinHeight(maxOf(v / effectiveScale, minimumSize().second)) }
-    }
+    public open var renderedH: Float get() = _renderedH.value; set(v) { _renderedH.put(v) }
 
     private var minSizeFrame = Long.MIN_VALUE
     private var minSize: Pair<Float, Float> = 0f to 0f
@@ -989,7 +1000,6 @@ public abstract class Hud(
 
     @ApiStatus.Internal
     public open fun applyEditorWidth(width: Float) {
-        pendingFixW = false
         pinWidth(width)
     }
 
@@ -1478,15 +1488,15 @@ public abstract class Hud(
     public var padRight: Float get() = _padRight.value; set(v) { _padRight.put(v) }
 
     private var _staticW: MutableState<Float> = mutableStateOf(200f)
-    public open var staticW: Float get() = _staticW.value; set(v) {
+    public open var staticW: Float get() = if (isFixedW) minW else _staticW.value; set(v) {
         _staticW.put(v)
-        if (isFixedW && v > 0f) { _minW.put(v); _maxW.put(v) }
+        if ((isFixedW || pendingFixW) && v > 0f) pinWidth(v)
     }
 
     private var _staticH: MutableState<Float> = mutableStateOf(48f)
-    public open var staticH: Float get() = _staticH.value; set(v) {
+    public open var staticH: Float get() = if (isFixedH) minH else _staticH.value; set(v) {
         _staticH.put(v)
-        if (isFixedH && v > 0f) { _minH.put(v); _maxH.put(v) }
+        if ((isFixedH || pendingFixH) && v > 0f) pinHeight(v)
     }
 
     private var _font: MutableState<Font> = mutableStateOf(Font.Minecraft)
@@ -2019,13 +2029,18 @@ public abstract class Hud(
             _runtime = it
             it.setContent {
                 CompositionLocalProvider(LocalHud provides this, LocalContentScale provides effectiveScale) {
-                    // limits are enforced here so every HUD honours them, not only those that opt in
-                    PolyBox(modifier = sizeConstraints(PolyModifier)) {
-                        Content()
-                    }
+                    RootContent()
                 }
             }
         }
+
+    @ApiStatus.Internal
+    @Composable
+    public fun RootContent() {
+        NodeBox(modifier = sizeConstraints(PolyModifier)) {
+            Content()
+        }
+    }
 
     @Composable
     public abstract fun Content()
@@ -2083,8 +2098,8 @@ public abstract class Hud(
                 addDisplayCondition(hideFromConfigUi)
             }
             if (out.persistOwnState) {
-                tree["staticW"] = ktProperty(out::staticW).apply { addDisplayCondition(hideFromConfigUi) }
-                tree["staticH"] = ktProperty(out::staticH).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["staticW"] = functional({ out.staticW }, { out._staticW.put(it) }, "staticW", type = Float::class.javaObjectType).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["staticH"] = functional({ out.staticH }, { out._staticH.put(it) }, "staticH", type = Float::class.javaObjectType).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["minW"] = ktProperty(out::minW).apply {
                     description = "The narrowest this HUD may get. 0 means no limit."
                     addDisplayCondition(hideFromConfigUi)

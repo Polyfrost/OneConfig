@@ -2001,6 +2001,7 @@ public object HudManager {
         val failedProviders = HashSet<Class<Hud>>()
         val failed = HashMap<String, Int>(8)
         var i = 0
+        val seeded = HashMap<String, Tree>()
 
         fun rollback(candidate: Hud?) {
             if (candidate == null) return
@@ -2028,7 +2029,10 @@ public object HudManager {
             var providerClass: Class<Hud>? = null
             try {
                 // mods (e.g. VanillaHUD) pre-seed settings without hudClass; the default HUD of that ID adopts them below
-                val clsName = data.getProp("hudClass")?.get() as? String ?: return@forEach
+                val clsName = data.getProp("hudClass")?.get() as? String ?: run {
+                    data.id?.let { seeded[it] = data }
+                    return@forEach
+                }
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
                 if (clsName in unsupportedHuds) return@forEach
                 val cls = Class.forName(clsName, true, loader) as? Class<Hud>
@@ -2108,6 +2112,7 @@ public object HudManager {
                 val (dx, dy) = h.defaultPosition() ?: (10f to 10f)
                 val hud = h.make()
                 candidate = hud
+                hud.tree?.id?.let(seeded::get)?.let(hud::migrateLegacySize)
                 hud.setAbsolutePosition(dx, dy)
                 activeInstances.add(hud)
                 instancesRevision.intValue++

@@ -152,6 +152,7 @@ private fun resetPositionOptions(hud: Hud): Boolean {
 }
 
 private fun finishHudReset(hud: Hud) {
+    hud.reseedStaticSizeIfNeeded()
     bumpHudUiEpoch(hud)
     hud.updateAndRecalculate()
 }

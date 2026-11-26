@@ -258,6 +258,7 @@ private const val NUDGE_SETTLE_MS = 300L
 private const val PANEL_RESIZE_STIFFNESS = Spring.StiffnessMediumLow
 private const val DRAGGED_HUD_FILL_ALPHA = 0.10f
 private const val MARQUEE_FILL_ALPHA = 0.15f
+private const val LIMIT_SLACK = 0.5f
 
 private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
 
@@ -1089,10 +1090,16 @@ private fun resizeWidth(hud: Hud, width: Float) {
             hud.maxW = width
         }
         hud.maxW > 0f -> {
-            if (hud.minW > width) hud.minW = width
+            val box = hud.currentWidth()
+            if (hud.minW > width || (width > box && box < hud.maxW - LIMIT_SLACK)) hud.minW = width
             hud.maxW = width
         }
-        hud.minW > 0f -> hud.minW = width
+        hud.minW > 0f -> {
+            val box = hud.currentWidth()
+            val shrinking = width < box && box > hud.minW + LIMIT_SLACK
+            hud.minW = width
+            if (shrinking) hud.maxW = width
+        }
         else -> { hud.maxW = width; hud.minW = width }
     }
 }
@@ -1104,10 +1111,16 @@ private fun resizeHeight(hud: Hud, height: Float) {
             hud.maxH = height
         }
         hud.maxH > 0f -> {
-            if (hud.minH > height) hud.minH = height
+            val box = hud.currentHeight()
+            if (hud.minH > height || (height > box && box < hud.maxH - LIMIT_SLACK)) hud.minH = height
             hud.maxH = height
         }
-        hud.minH > 0f -> hud.minH = height
+        hud.minH > 0f -> {
+            val box = hud.currentHeight()
+            val shrinking = height < box && box > hud.minH + LIMIT_SLACK
+            hud.minH = height
+            if (shrinking) hud.maxH = height
+        }
         else -> { hud.maxH = height; hud.minH = height }
     }
 }

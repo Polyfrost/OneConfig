@@ -298,7 +298,6 @@ public abstract class TextHud(
             updateWhenChanged("brackets")
         }
         update()
-        reseedStaticSizeIfNeeded()
         captureStaticSizeDefaults()
     }
 
