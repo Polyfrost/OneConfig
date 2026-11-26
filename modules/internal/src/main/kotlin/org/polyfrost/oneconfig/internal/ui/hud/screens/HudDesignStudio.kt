@@ -1479,6 +1479,8 @@ fun HudDesignStudio(visible: Boolean = true) {
     }
 
     fun startTour() {
+        // the tour's interactive steps need at least one placed HUD; without one it would soft-lock
+        if (HudManager.activeInstances.isEmpty()) return
         Snapshot.withMutableSnapshot {
             clearTransientEditorState()
             if (tourStep == null) {
@@ -2043,7 +2045,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                         undoEnabled = canUndo,
                         onRedo = { HudDesignSession.handleRedo(true) },
                         redoEnabled = canRedo,
-                        onTour = { startTour() },
+                        onTour = if (HudManager.activeInstances.isNotEmpty()) ({ startTour() }) else null,
                         onShortcuts = { shortcutsOpen = true },
                     )
                 }
