@@ -4313,9 +4313,12 @@ private fun presetGeometry(
     labelWidth: () -> Dp,
 ): HudPreviewGeometry? {
     val states = entry.members.map { previews.getValue(it) }
-    if (states.any { !it.ready }) return null
+    if (states.any { !it.measured }) return null
     val scales = entry.members.map { it.effectiveScale }
-    val sizes = states.indices.map { states[it].naturalWidth * scales[it] to states[it].naturalHeight * scales[it] }
+    val sizes = states.indices.map {
+        if (states[it].ready) states[it].naturalWidth * scales[it] to states[it].naturalHeight * scales[it]
+        else HudGroups.estimatedSize(entry.members[it], null)
+    }
     val positions = HudGroups.presetLayout(entry.preset, entry.members, sizes)
     val left = positions.minOf { it.first }
     val top = positions.minOf { it.second }

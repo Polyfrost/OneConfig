@@ -447,7 +447,7 @@ public object HudGroups {
     @JvmStatic
     public fun canAdd(preset: HudPreset): Boolean {
         val providers = providersOf(preset)
-        return providers.size >= 2 && providers.none { !it.multipleInstancesAllowed() && HudManager.hasHudOfType(it::class.java) }
+        return providers.size == preset.members.size && providers.none { !it.multipleInstancesAllowed() && HudManager.hasHudOfType(it::class.java) }
     }
 
     /** Adds every HUD of [preset] in one new group, or returns `null` and changes nothing when it cannot be added */
@@ -459,45 +459,69 @@ public object HudGroups {
     public fun addPreset(preset: HudPreset, naturalSize: (Hud) -> Pair<Float, Float>?): HudGroup? {
         if (!canAdd(preset)) return null
         val providers = providersOf(preset)
-        val made = ArrayList<Hud>(providers.size)
-        val restore = ArrayList<() -> Unit>()
-        val addedReal = ArrayList<Hud>()
+        val built = ArrayList<Hud>(providers.size)
+        val setUp = ArrayList<Hud>(providers.size)
+        val instances: List<Hud>
+        val sizes: List<Pair<Float, Float>>
+        val positions: List<Pair<Float, Float>>
         try {
-            val instances = providers.map { provider -> if (provider.isReal) provider else provider.make().also(made::add) }
-            val sizes = instances.mapIndexed { i, hud -> estimatedSize(hud, naturalSize(providers[i])) }
-            val positions = placed(preset, presetLayout(preset, instances, sizes), sizes)
-            val path = "${preset.id}$PRESET_SEPARATOR${newId()}"
-            Snapshot.withMutableSnapshot {
-                for ((i, hud) in instances.withIndex()) {
-                    if (hud !in made) restore.add(placementRestorer(hud))
-                    if (!hud.staticWidth) {
-                        hud.renderedW = sizes[i].first
-                        hud.renderedH = sizes[i].second
-                    }
-                    hud.setAbsolutePosition(positions[i].first, positions[i].second)
-                    hud.groupPath = path
+            instances = providers.map { provider ->
+                val hud = if (provider.isReal) provider else provider.build().also {
+                    built.add(it)
+                    it.loadStoredValues()
                 }
+                if (hud !in HudManager.activeInstances) {
+                    setUp.add(hud)
+                    hud.setup()
+                }
+                hud
             }
-            for (hud in instances) {
-                HudManager.markProviderKnown(hud)
-                if (hud !in made && hud !in HudManager.activeInstances) addedReal.add(hud)
-                HudManager.addInstance(hud)
-            }
-            val defaultAction = preset.defaultAction
-            if (defaultAction != null && instances.none { it.isAnchored }) arrangeSafely(defaultAction, alignedMembers(preset, instances))
-            HudManager.invalidate()
-            saveTrees(instances)
-            if (preset.id in defaults) HudManager.markGroupKnown(preset.id)
-            return HudGroup(path)
+            sizes = instances.mapIndexed { i, hud -> estimatedSize(hud, naturalSize(providers[i])) }
+            positions = placed(preset, presetLayout(preset, instances, sizes), sizes)
         } catch (e: Throwable) {
             if (e.isFatalHudFailure()) throw e
-            made.forEach { HudManager.removeHud(it, delete = true) }
-            addedReal.forEach { HudManager.removeHud(it) }
-            Snapshot.withMutableSnapshot { restore.forEach { it() } }
-            HudManager.invalidate()
+            for (hud in setUp) {
+                try {
+                    hud.remove()
+                } catch (t: Throwable) {
+                    if (t.isFatalHudFailure()) throw t
+                    HudManager.LOGGER.error("Failed to remove HUD ${hud.title} after its preset failed", t)
+                }
+            }
+            built.forEach(Hud::detachTree)
             HudManager.LOGGER.error("Failed to add HUD preset ${preset.id}", e)
             return null
         }
+        built.forEach(Hud::registerTree)
+        val path = "${preset.id}$PRESET_SEPARATOR${newId()}"
+        Snapshot.withMutableSnapshot {
+            for ((i, hud) in instances.withIndex()) {
+                if (!hud.staticWidth) {
+                    hud.renderedW = sizes[i].first
+                    hud.renderedH = sizes[i].second
+                }
+                hud.setAbsolutePosition(positions[i].first, positions[i].second)
+                hud.groupPath = path
+            }
+        }
+        for (hud in instances) {
+            HudManager.markProviderKnown(hud)
+            if (hud in HudManager.activeInstances) continue
+            HudManager.activeInstances.add(hud)
+            HudManager.instancesRevision.intValue++
+            try {
+                hud.captureStaticSizeDefaults()
+                hud.capturePositionDefaults()
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                HudManager.LOGGER.error("Failed to capture the defaults of HUD ${hud.title}", e)
+            }
+        }
+        val defaultAction = preset.defaultAction
+        if (defaultAction != null && instances.none { it.isAnchored }) arrangeSafely(defaultAction, alignedMembers(preset, instances))
+        HudManager.invalidate()
+        if (saveTrees(instances) && preset.id in defaults) HudManager.markGroupKnown(preset.id)
+        return HudGroup(path)
     }
 
     /** The preset a group was made from, which is the one registered under its id or under the part of its id before [PRESET_SEPARATOR] */
@@ -511,7 +535,7 @@ public object HudGroups {
     private fun presetSlots(group: HudGroup, preset: HudPreset): List<Hud?> =
         alignedMembers(preset, group.huds.filter { hud -> chainOf(hud).none { it in group && presetOf(it) != null } })
 
-    /** Applies [action] to the members of [group] as a single undo step, doing nothing if it fails */
+    /** Applies [action] to the members of [group] as a single undo step, dropping its changes to snapshot state such as positions and anchors if it fails */
     @JvmStatic
     public fun runPresetAction(group: HudGroup, action: HudPresetAction) {
         val preset = presetOf(group) ?: return
@@ -536,20 +560,6 @@ public object HudGroups {
         false
     }
 
-    private fun placementRestorer(hud: Hud): () -> Unit {
-        val w = hud.renderedW
-        val h = hud.renderedH
-        val x = hud.x
-        val y = hud.y
-        val path = hud.groupPath
-        return {
-            hud.renderedW = w
-            hud.renderedH = h
-            hud.setAbsolutePosition(x, y)
-            hud.groupPath = path
-        }
-    }
-
     @ApiStatus.Internal
     @JvmStatic
     public fun presetLayout(preset: HudPreset, huds: List<Hud>, sizes: List<Pair<Float, Float>>): List<Pair<Float, Float>> {
@@ -572,6 +582,7 @@ public object HudGroups {
         val (minW, minH) = hud.minimumSize()
         val w = if (hud.staticWidth) {
             hud.staticW.takeIf { it > 0f }?.times(scale)
+                ?: natural?.first?.takeIf { it > 0f }?.let { maxOf(it, minW) * scale }
         } else {
             hud.renderedW.takeIf { it > 0f }
                 ?: natural?.first?.takeIf { it > 0f }?.times(scale)
@@ -580,6 +591,7 @@ public object HudGroups {
         } ?: DEFAULT_HUD_WIDTH
         val h = if (hud.staticWidth) {
             hud.staticH.takeIf { it > 0f }?.times(scale)
+                ?: natural?.second?.takeIf { it > 0f }?.let { maxOf(it, minH) * scale }
         } else {
             hud.renderedH.takeIf { it > 0f }
                 ?: natural?.second?.takeIf { it > 0f }?.times(scale)
@@ -624,9 +636,14 @@ public object HudGroups {
         )
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
+        val copyPrefix = "${preset.id}$PRESET_SEPARATOR"
         val earlier = HudManager.activeInstances
-            .filter { it.groupPath.startsWith("${preset.id}$PRESET_SEPARATOR") }
-            .groupBy { it.groupPath }
+            .groupBy { hud ->
+                val ids = hud.groupPath.split(SEPARATOR)
+                val copy = ids.indexOfFirst { it.startsWith(copyPrefix) }
+                if (copy < 0) null else ids.subList(0, copy + 1)
+            }
+            .filterKeys { it != null }
             .values.mapNotNull { bounds(it) }
         fun free(x: Float, y: Float) = earlier.none { o ->
             x < o[0] + o[2] && o[0] < x + box[2] && y < o[1] + o[3] && o[1] < y + box[3]
@@ -637,10 +654,12 @@ public object HudGroups {
         val grid = generateSequence(0f) { it + stepY }.takeWhile { it + box[3] <= sh }.flatMap { gy ->
             generateSequence(0f) { it + stepX }.takeWhile { it + box[2] <= sw }.map { gx -> gx to gy }
         }
-        val (x, y) = (sequenceOf(box[0] to box[1], centred) + grid).firstOrNull { (cx, cy) -> free(cx, cy) }
-            ?: (box[0] + earlier.size * LAYOUT_GAP to box[1] + earlier.size * LAYOUT_GAP)
-        val dx = x.coerceIn(0f, maxOf(0f, sw - box[2])) - box[0]
-        val dy = y.coerceIn(0f, maxOf(0f, sh - box[3])) - box[1]
+        fun onScreen(p: Pair<Float, Float>) =
+            p.first.coerceIn(0f, maxOf(0f, sw - box[2])) to p.second.coerceIn(0f, maxOf(0f, sh - box[3]))
+        val (x, y) = (sequenceOf(box[0] to box[1], centred) + grid).map { onScreen(it) }.firstOrNull { (cx, cy) -> free(cx, cy) }
+            ?: onScreen(box[0] + earlier.size * LAYOUT_GAP to box[1] + earlier.size * LAYOUT_GAP)
+        val dx = x - box[0]
+        val dy = y - box[1]
         return positions.map { (it.first + dx) to (it.second + dy) }
     }
 
@@ -832,13 +851,19 @@ public object HudGroups {
     }
 
     private fun copyId(id: String, taken: MutableSet<String>): String {
-        val preset = id.substringBefore(PRESET_SEPARATOR, "")
-        return if (preset.isEmpty()) newId(taken) else "$preset$PRESET_SEPARATOR${newId(taken)}"
+        val preset = id.substringBefore(PRESET_SEPARATOR)
+        val keep = PRESET_SEPARATOR in id || presetNamed(preset) != null
+        return if (keep) "$preset$PRESET_SEPARATOR${newId(taken)}" else newId(taken)
     }
 
     private fun takenIds(): MutableSet<String> {
         val taken = HashSet<String>()
-        for (hud in HudManager.activeInstances) taken.addAll(hud.groupPath.split(SEPARATOR))
+        for (hud in HudManager.activeInstances) {
+            for (id in hud.groupPath.split(SEPARATOR)) {
+                taken.add(id)
+                taken.add(id.substringAfter(PRESET_SEPARATOR))
+            }
+        }
         return taken
     }
 

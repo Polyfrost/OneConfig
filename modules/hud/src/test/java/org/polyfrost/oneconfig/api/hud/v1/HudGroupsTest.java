@@ -42,6 +42,8 @@ class HudGroupsTest {
         @Override public boolean showByDefault() { return false; }
         @Override public boolean multipleInstancesAllowed() { return false; }
         @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(100f, 50f); }
+        static float textScaleInSetup;
+        @Override public void setup() { super.setup(); textScaleInSetup = getTextScale(); }
     }
 
     static class PresetMulti extends BoxHud {
@@ -55,6 +57,35 @@ class HudGroupsTest {
         @Override public boolean showByDefault() { return false; }
         @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(100f, 50f); }
     }
+
+    static class Undeletable extends BoxHud {
+        Undeletable() { super("group-undeletable"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public boolean multipleInstancesAllowed() { return false; }
+        @Override public boolean deletable() { return false; }
+        static int removals;
+        @Override public void remove() { removals++; }
+    }
+
+    static class BrokenSetup extends BoxHud {
+        BrokenSetup() { super("group-broken-setup"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public void setup() { throw new IllegalStateException("setup"); }
+    }
+
+    static class OffOne extends BoxHud {
+        OffOne() { super("group-off-one"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(2000f, 50f); }
+    }
+
+    static class OffTwo extends BoxHud {
+        OffTwo() { super("group-off-two"); }
+        @Override public boolean showByDefault() { return false; }
+        @Override public Pair<Float, Float> defaultPosition() { return new Pair<>(2100f, 50f); }
+    }
+
+    static class NeverRegistered extends BoxHud { NeverRegistered() { super("group-never-registered"); } }
 
     static class ArrangeOne extends BoxHud {
         ArrangeOne() { super("group-arrange-one"); }
@@ -79,8 +110,11 @@ class HudGroupsTest {
         huds.get(1).anchorTo(huds.get(0), HudAnchor.BottomLeft, HudAnchor.TopLeft));
     private static final String DEFAULT_ID = "test.defaults";
     private static HudPreset multiPreset;
+    private static HudPreset offPreset;
+    private static HudPreset partialPreset;
     private static final String PRESET_ID = "test.preset";
     private static HudPreset preset;
+    private static HudPreset brokenPreset;
     private static boolean registered = false;
 
     private Hud a;
@@ -93,7 +127,7 @@ class HudGroupsTest {
         ConfigManager.active();
         ConfigManager.openProfile("");
         if (!registered) {
-            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB(), new ArrangeOne(), new ArrangeTwo(), new SlotBase(), new SlotDerived());
+            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB(), new ArrangeOne(), new ArrangeTwo(), new SlotBase(), new SlotDerived(), new OffOne(), new OffTwo(), new Undeletable(), new BrokenSetup());
             HudGroups.registerPreset("test.recording", "Recording", Arrays.asList(HudB.class, HudA.class), null, null, null,
                 Collections.singletonList(new HudPresetAction("record", "Record", huds -> { received.clear(); received.addAll(huds); })), null);
             HudGroups.registerPreset("test.arranged", "Arranged", Arrays.asList(ArrangeTwo.class, ArrangeOne.class), null, null, null,
@@ -105,6 +139,9 @@ class HudGroupsTest {
             HudGroups.registerPreset(DEFAULT_ID, "Defaults", Arrays.asList(DefaultOne.class, DefaultTwo.class), null, null, null,
                 Collections.singletonList(STACK), "stack");
             multiPreset = HudGroups.registerPreset("test.preset.multi", "Multi", Arrays.asList(PresetMultiB.class, PresetMulti.class));
+            offPreset = HudGroups.registerPreset("test.offscreen", "Off", Arrays.asList(OffOne.class, OffTwo.class));
+            partialPreset = HudGroups.registerPreset("test.partial", "Partial", Arrays.asList(HudA.class, HudB.class, NeverRegistered.class));
+            brokenPreset = HudGroups.registerPreset("test.broken", "Broken", Arrays.asList(Undeletable.class, BrokenSetup.class));
             preset = HudGroups.registerPreset(PRESET_ID, "Preset", Arrays.asList(PresetSingle.class, PresetMulti.class));
             HudGroups.registerDefault(DEFAULT_ID, "Defaults", DefaultOne.class, DefaultTwo.class);
             registered = true;
@@ -569,6 +606,116 @@ class HudGroupsTest {
             removeAll(PresetMulti.class);
             removeAll(PresetMultiB.class);
         }
+    }
+
+    @Test
+    void offScreenPresetCopiesAreClampedWithoutOverlapping() {
+        try {
+            float[] first = HudGroups.bounds(HudGroups.addPreset(offPreset).getHuds());
+            float[] second = HudGroups.bounds(HudGroups.addPreset(offPreset).getHuds());
+            assertTrue(first[0] + first[2] <= 960f && second[0] + second[2] <= 960f, "both copies are on screen");
+            boolean overlap = first[0] < second[0] + second[2] && second[0] < first[0] + first[2]
+                && first[1] < second[1] + second[3] && second[1] < first[1] + first[3];
+            assertFalse(overlap, "the second copy covers the first");
+        } finally {
+            removeAll(OffOne.class);
+            removeAll(OffTwo.class);
+        }
+    }
+
+    @Test
+    void aPresetCopyInsideAnotherGroupIsNotCovered() {
+        try {
+            HudGroup first = HudGroups.addPreset(multiPreset);
+            HudGroup parent = HudGroups.group(Collections.emptyList(), Collections.singletonList(first));
+            assertNotNull(parent);
+            float[] nested = HudGroups.bounds(parent.getHuds());
+            float[] second = HudGroups.bounds(HudGroups.addPreset(multiPreset).getHuds());
+            boolean overlap = nested[0] < second[0] + second[2] && second[0] < nested[0] + nested[2]
+                && nested[1] < second[1] + second[3] && second[1] < nested[1] + nested[3];
+            assertFalse(overlap, "the second copy covers the nested one");
+        } finally {
+            removeAll(PresetMulti.class);
+            removeAll(PresetMultiB.class);
+        }
+    }
+
+    @Test
+    void aPresetWhoseMemberFailsSetupLeavesNothingBehind() throws Exception {
+        String treeId = "huds/group-undeletable";
+        int removals = Undeletable.removals;
+        assertNull(HudGroups.addPreset(brokenPreset));
+        assertEquals(removals + 1, Undeletable.removals, "a member that was set up is removed again");
+        assertFalse(HudManager.INSTANCE.hasHudOfType(Undeletable.class));
+        assertFalse(HudManager.INSTANCE.hasHudOfType(BrokenSetup.class));
+        assertFalse(HudManager.INSTANCE.getProvider(Undeletable.class).isReal());
+        assertFalse(ConfigManager.active().exists(treeId));
+        assertNull(ConfigManager.active().load(treeId), "no config file is written");
+        assertFalse(((Set<?>) get("knownProviders")).contains(Undeletable.class.getName()));
+        assertTrue(HudGroups.canAdd(brokenPreset));
+    }
+
+    @Test
+    void aPresetWithAMissingMemberCannotBeAdded() {
+        assertFalse(HudGroups.canAdd(partialPreset));
+        assertNull(HudGroups.addPreset(partialPreset));
+    }
+
+    @Test
+    void aFailedPresetKeepsTheStoredConfigOfASingleInstanceMember() {
+        Hud single = HudManager.INSTANCE.getProvider(PresetSingle.class).make(null);
+        String treeId = single.getTree().getID();
+        try {
+            HudManager.addInstance(single);
+            ConfigManager.active().save(treeId);
+            ConfigManager.active().unregister(treeId);
+            HudManager.INSTANCE.removeHud(single, false);
+            assertNotNull(ConfigManager.active().load(treeId));
+
+            assertNull(HudGroups.addPreset(preset, hud -> { throw new IllegalStateException("measure"); }));
+            assertNotNull(ConfigManager.active().load(treeId), "the stored config survives the rollback");
+            assertFalse(HudManager.INSTANCE.hasHudOfType(PresetSingle.class));
+            assertFalse(HudManager.INSTANCE.hasHudOfType(PresetMulti.class));
+        } finally {
+            removeAll(PresetSingle.class);
+            removeAll(PresetMulti.class);
+            ConfigManager.active().get(treeId);
+            ConfigManager.active().delete(treeId);
+        }
+    }
+
+    @Test
+    void aPresetMemberWithStoredConfigIsSetUpWithItsStoredValues() {
+        Hud single = HudManager.INSTANCE.getProvider(PresetSingle.class).make(null);
+        String treeId = single.getTree().getID();
+        try {
+            HudManager.addInstance(single);
+            single.setTextScale(2f);
+            ConfigManager.active().save(treeId);
+            ConfigManager.active().unregister(treeId);
+            HudManager.INSTANCE.removeHud(single, false);
+            single.setTextScale(1f);
+
+            assertNotNull(HudGroups.addPreset(preset));
+            assertEquals(2f, PresetSingle.textScaleInSetup);
+            assertEquals(2f, only(PresetSingle.class).getTextScale());
+        } finally {
+            removeAll(PresetSingle.class);
+            removeAll(PresetMulti.class);
+            ConfigManager.active().get(treeId);
+            ConfigManager.active().delete(treeId);
+        }
+    }
+
+    @Test
+    void copiesOfADefaultGroupKeepItsPreset() {
+        Hud one = only(DefaultOne.class);
+        Hud two = only(DefaultTwo.class);
+        one.setGroupPath(DEFAULT_ID);
+        two.setGroupPath(DEFAULT_ID);
+        List<String> paths = HudGroups.pathsForCopies(Arrays.asList(one, two));
+        assertTrue(paths.get(0).startsWith(DEFAULT_ID + HudGroups.PRESET_SEPARATOR), paths.get(0));
+        assertEquals("Defaults", new HudGroup(paths.get(0)).getName());
     }
 
     @Test
