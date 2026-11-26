@@ -225,7 +225,7 @@ public final class CompatSnapshotStore {
 
     private static boolean contentEquals(Path file, byte[] bytes) {
         try {
-            return Files.isRegularFile(file) && Files.size(file) == bytes.length && Arrays.equals(Files.readAllBytes(file), bytes);
+            return Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS) && Files.size(file) == bytes.length && Arrays.equals(Files.readAllBytes(file), bytes);
         } catch (IOException ignored) {
             return false;
         }
