@@ -49,6 +49,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,7 +219,16 @@ public final class CompatSnapshotStore {
         } catch (Exception failure) {
             throw new IOException("Failed to serialize compat snapshot for profile '" + profile + "'", failure);
         }
+        if (contentEquals(file, bytes)) return;
         writeAtomically(file, bytes);
+    }
+
+    private static boolean contentEquals(Path file, byte[] bytes) {
+        try {
+            return Files.isRegularFile(file) && Files.size(file) == bytes.length && Arrays.equals(Files.readAllBytes(file), bytes);
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 
     private static void writeAtomically(Path file, byte[] bytes) throws IOException {
