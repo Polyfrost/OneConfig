@@ -119,6 +119,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
+import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.api.PropertyModToggle
 import org.polyfrost.oneconfig.internal.ui.api.isLockExempt
 import org.polyfrost.oneconfig.internal.ui.api.isMarkedSwitch
@@ -941,13 +942,13 @@ private fun GroupHeaderContent(
     val showActionButton = OneConfigConfig.showOptionActionButtons && !headLocked
     val menu = head?.let { rememberOptionMenu(it) }
     val configId = LocalConfigId.current
-    menu?.extraEntries = { listOf(groupResetEntry(tree, false, configId)) }
+    menu?.extraEntries = { listOfNotNull(groupResetEntry(tree, false, configId, null)) }
 
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(interaction)
-            .contextMenu { groupMenuEntries(tree, menu.takeUnless { headLocked }, headLocked, configId) }
+            .contextMenu { groupMenuEntries(tree, menu.takeUnless { headLocked }, !groupEnabled, configId, head.takeIf { headDisplay == Property.Display.DISABLED }) }
             .oneConfigClickable(tree.localizedTitle().asPlainLabel(), onClick, indication = false, interactionSource = interaction)
     ) {
         val switch = head != null && isSwitchHead(tree, head)
@@ -1005,15 +1006,16 @@ private fun GroupHeaderContent(
     }
 }
 
-private fun groupMenuEntries(tree: Tree, headMenu: OptionMenuState?, locked: Boolean, configId: String?): List<MenuEntry> =
-    headMenu?.entries() ?: listOf(groupResetEntry(tree, locked, configId))
+private fun groupMenuEntries(tree: Tree, headMenu: OptionMenuState?, locked: Boolean, configId: String?, lockedHead: Property<*>?): List<MenuEntry> =
+    headMenu?.entries() ?: listOfNotNull(groupResetEntry(tree, locked, configId, lockedHead))
 
-private fun groupResetEntry(tree: Tree, locked: Boolean, configId: String?): MenuEntry {
-    val ownSwitch = ownSwitchOf(configId)
-    val resettable = treeHasDefault(tree, identitySet().also { seen -> ownSwitch?.let(seen::add) })
+private fun groupResetEntry(tree: Tree, locked: Boolean, configId: String?, lockedHead: Property<*>?): MenuEntry? {
+    if (!isNativeConfig(configId)) return null
+    val skipped = listOfNotNull(ownSwitchOf(configId), lockedHead)
+    val resettable = treeHasDefault(tree, identitySet().apply { addAll(skipped) })
     return MenuAction(
         translated("oneconfig.group.menu.reset", "Reset to defaults"),
-        { confirmGroupReset(tree, ownSwitch) },
+        { confirmGroupReset(tree, skipped) },
         icon = "refresh",
         danger = true,
         enabled = !locked && resettable,
@@ -1025,15 +1027,20 @@ private fun groupResetEntry(tree: Tree, locked: Boolean, configId: String?): Men
     )
 }
 
+private fun isNativeConfig(configId: String?): Boolean {
+    val data = configId?.let(ConfigRegistry::findById) ?: return false
+    return data.source == ConfigSource.OC && ConfigRegistry.findTree(data.id)?.getMetadata<Boolean>("ui_only") != true
+}
+
 private fun ownSwitchOf(configId: String?): Property<*>? =
     (configId?.let { ConfigRegistry.findById(it)?.toggle } as? PropertyModToggle)?.property
 
-private fun confirmGroupReset(tree: Tree, ownSwitch: Property<*>?) {
+private fun confirmGroupReset(tree: Tree, skipped: List<Property<*>>) {
     Confirm.ask(
         title = translated("oneconfig.group.menu.reset.title", "Reset %s?", tree.localizedTitle().asPlainLabel()),
         text = translated("oneconfig.group.menu.reset.text", "Every setting in this group goes back to its default. This can't be undone."),
         confirmLabel = translated("oneconfig.group.menu.reset.confirm", "Reset settings"),
-        onConfirm = { resetTree(tree, identitySet().also { seen -> ownSwitch?.let(seen::add) }) },
+        onConfirm = { resetTree(tree, identitySet().apply { addAll(skipped) }) },
         icon = "refresh",
     )
 }

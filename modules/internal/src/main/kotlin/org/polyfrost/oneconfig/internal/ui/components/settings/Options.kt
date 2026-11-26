@@ -42,7 +42,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -137,7 +136,7 @@ fun resetOption(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()
 
 internal fun treeHasDefault(tree: Tree, seen: MutableSet<Property<*>> = identitySet()): Boolean = tree.map.values.any { node ->
     when (node) {
-        is Property<*> -> if (node.get() is OneConfigKeybind) seen.add(node) else optionHasDefault(node, seen)
+        is Property<*> -> optionHasDefault(node, seen)
         is Tree -> treeHasDefault(node, seen)
         else -> false
     }
@@ -146,11 +145,7 @@ internal fun treeHasDefault(tree: Tree, seen: MutableSet<Property<*>> = identity
 internal fun resetTree(tree: Tree, seen: MutableSet<Property<*>> = identitySet()) {
     for (node in tree.map.values) {
         when (node) {
-            is Property<*> -> if (node.get() is OneConfigKeybind) {
-                if (seen.add(node)) resetKeybindOption(node)
-            } else {
-                resetOption(node, seen)
-            }
+            is Property<*> -> if (!node.isKeybind()) resetOption(node, seen) else if (optionHasDefault(node, seen)) resetKeybindOption(node)
             is Tree -> resetTree(node, seen)
         }
     }
@@ -229,8 +224,8 @@ fun optionMenuEntries(
     resetEnabled: Boolean? = null,
     onUnbind: (() -> Unit)? = null,
 ): List<MenuEntry> {
-    val isKeybind = runCatching { prop.get() is OneConfigKeybind }.getOrDefault(false)
-    val reset = onReset ?: { if (prop.get() is OneConfigKeybind) resetKeybindOption(prop) else resetOption(prop) }
+    val isKeybind = prop.isKeybind()
+    val reset = onReset ?: { if (isKeybind) resetKeybindOption(prop) else resetOption(prop) }
     val builtIn = OptionMenuContributors.builtInEntries(prop, onReset = reset)
     val canReset = resetEnabled ?: optionHasDefault(prop)
     val entries = ArrayList<MenuEntry>(builtIn.size + 4)
