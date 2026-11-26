@@ -250,7 +250,7 @@ internal class HudHistory {
 
     fun redo(): List<Hud>? = step(redoStack, undoStack)
 
-    /** Goes back to how the layout was when this history started, one [redo] per step to bring it back */
+    /** Goes back as far as this history holds, at most [HISTORY_LIMIT] steps, one [redo] per step to bring it back */
     fun undoAll(): List<Hud>? {
         val now = capture()
         val last = recorded

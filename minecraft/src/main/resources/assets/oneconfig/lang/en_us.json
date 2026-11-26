@@ -899,6 +899,7 @@
   "oneconfig.hud.menu.remove_from_group": "Remove from group",
   "oneconfig.hud.menu.duplicate": "Duplicate",
   "oneconfig.hud.menu.undo": "Undo",
+  "oneconfig.hud.menu.undo_all": "Undo all",
   "oneconfig.hud.menu.redo": "Redo",
   "oneconfig.hud.menu.reset_position": "Reset position",
   "oneconfig.hud.menu.reset_settings": "Reset HUD settings",
