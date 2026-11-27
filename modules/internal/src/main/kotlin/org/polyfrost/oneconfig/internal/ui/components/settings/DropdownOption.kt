@@ -77,7 +77,6 @@ fun Dropdown(
     val labels = remember(options, stamp) { options.map { it.asPlainLabel() } }
     val styled = remember(options, stamp) { options.styledLabelsOrNull() }
     Select(
-        // an index outside the options leaves the field showing its placeholder
         selected = if (mixed) -1 else selected,
         options = labels.indices.toList(),
         onSelect = onSelect,

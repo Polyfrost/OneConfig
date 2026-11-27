@@ -29,15 +29,14 @@ import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 /** The Settings tab of [group], which lists what is inside it and has what its HUDs share, with [onOpen] stepping into one */
 @Composable
 fun GroupSettings(group: HudGroup, query: String, onOpen: (Set<Hud>) -> Unit) {
-    // the group reads the HUD list, which compose cannot see change
-    HudManager.instancesRevision.intValue
+    val (subGroups, directHuds) = HudManager.instancesRevision.intValue.let { group.subGroups to group.directHuds }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         CardSection("HUDs", query) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                for (sub in group.subGroups) {
+                for (sub in subGroups) {
                     GroupRow(sub.name ?: hudGroupMembers(sub), "group") { onOpen(sub.huds.toSet()) }
                 }
-                for (hud in group.directHuds) {
+                for (hud in directHuds) {
                     GroupRow(localizedLabel(hud.title) ?: hud.title, "right-arrow") { onOpen(setOf(hud)) }
                 }
             }

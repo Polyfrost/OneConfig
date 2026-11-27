@@ -207,7 +207,6 @@ class HudGroupsTest {
 
     @Test
     void movingAGroupAnchoredThroughAnOutsideHud() {
-        // b hangs off c which hangs off a, and only a and b are grouped
         c.setAbsolutePosition(100f, 120f);
         b.setAbsolutePosition(100f, 140f);
         c.anchorTo(a, HudAnchor.BottomLeft, HudAnchor.TopLeft);
@@ -431,7 +430,6 @@ class HudGroupsTest {
 
     @Test
     void defaultGroupsApplyOnceAndUngroupingSticks() throws Exception {
-        // start as if the group had never been applied, earlier runs may have saved it as known
         ((Set<?>) get("knownGroups")).remove(DEFAULT_ID);
         only(DefaultOne.class).setGroupPath("");
         only(DefaultTwo.class).setGroupPath("");

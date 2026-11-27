@@ -60,7 +60,6 @@ private val POSITION_OPTIONS = setOf(
     "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY", "movedByPlayer",
 )
 
-// which group a HUD is in is structure rather than a setting, so resetting the HUD keeps it grouped
 private val UNRESETTABLE_OPTIONS = setOf("groupPath")
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */

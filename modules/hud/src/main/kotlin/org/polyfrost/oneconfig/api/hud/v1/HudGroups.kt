@@ -105,6 +105,7 @@ public class HudGroup internal constructor(
 }
 
 private val HUD_SCALE_RANGE = 0.25f..4f
+private const val DEPTH_WHILE_VISITING = 0
 
 /**
  * Creates, changes and lays out [HudGroup]s
@@ -420,8 +421,6 @@ public object HudGroups {
     public fun roots(huds: Collection<Hud>): List<Hud> {
         val set = identitySet(huds)
         return huds.filter { hud ->
-            // anchors and fused backgrounds hold each axis separately, so a HUD only rides along when
-            // both of its axes hang off a HUD that is moving too
             val (px, py) = axisParents(hud)
             !followsWithin(hud, px, set) || !followsWithin(hud, py, set)
         }
@@ -430,7 +429,6 @@ public object HudGroups {
     /** Moves the roots of [huds] by ([dx], [dy]) from the positions in [starts] */
     @JvmStatic
     public fun moveFrom(huds: Collection<Hud>, starts: Map<Hud, Pair<Float, Float>>, dx: Float, dy: Float) {
-        // parents first, so a HUD still pinned to a moving one on one axis is placed against where it ended up
         for (hud in parentsFirst(roots(huds), huds)) {
             val (sx, sy) = starts[hud] ?: continue
             hud.setAbsolutePosition(sx + dx, sy + dy)
@@ -460,7 +458,6 @@ public object HudGroups {
         public val maxFactor: Float
 
         init {
-            // anchor parents first so every HUD is placed against where its parent already ended up
             members = parentsFirst(huds, huds)
             scales = BooleanArray(members.size).also { flags ->
                 val can = identitySet(scalable(members))
@@ -512,12 +509,10 @@ public object HudGroups {
     public fun groupable(hud: Hud): Boolean = hud.persistOwnState
 
     private fun units(huds: Collection<Hud>, groups: Collection<HudGroup>): List<Moving> {
-        // a group already holding another selected group or HUD carries it along on its own
         val groupList = groups.distinct().filter { g -> groups.none { it != g && g in it } }
         val out = ArrayList<Moving>(huds.size + groupList.size)
         for (g in groupList) out.add(Moving(g.huds, g.parent?.path.orEmpty()))
         for (hud in huds.distinct()) {
-            // a HUD that keeps its own state elsewhere has nowhere to save which group it is in
             if (!groupable(hud) || groupList.any { hud in it }) continue
             out.add(Moving(listOf(hud), hud.groupPath))
         }
@@ -609,8 +604,7 @@ public object HudGroups {
         fun depth(hud: Hud, steps: Int): Int {
             memo[hud]?.let { return it }
             if (steps > MAX_ANCHOR_DEPTH) return 0
-            // a loop resolves to the screen so treat a HUD already being visited as a root
-            memo[hud] = 0
+            memo[hud] = DEPTH_WHILE_VISITING
             val (px, py) = axisParents(hud)
             var d = 0
             for (p in arrayOf(px, py)) {

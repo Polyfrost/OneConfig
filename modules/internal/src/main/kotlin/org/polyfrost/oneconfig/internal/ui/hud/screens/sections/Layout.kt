@@ -277,7 +277,6 @@ internal fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float
 internal fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit) {
     HudEditorViewport.observe()
     val selection = designerSelection(hud)
-    // the fields read and move what a drag would, so a locked HUD that holds still does not count
     val movable = { draggableHuds(selection).ifEmpty { selection } }
     val origin = selectionOrigin(movable()) ?: Offset(hud.x, hud.y)
     val locked = draggableHuds(selection).isEmpty()
