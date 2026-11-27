@@ -397,8 +397,9 @@ class OneConfigSetupPlugin : Plugin<Project> {
 
         tasks.withType<JavaCompile>().configureEach {
             if (inCI) return@configureEach
-            val sourceSetName = sourceSets.find { it.compileJavaTaskName == name }!!.name
-            finalizedBy("checkstyle${sourceSetName.replaceFirstChar(Char::uppercaseChar)}")
+            // standalone compile tasks like compileModMenuApiShimJava have no checkstyle task
+            val sourceSet = sourceSets.find { it.compileJavaTaskName == name } ?: return@configureEach
+            finalizedBy("checkstyle${sourceSet.name.replaceFirstChar(Char::uppercaseChar)}")
         }
 
         tasks.withType<KotlinCompile>().configureEach {
