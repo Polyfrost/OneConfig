@@ -168,12 +168,8 @@ private fun restore(target: Layout): List<Hud> {
             val hud = existing ?: revive(id, entry) ?: continue
             val changed = write(hud, entry)
             if (existing == null) {
-                HudManager.activeInstances.add(hud)
-                HudManager.instancesRevision.intValue++
+                HudManager.addInstance(hud)
                 HudManager.markProviderKnown(hud)
-                hud.setup()
-                hud.captureStaticSizeDefaults()
-                hud.capturePositionDefaults()
                 revived.add(hud)
             } else if (changed) {
                 bumpHudUiEpoch(hud)

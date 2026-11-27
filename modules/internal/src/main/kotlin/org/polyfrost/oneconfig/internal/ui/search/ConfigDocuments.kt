@@ -7,7 +7,9 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudGroups
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.HudPreset
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.TreeConfigData
@@ -20,6 +22,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.HudModCardData
 import org.polyfrost.oneconfig.internal.ui.hud.cardsSupersededByHudCards
 import org.polyfrost.oneconfig.internal.ui.hud.configForHud
 import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
+import org.polyfrost.oneconfig.internal.ui.hud.libraryConfigId
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.isKeybindProperty
@@ -178,6 +181,28 @@ object HudDocumentSource : SearchDocumentSource {
                 modDescription = config?.description?.asRenderText()?.takeIf { it.isNotBlank() },
             ),
             payload = hud,
+        )
+    }
+}
+
+object HudPresetDocumentSource : SearchDocumentSource {
+    override val dependencies = setOf<SearchDocumentSource>(ConfigDocumentSource)
+
+    init {
+        HudManager.addRegistrationListener { SearchCorpus.invalidate(HudPresetDocumentSource) }
+    }
+
+    override fun documents(): List<SearchDocument<HudPreset>> = HudGroups.presets().map { preset ->
+        SearchDocument(
+            id = "hudpreset$ID_SEPARATOR${preset.id}",
+            scopes = setOf(SearchScope.Huds),
+            metadata = SearchMetadata(
+                title = preset.name.takeIf { it.isNotBlank() },
+                id = preset.id,
+                tags = preset.members.mapNotNull { HudManager.getProvider(it)?.title?.let(::localizedLabel)?.takeIf { l -> l.isNotBlank() } },
+                modTitle = preset.libraryConfigId?.let { modNameFor(it) ?: it }?.takeIf { it.isNotBlank() },
+            ),
+            payload = preset,
         )
     }
 }

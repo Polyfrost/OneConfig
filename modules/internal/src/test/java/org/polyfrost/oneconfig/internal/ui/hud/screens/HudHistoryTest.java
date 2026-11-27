@@ -34,7 +34,10 @@ import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.hud.v1.Hud;
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor;
+import org.polyfrost.oneconfig.api.hud.v1.HudGroups;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
+import org.polyfrost.oneconfig.api.hud.v1.HudPresetAction;
 import org.polyfrost.oneconfig.api.hud.v1.TextHud;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedAmount;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedColor;
@@ -43,11 +46,13 @@ import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedProperty;
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.SharedToggle;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudHistoryTest {
@@ -278,21 +283,67 @@ class HudHistoryTest {
         assertNull(history.redo());
     }
 
+    @Test
+    void aPresetActionOverSeveralHudsIsOneStep() {
+        SecondHud secondProvider = new SecondHud();
+        ThirdHud thirdProvider = new ThirdHud();
+        HudManager.register(secondProvider, thirdProvider);
+        HudGroups.registerPreset("test.history.preset", "History", Arrays.asList(TestHud.class, SecondHud.class, ThirdHud.class), null, null, null,
+            Collections.singletonList(new HudPresetAction("chain", "Chain", huds -> {
+                for (int i = 1; i < huds.size(); i++) huds.get(i).anchorTo(huds.get(i - 1), HudAnchor.BottomLeft, HudAnchor.TopLeft);
+            })), null);
+        try {
+            List<Hud> huds = Arrays.asList(place(provider), place(secondProvider), place(thirdProvider));
+            for (Hud hud : huds) hud.setGroupPath("test.history.preset#one");
+            history.poll(false);
+
+            HudGroups.runPresetAction(huds.get(0).getGroup(), HudGroups.presetOf(huds.get(0).getGroup()).getActions().get(0));
+            settle();
+
+            assertSame(huds.get(0), huds.get(1).getAnchorParent());
+            assertSame(huds.get(1), huds.get(2).getAnchorParent());
+            assertNotNull(history.undo());
+            assertNull(huds.get(1).getAnchorParent());
+            assertNull(huds.get(2).getAnchorParent());
+            assertNull(history.undo(), "the whole arrangement went back in the one step");
+        } finally {
+            HudGroups.unregisterPreset("test.history.preset");
+            HudManager.INSTANCE.unregister(secondProvider, true, true);
+            HudManager.INSTANCE.unregister(thirdProvider, true, true);
+        }
+    }
+
     private void settle() {
         history.poll(false);
         history.poll(false);
     }
 
     private Hud place() {
-        Hud hud = provider.make(null);
+        return place(provider);
+    }
+
+    private Hud place(Hud from) {
+        Hud hud = from.make(null);
         hud.setAbsolutePosition(10f, 10f);
         HudManager.INSTANCE.getActiveInstances().add(hud);
         return hud;
     }
 
-    static class TestHud extends TextHud {
-        TestHud() {
-            super("test-history", "Test History HUD", Hud.Category.getINFO(), "", "");
+    static class SecondHud extends BaseHud {
+        SecondHud() { super("test-history-second"); }
+    }
+
+    static class ThirdHud extends BaseHud {
+        ThirdHud() { super("test-history-third"); }
+    }
+
+    static class TestHud extends BaseHud {
+        TestHud() { super("test-history"); }
+    }
+
+    static abstract class BaseHud extends TextHud {
+        BaseHud(String id) {
+            super(id, "Test History HUD", Hud.Category.getINFO(), "", "");
         }
 
         @Override

@@ -1890,11 +1890,15 @@ public abstract class Hud(
     @Composable
     public abstract fun Content()
 
+    internal val singletonTreeId: String get() = "huds/$id"
+
     @ApiStatus.Internal
-    public fun make(with: Tree? = null): Hud {
+    public fun make(with: Tree? = null): Hud = build(with).also { it.registerTree() }
+
+    internal fun build(with: Tree? = null): Hud {
         if (tree != null) throw IllegalArgumentException("HUD is already made, it cannot be made again")
         val out = if (multipleInstancesAllowed()) clone() else this
-        val treeId = with?.id ?: if (multipleInstancesAllowed()) "huds/${(1000..9999).random()}-$id" else "huds/$id"
+        val treeId = with?.id ?: if (multipleInstancesAllowed()) "huds/${(1000..9999).random()}-$id" else singletonTreeId
         if (out.defaultStaticWidth) out.staticWidth = true
         HudStyles.applyDefaultTo(out)
         val tree = ConfigManager.collect(out, treeId)
@@ -2017,13 +2021,22 @@ public abstract class Hud(
             if (with == null) LOGGER.info("generated new HUD config for $title -> ${tree.id}")
             Config.captureDefaults(tree)
             if (out.capturedDefaults == null) out.capturedDefaults = tree
-            ConfigManager.active().register(tree)
-            sanitizeHudCapturedDefaults(tree)
             this.tree = tree
-            syncToggleKeybind()
-            for (bind in clonedKeybinds) KeybindManager.register(bind)
         }
         return out
+    }
+
+    internal fun registerTree() {
+        val tree = tree ?: return
+        ConfigManager.active().register(tree)
+        sanitizeHudCapturedDefaults(tree)
+        syncToggleKeybind()
+        for (bind in clonedKeybinds) KeybindManager.register(bind)
+    }
+
+    internal fun loadStoredValues() {
+        val tree = tree ?: return
+        ConfigManager.active().load(tree.id)?.let { tree.overwrite(it, true) }
     }
 
     protected open fun addCallbacks(tree: Tree) {}
