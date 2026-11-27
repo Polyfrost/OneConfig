@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.utils.v1.OverwriteMergeable
@@ -167,7 +168,7 @@ public open class OneConfigKeybind(
             if (KeyModifiers.has(mods, KeyModifiers.CTRL)) add("Ctrl")
             if (KeyModifiers.has(mods, KeyModifiers.SHIFT)) add("Shift")
             if (KeyModifiers.has(mods, KeyModifiers.ALT)) add("Alt")
-            if (KeyModifiers.has(mods, KeyModifiers.META)) add("Meta")
+            if (KeyModifiers.has(mods, KeyModifiers.META)) add(if (DesktopHelper.isMac) "Cmd" else "Win")
         }
     }
 }
