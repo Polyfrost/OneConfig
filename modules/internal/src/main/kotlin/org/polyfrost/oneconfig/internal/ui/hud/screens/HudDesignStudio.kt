@@ -122,7 +122,6 @@ import org.polyfrost.oneconfig.internal.ui.hud.components.rememberHudPreview
 import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasMenuEntries
 import org.polyfrost.oneconfig.internal.ui.hud.hudCanvasPasteMenuEntries
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
-import org.polyfrost.oneconfig.internal.ui.hud.repairHudStaticSize
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.GroupSettings
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Layout
 import org.polyfrost.oneconfig.internal.ui.hud.screens.sections.Settings
@@ -259,6 +258,7 @@ private const val NUDGE_SETTLE_MS = 300L
 private const val PANEL_RESIZE_STIFFNESS = Spring.StiffnessMediumLow
 private const val DRAGGED_HUD_FILL_ALPHA = 0.10f
 private const val MARQUEE_FILL_ALPHA = 0.15f
+private const val LIMIT_SLACK = 0.5f
 
 private val hiddenHudDashEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f)
 
@@ -643,16 +643,7 @@ private fun hudBounds(hud: Hud): HudBounds? {
             ?: return null
         return HudBounds(hud.x, hud.y, width, height)
     }
-    val width = if (hud.staticWidth) {
-        hud.staticW.takeIf { it > 0f }?.times(scale)
-    } else {
-        hud.renderedW.takeIf { it > 0f } ?: hud.staticW.takeIf { it > 0f }?.times(scale)
-    } ?: return null
-    val height = if (hud.staticWidth) {
-        hud.staticH.takeIf { it > 0f }?.times(scale)
-    } else {
-        hud.renderedH.takeIf { it > 0f } ?: hud.staticH.takeIf { it > 0f }?.times(scale)
-    } ?: return null
+    val (width, height) = hud.boundsSize(scale) ?: return null
     return HudBounds(hud.x, hud.y, width, height)
 }
 
@@ -1082,13 +1073,56 @@ private fun resizeHud(
         val newWidth = targetWidth.coerceAtLeast(minStaticW * effectiveScale)
         val newHeight = targetHeight.coerceAtLeast(minStaticH * effectiveScale)
 
-        hud.staticWidth = true
-        hud.staticW = newWidth / effectiveScale
-        hud.staticH = newHeight / effectiveScale
+        resizeWidth(hud, newWidth / effectiveScale)
+        resizeHeight(hud, newHeight / effectiveScale)
         return
     }
 
     hud.customScale = (startScale.coerceAtLeast(0.001f) * cornerScaleFactor(corner, startBounds, mouseX, mouseY)).coerceIn(0.25f, 4f)
+}
+
+/** Moves the limits the user is dragging: both when the axis is fixed, else the maximum if there is one, else the minimum, else pins the size */
+private fun resizeWidth(hud: Hud, width: Float) {
+    when {
+        hud.isFixedW -> {
+            // the minimum first so a growing width raises the maximum and a shrinking one is not held up by it
+            hud.minW = width
+            hud.maxW = width
+        }
+        hud.maxW > 0f -> {
+            val box = hud.currentWidth()
+            if (hud.minW > width || (width > box && box < hud.maxW - LIMIT_SLACK)) hud.minW = width
+            hud.maxW = width
+        }
+        hud.minW > 0f -> {
+            val box = hud.currentWidth()
+            val shrinking = width < box && box > hud.minW + LIMIT_SLACK
+            hud.minW = width
+            if (shrinking) hud.maxW = width
+        }
+        else -> { hud.maxW = width; hud.minW = width }
+    }
+}
+
+private fun resizeHeight(hud: Hud, height: Float) {
+    when {
+        hud.isFixedH -> {
+            hud.minH = height
+            hud.maxH = height
+        }
+        hud.maxH > 0f -> {
+            val box = hud.currentHeight()
+            if (hud.minH > height || (height > box && box < hud.maxH - LIMIT_SLACK)) hud.minH = height
+            hud.maxH = height
+        }
+        hud.minH > 0f -> {
+            val box = hud.currentHeight()
+            val shrinking = height < box && box > hud.minH + LIMIT_SLACK
+            hud.minH = height
+            if (shrinking) hud.maxH = height
+        }
+        else -> { hud.maxH = height; hud.minH = height }
+    }
 }
 
 private fun DrawScope.drawSelectedHudBounds(
@@ -1354,13 +1388,13 @@ private fun placeHudCentered(provider: Hud): Hud? = try {
     val screenH = HudManager.guiScreenHeight
     val scale = instance.effectiveScale
     val (minW, minH) = instance.minimumSize()
-    val w = if (instance.staticWidth) {
-        instance.staticW.takeIf { it > 0f }?.times(scale)
+    val w = if (instance.isFixedW) {
+        maxOf(instance.minW, minW).times(scale)
     } else {
         instance.renderedW.takeIf { it > 0f } ?: minW.takeIf { it > 0f }?.times(scale) ?: instance.staticW.takeIf { it > 0f }?.times(scale)
     } ?: 60f
-    val h = if (instance.staticWidth) {
-        instance.staticH.takeIf { it > 0f }?.times(scale)
+    val h = if (instance.isFixedH) {
+        maxOf(instance.minH, minH).times(scale)
     } else {
         instance.renderedH.takeIf { it > 0f } ?: minH.takeIf { it > 0f }?.times(scale) ?: instance.staticH.takeIf { it > 0f }?.times(scale)
     } ?: 20f
@@ -1652,8 +1686,6 @@ fun HudDesignStudio(visible: Boolean = true) {
     }
 
     LaunchedEffect(selectedHuds, enteredGroup, tourBlocksEditor) {
-        val primary = primaryHud()
-        primary?.let { repairHudStaticSize(it) }
         HudDesignSession.activeSelection = if (tourBlocksEditor) emptyList() else selectedHuds.toList()
         HudDesignSession.activeGroup = if (tourBlocksEditor) null else soleGroup()
         HudDesignSession.enteredGroup = enteredGroup
@@ -3438,9 +3470,13 @@ internal fun duplicateHud(
         fresh.tree.overwrite(detachedValues(copied.tree), true, false, null)
         fresh.hidden = copied.hidden
         fresh.locked = copied.locked
-        fresh.staticWidth = copied.staticWidth
         fresh.staticW = copied.staticW
         fresh.staticH = copied.staticH
+        fresh.minW = copied.minW
+        fresh.maxW = copied.maxW
+        fresh.minH = copied.minH
+        fresh.maxH = copied.maxH
+        fresh.fitContent = copied.fitContent
         fresh.customScale = copied.customScale
         if (mcPosition != null) {
             val sw = HudManager.guiScreenWidth

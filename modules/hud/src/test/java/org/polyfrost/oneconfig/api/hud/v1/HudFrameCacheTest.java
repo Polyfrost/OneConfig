@@ -302,7 +302,8 @@ class HudFrameCacheTest {
         child.side = 60f;
         other.side = 20f;
         for (Hud hud : new Hud[]{above, child, other}) {
-            hud.setStaticWidth(true);
+            hud.fixWidth(true);
+            hud.fixHeight(true);
             hud.setRenderedW(hud.getStaticW());
             hud.setRenderedH(hud.getStaticH());
         }
@@ -318,6 +319,7 @@ class HudFrameCacheTest {
             assertTrue(child.getMergeLinkY$hud() != null && child.getMergeLinkY$hud().getParent() == above, "child must hang under the HUD above it");
 
             above.side = 0f;
+            above.fixHeight(false);
             above.setRenderedH(0f);
             assertTrue(child.layoutY$hud(540f) < 30f, "setup: the collapsed parent must pull the child beside the other HUD");
             groups.invoke(HudManager.INSTANCE, huds, 960f, 540f, 1f);

@@ -32,8 +32,10 @@ import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TextHudTest {
     @Test
@@ -49,6 +51,54 @@ public class TextHudTest {
         hud.setTemplate("yyyy-MM-dd");
         assertDoesNotThrow(hud::update);
         assertNotNull(hud.text());
+    }
+
+    @Test
+    void fixedSizeBeforeFirstMeasureIsKeptAndPinned() {
+        TestMutableTextHud hud = new TestMutableTextHud("Text");
+        hud.fixWidth(true);
+        assertTrue(hud.getMinW() < 0f);
+        assertFalse(hud.isFixedW());
+
+        float pending = hud.getMinW();
+        TestMutableTextHud loaded = new TestMutableTextHud("Text");
+        loaded.setMinW(pending);
+        loaded.setMaxW(0f);
+        assertTrue(loaded.getMinW() < 0f);
+
+        loaded.setRenderedW(50f);
+        assertTrue(loaded.isFixedW());
+        assertEquals(50f, loaded.getMinW(), 0.001f);
+
+        hud.setStaticW(100f);
+        assertTrue(hud.isFixedW());
+        assertEquals(100f, hud.getMaxW(), 0.001f);
+
+        hud.fixHeight(true);
+        hud.setMaxH(30f);
+        assertEquals(0f, hud.getMinH(), 0.001f);
+    }
+
+    @Test
+    void limitsLoadInAnyOrder() {
+        TestMutableTextHud hud = new TestMutableTextHud("Text");
+        hud.setMinW(200f);
+        hud.setMaxW(200f);
+        hud.setMaxW(100f);
+        hud.setMinW(50f);
+        assertEquals(50f, hud.getMinW(), 0.001f);
+        assertEquals(100f, hud.getMaxW(), 0.001f);
+    }
+
+    @Test
+    void limitsSetDirectlySurviveSetup() {
+        TestMutableTextHud hud = new TestMutableTextHud("Text");
+        hud.setMinW(100f);
+        hud.setMaxW(100f);
+        hud.setup();
+        assertEquals(100f, hud.getMinW(), 0.001f);
+        assertEquals(100f, hud.getMaxW(), 0.001f);
+        assertEquals(100f, hud.getStaticW(), 0.001f);
     }
 
     @Test
