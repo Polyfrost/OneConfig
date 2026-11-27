@@ -36,7 +36,7 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
     override fun icon(modId: String): String? {
         val bytes = api.findIcon(modId).orElse(null) ?: return null
         // a new file each time, as a mod updated since must not show its old icon from a path already loaded
-        val file = Files.createTempFile(iconDir, "mod-icon-", ".png")
+        val file = Files.createTempFile(iconDir, "mod-icon-", iconSuffix(bytes))
         file.toFile().deleteOnExit()
         Files.write(file, bytes)
         return file.toAbsolutePath().toString()

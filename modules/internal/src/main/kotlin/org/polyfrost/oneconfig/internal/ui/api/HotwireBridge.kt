@@ -387,6 +387,10 @@ abstract class HotwireBridge {
             return file
         }
 
+        /** The file suffix for an icon's [bytes], as a jar's icon can be an SVG though Fabric asks for a PNG */
+        fun iconSuffix(bytes: ByteArray) =
+            if (String(bytes, 0, minOf(bytes.size, 64), Charsets.UTF_8).trimStart('\uFEFF', ' ', '\t', '\r', '\n').startsWith('<')) ".svg" else ".png"
+
         private const val MAX_ICON_BYTES = 8 * 1024 * 1024
 
         private const val ICON_TIMEOUT_MS = 10_000

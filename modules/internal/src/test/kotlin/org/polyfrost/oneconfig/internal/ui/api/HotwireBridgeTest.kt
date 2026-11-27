@@ -240,4 +240,10 @@ class HotwireBridgeTest {
         val before = HotwireBridge.downloadProgress(listOf(download(1, 100)))
         assertEquals(0.1f, HotwireBridge.downloadProgress(listOf(download(2, 10)))?.shownAfter(before, 1f))
     }
+
+    @Test
+    fun anSvgIconIsSavedAsOne() {
+        assertEquals(".svg", HotwireBridge.iconSuffix("﻿<?xml version=\"1.0\"?>\n<svg/>".toByteArray()))
+        assertEquals(".png", HotwireBridge.iconSuffix(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47)))
+    }
 }
