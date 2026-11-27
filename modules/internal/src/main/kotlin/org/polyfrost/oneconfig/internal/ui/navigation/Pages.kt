@@ -62,7 +62,7 @@ internal class BuiltinPage(
     group,
 ) {
     override val searchPlaceholder: PageText =
-        PageText.translatable("oneconfig.page.$key.search", "Search $englishTitle...")
+        PageText.translatable("oneconfig.page.$key.search", "Filter ${englishTitle.lowercase(Locale.ROOT)}")
 
     @Composable
     override fun Content() = content()
@@ -268,10 +268,13 @@ fun NavBackStackEntry?.currentPageTitle(): String? =
     currentPage()?.title?.resolve()
         ?: sidebarSections().asSequence().flatMap { it.entries }.firstOrNull { isOn(it.route) }?.label
 
-fun searchPlaceholder(entry: NavBackStackEntry?): String = searchPlaceholder(entry.currentPage(), entry.currentPageTitle())
+fun searchPlaceholder(entry: NavBackStackEntry?): String {
+    if (entry?.destination?.hasRoute(ModConfigRoute::class) == true) return translated("oneconfig.header.filter.mod", "Filter this mod")
+    return searchPlaceholder(entry.currentPage(), entry.currentPageTitle())
+}
 
 fun searchPlaceholder(page: OneConfigPage?, title: String?): String {
     page?.searchPlaceholder?.let { return it.resolve() }
-    if (title == null) return translated("oneconfig.header.search", "Search...")
-    return translated("oneconfig.header.search.page", "Search %s...", title)
+    if (title == null) return translated("oneconfig.header.filter", "Filter")
+    return translated("oneconfig.header.filter.page", "Filter %s", title)
 }

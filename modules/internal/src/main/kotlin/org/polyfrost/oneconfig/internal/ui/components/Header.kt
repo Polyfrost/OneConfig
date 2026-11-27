@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -43,11 +42,9 @@ import androidx.navigation.toRoute
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
-import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.SearchField
-import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
@@ -57,7 +54,9 @@ import org.polyfrost.oneconfig.internal.ui.LocalCloseRequest
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.navigation.currentPageTitle
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.searchPlaceholder
+import org.polyfrost.oneconfig.internal.ui.screens.ModSortControl
 import org.polyfrost.oneconfig.internal.ui.search.submenuTrail
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
@@ -130,44 +129,21 @@ fun Header(modifier: Modifier = Modifier) {
                         }
                     }
                 }
-                // Separate animation keeps the button composed exactly once per frame while still giving
-                // it the same fade as the title. Sharing the title's AnimatedContent duplicated the
-                // button per transition target, and the outgoing copy had no byline or tooltip (both
-                // gated on the current title) so it briefly showed against the bare title.
-                //
-                // AnimatedVisibility rather than AnimatedContent: the header Row vertically centers its
-                // children, so animating AnimatedContent's measured size re-centers it and drags the
-                // button around. AnimatedVisibility only fades and keeps the content's natural size for
-                // the whole transition, so the Row never has to re-center it.
-                var lastAction by remember { mutableStateOf<Runnable?>(null) }
-                LaunchedEffect(openOriginalScreen) {
-                    if (openOriginalScreen != null) lastAction = openOriginalScreen
-                }
-                AnimatedVisibility(
-                    visible = openOriginalScreen != null,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                ) {
-                    // one Row so the spacer and the button share a single measured node and keep their
-                    // horizontal order
-                    // prefer the live action so switching between two mods never shows the previous
-                    // mod's runnable for the frame before the effect updates lastAction
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        (openOriginalScreen ?: lastAction)?.let {
-                            Spacer(Modifier.size(8.dp))
-                            OpenOriginalScreenButton(it)
-                        }
-                    }
-                }
             }
         }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(26.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GlobalSearchBar()
-            IconButton("close", iconButtonLabel("close"), { closeRequest() }, Modifier.size(32.dp))
+            PageFilterBar()
+            if (backStackEntry?.destination?.hasRoute(ModsRoute::class) == true) ModSortControl()
+            val entryId = backStackEntry?.id
+            val pageMenu = HeaderMenus.entriesFor(entryId)
+            val modMenu = title?.configId?.takeIf { hasModHeaderMenu(it, openOriginalScreen) }
+                ?.let { id -> { modHeaderMenu(id, openOriginalScreen) } }
+            (pageMenu ?: modMenu)?.let { HeaderMoreButton(it) }
+            IconButton("close", iconButtonLabel("close"), { closeRequest() }, Modifier.padding(start = 8.dp).size(32.dp))
         }
     }
 }
@@ -184,6 +160,7 @@ private data class HeaderTitle(
     val credits: String? = null,
     val version: String? = null,
     val openOriginalScreen: Runnable? = null,
+    val configId: String? = null,
 )
 
 private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
@@ -205,6 +182,7 @@ private fun NavBackStackEntry?.headerTitle(): HeaderTitle? {
             credits = config.credits,
             version = config.version,
             openOriginalScreen = tree?.getMetadata<Runnable>("open_original_screen"),
+            configId = route.id,
         )
     }
 
@@ -242,22 +220,6 @@ private fun TitleBreadcrumb(segments: List<TitleSegment>, controller: ShellNavig
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun OpenOriginalScreenButton(runnable: Runnable) {
-    TooltipBox(
-        translated("oneconfig.header.original_menu.tooltip", "Opening the original screen may show options that OneConfig doesn't."),
-        placement = TooltipPlacement.BelowCenter,
-    ) {
-        TextButton(
-            translated("oneconfig.header.original_menu", "Original menu"),
-            "external-link",
-            { runnable.run() },
-            style = ControlStyle.Primary,
-            size = ControlSize.Compact,
-        )
     }
 }
 
@@ -321,6 +283,7 @@ fun GlobalSearchBar(
     leading: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
     fontSize: TextUnit = TextUnit.Unspecified,
+    size: ControlSize = ControlSize.ExtraLarge,
 ) {
     val navController = LocalShellNavController.current
     val search = LocalShell.current.search
@@ -369,7 +332,7 @@ fun GlobalSearchBar(
             onValueChange = { searchText = it },
             modifier = modifier.then(fieldModifier),
             placeholder = placeholderText ?: placeholder,
-            size = ControlSize.ExtraLarge,
+            size = size,
             leading = leading,
             trailing = if (searchText.text.isEmpty()) null else ({
                 IconButton(

@@ -502,7 +502,7 @@ private fun modCardMenu(mod: ConfigData, navigation: ShellNavigation): List<Menu
     }
 }
 
-private fun confirmReset(mod: ConfigData, tree: Tree) {
+internal fun confirmReset(mod: ConfigData, tree: Tree) {
     val ownSwitch = (mod.toggle as? PropertyModToggle)?.property
     Confirm.ask(
         title = translated("oneconfig.mods.menu.reset.title", "Reset %s?", mod.title.asRenderText()),
