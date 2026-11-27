@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Needs PolyCompose 3.0.9 or newer
-- Marked as incompatible with Hotwire versions below 0.9.5.4-beta
+- Marked as incompatible with Hotwire versions below 0.9.6-beta
 
 ### Fixed
 - Merged HUDs stay in place when one of them changes size (#1431)
