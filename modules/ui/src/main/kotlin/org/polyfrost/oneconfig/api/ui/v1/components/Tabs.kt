@@ -54,6 +54,7 @@ private const val SEGMENT_SELECTED_ALPHA = 0.1f
 private val PILL_PADDING = 14.dp
 private val CORNER_BADGE_GAP = 1.dp
 private val CORNER_BADGE_RISE = 7.dp
+private const val COUNT_ALPHA = 0.6f
 
 @ExperimentalOneConfigUiApi
 public enum class TabStyle {
@@ -71,6 +72,8 @@ public enum class TabBadgePlacement {
     Inline,
 
     Corner,
+
+    Count,
 }
 
 @ExperimentalOneConfigUiApi
@@ -380,6 +383,14 @@ private fun SegmentTab(tab: TabItem<*>, selected: Boolean, enabled: Boolean, siz
 @Composable
 private fun TabContent(tab: TabItem<*>, color: Color, size: ControlSize, badges: TabBadgePlacement, spacing: Dp = 6.dp) {
     val badge = tab.badge
+    if (badges == TabBadgePlacement.Count && badge != null) {
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing + 1.dp), verticalAlignment = Alignment.CenterVertically) {
+            TabContentRow(tab, color, size, spacing, null)
+            val style = OneConfigTheme.typography.body.copy(fontSize = 12.sp, fontWeight = FontWeight.Normal)
+            Text(badge, Modifier, color.copy(alpha = color.alpha * COUNT_ALPHA), style, 1, TextOverflow.Clip)
+        }
+        return
+    }
     if (badges == TabBadgePlacement.Corner && badge != null) {
         Box(contentAlignment = Alignment.CenterEnd) {
             TabContentRow(tab, color, size, spacing, null)

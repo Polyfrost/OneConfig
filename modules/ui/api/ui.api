@@ -1753,6 +1753,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/TabActivation : 
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement : java/lang/Enum {
 	public static final field Corner Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
+	public static final field Count Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
 	public static final field Inline Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
