@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.ui.hud
 
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
+import org.polyfrost.oneconfig.api.hud.v1.HudPreset
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.internal.ui.api.ConfigData
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
@@ -17,3 +19,6 @@ internal fun modNameFor(configId: String): String? {
     ModInfo.loadedMods.firstOrNull { it.id == modId }?.name?.let { return it }
     return configForHud(configId)?.title?.asRenderText()
 }
+
+internal val HudPreset.libraryConfigId: String?
+    get() = configId ?: members.firstNotNullOfOrNull { HudManager.getProvider(it)?.configId }

@@ -57,7 +57,7 @@ public class HudGroup internal constructor(
     /** How many groups this one is nested in */
     public val depth: Int get() = path.count { it == HudGroups.SEPARATOR }
 
-    /** The name a mod gave this group through [HudGroups.registerDefault], if any */
+    /** The name a mod gave this group through [HudGroups.registerDefault] or [HudGroups.registerPreset], if any */
     public val name: String? get() = HudGroups.nameOf(id)
 
     /** Every live HUD in this group or in one of its sub-groups */
@@ -106,6 +106,9 @@ public class HudGroup internal constructor(
 
 private val HUD_SCALE_RANGE = 0.25f..4f
 private const val DEPTH_WHILE_VISITING = 0
+private const val DEFAULT_HUD_WIDTH = 60f
+private const val DEFAULT_HUD_HEIGHT = 20f
+private const val LAYOUT_GAP = 4f
 
 /**
  * Creates, changes and lays out [HudGroup]s
@@ -117,6 +120,9 @@ private const val DEPTH_WHILE_VISITING = 0
 public object HudGroups {
     public const val SEPARATOR: Char = '/'
 
+    /** Splits the preset id from the unique part in the id of a group made from a [HudPreset] */
+    public const val PRESET_SEPARATOR: Char = '#'
+
     /** Backstop for walking a chain of HUDs anchored to one another */
     private const val MAX_ANCHOR_DEPTH = 16
 
@@ -124,6 +130,7 @@ public object HudGroups {
 
     private val defaults = LinkedHashMap<String, DefaultGroup>()
     private val names = HashMap<String, String>()
+    private val presets = LinkedHashMap<String, HudPreset>()
 
     @Volatile
     private var defaultsPending = false
@@ -164,8 +171,12 @@ public object HudGroups {
         return out.sortedBy { it.depth }
     }
 
+    /** The name registered for the group with [id], which a group made from a [HudPreset] has through its preset */
     @JvmStatic
-    public fun nameOf(id: String): String? = names[id]
+    public fun nameOf(id: String): String? =
+        names[id] ?: presetNamed(id.substringBefore(PRESET_SEPARATOR, ""))?.name
+
+    private fun presetNamed(id: String): HudPreset? = synchronized(presets) { presets[id] }
 
     /**
      * Puts [huds] and [groups] into a new group and returns it
@@ -363,20 +374,12 @@ public object HudGroups {
             if (!default.members.all { type -> members.any(type::isInstance) }) continue
             val added = members.filter { it.groupPath.isEmpty() }
             Snapshot.withMutableSnapshot { for (hud in added) hud.groupPath = default.id }
-            var saved = true
-            for (hud in added) {
-                val treeId = hud.tree?.id ?: continue
-                try {
-                    if (!ConfigManager.active().save(treeId)) {
-                        HudManager.LOGGER.error("Failed to save HUD {} after grouping it", treeId)
-                        saved = false
-                    }
-                } catch (e: Exception) {
-                    HudManager.LOGGER.error("Failed to save HUD $treeId after grouping it", e)
-                    saved = false
-                }
+            val preset = presetNamed(default.id)
+            val action = preset?.defaultAction
+            if (preset != null && action != null && members.none { it.isAnchored }) {
+                arrangeSafely(action, alignedMembers(preset, members))
             }
-            if (!saved) continue
+            if (!saveTrees(members)) continue
             HudManager.markGroupKnown(default.id)
             HudManager.LOGGER.info("Grouped {} HUDs into default group {}", members.size, default.id)
         }
@@ -384,6 +387,282 @@ public object HudGroups {
 
     private fun inDefault(hud: Hud, id: String): Boolean =
         hud.groupPath == id || hud.groupPath.startsWith(id + SEPARATOR)
+
+    private fun saveTrees(huds: Collection<Hud>): Boolean {
+        var saved = true
+        for (hud in huds) {
+            val treeId = hud.tree?.id ?: continue
+            try {
+                if (!ConfigManager.active().save(treeId)) {
+                    HudManager.LOGGER.error("Failed to save HUD {} after grouping it", treeId)
+                    saved = false
+                }
+            } catch (e: Exception) {
+                HudManager.LOGGER.error("Failed to save HUD $treeId after grouping it", e)
+                saved = false
+            }
+        }
+        return saved
+    }
+
+    /** Registers [members] as a preset the HUD library adds as one group, replacing any preset with the same [id] */
+    @JvmStatic
+    @JvmOverloads
+    public fun registerPreset(
+        id: String,
+        name: String,
+        members: List<Class<out Hud>>,
+        configId: String? = null,
+        icon: String? = null,
+        layout: HudPresetLayout? = null,
+        actions: List<HudPresetAction> = emptyList(),
+        defaultAction: String? = null,
+    ): HudPreset {
+        require(id.isNotEmpty() && SEPARATOR !in id && PRESET_SEPARATOR !in id) {
+            "HUD preset id '$id' must be non-empty and contain neither '$SEPARATOR' nor '$PRESET_SEPARATOR'"
+        }
+        require(name.isNotBlank()) { "HUD preset '$id' needs a name" }
+        val distinct = members.distinct()
+        require(distinct.size >= 2) { "HUD preset '$id' needs at least two different HUDs" }
+        require(actions.map { it.id }.distinct().size == actions.size) { "HUD preset '$id' has actions with the same id" }
+        val default = defaultAction?.let { wanted ->
+            requireNotNull(actions.firstOrNull { it.id == wanted }) { "HUD preset '$id' has no action '$wanted'" }
+        }
+        val preset = HudPreset(id, name, distinct, configId, icon, layout, actions.toList(), default)
+        synchronized(presets) { presets[id] = preset }
+        HudManager.notifyRegistrationChanged()
+        return preset
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun unregisterPreset(id: String) {
+        if (synchronized(presets) { presets.remove(id) } != null) HudManager.notifyRegistrationChanged()
+    }
+
+    /** Every registered preset in the order they were registered */
+    @JvmStatic
+    public fun presets(): List<HudPreset> = synchronized(presets) { presets.values.toList() }
+
+    /** Whether [preset] can be added right now */
+    @JvmStatic
+    public fun canAdd(preset: HudPreset): Boolean {
+        val providers = providersOf(preset)
+        return providers.size == preset.members.size && providers.none { !it.multipleInstancesAllowed() && HudManager.hasHudOfType(it::class.java) }
+    }
+
+    /** Adds every HUD of [preset] in one new group, or returns `null` and changes nothing when it cannot be added */
+    @JvmStatic
+    public fun addPreset(preset: HudPreset): HudGroup? = addPreset(preset) { null }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun addPreset(preset: HudPreset, naturalSize: (Hud) -> Pair<Float, Float>?): HudGroup? {
+        if (!canAdd(preset)) return null
+        val providers = providersOf(preset)
+        val built = ArrayList<Hud>(providers.size)
+        val setUp = ArrayList<Hud>(providers.size)
+        val instances: List<Hud>
+        val sizes: List<Pair<Float, Float>>
+        val positions: List<Pair<Float, Float>>
+        try {
+            instances = providers.map { provider ->
+                val hud = if (provider.isReal) provider else provider.build().also {
+                    built.add(it)
+                    it.loadStoredValues()
+                }
+                if (hud !in HudManager.activeInstances) {
+                    setUp.add(hud)
+                    hud.setup()
+                }
+                hud
+            }
+            sizes = instances.mapIndexed { i, hud -> estimatedSize(hud, naturalSize(providers[i])) }
+            positions = placed(preset, presetLayout(preset, instances, sizes), sizes)
+        } catch (e: Throwable) {
+            if (e.isFatalHudFailure()) throw e
+            for (hud in setUp) {
+                try {
+                    hud.remove()
+                } catch (t: Throwable) {
+                    if (t.isFatalHudFailure()) throw t
+                    HudManager.LOGGER.error("Failed to remove HUD ${hud.title} after its preset failed", t)
+                }
+            }
+            built.forEach(Hud::detachTree)
+            HudManager.LOGGER.error("Failed to add HUD preset ${preset.id}", e)
+            return null
+        }
+        built.forEach(Hud::registerTree)
+        val path = "${preset.id}$PRESET_SEPARATOR${newId()}"
+        Snapshot.withMutableSnapshot {
+            for ((i, hud) in instances.withIndex()) {
+                if (!hud.staticWidth) {
+                    hud.renderedW = sizes[i].first
+                    hud.renderedH = sizes[i].second
+                }
+                hud.setAbsolutePosition(positions[i].first, positions[i].second)
+                hud.groupPath = path
+            }
+        }
+        for (hud in instances) {
+            HudManager.markProviderKnown(hud)
+            if (hud in HudManager.activeInstances) continue
+            HudManager.activeInstances.add(hud)
+            HudManager.instancesRevision.intValue++
+            try {
+                hud.captureStaticSizeDefaults()
+                hud.capturePositionDefaults()
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                HudManager.LOGGER.error("Failed to capture the defaults of HUD ${hud.title}", e)
+            }
+        }
+        val defaultAction = preset.defaultAction
+        if (defaultAction != null && instances.none { it.isAnchored }) arrangeSafely(defaultAction, alignedMembers(preset, instances))
+        HudManager.invalidate()
+        if (saveTrees(instances) && preset.id in defaults) HudManager.markGroupKnown(preset.id)
+        return HudGroup(path)
+    }
+
+    /** The preset a group was made from, which is the one registered under its id or under the part of its id before [PRESET_SEPARATOR] */
+    @JvmStatic
+    public fun presetOf(group: HudGroup): HudPreset? = presetNamed(group.id.substringBefore(PRESET_SEPARATOR))
+
+    /** The HUDs of [group] that are members of [preset], in the order the preset lists them */
+    @JvmStatic
+    public fun presetMembers(group: HudGroup, preset: HudPreset): List<Hud> = presetSlots(group, preset).filterNotNull()
+
+    private fun presetSlots(group: HudGroup, preset: HudPreset): List<Hud?> =
+        alignedMembers(preset, group.huds.filter { hud -> chainOf(hud).none { it in group && presetOf(it) != null } })
+
+    /** Applies [action] to the members of [group] as a single undo step, dropping its changes to snapshot state such as positions and anchors if it fails */
+    @JvmStatic
+    public fun runPresetAction(group: HudGroup, action: HudPresetAction) {
+        val preset = presetOf(group) ?: return
+        val slots = presetSlots(group, preset)
+        if (!arrangeSafely(action, slots)) return
+        HudManager.invalidate()
+        saveTrees(slots.filterNotNull())
+    }
+
+    private fun alignedMembers(preset: HudPreset, huds: List<Hud>): List<Hud?> {
+        val taken = identitySet(emptyList())
+        val exact = preset.members.map { type -> huds.firstOrNull { it.javaClass == type && taken.add(it) } }
+        return preset.members.mapIndexed { i, type -> exact[i] ?: huds.firstOrNull { type.isInstance(it) && taken.add(it) } }
+    }
+
+    private fun arrangeSafely(action: HudPresetAction, huds: List<Hud?>): Boolean = try {
+        Snapshot.withMutableSnapshot { action.arrangement.arrange(huds) }
+        true
+    } catch (e: Throwable) {
+        if (e.isFatalHudFailure()) throw e
+        HudManager.LOGGER.error("HUD preset action ${action.id} failed", e)
+        false
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun presetLayout(preset: HudPreset, huds: List<Hud>, sizes: List<Pair<Float, Float>>): List<Pair<Float, Float>> {
+        val custom = preset.layout?.let {
+            try {
+                it.positions(huds, sizes).takeIf { positions -> positions.size == huds.size }
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                HudManager.LOGGER.error("Layout of HUD preset ${preset.id} failed", e)
+                null
+            }
+        }
+        return custom ?: defaultLayout(huds, sizes)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun estimatedSize(hud: Hud, natural: Pair<Float, Float>?): Pair<Float, Float> {
+        val scale = hud.effectiveScale
+        val (minW, minH) = hud.minimumSize()
+        val w = if (hud.staticWidth) {
+            hud.staticW.takeIf { it > 0f }?.times(scale)
+                ?: natural?.first?.takeIf { it > 0f }?.let { maxOf(it, minW) * scale }
+        } else {
+            hud.renderedW.takeIf { it > 0f }
+                ?: natural?.first?.takeIf { it > 0f }?.times(scale)
+                ?: minW.takeIf { it > 0f }?.times(scale)
+                ?: hud.staticW.takeIf { it > 0f }?.times(scale)
+        } ?: DEFAULT_HUD_WIDTH
+        val h = if (hud.staticWidth) {
+            hud.staticH.takeIf { it > 0f }?.times(scale)
+                ?: natural?.second?.takeIf { it > 0f }?.let { maxOf(it, minH) * scale }
+        } else {
+            hud.renderedH.takeIf { it > 0f }
+                ?: natural?.second?.takeIf { it > 0f }?.times(scale)
+                ?: minH.takeIf { it > 0f }?.times(scale)
+                ?: hud.staticH.takeIf { it > 0f }?.times(scale)
+        } ?: DEFAULT_HUD_HEIGHT
+        return w to h
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun providersOf(preset: HudPreset): List<Hud> =
+        preset.members.mapNotNull(HudManager::getProvider).filter { groupable(it) && it !is LegacyHudMarker }
+
+    private fun defaultLayout(huds: List<Hud>, sizes: List<Pair<Float, Float>>): List<Pair<Float, Float>> {
+        val defaults = huds.map {
+            try {
+                it.defaultPosition()
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                HudManager.LOGGER.error("Default position of HUD ${it.title} failed", e)
+                null
+            }
+        }
+        val placed = huds.indices.filter { defaults[it] != null }
+        val right = placed.maxOfOrNull { defaults[it]!!.first + sizes[it].first } ?: 0f
+        val top = placed.minOfOrNull { defaults[it]!!.second } ?: 0f
+        var x = right
+        return huds.indices.map { i ->
+            defaults[i] ?: (x to top).also { x += sizes[i].first + LAYOUT_GAP }
+        }
+    }
+
+    private fun placed(preset: HudPreset, positions: List<Pair<Float, Float>>, sizes: List<Pair<Float, Float>>): List<Pair<Float, Float>> {
+        val left = positions.minOf { it.first }
+        val top = positions.minOf { it.second }
+        val box = floatArrayOf(
+            left,
+            top,
+            positions.indices.maxOf { positions[it].first + sizes[it].first } - left,
+            positions.indices.maxOf { positions[it].second + sizes[it].second } - top,
+        )
+        val sw = HudManager.guiScreenWidth
+        val sh = HudManager.guiScreenHeight
+        val copyPrefix = "${preset.id}$PRESET_SEPARATOR"
+        val earlier = HudManager.activeInstances
+            .groupBy { hud ->
+                val ids = hud.groupPath.split(SEPARATOR)
+                val copy = ids.indexOfFirst { it.startsWith(copyPrefix) }
+                if (copy < 0) null else ids.subList(0, copy + 1)
+            }
+            .filterKeys { it != null }
+            .values.mapNotNull { bounds(it) }
+        fun free(x: Float, y: Float) = earlier.none { o ->
+            x < o[0] + o[2] && o[0] < x + box[2] && y < o[1] + o[3] && o[1] < y + box[3]
+        }
+        val stepX = box[2] + LAYOUT_GAP
+        val stepY = box[3] + LAYOUT_GAP
+        val centred = (sw - box[2]) / 2f to (sh - box[3]) / 2f
+        val grid = generateSequence(0f) { it + stepY }.takeWhile { it + box[3] <= sh }.flatMap { gy ->
+            generateSequence(0f) { it + stepX }.takeWhile { it + box[2] <= sw }.map { gx -> gx to gy }
+        }
+        fun onScreen(p: Pair<Float, Float>) =
+            p.first.coerceIn(0f, maxOf(0f, sw - box[2])) to p.second.coerceIn(0f, maxOf(0f, sh - box[3]))
+        val (x, y) = (sequenceOf(box[0] to box[1], centred) + grid).map { onScreen(it) }.firstOrNull { (cx, cy) -> free(cx, cy) }
+            ?: onScreen(box[0] + earlier.size * LAYOUT_GAP to box[1] + earlier.size * LAYOUT_GAP)
+        val dx = x - box[0]
+        val dy = y - box[1]
+        return positions.map { (it.first + dx) to (it.second + dy) }
+    }
 
     /**
      * The box around [huds] as `[x, y, width, height]` in gui units, or `null` when none of them has a
@@ -562,14 +841,25 @@ public object HudGroups {
         val renamed = HashMap<String, String>()
         return originals.map { hud ->
             chainOf(hud).joinToString(SEPARATOR.toString()) { group ->
-                if (group.huds.all { it in copied }) renamed.getOrPut(group.path) { newId(taken) } else group.id
+                if (group.huds.all { it in copied }) renamed.getOrPut(group.path) { copyId(group.id, taken) } else group.id
             }
         }
     }
 
+    private fun copyId(id: String, taken: MutableSet<String>): String {
+        val preset = id.substringBefore(PRESET_SEPARATOR)
+        val keep = PRESET_SEPARATOR in id || presetNamed(preset) != null
+        return if (keep) "$preset$PRESET_SEPARATOR${newId(taken)}" else newId(taken)
+    }
+
     private fun takenIds(): MutableSet<String> {
         val taken = HashSet<String>()
-        for (hud in HudManager.activeInstances) taken.addAll(hud.groupPath.split(SEPARATOR))
+        for (hud in HudManager.activeInstances) {
+            for (id in hud.groupPath.split(SEPARATOR)) {
+                taken.add(id)
+                taken.add(id.substringAfter(PRESET_SEPARATOR))
+            }
+        }
         return taken
     }
 
