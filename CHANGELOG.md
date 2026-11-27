@@ -5,6 +5,21 @@ All notable changes to OneConfig are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- API: `Hud.previewsBehindMenu` lets HUDs that only show now and then stay as they are in game behind the config menu and preview only in Edit HUD (#1423)
+
+### Changed
+- Needs PolyCompose 3.0.9 or newer
+
+### Fixed
+- Merged HUDs stay in place when one of them changes size (#1431)
+- Keybinds are no longer saved every frame while FastQuit saves the world (#1429)
+- On 1.8.9, OneConfig no longer declares a Mod Menu entrypoint that fails to load (#1427)
+- With wWaypoints 0.9 and newer, the per-type default settings it no longer has are hidden instead of snapping back to Icon (#1428)
+- API: `ShutdownEvent` is posted once when the client stops instead of every frame while FastQuit waits on the world save (#1429)
+
 ## [1.9.5] - 2026-11-25
 
 ### Added
