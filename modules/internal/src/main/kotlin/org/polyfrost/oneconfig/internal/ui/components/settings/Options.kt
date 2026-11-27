@@ -1,6 +1,9 @@
 package org.polyfrost.oneconfig.internal.ui.components.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
@@ -14,6 +17,7 @@ import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
@@ -29,6 +33,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.Checkbox
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
@@ -41,7 +46,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.OptionMenuContributors
 import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
-import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -50,6 +54,7 @@ import org.polyfrost.oneconfig.internal.ui.components.blockInteraction
 import org.polyfrost.oneconfig.internal.ui.components.componentText
 import org.polyfrost.oneconfig.internal.ui.components.legacyText
 import org.polyfrost.oneconfig.internal.ui.components.translated
+import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import org.polyfrost.oneconfig.internal.ui.themes.updateAccent
 import java.util.Collections
@@ -213,8 +218,8 @@ fun BooleanOption(data: BooleanOptionData, enabled: Boolean) {
         }
     }
     when (data.style) {
-        BooleanOptionData.Style.Switch -> Switch(checked, { checked = it; data.boolProp.set(it) }, enabled = enabled, stateLabel = true)
-        BooleanOptionData.Style.Checkbox -> Checkbox(checked, { checked = it; data.boolProp.set(it) }, enabled = enabled, stateLabel = true)
+        BooleanOptionData.Style.Switch -> Switch(checked, { checked = it; data.boolProp.set(it) }, enabled = enabled, stateLabel = false)
+        BooleanOptionData.Style.Checkbox -> Checkbox(checked, { checked = it; data.boolProp.set(it) }, enabled = enabled, stateLabel = false)
     }
 }
 
@@ -230,7 +235,7 @@ fun optionMenuEntries(
     val canReset = resetEnabled ?: optionHasDefault(prop)
     val entries = ArrayList<MenuEntry>(builtIn.size + 4)
     builtIn.forEachIndexed { index, entry ->
-        entries += if (index == 0 && !canReset && entry is MenuAction) entry.disabled() else entry
+        entries += if (index == 0 && entry is MenuAction) entry.resetEntry(canReset, if (onReset == null) optionDefaultLabel(prop) else null) else entry
     }
     if (isKeybind || onUnbind != null) {
         entries += MenuAction(
@@ -248,14 +253,14 @@ fun optionMenuEntries(
     return entries
 }
 
-private fun MenuAction.disabled(): MenuAction = MenuAction(
+private fun MenuAction.resetEntry(canReset: Boolean, defaultLabel: String?): MenuAction = MenuAction(
     label,
     onClick,
     icon = icon,
     painter = painter,
-    detail = detail,
+    detail = detail ?: defaultLabel,
     style = style,
-    enabled = false,
+    enabled = enabled && canReset,
     disabledReason = disabledReason,
     checked = checked,
     shortcutHint = shortcutHint,
@@ -333,10 +338,50 @@ fun Modifier.optionContextMenu(menu: OptionMenuState, enabled: Boolean = true): 
     contextMenu(enabled) { menu.entries() }
 
 @Composable
-fun OptionMoreButton(menu: OptionMenuState, visible: Boolean, modifier: Modifier = Modifier) {
-    MoreButton(
-        menu.buttonEntries,
-        modifier.hiddenUntilHover(visible || menu.isOpen),
-        contentDescription = translated("oneconfig.option.more_actions", "More actions. Right-click option as shortcut."),
-    )
+fun OptionMoreButton(
+    menu: OptionMenuState,
+    hovered: Boolean,
+    modifier: Modifier = Modifier,
+    changed: Boolean = false,
+    enabled: Boolean = true,
+) {
+    val emphasis by Motion.animateFloatAsState(if (hovered && enabled || menu.isOpen) 1f else MORE_REST_ALPHA)
+    val description = if (changed) {
+        translated("oneconfig.option.more_actions.changed", "More actions. Changed from default. Right-click option as shortcut.")
+    } else {
+        translated("oneconfig.option.more_actions", "More actions. Right-click option as shortcut.")
+    }
+    Box(modifier) {
+        MoreButton(
+            menu.buttonEntries,
+            Modifier.graphicsLayer { alpha = emphasis }.blockInteraction(!enabled, keyboard = true),
+            contentDescription = description,
+        )
+        if (changed) {
+            Box(
+                Modifier.align(Alignment.TopEnd)
+                    .offset(x = (-3).dp, y = 3.dp)
+                    .size(CHANGED_DOT_SIZE)
+                    .background(Accent, LocalTheme.current.circleShape),
+            )
+        }
+    }
+}
+
+private const val MORE_REST_ALPHA = 0.6f
+private val CHANGED_DOT_SIZE = 6.dp
+
+@Composable
+fun rememberChangedFromDefault(prop: Property<*>): Boolean {
+    val epoch = resetEpochs[System.identityHashCode(prop)] ?: 0
+    return key(System.identityHashCode(prop)) {
+        var revision by remember { mutableIntStateOf(0) }
+        DisposableEffect(Unit) {
+            val property = Property.recast<Any?>(prop)
+            val listener = Predicate<Any?> { revision++; false }
+            property.addCallback(listener)
+            onDispose { property.removeCallback(listener) }
+        }
+        remember(revision, epoch) { optionDiffersFromDefault(prop) }
+    }
 }

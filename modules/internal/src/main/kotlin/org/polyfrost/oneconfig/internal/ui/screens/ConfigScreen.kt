@@ -33,9 +33,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -43,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -54,11 +57,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -66,18 +76,22 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.asComposeImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
@@ -94,7 +108,7 @@ import org.polyfrost.oneconfig.api.ui.v1.SettingRowDecorators
 import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorator
 import org.polyfrost.oneconfig.api.ui.v1.TreeHeaderDecorators
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
-import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
+import org.polyfrost.oneconfig.api.ui.v1.components.CardBorder
 import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
@@ -107,9 +121,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.SectionChevron
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.Switch
-import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
-import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
-import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipDefaults
@@ -127,6 +138,8 @@ import org.polyfrost.oneconfig.internal.ui.api.shown
 import org.polyfrost.oneconfig.internal.ui.components.ContentSlide
 import org.polyfrost.oneconfig.internal.ui.components.ContentSlide.tabSlide
 import org.polyfrost.oneconfig.internal.ui.components.Icon
+import org.polyfrost.oneconfig.internal.ui.components.StripTab
+import org.polyfrost.oneconfig.internal.ui.components.TabStrip
 import org.polyfrost.oneconfig.internal.ui.components.isEmptyText
 import org.polyfrost.oneconfig.internal.ui.components.localizedDescription
 import org.polyfrost.oneconfig.internal.ui.components.localizedTitle
@@ -143,6 +156,7 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.asPlainLabel
 import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
 import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.rememberChangedFromDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetTree
 import org.polyfrost.oneconfig.internal.ui.components.settings.treeHasDefault
@@ -283,6 +297,7 @@ private fun ConfigScreenContent(
                     else -> flattenSearchEntries(searchCategories(results))
                 }
             }
+            val rows = remember(entries) { groupSections(entries, "$pageKey/${category?.name.orEmpty()}") }
 
             // each category keeps its own place in the list
             val lazyListState = rememberRestorableLazyListState(
@@ -295,16 +310,26 @@ private fun ConfigScreenContent(
             val highlightScope = rememberCoroutineScope()
             LaunchedEffect(jump, entries) {
                 val target = jump ?: return@LaunchedEffect
-                val at = entries.indexOfFirst { (it as? ConfigListEntry.Item)?.node?.holds(target) == true }
+                val at = rows.indexOfFirst { it is PageRow.Section && it.items.any { item -> item.node.holds(target) } }
                 if (at < 0) return@LaunchedEffect
+                val section = rows[at] as PageRow.Section
+                SectionCollapse.expand(section.id)
+                val itemIndex = section.items.indexOfFirst { it.node.holds(target) }
+                val listKeys = pageListKeys(rows, header != null, false, localSearchQuery.isNotBlank())
+                val listIndex = listKeys.indexOf(sectionItemKey(at, itemIndex))
                 // clearing the jump restarts this effect, so the scroll and highlight run in a scope that outlives it
                 highlightScope.launch {
                     try {
                         // the list has no size until its first layout, and the row ends a third of the way down
                         // rather than at the top
                         val viewport = snapshotFlow { lazyListState.layoutInfo.viewportSize.height }.first { it > 0 }
-                        lazyListState.scrollToItem(at + if (header != null) 1 else 0)
-                        lazyListState.scrollBy(-viewport / 3f)
+                        val laidOut = withTimeoutOrNull(SECTION_EXPAND_WAIT_MS) {
+                            snapshotFlow { lazyListState.layoutInfo.totalItemsCount }.first { it >= listKeys.size }
+                        } != null
+                        if (laidOut) {
+                            lazyListState.scrollToItem(listIndex.coerceAtLeast(0))
+                            lazyListState.scrollBy(-viewport / 3f)
+                        }
                     } catch (e: CancellationException) {
                         // scrolling by hand stops the jump, which should still leave the highlight
                         if (!isActive) throw e
@@ -339,7 +364,6 @@ private fun ConfigScreenContent(
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier.scrollFade(lazyListState),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(horizontal = PageGutter),
                     ) {
                     if (header != null) {
@@ -359,18 +383,46 @@ private fun ConfigScreenContent(
                     }
                     if (empty != null) {
                         item(key = "empty") {
-                            Box(Modifier.fillMaxWidth().then(slide), contentAlignment = Alignment.Center) {
+                            Box(Modifier.fillMaxWidth().padding(top = PAGE_ROW_GAP).then(slide), contentAlignment = Alignment.Center) {
                                 EmptyState(empty.title, icon = empty.icon, state = empty.state)
                             }
                         }
                     }
-                    items(entries) { entry ->
-                        val lock = locksAll && !entry.isLockExempt(lockExempt)
-                        CompositionLocalProvider(
-                            LocalOptionEnabled provides !(lock || groupOff),
-                            LocalSearchExpands provides localSearchQuery.isNotBlank(),
-                        ) {
-                            Box(slide) { ConfigListRow(entry) }
+                    val searching = localSearchQuery.isNotBlank()
+                    rows.forEachIndexed { rowIndex, row ->
+                        val topGap = if (rowIndex == 0 && header == null) 0.dp else PAGE_ROW_GAP
+                        val decorate: @Composable (@Composable () -> Unit) -> Unit = { content ->
+                            CompositionLocalProvider(LocalSearchExpands provides searching) {
+                                Box(slide) { content() }
+                            }
+                        }
+                        when (row) {
+                            is PageRow.Heading -> item(key = headingKey(rowIndex)) {
+                                decorate {
+                                    Box(Modifier.padding(top = topGap)) {
+                                        CompositionLocalProvider(LocalOptionEnabled provides !(locksAll || groupOff)) {
+                                            ConfigListRow(row.entry)
+                                        }
+                                    }
+                                }
+                            }
+                            is PageRow.Section -> groupedSection(
+                                key = sectionKey(rowIndex),
+                                title = row.title,
+                                items = row.items,
+                                collapsed = !searching && SectionCollapse.isCollapsed(row.id),
+                                collapsible = !searching,
+                                first = rowIndex == 0,
+                                topGap = topGap,
+                                dimmed = locksAll || groupOff,
+                                onToggle = { SectionCollapse.toggle(row.id) },
+                                decorate = decorate,
+                            ) { item ->
+                                val lock = locksAll && !item.isLockExempt(lockExempt)
+                                CompositionLocalProvider(LocalOptionEnabled provides !(lock || groupOff)) {
+                                    ConfigListRow(item)
+                                }
+                            }
                         }
                     }
                     }
@@ -437,18 +489,255 @@ private fun CategoryTabs(
     modifier: Modifier,
     onSelect: (CategoryGroup) -> Unit,
 ) {
-    val tabs = remember(categories) { categories.map { TabItem(it.name, it.name.asPlainLabel()) } }
-    TabRow(
-        tabs = tabs,
-        selected = selected?.name.orEmpty(),
-        onSelect = { name -> categories.firstOrNull { it.name == name }?.let(onSelect) },
-        modifier = modifier,
-        style = TabStyle.Chips,
-        size = ChipDefaults.size,
-    )
+    val tabs = remember(categories) { categories.map { StripTab(it.name, it.name.asPlainLabel()) } }
+    TabStrip(tabs, selected?.name.orEmpty(), { name -> categories.firstOrNull { it.name == name }?.let(onSelect) }, modifier)
 }
 
 private class ConfigEmpty(val title: String, val icon: String?, val state: LoadState = LoadState.Idle)
+
+private sealed interface PageRow {
+    class Heading(val entry: ConfigListEntry.CategoryHeader) : PageRow
+
+    class Section(val id: String, val title: String?, val items: List<ConfigListEntry.Item>) : PageRow
+}
+
+private fun groupSections(entries: List<ConfigListEntry>, scope: String): List<PageRow> {
+    val rows = ArrayList<PageRow>()
+    var category = scope
+    var title: String? = null
+    var items = ArrayList<ConfigListEntry.Item>()
+    fun flush() {
+        if (items.isNotEmpty()) rows += PageRow.Section("$category/${title.orEmpty()}", title, items)
+        items = ArrayList()
+        title = null
+    }
+    for (entry in entries) {
+        when (entry) {
+            is ConfigListEntry.CategoryHeader -> {
+                flush()
+                category = "$scope/${entry.title}"
+                rows += PageRow.Heading(entry)
+            }
+            is ConfigListEntry.SubcategoryHeader -> {
+                flush()
+                title = entry.title
+            }
+            is ConfigListEntry.Item -> items += entry
+        }
+    }
+    flush()
+    return rows
+}
+
+private object SectionCollapse {
+    private val collapsed = mutableStateMapOf<String, Boolean>()
+
+    fun isCollapsed(id: String): Boolean = collapsed[id] == true
+
+    fun toggle(id: String) {
+        collapsed[id] = !isCollapsed(id)
+    }
+
+    fun expand(id: String) {
+        collapsed.remove(id)
+    }
+}
+
+private val SECTION_GAP = 14.dp
+private val SECTION_HEADING_GAP = 8.dp
+private const val SECTION_DIVIDER_ALPHA = 0.7f
+
+internal val LocalGroupedRows = staticCompositionLocalOf { false }
+
+@Composable
+private fun SectionBlock(
+    section: PageRow.Section,
+    first: Boolean,
+    collapsible: Boolean,
+    dimmed: Boolean,
+    item: @Composable (ConfigListEntry.Item) -> Unit,
+) {
+    val collapsed = collapsible && SectionCollapse.isCollapsed(section.id)
+    Column(Modifier.fillMaxWidth()) {
+        section.title?.let {
+            SectionHeading(
+                it,
+                collapsed = collapsed,
+                count = optionCountLabel(section.items.size),
+                collapsible = collapsible,
+                icon = null,
+                modifier = Modifier
+                    .padding(top = if (first) 0.dp else SECTION_GAP)
+                    .then(if (dimmed) Modifier.alpha(LocalTheme.current.disabledAlpha) else Modifier),
+                onToggle = { SectionCollapse.toggle(section.id) },
+            )
+        }
+        AnimatedVisibility(visible = !collapsed, enter = foldEnter(), exit = foldExit()) {
+            Column(Modifier.padding(top = if (section.title != null) SECTION_HEADING_GAP else 0.dp).optionCard()) {
+                CompositionLocalProvider(LocalGroupedRows provides true) {
+                    section.items.forEachIndexed { index, entry ->
+                        Box(if (index == 0) Modifier else Modifier.rowDivider()) { item(entry) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private val PAGE_ROW_GAP = 8.dp
+
+private fun headingKey(rowIndex: Int) = "heading:$rowIndex"
+
+private fun sectionKey(rowIndex: Int) = "section:$rowIndex"
+
+private fun sectionItemKey(rowIndex: Int, itemIndex: Int) = "${sectionKey(rowIndex)}:$itemIndex"
+
+private fun pageListKeys(rows: List<PageRow>, hasHeader: Boolean, hasEmpty: Boolean, searching: Boolean): List<String> = buildList {
+    if (hasHeader) add("header")
+    if (hasEmpty) add("empty")
+    rows.forEachIndexed { rowIndex, row ->
+        when (row) {
+            is PageRow.Heading -> add(headingKey(rowIndex))
+            is PageRow.Section -> {
+                if (row.title != null) add("${sectionKey(rowIndex)}:title")
+                if (searching || !SectionCollapse.isCollapsed(row.id)) row.items.indices.forEach { add(sectionItemKey(rowIndex, it)) }
+            }
+        }
+    }
+}
+
+internal fun <T> LazyListScope.groupedSection(
+    key: String,
+    title: Any?,
+    items: List<T>,
+    collapsed: Boolean,
+    collapsible: Boolean,
+    first: Boolean,
+    topGap: Dp,
+    dimmed: Boolean = false,
+    icon: String? = null,
+    countLabel: (Int) -> String = ::optionCountLabel,
+    onToggle: () -> Unit,
+    decorate: @Composable (@Composable () -> Unit) -> Unit = { it() },
+    item: @Composable (T) -> Unit,
+) {
+    if (title != null) {
+        item(key = "$key:title") {
+            decorate {
+                SectionHeading(
+                    title,
+                    collapsed = collapsed,
+                    count = countLabel(items.size),
+                    collapsible = collapsible,
+                    icon = icon,
+                    modifier = Modifier
+                        .padding(top = topGap + if (first) 0.dp else SECTION_GAP, bottom = if (collapsed) 0.dp else SECTION_HEADING_GAP)
+                        .then(if (dimmed) Modifier.alpha(LocalTheme.current.disabledAlpha) else Modifier),
+                    onToggle = onToggle,
+                )
+            }
+        }
+    }
+    if (collapsed) return
+    items.forEachIndexed { index, entry ->
+        item(key = "$key:$index") {
+            val fold = Modifier.animateItem(fadeInSpec = tween(SECTION_FOLD_MS), placementSpec = null, fadeOutSpec = tween(SECTION_FOLD_MS))
+            decorate {
+                Box(
+                    fold
+                        .padding(top = if (index == 0 && title == null) topGap else 0.dp)
+                        .sectionSegment(top = index == 0, bottom = index == items.lastIndex)
+                        .then(if (index == 0) Modifier else Modifier.rowDivider()),
+                ) {
+                    CompositionLocalProvider(LocalGroupedRows provides true) { item(entry) }
+                }
+            }
+        }
+    }
+}
+
+private const val SECTION_FOLD_MS = 150
+private const val SECTION_EXPAND_WAIT_MS = 1000L
+
+@Composable
+private fun Modifier.sectionSegment(top: Boolean, bottom: Boolean): Modifier {
+    val theme = LocalTheme.current
+    val shape = segmentShape(theme.modCardShape, top, bottom)
+    val border = theme.borderColor
+    return fillMaxWidth()
+        .cardSurface(shape, border = CardBorder.None)
+        .drawWithContent {
+            drawContent()
+            val stroke = 1.dp.toPx()
+            val above = if (top) 0f else stroke
+            val below = if (bottom) 0f else stroke
+            val outline = shape.createOutline(Size(size.width - stroke, size.height - stroke + above + below), layoutDirection, this)
+            clipRect {
+                translate(stroke / 2f, stroke / 2f - above) { drawOutline(outline, border, style = Stroke(stroke)) }
+            }
+        }
+}
+
+private fun segmentShape(base: Shape, top: Boolean, bottom: Boolean): Shape {
+    if (top && bottom) return base
+    val corners = base as? CornerBasedShape ?: return RectangleShape
+    val square = CornerSize(0)
+    return when {
+        top -> corners.copy(bottomStart = square, bottomEnd = square)
+        bottom -> corners.copy(topStart = square, topEnd = square)
+        else -> RectangleShape
+    }
+}
+
+private fun optionCountLabel(count: Int): String =
+    if (count == 1) translated("oneconfig.config.section.count.one", "1 option")
+    else translated("oneconfig.config.section.count", "%s options", count)
+
+@Composable
+private fun SectionHeading(
+    title: Any,
+    collapsed: Boolean,
+    count: String,
+    collapsible: Boolean,
+    icon: String?,
+    modifier: Modifier,
+    onToggle: () -> Unit,
+) {
+    val theme = LocalTheme.current
+    val source = rememberInteractionSource()
+    val style = theme.typography.titleLarge.copy(fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .then(
+                if (collapsible) {
+                    Modifier.oneConfigClickable(title.asPlainLabel(), onToggle, indication = false, interactionSource = source)
+                } else {
+                    Modifier
+                },
+            )
+            .padding(start = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        icon?.let { Icon(it, color = theme.textColor, modifier = Modifier.size(18.dp)) }
+        Text(title.asStyledLabel(), Modifier.weight(1f, fill = false), theme.textColor, style, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (collapsible) SectionChevron(!collapsed)
+        if (collapsed) Text(count, color = theme.textColorSecondary, style = descriptionStyle())
+    }
+}
+
+@Composable
+private fun Modifier.rowDivider(): Modifier {
+    val border = LocalTheme.current.borderColor
+    val color = border.copy(alpha = border.alpha * SECTION_DIVIDER_ALPHA)
+    return drawBehind {
+        if (size.height <= 0f) return@drawBehind
+        val start = 16.dp.toPx()
+        val end = OPTION_ROW_END_PADDING.toPx()
+        drawRect(color, Offset(start, 0f), Size(size.width - start - end, 1.dp.toPx()))
+    }
+}
 
 private fun ConfigListEntry.isLockExempt(ownSwitch: Property<*>?): Boolean {
     val node = (this as? ConfigListEntry.Item)?.node ?: return false
@@ -743,7 +1032,7 @@ internal fun Accordion(
             titleActions,
             dimmed = !headEnabled,
         ) {
-            if (checked != null) Switch(checked, onCheckedChange, enabled = headEnabled, stateLabel = true, mixed = mixed)
+            if (checked != null) Switch(checked, onCheckedChange, enabled = headEnabled, stateLabel = false, mixed = mixed)
         }
         AnimatedVisibility(visible = expanded, enter = foldEnter(), exit = foldExit()) {
             Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) { body((checked != false || mixed) && headEnabled) }
@@ -939,10 +1228,11 @@ private fun GroupHeaderContent(
     val groupEnabled = LocalOptionEnabled.current
     val headLocked = headDisplay == Property.Display.DISABLED || !groupEnabled
     val labelModifier = if (groupEnabled) Modifier else Modifier.alpha(LocalTheme.current.disabledAlpha)
-    val showActionButton = OneConfigConfig.showOptionActionButtons && !headLocked
+    val showActionButton = OneConfigConfig.showOptionActionButtons
     val menu = head?.let { rememberOptionMenu(it) }
     val configId = LocalConfigId.current
     menu?.extraEntries = { listOfNotNull(groupResetEntry(tree, false, configId, null)) }
+    val changed = head?.let { rememberChangedFromDefault(it) } == true
 
     BoxWithConstraints(
         modifier = Modifier
@@ -959,19 +1249,19 @@ private fun GroupHeaderContent(
             measurer.titleWidth(tree, titleStyle, density) + reserved > maxWidth
         })
         val headControl = @Composable {
-            if (control != null) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (showActionButton && menu != null) OptionMoreButton(menu, visible = isHovered)
-                    HeadControl(control, !headLocked, switch, onHeadChange)
-                }
-            }
+            if (control != null) HeadControl(control, !headLocked, switch, onHeadChange)
+        }
+        val actionMenu = menu?.takeIf { showActionButton && control != null }
+        val endPadding = if (actionMenu != null) OPTION_ROW_END_PADDING else 16.dp
+        val actionButton = @Composable {
+            actionMenu?.let { OptionMoreButton(it, hovered = isHovered, changed = changed, enabled = !headLocked) }
         }
 
         if (stacked) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(start = 16.dp, end = endPadding, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Row(
@@ -981,6 +1271,7 @@ private fun GroupHeaderContent(
                 ) {
                     GroupLabel(tree, Modifier.weight(1f).then(labelModifier))
                     SectionChevron(expanded)
+                    actionButton()
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { headControl() }
             }
@@ -988,7 +1279,7 @@ private fun GroupHeaderContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(start = 16.dp, end = endPadding, top = 12.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -1000,6 +1291,7 @@ private fun GroupHeaderContent(
                 ) {
                     headControl()
                     SectionChevron(expanded)
+                    actionButton()
                 }
             }
         }
@@ -1142,7 +1434,7 @@ private fun HeadSwitch(head: Property<Boolean>, enabled: Boolean, onHeadChange: 
             onHeadChange(it)
         },
         enabled = enabled,
-        stateLabel = true,
+        stateLabel = false,
     )
 }
 
@@ -1164,14 +1456,20 @@ private fun SettingRowContent(prop: Property<*>, compact: Boolean) {
         return
     }
 
-    Box(Modifier.optionCard().jumpHighlightOf(prop)) {
+    val requester = remember { BringIntoViewRequester() }
+    val jumpTarget = LocalJumpHighlight.current?.target
+    LaunchedEffect(jumpTarget) {
+        if (jumpTarget === prop) requester.bringIntoView()
+    }
+    Box(Modifier.optionCard().bringIntoViewRequester(requester).jumpHighlightOf(prop)) {
         SettingContent(prop, compact = compact, enabled = display != Property.Display.DISABLED)
     }
 }
 
 /** The card behind an option or accordion */
 @Composable
-private fun Modifier.optionCard(): Modifier = fillMaxWidth().cardSurface(LocalTheme.current.modCardShape)
+private fun Modifier.optionCard(): Modifier =
+    if (LocalGroupedRows.current) fillMaxWidth() else fillMaxWidth().cardSurface(LocalTheme.current.modCardShape)
 
 @Composable
 private fun AccordionSettingRow(
@@ -1202,6 +1500,8 @@ private fun rememberVisibleOptions(body: List<Property<*>>): List<Pair<Property<
 }
 
 private val OPTION_ROW_GAP = 8.dp
+
+private val OPTION_ROW_END_PADDING = 8.dp
 
 private val OPTION_CHROME_WIDTH = 108.dp
 private val OPTION_ICON_WIDTH = 44.dp
@@ -1357,7 +1657,8 @@ private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Bool
     val menu = rememberOptionMenu(prop)
     val rowInteraction = rememberInteractionSource()
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
-    val showActionButton = OneConfigConfig.showOptionActionButtons && enabled
+    val showActionButton = OneConfigConfig.showOptionActionButtons
+    val changed = rememberChangedFromDefault(prop)
 
     val measurer = rememberTextMeasurer()
     val titleStyle = rememberTitleStyle()
@@ -1369,7 +1670,7 @@ private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Bool
             .optionContextMenu(menu, enabled)
     ) {
         val actionButton = @Composable {
-            if (showActionButton) OptionMoreButton(menu, visible = isRowHovered)
+            if (showActionButton) OptionMoreButton(menu, hovered = isRowHovered, changed = changed, enabled = enabled)
         }
         if (isFullWidth(prop)) {
             val fullControl = @Composable { modifier: Modifier ->
@@ -1380,7 +1681,12 @@ private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Bool
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = verticalPadding, bottom = if (nested) 8.dp else verticalPadding),
+                    .padding(
+                        start = 16.dp,
+                        end = if (showActionButton) OPTION_ROW_END_PADDING else 16.dp,
+                        top = verticalPadding,
+                        bottom = if (nested) 8.dp else verticalPadding,
+                    ),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (hidesLabel(prop)) {
@@ -1405,6 +1711,7 @@ private fun SettingContentBody(prop: Property<*>, nested: Boolean, compact: Bool
                 titleWidth = titleWidth,
                 leading = if (prop.nodeIcon() != null) OPTION_ICON_WIDTH else 0.dp,
                 stack = compact,
+                endPadding = if (showActionButton) OPTION_ROW_END_PADDING else 16.dp,
                 verticalPadding = verticalPadding,
                 bottomPadding = if (nested) 8.dp else verticalPadding,
                 modifier = Modifier.fillMaxWidth(),
@@ -1427,6 +1734,7 @@ private fun LabelledOptionRow(
     titleWidth: Int,
     leading: Dp,
     stack: Boolean,
+    endPadding: Dp,
     verticalPadding: Dp,
     bottomPadding: Dp,
     modifier: Modifier,
@@ -1436,16 +1744,21 @@ private fun LabelledOptionRow(
 ) {
     Layout(listOf(label, actionButton, control), modifier) { (labels, actions, controls), constraints ->
         val side = 16.dp.roundToPx()
+        val end = endPadding.roundToPx()
         val top = verticalPadding.roundToPx()
         val width = constraints.maxWidth
-        val inner = (width - side * 2).coerceAtLeast(0)
+        val inner = (width - side - end).coerceAtLeast(0)
         val loose = Constraints(maxWidth = inner)
-        val ctrl = controls.firstOrNull()?.measure(loose)
         val action = actions.firstOrNull()?.measure(loose)
+        val actionGap = 12.dp.roundToPx()
+        val actionSpace = action?.let { it.width + actionGap } ?: 0
+        val ctrl = controls.firstOrNull()?.measure(Constraints(maxWidth = (inner - actionSpace).coerceAtLeast(0)))
         val ctrlWidth = ctrl?.width ?: 0
+        val actionX = width - end - (action?.width ?: 0)
+        val ctrlX = width - end - actionSpace - ctrlWidth
 
         val besideGap = 16.dp.roundToPx()
-        val beside = inner - ctrlWidth - besideGap - (action?.let { it.width + besideGap } ?: 0)
+        val beside = inner - ctrlWidth - besideGap - actionSpace
         if (!stack && titleWidth + leading.roundToPx() <= beside) {
             val lbl = labels.first().measure(Constraints.fixedWidth(beside.coerceAtLeast(0)))
             // as tall as a dropdown even when the control is a smaller switch or checkbox
@@ -1453,20 +1766,18 @@ private fun LabelledOptionRow(
             layout(width, rowHeight + top * 2) {
                 fun Placeable.center(x: Int) = place(x, top + (rowHeight - height) / 2)
                 lbl.center(side)
-                action?.center(side + beside + besideGap)
-                ctrl?.center(width - side - ctrlWidth)
+                action?.center(actionX)
+                ctrl?.center(ctrlX)
             }
         } else {
             val lbl = labels.first().measure(loose)
             val belowGap = 10.dp.roundToPx()
-            val controlsGap = 12.dp.roundToPx()
             val rowHeight = maxOf(action?.height ?: 0, ctrl?.height ?: 0)
             val rowTop = top + lbl.height + belowGap
             layout(width, rowTop + rowHeight + bottomPadding.roundToPx()) {
                 lbl.place(side, top)
-                val ctrlX = width - side - ctrlWidth
                 ctrl?.place(ctrlX, rowTop + (rowHeight - ctrl.height) / 2)
-                action?.place(ctrlX - (if (ctrl != null) controlsGap else 0) - action.width, rowTop + (rowHeight - action.height) / 2)
+                action?.place(actionX, rowTop + (rowHeight - action.height) / 2)
             }
         }
     }
@@ -1569,8 +1880,15 @@ internal fun HudCategoryList(
             CategoryTabs(visibleCategories, selectedCategory, Modifier) { chosenCategory = it }
         }
 
+        val rows = remember(entries) { groupSections(entries, "hud/${selectedCategory?.name.orEmpty()}") }
+        val searching = searchQuery.isNotEmpty()
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            entries.forEach { entry -> row(entry) }
+            rows.forEachIndexed { index, pageRow ->
+                when (pageRow) {
+                    is PageRow.Heading -> row(pageRow.entry)
+                    is PageRow.Section -> SectionBlock(pageRow, first = index == 0, collapsible = !searching, dimmed = false) { row(it) }
+                }
+            }
         }
     }
     }
