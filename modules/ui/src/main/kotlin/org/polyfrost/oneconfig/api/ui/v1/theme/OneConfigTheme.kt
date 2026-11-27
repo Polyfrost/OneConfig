@@ -120,6 +120,15 @@ public object OneConfigTheme {
     public fun overrideLogo(path: String?) {
         logoOverride = path?.takeIf { it.isNotBlank() }
     }
+
+    @JvmStatic
+    public var brandIconOverride: String? by mutableStateOf(null)
+        private set
+
+    @JvmStatic
+    public fun overrideBrandIcon(path: String?) {
+        brandIconOverride = path?.takeIf { it.isNotBlank() }
+    }
 }
 
 @ExperimentalOneConfigUiApi

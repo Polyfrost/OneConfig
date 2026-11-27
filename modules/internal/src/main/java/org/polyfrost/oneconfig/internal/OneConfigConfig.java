@@ -59,6 +59,13 @@ public class OneConfigConfig extends Config {
     )
     public static boolean keybindClosesGui = false;
 
+    @Switch(
+        title = "oneconfig.preferences.hud_first.title",
+        subcategory = "oneconfig.preferences.category.gui",
+        description = "oneconfig.preferences.hud_first.description"
+    )
+    public static boolean hudFirst = false;
+
     @Keybind(
         title = "oneconfig.preferences.hud_settings_keybind.title",
         subcategory = "oneconfig.preferences.category.hud_editor",
