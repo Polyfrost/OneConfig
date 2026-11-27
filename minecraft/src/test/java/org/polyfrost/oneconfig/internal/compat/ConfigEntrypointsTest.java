@@ -1,5 +1,10 @@
 package org.polyfrost.oneconfig.internal.compat;
 
+import java.lang.reflect.Proxy;
+import java.util.List;
+import java.util.Map;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 
@@ -121,6 +126,34 @@ class ConfigEntrypointsTest {
         // a StackOverflowError keeps only the top of the stack, so register() and everything below is gone
         Throwable t = thrown(init(Base.class), ENTRYPOINT, HELPER);
         assertFalse(ConfigEntrypoints.constructorFailed(t, Base.class, construction));
+    }
+
+    @Test
+    void aModNestedInACopyGoesByTheModItStandsInFor() {
+        ModContainer parent = mod("parent_live1", mod("kid_live1", mod("lib")));
+        Map<String, String> copies = Map.of("parent_live1", "parent", "kid_live1", "kid");
+        assertEquals(Map.of("kid", "parent", "lib", "parent"), ConfigEntrypoints.nestedIds(Map.of("parent", parent), copies));
+    }
+
+    @Test
+    void aNestedCopyWithAnEntrypointOfItsOwnStaysItsOwnProvider() {
+        ModContainer kid = mod("kid_live1");
+        Map<String, ModContainer> providers = Map.of("parent", mod("parent_live1", kid), "kid", kid);
+        Map<String, String> copies = Map.of("parent_live1", "parent", "kid_live1", "kid");
+        assertEquals(Map.of(), ConfigEntrypoints.nestedIds(providers, copies));
+    }
+
+    private static ModContainer mod(String id, ModContainer... nested) {
+        ModMetadata metadata = stub(ModMetadata.class, Map.of("getId", id));
+        return stub(ModContainer.class, Map.of("getMetadata", metadata, "getContainedMods", List.of(nested)));
+    }
+
+    // answers the named methods and throws for any other
+    private static <T> T stub(Class<T> type, Map<String, Object> answers) {
+        return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, (proxy, method, args) -> {
+            if (!answers.containsKey(method.getName())) throw new UnsupportedOperationException(method.getName());
+            return answers.get(method.getName());
+        }));
     }
 
     private static Throwable thrown(StackTraceElement... frames) {

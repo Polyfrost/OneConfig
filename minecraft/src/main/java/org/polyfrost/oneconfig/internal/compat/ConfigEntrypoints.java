@@ -583,14 +583,15 @@ public final class ConfigEntrypoints {
         synchronized (DISCOVERY_LOCK) {
             if (providers != null) return providers;
             List<Provider> found = new ArrayList<>();
+            // looked up by the ids the loader has them under, which for a copy is not the one OneConfig knows it by
+            Map<String, ModContainer> containers = new LinkedHashMap<>();
+            Map<String, String> copies = CompatibilityPlatformImpl.liveCopies;
             try {
                 for (EntrypointContainer<ConfigEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(ConfigEntrypoint.ENTRYPOINT, ConfigEntrypoint.class)) {
                     String id = container.getProvider().getMetadata().getId();
-                    found.add(new Provider(
-                            CompatibilityPlatformImpl.liveCopies.getOrDefault(id, id),
-                            container.getDefinition(),
-                            container::getEntrypoint
-                    ));
+                    String ownId = copies.getOrDefault(id, id);
+                    containers.putIfAbsent(ownId, container.getProvider());
+                    found.add(new Provider(ownId, container.getDefinition(), container::getEntrypoint));
                 }
             } catch (Throwable t) {
                 // not cached so a discovery attempted too early is retried
@@ -598,25 +599,32 @@ public final class ConfigEntrypoints {
                 discoveryFailureLogged = true;
                 return Collections.emptyList();
             }
-            Set<String> ids = new LinkedHashSet<>();
-            for (Provider provider : found) ids.add(provider.modId);
-            Map<String, String> nested = new HashMap<>();
-            for (String id : ids) {
-                FabricLoader.getInstance().getModContainer(id).ifPresent(container -> collectNested(container, id, ids, nested));
-            }
-            nestedIds = Collections.unmodifiableMap(nested);
-            providerIds = Collections.unmodifiableSet(ids);
+            nestedIds = Collections.unmodifiableMap(nestedIds(containers, copies));
+            providerIds = Collections.unmodifiableSet(new LinkedHashSet<>(containers.keySet()));
             providers = Collections.unmodifiableList(found);
             return providers;
         }
     }
 
+    /**
+     * The provider of each mod nested in a provider's jar, by the ids OneConfig knows the mods by
+     *
+     * @param providers the providers' containers by those ids
+     * @param copies    by its own id, the mod each copy stands in for that Hotwire runs
+     */
+    static Map<String, String> nestedIds(Map<String, ModContainer> providers, Map<String, String> copies) {
+        Map<String, String> nested = new HashMap<>();
+        providers.forEach((id, container) -> collectNested(container, id, providers.keySet(), copies, nested));
+        return nested;
+    }
+
     // a nested mod that provides an entrypoint itself is left as its own provider
-    private static void collectNested(ModContainer container, String providerId, Set<String> ids, Map<String, String> nested) {
+    private static void collectNested(ModContainer container, String providerId, Set<String> ids, Map<String, String> copies, Map<String, String> nested) {
         for (ModContainer child : container.getContainedMods()) {
-            String childId = child.getMetadata().getId();
+            String loaderId = child.getMetadata().getId();
+            String childId = copies.getOrDefault(loaderId, loaderId);
             if (ids.contains(childId) || nested.putIfAbsent(childId, providerId) != null) continue;
-            collectNested(child, providerId, ids, nested);
+            collectNested(child, providerId, ids, copies, nested);
         }
     }
 }
