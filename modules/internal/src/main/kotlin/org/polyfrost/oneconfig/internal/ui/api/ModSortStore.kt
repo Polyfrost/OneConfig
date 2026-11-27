@@ -14,6 +14,8 @@ import java.nio.file.StandardOpenOption
 object ModSortStore {
     const val CUSTOM = ModSortModes.CUSTOM
     const val ALPHABETICAL = ModSortModes.ALPHABETICAL
+    const val ENABLED_FIRST = "enabled-first"
+    const val DISABLED_FIRST = "disabled-first"
 
     private val LOGGER = LoggerFactory.getLogger("OneConfig/ModSortStore")
     private const val FILE_NAME = "mod-sort"

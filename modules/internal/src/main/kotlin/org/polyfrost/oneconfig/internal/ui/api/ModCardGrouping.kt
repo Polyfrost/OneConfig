@@ -27,12 +27,25 @@ fun modCardGroupRank(id: String): Int {
 
 fun modCardOrder(): Comparator<ConfigData> {
     val ranks = HashMap<String, Int>()
-    val alphabetical = ModSortStore.alphabetical
+    val states = HashMap<String, Int>()
+    val selected = ModSortStore.selectedId
+    val alphabetical = selected == ModSortStore.ALPHABETICAL
+    val stateDirection = when (selected) {
+        ModSortStore.ENABLED_FIRST -> 1
+        ModSortStore.DISABLED_FIRST -> -1
+        else -> 0
+    }
     return compareBy<ConfigData> { ranks.getOrPut(it.id) { modCardGroupRank(it.id) } }
         .thenByDescending { ModFavorites.isFavorite(it.id) }
+        .thenBy { if (stateDirection == 0) 0 else stateDirection * states.getOrPut(it.id) { toggleStateRank(it) } }
         .thenBy { if (alphabetical) 0 else ModOrder.indexOf(it.id) }
         .thenBy { if (isHudModCard(it.id)) 1 else 0 }
         .thenBy(String.CASE_INSENSITIVE_ORDER) { it.title.asRenderText() }
+}
+
+private fun toggleStateRank(mod: ConfigData): Int {
+    val toggle = runCatching { mod.toggle }.getOrNull() ?: return 0
+    return if (runCatching { toggle.isEnabled() }.getOrDefault(false)) -1 else 1
 }
 
 fun buildModGridEntries(sorted: List<ConfigData>, collapsed: (String) -> Boolean): List<ModGridEntry> {
