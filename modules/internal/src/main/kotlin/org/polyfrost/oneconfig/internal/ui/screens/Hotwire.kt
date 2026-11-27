@@ -599,6 +599,8 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     val updates = HotwireUpdates.found?.getOrNull().orEmpty().filter { it.modId in pickedIds }
     val updating = HotwireUpdates.updating
     var switching by remember { mutableStateOf(false) }
+    // a switch that reopens the world, waiting to be confirmed as Hotwire's own screen does
+    var reopenPlan by remember(turnOff, turnOn) { mutableStateOf<HotwireBridge.Plan?>(null) }
     val planning = HotwireUpdates.planning
     val running = switching || updating != null || planning
     var fraction by remember { mutableFloatStateOf(0f) }
@@ -617,7 +619,6 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     val download = rememberDownloadWatch(bridge, HotwireUpdates.planTag, planning)
 
     val label = when {
-        plan?.needsReopen == true -> translated("oneconfig.page.hotwire.switch.reopen", "Save and switch %s", picked.size)
         mixed -> translated("oneconfig.page.hotwire.switch.mixed", "Switch %s", picked.size)
         turnOff.isNotEmpty() -> translated("oneconfig.page.hotwire.switch.off", "Turn off %s", turnOff.size)
         else -> translated("oneconfig.page.hotwire.switch.on", "Turn on %s", turnOn.size)
@@ -641,10 +642,19 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         switching = true
         // mods picked while this runs stay picked
         val started = pickedIds.toSet()
+        val change = HotwireBridge.Change(off = turnOff, on = turnOn)
         plan.accept().whenComplete { result, error ->
             Platform.screen().runOnUiThread {
                 switching = false
-                notifyHotwireResult(bridge, result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: ""))
+                if (result?.needsReopen == true && !plan.needsReopen) {
+                    // only the attempt found it needs the world reopened, where Hotwire's own screen offers that, and a plan
+                    // made now offers it too unless Hotwire didn't keep what it found
+                    bridge.plan(change).whenComplete { again, _ ->
+                        Platform.screen().runOnUiThread { if (again?.needsReopen == true) reopenPlan = again else notifyHotwireResult(bridge, result) }
+                    }
+                } else {
+                    notifyHotwireResult(bridge, result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: ""))
+                }
                 // a change that failed partway leaves picked only what it didn't switch
                 if (result?.ok == true) onDeselect(started) else result?.let { onDeselect(it.appliedNow.toSet()) }
             }
@@ -690,7 +700,37 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
             TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), { HotwireUpdates.reviewUpdates(updates, onDeselect) })
         }
         // the narrator reads only controls, so the button carries the plan it switches by
-        if (canSwitch) TextButton(label, { start(plan) }, style = ControlStyle.Primary, contentDescription = spokenWith(label, listOf(message)))
+        if (canSwitch) {
+            TextButton(label, { if (plan.needsReopen) reopenPlan = plan else start(plan) }, style = ControlStyle.Primary, contentDescription = spokenWith(label, listOf(message)))
+        }
+    }
+    reopenPlan?.let { if (!running) ReopenDialog(it, picked.size, onConfirm = { start(it) }, onDismiss = { reopenPlan = null }) }
+}
+
+/** Confirms a switch that saves and reopens the world, or leaves the server, around it */
+@Composable
+private fun ReopenDialog(plan: HotwireBridge.Plan, count: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val theme = LocalTheme.current
+    val confirm = translated("oneconfig.page.hotwire.switch.reopen", "Save and switch %s", count)
+    ModalDialog(
+        onDismiss = onDismiss,
+        title = { DialogTitle(translated("oneconfig.page.hotwire.switch.reopen.title", "Switching needs a rejoin")) },
+        buttons = {
+            TextButton(translated("oneconfig.page.hotwire.add.back", "Back"), onDismiss)
+            TextButton(
+                confirm,
+                {
+                    onDismiss()
+                    onConfirm()
+                },
+                style = ControlStyle.Primary,
+                contentDescription = spokenWith(confirm, plan.lines),
+            )
+        },
+    ) {
+        // read out when it opens, as the narrator reads only controls
+        Announce(plan.lines.joinToString(" "))
+        plan.lines.forEach { Text(it, color = theme.textColor, fontSize = 13.sp) }
     }
 }
 
