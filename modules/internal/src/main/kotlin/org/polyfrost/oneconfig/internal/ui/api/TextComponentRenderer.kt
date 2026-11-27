@@ -12,6 +12,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.text.withStyle
@@ -69,7 +70,7 @@ private fun AnnotatedString.Builder.appendComponent(component: Component, inheri
 
 private fun spanStyle(style: Style) = SpanStyle(
     color = style.color()?.let { Color(it.value()).copy(alpha = 1f) } ?: Color.Unspecified,
-    textGeometricTransform = if (style.hasDecoration(KyoriDecoration.ITALIC)) TextGeometricTransform(1f, 0.5f) else null,
+    fontStyle = if (style.hasDecoration(KyoriDecoration.ITALIC)) FontStyle.Italic else null,
     textDecoration = if (style.hasDecoration(KyoriDecoration.STRIKETHROUGH) || style.hasDecoration(KyoriDecoration.UNDERLINED)) {
         TextDecoration.combine(
             buildList {

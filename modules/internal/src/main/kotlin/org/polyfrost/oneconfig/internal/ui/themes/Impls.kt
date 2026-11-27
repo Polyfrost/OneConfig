@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.polyfrost.compose.text.Font
@@ -111,13 +112,21 @@ val PolyfrostedDark = UITheme(
     UITypography(
         family = FontFamily(
             Font("assets/oneconfig/fonts/Poppins/Poppins-Black.ttf", FontWeight.Black),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-BlackItalic.ttf", FontWeight.Black, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraBold.ttf", FontWeight.ExtraBold),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraBoldItalic.ttf", FontWeight.ExtraBold, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraLight.ttf", FontWeight.ExtraLight),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraLightItalic.ttf", FontWeight.ExtraLight, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-Regular.ttf", FontWeight.Normal),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Italic.ttf", FontWeight.Normal, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-Light.ttf", FontWeight.Light),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-LightItalic.ttf", FontWeight.Light, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-Medium.ttf", FontWeight.Medium),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-MediumItalic.ttf", FontWeight.Medium, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-SemiBold.ttf", FontWeight.SemiBold),
-            Font("assets/oneconfig/fonts/Poppins/Poppins-Thin.ttf", FontWeight.Thin)
+            Font("assets/oneconfig/fonts/Poppins/Poppins-SemiBoldItalic.ttf", FontWeight.SemiBold, FontStyle.Italic),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Thin.ttf", FontWeight.Thin),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ThinItalic.ttf", FontWeight.Thin, FontStyle.Italic)
         )
     )
 )
@@ -155,13 +164,21 @@ val PolyfrostedLight = UITheme(
     UITypography(
         family = FontFamily(
             Font("assets/oneconfig/fonts/Poppins/Poppins-Black.ttf", FontWeight.Black),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-BlackItalic.ttf", FontWeight.Black, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraBold.ttf", FontWeight.ExtraBold),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraBoldItalic.ttf", FontWeight.ExtraBold, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraLight.ttf", FontWeight.ExtraLight),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ExtraLightItalic.ttf", FontWeight.ExtraLight, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-Regular.ttf", FontWeight.Normal),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Italic.ttf", FontWeight.Normal, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-Light.ttf", FontWeight.Light),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-LightItalic.ttf", FontWeight.Light, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-Medium.ttf", FontWeight.Medium),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-MediumItalic.ttf", FontWeight.Medium, FontStyle.Italic),
             Font("assets/oneconfig/fonts/Poppins/Poppins-SemiBold.ttf", FontWeight.SemiBold),
-            Font("assets/oneconfig/fonts/Poppins/Poppins-Thin.ttf", FontWeight.Thin)
+            Font("assets/oneconfig/fonts/Poppins/Poppins-SemiBoldItalic.ttf", FontWeight.SemiBold, FontStyle.Italic),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-Thin.ttf", FontWeight.Thin),
+            Font("assets/oneconfig/fonts/Poppins/Poppins-ThinItalic.ttf", FontWeight.Thin, FontStyle.Italic)
         )
     )
 )
