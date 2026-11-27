@@ -56,8 +56,9 @@ class HotwireContractTest {
         fields(manager, "handlers");
         manager.getMethod("register", handler);
         manager.getMethod("unregister", handler);
-        // to run the handlers of a mod it starts late
+        // to run the handlers of a mod it starts late, highest priority first
         handler.getMethod("getEventClass");
+        handler.getMethod("getPriority");
         handler.getMethod("handle", type(EVENT + "events.Event"));
         type(EVENT + "events.InitializationEvent").getField("INSTANCE");
     }
