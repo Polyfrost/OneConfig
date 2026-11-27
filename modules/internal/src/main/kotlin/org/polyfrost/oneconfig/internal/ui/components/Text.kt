@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.TextUnit
@@ -61,7 +62,7 @@ internal fun parseLegacyFormatting(text: String, baseColor: Color): AnnotatedStr
     fun currentStyle() = SpanStyle(
         color = color,
         fontWeight = if (bold) FontWeight.Bold else null,
-        textGeometricTransform = if (italic) TextGeometricTransform(1f, 0.5f) else null,
+        fontStyle = if (italic) FontStyle.Italic else null,
         textDecoration = when {
             strikethrough && underline -> TextDecoration.combine(listOf(TextDecoration.LineThrough, TextDecoration.Underline))
             strikethrough -> TextDecoration.LineThrough
@@ -239,7 +240,7 @@ private fun componentSpanStyle(style: Style): SpanStyle {
     return SpanStyle(
         color = style.color()?.let { Color(it.value()).copy(alpha = 1f) } ?: Color.Unspecified,
         fontWeight = if (style.hasDecoration(KyoriDecoration.BOLD)) FontWeight.Bold else null,
-        textGeometricTransform = if (style.hasDecoration(KyoriDecoration.ITALIC)) TextGeometricTransform(1f, 0.5f) else null,
+        fontStyle = if (style.hasDecoration(KyoriDecoration.ITALIC)) FontStyle.Italic else null,
         textDecoration = when {
             strikethrough && underlined -> TextDecoration.combine(listOf(TextDecoration.LineThrough, TextDecoration.Underline))
             strikethrough -> TextDecoration.LineThrough
