@@ -70,7 +70,6 @@ public final class VanillaHudSampler {
             run(() -> sampleBossBar(accessor, graphics, deltaTracker));
             run(() -> sampleSidebar(accessor, graphics, minecraft));
             run(() -> sampleActionBar(accessor, graphics, deltaTracker));
-            run(() -> sampleTitle(accessor, graphics, deltaTracker));
         } finally {
             HudManager.isSamplingVanilla = false;
             VanillaHudFootprint.end(HudManager.guiScreenWidth, HudManager.guiScreenHeight);
@@ -147,35 +146,6 @@ public final class VanillaHudSampler {
             accessor.oneconfig$setOverlayMessage(message);
             accessor.oneconfig$setOverlayMessageTime(time);
             accessor.oneconfig$setAnimateOverlayMessage(animate);
-        }
-    }
-
-    //? if >= 26.1 {
-    private static void sampleTitle(HudSampleAccessor accessor, GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-    //?} else
-    //private static void sampleTitle(HudSampleAccessor accessor, GuiGraphics graphics, DeltaTracker deltaTracker) {
-        if (accessor.oneconfig$titleTime() > 0 && accessor.oneconfig$title() != null) return;
-        Component title = accessor.oneconfig$title();
-        Component subtitle = accessor.oneconfig$subtitle();
-        int time = accessor.oneconfig$titleTime();
-        int fadeIn = accessor.oneconfig$titleFadeIn();
-        int stay = accessor.oneconfig$titleStay();
-        int fadeOut = accessor.oneconfig$titleFadeOut();
-        accessor.oneconfig$setTitle(Component.literal("Title"));
-        accessor.oneconfig$setSubtitle(Component.literal("Subtitle text"));
-        accessor.oneconfig$setTitleFadeIn(10);
-        accessor.oneconfig$setTitleStay(70);
-        accessor.oneconfig$setTitleFadeOut(20);
-        accessor.oneconfig$setTitleTime(60);
-        try {
-            accessor.oneconfig$drawTitle(graphics, deltaTracker);
-        } finally {
-            accessor.oneconfig$setTitle(title);
-            accessor.oneconfig$setSubtitle(subtitle);
-            accessor.oneconfig$setTitleTime(time);
-            accessor.oneconfig$setTitleFadeIn(fadeIn);
-            accessor.oneconfig$setTitleStay(stay);
-            accessor.oneconfig$setTitleFadeOut(fadeOut);
         }
     }
 }

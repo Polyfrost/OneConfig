@@ -23,8 +23,8 @@ public abstract class Mixin_VanillaHudFootprintLegacyGameGui {
         method = "render(F)V",
         at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/GameGui;titleTime:I", opcode = Opcodes.GETFIELD, ordinal = 0)
     )
-    private void oneconfig$beginTitleSample(float tickDelta, CallbackInfo ci) {
-        LegacyVanillaHudSampler.beginInlineTitle(this);
+    private void oneconfig$endActionBarSample(float tickDelta, CallbackInfo ci) {
+        LegacyVanillaHudSampler.endInlineActionBar(this);
     }
 
     @Inject(
