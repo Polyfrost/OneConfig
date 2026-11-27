@@ -47,9 +47,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.Notifications
+import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
@@ -443,7 +445,7 @@ fun Hotwire() {
                         ) {
                             items(mods, key = { it.id }) { mod ->
                                 HotwireTile(bridge, mod, mod.id in availableUpdates, listLayout, mod.id in selected) {
-                                    if (!selected.remove(mod.id)) selected.add(mod.id)
+                                    if (!selected.pick(mod.id, MaxSwitchedMods)) notifyPickLimit()
                                 }
                             }
                         }
@@ -588,9 +590,7 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     // a plan rather than a switch, as only a plan says what goes along and can save and reopen the world around it;
     // remembered with what it was made for, so one for another selection or from before Hotwire changed mods is never offered
     val planState = remember(turnOff, turnOn, HotwireBridge.revision) { mutableStateOf<Result<HotwireBridge.Plan>?>(null) }
-    val tooMany = picked.size > MaxSwitchedMods
-    LaunchedEffect(planState, tooMany) {
-        if (tooMany) return@LaunchedEffect
+    LaunchedEffect(planState) {
         planState.value = HotwireBridge.catching { bridge.plan(HotwireBridge.Change(off = turnOff, on = turnOn)).await() }
     }
     val planned = planState.value
@@ -628,19 +628,12 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         planning -> download.progress?.let { translated("oneconfig.page.hotwire.updates.downloading", "Downloading %s… %s%%", it.name, (download.fraction * 100).toInt()) }
             ?: translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
         running -> translated("oneconfig.page.hotwire.switch.running", "Switching… %s%%", (fraction * 100).toInt())
-        tooMany -> translated("oneconfig.page.hotwire.switch.too_many", "Only %s mods can be switched at once.", MaxSwitchedMods)
         planned == null -> translated("oneconfig.page.hotwire.switch.checking", "Checking what this changes…")
         else -> planned.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() }
     }
     // read out once the plan is known, refusals included, as the narrator reads only controls
-    Announce(
-        if (tooMany) {
-            translated("oneconfig.page.hotwire.switch.too_many", "Only %s mods can be switched at once.", MaxSwitchedMods)
-        } else {
-            planned?.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() }
-        },
-    )
-    val canSwitch = !running && !tooMany && plan?.canApply == true && !busy
+    Announce(planned?.fold({ it.lines.joinToString(" ") }) { (it.cause ?: it).message.orEmpty() })
+    val canSwitch = !running && plan?.canApply == true && !busy
 
     fun start(plan: HotwireBridge.Plan) {
         // a second click before the bar redraws mustn't switch again
@@ -701,7 +694,26 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
     }
 }
 
+// as many as Hotwire's own screen lets be picked
 private const val MaxSwitchedMods = 5
+
+/** Picks [id], or unpicks it when it was picked, and returns false instead when picking it would go past [most] */
+internal fun MutableSet<String>.pick(id: String, most: Int): Boolean = remove(id) || (size < most && add(id))
+
+private var pickLimitToast: Notification? = null
+
+/** Says why a pick was refused, keeping the toast up rather than stacking another */
+private fun notifyPickLimit() {
+    val message = translated(
+        "oneconfig.page.hotwire.switch.pick_limit",
+        "You can pick up to %s mods at once. Switch these first, then pick more.",
+        MaxSwitchedMods,
+    )
+    // read out too, as notifications aren't
+    A11y.announce(message)
+    pickLimitToast?.let { if (NotificationsManager.contains(it)) return }
+    pickLimitToast = Notifications.info("Hotwire", message)
+}
 
 @Composable
 private fun HotwireTile(

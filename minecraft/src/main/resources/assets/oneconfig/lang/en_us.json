@@ -392,7 +392,7 @@
   "oneconfig.page.hotwire.switch.running": "Switching… %s%%",
   "oneconfig.page.hotwire.switch.selected": "%s selected",
   "oneconfig.page.hotwire.switch.starting": "Hotwire is still starting, so mods can't be switched yet.",
-  "oneconfig.page.hotwire.switch.too_many": "Only %s mods can be switched at once.",
+  "oneconfig.page.hotwire.switch.pick_limit": "You can pick up to %s mods at once. Switch these first, then pick more.",
   "oneconfig.page.hotwire.tile.off": "turned off",
   "oneconfig.page.hotwire.unavailable": "Hotwire is not available.",
   "oneconfig.page.hotwire.update.as_planned": "Update",
