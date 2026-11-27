@@ -1649,6 +1649,12 @@ fun HudDesignStudio(visible: Boolean = true) {
         }
     }
 
+    fun leaveIsland(close: () -> Unit) {
+        val refocus = Controllers.isActive && libraryHasFocus
+        close()
+        if (refocus) canvasFocusRequests++
+    }
+
     val panelHud: Hud? = if (panelOpen) primaryHud() else null
     val panelVisible = panelHud != null
     val panelGroup: HudGroup? = if (panelOpen) soleGroup() else null
@@ -1878,7 +1884,6 @@ fun HudDesignStudio(visible: Boolean = true) {
         val (cdx, cdy) = clampMoveFrom(from, dx, dy)
         lastNudgeAt[0] = System.currentTimeMillis()
         Snapshot.withMutableSnapshot {
-            // HUDs anchored to another selected HUD follow it, so nudging them too would move them twice
             applyHudTargets(HudGroups.roots(from.keys).mapNotNull { member ->
                 val (x, y) = from[member] ?: return@mapNotNull null
                 Triple(member, x + cdx, y + cdy)
@@ -3317,6 +3322,15 @@ fun HudDesignStudio(visible: Boolean = true) {
                     return@onKeyEvent keyEvent.key != Key.Escape
                 }
                 if (keyEvent.isFromController && !cursorFocused) {
+                    if (keyEvent.key == Key.Escape && libraryHasFocus && (libraryVisible || islandSearchOpen)) {
+                        leaveIsland {
+                            Snapshot.withMutableSnapshot {
+                                closeLibrary()
+                                closeIslandSearch()
+                            }
+                        }
+                        return@onKeyEvent true
+                    }
                     if (keyEvent.key == Key.Escape && runCatching { cursorFocusRequester.requestFocus(FocusDirection.Enter) }.getOrDefault(false)) {
                         return@onKeyEvent true
                     }
@@ -3859,7 +3873,7 @@ fun HudDesignStudio(visible: Boolean = true) {
             controllerMode && anchorPickSources.size > 1 ->
                 translated("oneconfig.hud.hint.anchor_target_multi_controller", "Use the d-pad to pick the point to anchor them to  ·  Bumpers switch HUD  ·  Press A to anchor  ·  Press B to cancel")
             controllerMode && anchorPickSources.isNotEmpty() ->
-                translated("oneconfig.hud.hint.anchor_target_controller","Use the d-pad to pick the point to anchor it to  ·  Bumpers switch HUD  ·  Press A to anchor  ·  Press B to go back")
+                translated("oneconfig.hud.hint.anchor_target_controller", "Use the d-pad to pick the point to anchor it to  ·  Bumpers switch HUD  ·  Press A to anchor  ·  Press B to go back")
             anchorPickSources.isNotEmpty() && anchorPickSelf == null ->
                 translated("oneconfig.hud.hint.anchor_self", "Click the point on this HUD that gets anchored  ·  Esc to cancel")
             anchorPickSources.size > 1 ->
@@ -4093,7 +4107,21 @@ fun HudDesignStudio(visible: Boolean = true) {
         val islandTarget = (hoveredHud ?: lingerHud ?: primaryHud())?.takeIf { it in HudManager.activeInstances }
         val draggingHud = draggedHud?.takeIf { isDragging }
         val islandExpanded = libraryVisible || islandSearchOpen
-        Box(Modifier.align(Alignment.TopCenter).padding(top = ISLAND_TOP, start = 16.dp, end = 16.dp)) {
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = ISLAND_TOP, start = 16.dp, end = 16.dp)
+                .then(
+                    if (controllerMode) {
+                        Modifier
+                            .focusRequester(libraryFocusRequester)
+                            .onFocusChanged { libraryHasFocus = it.hasFocus }
+                            .focusGroup()
+                    } else {
+                        Modifier
+                    },
+                ),
+        ) {
             DisposableEffect(Unit) { onDispose { chromeRects.remove(CHROME_LIBRARY) } }
             HudIslandSurface(
                 expanded = islandExpanded,
@@ -4104,8 +4132,8 @@ fun HudDesignStudio(visible: Boolean = true) {
             ) {
                 when {
                     libraryVisible -> {
-                        EscapeCloses { closeLibrary() }
-                        IslandFieldRow(onClose = { closeLibrary() }) {
+                        EscapeCloses { leaveIsland { closeLibrary() } }
+                        IslandFieldRow(onClose = { leaveIsland { closeLibrary() } }) {
                             SearchBar(
                                 searchText,
                                 { searchText = it },
@@ -4167,7 +4195,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 onSearchChange = { searchText = it },
                                 searchFocusRequested = false,
                                 onSearchFocused = {},
-                                onClose = { closeLibrary() },
+                                onClose = { leaveIsland { closeLibrary() } },
                                 sections = librarySections,
                                 suggestEvergreenHud = providers.isEmpty(),
                                 activeModId = activeLibraryMod,
@@ -4247,14 +4275,18 @@ fun HudDesignStudio(visible: Boolean = true) {
                             )
                         }
                         IslandFooter(
-                            translated("oneconfig.hud.island.library_hint", "Click a HUD to add it, or drag it where you want it"),
+                            if (controllerMode) {
+                                translated("oneconfig.hud.island.library_hint_controller", "Press A on a HUD to add it to the middle of the screen")
+                            } else {
+                                translated("oneconfig.hud.island.library_hint", "Click a HUD to add it, or drag it where you want it")
+                            },
                             if (providers.any(::isPlaced)) translated("oneconfig.hud.island.placed_hint", "Faded HUDs are on screen and can only be added once") else null,
                         )
                     }
 
                     islandSearchOpen -> {
-                        EscapeCloses { closeIslandSearch() }
-                        IslandFieldRow(onClose = { closeIslandSearch() }) {
+                        EscapeCloses { leaveIsland { closeIslandSearch() } }
+                        IslandFieldRow(onClose = { leaveIsland { closeIslandSearch() } }) {
                             SearchBar(
                                 islandQuery,
                                 {
@@ -4364,6 +4396,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                     if (!inLargerSelection) selectedHuds = unit
                                     panelOpen = true
                                 }
+                                if (Controllers.isActive) panelFocusRequests++
                             },
                             onToggleHidden = {
                                 Snapshot.withMutableSnapshot {
@@ -4387,10 +4420,12 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 }
                             },
                             onDelete = {
-                                lingerHud = null
-                                deleteHuds(unit)
+                                leaveIsland {
+                                    lingerHud = null
+                                    deleteHuds(unit)
+                                }
                             },
-                            onCollapse = ::collapseIsland,
+                            onCollapse = { leaveIsland(::collapseIsland) },
                         )
                     }
 
@@ -4413,7 +4448,7 @@ fun HudDesignStudio(visible: Boolean = true) {
                                 }
                             },
                             onPreferences = ::openPreferencesPage,
-                            onCollapse = ::collapseIsland,
+                            onCollapse = { leaveIsland(::collapseIsland) },
                         )
                     }
                 }

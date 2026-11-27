@@ -1004,6 +1004,7 @@
   "oneconfig.hud.island.on_screen": "On screen",
   "oneconfig.hud.island.mods_heading": "Mods",
   "oneconfig.hud.island.library_hint": "Click a HUD to add it, or drag it where you want it",
+  "oneconfig.hud.island.library_hint_controller": "Press A on a HUD to add it to the middle of the screen",
   "oneconfig.hud.island.placed_hint": "Faded HUDs are on screen and can only be added once",
   "oneconfig.hud.island.search_placeholder": "Search HUDs, mods and settings",
   "oneconfig.hud.island.no_results": "Nothing matches that search.",
