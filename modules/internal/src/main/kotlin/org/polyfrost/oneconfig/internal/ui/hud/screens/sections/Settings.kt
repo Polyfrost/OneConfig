@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -11,9 +12,16 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
+import org.polyfrost.oneconfig.api.ui.v1.components.NumberField
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressMode
+import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
+import org.polyfrost.oneconfig.internal.ui.components.settings.Dropdown
+import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.hudOptionsCanReset
+import org.polyfrost.oneconfig.internal.ui.hud.hudProperty
 import org.polyfrost.oneconfig.internal.ui.hud.resetHudOptions
 import org.polyfrost.oneconfig.internal.ui.screens.HudConfigScreen
 
@@ -32,6 +40,8 @@ fun Settings(hud: Hud?, query: String) {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             hud.tree?.let { HudConfigScreen(it, query) }
+
+            if (hud.hasVisibilityKeyMode()) VisibilityKeyCard(hud, query)
 
             if (hud !is LegacyHudMarker) {
                 val canReset = remember(showInF3, showInTab, showInScreens, showInChat) {
@@ -74,5 +84,57 @@ fun Settings(hud: Hud?, query: String) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun VisibilityKeyCard(hud: Hud, query: String) {
+    val keyProp = hudProperty(hud, "visibilityKeybind")
+    if (hudProperty(hud, "visibilityKeyMode") == null) return
+    val mode = hud.visibilityKeyMode
+    val bound = keyProp == null || hud.visibilityKeybind.isBound
+
+    val title = hudPanelText("visibility_keybind", "Visibility Keybind")
+    val keyModeLabel = hudPanelText("key_mode", "Key Mode")
+    val holdThresholdLabel = hudPanelText("hold_threshold", "Hold Threshold")
+    CardSection(title, query, title, keyModeLabel, holdThresholdLabel) {
+        if (keyProp != null) {
+            HudSettingTarget(hud, "visibilityKeybind") {
+                key(hud.visibilityKeybind) {
+                    ControlRow(hudPanelText("key", "Key")) { KeybindOption(KeybindOptionData(keyProp)) }
+                }
+            }
+        }
+        if (bound) {
+            HudSettingTarget(hud, "visibilityKeyMode") {
+                ControlRow(keyModeLabel) {
+                    Dropdown(keyModeLabels(), mode.ordinal, onSelect = {
+                        Snapshot.withMutableSnapshot { hud.visibilityKeyMode = KeyPressMode.entries[it] }
+                    }, width = 176.dp)
+                }
+            }
+            if (mode == KeyPressMode.QuickPress) {
+                HudSettingTarget(hud, "visibilityKeyHoldThreshold") {
+                    ControlRow(holdThresholdLabel) {
+                        NumberField(
+                            hud.visibilityKeyHoldThreshold.toFloat(),
+                            { Snapshot.withMutableSnapshot { hud.visibilityKeyHoldThreshold = it.toInt() } },
+                            range = 50f..1000f,
+                            step = 50f,
+                            unit = "ms",
+                            width = 176.dp,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun keyModeLabels(): List<String> = KeyPressMode.entries.map {
+    when (it) {
+        KeyPressMode.Held -> translated("oneconfig.preferences.key_mode.held", "Held")
+        KeyPressMode.Toggle -> translated("oneconfig.preferences.key_mode.toggle", "Toggle")
+        KeyPressMode.QuickPress -> translated("oneconfig.preferences.key_mode.quick_press", "Quick Press")
     }
 }

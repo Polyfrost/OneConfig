@@ -420,7 +420,7 @@ private fun buildHudCanvasMenuEntries(
     addToGroups: List<Pair<String, () -> Unit>> = emptyList(),
 ): List<MenuEntry> {
     val actionTargets = targets.ifEmpty { listOf(hud) }
-    val allHidden = actionTargets.all { it.hidden }
+    val allHidden = actionTargets.all { it.effectivelyHidden }
     val allLocked = actionTargets.all { it.locked }
     val entries = ArrayList<MenuEntry>(24)
 
@@ -432,12 +432,7 @@ private fun buildHudCanvasMenuEntries(
     )
     entries += MenuAction(
         if (allHidden) translated("oneconfig.hud.menu.show", "Show") else translated("oneconfig.hud.menu.hide", "Hide"),
-        {
-            Snapshot.withMutableSnapshot {
-                val hide = actionTargets.any { !it.hidden }
-                actionTargets.forEach { it.hidden = hide }
-            }
-        },
+        { toggleHudVisibility(actionTargets) },
         icon = if (allHidden) "eye-off" else "eye",
         shortcutHint = keybindHint(OneConfigConfig.hudVisibilityKeybind),
     )

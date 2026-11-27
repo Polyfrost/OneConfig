@@ -12,9 +12,12 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
+import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.platform.v1.Keys;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.BindNotInScreen;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressMode;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindUtils;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind;
@@ -199,6 +202,36 @@ public class OneConfigConfig extends Config {
         description = "oneconfig.preferences.hud_marquee_anim_duration.description"
     )
     public static float marqueeSelectionAnimDuration = 150f;
+
+    @Keybind(
+        title = "oneconfig.preferences.hud_toggle_all_keybind.title",
+        subcategory = "oneconfig.preferences.category.huds",
+        description = "oneconfig.preferences.hud_toggle_all_keybind.description"
+    )
+    public static OneConfigKeybind hudToggleAllKeybind =
+        new OneConfigKeybind(null, null, KeyModifiers.NONE, 0L, pressed -> true);
+
+    @Dropdown(
+        title = "oneconfig.preferences.hud_toggle_all_mode.title",
+        subcategory = "oneconfig.preferences.category.huds",
+        options = {
+            "oneconfig.preferences.key_mode.held",
+            "oneconfig.preferences.key_mode.toggle",
+            "oneconfig.preferences.key_mode.quick_press"
+        },
+        description = "oneconfig.preferences.hud_toggle_all_mode.description"
+    )
+    public static KeyPressMode hudToggleAllKeyMode = KeyPressMode.Held;
+
+    @Slider(
+        title = "oneconfig.preferences.hud_toggle_all_hold_threshold.title",
+        subcategory = "oneconfig.preferences.category.huds",
+        min = 50f,
+        max = 1000f,
+        step = 50f,
+        description = "oneconfig.preferences.hud_toggle_all_hold_threshold.description"
+    )
+    public static float hudToggleAllHoldThreshold = 300f;
 
     @Slider(
         title = "oneconfig.preferences.hud_drag_ui_opacity.title",
@@ -436,6 +469,11 @@ public class OneConfigConfig extends Config {
     private static final AtomicReference<OneConfigKeybind>
         registeredHudShortcutsAltKeybind = new AtomicReference<>();
 
+    /**
+     * The keybind registered with the {@link KeybindManager} for temporarily hiding every HUD
+     */
+    private static OneConfigKeybind registeredHudToggleAllKeybind;
+
     public OneConfigConfig() {
         super("oneconfig.json", "assets/oneconfig/brand/oneconfig-icon.svg", "OneConfig", Category.QOL);
         INSTANCE = this;
@@ -590,6 +628,47 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshHudShortcutsAltKeybind();
+        addCallback(
+            "hudToggleAllKeybind", (OneConfigKeybind kb) -> {
+                refreshHudToggleAllKeybind();
+                return false;
+            });
+        refreshHudToggleAllKeybind();
+        addCallback(
+            "hudToggleAllKeyMode", (KeyPressMode mode) -> {
+                HudManager.resetAllHudsKey();
+                return false;
+            });
+        addDependency(
+            "hudToggleAllHoldThreshold",
+            "Mode",
+            () -> hudToggleAllKeyMode == KeyPressMode.QuickPress ? Property.Display.SHOWN : Property.Display.DISABLED);
+    }
+
+    /**
+     * Rebuilds the keybind which temporarily hides every HUD
+     * <p>
+     * Built as a {@link BindNotInScreen} so it never fires while a screen is open
+     */
+    private static void refreshHudToggleAllKeybind() {
+        if (registeredHudToggleAllKeybind != null) {
+            KeybindManager.unregister(registeredHudToggleAllKeybind);
+            registeredHudToggleAllKeybind = null;
+        }
+        HudManager.resetAllHudsKey();
+        OneConfigKeybind src = hudToggleAllKeybind;
+        if (src == null || !src.isBound()) {
+            return;
+        }
+        registeredHudToggleAllKeybind = KeybindManager.register(new BindNotInScreen(
+            src.getKeyCodes(),
+            src.getMouseBtns(),
+            src.getMods(),
+            0L,
+            pressed -> {
+                HudManager.allHudsKeyInput(pressed, hudToggleAllKeyMode, (long) hudToggleAllHoldThreshold);
+                return true;
+            }));
     }
 
     private static final String[] SOUND_OPTIONS = {"enableUIMenuSounds", "enableUIClickSounds", "enableUISliderSounds", "enableHudEditorSounds", "uiSoundVolume"};

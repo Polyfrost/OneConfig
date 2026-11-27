@@ -27,6 +27,7 @@
 //~ gui_graphics
 package org.polyfrost.oneconfig.internal;
 
+import java.util.function.BooleanSupplier;
 import com.mojang.brigadier.Command;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -196,6 +197,8 @@ public class OneConfig implements ClientModInitializer {
     }
 
     private static boolean isTabListVisible() {
+        BooleanSupplier override = HudManager.tabListVisibility;
+        if (override != null) return override.getAsBoolean();
         Minecraft minecraft = Minecraft.getInstance();
         if (!minecraft.options.keyPlayerList.isDown()) return false;
         if (minecraft.level == null || minecraft.player == null) return false;
@@ -380,6 +383,7 @@ public class OneConfig implements ClientModInitializer {
         EventManager.register(WorldEvent.Load.class, e -> {
             showFirstLaunchNotification();
         });
+        EventManager.register(WorldEvent.Unload.class, e -> HudManager.resetVisibilityKeys());
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());
         EventManager.register(ResourceFinishedLoading.class, e -> CompatLoader.INSTANCE.onResourcesLoaded());
