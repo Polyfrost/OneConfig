@@ -63,7 +63,9 @@ fun Layout(hud: Hud?, query: String) {
         var staticW by remember { mutableStateOf(hud.staticW) }
         var staticH by remember { mutableStateOf(hud.staticH) }
         var alignment by remember { mutableStateOf(hud.alignment) }
-        var growthAnchor by remember { mutableStateOf(hud.effectiveGrowthAnchor) }
+        // keyed because a snap or a move to another screen third changes the anchor outside this panel
+        val effectiveGrowthAnchor = hud.effectiveGrowthAnchor
+        var growthAnchor by remember(effectiveGrowthAnchor) { mutableStateOf(effectiveGrowthAnchor) }
         val growthAlign = growthAnchor.toAlign() ?: PolyAlign.Center
         var padLeft by remember { mutableStateOf(hud.padLeft) }
         var padRight by remember { mutableStateOf(hud.padRight) }
