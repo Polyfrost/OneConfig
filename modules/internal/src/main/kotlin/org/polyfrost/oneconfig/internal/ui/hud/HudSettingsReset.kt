@@ -63,7 +63,7 @@ private val POSITION_OPTIONS = setOf(
     "snapEdgeX", "snapEdgeY",
 )
 
-private val UNRESETTABLE_OPTIONS = setOf("groupPath")
+private val UNRESETTABLE_OPTIONS = setOf("groupPath", "groupBackground")
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
 fun hudUiEpoch(hud: Hud): Int = hudUiEpochs[hud] ?: 0
@@ -472,7 +472,7 @@ private fun buildHudCanvasMenuEntries(
         )
     }
     val mergeable = actionTargets.filter { it !is LegacyHudMarker && it.canMergeBackground() }
-    if (mergeable.any { it.mergeBackground && it.bgMerged }) {
+    if (mergeable.any { it.mergeBackground && it.bgFused }) {
         entries += MenuAction(
             translated("oneconfig.hud.menu.detach", "Detach from group"),
             { Snapshot.withMutableSnapshot { mergeable.forEach { it.mergeBackground = false } } },

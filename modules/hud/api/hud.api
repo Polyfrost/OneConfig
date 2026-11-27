@@ -85,6 +85,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getFont ()Lorg/polyfrost/oneconfig/api/hud/v1/Font;
 	public final fun getFullShadow ()Z
 	public final fun getGroup ()Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
+	public final fun getGroupBackground ()Ljava/lang/String;
 	public final fun getGroupPath ()Ljava/lang/String;
 	public final fun getGrowthAnchor ()Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;
 	public final fun getHasBeenMoved ()Z
@@ -202,6 +203,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public fun setCustomScale (F)V
 	public final fun setFont (Lorg/polyfrost/oneconfig/api/hud/v1/Font;)V
 	public final fun setFullShadow (Z)V
+	public final fun setGroupBackground (Ljava/lang/String;)V
 	public final fun setGroupPath (Ljava/lang/String;)V
 	public final fun setGrowthAnchor (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
 	public final fun setGrowthAnchorKeepingPosition (Lorg/polyfrost/oneconfig/api/hud/v1/HudAnchor;)V
@@ -381,7 +383,9 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudGroups {
 	public static final fun group (Ljava/util/Collection;Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
 	public static synthetic fun group$default (Ljava/util/Collection;Ljava/util/Collection;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;
 	public static final fun groupable (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
+	public static final fun hasSingleBackground (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)Z
 	public static final fun hasUniformScale (Ljava/util/Collection;)Z
+	public static final fun isBackgroundTakenOver (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)Z
 	public static final fun matchScale (Ljava/util/Collection;F)V
 	public static final fun matchScale (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;F)V
 	public static final fun moveFrom (Ljava/util/Collection;Ljava/util/Map;FF)V
@@ -412,6 +416,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudGroups {
 	public static final fun setLocked (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;Z)V
 	public static final fun setScale (Ljava/util/Collection;F)V
 	public static final fun setScale (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;F)V
+	public static final fun setSingleBackground (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;Z)V
 	public static final fun ungroup (Lorg/polyfrost/oneconfig/api/hud/v1/HudGroup;)V
 }
 

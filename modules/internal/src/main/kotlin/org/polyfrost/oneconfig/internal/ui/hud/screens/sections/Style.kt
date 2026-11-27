@@ -390,7 +390,7 @@ fun Style(hud: Hud?, query: String) {
                         }
                     },
                     third = {
-                        FadingCell(mergeBackground) {
+                        FadingCell(mergeBackground || onGroupBackground(hud)) {
                             HudSettingTarget(hud, "keepBgWhenHidden") {
                                 LabeledControl(hudPanelText("keep_hidden", "Keep hidden")) {
                                     Switch(keepBgWhenHidden, {

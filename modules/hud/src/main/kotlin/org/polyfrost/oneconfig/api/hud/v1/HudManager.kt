@@ -719,7 +719,10 @@ public object HudManager {
         } else if (delete && treeId != null) {
             cleanup { ConfigManager.active().delete(treeId) }
             cleanup { CompatSnapshots.untrack(treeId) }
-            cleanup { hud.groupPath = "" }
+            cleanup {
+                hud.groupPath = ""
+                hud.groupBackground = ""
+            }
         }
         // back to being a plain provider so a single-instance HUD can be made again later
         cleanup { hud.detachTree() }
@@ -1387,7 +1390,17 @@ public object HudManager {
         // so the cached frame is no longer good
         contentDirty = true
 
-        val mergeable = if (mergeExclusions.isEmpty()) huds else huds.filter { hud -> !isMergeExcluded(hud) }
+        val wholeShapes = ArrayList<HudBackgroundMerge.Group>()
+        val inWholeGroup = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
+        for ((members, styled) in wholeGroupMembers(huds).values) {
+            wholeShapes.add(HudBackgroundMerge.wholeGroup(members, styled) ?: continue)
+            inWholeGroup.addAll(members)
+        }
+        val mergeable = if (mergeExclusions.isEmpty() && inWholeGroup.isEmpty()) {
+            huds
+        } else {
+            huds.filter { hud -> !isMergeExcluded(hud) && hud !in inWholeGroup }
+        }
         val refW = if (layoutRefWidth > 0f) layoutRefWidth else screenWidth
         val refH = if (layoutRefHeight > 0f) layoutRefHeight else screenHeight
         val collapsed = activeInstances.filter { it.isCollapsed && !isMergeExcluded(it) }
@@ -1409,13 +1422,14 @@ public object HudManager {
             updateMergeLinks(groups)
             groups
         }
-        frameGroups = if (collapsed.isEmpty()) linkGroups else HudBackgroundMerge.computeGroups(mergeable, refW, refH)
+        val fusedGroups = if (collapsed.isEmpty()) linkGroups else HudBackgroundMerge.computeGroups(mergeable, refW, refH)
+        frameGroups = wholeShapes + fusedGroups
         val merged = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>())
-        for (group in frameGroups) merged.addAll(group.huds)
+        for (group in fusedGroups) merged.addAll(group.huds)
 
         var changed = false
         for (hud in activeInstances) {
-            if (hud.bgMerged != (hud in merged)) {
+            if (hud.bgFused != (hud in merged) || hud.bgGrouped != (hud in inWholeGroup)) {
                 changed = true
                 break
             }
@@ -1423,7 +1437,10 @@ public object HudManager {
         if (!changed) return
 
         Snapshot.withMutableSnapshot {
-            for (hud in activeInstances) hud.bgMerged = hud in merged
+            for (hud in activeInstances) {
+                hud.bgFused = hud in merged
+                hud.bgGrouped = hud in inWholeGroup
+            }
         }
         // the flag is read during composition so recompose and re-lay out now
         // instead of letting the change land a frame late
@@ -1450,6 +1467,21 @@ public object HudManager {
     }
     internal var prepareScale = Float.NaN
         private set
+
+    private fun wholeGroupMembers(huds: List<Hud>): Map<String, Pair<List<Hud>, List<Hud>>> {
+        val members = LinkedHashMap<String, Pair<MutableList<Hud>, MutableList<Hud>>>()
+        val drawn = Collections.newSetFromMap(IdentityHashMap<Hud, Boolean>()).apply { addAll(huds) }
+        for (hud in activeInstances) {
+            if (hud is LegacyHudMarker || !hud.canMergeBackground() || hud.borderEnabled) continue
+            val id = HudGroups.wholeGroupBackgroundOf(hud) ?: continue
+            val (shown, styled) = members.getOrPut(id) { ArrayList<Hud>() to ArrayList() }
+            styled.add(hud)
+            if (hud in drawn && !hud.isCollapsed && (!hud.effectivelyHidden || hud.keepBgWhenHidden) && (isEditing || hud in frameDrawn)) shown.add(hud)
+        }
+        return members.entries.filter { it.value.first.isNotEmpty() }
+            .sortedBy { (id, value) -> value.first.first().groupPath.split(HudGroups.SEPARATOR).indexOf(id) }
+            .associate { it.key to it.value }
+    }
     private var geometrySkip = false
     private var geometryStable = false
     private var geometryWrites = -1

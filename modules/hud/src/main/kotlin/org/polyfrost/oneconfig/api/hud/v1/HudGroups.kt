@@ -216,8 +216,12 @@ public object HudGroups {
     @JvmStatic
     public fun ungroup(group: HudGroup) {
         val parent = group.parent?.path.orEmpty()
+        val leaving = group.huds
+        val moving = identitySet(leaving)
         Snapshot.withMutableSnapshot {
-            for (hud in group.huds) hud.groupPath = join(parent, hud.groupPath.substring(group.path.length).trimStart(SEPARATOR))
+            for (hud in leaving) {
+                joinGroup(hud, join(parent, hud.groupPath.substring(group.path.length).trimStart(SEPARATOR)), moving)
+            }
         }
         HudManager.invalidate()
     }
@@ -226,7 +230,7 @@ public object HudGroups {
     @JvmStatic
     public fun removeFromGroup(hud: Hud) {
         val group = of(hud) ?: return
-        Snapshot.withMutableSnapshot { hud.groupPath = group.parent?.path.orEmpty() }
+        Snapshot.withMutableSnapshot { joinGroup(hud, group.parent?.path.orEmpty(), identitySet(listOf(hud))) }
         HudManager.invalidate()
     }
 
@@ -235,6 +239,67 @@ public object HudGroups {
     public fun removeFromGroup(group: HudGroup) {
         val parent = group.parent ?: return
         move(listOf(Moving(group.huds, parent.path)), parent.parent?.path.orEmpty())
+    }
+
+    /** Whether every HUD in [group] is drawn on one background shared by the whole group or by a group around it */
+    @JvmStatic
+    public fun hasSingleBackground(group: HudGroup): Boolean =
+        group.huds.let { huds -> huds.isNotEmpty() && huds.all { it.groupBackground in group.path.split(SEPARATOR) } }
+
+    /** Whether a group around [group] is drawn on one background, which takes over from any background of [group] */
+    @JvmStatic
+    public fun isBackgroundTakenOver(group: HudGroup): Boolean = generateSequence(group.parent) { it.parent }.any(::hasSingleBackground)
+
+    /** Draws [group] on one shared background instead of one per HUD, or goes back when [on] is `false` */
+    @JvmStatic
+    public fun setSingleBackground(group: HudGroup, on: Boolean) {
+        if (on && isBackgroundTakenOver(group)) return
+        Snapshot.withMutableSnapshot {
+            for (hud in group.huds) {
+                if (on) hud.groupBackground = group.id else if (hud.groupBackground == group.id) hud.groupBackground = ""
+            }
+        }
+        HudManager.invalidate()
+    }
+
+    internal fun wholeGroupBackgroundOf(hud: Hud): String? =
+        hud.groupBackground.takeIf { it.isNotEmpty() && it in hud.groupPath.split(SEPARATOR) }
+
+    private fun dropStaleBackground(hud: Hud) {
+        if (hud.groupBackground.isNotEmpty() && wholeGroupBackgroundOf(hud) == null) hud.groupBackground = ""
+    }
+
+    private fun joinGroup(hud: Hud, path: String, moving: Set<Hud>) {
+        hud.groupPath = path
+        val inherited = inheritedBackground(hud, moving)
+        when {
+            inherited == null -> dropStaleBackground(hud)
+            hud is LegacyHudMarker || !hud.canMergeBackground() -> {
+                hud.groupBackground = ""
+                for (other in HudManager.activeInstances) if (other.groupBackground == inherited) other.groupBackground = ""
+            }
+            else -> hud.groupBackground = inherited
+        }
+    }
+
+    private fun inheritedBackground(hud: Hud, moving: Set<Hud>): String? {
+        if (hud.groupPath.isEmpty()) return null
+        val ids = hud.groupPath.split(SEPARATOR)
+        return ids.indices.firstNotNullOfOrNull { i ->
+            val prefix = ids.take(i + 1).joinToString(SEPARATOR.toString())
+            val stayers = HudManager.activeInstances.filter { it !in moving && isWithin(it.groupPath, prefix) }
+            ids[i].takeIf { id -> stayers.isNotEmpty() && stayers.all { it.groupBackground == id } }
+        }
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    public fun remapCopies(originals: List<Hud>, copies: List<Hud>) {
+        for ((original, copy) in originals.zip(copies)) {
+            if (original.groupBackground.isEmpty()) continue
+            val index = original.groupPath.split(SEPARATOR).indexOf(original.groupBackground)
+            if (index >= 0) copy.groupBackground = copy.groupPath.split(SEPARATOR)[index]
+        }
     }
 
     /** Locks or unlocks every HUD in [group] */
@@ -800,11 +865,12 @@ public object HudGroups {
     }
 
     private fun move(units: List<Moving>, into: String) {
+        val moving = identitySet(units.flatMap { it.huds })
         Snapshot.withMutableSnapshot {
             for (unit in units) {
                 for (hud in unit.huds) {
                     val rest = hud.groupPath.substring(unit.parentPath.length).trimStart(SEPARATOR)
-                    hud.groupPath = join(into, rest)
+                    joinGroup(hud, join(into, rest), moving)
                 }
             }
         }
