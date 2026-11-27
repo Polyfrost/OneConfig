@@ -105,7 +105,7 @@ object ModToggleStore : ModToggles.Store, ConfigManager.ProfileChangeListener {
 
     private val writeLock = Any()
 
-    private class Bound(val profile: String, val disabled: Set<String>, val trusted: Boolean)
+    private class Bound(val profile: String, val disabled: Set<String>, val trusted: Boolean, val held: Set<String> = emptySet())
 
     private val bound = AtomicReference(Bound("", emptySet(), false))
 
@@ -126,7 +126,12 @@ object ModToggleStore : ModToggles.Store, ConfigManager.ProfileChangeListener {
 
     @JvmStatic
     fun keepEnabled(modId: String) {
-        keptEnabled = keptEnabled + modId
+        val key = modId.trim().lowercase()
+        keptEnabled = keptEnabled + key
+        bound.updateAndGet {
+            if (key in it.disabled) Bound(it.profile, it.disabled - key, it.trusted, it.held + key) else it
+        }
+        ModToggles.replaceDisabled { it - key }
     }
 
     private fun migrateSharedList() {
@@ -157,8 +162,9 @@ object ModToggleStore : ModToggles.Store, ConfigManager.ProfileChangeListener {
             bound.set(Bound(profile, emptySet(), false))
             throw e
         }
-        bound.set(Bound(profile, loaded, true))
-        return loaded
+        val kept = keptEnabled
+        bound.set(Bound(profile, loaded - kept, true, loaded intersect kept))
+        return loaded - kept
     }
 
     override fun onProfileSaving(profile: String) {
@@ -171,7 +177,7 @@ object ModToggleStore : ModToggles.Store, ConfigManager.ProfileChangeListener {
     }
 
     override fun onProfileRenamed(oldProfile: String, newProfile: String) {
-        bound.updateAndGet { if (it.profile == oldProfile) Bound(newProfile, it.disabled, it.trusted) else it }
+        bound.updateAndGet { if (it.profile == oldProfile) Bound(newProfile, it.disabled, it.trusted, it.held) else it }
     }
 
     override fun onProfileChanged(newProfile: String) {
@@ -185,10 +191,9 @@ object ModToggleStore : ModToggles.Store, ConfigManager.ProfileChangeListener {
             Platform.screen()::runOnUiThread,
             {
                 ModToggles.replaceDisabled { live ->
-                    val next = loaded?.minus(keptEnabled) ?: live
-                    val state = Bound(newProfile, next, loaded != null)
-                    bound.set(state)
-                    if (loaded != null && next != loaded) persist(state)
+                    val kept = keptEnabled
+                    val next = loaded?.minus(kept) ?: live
+                    bound.set(Bound(newProfile, next, loaded != null, loaded?.intersect(kept).orEmpty()))
                     next
                 }
             },
@@ -198,7 +203,7 @@ object ModToggleStore : ModToggles.Store, ConfigManager.ProfileChangeListener {
     }
 
     override fun save(disabled: Set<String>) {
-        val state = bound.updateAndGet { Bound(it.profile, disabled, it.trusted) }
+        val state = bound.updateAndGet { Bound(it.profile, disabled, it.trusted, it.held) }
         if (state.trusted) persist(state)
     }
 
@@ -222,7 +227,7 @@ object ModToggleStore : ModToggles.Store, ConfigManager.ProfileChangeListener {
         if (!Files.isDirectory(path.parent)) return
         Files.write(
             path,
-            state.disabled.sorted().joinToString("\n").toByteArray(StandardCharsets.UTF_8),
+            (state.disabled + state.held).sorted().joinToString("\n").toByteArray(StandardCharsets.UTF_8),
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING,
             StandardOpenOption.WRITE,

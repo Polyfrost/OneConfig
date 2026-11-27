@@ -322,8 +322,11 @@ public final class ConfigManager {
         ConfigManager mgr = active();
         try {
             Path file = mgr.getFolder().resolve(id);
-            if (Files.exists(file)) {
-                Files.copy(file, mgr.getFolder().resolve(id + ".corrupted"), StandardCopyOption.REPLACE_EXISTING);
+            Path backup = mgr.getFolder().resolve(id + ".corrupted");
+            if (Files.exists(backup)) {
+                LOGGER.warn("keeping existing backup {}.corrupted of problematic config {}", id, id);
+            } else if (Files.exists(file)) {
+                Files.copy(file, backup);
                 LOGGER.warn("backed up problematic config {} to {}.corrupted", id, id);
             }
         } catch (IOException e) {

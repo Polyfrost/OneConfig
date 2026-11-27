@@ -78,7 +78,8 @@ public class NightConfigSerializer implements FileSerializer<String> {
             if (n instanceof Property<?>) {
                 Property<?> p = (Property<?>) n;
                 if (p.type == Void.class) continue;
-                Object o = p.get();
+                Object unapplied = p.getUnappliedStoredValue();
+                Object o = unapplied != null ? unapplied : p.get();
                 if (o == null) continue;
                 if (!WrappingUtils.isSimpleObject(o) && ObjectSerializer.isSerializable(o)) {
                     Object out = ObjectSerializer.INSTANCE.serialize(o, true);
