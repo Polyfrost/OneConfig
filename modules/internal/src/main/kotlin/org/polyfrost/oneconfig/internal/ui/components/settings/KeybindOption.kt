@@ -30,6 +30,9 @@ internal fun writeKeybind(prop: Property<*>, keys: IntArray?, mouse: IntArray?, 
     return applied
 }
 
+internal fun Property<*>.isKeybind(): Boolean =
+    runCatching { get() is OneConfigKeybind }.getOrDefault(false) || getMetadata<Any?>("default") is OneConfigKeybind
+
 @Suppress("UNCHECKED_CAST")
 fun resetKeybindOption(prop: Property<*>) {
     val def = prop.getMetadata<Any?>("default") as? OneConfigKeybind
@@ -40,6 +43,10 @@ fun resetKeybindOption(prop: Property<*>) {
         KeybindConflicts.revision.intValue++
     } else if (def == null) {
         writeKeybind(prop, null, null, KeyModifiers.NONE)
+    } else if (prop.get() == null) {
+        (prop as Property<Any?>).setAsReferential(def.copyWith(def.keyCodes?.clone(), def.mouseBtns?.clone(), def.mods))
+        (prop.get() as? OneConfigKeybind)?.let(KeybindManager::register)
+        KeybindConflicts.revision.intValue++
     } else {
         writeKeybind(prop, def.keyCodes?.clone(), def.mouseBtns?.clone(), def.mods)
     }
