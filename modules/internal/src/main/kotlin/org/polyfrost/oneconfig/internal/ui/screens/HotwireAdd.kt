@@ -187,11 +187,11 @@ private fun RowIcon(key: Any, load: () -> String?) {
     val path by produceState<String?>(null, key) {
         // a row reused for another item mustn't keep the last one's icon while this one loads
         value = null
-        value = withContext(Dispatchers.IO) { runCatching(load).getOrNull() }
+        value = withContext(Dispatchers.IO) { runCatching(load).getOrNull().orEmpty() }
     }
-    // keeps names lined up while an icon loads or when a mod has none
+    // keeps names lined up while an icon loads
     Box(Modifier.size(36.dp)) {
-        path?.let { Icon(it, color = LocalTheme.current.textColor, modifier = Modifier.fillMaxSize()) }
+        path?.let { IconOrPlaceholder(it) }
     }
 }
 

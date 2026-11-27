@@ -307,12 +307,24 @@ internal fun modIconPath(bridge: HotwireBridge, id: String, version: String): St
 @Composable
 internal fun ModIcon(bridge: HotwireBridge, id: String, version: String, size: Int) {
     val key = id to version
-    val path by produceState(iconPaths[key]?.ifEmpty { null }, key) {
-        value = withContext(Dispatchers.IO) { modIconPath(bridge, id, version) }
+    // null while the jar is read, and blank once it's known to have no icon
+    val path by produceState(iconPaths[key], key) {
+        value = withContext(Dispatchers.IO) { modIconPath(bridge, id, version).orEmpty() }
     }
-    // keeps names lined up while an icon loads or when a mod has none
+    // keeps names lined up while an icon loads
     Box(Modifier.size(size.dp)) {
-        path?.let { Icon(it, color = LocalTheme.current.textColor, modifier = Modifier.fillMaxSize()) }
+        path?.let { IconOrPlaceholder(it) }
+    }
+}
+
+/** The icon at [path], or OneConfig's stand-in when it's blank, so a mod without one isn't left an empty space */
+@Composable
+internal fun IconOrPlaceholder(path: String) {
+    val theme = LocalTheme.current
+    if (path.isEmpty()) {
+        Icon("default_mod", color = theme.textColorSecondary, modifier = Modifier.fillMaxSize())
+    } else {
+        Icon(path, color = theme.textColor, modifier = Modifier.fillMaxSize())
     }
 }
 
