@@ -55,7 +55,11 @@ import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.keybind.BindNotInScreen
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyModifiers
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressMode
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressState
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.page.PageText
@@ -148,6 +152,9 @@ private val REDRAW_GETTERS = arrayOf("getAlwaysRedraw", "getBorderEnabled", "get
 private val BORDER_OPTIONS = arrayOf("border", "borderEnabled", "borderColor", "borderChroma", "borderChromaSpeed", "borderSize")
 
 internal const val POS_SCHEMA = 1
+
+/** Mirrors `MinecraftKeybindRegistrar.NO_MIRROR_METADATA` which this module cannot see */
+private const val NO_MC_MIRROR_METADATA = "oc_no_mc_mirror"
 
 // every open getter the cached frame geometry or the background merge key reads
 // a subclass overriding one of these is read live, so a new open geometry property must be added here
@@ -472,8 +479,118 @@ public abstract class Hud(
     @Switch(title = "Show in Chat")
     public var showInChat: Boolean = true
 
-    public var toggleKey: Int = -1
-    public var showKey: Int = -1
+    @Deprecated("Binary compatibility, replaced by visibilityKeybind", level = DeprecationLevel.HIDDEN)
+    public var toggleKey: Int
+        get() = -1
+        set(_) {}
+
+    @Deprecated("Binary compatibility, replaced by visibilityKeybind", level = DeprecationLevel.HIDDEN)
+    public var showKey: Int
+        get() = -1
+        set(_) {}
+
+    /**
+     * Key which temporarily flips this HUD between shown and hidden without touching [hidden]
+     *
+     * Whether it shows or hides the HUD depends on [hidden] so a shown HUD is hidden by it and a hidden HUD shown
+     */
+    public var visibilityKeybind: OneConfigKeybind
+        get() = _visibilityKeybind.value
+        set(v) {
+            _visibilityKeybind.value = v
+            refreshVisibilityKeybind()
+        }
+
+    private var _visibilityKeybind: MutableState<OneConfigKeybind> = mutableStateOf(KeybindHelper.builder().build())
+
+    private var _visibilityKeyMode: MutableState<KeyPressMode> = mutableStateOf(KeyPressMode.Held)
+    public var visibilityKeyMode: KeyPressMode
+        get() = _visibilityKeyMode.value
+        set(v) {
+            if (_visibilityKeyMode.value != v) resetVisibilityKey()
+            _visibilityKeyMode.value = v
+        }
+
+    private var _visibilityKeyHoldThreshold: MutableState<Int> = mutableStateOf(300)
+
+    /** How long in milliseconds a [KeyPressMode.QuickPress] press must be held to act as a hold */
+    public var visibilityKeyHoldThreshold: Int
+        get() = _visibilityKeyHoldThreshold.value
+        set(v) { _visibilityKeyHoldThreshold.value = v }
+
+    @Transient
+    private var visibilityKeyState = KeyPressState()
+
+    @Transient
+    private var registeredVisibilityKeybind: OneConfigKeybind? = null
+
+    @Transient
+    private var _visibilityKeyActive: MutableState<Boolean> = mutableStateOf(false)
+
+    /** Whether [visibilityKeybind] is currently flipping this HUD's visibility */
+    public val visibilityKeyActive: Boolean get() = _visibilityKeyActive.value
+
+    /**
+     * Whether this HUD has its own [visibilityKeybind]
+     *
+     * Return `false` for a HUD which is shown and hidden by some other input, and override
+     * [hasVisibilityKeyMode] to keep offering the press mode settings for that input
+     */
+    public open fun hasVisibilityKeybind(): Boolean = true
+
+    /** Whether the [visibilityKeyMode] and [visibilityKeyHoldThreshold] settings apply to this HUD */
+    public open fun hasVisibilityKeyMode(): Boolean = hasVisibilityKeybind()
+
+    /** Whether this HUD is hidden right now, taking [visibilityKeybind] into account */
+    public val effectivelyHidden: Boolean get() = hidden != visibilityKeyActive
+
+    /**
+     * Feeds the held state of whatever key flips this HUD's visibility through [visibilityKeyMode]
+     *
+     * [visibilityKeybind] does this on its own, so call it only for a HUD driven by another input (see
+     * [hasVisibilityKeybind]). Repeated calls with the same [down] change nothing
+     *
+     * Presses are ignored while the editor is open, releases still count so a held key never sticks
+     */
+    public fun visibilityKeyInput(down: Boolean) {
+        if (HudManager.isEditing && down) return
+        visibilityKeyState.input(down, visibilityKeyMode, visibilityKeyHoldThreshold.toLong())
+        _visibilityKeyActive.put(visibilityKeyState.active)
+    }
+
+    /**
+     * Whether this HUD is switched on, which is what its switch in the HUD library shows and changes
+     *
+     * Defaults to not [hidden]. A HUD which stays hidden until its key shows it should override this with a
+     * switch of its own, or switching it on in the library would leave it shown for good
+     */
+    public open var hudEnabled: Boolean
+        get() = !hidden
+        set(v) { hidden = !v }
+
+    /**
+     * Puts this HUD back to its configured visibility and forgets any key press in progress
+     *
+     * Called when the editor's show/hide action is used on this HUD, the world unloads or the key or its mode
+     * changes, so a HUD driven by
+     * another input (see [hasVisibilityKeybind]) can override it to reset that input too
+     */
+    @MustBeInvokedByOverriders
+    public open fun resetVisibilityKey() {
+        visibilityKeyState.reset()
+        _visibilityKeyActive.put(false)
+    }
+
+    private fun refreshVisibilityKeybind() {
+        registeredVisibilityKeybind?.let(KeybindManager::unregister)
+        registeredVisibilityKeybind = null
+        resetVisibilityKey()
+        val src = visibilityKeybind
+        if (!isReal || !hasVisibilityKeybind() || !src.isBound) return
+        registeredVisibilityKeybind = KeybindManager.register(
+            BindNotInScreen(src.keyCodes, src.mouseBtns, src.mods, 0L) { visibilityKeyInput(it); true }
+        )
+    }
 
     @Transient
     private var toggleBind: OneConfigKeybind? = null
@@ -1440,7 +1557,7 @@ public abstract class Hud(
     public var keepBgWhenHidden: Boolean get() = _keepBgWhenHidden.value; set(v) { _keepBgWhenHidden.put(v) }
 
     internal val keepsHiddenBackground: Boolean
-        get() = hidden && keepBgWhenHidden && showBackground &&
+        get() = effectivelyHidden && keepBgWhenHidden && showBackground &&
             (mergeBackground || HudGroups.wholeGroupBackgroundOf(this) != null) &&
             hasBackground() && canMergeBackground() && this !is LegacyHudMarker
 
@@ -1827,7 +1944,7 @@ public abstract class Hud(
             flagRevision = rev
             if (!hasTrait(TRAIT_LIVE_REDRAW_INPUTS)) flagRedraw = alwaysRedraw
             if (!hasExternalGeometry) {
-                flagHidden = hidden
+                flagHidden = effectivelyHidden
                 flagUseGuiScale = useGuiScale
                 flagCustomScale = customScale
                 flagFixedGuiScale = fixedGuiScale
@@ -1842,7 +1959,7 @@ public abstract class Hud(
         get() = if (!hasTrait(TRAIT_LIVE_REDRAW_INPUTS) && refreshFrameFlags()) flagRedraw else alwaysRedraw
 
     internal val frameHidden: Boolean
-        get() = if (!hasExternalGeometry && refreshFrameFlags()) flagHidden else hidden
+        get() = if (!hasExternalGeometry && refreshFrameFlags()) flagHidden else effectivelyHidden
 
     internal val frameEffectiveScale: Float
         get() {
@@ -1941,10 +2058,26 @@ public abstract class Hud(
                 tree["snapEdgeY"] = ktProperty(out::snapEdgeY).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["groupBackground"] = ktProperty(out::groupBackground).apply { addDisplayCondition(hideFromConfigUi) }
             }
-            tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
-            tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
             if (tree["toggleKeybind"] == null) {
                 tree["toggleKeybind"] = ktProperty(out::toggleKeybind).apply { addDisplayCondition(hideFromConfigUi) }
+            }
+            if (out.hasVisibilityKeybind()) {
+                tree["visibilityKeybind"] = ktProperty(out::visibilityKeybind, "Visibility Keybind").apply {
+                    description = "Temporarily shows this HUD if it is hidden, or hides it if it is shown."
+                    addMetadata(NO_MC_MIRROR_METADATA, true)
+                    addDisplayCondition(hideFromConfigUi)
+                }
+            }
+            if (out.hasVisibilityKeyMode()) {
+                tree["visibilityKeyMode"] = ktProperty(out::visibilityKeyMode, "Key Mode").apply {
+                    description = "Held: only while the key is held. Toggle: each press switches. Quick Press: a tap switches, holding switches back on release."
+                    addMetadata("optionLabels", arrayOf("Held", "Toggle", "Quick Press"))
+                    addDisplayCondition(hideFromConfigUi)
+                }
+                tree["visibilityKeyHoldThreshold"] = ktProperty(out::visibilityKeyHoldThreshold, "Hold Threshold").apply {
+                    description = "How long the key must be held in Quick Press mode before releasing it switches back."
+                    addDisplayCondition(hideFromConfigUi)
+                }
             }
             tree["alignment"] = ktProperty(out::alignment).apply { addDisplayCondition(hideFromConfigUi) }
             tree["growthAnchor"] = ktProperty(out::growthAnchor).apply {
@@ -2045,6 +2178,7 @@ public abstract class Hud(
         sanitizeHudCapturedDefaults(tree)
         syncToggleKeybind()
         for (bind in clonedKeybinds) KeybindManager.register(bind)
+        refreshVisibilityKeybind()
     }
 
     internal fun loadStoredValues() {
@@ -2090,6 +2224,14 @@ public abstract class Hud(
      * menu leaves them as they are in game. The HUD editor still previews them
      */
     public open val previewsBehindMenu: Boolean get() = true
+
+    /**
+     * Return `true` while this HUD still has something to draw after being hidden, such as a closing
+     * animation, so it keeps being drawn until that finishes
+     *
+     * Called every frame while the HUD is hidden outside the editor
+     */
+    public open fun drawsWhileHidden(): Boolean = false
 
     public open fun showByDefault(): Boolean = false
     public open fun hasBackground(): Boolean = true
@@ -2162,6 +2304,7 @@ public abstract class Hud(
         toggleBind?.let(KeybindManager::unregister)
         for (bind in clonedKeybinds) KeybindManager.unregister(bind)
         tree = null
+        refreshVisibilityKeybind()
     }
 
     @ApiStatus.Internal
@@ -2192,8 +2335,6 @@ public abstract class Hud(
         chainParents = emptyList()
         parentGeom = FloatArray(0)
         geomValid = false
-        showKey = -1
-        toggleKey = -1
         toggleBind = this@Hud.toggleBind?.let { src ->
             OneConfigKeybind(src.keyCodes?.copyOf(), src.mouseBtns?.copyOf(), src.mods, src.durationNanos, ::onToggleKeybind).also {
                 it.unresolvedKeyInputs = src.unresolvedKeyInputs
@@ -2204,6 +2345,12 @@ public abstract class Hud(
         positionBatch = 0
         positionMovePending = false
         _movedByPlayer = mutableStateOf(this@Hud.movedByPlayer)
+        _visibilityKeybind = mutableStateOf(this@Hud.visibilityKeybind.let { it.copyWith(it.keyCodes?.clone(), it.mouseBtns?.clone(), it.mods) })
+        _visibilityKeyMode = mutableStateOf(this@Hud.visibilityKeyMode)
+        _visibilityKeyHoldThreshold = mutableStateOf(this@Hud.visibilityKeyHoldThreshold)
+        visibilityKeyState = KeyPressState()
+        registeredVisibilityKeybind = null
+        _visibilityKeyActive = mutableStateOf(false)
         _staticWidth = mutableStateOf(this@Hud.staticWidth)
         _section = mutableStateOf(this@Hud.section)
         _relativeX = mutableStateOf(this@Hud.relativeX)

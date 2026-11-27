@@ -63,7 +63,6 @@ private val POSITION_OPTIONS = setOf(
     "snapEdgeX", "snapEdgeY",
 )
 
-// which group a HUD is in is structure rather than a setting, so resetting the HUD keeps it grouped
 private val UNRESETTABLE_OPTIONS = setOf("groupPath", "groupBackground")
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
@@ -421,7 +420,7 @@ private fun buildHudCanvasMenuEntries(
     addToGroups: List<Pair<String, () -> Unit>> = emptyList(),
 ): List<MenuEntry> {
     val actionTargets = targets.ifEmpty { listOf(hud) }
-    val allHidden = actionTargets.all { it.hidden }
+    val allHidden = actionTargets.all { it.effectivelyHidden }
     val allLocked = actionTargets.all { it.locked }
     val entries = ArrayList<MenuEntry>(24)
 
@@ -433,12 +432,7 @@ private fun buildHudCanvasMenuEntries(
     )
     entries += MenuAction(
         if (allHidden) translated("oneconfig.hud.menu.show", "Show") else translated("oneconfig.hud.menu.hide", "Hide"),
-        {
-            Snapshot.withMutableSnapshot {
-                val hide = actionTargets.any { !it.hidden }
-                actionTargets.forEach { it.hidden = hide }
-            }
-        },
+        { toggleHudVisibility(actionTargets) },
         icon = if (allHidden) "eye-off" else "eye",
         shortcutHint = keybindHint(OneConfigConfig.hudVisibilityKeybind),
     )
