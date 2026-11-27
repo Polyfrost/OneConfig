@@ -27,6 +27,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Icon
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuCustomItem
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuHeading
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuIconRow
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuItem
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuList
@@ -576,6 +577,24 @@ internal fun hudCanvasPasteMenuEntries(
     entries += undoAllAction(onUndoAll, undoEnabled)
     entries += MenuSeparator
     entries += pasteAction(onPaste, pasteEnabled)
+    entries += hudCanvasOnlyMenuEntries(onSelectAll, onTour, onShortcuts)
+    return entries
+}
+
+internal fun hudCanvasControllerMenuEntries(
+    onSelectAll: () -> Unit,
+    onTour: (() -> Unit)?,
+    onShortcuts: () -> Unit,
+): List<MenuEntry> =
+    listOf(MenuSeparator, MenuHeading(translated("oneconfig.hud.menu.canvas", "Canvas"))) +
+        hudCanvasOnlyMenuEntries(onSelectAll, onTour, onShortcuts)
+
+private fun hudCanvasOnlyMenuEntries(
+    onSelectAll: () -> Unit,
+    onTour: (() -> Unit)?,
+    onShortcuts: () -> Unit,
+): List<MenuEntry> {
+    val entries = ArrayList<MenuEntry>(4)
     entries += MenuAction(
         translated("oneconfig.menu.text.select_all", "Select all"),
         onSelectAll,

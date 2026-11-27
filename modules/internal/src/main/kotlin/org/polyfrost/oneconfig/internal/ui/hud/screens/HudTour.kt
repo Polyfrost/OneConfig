@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
@@ -53,20 +54,21 @@ internal enum class HudTourStep(
     val focus: HudTourFocus,
     val interactive: Boolean = false,
     val category: StudioCategory = StudioCategory.Settings,
+    val controllerBody: Boolean = false,
 ) {
     Welcome("welcome", HudTourFocus.None),
-    Adding("adding", HudTourFocus.Library),
-    Dragging("dragging", HudTourFocus.Hud),
-    Merging("merging", HudTourFocus.None, interactive = true),
-    Anchoring("anchoring", HudTourFocus.AnchorMenu),
-    Settings("settings", HudTourFocus.Panel),
+    Adding("adding", HudTourFocus.Library, controllerBody = true),
+    Dragging("dragging", HudTourFocus.Hud, controllerBody = true),
+    Merging("merging", HudTourFocus.None, interactive = true, controllerBody = true),
+    Anchoring("anchoring", HudTourFocus.AnchorMenu, controllerBody = true),
+    Settings("settings", HudTourFocus.Panel, controllerBody = true),
     Style("style", HudTourFocus.Panel, category = StudioCategory.Style),
     Fonts("fonts", HudTourFocus.Panel, category = StudioCategory.Style),
     Layout("layout", HudTourFocus.Panel, category = StudioCategory.Layout),
-    Done("done", HudTourFocus.None);
+    Done("done", HudTourFocus.None, controllerBody = true);
 
     val title: String get() = tourString("$id.title")
-    val body: String get() = tourString("$id.body")
+    val body: String get() = tourString(if (controllerBody && Controllers.isActive) "$id.body_controller" else "$id.body")
     val isFirst: Boolean get() = ordinal == 0
     val isLast: Boolean get() = ordinal == entries.lastIndex
 
@@ -124,6 +126,7 @@ internal fun HudTourOverlay(
     avoid: Rect?,
     modifier: Modifier = Modifier,
     cardModifier: Modifier = Modifier,
+    nextModifier: Modifier = Modifier,
     onBack: () -> Unit,
     onNext: () -> Unit,
     onSkip: () -> Unit,
@@ -250,6 +253,7 @@ internal fun HudTourOverlay(
                     tourString(if (step.isLast) "finish" else "next"),
                     primary = true,
                     enabled = !step.interactive || taskDone,
+                    modifier = nextModifier,
                     onClick = onNext,
                 )
             }
@@ -302,10 +306,11 @@ private fun tourDragProgress(): Float {
 }
 
 @Composable
-private fun TourButton(text: String, primary: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
+private fun TourButton(text: String, primary: Boolean, enabled: Boolean = true, modifier: Modifier = Modifier, onClick: () -> Unit) {
     TextButton(
         text,
         onClick,
+        modifier = modifier,
         style = if (primary) ControlStyle.Primary else ControlStyle.Ghost,
         size = ControlSize.Compact,
         enabled = enabled,

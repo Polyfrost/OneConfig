@@ -4,6 +4,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.geometry.Offset
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudGroup
+import org.polyfrost.oneconfig.api.hud.v1.HudGroups
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 
 private const val MIN_VISIBLE_PX = 12f
@@ -72,6 +73,13 @@ internal fun endHudMove() {
     moveSession = null
     HudManager.setMergeExclusions(emptySet())
     for (hud in session) hud.onEditorDragEnd()
+}
+
+internal fun clampMoveFrom(starts: Map<Hud, Pair<Float, Float>>, dx: Float, dy: Float): Pair<Float, Float> {
+    val free = HudGroups.roots(starts.keys)
+    val cdx = clampGroupDelta(dx, free, HudManager.guiScreenWidth, { starts.getValue(it).first }, { it.scaledWidth })
+    val cdy = clampGroupDelta(dy, free, HudManager.guiScreenHeight, { starts.getValue(it).second }, { it.scaledHeight })
+    return cdx to cdy
 }
 
 private inline fun clampGroupDelta(

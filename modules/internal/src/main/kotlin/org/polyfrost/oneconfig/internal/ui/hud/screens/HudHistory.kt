@@ -241,6 +241,16 @@ internal class HudHistory {
         if (previous != null && sameLayout(previous, now)) record(now) else settling = now
     }
 
+    fun checkpoint() {
+        val now = capture()
+        val last = recorded
+        if (last == null || last.owner !== now.owner) {
+            reset(now)
+            return
+        }
+        if (!sameLayout(last, now)) record(now)
+    }
+
     /** The HUDs brought back by the step, or `null` when there was nothing to undo */
     fun undo(): List<Hud>? = step(undoStack, redoStack)
 
