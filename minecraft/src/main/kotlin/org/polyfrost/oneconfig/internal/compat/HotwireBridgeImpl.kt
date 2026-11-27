@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+import dev.moon.hotwire.api.ApiStatus
 import dev.moon.hotwire.api.ChangePlan
 import dev.moon.hotwire.api.ChangeRequest
 import dev.moon.hotwire.api.HotwireApi
@@ -62,7 +63,10 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
         override fun cancel() = plan.cancel()
     }
 
-    override fun progress() = api.progress.takeIf { it.running() }?.fraction()?.toFloat()
+    // by status rather than progress, which leaves out changes made from Hotwire's own screen and its self update
+    override fun progress() = api.status.takeIf { it.state() == ApiStatus.State.BUSY }?.progress()?.toFloat()
+
+    override fun unavailable() = api.status.takeIf { it.state() == ApiStatus.State.UNAVAILABLE }?.message()
 
     override fun downloads(tag: String) = api.storeDownloads.filter { it.tag() == tag }.map {
         Download(it.id(), it.name(), it.done(), it.total(), it.over(), it.state() == StoreDownload.State.PAUSED, it.state() == StoreDownload.State.GETTING)
@@ -106,7 +110,7 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
         api.searchStore(StoreQuery.of(words).withCategory(category).withOffset(offset)).thenApply { page ->
             StorePage(
                 page.mods().map {
-                    StoreHit(it.id(), it.name(), it.author(), it.description(), it.downloads(), it.iconUrl().ifBlank { null }, it.installed(), it.hasUpdate())
+                    StoreHit(it.id(), it.name(), it.author(), it.description(), it.downloads(), it.iconUrl().ifBlank { null }, it.installed(), it.hasUpdate(), it.queued())
                 },
                 page.total(),
             )
@@ -119,6 +123,8 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
         check(found.failure().isBlank()) { found.failure() }
         found.updates().map { StoreUpdate(it.id(), it.projectId(), it.name(), it.installedVersion(), it.newVersion()) }
     }
+
+    override val updateCheckOn get() = api.isUpdateCheckOn
 
     override fun updateHotwire() = api.updateHotwire().thenApply(::result)
 

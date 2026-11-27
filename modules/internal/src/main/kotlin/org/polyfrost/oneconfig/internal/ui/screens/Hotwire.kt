@@ -91,7 +91,7 @@ private var listLayout by mutableStateOf(false)
 /**
  * The updates Hotwire found on Modrinth, checked once per session and again whenever an update or add made here
  * finishes or Hotwire switched mods since, so the Hotwire page and the Updates tab share one answer instead of each
- * asking Modrinth
+ * asking Modrinth; while the player has Hotwire's own checks off, only a check they ask for runs
  */
 object HotwireUpdates {
     // outlives the page, so leaving it doesn't cancel a batch that is being applied
@@ -107,6 +107,10 @@ object HotwireUpdates {
     var updating by mutableStateOf<String?>(null)
         private set
 
+    /** Whether a check is running */
+    var checking by mutableStateOf(false)
+        private set
+
     // the revision the last check saw, so one made before Hotwire switched mods is made again
     private var checkedAt: Int? = null
 
@@ -115,23 +119,30 @@ object HotwireUpdates {
 
     /** Checks on first use, and again once Hotwire changed mods since the last check */
     fun ensure() {
-        if (checkedAt != HotwireBridge.revision) refresh()
+        if (checkedAt != HotwireBridge.revision && HotwireBridge.instance?.updateCheckOn == true) check()
     }
 
-    /** Checks again once the change Hotwire was just given has finished, and has the grid read the changed mods */
-    fun refreshWhenDone() {
-        HotwireBridge.instance?.awaitIdle()?.whenComplete { _, _ ->
+    /**
+     * Has the grid read the mods once the change Hotwire was just given has finished, and checks again, or drops the
+     * updates of the [changed] mods while Hotwire's checks are off
+     */
+    fun refreshWhenDone(changed: Collection<String>) {
+        val bridge = HotwireBridge.instance ?: return
+        bridge.awaitIdle().whenComplete { _, _ ->
             HotwireBridge.invalidate()
-            refresh()
+            if (bridge.updateCheckOn) check() else found = found?.map { all -> all.filterNot { it.modId in changed } }
         }
     }
 
-    private fun refresh() {
+    /** Asks Modrinth now, which is also how a player with Hotwire's checks off asks for one */
+    fun check() {
         val bridge = HotwireBridge.instance ?: return
         checkedAt = HotwireBridge.revision
         val check = ++checks
+        checking = true
         bridge.checkUpdates().whenComplete { updates, error ->
             if (check != checks) return@whenComplete
+            checking = false
             // a failed check keeps the last list shown, and the next use tries again
             if (error != null) checkedAt = null
             if (error == null || found?.isSuccess != true) found = if (error == null) Result.success(updates) else Result.failure(error.cause ?: error)
@@ -197,9 +208,9 @@ object HotwireUpdates {
         val bridge = HotwireBridge.instance ?: return
         review = null
         uiScope.launch {
+            val said = ArrayList<String>()
             val problems = ArrayList<String>()
-            val now = ArrayList<String>()
-            val nextLaunch = ArrayList<String>()
+            val applied = HashSet<String>()
             try {
                 for ((name, plan) in accepted.plans) {
                     updating = name
@@ -210,23 +221,18 @@ object HotwireUpdates {
                         continue
                     }
                     val result = plan.getOrThrow().actions.first { it.primary }.attempt().await()
-                    if (!result.ok) problems += "$name: ${result.message}"
-                    now += result.appliedNow
-                    nextLaunch += result.atNextStart
+                    if (result.ok) said += bridge.describe(result) else problems += "$name: ${bridge.describe(result)}"
+                    applied += result.appliedNow + result.atNextStart
                 }
             } finally {
                 updating = null
-                refreshWhenDone()
+                refreshWhenDone(applied)
             }
-            val summary = bridge.applied(now, nextLaunch)
-            accepted.onDone((now + nextLaunch).toSet())
+            val summary = said.distinct().joinToString(" ")
+            accepted.onDone(applied)
             A11y.announce(listOf(summary, problems.joinToString(" ")).filter { it.isNotBlank() }.joinToString(" "))
-            if (problems.isEmpty()) {
-                Notifications.success("Hotwire", summary.ifBlank { translated("oneconfig.page.hotwire.updates.done", "Updates finished.") })
-            } else {
-                if (summary.isNotBlank()) Notifications.success("Hotwire", summary)
-                Notifications.error("Hotwire", problems.joinToString(" "))
-            }
+            if (summary.isNotBlank()) Notifications.success("Hotwire", summary)
+            if (problems.isNotEmpty()) Notifications.error("Hotwire", problems.joinToString(" "))
         }
     }
 }
@@ -310,6 +316,29 @@ internal fun ModIcon(bridge: HotwireBridge, id: String, version: String, size: I
     }
 }
 
+/** What shows while the updates aren't known: a check running or failed, or one to ask for while Hotwire's checks are off */
+@Composable
+internal fun UnknownUpdates(modifier: Modifier = Modifier) {
+    val failed = HotwireUpdates.found?.exceptionOrNull()
+    when {
+        HotwireUpdates.checking || (failed == null && HotwireBridge.instance?.updateCheckOn != false) ->
+            EmptyState(translated("oneconfig.page.hotwire.updates.checking", "Checking for updates…"), modifier, state = LoadState.Loading)
+        failed != null -> EmptyState(
+            translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates"),
+            modifier,
+            state = LoadState.Error(failed.message.orEmpty()),
+            onRetry = HotwireUpdates::check,
+        )
+        else -> EmptyState(
+            translated("oneconfig.page.hotwire.updates.off", "Update checks are off"),
+            modifier,
+            icon = "refresh",
+            text = translated("oneconfig.page.hotwire.updates.off.text", "Hotwire's settings have it check only when you ask."),
+            action = { TextButton(translated("oneconfig.page.hotwire.updates.check", "Check for updates"), "refresh", HotwireUpdates::check) },
+        )
+    }
+}
+
 @Composable
 internal fun HotwireUnavailable(text: String = translated("oneconfig.page.hotwire.unavailable", "Hotwire is not available.")) {
     Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
@@ -331,7 +360,7 @@ fun Hotwire() {
 
     val revision = HotwireBridge.revision
     val states = remember(revision) { bridge.mods() }
-    if (states.isEmpty()) return HotwireUnavailable(translated("oneconfig.page.hotwire.switch.starting", "Hotwire is still starting, so mods can't be switched yet."))
+    if (states.isEmpty()) return HotwireUnavailable(bridge.unavailable() ?: translated("oneconfig.page.hotwire.switch.starting", "Hotwire is still starting, so mods can't be switched yet."))
     LaunchedEffect(revision) {
         HotwireUpdates.ensure()
         HotwireUpdates.dropStaleReview()
@@ -382,15 +411,10 @@ fun Hotwire() {
                 if (mods.isEmpty()) {
                     Box(Modifier.fillMaxSize().padding(horizontal = PageGutter), contentAlignment = Alignment.Center) {
                         // with only updates shown, an empty grid can also mean the updates aren't known yet
-                        val checked = HotwireUpdates.found
-                        when {
-                            !onlyUpdates || checked?.isSuccess == true -> EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), icon = "search")
-                            checked == null -> EmptyState(translated("oneconfig.page.hotwire.updates.checking", "Checking for updates…"), state = LoadState.Loading)
-                            else -> EmptyState(
-                                translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates"),
-                                state = LoadState.Error(checked.exceptionOrNull()?.message.orEmpty()),
-                                onRetry = HotwireUpdates::ensure,
-                            )
+                        if (!onlyUpdates || HotwireUpdates.found?.isSuccess == true) {
+                            EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), icon = "search")
+                        } else {
+                            UnknownUpdates()
                         }
                     }
                 } else {
@@ -612,15 +636,12 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         switching = true
         // mods picked while this runs stay picked
         val started = pickedIds.toSet()
-        // Hotwire answers for these before it has added them back, so the grid has to look again once it's done
-        val bringsBack = picked.any { !it.on && it.offSinceStart }
         plan.accept().whenComplete { result, error ->
             Platform.screen().runOnUiThread {
                 switching = false
                 notifyHotwireResult(bridge, result ?: HotwireBridge.Result(false, (error?.cause ?: error)?.message ?: ""))
                 // a change that failed partway leaves picked only what it didn't switch
                 if (result?.ok == true) onDeselect(started) else result?.let { onDeselect(it.appliedNow.toSet()) }
-                if (bringsBack) HotwireUpdates.refreshWhenDone()
             }
         }
     }

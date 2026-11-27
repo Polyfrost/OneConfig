@@ -3,11 +3,13 @@ package org.polyfrost.oneconfig.internal.ui.api
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.polyfrost.oneconfig.internal.ui.screens.HotwireUpdates
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
@@ -37,6 +39,7 @@ class HotwireBridgeTest {
     /** Hotwire with only planning and saving, which answers each plan from [plans] by the mods it updates, or with [answer] */
     private inner class FakeHotwire(
         val answer: ((HotwireBridge.Change) -> CompletableFuture<HotwireBridge.Plan>)? = null,
+        override val updateCheckOn: Boolean = true,
         val plans: (HotwireBridge.Change) -> HotwireBridge.Plan = { FakePlan() },
     ) : HotwireBridge() {
         override fun plan(change: Change): CompletableFuture<Plan> {
@@ -72,14 +75,21 @@ class HotwireBridgeTest {
 
         override fun searchStore(words: String, category: String, offset: Int) = TODO()
 
-        override fun checkUpdates() = TODO()
+        override fun checkUpdates() = CompletableFuture.completedFuture(listOf(update("a"), update("b"))).also { calls += "check" }
 
         override fun writeReport(reason: String): CompletableFuture<Path> = TODO()
 
-        override fun awaitIdle() = TODO()
+        override fun awaitIdle() = CompletableFuture.completedFuture(null)
+
+        override fun unavailable() = TODO()
     }
 
-    private val hit = HotwireBridge.StoreHit("project", "Mod", "", "", 0, null, installed = false, hasUpdate = false)
+    @AfterEach
+    fun forgetHotwire() {
+        HotwireBridge.instance = null
+    }
+
+    private val hit = HotwireBridge.StoreHit("project", "Mod", "", "", 0, null, installed = false, hasUpdate = false, queued = false)
 
     private fun update(id: String) = HotwireBridge.StoreUpdate(id, "p-$id", id.uppercase(), "1", "2")
 
@@ -108,10 +118,29 @@ class HotwireBridgeTest {
     }
 
     @Test
-    fun aChangeThatWaitsForTheNextLaunchSaysSo() {
-        val said = FakeHotwire().describe(HotwireBridge.Result(true, "All done.", atNextStart = listOf("a")))
-        assertTrue("Alpha" in said)
-        assertFalse("All done." in said)
+    fun aDoneChangeSaysWhatHotwireSaidOfIt() {
+        val said = "Alpha goes in when you close the game."
+        assertEquals(said, FakeHotwire().describe(HotwireBridge.Result(true, said, atNextStart = listOf("a"))))
+    }
+
+    @Test
+    fun withHotwiresChecksOffOnlyACheckThePlayerAskedForRuns() {
+        HotwireBridge.instance = FakeHotwire(updateCheckOn = false)
+        // so a check another test made doesn't count as current
+        HotwireBridge.invalidate()
+        HotwireUpdates.ensure()
+        assertEquals(emptyList<String>(), calls)
+        HotwireUpdates.check()
+        assertEquals(listOf("check"), calls)
+    }
+
+    @Test
+    fun withHotwiresChecksOffAnUpdatedModLeavesTheListWithoutACheck() {
+        HotwireBridge.instance = FakeHotwire(updateCheckOn = false)
+        HotwireUpdates.check()
+        HotwireUpdates.refreshWhenDone(listOf("a"))
+        assertEquals(setOf("b"), HotwireUpdates.modIds)
+        assertEquals(listOf("check"), calls)
     }
 
     @Test
@@ -180,7 +209,7 @@ class HotwireBridgeTest {
 
     @Test
     fun aProjectModrinthMovedToTheNextPageIsListedOnce() {
-        fun hit(id: String) = HotwireBridge.StoreHit(id, id, "", "", 0, null, installed = false, hasUpdate = false)
+        fun hit(id: String) = HotwireBridge.StoreHit(id, id, "", "", 0, null, installed = false, hasUpdate = false, queued = false)
         val listed = HotwireBridge.appendPage(listOf(hit("a"), hit("b")), listOf(hit("b"), hit("c")))
         assertEquals(listOf("a", "b", "c"), listed.map { it.projectId })
     }

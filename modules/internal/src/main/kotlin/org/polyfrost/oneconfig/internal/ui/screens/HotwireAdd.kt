@@ -367,13 +367,13 @@ private fun ModrinthSource(
             val shown = remember(current, updates) {
                 current.getOrThrow().mapNotNull { hit ->
                     val update = updates.firstOrNull { it.projectId == hit.projectId }
-                    if (update == null && hit.installed) null else hit to update
+                    if (update == null && (hit.installed || hit.queued)) null else hit to update
                 }
             }
             val loaded = browse.fetched
             // what is already installed is left out, so a search can come back with nothing to show
             if (shown.isEmpty() && loaded >= browse.total) {
-                EmptyState(translated("oneconfig.page.hotwire.modrinth.none", "Nothing to add here. Mods you already have are left out."), Modifier.fillMaxWidth(), icon = "search")
+                EmptyState(translated("oneconfig.page.hotwire.modrinth.none", "Nothing to add here. Mods you have or are adding at next launch are left out."), Modifier.fillMaxWidth(), icon = "search")
                 return
             }
             val footer: @Composable () -> Unit = {
@@ -428,18 +428,12 @@ private fun UpdatesSource(bridge: HotwireBridge, onUpdate: (HotwireBridge.StoreU
     LaunchedEffect(HotwireBridge.revision) { HotwireUpdates.ensure() }
 
     val query = pageSearchQuery().trim()
-    val current = HotwireUpdates.found
+    val current = HotwireUpdates.found?.getOrNull()
     when {
-        current == null -> EmptyState(translated("oneconfig.page.hotwire.updates.checking", "Checking for updates…"), Modifier.fillMaxWidth(), state = LoadState.Loading)
-        current.isFailure -> EmptyState(
-            translated("oneconfig.page.hotwire.updates.failed", "Couldn't check for updates"),
-            Modifier.fillMaxWidth(),
-            state = LoadState.Error(current.exceptionOrNull()?.message.orEmpty()),
-            onRetry = HotwireUpdates::ensure,
-        )
-        current.getOrThrow().isEmpty() -> EmptyState(translated("oneconfig.page.hotwire.updates.none", "Everything is up to date."), Modifier.fillMaxWidth(), icon = "check-circle")
+        current == null -> UnknownUpdates(Modifier.fillMaxWidth())
+        current.isEmpty() -> EmptyState(translated("oneconfig.page.hotwire.updates.none", "Everything is up to date."), Modifier.fillMaxWidth(), icon = "check-circle")
         else -> {
-            val matching = current.getOrThrow().filter { query.isEmpty() || it.name.contains(query, true) || it.modId.contains(query, true) }
+            val matching = current.filter { query.isEmpty() || it.name.contains(query, true) || it.modId.contains(query, true) }
             if (matching.isEmpty()) {
                 EmptyState(translated("oneconfig.page.hotwire.no_match", "Nothing matches."), Modifier.fillMaxWidth(), icon = "search")
                 return
@@ -590,7 +584,7 @@ private fun PlanCard(
                             Platform.screen().runOnUiThread {
                                 outcome = result
                                 notifyHotwireResult(bridge, result)
-                                HotwireUpdates.refreshWhenDone()
+                                HotwireUpdates.refreshWhenDone(result.appliedNow + result.atNextStart)
                             }
                         }
                     }, style = if (action.primary) ControlStyle.Primary else ControlStyle.Secondary, contentDescription = spokenWith(action.label, listOf(plan.title) + plan.lines.takeIf { action.primary }.orEmpty()))

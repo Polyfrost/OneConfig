@@ -97,6 +97,7 @@ abstract class HotwireBridge {
         val iconUrl: String?,
         val installed: Boolean,
         val hasUpdate: Boolean,
+        val queued: Boolean,
     )
 
     class StorePage(val hits: List<StoreHit>, val total: Int)
@@ -111,8 +112,11 @@ abstract class HotwireBridge {
 
     abstract fun plan(change: Change): CompletableFuture<Plan>
 
-    /** How far the running switch, add or update is, from 0 to 1, or null while nothing runs */
+    /** How far the running switch, add or update is, from 0 to 1, or null while Hotwire isn't busy */
     abstract fun progress(): Float?
+
+    /** Why Hotwire can't change mods this session, or null when it can or is still starting */
+    abstract fun unavailable(): String?
 
     /** The downloads that plans with [tag] started, including ones that ended a moment ago */
     abstract fun downloads(tag: String): List<Download>
@@ -142,6 +146,9 @@ abstract class HotwireBridge {
 
     /** Completes exceptionally with Hotwire's reason when it couldn't ask Modrinth */
     abstract fun checkUpdates(): CompletableFuture<List<StoreUpdate>>
+
+    /** Whether the player left Hotwire's "Check for updates" on; while it is off, [checkUpdates] is only for a check the player asked for */
+    abstract val updateCheckOn: Boolean
 
     abstract fun updateHotwire(): CompletableFuture<Result>
 
@@ -215,8 +222,8 @@ abstract class HotwireBridge {
         return self.map { plan(listOf(it)) } + listOfNotNull(together)
     }
 
-    /** Names the mods a change applied now and at the next launch, or is blank when it applied none */
-    fun applied(now: List<String>, nextLaunch: List<String>): String {
+    // names the mods a change applied now and at the next launch, or is blank when it applied none
+    private fun applied(now: List<String>, nextLaunch: List<String>): String {
         if (now.isEmpty() && nextLaunch.isEmpty()) return ""
         val names = mods().associate { it.id to it.name }
         fun named(ids: List<String>) = ids.distinct().joinToString(", ") { names[it] ?: it }
@@ -226,11 +233,10 @@ abstract class HotwireBridge {
         ).joinToString(" ")
     }
 
-    /** What came of a change, naming what waits for the next launch or went through before a failure, which Hotwire's message doesn't */
+    /** What came of a change, naming what went through before one that didn't finish, which Hotwire's message for it doesn't */
     fun describe(result: Result): String {
         val applied = applied(result.appliedNow, result.atNextStart)
         return when {
-            result.ok && result.atNextStart.isNotEmpty() -> applied
             result.ok -> result.message.ifBlank { translated("oneconfig.page.hotwire.result.done", "Done.") }
             result.needsReopen -> listOf(applied, result.message.ifBlank { translated("oneconfig.page.hotwire.result.reopen", "Reopen your world to finish this.") }).filter { it.isNotBlank() }.joinToString(" ")
             else -> listOf(applied, result.message.ifBlank { translated("oneconfig.page.hotwire.result.failed", "That didn't work.") }).filter { it.isNotBlank() }.joinToString(" ")
