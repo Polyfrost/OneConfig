@@ -121,7 +121,6 @@ internal class HudModCardData(
 
         override fun setEnabled(enabled: Boolean) {
             val huds = placed()
-            // switching HUDs on or off ends any keybind flip so they really end up as chosen
             Snapshot.withMutableSnapshot {
                 huds.forEach {
                     it.resetVisibilityKey()

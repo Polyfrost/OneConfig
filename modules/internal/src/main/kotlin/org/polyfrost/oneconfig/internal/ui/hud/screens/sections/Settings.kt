@@ -17,6 +17,7 @@ import org.polyfrost.oneconfig.api.ui.v1.keybind.KeyPressMode
 import org.polyfrost.oneconfig.internal.ui.api.settings.KeybindOptionData
 import org.polyfrost.oneconfig.internal.ui.components.settings.Dropdown
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindOption
+import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingTarget
 import org.polyfrost.oneconfig.internal.ui.hud.HudSettingsContent
 import org.polyfrost.oneconfig.internal.ui.hud.hudOptionsCanReset
@@ -91,28 +92,30 @@ private fun VisibilityKeyCard(hud: Hud, query: String) {
     val keyProp = hudProperty(hud, "visibilityKeybind")
     if (hudProperty(hud, "visibilityKeyMode") == null) return
     val mode = hud.visibilityKeyMode
-    // a HUD without its own key is driven by some other input so its mode always applies
     val bound = keyProp == null || hud.visibilityKeybind.isBound
 
-    CardSection("Visibility Keybind", query, "Visibility Keybind", "Key Mode", "Hold Threshold") {
+    val title = hudPanelText("visibility_keybind", "Visibility Keybind")
+    val keyModeLabel = hudPanelText("key_mode", "Key Mode")
+    val holdThresholdLabel = hudPanelText("hold_threshold", "Hold Threshold")
+    CardSection(title, query, title, keyModeLabel, holdThresholdLabel) {
         if (keyProp != null) {
             HudSettingTarget(hud, "visibilityKeybind") {
                 key(hud.visibilityKeybind) {
-                    ControlRow("Key") { KeybindOption(KeybindOptionData(keyProp)) }
+                    ControlRow(hudPanelText("key", "Key")) { KeybindOption(KeybindOptionData(keyProp)) }
                 }
             }
         }
         if (bound) {
             HudSettingTarget(hud, "visibilityKeyMode") {
-                ControlRow("Key Mode") {
-                    Dropdown(KeyPressMode.entries.map { it.name }, mode.ordinal, onSelect = {
+                ControlRow(keyModeLabel) {
+                    Dropdown(keyModeLabels(), mode.ordinal, onSelect = {
                         Snapshot.withMutableSnapshot { hud.visibilityKeyMode = KeyPressMode.entries[it] }
                     }, width = 176.dp)
                 }
             }
             if (mode == KeyPressMode.QuickPress) {
                 HudSettingTarget(hud, "visibilityKeyHoldThreshold") {
-                    ControlRow("Hold Threshold") {
+                    ControlRow(holdThresholdLabel) {
                         NumberField(
                             hud.visibilityKeyHoldThreshold.toFloat(),
                             { Snapshot.withMutableSnapshot { hud.visibilityKeyHoldThreshold = it.toInt() } },
@@ -125,5 +128,13 @@ private fun VisibilityKeyCard(hud: Hud, query: String) {
                 }
             }
         }
+    }
+}
+
+private fun keyModeLabels(): List<String> = KeyPressMode.entries.map {
+    when (it) {
+        KeyPressMode.Held -> translated("oneconfig.preferences.key_mode.held", "Held")
+        KeyPressMode.Toggle -> translated("oneconfig.preferences.key_mode.toggle", "Toggle")
+        KeyPressMode.QuickPress -> translated("oneconfig.preferences.key_mode.quick_press", "Quick Press")
     }
 }

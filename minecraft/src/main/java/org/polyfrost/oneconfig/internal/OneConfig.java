@@ -383,7 +383,6 @@ public class OneConfig implements ClientModInitializer {
         EventManager.register(WorldEvent.Load.class, e -> {
             showFirstLaunchNotification();
         });
-        // leaving a world or server ends any temporary visibility flip
         EventManager.register(WorldEvent.Unload.class, e -> HudManager.resetVisibilityKeys());
         // after loading finishes so translation keys are available
         EventManager.register(ResourceFinishedLoading.class, e -> SearchCorpus.INSTANCE.init());

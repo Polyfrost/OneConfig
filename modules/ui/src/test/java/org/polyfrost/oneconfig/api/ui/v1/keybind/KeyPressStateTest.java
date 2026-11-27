@@ -75,7 +75,6 @@ class KeyPressStateTest {
         state.input(false, KeyPressMode.QuickPress, THRESHOLD_MS, 400L * MS);
         assertFalse(state.getActive());
 
-        // latched on by a tap, then a hold peeks it off and puts it back on
         state.input(true, KeyPressMode.QuickPress, THRESHOLD_MS, 1000L * MS);
         state.input(false, KeyPressMode.QuickPress, THRESHOLD_MS, 1050L * MS);
         assertTrue(state.getActive());

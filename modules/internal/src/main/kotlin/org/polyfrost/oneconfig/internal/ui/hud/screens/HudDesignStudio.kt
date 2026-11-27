@@ -180,9 +180,9 @@ private var allHudsHiddenToast: Notification? = null
 private fun notifyAllHudsHidden() {
     allHudsHiddenToast?.let { if (NotificationsManager.contains(it)) return }
     allHudsHiddenToast = Notifications.builder(
-        "All HUDs hidden",
-        "The Hide All HUDs keybind is hiding every HUD outside the editor.",
-    ).action("Show HUDs") { HudManager.resetAllHudsKey() }.send()
+        translated("oneconfig.hud.all_hidden.title", "All HUDs hidden"),
+        translated("oneconfig.hud.all_hidden.message", "Your Hide All HUDs key is on, so every HUD stays hidden once you close the editor."),
+    ).action(translated("oneconfig.hud.all_hidden.show", "Show HUDs")) { HudManager.resetAllHudsKey() }.send()
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -1790,7 +1790,6 @@ fun HudDesignStudio(visible: Boolean = true) {
         }
     }
 
-    // the editor shows every HUD regardless, so say why they will all be gone again once it closes
     LaunchedEffect(visible) {
         if (visible && HudManager.allHudsHiddenByKey) notifyAllHudsHidden()
     }

@@ -59,7 +59,6 @@ public class KeyPressState {
                 pressedAt = nowNanos
                 active = !active
             } else {
-                // a press which began under another mode has no start time and so cannot be a hold
                 if (pressedAt != NOT_PRESSED && nowNanos - pressedAt > holdThresholdMs * 1_000_000L) active = activeBeforePress
                 pressedAt = NOT_PRESSED
             }

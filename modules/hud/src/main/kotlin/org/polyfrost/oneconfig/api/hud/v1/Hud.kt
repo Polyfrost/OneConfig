@@ -587,7 +587,6 @@ public abstract class Hud(
         resetVisibilityKey()
         val src = visibilityKeybind
         if (!isReal || !hasVisibilityKeybind() || !src.isBound) return
-        // the configured keybind loses its action when loaded so a separate bind carries it
         registeredVisibilityKeybind = KeybindManager.register(
             BindNotInScreen(src.keyCodes, src.mouseBtns, src.mods, 0L) { visibilityKeyInput(it); true }
         )
@@ -2048,7 +2047,6 @@ public abstract class Hud(
             if (out.hasVisibilityKeybind()) {
                 tree["visibilityKeybind"] = ktProperty(out::visibilityKeybind, "Visibility Keybind").apply {
                     description = "Temporarily shows this HUD if it is hidden, or hides it if it is shown."
-                    // one entry per HUD would flood Minecraft's Controls menu
                     addMetadata(NO_MC_MIRROR_METADATA, true)
                     addDisplayCondition(hideFromConfigUi)
                 }
@@ -2321,7 +2319,6 @@ public abstract class Hud(
         positionBatch = 0
         positionMovePending = false
         _movedByPlayer = mutableStateOf(this@Hud.movedByPlayer)
-        // the clone registers its own bind once it is made
         _visibilityKeybind = mutableStateOf(this@Hud.visibilityKeybind.let { it.copyWith(it.keyCodes?.clone(), it.mouseBtns?.clone(), it.mods) })
         _visibilityKeyMode = mutableStateOf(this@Hud.visibilityKeyMode)
         _visibilityKeyHoldThreshold = mutableStateOf(this@Hud.visibilityKeyHoldThreshold)
