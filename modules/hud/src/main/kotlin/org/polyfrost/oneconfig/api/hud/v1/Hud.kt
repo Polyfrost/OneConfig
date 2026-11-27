@@ -121,7 +121,22 @@ public enum class HudAnchor {
     }
 }
 
+/** The part of a HUD the editor snapped to a guide on one axis, [Start] being its left or top edge */
+public enum class HudSnapEdge {
+    None, Start, Center, End;
+
+    internal val fraction: Float? get() = when (this) {
+        None -> null
+        Start -> 0f
+        Center -> 0.5f
+        End -> 1f
+    }
+}
+
 internal const val GRID_SIZE = 3
+
+/** How close a position write must land to where the HUD already sits to count as not moving it */
+private const val SNAP_HOLD = 0.01f
 
 /** Backstop for walking a chain of HUDs anchored to one another */
 private const val MAX_ANCHOR_DEPTH = 16
@@ -356,6 +371,11 @@ public abstract class Hud(
         val curOffY = anchorOffsetY
         val curLinkX = mergeLinkX
         val curLinkY = mergeLinkY
+        val curSnapX = snapEdgeX
+        val curSnapY = snapEdgeY
+        // the defaults are measured without a snapped edge
+        snapEdgeX = HudSnapEdge.None
+        snapEdgeY = HudSnapEdge.None
         withSystemPosition {
             setAbsolutePosition(dx, dy)
             t.getProp("section")?.addMetadata("default", section)
@@ -370,6 +390,8 @@ public abstract class Hud(
         anchorOffsetY = curOffY
         mergeLinkX = curLinkX
         mergeLinkY = curLinkY
+        snapEdgeX = curSnapX
+        snapEdgeY = curSnapY
     }
 
     @ExperimentalOneConfigUiApi
@@ -545,6 +567,7 @@ public abstract class Hud(
     }
 
     public open val scaledWidth: Float get() {
+        if (isCollapsed) return 0f
         val scale = effectiveScale
         val w = if (staticWidth || renderedW <= 0f) staticW * scale else renderedW
         val (minW, _) = frameMinimumSize()
@@ -552,6 +575,7 @@ public abstract class Hud(
     }
 
     public open val scaledHeight: Float get() {
+        if (isCollapsed) return 0f
         val scale = effectiveScale
         val h = if (staticWidth || renderedH <= 0f) staticH * scale else renderedH
         val (_, minH) = frameMinimumSize()
@@ -580,9 +604,13 @@ public abstract class Hud(
         HudAnchor.BottomLeft, HudAnchor.Bottom, HudAnchor.BottomRight -> 1f
     }
 
-    private val anchorFracX: Float get() = pinnedFracX(growthAnchor)
+    private val growthFracX: Float get() = snapEdgeX.fraction ?: fracX(growthAnchor)
 
-    private val anchorFracY: Float get() = pinnedFracY(growthAnchor)
+    private val growthFracY: Float get() = snapEdgeY.fraction ?: fracY(growthAnchor)
+
+    private val anchorFracX: Float get() = pinnedCorner?.let(::fracX) ?: growthFracX
+
+    private val anchorFracY: Float get() = pinnedCorner?.let(::fracY) ?: growthFracY
 
     private fun pinnedFracX(point: HudAnchor): Float = fracX(pinnedCorner ?: point)
 
@@ -678,7 +706,10 @@ public abstract class Hud(
             val raw = rawX(a, w)
             return if (a != null) raw else keepVisibleX(raw, w)
         }
-        set(v) { updateRelativeX(v) }
+        set(v) {
+            releaseSnapEdges(v, Float.NaN)
+            updateRelativeX(v)
+        }
 
     public open var y: Float
         get() {
@@ -688,7 +719,10 @@ public abstract class Hud(
             val raw = rawY(a, h)
             return if (a != null) raw else keepVisibleY(raw, h)
         }
-        set(v) { updateRelativeY(v) }
+        set(v) {
+            releaseSnapEdges(Float.NaN, v)
+            updateRelativeY(v)
+        }
 
     private fun keepVisibleX(absX: Float, w: Float): Float {
         val sw = HudManager.guiScreenWidth
@@ -778,6 +812,7 @@ public abstract class Hud(
     }
 
     private fun placeAbsolute(absX: Float, absY: Float) {
+        releaseSnapEdges(absX, absY)
         val sw = HudManager.guiScreenWidth
         val sh = HudManager.guiScreenHeight
         val gridW = sw / GRID_SIZE
@@ -876,8 +911,8 @@ public abstract class Hud(
     public var growthAnchor: HudAnchor get() = _growthAnchor.value; set(v) { _growthAnchor.put(v) }
 
     public val effectiveGrowthAnchor: HudAnchor get() {
-        val fx = fracX(growthAnchor)
-        val fy = fracY(growthAnchor)
+        val fx = growthFracX
+        val fy = growthFracY
         return when {
             fy == 0f -> when (fx) { 0f -> HudAnchor.TopLeft; 0.5f -> HudAnchor.Top; else -> HudAnchor.TopRight }
             fy == 0.5f -> when (fx) { 0f -> HudAnchor.Left; 0.5f -> HudAnchor.Center; else -> HudAnchor.Right }
@@ -889,10 +924,58 @@ public abstract class Hud(
         val absX = rawX
         val absY = rawY
         growthAnchor = anchor
+        snapEdgeX = HudSnapEdge.None
+        snapEdgeY = HudSnapEdge.None
         keepingPosition {
             updateRelativeX(absX)
             updateRelativeY(absY)
         }
+    }
+
+    private var _snapEdgeX: MutableState<HudSnapEdge> = mutableStateOf(HudSnapEdge.None)
+
+    /**
+     * The edge the HUD editor last snapped to a guide on the horizontal axis
+     *
+     * While set, this edge holds still when the HUD changes width, taking priority over [growthAnchor].
+     * Moving the HUD on this axis or [setGrowthAnchorKeepingPosition] clears it, writing [growthAnchor] does not
+     */
+    public var snapEdgeX: HudSnapEdge
+        get() = _snapEdgeX.value
+        private set(v) { _snapEdgeX.put(v) }
+
+    private var _snapEdgeY: MutableState<HudSnapEdge> = mutableStateOf(HudSnapEdge.None)
+
+    /** [snapEdgeX] for the vertical axis */
+    public var snapEdgeY: HudSnapEdge
+        get() = _snapEdgeY.value
+        private set(v) { _snapEdgeY.put(v) }
+
+    /** Sets the snapped edges without moving the HUD, leaving an axis held by a merge link alone */
+    @ApiStatus.Internal
+    public fun setSnapEdgesKeepingPosition(edgeX: HudSnapEdge, edgeY: HudSnapEdge) {
+        val newX = if (mergeLinkX != null) snapEdgeX else edgeX
+        val newY = if (mergeLinkY != null) snapEdgeY else edgeY
+        if (this is LegacyHudMarker || (newX == snapEdgeX && newY == snapEdgeY)) return
+        val absX = rawX
+        val absY = rawY
+        snapEdgeX = newX
+        snapEdgeY = newY
+        keepingPosition {
+            updateRelativeX(absX)
+            updateRelativeY(absY)
+        }
+    }
+
+    /**
+     * Clears the snapped edge on each axis a position write is about to move, [Float.NaN] leaving an axis alone
+     *
+     * Must run before the write changes [section], which [x] and [y] are read through
+     */
+    private fun releaseSnapEdges(absX: Float, absY: Float) {
+        if (positionKeep > 0 || HudManager.systemReposition) return
+        if (snapEdgeX != HudSnapEdge.None && !absX.isNaN() && abs(absX - x) > SNAP_HOLD) snapEdgeX = HudSnapEdge.None
+        if (snapEdgeY != HudSnapEdge.None && !absY.isNaN() && abs(absY - y) > SNAP_HOLD) snapEdgeY = HudSnapEdge.None
     }
 
     private var _anchorTargetId: MutableState<String> = mutableStateOf("")
@@ -1073,11 +1156,17 @@ public abstract class Hud(
         anchorParent?.let { parent ->
             val self = selfAnchorPoint.takeUnless { it == HudAnchor.Auto } ?: effectiveGrowthAnchor
             val offset = if (axis == MergeAxis.X) anchorOffsetX else anchorOffsetY
-            return ResolvedAnchor(parent, anchorPoint, self, offset, false)
+            return ResolvedAnchor(parent, anchorPoint, self, offsetPastCollapsed(parent, anchorPoint, self, offset, axis), false)
         }
         val link = mergeLink(axis) ?: return null
         if (link.parent === this) return null
-        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, link.offset, true)
+        return ResolvedAnchor(link.parent, link.targetPoint, link.selfPoint, offsetPastCollapsed(link.parent, link.targetPoint, link.selfPoint, link.offset, axis), true)
+    }
+
+    private fun offsetPastCollapsed(parent: Hud, target: HudAnchor, self: HudAnchor, offset: Float, axis: MergeAxis): Float {
+        if (!parent.isCollapsed) return offset
+        val stacked = if (axis == MergeAxis.X) parent.fracX(target) != pinnedFracX(self) else parent.fracY(target) != pinnedFracY(self)
+        return if (stacked) 0f else offset
     }
 
     private class ResolvedAnchor(
@@ -1204,6 +1293,17 @@ public abstract class Hud(
         anchorOffsetY = 0f
         selfAnchorPoint = HudAnchor.Auto
         setAbsolutePosition(absX, absY)
+    }
+
+    @Transient
+    private var _collapsed: MutableState<Boolean> = mutableStateOf(false)
+
+    /** Whether this HUD currently measures 0 by 0 because it is not being drawn, which needs [collapsesWhenNotShown] */
+    @get:ApiStatus.Experimental
+    public val isCollapsed: Boolean get() = _collapsed.value && !HudManager.ignoreCollapse
+
+    internal fun setCollapsed(collapsed: Boolean) {
+        _collapsed.put(collapsed)
     }
 
     private var _groupPath: MutableState<String> = mutableStateOf("")
@@ -1825,6 +1925,8 @@ public abstract class Hud(
                 tree["anchorOffsetY"] = ktProperty(out::anchorOffsetY).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["movedByPlayer"] = ktProperty(out::movedByPlayer).apply { addDisplayCondition(hideFromConfigUi) }
                 tree["groupPath"] = ktProperty(out::groupPath).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["snapEdgeX"] = ktProperty(out::snapEdgeX).apply { addDisplayCondition(hideFromConfigUi) }
+                tree["snapEdgeY"] = ktProperty(out::snapEdgeY).apply { addDisplayCondition(hideFromConfigUi) }
             }
             tree["toggleKey"] = ktProperty(out::toggleKey).apply { addDisplayCondition(hideFromConfigUi) }
             tree["showKey"] = ktProperty(out::showKey).apply { addDisplayCondition(hideFromConfigUi) }
@@ -2001,6 +2103,10 @@ public abstract class Hud(
      */
     public open fun canMergeBackground(): Boolean = this is TextHud
 
+    /** Whether this HUD takes no space while it is not being drawn outside the editor, so HUDs anchored to it close up the gap */
+    @ApiStatus.Experimental
+    public open fun collapsesWhenNotShown(): Boolean = false
+
     @JvmOverloads
     public fun hudBackground(modifier: PolyModifier = PolyModifier): PolyModifier {
         if (!showBackground || !hasBackground() || bgMerged) return modifier
@@ -2093,6 +2199,8 @@ public abstract class Hud(
         _renderedH = mutableStateOf(0f)
         _alignment = mutableStateOf(this@Hud.alignment)
         _growthAnchor = mutableStateOf(this@Hud.growthAnchor)
+        _snapEdgeX = mutableStateOf(this@Hud.snapEdgeX)
+        _snapEdgeY = mutableStateOf(this@Hud.snapEdgeY)
         _anchorTargetId = mutableStateOf(this@Hud.anchorTargetId)
         _anchorPoint = mutableStateOf(this@Hud.anchorPoint)
         _selfAnchorPoint = mutableStateOf(this@Hud.selfAnchorPoint)
@@ -2101,6 +2209,7 @@ public abstract class Hud(
         _anchorOffsetX = mutableStateOf(this@Hud.anchorOffsetX)
         _anchorOffsetY = mutableStateOf(this@Hud.anchorOffsetY)
         _groupPath = mutableStateOf(this@Hud.groupPath)
+        _collapsed = mutableStateOf(false)
         _padTop = mutableStateOf(this@Hud.padTop)
         _padBottom = mutableStateOf(this@Hud.padBottom)
         _padLeft = mutableStateOf(this@Hud.padLeft)

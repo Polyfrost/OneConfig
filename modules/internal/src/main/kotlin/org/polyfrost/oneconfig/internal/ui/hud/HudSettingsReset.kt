@@ -19,6 +19,8 @@ import androidx.compose.ui.window.PopupProperties
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudAnchor
+import org.polyfrost.oneconfig.api.hud.v1.HudSnapEdge
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Icon
@@ -58,9 +60,9 @@ private val STATIC_SIZE_OPTIONS = setOf("staticW", "staticH")
 private val POSITION_OPTIONS = setOf(
     "section", "relativeX", "relativeY",
     "anchorTargetId", "anchorPoint", "selfAnchorPoint", "anchorOffsetX", "anchorOffsetY", "movedByPlayer",
+    "snapEdgeX", "snapEdgeY",
 )
 
-// which group a HUD is in is structure rather than a setting, so resetting the HUD keeps it grouped
 private val UNRESETTABLE_OPTIONS = setOf("groupPath")
 
 /** Bumped when any HUD field is reset so bound [remember] state is recreated from the HUD */
@@ -137,6 +139,7 @@ private fun hudIsAtDefaultPosition(hud: Hud): Boolean {
     val section = hudProperty(hud, "section")?.getMetadata<Any?>("default") ?: return true
     val x = (hudProperty(hud, "relativeX")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
     val y = (hudProperty(hud, "relativeY")?.getMetadata<Any?>("default") as? Number)?.toFloat() ?: return true
+    if (hud.snapEdgeX != HudSnapEdge.None || hud.snapEdgeY != HudSnapEdge.None) return false
     return section == hud.section && abs(x - hud.relativeX) < 1e-4f && abs(y - hud.relativeY) < 1e-4f
 }
 
@@ -177,6 +180,10 @@ private fun performHudOptionReset(hud: Hud, prop: Property<*>, optionId: String)
         }
         "staticH" -> {
             if (optionHasDefault(prop)) resetOption(prop) else hud.reseedStaticHeight()
+        }
+        "growthAnchor" -> {
+            val def = prop.getMetadata<Any?>("default") as? HudAnchor
+            if (def != null) hud.setGrowthAnchorKeepingPosition(def) else resetOption(prop)
         }
         else -> {
             if (optionId in POSITION_OPTIONS) hud.dropMergeLinks()
@@ -320,6 +327,7 @@ fun HudCanvasResetMenu(
         undoEnabled = false,
         onRedo = {},
         redoEnabled = false,
+        onUndoAll = {},
         highlightAnchor = preview,
         units = units,
         onGroup = onGroup,
@@ -354,6 +362,7 @@ internal fun hudCanvasMenuEntries(
     undoEnabled: Boolean,
     onRedo: () -> Unit,
     redoEnabled: Boolean,
+    onUndoAll: () -> Unit,
     units: List<Collection<Hud>> = emptyList(),
     onGroup: (() -> Unit)? = null,
     onUngroup: (() -> Unit)? = null,
@@ -376,6 +385,7 @@ internal fun hudCanvasMenuEntries(
     undoEnabled = undoEnabled,
     onRedo = onRedo,
     redoEnabled = redoEnabled,
+    onUndoAll = onUndoAll,
     highlightAnchor = false,
     units = units,
     onGroup = onGroup,
@@ -401,6 +411,7 @@ private fun buildHudCanvasMenuEntries(
     undoEnabled: Boolean,
     onRedo: () -> Unit,
     redoEnabled: Boolean,
+    onUndoAll: () -> Unit,
     highlightAnchor: Boolean,
     units: List<Collection<Hud>> = emptyList(),
     onGroup: (() -> Unit)? = null,
@@ -522,6 +533,7 @@ private fun buildHudCanvasMenuEntries(
     entries += MenuSeparator
     entries += undoAction(onUndo, undoEnabled)
     entries += redoAction(onRedo, redoEnabled)
+    entries += undoAllAction(onUndoAll, undoEnabled)
 
     entries += MenuSeparator
     if (actionTargets.any(::hudHasPositionDefaults)) {
@@ -559,12 +571,14 @@ internal fun hudCanvasPasteMenuEntries(
     undoEnabled: Boolean,
     onRedo: () -> Unit,
     redoEnabled: Boolean,
+    onUndoAll: () -> Unit,
     onTour: (() -> Unit)?,
     onShortcuts: () -> Unit,
 ): List<MenuEntry> {
     val entries = ArrayList<MenuEntry>(9)
     entries += undoAction(onUndo, undoEnabled)
     entries += redoAction(onRedo, redoEnabled)
+    entries += undoAllAction(onUndoAll, undoEnabled)
     entries += MenuSeparator
     entries += pasteAction(onPaste, pasteEnabled)
     entries += MenuAction(
@@ -598,6 +612,13 @@ private fun undoAction(onUndo: () -> Unit, enabled: Boolean): MenuAction = MenuA
     icon = "undo",
     enabled = enabled,
     shortcutHint = keybindHint(OneConfigConfig.hudUndoKeybind),
+)
+
+private fun undoAllAction(onUndoAll: () -> Unit, enabled: Boolean): MenuAction = MenuAction(
+    translated("oneconfig.hud.menu.undo_all", "Undo all"),
+    onUndoAll,
+    icon = "undo",
+    enabled = enabled,
 )
 
 private fun redoAction(onRedo: () -> Unit, enabled: Boolean): MenuAction = MenuAction(

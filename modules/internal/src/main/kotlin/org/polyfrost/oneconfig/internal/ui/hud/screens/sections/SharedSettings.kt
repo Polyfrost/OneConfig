@@ -47,7 +47,9 @@ import java.util.function.Consumer
 private class SharedEdits {
     private var count by mutableIntStateOf(0)
 
-    val revision: Int get() = count
+    fun observe() {
+        count
+    }
 
     fun bump() {
         count++
@@ -112,7 +114,6 @@ fun SharedSettings(huds: Collection<Hud>, query: String) {
 @Composable
 private fun PositionAndScale(huds: List<Hud>, query: String, group: HudGroup?) {
     val locked = group?.locked ?: resolveShared(huds) { it.locked }.isOn()
-    // scaling only touches what a drag would move, so a HUD that holds still keeps its size and place
     val movable = draggableHuds(huds).ifEmpty { huds }
     val scalable = HudGroups.scalable(movable).isNotEmpty()
     val mixedLock = group == null && resolveShared(huds) { it.locked }.isMixed()
@@ -155,16 +156,14 @@ private fun PositionAndScale(huds: List<Hud>, query: String, group: HudGroup?) {
 private fun SharedCard(section: SharedSection, huds: List<Hud>, query: String, edits: SharedEdits) {
     val options = SharedOptions.shared(section, huds)
     if (options.isEmpty()) return
-    // the background card's own switch turns the whole card on or off
-    val master = options.firstOrNull { it.id == "showBackground" } as? SharedToggle
-    // read so the card reads the HUDs again after an edit
-    edits.revision
-    val masterValue = master?.resolve(huds)
+    val cardSwitch = options.firstOrNull { it.id == "showBackground" } as? SharedToggle
+    edits.observe()
+    val cardSwitchValue = cardSwitch?.resolve(huds)
     CardSection(
         section.title, query, *options.map { it.label }.toTypedArray(),
-        checked = masterValue?.isOn(),
-        mixed = masterValue?.isMixed() == true,
-        onCheckedChange = { master?.apply(huds, it); edits.bump() },
+        checked = cardSwitchValue?.isOn(),
+        mixed = cardSwitchValue?.isMixed() == true,
+        onCheckedChange = { cardSwitch?.apply(huds, it); edits.bump() },
     ) { col1 ->
         val widths = listOf(col1, GridCol2, GridCol3)
         val cells = ArrayList<SharedOption>()
@@ -183,7 +182,7 @@ private fun SharedCard(section: SharedSection, huds: List<Hud>, query: String, e
         }
 
         for (option in options) {
-            if (option === master || !SharedOptions.isShown(option, huds)) continue
+            if (option === cardSwitch || !SharedOptions.isShown(option, huds)) continue
             when {
                 option is SharedToggle -> {
                     flush()
@@ -212,11 +211,9 @@ private fun SharedPadding(huds: List<Hud>, query: String) {
     val sides = listOf("padLeft", "padRight", "padTop", "padBottom").map { SharedOptions.find(it) as? SharedAmount ?: return }
     if (!sides.all { SharedOptions.isShared(it, huds) }) return
     val (left, right, top, bottom) = sides
-    // read so the fields read the HUDs again after an edit
     var revision by remember { mutableIntStateOf(0) }
     revision
     val edit = { write: (Hud, Float) -> Unit, value: Float -> setShared(huds, value, write); revision++ }
-    // opens with a field per side when the sides already differ
     var perSide by remember { mutableStateOf(huds.any { it.padLeft != it.padRight || it.padTop != it.padBottom }) }
 
     @Composable
@@ -249,7 +246,6 @@ private fun SharedPadding(huds: List<Hud>, query: String) {
                         LabeledControl("Per side") {
                             Switch(perSide, {
                                 perSide = it
-                                // leaving per side mode evens the sides out so the two fields show what is applied
                                 if (!it) {
                                     Snapshot.withMutableSnapshot { huds.forEach { h -> h.padRight = h.padLeft; h.padBottom = h.padTop } }
                                     revision++
@@ -272,8 +268,7 @@ private fun SharedPadding(huds: List<Hud>, query: String) {
 
 @Composable
 private fun SharedCell(option: SharedOption, huds: List<Hud>, edits: SharedEdits, width: Dp) {
-    // read so the control reads the HUDs again after an edit
-    edits.revision
+    edits.observe()
     key(option.id) {
         when (option) {
             is SharedToggle -> Unit
@@ -318,7 +313,6 @@ private fun SharedCell(option: SharedOption, huds: List<Hud>, edits: SharedEdits
                 ModifierButtons(
                     option.flags.map { flag ->
                         val value = flag.resolve(huds)
-                        // a mix of both turns on first
                         ModifierToggle(flag.icon, hudPanelText(flag.icon, flag.label), value.isOn()) {
                             flag.apply(huds, !value.isOn())
                             edits.bump()
@@ -415,8 +409,7 @@ private fun SharedPropertyRows(huds: List<Hud>, query: String, edits: SharedEdit
 
 @Composable
 private fun SharedPropertyRow(shared: SharedProperty, proxy: Property<Any?>, edits: SharedEdits) {
-    // read so the note reads the HUDs again after an edit
-    edits.revision
+    edits.observe()
     val display = rememberDisplay(proxy)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         HudOptionRow(proxy)

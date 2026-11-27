@@ -45,6 +45,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	protected final fun cloneOptions ()V
+	public fun collapsesWhenNotShown ()Z
 	protected final fun contentChanged ()V
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
@@ -127,6 +128,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getShowInTab ()Z
 	public final fun getShowKey ()I
 	public final fun getShowShadow ()Z
+	public final fun getSnapEdgeX ()Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
+	public final fun getSnapEdgeY ()Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
 	public fun getStaticH ()F
 	public fun getStaticW ()F
 	public final fun getStaticWidth ()Z
@@ -152,6 +155,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/composables/PolyModifier;ILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public final fun isAnchored ()Z
 	public final fun isAtDefaultPosition ()Z
+	public final fun isCollapsed ()Z
 	public final fun isMergeAnchored ()Z
 	public final fun isReal ()Z
 	protected final fun measureNaturalContentSize ()Lkotlin/Pair;
@@ -515,6 +519,16 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudResize : java/lang/Enum
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
 	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/HudResize;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/HudSnapEdge : java/lang/Enum {
+	public static final field Center Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
+	public static final field End Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
+	public static final field None Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
+	public static final field Start Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/HudSnapEdge;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudStyle {

@@ -37,6 +37,11 @@ class HudGroupsTest {
     static class DefaultOne extends BoxHud { DefaultOne() { super("group-default-one"); } }
     static class DefaultTwo extends BoxHud { DefaultTwo() { super("group-default-two"); } }
 
+    static class CollapsingHud extends BoxHud {
+        CollapsingHud() { super("group-collapsing"); }
+        @Override public boolean collapsesWhenNotShown() { return true; }
+    }
+
     static class PresetSingle extends BoxHud {
         PresetSingle() { super("group-preset-single"); }
         @Override public boolean showByDefault() { return false; }
@@ -127,7 +132,7 @@ class HudGroupsTest {
         ConfigManager.active();
         ConfigManager.openProfile("");
         if (!registered) {
-            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB(), new ArrangeOne(), new ArrangeTwo(), new SlotBase(), new SlotDerived(), new OffOne(), new OffTwo(), new Undeletable(), new BrokenSetup());
+            HudManager.register(new HudA(), new HudB(), new HudC(), new DefaultOne(), new DefaultTwo(), new PresetSingle(), new PresetMulti(), new PresetMultiB(), new ArrangeOne(), new ArrangeTwo(), new SlotBase(), new SlotDerived(), new OffOne(), new OffTwo(), new Undeletable(), new BrokenSetup(), new CollapsingHud());
             HudGroups.registerPreset("test.recording", "Recording", Arrays.asList(HudB.class, HudA.class), null, null, null,
                 Collections.singletonList(new HudPresetAction("record", "Record", huds -> { received.clear(); received.addAll(huds); })), null);
             HudGroups.registerPreset("test.arranged", "Arranged", Arrays.asList(ArrangeTwo.class, ArrangeOne.class), null, null, null,
@@ -300,7 +305,6 @@ class HudGroupsTest {
 
     @Test
     void movingAGroupAnchoredThroughAnOutsideHud() {
-        // b hangs off c which hangs off a, and only a and b are grouped
         c.setAbsolutePosition(100f, 120f);
         b.setAbsolutePosition(100f, 140f);
         c.anchorTo(a, HudAnchor.BottomLeft, HudAnchor.TopLeft);
@@ -536,6 +540,44 @@ class HudGroupsTest {
 
         assertEquals("", only(DefaultOne.class).getGroupPath(), "an ungrouped default group stays ungrouped");
         assertEquals("", only(DefaultTwo.class).getGroupPath());
+    }
+
+    private static void setCollapsed(Hud hud, boolean collapsed) throws Exception {
+        for (Method m : Hud.class.getDeclaredMethods()) {
+            if (m.getName().startsWith("setCollapsed")) {
+                m.invoke(hud, collapsed);
+                return;
+            }
+        }
+        throw new NoSuchMethodException("setCollapsed");
+    }
+
+    @Test
+    void aCollapsedHudMeasuresNothingAndItsChildSitsAtItsEdge() throws Exception {
+        Hud parent = only(CollapsingHud.class);
+        parent.setRenderedW(40f);
+        parent.setRenderedH(10f);
+        parent.setAbsolutePosition(100f, 100f);
+        a.anchorTo(parent, HudAnchor.TopRight, HudAnchor.TopLeft);
+        a.setAnchorOffsetX(10f);
+        a.setAnchorOffsetY(5f);
+        try {
+            assertEquals(150f, a.getX(), 0.001f);
+            assertEquals(105f, a.getY(), 0.001f);
+
+            setCollapsed(parent, true);
+            assertTrue(parent.isCollapsed());
+            assertEquals(0f, parent.getScaledWidth(), 0f);
+            assertEquals(0f, parent.getScaledHeight(), 0f);
+            assertEquals(parent.getX(), a.getX(), 0.001f, "the offset is dropped so no gap is left");
+            assertEquals(parent.getY() + 5f, a.getY(), 0.001f, "the offset across the stack is kept");
+
+            setCollapsed(parent, false);
+            assertEquals(150f, a.getX(), 0.001f);
+            assertEquals(105f, a.getY(), 0.001f);
+        } finally {
+            setCollapsed(parent, false);
+        }
     }
 
     private static void relaunchBeforeDefaultsApplied() throws Exception {

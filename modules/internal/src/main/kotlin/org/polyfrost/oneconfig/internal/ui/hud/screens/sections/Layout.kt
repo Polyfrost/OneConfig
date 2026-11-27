@@ -63,7 +63,9 @@ fun Layout(hud: Hud?, query: String) {
         var staticW by remember { mutableStateOf(hud.staticW) }
         var staticH by remember { mutableStateOf(hud.staticH) }
         var alignment by remember { mutableStateOf(hud.alignment) }
-        var growthAnchor by remember { mutableStateOf(hud.effectiveGrowthAnchor) }
+        // keyed because a snap or a move to another screen third changes the anchor outside this panel
+        val effectiveGrowthAnchor = hud.effectiveGrowthAnchor
+        var growthAnchor by remember(effectiveGrowthAnchor) { mutableStateOf(effectiveGrowthAnchor) }
         val growthAlign = growthAnchor.toAlign() ?: PolyAlign.Center
         var padLeft by remember { mutableStateOf(hud.padLeft) }
         var padRight by remember { mutableStateOf(hud.padRight) }
@@ -277,7 +279,6 @@ internal fun PadSpinner(label: String, value: Float, width: Dp, onChange: (Float
 internal fun HudPositionFields(hud: Hud, col1: Dp, third: @Composable () -> Unit) {
     HudEditorViewport.observe()
     val selection = designerSelection(hud)
-    // the fields read and move what a drag would, so a locked HUD that holds still does not count
     val movable = { draggableHuds(selection).ifEmpty { selection } }
     val origin = selectionOrigin(movable()) ?: Offset(hud.x, hud.y)
     val locked = draggableHuds(selection).isEmpty()

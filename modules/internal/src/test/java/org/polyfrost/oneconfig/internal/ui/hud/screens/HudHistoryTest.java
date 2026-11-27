@@ -263,6 +263,27 @@ class HudHistoryTest {
     }
 
     @Test
+    void undoAllCanBeRedoneOneStepAtATime() {
+        Hud hud = place();
+        history.poll(false);
+
+        hud.setAbsolutePosition(100f, 60f);
+        settle();
+        hud.setAbsolutePosition(200f, 120f);
+        settle();
+
+        assertNotNull(history.undoAll());
+        assertEquals(10f, hud.getX(), 0.01f);
+        assertNull(history.undo());
+
+        assertNotNull(history.redo());
+        assertEquals(100f, hud.getX(), 0.01f);
+        assertNotNull(history.redo());
+        assertEquals(200f, hud.getX(), 0.01f);
+        assertNull(history.redo());
+    }
+
+    @Test
     void aPresetActionOverSeveralHudsIsOneStep() {
         SecondHud secondProvider = new SecondHud();
         ThirdHud thirdProvider = new ThirdHud();

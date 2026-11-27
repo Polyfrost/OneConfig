@@ -25,6 +25,7 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.get
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -41,7 +42,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.Switch
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.hiddenUntilHover
-import org.polyfrost.oneconfig.api.ui.v1.keybind.OneConfigKeybind
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.settings.BooleanOptionData
 import org.polyfrost.oneconfig.internal.ui.api.shown
@@ -134,6 +134,23 @@ fun resetOption(prop: Property<*>, seen: MutableSet<Property<*>> = identitySet()
     if (def != null || nullDefault || linked != null) bumpResetEpoch(prop)
 }
 
+internal fun treeHasDefault(tree: Tree, seen: MutableSet<Property<*>> = identitySet()): Boolean = tree.map.values.any { node ->
+    when (node) {
+        is Property<*> -> optionHasDefault(node, seen)
+        is Tree -> treeHasDefault(node, seen)
+        else -> false
+    }
+}
+
+internal fun resetTree(tree: Tree, seen: MutableSet<Property<*>> = identitySet()) {
+    for (node in tree.map.values) {
+        when (node) {
+            is Property<*> -> if (!node.isKeybind()) resetOption(node, seen) else if (optionHasDefault(node, seen)) resetKeybindOption(node)
+            is Tree -> resetTree(node, seen)
+        }
+    }
+}
+
 @Composable
 fun Option(prop: Property<*>) {
     val vis = remember(System.identityHashCode(prop)) {
@@ -207,8 +224,8 @@ fun optionMenuEntries(
     resetEnabled: Boolean? = null,
     onUnbind: (() -> Unit)? = null,
 ): List<MenuEntry> {
-    val isKeybind = runCatching { prop.get() is OneConfigKeybind }.getOrDefault(false)
-    val reset = onReset ?: { if (prop.get() is OneConfigKeybind) resetKeybindOption(prop) else resetOption(prop) }
+    val isKeybind = prop.isKeybind()
+    val reset = onReset ?: { if (isKeybind) resetKeybindOption(prop) else resetOption(prop) }
     val builtIn = OptionMenuContributors.builtInEntries(prop, onReset = reset)
     val canReset = resetEnabled ?: optionHasDefault(prop)
     val entries = ArrayList<MenuEntry>(builtIn.size + 4)
@@ -255,6 +272,7 @@ class OptionMenuState internal constructor(private val prop: Property<*>) {
     internal var onReset: (() -> Unit)? = null
     internal var resetEnabled: Boolean? = null
     internal var openPage: ((Property<*>) -> Unit)? = null
+    internal var extraEntries: (() -> List<MenuEntry>)? = null
 
     private val tracker = MenuCustomItem { TrackOpen() }
 
@@ -263,7 +281,10 @@ class OptionMenuState internal constructor(private val prop: Property<*>) {
 
     val isOpen: Boolean get() = openCount > 0
 
-    fun entries(): List<MenuEntry> = jumpEntries() + optionMenuEntries(prop, onReset, resetEnabled) + tracker
+    fun entries(): List<MenuEntry> {
+        val extras = extraEntries?.invoke().orEmpty()
+        return jumpEntries() + optionMenuEntries(prop, onReset, resetEnabled) + (if (extras.isEmpty()) emptyList() else listOf(MenuSeparator) + extras) + tracker
+    }
 
     private fun jumpEntries(): List<MenuEntry> {
         val open = openPage ?: return emptyList()
