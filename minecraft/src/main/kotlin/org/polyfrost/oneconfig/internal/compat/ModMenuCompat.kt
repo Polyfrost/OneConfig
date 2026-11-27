@@ -56,6 +56,13 @@ object ModMenuCompat {
         addCards(started)
     }
 
+    /**
+     * As [addStarted] for the mods that Hotwire added while Mod Menu was off, which it lists in Mod Menu once that is on
+     * again
+     */
+    @JvmStatic
+    fun addMissed() = addStarted(ModMenu.ROOT_MODS.keys)
+
     private fun addCards(added: List<Mod>) {
         val nativeCoveredMods = added.mapNotNull { mod ->
             val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null

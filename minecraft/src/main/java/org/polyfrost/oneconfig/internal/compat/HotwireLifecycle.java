@@ -103,6 +103,9 @@ public final class HotwireLifecycle implements ModLifecycleListener {
     public void finishOn(List<String> ids) {
         try {
             sync(true);
+            // the mods added while Mod Menu was off have had no card for their Mod Menu screen yet
+            //? modmenu_compat
+            if (ids.contains("modmenu")) ModMenuCompat.addMissed();
         } catch (Throwable t) {
             LOGGER.error("Failed to bind {} to the active profile after Hotwire turned them on", ids, t);
         }
