@@ -2,9 +2,10 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
+//? if = 1.8.9 {
+/*import org.polyfrost.oneconfig.internal.LegacyVanillaHudSampler;
 import org.polyfrost.oneconfig.internal.OneConfig;
-//? if = 1.8.9
-//import org.polyfrost.oneconfig.internal.LegacyVanillaHudSampler;
+*///?}
 import org.polyfrost.oneconfig.internal.ui.hud.VanillaHudFootprint;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,12 +49,11 @@ public class Mixin_HudRenderEvent {
     //~ if = 1.8.9 '(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker' -> '(float partialTicks'
     private void renderHudCallback(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, CallbackInfo ci) {
         VanillaHudFootprint.end(HudManager.guiScreenWidth, HudManager.guiScreenHeight);
-        //? if = 1.8.9
-        //LegacyVanillaHudSampler.sample(this);
-
-
-        //~ if = 1.8.9 'submitHud(ctx)' -> 'render()'
-        OneConfig.submitHud(ctx);
+        // newer versions submit from Mixin_HudPrepareEvent, after HUD caching mods like Gnetum composite their output
+        //? if = 1.8.9 {
+        /*LegacyVanillaHudSampler.sample(this);
+        OneConfig.render();
+        *///?}
     }
 
 }

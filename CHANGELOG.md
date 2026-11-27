@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keybinds are no longer saved every frame while FastQuit saves the world (#1429)
 - On 1.8.9, OneConfig no longer declares a Mod Menu entrypoint that fails to load (#1427)
 - With wWaypoints 0.9 and newer, the per-type default settings it no longer has are hidden instead of snapping back to Icon (#1428)
+- With Gnetum, HUDs draw above the vanilla HUD elements it caches, such as the chat and tab list, instead of under them
 - API: `ShutdownEvent` is posted once when the client stops instead of every frame while FastQuit waits on the world save (#1429)
 
 ## [1.9.5] - 2026-11-25
