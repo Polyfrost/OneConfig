@@ -45,6 +45,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	protected final fun cloneOptions ()V
+	public fun collapsesWhenNotShown ()Z
 	protected final fun contentChanged ()V
 	public fun defaultPosition ()Lkotlin/Pair;
 	public fun deletable ()Z
@@ -154,6 +155,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public static synthetic fun hudBackground$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/compose/composables/PolyModifier;ILjava/lang/Object;)Lorg/polyfrost/compose/composables/PolyModifier;
 	public final fun isAnchored ()Z
 	public final fun isAtDefaultPosition ()Z
+	public final fun isCollapsed ()Z
 	public final fun isMergeAnchored ()Z
 	public final fun isReal ()Z
 	protected final fun measureNaturalContentSize ()Lkotlin/Pair;

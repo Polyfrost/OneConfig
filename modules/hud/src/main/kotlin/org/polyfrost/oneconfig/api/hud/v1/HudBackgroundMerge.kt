@@ -209,7 +209,7 @@ internal object HudBackgroundMerge {
 
     @OptIn(ExperimentalOneConfigUiApi::class)
     fun canMerge(hud: Hud): Boolean =
-        hud !is LegacyHudMarker && hud.canMergeBackground() &&
+        hud !is LegacyHudMarker && hud.canMergeBackground() && !hud.isCollapsed &&
             hud.showBackground && hud.mergeBackground && hud.hasBackground() && !hud.borderEnabled &&
             (!hud.hidden || hud.keepBgWhenHidden) &&
             hud.renderedW > 0f && hud.renderedH > 0f
@@ -803,6 +803,7 @@ internal object HudBackgroundMerge {
             key = key * 31 + (if (hud.borderEnabled) 1 else 0)
             key = key * 31 + hud.effectiveGrowthAnchor.ordinal
             key = key * 31 + hud.effectiveSelfAnchorPoint.ordinal
+            key = key * 31 + (if (hud.isCollapsed) 1 else 0)
         }
         return key
     }
