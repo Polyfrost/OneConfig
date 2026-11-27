@@ -322,14 +322,19 @@ public final class ConfigManager {
         ConfigManager mgr = active();
         try {
             Path file = mgr.getFolder().resolve(id);
-            if (Files.exists(file)) {
-                Files.copy(file, mgr.getFolder().resolve(id + ".corrupted"), StandardCopyOption.REPLACE_EXISTING);
+            Path backup = mgr.getFolder().resolve(id + ".corrupted");
+            if (Files.exists(backup)) {
+                LOGGER.warn("keeping existing backup {}.corrupted of problematic config {}", id, id);
+            } else if (Files.exists(file)) {
+                Files.copy(file, backup);
                 LOGGER.warn("backed up problematic config {} to {}.corrupted", id, id);
             }
         } catch (IOException e) {
             LOGGER.error("failed to back up problematic config {}", id, e);
         }
-        LOGGER.warn("using defaults for {} incompatible option(s) in config {}, their stored values are kept: {}", options.size(), id, options);
+        // persist the reset values so the incompatible entries are scrubbed from the file
+        mgr.save(id);
+        LOGGER.warn("reset {} incompatible option(s) in config {}: {}", options.size(), id, options);
         notifyResetOptions(config, options);
     }
 
@@ -337,8 +342,8 @@ public final class ConfigManager {
         try {
             String name = config.title != null ? config.title : config.id;
             String message = options.size() == 1
-                    ? "The option '" + options.get(0) + "' could not be loaded and is using its default until you change it. A backup was saved as " + config.getTree().getID() + ".corrupted."
-                    : options.size() + " options could not be loaded and are using their defaults until you change them (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
+                    ? "The option '" + options.get(0) + "' could not be loaded and was reset to its default. A backup was saved as " + config.getTree().getID() + ".corrupted."
+                    : options.size() + " options could not be loaded and were reset to their defaults (" + String.join(", ", options) + "). A backup was saved as " + config.getTree().getID() + ".corrupted.";
             Notifications.error(name + ": options reset", message);
         } catch (Throwable t) {
             LOGGER.error("failed to notify about reset options for config {}", config.id, t);

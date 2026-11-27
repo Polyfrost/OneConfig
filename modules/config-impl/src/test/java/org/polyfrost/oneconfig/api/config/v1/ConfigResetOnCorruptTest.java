@@ -86,7 +86,7 @@ public class ConfigResetOnCorruptTest {
         assertTrue(config.loadedTrue, "valid option must load its stored value");
         assertFalse(config.loadedFalse, "valid option must load its stored value");
 
-        assertTrue(Files.exists(backup), "a backup of the problematic file must be created");
+        assertFalse(Files.exists(backup), "a kept value must not back up the file");
 
         ConfigManager.active().save(ID);
         String saved = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
@@ -98,6 +98,55 @@ public class ConfigResetOnCorruptTest {
         String changed = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
         assertFalse(changed.contains("not_a_bool"), "a value set after loading must replace the stored one");
         assertTrue(changed.contains("\"broken\": false"));
+    }
+
+    private static final String KEEP_ID = "keep_backup_test.json";
+
+    @SuppressWarnings("unused")
+    public static class KeepConfig extends Config {
+        @Switch(title = "Kept")
+        public boolean kept = true;
+        @Switch(title = "Reset")
+        public boolean reset = true;
+
+        public KeepConfig() {
+            super(KEEP_ID, "Keep backup", Category.QOL);
+        }
+
+        @Override
+        public void initialize(boolean byConfigManager) {
+            super.initialize(byConfigManager);
+        }
+    }
+
+    @Test
+    void reloadWithKeptValueLeavesFirstBackupUntouched() throws Exception {
+        Path dir = ConfigManager.active().getFolder();
+        Files.createDirectories(dir);
+        Path file = dir.resolve(KEEP_ID);
+        Path backup = dir.resolve(KEEP_ID + ".corrupted");
+        Files.deleteIfExists(file);
+        Files.deleteIfExists(backup);
+
+        Files.write(file, "{ \"kept\": \"not_a_bool\", \"reset\": { \"on\": false } }".getBytes(StandardCharsets.UTF_8));
+        KeepConfig first = new KeepConfig();
+        assertDoesNotThrow(() -> first.initialize(true));
+        assertTrue(first.reset, "a value that is not a scalar must reset");
+        assertTrue(Files.exists(backup), "a reset value must back up the file");
+        byte[] original = Files.readAllBytes(backup);
+
+        ConfigManager.active().unregister(KEEP_ID);
+        KeepConfig second = new KeepConfig();
+        assertDoesNotThrow(() -> second.initialize(true));
+        assertArrayEquals(original, Files.readAllBytes(backup), "a reload with only a kept value must leave the backup untouched");
+        assertTrue(new String(Files.readAllBytes(file), StandardCharsets.UTF_8).contains("not_a_bool"));
+
+        Files.write(file, "{ \"kept\": \"not_a_bool\", \"reset\": [{ \"on\": false }] }".getBytes(StandardCharsets.UTF_8));
+        ConfigManager.active().unregister(KEEP_ID);
+        KeepConfig third = new KeepConfig();
+        assertDoesNotThrow(() -> third.initialize(true));
+        assertTrue(third.reset);
+        assertArrayEquals(original, Files.readAllBytes(backup), "a later reset must not overwrite the first backup");
     }
 
     private static final String LEGACY_ID = "legacy_format_test.json";

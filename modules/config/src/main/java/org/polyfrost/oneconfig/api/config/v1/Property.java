@@ -65,7 +65,7 @@ public abstract class Property<T> extends Node implements Serializable {
     private transient List<Supplier<Display>> conditions = null;
     private transient boolean conditionFailed = false;
     private transient List<WeakReference<Property<?>>> dependents = null;
-    private transient Node unappliedStored = null;
+    private transient Object unappliedStored = null;
     private transient Object unappliedFallback = null;
 
     protected Property(@Nullable String id, @Nullable Object title, @Nullable Object description, @NotNull Class<T> type) {
@@ -364,8 +364,6 @@ public abstract class Property<T> extends Node implements Serializable {
      * Use this method with caution
      */
     public boolean setReferential(@Nullable T value) {
-        unappliedStored = null;
-        unappliedFallback = null;
         boolean cancelled = false;
         if (callbacks != null) {
             T prev = get();
@@ -383,6 +381,10 @@ public abstract class Property<T> extends Node implements Serializable {
                 }
             }
         } else set0(value);
+        if (!cancelled) {
+            unappliedStored = null;
+            unappliedFallback = null;
+        }
         notifyDependents();
         return cancelled;
     }
@@ -391,7 +393,7 @@ public abstract class Property<T> extends Node implements Serializable {
 
     @ApiStatus.Internal
     @Nullable
-    public final Node getUnappliedStoredValue() {
+    public final Object getUnappliedStoredValue() {
         if (unappliedStored != null && !Objects.deepEquals(get(), unappliedFallback)) {
             unappliedStored = null;
             unappliedFallback = null;
@@ -399,9 +401,18 @@ public abstract class Property<T> extends Node implements Serializable {
         return unappliedStored;
     }
 
-    final void keepUnappliedStoredValue(@NotNull Node stored) {
-        unappliedStored = stored;
+    final boolean keepUnappliedStoredValue(@NotNull Node stored) {
+        if (!(stored instanceof Property<?>) || !isImmutableScalar(type)) return false;
+        Object raw = ((Property<?>) stored).get();
+        if (raw == null || !isImmutableScalar(raw.getClass())) return false;
+        unappliedStored = raw;
         unappliedFallback = get();
+        return true;
+    }
+
+    private static boolean isImmutableScalar(Class<?> c) {
+        return c.isEnum() || c.isPrimitive() || c == String.class || c == Boolean.class || c == Character.class
+                || c == Byte.class || c == Short.class || c == Integer.class || c == Long.class || c == Float.class || c == Double.class;
     }
 
     @Override

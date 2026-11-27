@@ -78,26 +78,21 @@ public class NightConfigSerializer implements FileSerializer<String> {
             if (n instanceof Property<?>) {
                 Property<?> p = (Property<?>) n;
                 if (p.type == Void.class) continue;
-                Node unapplied = p.getUnappliedStoredValue();
-                if (unapplied instanceof Tree) {
-                    writeChild(n.getID(), (Tree) unapplied, cfg);
-                    continue;
-                }
-                Object o = unapplied instanceof Property ? ((Property<?>) unapplied).get() : p.get();
+                Object unapplied = p.getUnappliedStoredValue();
+                Object o = unapplied != null ? unapplied : p.get();
                 if (o == null) continue;
                 if (!WrappingUtils.isSimpleObject(o) && ObjectSerializer.isSerializable(o)) {
                     Object out = ObjectSerializer.INSTANCE.serialize(o, true);
                     if (out instanceof Map) cfg.add(n.getID(), mapsToConfigs((Map<String, Object>) out));
                     else cfg.add(n.getID(), out);
                 } else cfg.add(n.getID(), o);
-            } else writeChild(n.getID(), (Tree) n, cfg);
+            } else {
+                Tree in = (Tree) n;
+                Config child = new BackedConfig(new HashMap<>(in.map.size(), 1f));
+                write(in, child);
+                cfg.add(n.getID(), child);
+            }
         }
-    }
-
-    private static void writeChild(String key, Tree in, Config cfg) {
-        Config child = new BackedConfig(new HashMap<>(in.map.size(), 1f));
-        write(in, child);
-        cfg.add(key, child);
     }
 
     private static Tree read(Config cfg, Tree b) {

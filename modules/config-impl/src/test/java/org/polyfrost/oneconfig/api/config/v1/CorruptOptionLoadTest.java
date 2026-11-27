@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -97,24 +98,61 @@ public class CorruptOptionLoadTest {
     }
 
     @Test
-    void savingKeepsAStoredObjectThatDoesNotFitTheOption() throws Exception {
-        Path dir = Files.createTempDirectory("oc706-keep");
-        Path file = dir.resolve("706test.json");
-        Files.write(file, "{ \"flag\": { \"on\": true } }".getBytes(StandardCharsets.UTF_8));
+    void savingResetsAStoredValueThatIsNotAScalar() throws Exception {
+        for (String stored : List.of("{ \"on\": true }", "[{ \"on\": true }]")) {
+            Path dir = Files.createTempDirectory("oc706-reset");
+            Files.write(dir.resolve("706test.json"), ("{ \"flag\": " + stored + " }").getBytes(StandardCharsets.UTF_8));
 
-        Holder h = new Holder();
-        Tree code = codeTree(h);
+            Holder h = new Holder();
+            Tree code = codeTree(h);
+            FileBackend backend = backend(dir);
+
+            Tree.beginFailureCollection();
+            backend.register(code);
+            assertEquals(List.of("flag"), Tree.endFailureCollection());
+            assertNull(code.getProp("flag").getUnappliedStoredValue(), stored);
+
+            assertDoesNotThrow(() -> backend.save(code), stored);
+            assertEquals(false, backend.load("706test.json").getProp("flag").get(), stored);
+        }
+    }
+
+    enum Mode { A, B }
+
+    static class ModeHolder {
+        public Mode mode = Mode.A;
+    }
+
+    @Test
+    void savingKeepsAnUnknownEnumValueUntilItIsChanged() throws Exception {
+        Path dir = Files.createTempDirectory("oc706-enum");
+        Files.write(dir.resolve("706enum.json"), "{ \"mode\": \"FUTURE\" }".getBytes(StandardCharsets.UTF_8));
+
+        ModeHolder h = new ModeHolder();
+        Tree code = Tree.tree("706enum.json");
+        code.put(Properties.field("mode", null, ModeHolder.class.getDeclaredField("mode"), h));
+        @SuppressWarnings("unchecked")
+        Property<Mode> mode = (Property<Mode>) code.getProp("mode");
+        AtomicBoolean cancel = new AtomicBoolean(true);
+        mode.addCallback(v -> cancel.get());
         FileBackend backend = backend(dir);
 
         Tree.beginFailureCollection();
         backend.register(code);
-        List<String> failures = Tree.endFailureCollection();
-        assertEquals(List.of("flag"), failures);
-        assertFalse(h.flag);
+        assertTrue(Tree.endFailureCollection().isEmpty(), "a kept value is not a reset");
+        assertEquals(Mode.A, h.mode);
 
         backend.save(code);
-        Tree saved = backend.load("706test.json");
-        assertInstanceOf(Tree.class, saved.get("flag"), "the unreadable value must be written back as it was");
-        assertEquals(true, ((Tree) saved.get("flag")).getProp("on").get());
+        assertEquals("FUTURE", String.valueOf(backend.load("706enum.json").getProp("mode").get()));
+
+        assertTrue(mode.set(Mode.B));
+        assertEquals(Mode.A, h.mode);
+        backend.save(code);
+        assertEquals("FUTURE", String.valueOf(backend.load("706enum.json").getProp("mode").get()), "a cancelled set must keep the stored value");
+
+        cancel.set(false);
+        assertFalse(mode.set(Mode.B));
+        backend.save(code);
+        assertEquals("B", String.valueOf(backend.load("706enum.json").getProp("mode").get()));
     }
 }

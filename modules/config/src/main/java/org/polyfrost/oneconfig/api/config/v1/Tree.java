@@ -132,9 +132,12 @@ public class Tree extends Node implements Serializable {
                 try {
                     _this.overwrite(that, preserveMissingOptions, skipOverwritten, root);
                 } catch (Throwable e) {
-                    LOGGER.error("failed to apply stored value for '{}' (incompatible or corrupted); using its default and keeping the stored value", key, e);
-                    if (_this instanceof Property) ((Property<?>) _this).keepUnappliedStoredValue(that);
-                    failures.add(key);
+                    if (_this instanceof Property && ((Property<?>) _this).keepUnappliedStoredValue(that)) {
+                        LOGGER.warn("failed to apply stored value for '{}' (incompatible or corrupted); using its default and keeping the stored value", key, e);
+                    } else {
+                        LOGGER.error("failed to apply stored value for '{}' (incompatible or corrupted); resetting it to its default", key, e);
+                        failures.add(key);
+                    }
                 }
             } else {
                 _this.overwrite(that, preserveMissingOptions, skipOverwritten, root);
