@@ -73,6 +73,7 @@ import org.polyfrost.compose.minecraft.mc.McItemIcons;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.HudEditorUIScreen;
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen;
 import org.polyfrost.oneconfig.internal.ui.hud.BuiltinHudRegistrar;
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession;
 import org.polyfrost.oneconfig.internal.ui.hud.LegacyHudRenderer;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindConflicts;
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry;
@@ -152,8 +153,17 @@ public class OneConfig implements ClientModInitializer {
     private static void registerKeybinds() {
         // the action lives here rather than on the keybind because it references platform classes and
         // is lost when the keybind is deserialized
-        OneConfigConfig.setOpenAction(pressed -> openFromKeybind(pressed, OneConfigUIScreen::openLastSession));
+        OneConfigConfig.setOpenAction(pressed -> openFromKeybind(pressed, OneConfig::openFromMainKeybind));
         OneConfigConfig.setMinimalOpenAction(pressed -> openFromKeybind(pressed, () -> Platform.screen().display(OneConfigUIScreen.minimal())));
+    }
+
+    private static void openFromMainKeybind() {
+        if (OneConfigConfig.hudFirst) {
+            HudDesignSession.launcherPending = true;
+            HudManager.INSTANCE.openEditor();
+        } else {
+            OneConfigUIScreen.openLastSession();
+        }
     }
 
     private static boolean openFromKeybind(boolean pressed, Runnable open) {

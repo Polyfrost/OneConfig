@@ -22,12 +22,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +75,6 @@ import org.polyfrost.oneconfig.api.ui.v1.ReadOnlyModToggle
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.components.Card
-import org.polyfrost.oneconfig.api.ui.v1.components.ChipDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.Divider
@@ -88,9 +90,6 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ModCardMenuContributors
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionChevron
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
-import org.polyfrost.oneconfig.api.ui.v1.components.TabItem
-import org.polyfrost.oneconfig.api.ui.v1.components.TabRow
-import org.polyfrost.oneconfig.api.ui.v1.components.TabStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipPlacement
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
@@ -118,6 +117,8 @@ import org.polyfrost.oneconfig.internal.ui.api.modFavoriteAt
 import org.polyfrost.oneconfig.internal.ui.api.modGroupBounds
 import org.polyfrost.oneconfig.internal.ui.components.Icon
 import org.polyfrost.oneconfig.internal.ui.components.ModToggleFlips
+import org.polyfrost.oneconfig.internal.ui.components.StripTab
+import org.polyfrost.oneconfig.internal.ui.components.TabStrip
 import org.polyfrost.oneconfig.internal.ui.components.Text
 import org.polyfrost.oneconfig.internal.ui.components.accentSheen
 import org.polyfrost.oneconfig.internal.ui.components.asRenderText
@@ -132,9 +133,11 @@ import org.polyfrost.oneconfig.internal.ui.components.settings.identitySet
 import org.polyfrost.oneconfig.internal.ui.components.settings.resetTree
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModConfigRoute
+import org.polyfrost.oneconfig.internal.ui.search.searchMatches
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.PageGutter
 import org.polyfrost.oneconfig.internal.ui.shell.ShellNavigation
+import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyGridState
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.AccentBrush
@@ -164,14 +167,18 @@ enum class ModCategory(
     Hidden("Hidden", "eye-off", null, hiddenOnly = true);
 
     val label: String get() = translated("oneconfig.mods.category.${name.lowercase()}", title)
+
+    fun holds(mod: ConfigData): Boolean = when {
+        ModHidden.isHidden(mod.id) != hiddenOnly -> false
+        favoritesOnly -> ModFavorites.isFavorite(mod.id)
+        configCategory != null -> mod.category == configCategory
+        else -> true
+    }
 }
 
 @Composable
 fun Mods() {
-    Box {
-        DecoratedModsPage(ModsPageDecorators.all(), 0)
-        ModSortControl(Modifier.align(Alignment.TopEnd))
-    }
+    DecoratedModsPage(ModsPageDecorators.all(), 0)
 }
 
 @Composable
@@ -186,24 +193,20 @@ private fun ModsPage() {
 
     Column(verticalArrangement = Arrangement.spacedBy(19.dp)) {
         val cards = ConfigRegistry.modCardConfigs
+        val counts = remember(cards, ConfigRegistry.revision, HudManager.revision, ThirdPartyModCategories.revision, ModFavorites.revision, ModHidden.revision) {
+            ModCategory.entries.associateWith { category -> cards.count { category.holds(it) } }
+        }
         val tabs = ModCategory.entries.filter {
             when {
                 it == ModCategory.All || it.favoritesOnly || activeCategory == it -> true
-                it.hiddenOnly -> cards.any { configData -> ModHidden.isHidden(configData.id) }
-                else -> cards.any { configData ->
-                    configData.category == it.configCategory && !ModHidden.isHidden(configData.id)
-                }
+                else -> counts.getValue(it) > 0
             }
-        }.map { TabItem(it, it.label, icon = it.icon) }
-        TabRow(
+        }.map { StripTab(it, it.label, counts.getValue(it)) }
+        TabStrip(
             tabs,
             activeCategory,
             { activeCategory = it },
             Modifier.padding(horizontal = PageGutter),
-            style = TabStyle.Chips,
-            size = ChipDefaults.size,
-            fill = false,
-            onDeselect = { activeCategory = ModCategory.All },
         )
         ModsGrid(activeCategory)
     }
@@ -218,23 +221,38 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
     val hiddenRevision = ModHidden.revision
     val orderRevision = ModOrder.revision
     val sortMode = ModSortStore.selectedId
+    val enabledStates = remember { mutableStateMapOf<String, Boolean>() }
+    val stateSorted = sortMode == ModSortStore.ENABLED_FIRST || sortMode == ModSortStore.DISABLED_FIRST
+    val stateKey: Any? = if (stateSorted) enabledStates.toMap() else null
+    if (stateSorted) {
+        LaunchedEffect(registryRevision) {
+            while (true) {
+                for (mod in ConfigRegistry.modCardConfigs) {
+                    val on = runCatching { mod.toggle?.isEnabled() }.getOrNull() ?: continue
+                    if (enabledStates[mod.id] != on) enabledStates[mod.id] = on
+                }
+                delay(STATE_SORT_POLL_MS)
+            }
+        }
+    }
     val typeRevision = ModCardTypes.revision
+    val toggleRevision = if (stateSorted) ModToggles.revision else 0
     val collapseRevision = ModCardTypeCollapseStore.revision
+    val query = pageSearchQuery().trim()
     val filtered = remember(
         registryRevision, hudRevision, category, categoryRevision, favoriteRevision, hiddenRevision, orderRevision,
-        typeRevision, sortMode,
+        typeRevision, sortMode, query, stateKey, toggleRevision,
     ) {
         ConfigRegistry.modCardConfigs
-            .filter { ModHidden.isHidden(it.id) == category.hiddenOnly }
-            .let { items ->
-                if (category.configCategory == null) items
-                else items.filter { it.category == category.configCategory }
-            }
-            .let { items ->
-                if (category.favoritesOnly) items.filter { ModFavorites.isFavorite(it.id) }
-                else items
-            }
+            .filter(category::holds)
+            .filter { query.isEmpty() || it.matchesFilter(query) }
             .sortedWith(modCardOrder())
+    }
+    if (filtered.isEmpty() && query.isNotEmpty()) {
+        Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
+            EmptyState(translated("oneconfig.mods.empty.filter", "No mods match \"%s\"", query), icon = "filter")
+        }
+        return
     }
     if (filtered.isEmpty() && (category.favoritesOnly || category.hiddenOnly)) {
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -329,6 +347,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
             .reorderContainer(reorderState)
             .reorderAutoScroll(reorderState),
     ) {
+        CompositionLocalProvider(LocalModEnabledStates provides enabledStates) {
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(4),
@@ -377,6 +396,7 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
                 }
             }
         }
+        }
         // drawn over the grid so it passes above the other cards
         val draggedId = reorderState.overlayKey
         val dragged = remember(entries, draggedId) { draggedId?.let(entries::cardData) }
@@ -390,6 +410,8 @@ fun ColumnScope.ModsGrid(category: ModCategory) {
         }
     }
 }
+
+private val LocalModEnabledStates = staticCompositionLocalOf<MutableMap<String, Boolean>?> { null }
 
 @Composable
 private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modifier, onToggle: () -> Unit) {
@@ -415,6 +437,9 @@ private fun ModTypeHeader(entry: ModGridEntry.Header, modifier: Modifier = Modif
         },
     )
 }
+
+private fun ConfigData.matchesFilter(query: String): Boolean =
+    listOfNotNull(title.asRenderText(), id, description, authors).any { searchMatches(it, query, 0) }
 
 private fun List<ModGridEntry>.cardData(key: Any): ConfigData? =
     firstNotNullOfOrNull { (it as? ModGridEntry.Card)?.data?.takeIf { mod -> mod.id == key } }
@@ -502,7 +527,7 @@ private fun modCardMenu(mod: ConfigData, navigation: ShellNavigation): List<Menu
     }
 }
 
-private fun confirmReset(mod: ConfigData, tree: Tree) {
+internal fun confirmReset(mod: ConfigData, tree: Tree) {
     val ownSwitch = (mod.toggle as? PropertyModToggle)?.property
     Confirm.ask(
         title = translated("oneconfig.mods.menu.reset.title", "Reset %s?", mod.title.asRenderText()),
@@ -552,6 +577,8 @@ private const val CARD_CONTENT_TYPE = "card"
 
 private val ModCardFooterHeight = 36.dp
 
+private val ModCardNameSize = 14.sp
+
 private val ModCardGlowHeight = 50.dp
 
 private val ModCardInsetFooterInset = 6.dp
@@ -565,6 +592,7 @@ private const val ModCardToggleRingDarken = 0.42f
 private val ModCardToggleRingShade = Color(0xFF181600)
 
 private const val ReadOnlyTogglePollMs = 250L
+private const val STATE_SORT_POLL_MS = 250L
 
 /**
  * [hoverHint] faintly shows an empty star on hover, and a card that is not [interactive] lets clicks and scrolling
@@ -585,6 +613,10 @@ fun ModCard(
     val toggleRevision = ModToggles.revision
     val toggle = remember(mod, toggleRevision) { mod.toggle }
     var enabled by rememberModEnabled(toggle)
+    val enabledStates = LocalModEnabledStates.current
+    if (interactive && enabledStates != null) {
+        LaunchedEffect(mod.id, enabled) { enabledStates[mod.id] = enabled }
+    }
     val locked = toggle is ReadOnlyModToggle
     if (toggle is ReadOnlyModToggle) {
         LaunchedEffect(toggle) {
@@ -694,7 +726,7 @@ fun ModCard(
                 Text(
                     mod.title,
                     color = footerTextColor,
-                    fontSize = theme.typography.titleSmall.fontSize,
+                    fontSize = ModCardNameSize,
                     lineHeight = 16.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
@@ -826,6 +858,8 @@ private fun FavoriteStar(
     val theme = LocalTheme.current
     val cardHovered = cardInteractions.hovered
     val color by Motion.animateColorAsState(if (favorite) theme.favoriteColor else theme.textColor)
+    val glow by Motion.animateFloatAsState(if (favorite) 1f else 0f)
+    val glowColor = theme.favoriteColor
     CardCornerToggle(
         icon = if (favorite) "star-filled" else "star",
         label = if (favorite) translated("oneconfig.mods.menu.unfavorite", "Remove from favorites")
@@ -834,10 +868,23 @@ private fun FavoriteStar(
         shown = favorite || hoverHint && cardHovered,
         emphasized = favorite,
         interactive = interactive,
-        modifier = modifier,
+        modifier = modifier.drawWithCache {
+            val radius = (CardToggleIconSize / 2 + ModCardToggleGlow).toPx()
+            val inner = (CardToggleIconSize / 2).toPx() / radius * FavoriteGlowCore
+            val brush = Brush.radialGradient(
+                inner to glowColor.copy(alpha = 0.41f),
+                inner + (1f - inner) * 0.4f to glowColor.copy(alpha = 0.25f),
+                inner + (1f - inner) * 0.8f to glowColor.copy(alpha = 0.09f),
+                1f to Color.Transparent,
+                center = size.center, radius = radius,
+            )
+            onDrawBehind { if (glow > 0f) drawCircle(brush, radius = radius, alpha = glow) }
+        },
         shape = cardCornerShape(),
     ) { ModFavorites.toggle(mod.id) }
 }
+
+private const val FavoriteGlowCore = 0.6f
 
 @Composable
 private fun HideToggle(

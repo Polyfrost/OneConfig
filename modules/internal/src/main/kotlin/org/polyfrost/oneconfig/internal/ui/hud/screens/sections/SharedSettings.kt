@@ -3,6 +3,7 @@ package org.polyfrost.oneconfig.internal.ui.hud.screens.sections
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
@@ -430,13 +432,18 @@ private fun SharedPropertyRow(shared: SharedProperty, proxy: Property<Any?>, edi
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         HudOptionRow(proxy)
         if (shared.resolve().isMixed()) {
-            Text(
-                "Mixed between these HUDs, changing it sets it for all of them.",
-                color = LocalTheme.current.textColorSecondary,
-                fontSize = 12.sp,
-            )
-            if (display == Property.Display.SHOWN) {
-                GroupRow("Set every HUD to the value shown", "align") { proxy.setReferential(proxy.get()) }
+            Column(
+                Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    "Mixed between these HUDs, changing it sets it for all of them.",
+                    color = LocalTheme.current.textColorSecondary,
+                    fontSize = 12.sp,
+                )
+                if (display == Property.Display.SHOWN) {
+                    GroupRow("Set every HUD to the value shown", "align") { proxy.setReferential(proxy.get()) }
+                }
             }
         }
     }

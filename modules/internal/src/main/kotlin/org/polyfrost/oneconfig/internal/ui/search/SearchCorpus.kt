@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.ui.search
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,6 +43,9 @@ object SearchCorpus {
 
     @Volatile
     var corpus: Map<String, SearchDocument<*>> = emptyMap()
+        private set
+
+    var revision: Int by mutableIntStateOf(0)
         private set
 
     init {
@@ -213,6 +219,7 @@ object SearchCorpus {
                 runCatching { provider.onCorpusUpdate(upserted, removed) }
                     .onFailure { LOGGER.error("Failed to index into ${provider.displayName()}", it) }
             }
+            revision++
         }
     }
 

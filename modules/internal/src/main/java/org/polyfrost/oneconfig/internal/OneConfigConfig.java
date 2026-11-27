@@ -59,6 +59,13 @@ public class OneConfigConfig extends Config {
     )
     public static boolean keybindClosesGui = false;
 
+    @Switch(
+        title = "oneconfig.preferences.hud_first.title",
+        subcategory = "oneconfig.preferences.category.gui",
+        description = "oneconfig.preferences.hud_first.description"
+    )
+    public static boolean hudFirst = false;
+
     @Keybind(
         title = "oneconfig.preferences.hud_settings_keybind.title",
         subcategory = "oneconfig.preferences.category.hud_editor",
@@ -312,6 +319,14 @@ public class OneConfigConfig extends Config {
     public static OneConfigKeybind searchKeybind =
         new OneConfigKeybind(new int[] {KEYS.getKeyF()}, null, KeybindUtils.getActionModifier(), 0L, pressed -> true);
 
+    @Keybind(
+        title = "oneconfig.preferences.palette_keybind.title",
+        subcategory = "oneconfig.preferences.category.search",
+        description = "oneconfig.preferences.palette_keybind.description"
+    )
+    public static OneConfigKeybind paletteKeybind =
+        new OneConfigKeybind(new int[] {KEYS.getKeyK()}, null, KeybindUtils.getActionModifier(), 0L, pressed -> true);
+
     @Number(
         title = "oneconfig.preferences.search_distance.title",
         subcategory = "oneconfig.preferences.category.search",
@@ -437,6 +452,8 @@ public class OneConfigConfig extends Config {
      */
     private static OneConfigKeybind registeredSearchKeybind;
 
+    private static OneConfigKeybind registeredPaletteKeybind;
+
     /**
      * The keybinds registered with the {@link KeybindManager} for the remaining HUD editor actions
      */
@@ -538,6 +555,12 @@ public class OneConfigConfig extends Config {
                 return false;
             });
         refreshSearchKeybind();
+        addCallback(
+            "paletteKeybind", (OneConfigKeybind kb) -> {
+                refreshPaletteKeybind();
+                return false;
+            });
+        refreshPaletteKeybind();
         addCallback(
             "hudDuplicateKeybind", (OneConfigKeybind kb) -> {
                 refreshHudDuplicateKeybind();
@@ -674,7 +697,7 @@ public class OneConfigConfig extends Config {
     private static final String[] SOUND_OPTIONS = {"enableUIMenuSounds", "enableUIClickSounds", "enableUISliderSounds", "enableHudEditorSounds", "uiSoundVolume"};
 
     private static final String[] KEYBINDS_PAGE_ONLY = {
-        "searchKeybind", "hudSettingsKeybind", "hudVisibilityKeybind", "hudLockKeybind", "hudCopyKeybind", "hudCutKeybind",
+        "searchKeybind", "paletteKeybind", "hudSettingsKeybind", "hudVisibilityKeybind", "hudLockKeybind", "hudCopyKeybind", "hudCutKeybind",
         "hudPasteKeybind", "hudDuplicateKeybind", "hudResetKeybind", "hudDeleteKeybind", "hudSelectAllKeybind",
         "hudUndoKeybind", "hudRedoKeybind", "hudRedoAltKeybind", "hudShortcutsKeybind", "hudShortcutsAltKeybind"
     };
@@ -814,6 +837,25 @@ public class OneConfigConfig extends Config {
             src.getDurationNanos(),
             openAction);
         KeybindManager.register(registeredKeybind);
+    }
+
+    private static void refreshPaletteKeybind() {
+        if (registeredPaletteKeybind != null) {
+            KeybindManager.unregister(registeredPaletteKeybind);
+            registeredPaletteKeybind = null;
+        }
+        OneConfigKeybind src = paletteKeybind;
+        if (src == null || !src.isBound()) {
+            return;
+        }
+        registeredPaletteKeybind = new OneConfigKeybind(
+            src.getKeyCodes(),
+            src.getMouseBtns(),
+            src.getMods(),
+            src.getDurationNanos(),
+            ShellState::handlePaletteKeybind);
+        registeredPaletteKeybind.setFiresWhileTyping(true);
+        KeybindManager.register(registeredPaletteKeybind);
     }
 
     /**

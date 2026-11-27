@@ -25,10 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,10 +32,6 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
 import org.polyfrost.oneconfig.api.ui.v1.components.LoadState
 import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
-import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
-import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
-import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
-import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.OneConfigConfig
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -54,8 +46,8 @@ import org.polyfrost.oneconfig.internal.ui.components.scrollFade
 import org.polyfrost.oneconfig.internal.ui.components.settings.KeybindConflicts
 import org.polyfrost.oneconfig.internal.ui.components.settings.Option
 import org.polyfrost.oneconfig.internal.ui.components.settings.OptionMoreButton
-import org.polyfrost.oneconfig.internal.ui.components.settings.asStyledLabel
 import org.polyfrost.oneconfig.internal.ui.components.settings.optionContextMenu
+import org.polyfrost.oneconfig.internal.ui.components.settings.rememberChangedFromDefault
 import org.polyfrost.oneconfig.internal.ui.components.settings.rememberOptionMenu
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindEntry
@@ -72,7 +64,6 @@ import org.polyfrost.oneconfig.internal.ui.shell.pageSearchQuery
 import org.polyfrost.oneconfig.internal.ui.shell.rememberRestorableLazyListState
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
 import java.util.IdentityHashMap
-import org.polyfrost.oneconfig.api.ui.v1.components.Text as KitText
 
 @Composable
 fun Keybinds() {
@@ -97,7 +88,6 @@ fun Keybinds() {
             state = listState,
             modifier = Modifier.fillMaxSize().scrollFade(listState),
             contentPadding = PaddingValues(horizontal = PageGutter),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "keymap") {
                 KeybindKeymap(visibleGroups, groups)
@@ -106,6 +96,7 @@ fun Keybinds() {
                 Box(
                     Modifier
                         .fillMaxWidth()
+                        .padding(top = 8.dp)
                         .padding(vertical = 12.dp)
                         .height(1.dp)
                         .background(LocalTheme.current.borderColor),
@@ -113,7 +104,7 @@ fun Keybinds() {
             }
             if (visibleGroups.isEmpty()) {
                 item(key = "empty") {
-                    Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxWidth().padding(top = 8.dp).padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
                         when {
                             localSearchQuery.isBlank() ->
                                 EmptyState(translated("oneconfig.search.no_keybinds", "No keybinds available."), icon = "keyboard")
@@ -126,24 +117,23 @@ fun Keybinds() {
                     }
                 }
             }
-            visibleGroups.forEach { group ->
+            visibleGroups.forEachIndexed { index, group ->
                 val storedCollapsed = KeybindGroupCollapseStore.isCollapsed(group.modId)
                 val expanded = searching || !storedCollapsed
-                item(key = "header:$revision:${group.modId}") {
-                    KeybindGroupHeader(
-                        group = group,
-                        expanded = expanded,
-                        onToggle = { KeybindGroupCollapseStore.setCollapsed(group.modId, !storedCollapsed) },
-                    )
-                }
-                if (expanded) {
-                    items(
-                        items = group.entries,
-                        key = { entry -> "$revision:${group.modId}:${entry.path}" },
-                    ) { entry ->
-                        key(revision, entry.prop) {
-                            KeybindRow(entry, conflictsWith = conflicts[entry.prop].orEmpty())
-                        }
+                groupedSection(
+                    key = "group:$revision:${group.modId}",
+                    title = group.modTitle,
+                    items = group.entries,
+                    collapsed = !expanded,
+                    collapsible = !searching,
+                    first = index == 0,
+                    topGap = 8.dp,
+                    icon = group.modIcon,
+                    countLabel = ::keybindCountLabel,
+                    onToggle = { KeybindGroupCollapseStore.setCollapsed(group.modId, !storedCollapsed) },
+                ) { entry ->
+                    key(revision, entry.prop) {
+                        KeybindRow(entry, conflictsWith = conflicts[entry.prop].orEmpty())
                     }
                 }
             }
@@ -187,36 +177,13 @@ private fun searchKeybindGroups(groups: List<KeybindGroup>, query: String): List
     }
 }
 
-@Composable
-private fun KeybindGroupHeader(group: KeybindGroup, expanded: Boolean, onToggle: () -> Unit) {
-    val secondary = OneConfigTheme.current.textColorSecondary
-    SectionHeader(
-        group.modTitle.asRenderText(),
-        icon = group.modIcon,
-        expanded = expanded,
-        onToggle = onToggle,
-        contentPadding = PaddingValues(top = 4.dp, bottom = 2.dp),
-        textStyle = SectionHeaderDefaults.labelStyle,
-        color = secondary,
-        hoverColor = secondary,
-        iconSize = 18.dp,
-        title = { style, color ->
-            KitText(
-                group.modTitle.asStyledLabel(),
-                Modifier.weight(1f, fill = false),
-                color,
-                style,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-    )
-}
+private fun keybindCountLabel(count: Int): String =
+    if (count == 1) translated("oneconfig.keybinds.section.count.one", "1 keybind")
+    else translated("oneconfig.keybinds.section.count", "%s keybinds", count)
 
 @Composable
 private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val theme = LocalTheme.current
-    val shape = theme.modCardShape
     val prop = entry.prop
     val display = rememberDisplay(prop)
     if (display == Property.Display.HIDDEN) return
@@ -226,76 +193,58 @@ private fun KeybindRow(entry: KeybindEntry, conflictsWith: List<Property<*>>) {
     val isRowHovered by rowInteraction.collectIsHoveredAsState()
     val showActionButton = OneConfigConfig.showOptionActionButtons
 
-    Box(
+    val changed = rememberChangedFromDefault(prop)
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(displayAlpha(display))
             .hoverable(rowInteraction)
             .optionContextMenu(menu)
-            .cardSurface(shape)
+            .padding(start = 16.dp, end = if (showActionButton) 8.dp else 16.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        val vignetteColor = theme.textColor
-        Box(
-            Modifier.fillMaxSize().drawWithCache {
-                val gradient = Brush.radialGradient(
-                    colors = listOf(
-                        vignetteColor.copy(alpha = 0f),
-                        vignetteColor.copy(alpha = 0.02f),
-                        vignetteColor.copy(alpha = 0.05f),
-                    ),
-                    center = size.center,
-                    radius = size.minDimension * 0.9f,
-                )
-                onDrawBehind { drawRect(gradient) }
-            }
-        )
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.weight(1f).padding(end = 4.dp).alpha(displayAlpha(display)),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                modifier = Modifier.weight(1f).padding(end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                (prop.getMetadata<Any?>("icon") as? String)?.let {
-                    Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        prop.localizedTitle(),
-                        theme.typography.headingMedium,
-                        color = theme.textColor,
-                    )
-                    prop.localizedDescription()?.takeUnless { it.isEmptyText() }?.let {
-                        Text(it, color = theme.textColorSecondary, fontSize = theme.typography.label.fontSize)
-                    }
-                    Text(
-                        "${entry.category} / ${entry.subcategory}",
-                        color = theme.textColorSecondary,
-                        fontSize = theme.typography.caption.fontSize,
-                    )
-                    if (conflictsWith.isNotEmpty()) {
-                        val names = conflictsWith.joinToString(", ") { KeybindConflicts.displayName(it) }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon("alert-circle", color = theme.error, modifier = Modifier.size(12.dp))
-                            Text(
-                                translated("oneconfig.keybind.conflicts", "Conflicts with %s", names),
-                                color = theme.error,
-                                fontSize = theme.typography.caption.fontSize,
-                            )
-                        }
-                    }
-                }
+            (prop.getMetadata<Any?>("icon") as? String)?.let {
+                Icon(it, color = theme.textColor, modifier = Modifier.size(32.dp))
             }
-            if (showActionButton) OptionMoreButton(menu, visible = isRowHovered)
-            Box(Modifier.blockInteraction(!enabled)) {
-                Option(prop)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    prop.localizedTitle(),
+                    theme.typography.headingMedium,
+                    color = theme.textColor,
+                )
+                prop.localizedDescription()?.takeUnless { it.isEmptyText() }?.let {
+                    Text(it, color = theme.textColorSecondary, fontSize = theme.typography.label.fontSize)
+                }
+                Text(
+                    "${entry.category} / ${entry.subcategory}",
+                    color = theme.textColorSecondary,
+                    fontSize = theme.typography.caption.fontSize,
+                )
+                if (conflictsWith.isNotEmpty()) {
+                    val names = conflictsWith.joinToString(", ") { KeybindConflicts.displayName(it) }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon("alert-circle", color = theme.error, modifier = Modifier.size(12.dp))
+                        Text(
+                            translated("oneconfig.keybind.conflicts", "Conflicts with %s", names),
+                            color = theme.error,
+                            fontSize = theme.typography.caption.fontSize,
+                        )
+                    }
+                }
             }
         }
+        Box(Modifier.alpha(displayAlpha(display)).blockInteraction(!enabled)) {
+            Option(prop)
+        }
+        if (showActionButton) OptionMoreButton(menu, hovered = isRowHovered, changed = changed, enabled = enabled)
     }
 }

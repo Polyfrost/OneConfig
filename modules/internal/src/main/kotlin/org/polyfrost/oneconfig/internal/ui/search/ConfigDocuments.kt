@@ -23,6 +23,7 @@ import org.polyfrost.oneconfig.internal.ui.hud.cardsSupersededByHudCards
 import org.polyfrost.oneconfig.internal.ui.hud.configForHud
 import org.polyfrost.oneconfig.internal.ui.hud.hudModCardConfigs
 import org.polyfrost.oneconfig.internal.ui.hud.libraryConfigId
+import org.polyfrost.oneconfig.internal.ui.hud.libraryHudProviders
 import org.polyfrost.oneconfig.internal.ui.hud.modNameFor
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindProviderRegistry
 import org.polyfrost.oneconfig.internal.ui.keybind.isKeybindProperty
@@ -166,10 +167,10 @@ object HudDocumentSource : SearchDocumentSource {
         HudManager.addRegistrationListener { SearchCorpus.invalidate(HudDocumentSource) }
     }
 
-    override fun documents(): List<SearchDocument<Hud>> = HudManager.providers().toList().map { hud ->
+    override fun documents(): List<SearchDocument<Hud>> = libraryHudProviders().map { hud ->
         val config = hud.configId?.let(::configForHud)
         return@map SearchDocument(
-            id = "hud$ID_SEPARATOR${hud::class.java.name}$ID_SEPARATOR${hud.id}",
+            id = "hud$ID_SEPARATOR${hud::class.java.name}$ID_SEPARATOR${hud.configId.orEmpty()}$ID_SEPARATOR${hud.id}",
             scopes = setOf(SearchScope.Huds),
             metadata = SearchMetadata(
                 title = localizedLabel(hud.title)?.takeIf { it.isNotBlank() },

@@ -39,14 +39,6 @@ public final class LegacyVanillaHudSampler {
     private static int savedOverlayCooldown;
     private static boolean savedOverlayTinted;
 
-    private static boolean titleFaked;
-    private static String savedTitle;
-    private static String savedSubtitle;
-    private static int savedTitleTime;
-    private static int savedTitleFadeIn;
-    private static int savedTitleDuration;
-    private static int savedTitleFadeOut;
-
     private LegacyVanillaHudSampler() {
     }
 
@@ -103,27 +95,10 @@ public final class LegacyVanillaHudSampler {
         HudManager.isSamplingVanilla = true;
     }
 
-    public static void beginInlineTitle(Object gameGui) {
-        LegacyHudSampleAccessor accessor = (LegacyHudSampleAccessor) gameGui;
-        restoreActionBar(accessor);
+    public static void endInlineActionBar(Object gameGui) {
+        restoreActionBar((LegacyHudSampleAccessor) gameGui);
         inlineRecording = false;
         HudManager.isSamplingVanilla = false;
-        if (!inlineArmed || accessor.oneconfig$titleTime() > 0) return;
-        savedTitle = accessor.oneconfig$title();
-        savedSubtitle = accessor.oneconfig$subtitle();
-        savedTitleTime = accessor.oneconfig$titleTime();
-        savedTitleFadeIn = accessor.oneconfig$titleFadeInTime();
-        savedTitleDuration = accessor.oneconfig$titleDuration();
-        savedTitleFadeOut = accessor.oneconfig$titleFadeOutTime();
-        accessor.oneconfig$setTitle("Title");
-        accessor.oneconfig$setSubtitle("Subtitle text");
-        accessor.oneconfig$setTitleFadeInTime(10);
-        accessor.oneconfig$setTitleDuration(70);
-        accessor.oneconfig$setTitleFadeOutTime(20);
-        accessor.oneconfig$setTitleTime(60);
-        titleFaked = true;
-        inlineRecording = true;
-        HudManager.isSamplingVanilla = true;
     }
 
     public static void endInline(Object gameGui) {
@@ -134,7 +109,6 @@ public final class LegacyVanillaHudSampler {
         inlineRecording = false;
         HudManager.isSamplingVanilla = false;
         restoreActionBar(accessor);
-        restoreTitle(accessor);
     }
 
     private static void restoreActionBar(LegacyHudSampleAccessor accessor) {
@@ -144,19 +118,6 @@ public final class LegacyVanillaHudSampler {
         accessor.oneconfig$setOverlayMessageCooldown(savedOverlayCooldown);
         accessor.oneconfig$setOverlayMessageTinted(savedOverlayTinted);
         savedOverlayMessage = null;
-    }
-
-    private static void restoreTitle(LegacyHudSampleAccessor accessor) {
-        if (!titleFaked) return;
-        titleFaked = false;
-        accessor.oneconfig$setTitle(savedTitle);
-        accessor.oneconfig$setSubtitle(savedSubtitle);
-        accessor.oneconfig$setTitleTime(savedTitleTime);
-        accessor.oneconfig$setTitleFadeInTime(savedTitleFadeIn);
-        accessor.oneconfig$setTitleDuration(savedTitleDuration);
-        accessor.oneconfig$setTitleFadeOutTime(savedTitleFadeOut);
-        savedTitle = null;
-        savedSubtitle = null;
     }
 
     public static void sample(Object gameGui) {

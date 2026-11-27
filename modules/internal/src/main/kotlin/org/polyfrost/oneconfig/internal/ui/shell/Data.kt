@@ -29,4 +29,14 @@ object ShellState {
         ShellController.shared.search.requestFocus(SearchFocus.SelectAll)
         return true
     }
+
+    @JvmStatic
+    fun handlePaletteKeybind(pressed: Boolean): Boolean {
+        if (KeybindRecordingBus.isRecording) return false
+        if (!pressed || !HudManager.isConfigUiOpen || HudManager.isEditorOpen) return false
+        val shell = ShellController.shared
+        if (shell.layout.minimal) return false
+        shell.palette.toggle()
+        return true
+    }
 }

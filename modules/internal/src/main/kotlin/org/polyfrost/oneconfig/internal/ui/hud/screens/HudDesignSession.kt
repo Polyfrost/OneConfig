@@ -50,6 +50,12 @@ object HudDesignSession {
     @Volatile
     var activeGroup: HudGroup? = null
 
+    @JvmField
+    @Volatile
+    var launcherPending: Boolean = false
+
+    var islandCollapsed: Boolean by mutableStateOf(false)
+
     private val commandQueue = Channel<StudioCommand>(Channel.UNLIMITED)
 
     /**

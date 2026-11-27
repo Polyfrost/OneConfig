@@ -1753,6 +1753,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/components/TabActivation : 
 
 public final class org/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement : java/lang/Enum {
 	public static final field Corner Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
+	public static final field Count Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
 	public static final field Inline Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/components/TabBadgePlacement;
@@ -2367,6 +2368,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme {
 	public static final fun ensureLoaded ()V
 	public final fun getAccent (Landroidx/compose/runtime/Composer;I)J
 	public static final fun getActive ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
+	public static final fun getBrandIconOverride ()Ljava/lang/String;
 	public final fun getCurrent (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public static final fun getGLASS_DARK ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
 	public static final fun getGLASS_LIGHT ()Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigUITheme;
@@ -2381,6 +2383,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTheme {
 	public final fun getSpacing (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigSpacing;
 	public final fun getTypography (Landroidx/compose/runtime/Composer;I)Lorg/polyfrost/oneconfig/api/ui/v1/theme/OneConfigTypography;
 	public final fun icon (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
+	public static final fun overrideBrandIcon (Ljava/lang/String;)V
 	public static final fun overrideLogo (Ljava/lang/String;)V
 	public static final fun registerPixelIcon (Ljava/lang/String;Ljava/lang/String;)V
 	public static final fun registerPixelIcons (Ljava/util/Map;)V

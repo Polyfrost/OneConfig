@@ -27,6 +27,7 @@ import org.polyfrost.compose.minecraft.render.blaze.BlazeHud
 //? if < 1.21.11
 //import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.internal.ui.guiCloseAnimationMillis
+import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignSession
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudDesignStudio
 import org.polyfrost.oneconfig.internal.ui.hud.screens.HudEditorViewport
 import org.polyfrost.oneconfig.internal.ui.keybind.KeybindRecordingBus
@@ -144,6 +145,7 @@ class HudEditorUIScreen private constructor() : ComposeScreen(options = OneConfi
     }
 
     override fun removed() {
+        HudDesignSession.launcherPending = false
         if (!returningToOneConfig) {
             // off by default so closing the editor leaves the last config page as the route to come back to
             if (OneConfigConfig.restoreHudEditor) ShellController.shared.navigation.recordLastRoute(HudEditorRoute)

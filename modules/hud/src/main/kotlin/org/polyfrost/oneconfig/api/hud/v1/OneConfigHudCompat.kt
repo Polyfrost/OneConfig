@@ -294,5 +294,6 @@ public interface OneConfigHudWrapper {
         }
         hud.captureStaticSizeDefaults()
         hud.capturePositionDefaults()
+        HudManager.notifyRegistrationChanged()
     }
 }

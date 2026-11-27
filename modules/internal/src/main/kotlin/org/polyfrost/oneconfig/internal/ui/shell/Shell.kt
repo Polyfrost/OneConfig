@@ -47,9 +47,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.currentBackStackEntryAsState
 import org.polyfrost.compose.backend.PolyImageBitmap
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
@@ -74,7 +72,6 @@ import org.polyfrost.oneconfig.internal.ui.components.rememberSvgResourcePainter
 import org.polyfrost.oneconfig.internal.ui.components.splitFrostedGlass
 import org.polyfrost.oneconfig.internal.ui.components.translated
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsGraph
-import org.polyfrost.oneconfig.internal.ui.navigation.graph.ModsRoute
 import org.polyfrost.oneconfig.internal.ui.navigation.graph.PreferencesGraph
 import org.polyfrost.oneconfig.internal.ui.navigation.navigation
 import org.polyfrost.oneconfig.internal.ui.screens.SearchResultsScreen
@@ -308,19 +305,15 @@ fun Shell(
         Row(Modifier.matchParentSize()) {
             Sidebar(background = glowAlpha <= 0f)
 
-            Column(
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .then(if (glowAlpha > 0f) Modifier else Modifier.background(pageColor)),
             ) {
-                val backStackEntry by LocalShellNavController.current.currentBackStackEntryAsState()
-                val isModsMenu = backStackEntry?.destination?.hasRoute(ModsRoute::class) == true
-                val searchQuery = shell.search.query
-                val isSearching = isModsMenu && searchQuery.isNotBlank()
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxSize()
                         .padding(vertical = 19.dp),
-                    verticalArrangement = Arrangement.spacedBy(if (isSearching) 0.dp else 19.dp)
+                    verticalArrangement = Arrangement.spacedBy(19.dp)
                 ) {
                     Header(Modifier.padding(horizontal = PageGutter))
                     Box(
@@ -330,9 +323,10 @@ fun Shell(
                             .then(if (shell.layout.modDragging) Modifier else Modifier.clipToBounds())
                             .alpha(if (shell.transitions.awaitingInitialRoute) 0f else 1f)
                     ) {
-                        if (isSearching) SearchResultsScreen(searchQuery) else ShellPages()
+                        ShellPages()
                     }
                 }
+                CommandPaletteOverlay()
             }
         }
     }

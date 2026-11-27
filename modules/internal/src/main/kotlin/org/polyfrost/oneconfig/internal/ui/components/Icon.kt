@@ -68,6 +68,8 @@ private object IconBitmapCache {
     }
 }
 
+internal fun iconResourceBytes(path: String): ByteArray? = IconResource.bytes(path)
+
 private object IconResource {
     private class Entry(val bytes: ByteArray?)
 

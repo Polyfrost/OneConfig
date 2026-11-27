@@ -35,6 +35,7 @@ class ShellController(val warming: Boolean = false) {
     val transitions = ShellTransitions()
     val scroll = ShellScroll()
     val navigation = ShellNavigation(search, transitions, layout)
+    val palette = ShellPalette()
 
     companion object {
         @JvmStatic
@@ -131,6 +132,23 @@ class ShellSearch {
     internal fun forgetEntries() {
         byEntry.clear()
         entryId = null
+    }
+}
+
+class ShellPalette {
+    var open by mutableStateOf(false)
+        private set
+
+    fun show() {
+        open = true
+    }
+
+    fun hide() {
+        open = false
+    }
+
+    fun toggle() {
+        open = !open
     }
 }
 
@@ -304,6 +322,33 @@ class ShellNavigation internal constructor(
         if (pendingJump === anchor) pendingJump = null
     }
 
+    private var queuedJump: Any? = null
+    private var queuedSearch: String? = null
+
+    fun jumpAfterNextNavigation(anchor: Any) {
+        queuedJump = anchor
+    }
+
+    fun searchAfterNextNavigation(text: String) {
+        queuedSearch = text
+    }
+
+    fun takeQueued() {
+        val jump = queuedJump
+        queuedJump = null
+        if (jump != null) {
+            search.clear()
+            pendingJump = jump
+        }
+        applyQueuedSearch()
+    }
+
+    private fun applyQueuedSearch() {
+        val text = queuedSearch ?: return
+        queuedSearch = null
+        search.update(text)
+    }
+
     /** Last top-level route navigated to used by the "Previous page" and "Smart reset" opening behaviors */
     var lastRoute: Any? = null
         private set
@@ -351,10 +396,15 @@ class ShellNavigation internal constructor(
 
     /** [clearSearch] is off when the navigation only restores a page the user was already on */
     fun navigate(route: Any, clearSearch: Boolean = true, animate: Boolean = ThemeConfig.showPageAnimations) {
-        pendingJump = null
+        pendingJump = queuedJump
+        queuedJump = null
         // the menu's own opening navigation keeps the minimal search bar, anything after it is the user opening a result
         if (!transitions.awaitingInitialRoute) layout.updateMinimal(false)
-        if (route == currentEntry.route) return
+        if (route == currentEntry.route) {
+            if (clearSearch && pendingJump != null) search.clear()
+            applyQueuedSearch()
+            return
+        }
         val host = readyHost() ?: return
         val query = if (clearSearch) "" else search.query
         transitions.prepare(animate, back = false)
@@ -366,6 +416,7 @@ class ShellNavigation internal constructor(
         seedRouteCategory(route)
         updateArrows()
         search.bind(host.currentBackStackEntry?.id, query)
+        applyQueuedSearch()
         if (clearSearch) instantSearch()
     }
 
