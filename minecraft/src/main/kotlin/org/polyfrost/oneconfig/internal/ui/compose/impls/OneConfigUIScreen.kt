@@ -34,6 +34,7 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.PolyCanvas
 import org.polyfrost.compose.backend.PolyCompose
 import org.polyfrost.compose.host.LocalComposeOptions
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.compose.minecraft.mc.McItemIcons
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.compose.render.PolyGlyphPage
@@ -405,6 +406,11 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
     override fun handleKeyPressed(key: Int, modifiers: Int): Boolean {
         if (key == InputConstants.KEY_ESCAPE) {
+            if (Controllers.isDispatching && !closeRequested && shell.navigation.isReady && !shell.layout.minimal && shell.navigation.canGoBack()) {
+                UiSounds.play(UiSoundEvent.CLICK)
+                shell.navigation.back()
+                return true
+            }
             if (!closeRequested) {
                 beginClose()
                 requestCloseCallback?.invoke()

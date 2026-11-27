@@ -62,6 +62,8 @@ public fun <T> RadioGroup(
     val indicator = rememberSlidingIndicatorState(options.size)
     val focus = rememberChoiceFocus(options.size)
     val selectedIndex = options.indexOf(selected)
+    val arrows = choiceArrows(activation, orientation)
+    val pick = choicePick(activation, enabled, selectedIndex, { true }) { onSelect(options[it]) }
     val fill = if (fillWidth) Modifier.fillMaxWidth() else Modifier
 
     Box(
@@ -88,7 +90,7 @@ public fun <T> RadioGroup(
                         vertical = vertical,
                         modifier = itemModifier
                             .slidingIndicatorItem(indicator, index)
-                            .choiceItem(focus, index),
+                            .choiceItem(focus, index, arrows, pick),
                         onClick = { onSelect(option) },
                     )
                 }

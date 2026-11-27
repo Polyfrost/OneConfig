@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
+import org.polyfrost.oneconfig.api.ui.v1.a11y.focusRing
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 
 @ExperimentalOneConfigUiApi
@@ -40,14 +41,14 @@ public fun Card(
 ) {
     val outline = shape ?: OneConfigTheme.current.shapes.large
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val surface = modifier.cardSurface(outline, hoverGlow, border, borderColor)
+    val surface = (if (onClick != null) modifier.focusRing(outline) else modifier).cardSurface(outline, hoverGlow, border, borderColor)
     val interactive = when {
         onClick != null && selected != null ->
             surface.selectableCard(selected, onClick, label ?: "", outline, enabled, selectionStyle, role, sound, recipe, source)
         onClick != null ->
             surface
                 .then(if (recipe != null) Modifier.controlInteraction(source, outline, recipe, enabled, focusRing = false, pointerIcon = null) else Modifier)
-                .oneConfigClickable(label, onClick, role, enabled, shape = outline, indication = false, sound = sound, interactionSource = source)
+                .oneConfigClickable(label, onClick, role, enabled, shape = outline, indication = false, sound = sound, interactionSource = source, focusRing = false)
         selected != null -> surface.cardSelection(selected, outline, selectionStyle)
         else -> surface
     }

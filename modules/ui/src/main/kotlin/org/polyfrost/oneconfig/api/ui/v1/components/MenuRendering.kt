@@ -53,7 +53,7 @@ internal fun MenuEntryItems(entries: List<MenuEntry>, onSelect: () -> Unit, size
             is MenuHeading -> MenuHeadingText(entry.text, size)
             is MenuRadioGroup<*> -> MenuRadioRows(entry, onSelect, size, reserveIcon)
             is MenuIconRow -> MenuIconRowItems(entry, onSelect)
-            is MenuCustomItem -> entry.content()
+            is MenuCustomItem -> MenuCustomSlot(entry.content)
         }
     }
 }

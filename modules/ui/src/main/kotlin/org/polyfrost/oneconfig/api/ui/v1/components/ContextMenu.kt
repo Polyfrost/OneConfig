@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.currentCompositionLocalContext
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -46,6 +47,9 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntOffset
 import org.apache.logging.log4j.LogManager
+import org.polyfrost.compose.host.controller.ControllerButton
+import org.polyfrost.compose.host.controller.Controllers
+import org.polyfrost.compose.host.controller.controllerAction
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.internal.componentsBridge
@@ -239,20 +243,26 @@ internal fun Modifier.contextMenuTrigger(
     val latestLocals by rememberUpdatedState(currentCompositionLocalContext)
     val anchor = remember { AnchorHolder() }
     val focus = remember { FocusRequester() }
+    val hasEntries by remember { derivedStateOf { entriesState.value().isNotEmpty() } }
+    val restoreFocus = { if (!anchor.focused && !Controllers.isActive) runCatching { focus.requestFocus() }; Unit }
+    fun openAtCenter(): Boolean {
+        if (isRecordingKeybind()) return false
+        val coordinates = anchor.coordinates?.takeIf { it.isAttached } ?: return false
+        val list = latestEntries()
+        if (list.isEmpty()) return false
+        val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+        host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus, latestLocals, entriesState, latestPopupSounds))
+        latestOpened?.invoke()
+        return true
+    }
     return this
         .onGloballyPositioned { anchor.coordinates = it }
         .focusRequester(focus)
         .onFocusChanged { anchor.focused = it.hasFocus }
+        .controllerAction(ControllerButton.X, formControlString("oneconfig.controller.options", "Options"), Controllers.isActive && hasEntries) { openAtCenter() }
         .onKeyEvent { event ->
-            if (event.type != KeyEventType.KeyDown || !event.opensContextMenu() || isRecordingKeybind()) return@onKeyEvent false
-            val coordinates = anchor.coordinates?.takeIf { it.isAttached } ?: return@onKeyEvent false
-            val list = latestEntries()
-            if (list.isEmpty()) return@onKeyEvent false
-            val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
-            val restoreFocus = { runCatching { focus.requestFocus() }; Unit }
-            host.show(OpenContextMenu(coordinates.localToWindow(center).round(), list, null, restoreFocus, latestLocals, entriesState, latestPopupSounds))
-            latestOpened?.invoke()
-            true
+            if (event.type != KeyEventType.KeyDown || !event.opensContextMenu()) return@onKeyEvent false
+            openAtCenter()
         }
         .pointerInput(host) {
             awaitPointerEventScope {
@@ -267,8 +277,7 @@ internal fun Modifier.contextMenuTrigger(
                     val list = latestEntries()
                     if (list.isEmpty()) continue
                     event.changes.forEach { it.consume() }
-                    val restoreFocus = if (anchor.focused) ({ runCatching { focus.requestFocus() }; Unit }) else null
-                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, restoreFocus, latestLocals, entriesState, latestPopupSounds), latestOpened)
+                    host.claim(key, OpenContextMenu(coordinates.localToWindow(change.position).round(), list, null, restoreFocus.takeIf { anchor.focused }, latestLocals, entriesState, latestPopupSounds), latestOpened)
                     awaitPointerEvent(PointerEventPass.Final)
                     host.commit(key)
                 }

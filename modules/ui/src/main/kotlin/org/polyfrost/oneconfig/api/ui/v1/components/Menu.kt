@@ -6,6 +6,7 @@ package org.polyfrost.oneconfig.api.ui.v1.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -36,8 +37,13 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -53,6 +59,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +71,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import org.polyfrost.compose.host.controller.Controllers
+import org.polyfrost.compose.host.controller.controllerArrows
+import org.polyfrost.compose.host.controller.hidesFocusRing
+import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
@@ -293,9 +304,9 @@ internal fun MenuItemRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = size.height)
+                .focusRing(shape, highlighted)
                 .clip(shape)
                 .background(background, shape)
-                .focusRing(shape, highlighted)
                 .hoverable(source)
                 .then(if (level != null) Modifier.notFocusable() else Modifier)
                 .oneConfigClickable(
@@ -366,8 +377,10 @@ public fun MenuSurface(
         ProvideMenuSurface(surface) { MenuSurface(modifier, maxHeight, null, tabNavigation, content) }
         return
     }
-    val controller = remember { MenuNavController() }
     val focus = remember { FocusRequester() }
+    val controller = remember { MenuNavController(focus) }
+    val controllerFocus = remember { MenuControllerFocus(controller, focus) }
+    val focusManager = LocalFocusManager.current
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     LaunchedEffect(controller) {
         runCatching { focus.requestFocus() }
@@ -380,10 +393,18 @@ public fun MenuSurface(
     CompositionLocalProvider(LocalMenuLevel provides controller.root) {
         MenuPanel(
             modifier
-                .onKeyEvent { (tabNavigation && controller.onTab(it)) || controller.onKey(it, rtl) }
+                .onKeyEvent { event ->
+                    controllerFocus.onKey(event, focusManager)?.let { return@onKeyEvent it }
+                    (tabNavigation && controller.onTab(event)) || controller.onKey(event, rtl)
+                }
                 .focusRequester(focus)
+                .controllerArrows()
+                .hidesFocusRing()
+                .onFocusChanged(controllerFocus::onFocusChanged)
+                .focusProperties { onExit = { if (controller.probing != null) cancelFocusChange() } }
                 .focusable(),
             maxHeight,
+            Modifier.focusRequester(controllerFocus.content).focusGroup(),
             content,
         )
     }
@@ -423,7 +444,7 @@ public fun ProvideMenuSurface(surface: @Composable (Modifier) -> Modifier, conte
 }
 
 @Composable
-internal fun MenuPanel(modifier: Modifier, maxHeight: Dp, content: @Composable ColumnScope.() -> Unit) {
+internal fun MenuPanel(modifier: Modifier, maxHeight: Dp, inner: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val padding = MenuDefaults.contentPadding
     val sized = modifier
         .widthIn(min = MenuDefaults.minWidth, max = MenuDefaults.maxWidth)
@@ -432,7 +453,7 @@ internal fun MenuPanel(modifier: Modifier, maxHeight: Dp, content: @Composable C
     val override = LocalMenuSurface.current
     val surfaced = if (override != null) override(sized) else componentsBridge().popupSurface(sized, MenuDefaults.shape)
     Column(
-        modifier = surfaced.verticalScroll(rememberScrollState()).padding(padding),
+        modifier = surfaced.verticalScroll(rememberScrollState()).padding(padding).then(inner),
         verticalArrangement = Arrangement.spacedBy(MenuDefaults.itemSpacing),
         content = content,
     )
@@ -457,5 +478,77 @@ public fun MenuList(
 ) {
     MenuSurface(modifier, surface = surface, tabNavigation = tabNavigation) {
         MenuEntryItems(entries, onSelect, size)
+    }
+}
+
+private class MenuControllerFocus(private val controller: MenuNavController, private val surface: FocusRequester) {
+    val content = FocusRequester()
+    private var surfaceFocused: Boolean = false
+
+    fun onFocusChanged(state: FocusState) {
+        surfaceFocused = state.isFocused
+        if (state.hasFocus && !state.isFocused && controller.probing == null && Controllers.isActive) leaveRows(controller.root)
+    }
+
+    fun onKey(event: KeyEvent, focusManager: FocusManager): Boolean? {
+        if (!event.isFromController) return null
+        val direction = when (event.key) {
+            Key.DirectionUp -> FocusDirection.Up
+            Key.DirectionDown -> FocusDirection.Down
+            Key.DirectionLeft -> FocusDirection.Left
+            Key.DirectionRight -> FocusDirection.Right
+            Key.Enter, Key.NumPadEnter, Key.Spacebar -> return if (surfaceFocused) null else false
+            else -> return null
+        }
+        if (event.type != KeyEventType.KeyDown || event.isCtrlPressed || event.isAltPressed || event.isMetaPressed) {
+            return if (surfaceFocused) null else false
+        }
+        val vertical = direction == FocusDirection.Up || direction == FocusDirection.Down
+        val level = controller.root
+        if (!surfaceFocused) {
+            return probe(level) { focusManager.moveFocus(direction) } || vertical && probe(level) { content.requestFocus(direction) }
+        }
+        if (!vertical || controller.active !== level) return null
+        val from = level.highlighted
+        val moved = probe(level) { from != null && from.focus.requestFocus() && focusManager.moveFocus(direction) } ||
+            probe(level) { content.requestFocus(direction) }
+        return if (moved) true else null
+    }
+
+    private fun probe(level: MenuNavLevel, move: () -> Boolean): Boolean {
+        controller.probing = level
+        controller.probed = null
+        try {
+            val moved = runCatching(move).getOrDefault(false)
+            val row = controller.probed
+            if (row != null) {
+                runCatching { surface.requestFocus() }
+                if (moved) level.select(row)
+                return moved
+            }
+            if (moved) leaveRows(level)
+            return moved
+        } finally {
+            controller.probing = null
+            controller.probed = null
+        }
+    }
+
+    private fun leaveRows(level: MenuNavLevel) {
+        controller.active = level
+        level.openChild = null
+        level.hoverIntent = null
+        level.highlighted = null
+    }
+}
+
+@Composable
+internal fun MenuCustomSlot(content: @Composable () -> Unit) {
+    if (LocalMenuLevel.current == null) {
+        content()
+        return
+    }
+    Column(Modifier.focusGroup(), verticalArrangement = Arrangement.spacedBy(MenuDefaults.itemSpacing)) {
+        content()
     }
 }

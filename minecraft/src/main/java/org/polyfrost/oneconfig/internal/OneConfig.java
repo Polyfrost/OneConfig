@@ -39,6 +39,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.scores.Scoreboard;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.polyfrost.compose.host.controller.ControllerButton;
+import org.polyfrost.compose.host.controller.Controllers;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
@@ -92,6 +94,7 @@ import org.polyfrost.oneconfig.test.TestMod_Test;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.scores.DisplaySlot;
 import org.polyfrost.oneconfig.internal.compat.ArmorHudCompat;
+import org.polyfrost.oneconfig.internal.compat.PauseMenuButton;
 //?}
 
 //? if skyblock
@@ -113,6 +116,7 @@ import org.polyfrost.oneconfig.internal.compat.WWaypointsCompat;
 public class OneConfig implements ClientModInitializer {
     public static final OneConfig INSTANCE = new OneConfig();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig");
+    private static final String CONTROLLER_CATEGORY = "oneconfig.controller.category";
     private boolean initialized = false;
 
     public static boolean isInitialized() {
@@ -155,6 +159,10 @@ public class OneConfig implements ClientModInitializer {
         // is lost when the keybind is deserialized
         OneConfigConfig.setOpenAction(pressed -> openFromKeybind(pressed, OneConfig::openFromMainKeybind));
         OneConfigConfig.setMinimalOpenAction(pressed -> openFromKeybind(pressed, () -> Platform.screen().display(OneConfigUIScreen.minimal())));
+        Controllers.register("oneconfig:open_menu", "oneconfig.controller.open_menu", ControllerButton.NONE, CONTROLLER_CATEGORY, true)
+                .onPress(() -> openFromKeybind(true, OneConfigUIScreen::openLastSession));
+        Controllers.register("oneconfig:open_hud_editor", "oneconfig.controller.open_hud_editor", ControllerButton.NONE, CONTROLLER_CATEGORY, true)
+                .onPress(() -> openFromKeybind(true, HudManager.INSTANCE::openEditor));
     }
 
     private static void openFromMainKeybind() {
@@ -408,7 +416,9 @@ public class OneConfig implements ClientModInitializer {
         OneConfigConfig.markFirstLaunchShown();
         String keyName = OneConfigConfig.oneConfigKeybind.displayName();
         String title = Platform.i18n().translateString("oneconfig.notification.first_launch.title");
-        String message = Platform.i18n().translateString("oneconfig.notification.first_launch.message", keyName);
+        String message = Controllers.isActive()
+                ? Platform.i18n().translateString("oneconfig.notification.first_launch.message_controller")
+                : Platform.i18n().translateString("oneconfig.notification.first_launch.message", keyName);
         firstLaunchToast = Notifications.builder(title, message)
                 .icon(Notifications.icon("/assets/oneconfig/brand/oneconfig-icon.svg", 64))
                 .persistent()
@@ -476,6 +486,8 @@ public class OneConfig implements ClientModInitializer {
         //? fabric
         ModMenuShimLoader.enable();
         KaleidoCompat.enable();
+        //? if > 1.8.9
+        PauseMenuButton.register();
 
         initialized = true;
         LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);

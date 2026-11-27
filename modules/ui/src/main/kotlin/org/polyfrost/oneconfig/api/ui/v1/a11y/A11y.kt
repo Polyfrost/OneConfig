@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -144,17 +145,17 @@ public fun Modifier.focusRing(): Modifier = focusRing(null)
 @ExperimentalOneConfigUiApi
 public fun Modifier.focusRing(shape: Shape?): Modifier = composed {
     var focused by remember { mutableStateOf(false) }
-    onFocusChanged { focused = it.isFocused }.then(ringDrawing(shape) { focused })
+    onFocusChanged { focused = it.isFocused }.then(ringDrawing(shape, false) { focused })
 }
 
 @ExperimentalOneConfigUiApi
 public fun Modifier.focusRing(shape: Shape?, visible: Boolean): Modifier = composed {
     val shown by rememberUpdatedState(visible)
-    ringDrawing(shape) { shown }
+    ringDrawing(shape, true) { shown }
 }
 
 @Composable
-private fun ringDrawing(shape: Shape?, visible: () -> Boolean): Modifier {
+private fun ringDrawing(shape: Shape?, onController: Boolean, visible: () -> Boolean): Modifier {
     val theme = OneConfigTheme.current
     val ring = theme.focusRingColor
     val halo = when {
@@ -165,7 +166,7 @@ private fun ringDrawing(shape: Shape?, visible: () -> Boolean): Modifier {
     val outline = shape ?: theme.buttonShape
     return Modifier.drawWithContent {
         drawContent()
-        if (visible() && A11y.keyboardMode) drawFocusRing(outline, ring, halo)
+        if (visible() && A11y.keyboardMode && (onController || !Controllers.isActive)) drawFocusRing(outline, ring, halo)
     }
 }
 

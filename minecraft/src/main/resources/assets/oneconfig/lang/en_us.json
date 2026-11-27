@@ -243,6 +243,8 @@
 
   "oneconfig.notification.first_launch.title": "Welcome to OneConfig!",
   "oneconfig.notification.first_launch.message": "Press '%s' to open OneConfig and access all your mod settings in one place.",
+  "oneconfig.notification.first_launch.message_controller": "Open OneConfig from the pause menu to change all your mod settings in one place.",
+  "oneconfig.pause_menu.open": "OneConfig",
 
   "oneconfig.hud.tour.menu": "Editor Tour",
   "oneconfig.hud.tour.next": "Next",
@@ -638,6 +640,13 @@
   "oneconfig.control.mixed": "Mixed",
   "oneconfig.keybind.none": "None",
   "oneconfig.keybind.recording": "Press keys...",
+  "oneconfig.controller.category": "OneConfig",
+  "oneconfig.controller.open_menu": "Open OneConfig",
+  "oneconfig.controller.open_hud_editor": "Edit HUD",
+  "oneconfig.controller.options": "Options",
+  "oneconfig.controller.turn_on": "Turn on",
+  "oneconfig.controller.turn_off": "Turn off",
+  "oneconfig.controller.toggle": "Toggle",
   "oneconfig.ui.loading": "Loading",
   "oneconfig.ui.retry": "Try again",
   "oneconfig.ui.selection.count": "%s selected",

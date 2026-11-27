@@ -36,6 +36,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.launch
+import org.polyfrost.compose.host.controller.focusEntry
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
@@ -116,6 +119,7 @@ private fun Navigation(modifier: Modifier) {
     val scroll = rememberScrollState()
     val overflow = remember { NavOverflow() }
     val scope = rememberCoroutineScope()
+    val selectedFocus = remember { FocusRequester() }
     Column(
         modifier = modifier.fillMaxWidth()
             .padding(top = 28.dp),
@@ -130,8 +134,8 @@ private fun Navigation(modifier: Modifier) {
                     .onGloballyPositioned { overflow.viewportBottom = it.positionInRoot().y + it.size.height },
                 fadingEdges = true,
             ) {
-                CompositionLocalProvider(LocalNavOverflow provides overflow) {
-                    Box(Modifier.padding(start = (SidebarWidth - SidebarEntryWidth) / 2, top = 4.dp, bottom = 4.dp)) { NavigationEntries() }
+                CompositionLocalProvider(LocalNavOverflow provides overflow, LocalSidebarSelection provides selectedFocus) {
+                    Box(Modifier.focusEntry(selectedFocus).padding(start = (SidebarWidth - SidebarEntryWidth) / 2, top = 4.dp, bottom = 4.dp)) { NavigationEntries() }
                 }
             }
             Box(Modifier.fillMaxWidth().height(MoreRowHeight)) {
@@ -331,8 +335,12 @@ private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -
 
 @Composable
 private fun NavigationEntry(icon: String, title: String, isSelected: Boolean = false, onSelect: () -> Unit) {
-    NavItem(isSelected, title, onSelect, Modifier.width(SidebarEntryWidth), icon = icon)
+    val selection = LocalSidebarSelection.current
+    val focus = if (isSelected && selection != null) Modifier.focusRequester(selection) else Modifier
+    NavItem(isSelected, title, onSelect, Modifier.width(SidebarEntryWidth).then(focus), icon = icon)
 }
+
+private val LocalSidebarSelection = staticCompositionLocalOf<FocusRequester?> { null }
 
 @Composable
 private fun NotificationBell() {

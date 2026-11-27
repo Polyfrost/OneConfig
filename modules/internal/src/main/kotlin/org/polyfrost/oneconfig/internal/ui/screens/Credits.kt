@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,6 +34,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
+import org.polyfrost.oneconfig.api.ui.v1.components.keyNavigable
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.TranslationCredits
 import org.polyfrost.oneconfig.internal.ui.components.Icon
@@ -136,7 +138,7 @@ fun Credits() {
 
     ScrollContainer(scrollState, Modifier.fillMaxSize(), gutter = PageGutter, fadingEdges = true) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(start = PageGutter, bottom = PageGutter),
+            modifier = Modifier.fillMaxWidth().keyNavigable().focusable().padding(start = PageGutter, bottom = PageGutter),
         ) {
             if (query.isEmpty()) Masthead()
             if (shownPeople.isNotEmpty()) {

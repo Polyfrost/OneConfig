@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -30,6 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -40,7 +44,11 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
@@ -55,6 +63,9 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.host.controller.ControllerAxes
+import org.polyfrost.compose.host.controller.controllerArrows
+import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11y
 import org.polyfrost.oneconfig.api.ui.v1.a11y.A11yRole
@@ -109,6 +120,9 @@ public fun RangeSlider(
     val header = valueText?.let { "${it(low)} - ${it(high)}" }
     val startWord = layoutString("oneconfig.ui.range.start", "Start")
     val endWord = layoutString("oneconfig.ui.range.end", "End")
+    val thumbFocus = remember { List(2) { FocusRequester() } }
+    var grabbed by remember { mutableStateOf<Boolean?>(null) }
+    if (!enabled && grabbed != null) grabbed = null
 
     fun thumbModifier(isEnd: Boolean): Modifier {
         val current = if (isEnd) high else low
@@ -132,8 +146,29 @@ public fun RangeSlider(
                 }
             }
             .a11y(name, A11yRole.Slider, null, null, theme.circleShape, true)
+            .focusRequester(thumbFocus[if (isEnd) 1 else 0])
+            .onFocusChanged { if (!it.isFocused && grabbed == isEnd) grabbed = null }
             .onKeyEvent { event ->
                 if (!enabled || span <= 0f) return@onKeyEvent false
+                if (event.isFromController) {
+                    when (event.key) {
+                        Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
+                            if (event.type == KeyEventType.KeyUp) grabbed = if (grabbed == isEnd) null else isEnd
+                            return@onKeyEvent true
+                        }
+                        Key.Escape -> {
+                            if (grabbed != isEnd) return@onKeyEvent false
+                            if (event.type == KeyEventType.KeyDown) grabbed = null
+                            return@onKeyEvent true
+                        }
+                        else -> if (grabbed != isEnd) {
+                            val toward = if (isEnd) Key.DirectionLeft else Key.DirectionRight
+                            if (event.type != KeyEventType.KeyDown || event.key != toward) return@onKeyEvent false
+                            runCatching { thumbFocus[if (isEnd) 0 else 1].requestFocus() }
+                            return@onKeyEvent true
+                        }
+                    }
+                }
                 val now = if (isEnd) latestHigh else latestLow
                 val floor = if (isEnd) latestLow else min
                 val ceiling = if (isEnd) max else latestHigh
@@ -147,6 +182,7 @@ public fun RangeSlider(
                 latestFinished?.invoke()
                 true
             }
+            .controllerArrows(ControllerAxes.Horizontal)
             .focusable(enabled)
     }
 
@@ -238,14 +274,15 @@ public fun RangeSlider(
                         if (sheen != null) drawRect(sheen)
                     },
             )
-            RangeThumb(false, thumbWidth, thumbHeight, { lowFraction.value }, { trackWidthPx }, startThumb)
-            RangeThumb(true, thumbWidth, thumbHeight, { highFraction.value }, { trackWidthPx }, endThumb)
+            RangeThumb(false, grabbed == false, thumbWidth, thumbHeight, { lowFraction.value }, { trackWidthPx }, startThumb)
+            RangeThumb(true, grabbed == true, thumbWidth, thumbHeight, { highFraction.value }, { trackWidthPx }, endThumb)
         }
     }
 }
 
 private val THUMB_CLEARANCE = 3.dp
 private val THUMB_MAX_CORNER = 2.dp
+private const val GRABBED_THUMB_SCALE = 1.3f
 private const val SHEEN_TOP_ALPHA = 0.2f
 private const val SHEEN_BOTTOM_ALPHA = 0.04f
 
@@ -258,6 +295,7 @@ private fun rangeThumbHeight(size: ControlSize): Dp = if (size == ControlSize.Co
 @Composable
 private fun BoxScope.RangeThumb(
     pointsLeft: Boolean,
+    grabbed: Boolean,
     width: Dp,
     height: Dp,
     fraction: () -> Float,
@@ -267,11 +305,16 @@ private fun BoxScope.RangeThumb(
     val theme = OneConfigTheme.current
     val color = theme.controlThumbColor
     val cornerShape = theme.buttonShape
+    val scale by animateFloatAsState(if (grabbed) GRABBED_THUMB_SCALE else 1f, Motion.spec(spring()), label = "rangeThumbGrab")
     Canvas(
         Modifier
             .align(Alignment.CenterStart)
             .offset { IntOffset((fraction() * (trackWidthPx() - width.toPx()).coerceAtLeast(0f)).roundToInt(), 0) }
             .size(width, height)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .then(modifier),
     ) {
         val shapeRadius = (cornerShape.createOutline(size, layoutDirection, this) as? Outline.Rounded)?.roundRect?.topLeftCornerRadius?.x ?: 0f

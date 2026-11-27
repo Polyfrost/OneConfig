@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.ui.components
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -27,12 +29,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.notifications.v1.Notification
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationState
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationType
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationsManager
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
+import org.polyfrost.oneconfig.api.ui.v1.a11y.focusRing
 import org.polyfrost.oneconfig.api.ui.v1.components.BadgeTone
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
@@ -103,7 +107,15 @@ private fun NotificationRow(notification: Notification) {
     val accent = accentFor(state.type)
 
     Row(
-        modifier = Modifier.contextMenu { notificationMenu(notification) },
+        modifier = Modifier
+            .contextMenu { notificationMenu(notification) }
+            .then(
+                if (notification.actions.none { it.enabled }) {
+                    Modifier.focusProperties { canFocus = Controllers.isActive }.focusRing(ButtonShape).focusable()
+                } else {
+                    Modifier
+                },
+            ),
         horizontalArrangement = Arrangement.spacedBy(13.dp),
     ) {
         Box(Modifier.size(32.dp).padding(4.dp), contentAlignment = Alignment.Center) {
@@ -206,8 +218,9 @@ private fun Footer() {
     ) {
         Row(
             modifier = Modifier
+                .focusRing(ButtonShape)
                 .clip(ButtonShape)
-                .oneConfigClickable(label, { NotificationsManager.clearHistory() }, indication = false, interactionSource = source)
+                .oneConfigClickable(label, { NotificationsManager.clearHistory() }, indication = false, interactionSource = source, focusRing = false)
                 .pointerHoverIcon(PointerIcon.Hand),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,

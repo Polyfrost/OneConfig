@@ -94,6 +94,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.compose.backend.asComposeImageBitmap
+import org.polyfrost.compose.host.controller.ControllerButton
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.config.v1.MetaKeys
 import org.polyfrost.oneconfig.api.config.v1.Node
@@ -126,6 +127,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.TooltipBox
 import org.polyfrost.oneconfig.api.ui.v1.components.TooltipDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.cardSurface
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.controllerShortcut
 import org.polyfrost.oneconfig.api.ui.v1.components.oneConfigClickable
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.OneConfigConfig
@@ -1233,12 +1235,25 @@ private fun GroupHeaderContent(
     val configId = LocalConfigId.current
     menu?.extraEntries = { listOfNotNull(groupResetEntry(tree, false, configId, null)) }
     val changed = head?.let { rememberChangedFromDefault(it) } == true
+    val headSwitch = head?.takeIf { isSwitchHead(tree, it) }
 
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .hoverable(interaction)
             .contextMenu { groupMenuEntries(tree, menu.takeUnless { headLocked }, !groupEnabled, configId, head.takeIf { headDisplay == Property.Display.DISABLED }) }
+            .then(
+                if (headSwitch != null) {
+                    Modifier.controllerShortcut(ControllerButton.Y, "oneconfig.controller.toggle", "Toggle", enabled = !headLocked) {
+                        val property: Property<Boolean> = Property.recast(headSwitch)
+                        val next = property.shown() != true
+                        property.set(next)
+                        onHeadChange(next)
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .oneConfigClickable(tree.localizedTitle().asPlainLabel(), onClick, indication = false, interactionSource = interaction)
     ) {
         val switch = head != null && isSwitchHead(tree, head)

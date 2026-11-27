@@ -38,6 +38,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import org.polyfrost.compose.host.controller.ControllerAxes
+import org.polyfrost.compose.host.controller.Controllers
+import org.polyfrost.compose.host.controller.controllerArrows
+import org.polyfrost.compose.host.controller.focusEntry
+import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
@@ -133,7 +138,9 @@ internal fun Modifier.choiceGroup(
     activation: TabActivation = TabActivation.Automatic,
     orientation: Orientation = Orientation.Horizontal,
     onPick: (Int) -> Unit,
-): Modifier = semantics { selectableGroup() }.onKeyEvent { event ->
+): Modifier = then(
+    focus.requesters.getOrNull(selectedIndex)?.let { Modifier.focusEntry(it, enabled) } ?: Modifier,
+).semantics { selectableGroup() }.onKeyEvent { event ->
     if (event.type != KeyEventType.KeyDown || !enabled) return@onKeyEvent false
     val manual = activation == TabActivation.Manual
     val horizontal = orientation == Orientation.Horizontal
@@ -144,24 +151,60 @@ internal fun Modifier.choiceGroup(
         Key.DirectionDown -> if (manual && horizontal) return@onKeyEvent false else 1
         else -> return@onKeyEvent false
     }
+    val controller = event.isFromController
+    if (controller) {
+        val onAxis = if (horizontal) {
+            event.key == Key.DirectionLeft || event.key == Key.DirectionRight
+        } else {
+            event.key == Key.DirectionUp || event.key == Key.DirectionDown
+        }
+        if (!onAxis) return@onKeyEvent false
+    }
     val count = focus.requesters.size
     var index = if (focus.focused in 0 until count) focus.focused else selectedIndex.coerceAtLeast(0)
     repeat(count) {
-        index = (index + step).mod(count)
+        index += step
+        if (controller && index !in 0 until count) return@onKeyEvent false
+        index = index.mod(count)
         if (selectable(index)) {
-            if (!manual) onPick(index)
+            if (!manual && !controller) onPick(index)
             runCatching { focus.requesters[index].requestFocus() }
+            if (!manual && controller && focus.focused != index) onPick(index)
             return@onKeyEvent true
         }
     }
     false
 }
 
-internal fun Modifier.choiceItem(focus: ChoiceFocus, index: Int): Modifier {
+internal fun choiceArrows(activation: TabActivation, orientation: Orientation = Orientation.Horizontal): ControllerAxes? = when {
+    activation == TabActivation.Manual -> null
+    orientation == Orientation.Horizontal -> ControllerAxes.Horizontal
+    else -> ControllerAxes.Vertical
+}
+
+internal fun choicePick(
+    activation: TabActivation,
+    enabled: Boolean,
+    selectedIndex: Int,
+    selectable: (Int) -> Boolean,
+    onPick: (Int) -> Unit,
+): ((Int) -> Unit)? = if (activation == TabActivation.Manual) {
+    null
+} else {
+    { index -> if (enabled && index != selectedIndex && selectable(index)) onPick(index) }
+}
+
+internal fun Modifier.choiceItem(focus: ChoiceFocus, index: Int, arrows: ControllerAxes? = null, pick: ((Int) -> Unit)? = null): Modifier {
     val requester = focus.requesters.getOrNull(index) ?: return this
     return focusRequester(requester).onFocusChanged {
-        if (it.isFocused) focus.focused = index else if (focus.focused == index) focus.focused = -1
-    }
+        if (it.isFocused) {
+            val arrived = focus.focused != index
+            focus.focused = index
+            if (arrived && pick != null && Controllers.isDispatching) pick(index)
+        } else if (focus.focused == index) {
+            focus.focused = -1
+        }
+    }.then(arrows?.let { Modifier.controllerArrows(it) } ?: Modifier)
 }
 
 @Composable

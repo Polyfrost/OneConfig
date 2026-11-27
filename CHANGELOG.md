@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - API: `Hud.previewsBehindMenu` lets HUDs that only show now and then stay as they are in game behind the config menu and preview only in Edit HUD (#1423)
+- Controller support with [Controlify](https://modrinth.com/mod/controlify) on 1.21.1 and newer. The menu, mod list, settings, dropdowns, sliders, colour pickers and context menus all work with a controller, and Controlify's button guide shows what each button does
+- Controlify's controls screen has "Open OneConfig" and "Edit HUD" actions, which you can also add to its radial menu
+- On a controller, B goes back a page, X opens an item's options, and Y turns a mod or a settings group on or off
+- The pause menu has a OneConfig button next to Options
+- On a controller, the first-launch message points to the pause menu button instead of a key
+- API: kit helpers for controller support in custom pages: `isControllerMode`, `Modifier.keyNavigable`, `Modifier.onArrowKeys`, `Modifier.controllerShortcut` and `Modifier.controllerAdjust`. Existing `Modifier.contextMenu` menus open on X with no code changes
 
 ### Changed
-- Needs PolyCompose 3.0.9 or newer
+- Needs PolyCompose 3.1.0 or newer
 
 ### Fixed
 - Merged HUDs stay in place when one of them changes size (#1431)
@@ -20,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - With wWaypoints 0.9 and newer, the per-type default settings it no longer has are hidden instead of snapping back to Icon (#1428)
 - With Gnetum, HUDs draw above the vanilla HUD elements it caches, such as the chat and tab list, instead of under them
 - API: `ShutdownEvent` is posted once when the client stops instead of every frame while FastQuit waits on the world save (#1429)
+- Screens built with `focusRoot`, such as PolyPlus's lobby and first-launch screens, can be navigated with Tab again. Moving focus into them used to fail with an error
 
 ## [1.9.5] - 2026-11-25
 

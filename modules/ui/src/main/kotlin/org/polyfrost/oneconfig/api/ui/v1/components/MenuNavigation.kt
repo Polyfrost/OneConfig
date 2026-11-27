@@ -18,6 +18,11 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.awtEventOrNull
 import androidx.compose.ui.composed
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusTarget
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -28,6 +33,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.semantics.requestFocus
+import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.delay
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import kotlin.math.abs
@@ -37,7 +44,8 @@ internal val LocalMenuLevel = staticCompositionLocalOf<MenuNavLevel?> { null }
 
 private const val UNPLACED = Int.MIN_VALUE
 
-internal class MenuNavItem {
+internal class MenuNavItem(val level: MenuNavLevel) {
+    val focus = FocusRequester()
     var label: String = ""
     var enabled: Boolean = true
     var hasSubmenu: Boolean = false
@@ -140,10 +148,12 @@ internal class MenuNavLevel(val controller: MenuNavController, val parent: MenuN
     }
 }
 
-internal class MenuNavController {
+internal class MenuNavController(private val surface: FocusRequester) {
     val root = MenuNavLevel(this, null)
     var active: MenuNavLevel = root
     var focusFirstOf: MenuNavItem? = null
+    var probing: MenuNavLevel? = null
+    var probed: MenuNavItem? = null
     private val typed = StringBuilder()
     private var typedAt = 0L
 
@@ -176,6 +186,12 @@ internal class MenuNavController {
             }
             else -> false
         }
+    }
+
+    fun focusRow(item: MenuNavItem): Boolean {
+        if (!runCatching { surface.requestFocus() }.getOrDefault(false)) return false
+        item.level.select(item)
+        return true
     }
 
     private fun rows(level: MenuNavLevel): List<List<MenuNavItem>> {
@@ -268,7 +284,7 @@ internal fun rememberMenuNavItem(
     activate: () -> Unit,
 ): MenuNavItem? {
     if (level == null) return null
-    val item = remember(level) { MenuNavItem() }
+    val item = remember(level) { MenuNavItem(level) }
     val latest by rememberUpdatedState(activate)
     SideEffect {
         item.label = label
@@ -318,4 +334,12 @@ internal fun Modifier.menuNavPosition(item: MenuNavItem?): Modifier =
                 item.top = at.y.roundToInt()
                 item.left = at.x.roundToInt()
             }
+            .semantics { requestFocus { item.level.controller.focusRow(item) } }
+            .focusRequester(item.focus)
+            .onFocusChanged {
+                val controller = item.level.controller
+                if (it.isFocused) controller.probed = item else if (controller.probed === item) controller.probed = null
+            }
+            .focusProperties { canFocus = item.level.controller.probing === item.level }
+            .focusTarget()
     }

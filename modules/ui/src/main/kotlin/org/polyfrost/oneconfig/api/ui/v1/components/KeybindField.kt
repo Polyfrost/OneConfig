@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -33,6 +34,8 @@ import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import org.polyfrost.compose.host.controller.Controllers
+import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.InternalOneConfigUiApi
@@ -109,11 +112,15 @@ public fun KeybindField(
         }
     }
 
-    if (recording) EscapeCloses { clear() }
+    fun cancel() {
+        recording = false
+    }
+
+    if (recording) EscapeCloses { if (Controllers.isDispatching) cancel() else clear() }
 
     DisposableEffect(recording) {
         if (!recording) return@DisposableEffect onDispose { }
-        val onEscape: () -> Unit = { clear() }
+        val onEscape: () -> Unit = { if (Controllers.isDispatching) cancel() else clear() }
         val onMouse: (Int, Boolean) -> Unit = { button, pressed ->
             if (pressed && singleKey) {
                 emit(null, intArrayOf(button), KeyModifiers.NONE)
@@ -178,8 +185,14 @@ public fun KeybindField(
         modifier = modifier
             .graphicsLayer { alpha = if (enabled) 1f else theme.disabledAlpha }
             .heightIn(min = size.height)
-            .onPreviewKeyEvent { event -> recording && handleRecordingKey(event, recordedKeys, heldKeys, singleKey, ::clear, ::commitIfReleased) { code -> emit(intArrayOf(code), null, KeyModifiers.NONE) } }
+            .onPreviewKeyEvent { event ->
+                if (recording && event.isFromController) {
+                    if (event.type == KeyEventType.KeyUp) cancel()
+                    return@onPreviewKeyEvent true
+                }
+                recording && handleRecordingKey(event, recordedKeys, heldKeys, singleKey, ::clear, ::commitIfReleased) { code -> emit(intArrayOf(code), null, KeyModifiers.NONE) } }
             .focusRequester(focusRequester)
+            .onFocusChanged { if (!it.hasFocus && recording && Controllers.isActive) cancel() }
             .formFrame(shape, theme.accentBrush, fill = { fill }, border = { border })
             .oneConfigClickable(
                 shown,

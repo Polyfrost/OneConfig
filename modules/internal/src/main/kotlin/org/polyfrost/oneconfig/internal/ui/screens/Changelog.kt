@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.internal.ui.screens
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeader
 import org.polyfrost.oneconfig.api.ui.v1.components.SectionHeaderDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.StatusDot
+import org.polyfrost.oneconfig.api.ui.v1.components.keyNavigable
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.internal.ui.api.ChangeKind
 import org.polyfrost.oneconfig.internal.ui.api.ChangelogData
@@ -245,7 +247,7 @@ private fun ReleaseDetail(release: ChangelogRelease) {
 
     ScrollContainer(scroll, Modifier.fillMaxSize(), gutter = PageGutter, fadingEdges = true) {
         Column(
-            Modifier.fillMaxWidth().padding(start = 18.dp, bottom = PageGutter),
+            Modifier.fillMaxWidth().keyNavigable().focusable().padding(start = 18.dp, bottom = PageGutter),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

@@ -155,7 +155,10 @@ public fun <T> TabRow(
         if (index == selectedIndex && deselect != null) deselect(tab.value) else onSelect(tab.value)
     }
 
-    fun item(index: Int, host: Modifier): Modifier = host.then(tabs[index].modifier).slidingIndicatorItem(indicator, index).choiceItem(focus, index)
+    val arrows = choiceArrows(activation)
+    val pick = choicePick(activation, enabled, selectedIndex, { tabs[it].enabled }) { onSelect(tabs[it].value) }
+
+    fun item(index: Int, host: Modifier): Modifier = host.then(tabs[index].modifier).slidingIndicatorItem(indicator, index).choiceItem(focus, index, arrows, pick)
 
     when (style) {
         TabStyle.Pill -> Box(rowModifier.slidingIndicatorContainer(indicator)) {
@@ -238,7 +241,7 @@ public fun <T> TabRow(
             ) {
                 tabs.forEachIndexed { index, tab ->
                     TabHost(tab, false, false, tooltipPlacement) { host ->
-                        ChipTab(tab, index == selectedIndex, enabled && tab.enabled, tab.size ?: size, ChipDefaults.shape, sound, badgePlacement, host.then(tab.modifier).choiceItem(focus, index)) { click(index) }
+                        ChipTab(tab, index == selectedIndex, enabled && tab.enabled, tab.size ?: size, ChipDefaults.shape, sound, badgePlacement, host.then(tab.modifier).choiceItem(focus, index, arrows, pick)) { click(index) }
                     }
                 }
             }
