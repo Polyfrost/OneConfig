@@ -5,12 +5,14 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,6 +55,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.DropdownMenu
 import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
 import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
 import org.polyfrost.oneconfig.api.ui.v1.components.NavItem
+import org.polyfrost.oneconfig.api.ui.v1.components.NavItemDefaults
 import org.polyfrost.oneconfig.api.ui.v1.components.NotificationsCenterPanel
 import org.polyfrost.oneconfig.api.ui.v1.components.Placement
 import org.polyfrost.oneconfig.api.ui.v1.components.PlayerHead
@@ -69,6 +72,7 @@ import org.polyfrost.oneconfig.internal.ui.navigation.registeredPages
 import org.polyfrost.oneconfig.internal.ui.navigation.sidebarSections
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShell
 import org.polyfrost.oneconfig.internal.ui.shell.LocalShellNavController
+import org.polyfrost.oneconfig.internal.ui.shell.paletteKeyHint
 import org.polyfrost.oneconfig.internal.ui.themes.Accent
 import org.polyfrost.oneconfig.internal.ui.themes.DEFAULT_SIDEBAR_OPACITY
 import org.polyfrost.oneconfig.internal.ui.themes.LocalTheme
@@ -217,6 +221,7 @@ private fun NavigationEntries() {
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        TrackOverflow("search") { SearchEntry() }
         sidebarSections().forEach {
             val entry by controller.currentBackStackEntryAsState()
             val id = it.id
@@ -242,6 +247,32 @@ private fun NavigationEntries() {
 }
 
 @Composable
+private fun SearchEntry() {
+    val palette = LocalShell.current.palette
+    val hint = paletteKeyHint()?.replace(" + ", " ")
+    val theme = LocalTheme.current
+    NavItem(
+        palette.open,
+        translated("oneconfig.sidebar.search", "Search"),
+        { palette.toggle() },
+        Modifier.width(SidebarEntryWidth),
+        icon = "search",
+        trailing = hint?.let { keys ->
+            { _ ->
+                Spacer(Modifier.weight(1f))
+                Text(
+                    keys,
+                    modifier = Modifier.border(1.dp, theme.borderColor, theme.buttonShape).padding(horizontal = 6.dp, vertical = 1.dp),
+                    color = theme.textColorSecondary,
+                    fontSize = theme.typography.caption.fontSize,
+                    maxLines = 1,
+                )
+            }
+        },
+    )
+}
+
+@Composable
 private fun NavigationSection(title: String? = null, collapsed: Boolean? = null, onToggle: () -> Unit = {}, trackKey: Any? = null, content: @Composable () -> Unit) {
     if (collapsed != null && title != null) {
         CollapsibleSection(title, collapsed, onToggle, trackKey ?: title, content)
@@ -264,7 +295,9 @@ private fun NavigationSection(title: String? = null, collapsed: Boolean? = null,
     }
 }
 
-private val SectionHeaderPadding = PaddingValues(start = 6.dp, end = 6.dp, bottom = 2.dp)
+private val SectionHeaderPadding = PaddingValues(start = NavItemDefaults.horizontalPadding, end = 6.dp, bottom = 2.dp)
+
+private const val SectionHeaderAlpha = 0.55f
 
 @Composable
 private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -> Unit, trackKey: Any, content: @Composable () -> Unit) {
@@ -277,7 +310,7 @@ private fun CollapsibleSection(title: String, collapsed: Boolean, onToggle: () -
                 onToggle = onToggle,
                 contentPadding = SectionHeaderPadding,
                 textStyle = SectionHeaderDefaults.labelStyle,
-                color = OneConfigTheme.current.textColor.copy(0.8f),
+                color = OneConfigTheme.current.textColor.copy(SectionHeaderAlpha),
             )
         }
         AnimatedVisibility(

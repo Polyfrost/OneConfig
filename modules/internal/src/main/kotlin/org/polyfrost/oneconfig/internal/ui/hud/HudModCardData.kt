@@ -22,13 +22,16 @@ private fun ownerIdOf(hud: Hud): String = hud.configId ?: BUILTIN_HUD_CONFIG_ID
 private fun hudCardId(hud: Hud, ownerId: String) =
     "$HUD_CARD_ID_PREFIX$ownerId:${hud.id}:${hud::class.java.name}"
 
-private fun isCompatHud(hud: Hud) = hud.category.id == Hud.Category.COMPAT.id
+internal fun isCompatHud(hud: Hud) = hud.category.id == Hud.Category.COMPAT.id
 
 private val COMPAT_CARD_HUD_IDS = setOf("ukus_armor_hud")
 
 private fun cardHuds(): List<Hud> =
     HudManager.providers().filterNot { isCompatHud(it) } +
         activeInstancesSnapshot().filter { isCompatHud(it) && it.id in COMPAT_CARD_HUD_IDS }
+
+internal fun libraryHudProviders(): List<Hud> =
+    HudManager.providers().filterNot { isCompatHud(it) } + activeInstancesSnapshot().filter { isCompatHud(it) }
 
 private fun activeInstancesSnapshot(): List<Hud> =
     runCatching { ArrayList(HudManager.activeInstances).filterNotNull() }.getOrElse { emptyList() }

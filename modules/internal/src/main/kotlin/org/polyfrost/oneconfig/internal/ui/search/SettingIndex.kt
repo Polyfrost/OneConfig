@@ -162,18 +162,23 @@ internal fun Property<*>.isHidden(): Boolean = display == Property.Display.HIDDE
 
 private fun Property<*>.isUnlisted(): Boolean = isHidden() || getMetadata<Any?>("keybindsPageOnly") == true
 
+internal fun SearchRow.leadsTo(target: Any?): Boolean =
+    node.isListed() && (target as? Property<*>)?.isUnlisted() != true
+
+internal fun isShownKeybind(target: Any?): Boolean = (target as? Property<*>)?.isHidden() != true
+
+internal fun SettingNode.isListed(): Boolean = when (this) {
+    is SettingNode.Leaf -> !prop.isUnlisted()
+    is SettingNode.Accordion -> when {
+        head != null && !head.hasVisualizer() -> !head.isUnlisted()
+        else -> head?.isUnlisted() == false || body.any { !it.isUnlisted() }
+    }
+    is SettingNode.Submenu -> head?.isUnlisted() == false || content.any { filterHiddenNodes(it) != null }
+}
+
 internal fun filterHiddenNodes(category: CategoryGroup): CategoryGroup? {
     val subcategories = category.subcategories.mapNotNull { subcategory ->
-        val nodes = subcategory.nodes.filter { node ->
-            when (node) {
-                is SettingNode.Leaf -> !node.prop.isUnlisted()
-                is SettingNode.Accordion -> when {
-                    node.head != null && !node.head.hasVisualizer() -> !node.head.isUnlisted()
-                    else -> node.head?.isUnlisted() == false || node.body.any { !it.isUnlisted() }
-                }
-                is SettingNode.Submenu -> node.head?.isUnlisted() == false || node.content.any { filterHiddenNodes(it) != null }
-            }
-        }
+        val nodes = subcategory.nodes.filter { it.isListed() }
         if (nodes.isEmpty()) null else subcategory.copy(nodes = nodes)
     }
     return if (subcategories.isEmpty()) null else category.copy(subcategories = subcategories)
