@@ -6,6 +6,7 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import java.util.function.DoubleConsumer
 import java.util.function.Function
@@ -27,6 +28,8 @@ import org.polyfrost.oneconfig.api.config.v1.dsl.category
 import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
 import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
+import org.polyfrost.oneconfig.api.event.v1.EventManager
+import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.internal.compat.CompatIds.idPart
 import org.polyfrost.oneconfig.internal.compat.CompatIds.uniqueId
@@ -53,6 +56,17 @@ object UkulibCompat {
 
     private val parsedScreens: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val parsedMods: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+    private val pressingHost = AtomicReference<Any?>()
+
+    init {
+        EventManager.register(ScreenOpenEvent::class.java, Consumer<ScreenOpenEvent> { event ->
+            val host = pressingHost.get() ?: return@Consumer
+            if (Platform.screen().current<Any?>() !== host && event.getScreen<Any?>() === readField(host, "parent")) {
+                event.cancelled = true
+            }
+        })
+    }
 
     /**
      * Called from the `BaseConfigScreen` constructor
@@ -119,7 +133,7 @@ object UkulibCompat {
         val getWidgets = findMethod(screen.javaClass, "getWidgets", 1)
         if (getWidgets != null) {
             return listOf(
-                CreatorSource(DEFAULT_CATEGORY, null, idPart(DEFAULT_CATEGORY, "general")) {
+                CreatorSource(screen, DEFAULT_CATEGORY, null, idPart(DEFAULT_CATEGORY, "general")) {
                     creators(getWidgets, screen, manager)
                 }
             )
@@ -136,7 +150,7 @@ object UkulibCompat {
             val titleComponent = (tab as? Tab)?.let { runCatching { it.tabTitle }.getOrNull() }
             val title = titleComponent?.string?.takeIf { it.isNotBlank() } ?: "Tab ${index + 1}"
             sources.add(
-                CreatorSource(title, CompatIds.componentKey(titleComponent), idPart(title, "tab_${index + 1}")) {
+                CreatorSource(screen, title, CompatIds.componentKey(titleComponent), idPart(title, "tab_${index + 1}")) {
                     creators(tabWidgets, tab, tabManager)
                 }
             )
@@ -355,7 +369,7 @@ object UkulibCompat {
         property.addMetadata("runnable", Runnable {
             runCatching {
                 val current = ref.get() ?: return@runCatching
-                if (kind == "ScreenOpenButton") openScreen(current) else press(current)
+                if (kind == "ScreenOpenButton") openScreen(current) else press(current, ref.host)
             }.onFailure { LOGGER.warn("Failed to run ukulib button action", it) }
         })
         return property
@@ -369,10 +383,15 @@ object UkulibCompat {
         Platform.screen().display(screen)
     }
 
-    private fun press(creator: Any) {
+    private fun press(creator: Any, host: Any) {
         val action = readField(creator, "action") as? Button.OnPress ?: return
-        // the action is handed the button that owns it, which ukulib options never read, so a throwaway is enough
-        action.onPress(Button.builder(Component.empty()) { }.build())
+        pressingHost.set(host)
+        try {
+            // the action is handed the button that owns it, which ukulib options never read, so a throwaway is enough
+            action.onPress(Button.builder(Component.empty()) { }.build())
+        } finally {
+            pressingHost.set(null)
+        }
     }
 
     private fun infoProperty(creator: Any, id: String): Property<*>? {
@@ -477,6 +496,7 @@ object UkulibCompat {
      * per frame
      */
     private class CreatorSource(
+        val host: Any,
         val category: String,
         val categoryKey: String?,
         val categoryPath: String,
@@ -502,6 +522,8 @@ object UkulibCompat {
         private val className: String,
         private val key: String?,
     ) {
+        val host: Any get() = source.host
+
         fun get(): Any? {
             val creators = source.creators()
             creators.getOrNull(index)?.takeIf { matches(it) }?.let { return it }
