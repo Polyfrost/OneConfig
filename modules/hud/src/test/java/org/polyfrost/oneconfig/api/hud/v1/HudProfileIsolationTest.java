@@ -27,11 +27,14 @@
 package org.polyfrost.oneconfig.api.hud.v1;
 
 import kotlin.Pair;
+import kotlin.Unit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.polyfrost.compose.runtime.PolyComposeRuntime;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -42,13 +45,17 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HudProfileIsolationTest {
@@ -314,6 +321,245 @@ class HudProfileIsolationTest {
         }
     }
 
+    @Test
+    void profileLoadDoesNotRunAHudWhoseProviderWasTakenOut() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        Runnable putBack = () -> {
+        };
+        try {
+            launch();
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size());
+            ConfigManager.active().saveAll();
+            putBack = takeOut(provider);
+            int made = SwitchedHud.made;
+
+            ConfigManager.createProfile(PROFILE);
+            ConfigManager.openProfile("");
+
+            assertEquals(made, SwitchedHud.made, "a HUD of a mod that is off must not be made from its file");
+            assertTrue(HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).isEmpty());
+        } finally {
+            putBack.run();
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void providerPutBackAfterAProfileSwitchGetsThatProfilesHud() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+            ConfigManager.createProfile(PROFILE);
+            assertFalse(switched().getHidden());
+            ConfigManager.openProfile("");
+            assertTrue(switched().getHidden());
+            Runnable putBack = takeOut(provider);
+
+            ConfigManager.openProfile(PROFILE);
+            putBack.run();
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size());
+            assertFalse(switched().getHidden(), "it must get this profile's settings, not the ones it went off with");
+            Object tree = switched().getTree();
+            assertTrue(ConfigManager.active().trees().stream().anyMatch(t -> t == tree),
+                    "the HUD that came back must be bound to the profile that is open now");
+            ConfigManager.openProfile("");
+            assertTrue(switched().getHidden(), "the profile it went off in must keep its settings");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    // as a config does that registers its HUD each time it is bound to a profile
+    @Test
+    void providerRegisteredAgainOnceItIsPutBackStillGetsTheNewProfilesHud() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+            ConfigManager.createProfile(PROFILE);
+            ConfigManager.openProfile("");
+            HudManager.INSTANCE.beforeModsOff();
+            Runnable putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            ConfigManager.openProfile(PROFILE);
+            putBack.run();
+            HudManager.register(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertFalse(switched().getHidden(), "it must get this profile's settings, not the ones it went off with");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void hudPutBackIsDisposedAndLoadedFromItsFile() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+
+            Runnable putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+            int disposed = SwitchedHud.disposed;
+            putBack.run();
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertEquals(disposed + 1, SwitchedHud.disposed, "nothing else disposes what the HUD put back last drew with");
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size());
+            assertTrue(switched().getHidden(), "it must come back with the settings it went off with");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void providerRegisteredAfterItsHudWasLoadedIsNoticedGoingOut() throws Exception {
+        LateRegisteredHud first = new LateRegisteredHud();
+        HudManager.register(first);
+        launch();
+        ConfigManager.active().saveAll();
+        // as at a launch that loads the saved HUD before its mod registers the provider
+        HudManager.INSTANCE.unregister(first, true, false);
+        launch();
+        LateRegisteredHud provider = new LateRegisteredHud();
+        HudManager.register(provider);
+        Runnable putBack = null;
+        try {
+            drainPendingProfileReload();
+            boolean[] told = {false};
+            HudManager.INSTANCE.addRegistrationListener(() -> told[0] = true);
+
+            HudManager.INSTANCE.beforeModsOff();
+            putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertTrue(told[0], "a provider going out must be noticed even if no load has seen it registered");
+        } finally {
+            if (putBack != null) putBack.run();
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void hudThatItsModUnregisteredStaysOutWhenOtherModsAreSwitched() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        launch();
+        ConfigManager.active().saveAll();
+        HudManager.INSTANCE.unregister(provider, true, false);
+        try {
+            HudManager.INSTANCE.beforeModsOff();
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            assertTrue(HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).isEmpty(),
+                    "its file is still there, but nothing about the providers changed that would have it loaded");
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void whatAHudDrewWithIsDisposedOnceHotwireTookTheHudOut() throws Exception {
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        Runnable putBack = null;
+        try {
+            launch();
+            PolyComposeRuntime drawing = new PolyComposeRuntime();
+            switched().set_runtime$hud(drawing);
+
+            HudManager.INSTANCE.beforeModsOff();
+            putBack = takeOut(provider);
+            HudManager.INSTANCE.syncWithMods(id -> false);
+
+            // only a disposed composition refuses content, and one that is not keeps running its effects
+            assertThrows(IllegalStateException.class, () -> drawing.setContent((composer, changed) -> Unit.INSTANCE));
+        } finally {
+            if (putBack != null) putBack.run();
+            HudManager.INSTANCE.unregister(provider, true, true);
+        }
+    }
+
+    @Test
+    void wrappedHudIsTakenOutWhileItsModIsOff() throws Exception {
+        launch();
+        new ModWrapper().register();
+        Hud hud = HudManager.INSTANCE.getActiveInstances().stream()
+                .filter(h -> ModWrapper.MOD.equals(h.getConfigId())).findFirst().orElseThrow();
+        boolean[] told = {false};
+        HudManager.INSTANCE.addRegistrationListener(() -> told[0] = true);
+
+        HudManager.INSTANCE.syncWithMods(ModWrapper.MOD::equals);
+        assertFalse(HudManager.INSTANCE.getActiveInstances().contains(hud),
+                "a HUD that draws through a mod that is off must not stay active");
+        assertFalse(HudManager.INSTANCE.providers().contains(hud), "nor be offered for adding again");
+        assertTrue(told[0], "what lists the HUDs, as the search does, must hear of the change");
+
+        HudManager.INSTANCE.syncWithMods(id -> false);
+        assertTrue(HudManager.INSTANCE.getActiveInstances().contains(hud),
+                "only the mod's compat could make it again, so the same HUD must come back");
+        assertTrue(HudManager.INSTANCE.providers().contains(hud));
+    }
+
+    @Test
+    void hudWhoseClassRunsUnderAnotherNameKeepsItsFile() throws Exception {
+        Function<Class<?>, String> savedName = ObjectSerializer.savedName;
+        Function<String, Class<?>> runningClass = ObjectSerializer.runningClass;
+        // as Hotwire does for the classes of a mod it runs as a copy
+        ObjectSerializer.savedName = type -> type == SwitchedHud.class ? "own.SwitchedHud" : savedName.apply(type);
+        ObjectSerializer.runningClass = name -> name.equals("own.SwitchedHud") ? SwitchedHud.class : runningClass.apply(name);
+        SwitchedHud provider = new SwitchedHud();
+        HudManager.register(provider);
+        try {
+            launch();
+            switched().setHidden(true);
+            ConfigManager.active().saveAll();
+            assertEquals("own.SwitchedHud", switched().getTree().getProp("hudClass").get());
+
+            ConfigManager.createProfile(PROFILE);
+            ConfigManager.openProfile("");
+
+            assertEquals(1, HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).size(),
+                    "the file must be loaded into the class that runs now, without a second default HUD next to it");
+            assertTrue(switched().getHidden());
+        } finally {
+            HudManager.INSTANCE.unregister(provider, true, true);
+            ObjectSerializer.savedName = savedName;
+            ObjectSerializer.runningClass = runningClass;
+        }
+    }
+
+    /** Takes a provider and its HUDs out of the manager's collections the way Hotwire does when their mod goes off */
+    @SuppressWarnings("unchecked")
+    private static Runnable takeOut(Hud provider) throws Exception {
+        Field f = HudManager.class.getDeclaredField("hudProviders");
+        f.setAccessible(true);
+        Map<Class<? extends Hud>, Hud> providers = (Map<Class<? extends Hud>, Hud>) f.get(HudManager.INSTANCE);
+        List<Hud> instances = new ArrayList<>(HudManager.INSTANCE.getHudsOfType(provider.getClass()));
+        providers.remove(provider.getClass());
+        HudManager.INSTANCE.getActiveInstances().removeAll(instances);
+        return () -> {
+            HudManager.INSTANCE.getActiveInstances().addAll(instances);
+            providers.put(provider.getClass(), provider);
+        };
+    }
+
+    private static Hud switched() {
+        return HudManager.INSTANCE.getHudsOfType(SwitchedHud.class).get(0);
+    }
+
     private static Hud hud() {
         return HudManager.INSTANCE.getHudsOfType(ProfileTestHud.class).get(0);
     }
@@ -487,6 +733,19 @@ class HudProfileIsolationTest {
         }
     }
 
+    static class ModWrapper extends TestWrapper {
+        static final String MOD = "test-wrapped-mod";
+
+        ModWrapper() {
+            setId("test-wrapped-mod-hud");
+        }
+
+        @Override
+        public String getModId() {
+            return MOD;
+        }
+    }
+
     static class CallbackHud extends TextHud {
         static int positionCallbacks = 0;
 
@@ -604,6 +863,42 @@ class HudProfileIsolationTest {
         @Override
         public String getText() {
             return "late";
+        }
+    }
+
+    static class SwitchedHud extends TextHud {
+        static int made = 0;
+
+        static int disposed = 0;
+
+        SwitchedHud() {
+            super("test-switched", "Test Switched HUD", Hud.Category.getINFO(), "", "");
+            made++;
+        }
+
+        @Override
+        public void remove() {
+            disposed++;
+        }
+
+        @Override
+        public Pair<Float, Float> defaultPosition() {
+            return new Pair<>(10f, 10f);
+        }
+
+        @Override
+        public boolean showByDefault() {
+            return true;
+        }
+
+        @Override
+        public boolean multipleInstancesAllowed() {
+            return false;
+        }
+
+        @Override
+        public String getText() {
+            return "switched";
         }
     }
 

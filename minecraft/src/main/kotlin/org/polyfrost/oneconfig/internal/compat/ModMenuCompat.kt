@@ -10,6 +10,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImpl
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
@@ -38,39 +39,64 @@ object ModMenuCompat {
         postLoad()
     }
 
-    fun postLoad() = CompatLoader.requireTranslations(1000, true) {
-        val nativeCoveredMods = mods.mapNotNull { mod ->
+    fun postLoad() = CompatLoader.requireTranslations(1000, true) { addCards(mods) }
+
+    /**
+     * Gives mods that Hotwire started after the game did what [enable] gave the ones there at launch, which is a card
+     * for their Mod Menu screen and the warm-up of that screen that lets the compat for it run
+     *
+     * Done on a later frame, as a mod may still set its own config up after the call that tells of its start
+     */
+    @JvmStatic
+    fun addStarted(ids: Collection<String>) = CompatLoader.queueScreenWarmup {
+        val started = ModMenu.ROOT_MODS.values.filter { mod ->
+            mod.id in ids && mods.none { it.id == mod.id } && runCatching { ModMenu.hasConfigScreen(mod.id) }.getOrDefault(false)
+        }
+        mods.addAll(started)
+        addCards(started)
+    }
+
+    /**
+     * As [addStarted] for the mods that Hotwire added while Mod Menu was off, which it lists in Mod Menu once that is on
+     * again
+     */
+    @JvmStatic
+    fun addMissed() = addStarted(ModMenu.ROOT_MODS.keys)
+
+    private fun addCards(added: List<Mod>) {
+        val nativeCoveredMods = added.mapNotNull { mod ->
             val nativeChild = mod.findNativeLoadedChild() ?: return@mapNotNull null
             mod.aliasNativeChildConfig(nativeChild)
             mod.id
         }.toSet()
 
-        val foundMods = mods.filterNot {
-            CompatLoader.nativeLoadedConfigs.contains(it.id) ||
+        val foundMods = added.filterNot {
+            CompatLoader.nativeLoadedConfigs.contains(it.ownId) ||
                 it.id in nativeCoveredMods ||
-                hasNativeOcConfig(it.id)
+                hasNativeOcConfig(it.ownId)
         }
 
         foundMods
             .forEach { mod ->
                 val modMenuTree = Tree.tree()
+                val ownId = mod.ownId
 
-                modMenuTree.id = mod.id
+                modMenuTree.id = ownId
                 modMenuTree.title = mod.name
                 modMenuTree.description = "(Mod Menu Compat)"
-                ModInfo.loadedMods.firstOrNull { it.id == mod.id }?.extractIconFile()?.let { iconPath ->
+                ModInfo.loadedMods.firstOrNull { it.id == ownId }?.extractIconFile()?.let { iconPath ->
                     modMenuTree.addMetadata("icon_path", iconPath)
                 }
                 modMenuTree.addMetadata("on_click") {
                     val foreignScreen = runCatching {
                         var screen: Screen? = null
-                        CompatLoader.withForcedModId(mod.id) {
+                        CompatLoader.withForcedModId(ownId) {
                             screen = ModMenu.getConfigScreen(mod.id, Platform.screen().current())
                         }
                         screen
                     }.getOrNull()
 
-                    val nativeTree = runCatching { ConfigManager.active().get(mod.id) }.getOrNull()
+                    val nativeTree = runCatching { ConfigManager.active().get(ownId) }.getOrNull()
                     val hasNative = nativeTree != null &&
                         nativeTree !== modMenuTree &&
                         nativeTree.getMetadata<Boolean>(Backend.UI_ONLY_METADATA) != true
@@ -88,8 +114,8 @@ object ModMenuCompat {
 
                     when {
                         showOc && ShellController.shared.navigation.isReady ->
-                            ShellController.shared.navigation.navigate(ModConfigRoute(mod.id))
-                        showOc -> Platform.screen().display(OneConfigUIScreen(initialTreeId = mod.id))
+                            ShellController.shared.navigation.navigate(ModConfigRoute(ownId))
+                        showOc -> Platform.screen().display(OneConfigUIScreen(initialTreeId = ownId))
                         foreignScreen != null -> Platform.screen().display(foreignScreen)
                     }
                 }
@@ -107,13 +133,17 @@ object ModMenuCompat {
     private fun scheduleWarmup(mods: List<Mod>) {
         mods.forEach { mod ->
             CompatLoader.queueScreenWarmup {
-                CompatLoader.withForcedModId(mod.id) {
+                CompatLoader.withForcedModId(mod.ownId) {
                     // the screen is thrown away because building it is what makes the compat mixins fire
                     ModMenu.getConfigScreen(mod.id, Platform.screen().current())
                 }
             }
         }
     }
+
+    // what OneConfig knows a mod by, which for a copy that Hotwire runs is the mod it stands in for, while Mod Menu
+    // knows the copy by an id of its own
+    private val Mod.ownId: String get() = CompatibilityPlatformImpl.liveCopies[id] ?: id
 
     // a mod can ship both a native OneConfig config and a Mod Menu entrypoint
     // the native one registers under its file id "legacyskyblock.json" while Mod Menu uses the bare

@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1.serialize;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
@@ -38,6 +39,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
@@ -48,6 +50,23 @@ public class ObjectSerializer {
      * Modifier.SYNTHETIC | Modifier.TRANSIENT | Modifier.STATIC
      */
     public static final int FIELD_SKIP_MODIFIERS = Modifier.STATIC | Modifier.TRANSIENT | 0x00001000;
+
+    /**
+     * The name a class is saved under, which is not its own while Hotwire runs an update of a mod as a copy with its
+     * classes renamed
+     */
+    @ApiStatus.Internal
+    public static volatile Function<Class<?>, String> savedName = Class::getName;
+
+    /** The class that a name from {@link #savedName} runs as now, not initialized, or null if there is none */
+    @ApiStatus.Internal
+    public static volatile Function<String, Class<?>> runningClass = name -> {
+        try {
+            return Class.forName(name, false, ObjectSerializer.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    };
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private static final IdentityHashMap<Class<?>, Field[]> CLASS_FIELD_CACHE = new IdentityHashMap<>(32);
     private static final IdentityHashMap<Class<?>, Boolean> IMMUTABLE_CACHE = new IdentityHashMap<>(32);
@@ -174,7 +193,7 @@ public class ObjectSerializer {
         // instanceof rather than cls.isEnum() so constants with a class body are still packed
         if (in instanceof Enum) {
             Map<String, Object> enumMap = new HashMap<>(2, 1f);
-            enumMap.put("class", ((Enum<?>) in).getDeclaringClass().getName());
+            enumMap.put("class", savedName.apply(((Enum<?>) in).getDeclaringClass()));
             enumMap.put("value", ((Enum<?>) in).name());
             return enumMap;
         }
@@ -225,7 +244,7 @@ public class ObjectSerializer {
                 if (outMap.get("class") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'class' is a reserved key!");
                 if (outMap.get("value") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'value' is a reserved key!");
             }
-            outMap.put("class", cls.getName());
+            outMap.put("class", savedName.apply(cls));
             return outMap;
         }
 
@@ -234,7 +253,7 @@ public class ObjectSerializer {
         if (!seen.add(in)) return null;
         try {
             Map<String, Object> cfg = new HashMap<>();
-            cfg.put("class", cls.getName());
+            cfg.put("class", savedName.apply(cls));
             _serialize(cls, in, cfg, useLists, boxArrays);
             return cfg;
         } finally {
@@ -332,7 +351,6 @@ public class ObjectSerializer {
      * @param in the map
      * @return the completed object
      */
-    @SuppressWarnings("unchecked")
     public Object deserialize(Map<String, Object> in) {
         if (in == null) return null;
         String clsName = (String) in.get("class");
@@ -341,11 +359,25 @@ public class ObjectSerializer {
             stderrMap(in);
             throw new SerializationException("Cannot deserialize object: missing class field (internal error)!");
         }
-        Class<?> cls;
+        Class<?> cls = runningClass.apply(clsName);
+        if (cls == null) {
+            throw new SerializationException("Failed to deserialize object: Class " + clsName + " not found, potential classloading issue?");
+        }
+        return deserialize(in, cls);
+    }
+
+    /**
+     * Deserialize the given complex object map as the class that its class field was found to name, for a caller
+     * that has to look at that class first
+     */
+    @ApiStatus.Internal
+    @SuppressWarnings("unchecked")
+    public Object deserialize(Map<String, Object> in, Class<?> cls) {
         try {
-            cls = Class.forName(clsName, true, ObjectSerializer.class.getClassLoader());
-        } catch (Exception e) {
-            throw new SerializationException("Failed to deserialize object: Class " + clsName + " not found, potential classloading issue?", e);
+            // only found so far, and initializing it may be what registers its adapter
+            Class.forName(cls.getName(), true, cls.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new SerializationException("Failed to deserialize object: Class " + cls.getName() + " not found, potential classloading issue?", e);
         }
         Adapter<Object, Object> ad = (Adapter<Object, Object>) getAdapter(cls);
         if (ad != null) {

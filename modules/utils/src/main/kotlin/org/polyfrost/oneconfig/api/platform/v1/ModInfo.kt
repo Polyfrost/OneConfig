@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.api.platform.v1
 
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -49,7 +50,17 @@ public data class ModInfo @JvmOverloads constructor(
 
         @get:JvmStatic
         public val loadedMods: Set<ModInfo>
-            get() = cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
+            // under the lock of forgetLoadedMods, or a read begun before it could store its older list after it
+            get() = cached ?: synchronized(this) {
+                cached ?: Platform.compatibility().mods.also { if (it.isNotEmpty()) cached = it }
+            }
+
+        /** Makes the next read of [loadedMods] ask the loader again, for when mods changed while the game runs */
+        @ApiStatus.Internal
+        @JvmStatic
+        public fun forgetLoadedMods() {
+            synchronized(this) { cached = null }
+        }
     }
 }
 

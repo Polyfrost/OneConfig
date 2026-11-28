@@ -11,6 +11,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.platform.v1.ModInfo
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.platform.v1.internal.CompatibilityPlatformImpl
 import org.polyfrost.compose.minecraft.render.GpuBackend
 import org.polyfrost.compose.minecraft.render.gl.resyncTextureBindCache
 
@@ -25,7 +26,8 @@ object CompatLoader {
     var queuedCompatsRan = false
         private set
 
-    private val pathFactory: MutableMap<ModInfo, (String) -> String> = mutableMapOf()
+    @Volatile
+    private var pathFactory: Map<ModInfo, (String) -> String> = emptyMap()
 
     // concurrent as compat hooks may fire on other threads while ConfigEntrypoints un-marks a failed mod
     val nativeLoadedConfigs: MutableSet<String> = ConcurrentHashMap.newKeySet()
@@ -131,10 +133,12 @@ object CompatLoader {
     const val OPEN_ORIGINAL_SCREEN = "open_original_screen"
 
     fun originalScreenOpener(modId: String): Runnable? {
+        // Mod Menu knows a copy that Hotwire runs in place of this mod by an id of its own
+        val menuId = CompatibilityPlatformImpl.liveCopies.entries.firstOrNull { it.value == modId }?.key ?: modId
         val hasScreen = runCatching {
             Class.forName(MOD_MENU_CLASS)
                 .getMethod("hasConfigScreen", String::class.java)
-                .invoke(null, modId) as? Boolean
+                .invoke(null, menuId) as? Boolean
         }.getOrNull() ?: false
         if (!hasScreen) return null
         return Runnable {
@@ -145,7 +149,7 @@ object CompatLoader {
                 } ?: return@runCatching
                 var screen: Any? = null
                 withForcedModId(modId) {
-                    screen = method.invoke(null, modId, parent)
+                    screen = method.invoke(null, menuId, parent)
                 }
                 screen?.let { Platform.screen().display(it) }
             }
@@ -174,14 +178,30 @@ object CompatLoader {
     private var entrypointsDecided = false
 
     init {
-        ModInfo.loadedMods.forEach { mod ->
-            mod.file?.let {
-                pathFactory[mod] = it.toUri().toString()::plus
-            }
-        }
+        indexMods()
 
         // filtered so a mod whose entrypoint already failed is never marked again
         nativeLoadedConfigs.addAll(ConfigEntrypoints.providerModIds().filter(ConfigEntrypoints::provides))
+    }
+
+    /**
+     * Reads the loader's mod list again into everything built from it, for when mods changed while the game runs
+     */
+    fun refreshMods() {
+        ModInfo.forgetLoadedMods()
+        indexMods()
+        ConfigEntrypoints.forgetProviders()
+    }
+
+    private fun indexMods() {
+        val paths = HashMap<ModInfo, (String) -> String>()
+        ModInfo.loadedMods.forEach { mod ->
+            mod.file?.let {
+                paths[mod] = it.toUri().toString()::plus
+            }
+        }
+        pathFactory = paths
+        ownerByClassName.clear()
     }
 
     /**

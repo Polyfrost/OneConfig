@@ -46,6 +46,7 @@ import org.polyfrost.oneconfig.api.config.v1.CompatSnapshots
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.hud.v1.events.HudEditorToggleEvent
 import org.polyfrost.oneconfig.api.platform.v1.Platform
@@ -63,6 +64,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
+import java.util.function.Predicate
 
 internal fun Throwable.isFatalHudFailure(): Boolean = this is VirtualMachineError
 
@@ -71,6 +73,15 @@ public object HudManager {
 
     private val hudProviders = HashMap<Class<out Hud>, Hud>()
     private val unsupportedHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    // classes registered and not unregistered here, which still names a provider that Hotwire took out of hudProviders
+    private val registeredHuds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    // the providers as of the last load or of Hotwire's last word that it would turn mods off, by name, as it takes
+    // the classes of a mod it turns off out of any collection
+    private var loadedProviders: Set<String> = emptySet()
+    // wrapped HUDs of mods that Hotwire turned off, kept as only their mod's compat could make them again
+    private val parked = ArrayList<Hud>()
+    private var drawnBeforeOff: List<PolyComposeRuntime> = emptyList()
+
     private val pendingUnsupported: MutableSet<Class<out Hud>> = ConcurrentHashMap.newKeySet()
     private val hudIcons = HashMap<String, String>()
     private val registrationListeners = CopyOnWriteArrayList<Runnable>()
@@ -411,7 +422,7 @@ public object HudManager {
 
     @JvmStatic
     public fun markProviderKnown(hud: Hud) {
-        if (knownProviders.add(hud::class.java.name)) saveRegistry()
+        if (knownProviders.add(savedName(hud::class.java))) saveRegistry()
     }
 
     /**
@@ -453,7 +464,8 @@ public object HudManager {
 
     @JvmStatic
     public fun register(hud: Hud) {
-        unsupportedHuds.remove(hud::class.java.name)
+        unsupportedHuds.remove(savedName(hud::class.java))
+        registeredHuds.add(savedName(hud::class.java))
         HudStyles.captureBuiltIn(hud)
         hudProviders[hud::class.java] = hud
         revision++
@@ -478,6 +490,37 @@ public object HudManager {
         for (hud in huds) register(hud)
     }
 
+    @ExperimentalOneConfigUiApi
+    @JvmStatic
+    public fun register(hud: Hud, configId: String? = null, icon: String? = null, supported: () -> Boolean = { true }) {
+        afterInit {
+            val ok = try {
+                supported()
+            } catch (e: Throwable) {
+                if (e.isFatalHudFailure()) throw e
+                LOGGER.error("Failed to check whether HUD ${hud.title} is supported, it will not be registered", e)
+                false
+            }
+            if (!ok) {
+                if (hud::class.java !in hudProviders) {
+                    unsupportedHuds.add(savedName(hud::class.java))
+                    pendingUnsupported.add(hud::class.java)
+                }
+                LOGGER.info("HUD ${hud.title} is not supported here and was not registered")
+                return@afterInit
+            }
+            val id = configId ?: hud.configId
+            when {
+                id != null && icon != null -> register(hud, id, icon)
+                id != null -> register(hud, id)
+                else -> {
+                    if (icon != null) LOGGER.warn("HUD ${hud.title} has no config id, so its icon $icon was not used")
+                    register(hud)
+                }
+            }
+        }
+    }
+
     @JvmStatic
     public fun register(hud: Hud, configId: String) {
         hud.configId = configId
@@ -499,37 +542,6 @@ public object HudManager {
     public fun register(hud: Hud, configId: String, icon: String) {
         hudIcons[configId] = icon
         register(hud, configId)
-    }
-
-    @ExperimentalOneConfigUiApi
-    @JvmStatic
-    public fun register(hud: Hud, configId: String? = null, icon: String? = null, supported: () -> Boolean = { true }) {
-        afterInit {
-            val ok = try {
-                supported()
-            } catch (e: Throwable) {
-                if (e.isFatalHudFailure()) throw e
-                LOGGER.error("Failed to check whether HUD ${hud.title} is supported, it will not be registered", e)
-                false
-            }
-            if (!ok) {
-                if (hud::class.java !in hudProviders) {
-                    unsupportedHuds.add(hud::class.java.name)
-                    pendingUnsupported.add(hud::class.java)
-                }
-                LOGGER.info("HUD ${hud.title} is not supported here and was not registered")
-                return@afterInit
-            }
-            val id = configId ?: hud.configId
-            when {
-                id != null && icon != null -> register(hud, id, icon)
-                id != null -> register(hud, id)
-                else -> {
-                    if (icon != null) LOGGER.warn("HUD ${hud.title} has no config id, so its icon $icon was not used")
-                    register(hud)
-                }
-            }
-        }
     }
 
     @ExperimentalOneConfigUiApi
@@ -596,9 +608,12 @@ public object HudManager {
     /** The menu icon associated with [configId] via [register] or `null` if none was set */
     public fun iconFor(configId: String): String? = hudIcons[configId]
 
-    public fun providers(): Collection<Hud> = hudProviders.values
+    // without the wrapped HUDs kept aside, which would be offered for adding while their mod is off
+    public fun providers(): Collection<Hud> =
+        if (parked.isEmpty()) hudProviders.values else hudProviders.values - parked.toSet()
 
     public fun <T : Hud> unregister(hud: T, removeActiveInstances: Boolean = false, delete: Boolean = false): ArrayList<T>? {
+        registeredHuds.remove(savedName(hud::class.java))
         if (hudProviders.remove(hud::class.java) != null) {
             revision++
             notifyRegistrationChanged()
@@ -1984,6 +1999,67 @@ public object HudManager {
         profileReloadDispatcher = dispatcher
     }
 
+    /**
+     * Brings the HUDs in line with the mods that Hotwire turned off or on. It takes a mod's providers and HUDs out of
+     * the collections here and puts the same ones back, so the active profile's HUDs are loaded again when the
+     * providers are not the ones its last load saw, which also disposes what a HUD that was put back last drew with
+     *
+     * A HUD that wraps something of a mod is not Hotwire's to take out, and is kept aside while [isOff] holds for
+     * its mod
+     */
+    @ApiStatus.Internal
+    public fun syncWithMods(isOff: Predicate<String>) {
+        if (!init) return
+        val drawing = drawing()
+        for (runtime in drawnBeforeOff) {
+            if (runtime in drawing) continue
+            try {
+                runtime.dispose()
+            } catch (failure: Throwable) {
+                if (failure.isFatalHudFailure()) throw failure
+                LOGGER.error("Failed to dispose what a HUD drew with that Hotwire took out", failure)
+            }
+        }
+        drawnBeforeOff = emptyList()
+        val leaving = activeInstances.filter { it is LegacyHudMarker && it.configId?.let(isOff::test) == true }
+        val returning = parked.filter { it.configId?.let(isOff::test) != true }
+        activeInstances.removeAll(leaving.toSet())
+        parked.addAll(leaving)
+        parked.removeAll(returning.toSet())
+        activeInstances.addAll(returning)
+        if (loadedProviders != providerNames()) {
+            pendingProfileReload.set(ProfileReload(ConfigManager.activeProfile(), saveCurrent = true))
+            applyPendingProfileReload()
+        } else if (leaving.isNotEmpty() || returning.isNotEmpty()) {
+            instancesRevision.intValue++
+            revision++
+            invalidate()
+        } else {
+            return
+        }
+        // Hotwire changes the providers without the calls that tell what lists them, as the search does
+        notifyRegistrationChanged()
+    }
+
+    /**
+     * Notes what there is before Hotwire turns mods off, for [syncWithMods] to tell what it took out
+     *
+     * That is what the HUDs draw with, which Hotwire leaves undisposed and so running their effects, and the
+     * providers, of which some may have registered or unregistered since the last load
+     */
+    @ApiStatus.Internal
+    public fun beforeModsOff() {
+        drawnBeforeOff = drawing()
+        loadedProviders = providerNames()
+    }
+
+    private fun drawing(): List<PolyComposeRuntime> =
+        (activeInstances + hudProviders.values).mapNotNull { it._runtime }
+
+    private fun providerNames(): Set<String> = hudProviders.keys.mapTo(HashSet()) { it.name }
+
+    private fun savedName(cls: Class<*>): String = ObjectSerializer.savedName.apply(cls)
+
     private fun teardownForProfile(profile: String) {
         val kept = ArrayList<Hud>(activeInstances.size)
         for (hud in ArrayList(activeInstances)) {
@@ -2033,7 +2109,7 @@ public object HudManager {
         val classes = pendingUnsupported.toList()
         pendingUnsupported.removeAll(classes.toSet())
         for (cls in classes) {
-            if (cls in hudProviders || cls.name !in unsupportedHuds) continue
+            if (cls in hudProviders || savedName(cls) !in unsupportedHuds) continue
             for (hud in activeInstances.filter { it.javaClass == cls }) {
                 LOGGER.info("Removing loaded HUD ${hud.title} because it is not supported here")
                 removeHud(hud, delete = false)
@@ -2122,7 +2198,6 @@ public object HudManager {
 
     @Suppress("UNCHECKED_CAST")
     private fun loadHuds(now: Long, prefetched: Collection<Tree>?) {
-        val loader = HudManager::class.java.classLoader
         val used = HashSet<Class<Hud>>(hudProviders.size)
         val failedProviders = HashSet<Class<Hud>>()
         val failed = HashMap<String, Int>(8)
@@ -2157,8 +2232,12 @@ public object HudManager {
                 val clsName = data.getProp("hudClass")?.get() as? String ?: return@forEach
                 if (clsName.endsWith(".OneConfigHudCompat")) return@forEach
                 if (clsName in unsupportedHuds) return@forEach
-                val cls = Class.forName(clsName, true, loader) as? Class<Hud>
+                // its mod is off, so its class must not be instantiated and its file stays as it is
+                if (clsName in registeredHuds && hudProviders.keys.none { savedName(it) == clsName }) return@forEach
+                val cls = (ObjectSerializer.runningClass.apply(clsName) ?: throw ClassNotFoundException(clsName)) as? Class<Hud>
                     ?: throw IllegalArgumentException("$clsName is not a subclass of Hud")
+                // only found so far, and initializing it may be what registers its provider
+                Class.forName(cls.name, true, cls.classLoader)
                 providerClass = cls
                 val h = hudProviders[cls] ?: MHUtils.instantiate(cls, true).getOrThrow()
                 // A previous HUD instance may still own this ID when the same backend is reloaded.
@@ -2206,14 +2285,14 @@ public object HudManager {
         }
 
         var registryChanged = false
-        for (cls in used) registryChanged = knownProviders.add(cls.name) or registryChanged
+        for (cls in used) registryChanged = knownProviders.add(savedName(cls)) or registryChanged
 
         hudProviders.forEach { (cls, h) ->
             var candidate: Hud? = null
             try {
                 if (cls in used || cls in failedProviders) return@forEach
                 if (h.isReal) return@forEach
-                val known = cls.name in knownProviders
+                val known = savedName(cls) in knownProviders
                 val deletable = h.deletable()
                 // A HUD the user cannot delete has no legitimate "deleted" state, so a missing
                 // instance always means its config was lost. Restore it instead of stranding it.
@@ -2231,7 +2310,7 @@ public object HudManager {
                 candidate = hud
                 hud.setAbsolutePosition(dx, dy)
                 addInstance(hud)
-                registryChanged = knownProviders.add(cls.name) or registryChanged
+                registryChanged = knownProviders.add(savedName(cls)) or registryChanged
                 LOGGER.info("Added HUD ${hud.title} at default position ($dx, $dy)")
             } catch (e: Throwable) {
                 rollback(candidate)
@@ -2241,6 +2320,7 @@ public object HudManager {
         }
 
         if (registryChanged) saveRegistry()
+        loadedProviders = providerNames()
 
         try {
             HudGroups.applyDefaults()

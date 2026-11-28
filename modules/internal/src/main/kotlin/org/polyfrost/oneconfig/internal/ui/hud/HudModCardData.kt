@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
 import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHudMarker
@@ -20,7 +21,7 @@ private const val HUD_CARD_ID_PREFIX = "oneconfig.hud:"
 private fun ownerIdOf(hud: Hud): String = hud.configId ?: BUILTIN_HUD_CONFIG_ID
 
 private fun hudCardId(hud: Hud, ownerId: String) =
-    "$HUD_CARD_ID_PREFIX$ownerId:${hud.id}:${hud::class.java.name}"
+    "$HUD_CARD_ID_PREFIX$ownerId:${hud.id}:${ObjectSerializer.savedName.apply(hud::class.java)}"
 
 internal fun isCompatHud(hud: Hud) = hud.category.id == Hud.Category.COMPAT.id
 

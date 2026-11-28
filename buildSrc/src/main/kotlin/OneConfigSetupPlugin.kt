@@ -270,6 +270,13 @@ class OneConfigSetupPlugin : Plugin<Project> {
                 }
             }
 
+            // Hotwire's API has no Minecraft types, so one of its builds serves every version. Its published jar keeps
+            // the API in a jar nested inside, which is the part to compile against
+            val hotwire = configurations.detachedConfiguration(
+                dependencies.create("maven.modrinth:irenehotwire:0.9.6.1-beta+mc26.1-26.3")
+            ).apply { isTransitive = false }
+            "compileOnly"(zipTree(hotwire.elements.map { it.single() }).matching { include("META-INF/jars/hotwire-core.jar") })
+
             "annotationProcessor"(versionedCatalog["mixin.squared"])
 
             if (enableMoulRelocatorKsp) {
