@@ -705,18 +705,27 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
                 TextButton(label, { if (plan.needsReopen) reopenPlan = plan else start(plan) }, style = ControlStyle.Primary, contentDescription = spokenWith(label, listOf(message)))
             }
         }
-        reopenPlan?.let { if (!running) ReopenDialog(it, picked.size, onConfirm = { start(it) }, onDismiss = { reopenPlan = null }) }
+        reopenPlan?.let { if (!running) ReopenDialog(it, picked.size, bridge.onServer, onConfirm = { start(it) }, onDismiss = { reopenPlan = null }) }
     }
 }
 
-/** Confirms a switch that saves and reopens the world, or leaves the server, around it */
+/** Confirms a switch that saves and reopens the world, or [leaves] the server, around it, in the words of Hotwire's own screen */
 @Composable
-private fun ReopenDialog(plan: HotwireBridge.Plan, count: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun ReopenDialog(plan: HotwireBridge.Plan, count: Int, leaves: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     val theme = LocalTheme.current
-    val confirm = translated("oneconfig.page.hotwire.switch.reopen", "Save and switch %s", count)
+    val confirm = if (leaves) {
+        translated("oneconfig.page.hotwire.switch.leave", "Leave and switch %s", count)
+    } else {
+        translated("oneconfig.page.hotwire.switch.reopen", "Save and switch %s", count)
+    }
+    val title = if (leaves) {
+        translated("oneconfig.page.hotwire.switch.leave.title", "Leave the server to finish this")
+    } else {
+        translated("oneconfig.page.hotwire.switch.reopen.title", "Reopen your world to finish this")
+    }
     ModalDialog(
         onDismiss = onDismiss,
-        title = { DialogTitle(translated("oneconfig.page.hotwire.switch.reopen.title", "Switching needs a rejoin")) },
+        title = { DialogTitle(title) },
         buttons = {
             TextButton(translated("oneconfig.page.hotwire.add.back", "Back"), onDismiss)
             TextButton(

@@ -13,6 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge
 import dev.moon.hotwire.api.OpeningPrompt as HotwirePrompt
 
@@ -131,6 +132,8 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
     override fun writeReport(reason: String): CompletableFuture<Path> = api.writeReport(reason)
 
     override fun awaitIdle(): CompletableFuture<*> = api.awaitIdle()
+
+    override val onServer get() = !Minecraft.getInstance().isLocalServer
 
     private companion object {
         fun result(result: SwitchResult) = Result(

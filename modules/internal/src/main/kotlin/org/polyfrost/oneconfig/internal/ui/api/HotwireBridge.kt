@@ -158,6 +158,9 @@ abstract class HotwireBridge {
     /** Completes once nothing is switching, adding or updating */
     abstract fun awaitIdle(): CompletableFuture<*>
 
+    /** Whether the game is on someone else's server, where a switch that needs a reopen leaves it instead */
+    abstract val onServer: Boolean
+
     /** Runs the action from a click, where a failure inside Hotwire comes back as a failed result, not a throw */
     class JarAction(val label: String, val primary: Boolean, private val run: () -> CompletableFuture<Result>) {
         fun attempt(): CompletableFuture<Result> = runCatching(run).getOrElse { CompletableFuture.completedFuture(failure(it)) }.exceptionally(::failure)

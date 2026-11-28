@@ -81,6 +81,8 @@ class HotwireBridgeTest {
 
         override fun awaitIdle() = CompletableFuture.completedFuture(null)
 
+        override val onServer = false
+
         override fun unavailable() = TODO()
     }
 
