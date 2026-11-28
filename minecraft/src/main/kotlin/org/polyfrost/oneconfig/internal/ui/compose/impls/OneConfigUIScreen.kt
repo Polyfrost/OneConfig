@@ -349,6 +349,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
 
         HudManager.overrideShowInScreens = true
         HudManager.isConfigUiOpen = true
+        HudManager.hideInMenu = OneConfigConfig.hideHudInMenu
 
         closeRequested = false
         closeRequestedAt = 0L
@@ -463,6 +464,7 @@ class OneConfigUIScreen @JvmOverloads constructor(
         // tcdcommons-based screens like Better Statistics Screen render their parent by hand each frame
         // and that would queue a fullscreen blur which smears over the popup so bail unless we are current
         if (Platform.screen().current<Any?>() !== this) return
+        HudManager.hideInMenu = OneConfigConfig.hideHudInMenu
         if (closeRequested && System.currentTimeMillis() - closeRequestedAt >= closeAnimationMs) {
             markClosed()
             //? if < 1.21.8 && > 1.8.9

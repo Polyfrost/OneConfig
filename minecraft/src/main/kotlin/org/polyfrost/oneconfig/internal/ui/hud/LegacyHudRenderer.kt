@@ -60,7 +60,7 @@ object LegacyHudRenderer {
         //~ if = 1.8.9 'renderLiveHuds(graphics)' -> 'renderLiveHuds()'
         renderLiveHuds(graphics)
         //~ if = 1.8.9 '.render(graphics)' -> '.render()'
-        if (CompatOverlayRenderer.oneConfigScreenOpen()) CompatOverlayRenderer.render(graphics)
+        if (CompatOverlayRenderer.oneConfigScreenOpen() && !HudManager.isHiddenByMenu) CompatOverlayRenderer.render(graphics)
     }
 
     //~ if = 1.8.9 '(graphics: GuiGraphicsExtractor)' -> '()'
@@ -128,6 +128,7 @@ object LegacyHudRenderer {
     }
 
     private fun passesFilters(hud: LegacyHud): Boolean {
+        if (HudManager.isHiddenByMenu) return false
         if (HudManager.isPreviewing(hud)) return true
         if (hud.effectivelyHidden && !hud.drawsWhileHidden()) return false
         if (HudManager.isGuiHidden || HudManager.allHudsHiddenByKey) return false

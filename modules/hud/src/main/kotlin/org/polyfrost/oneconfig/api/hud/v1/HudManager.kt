@@ -31,6 +31,7 @@ package org.polyfrost.oneconfig.api.hud.v1
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
@@ -112,6 +113,12 @@ public object HudManager {
     /** Whether [hud] should render example content right now, see [isEditing] and [Hud.previewsBehindMenu] */
     @JvmStatic
     public fun isPreviewing(hud: Hud): Boolean = isEditorOpen || isConfigUiOpen && hud.previewsBehindMenu
+
+    @JvmStatic
+    public var hideInMenu: Boolean by mutableStateOf(false)
+
+    @JvmStatic
+    public val isHiddenByMenu: Boolean get() = hideInMenu && isConfigUiOpen && !isEditorOpen
 
     /** `true` only while the HUD editor screen itself is open */
     @Volatile public var isEditorOpen: Boolean = false
@@ -1191,9 +1198,14 @@ public object HudManager {
         var volatileContent = false
         val instances = activeInstances
         var drawnKey = instances.size.toLong()
+        val hiddenByMenu = isHiddenByMenu
         for (i in instances.indices) {
             val hud = instances[i]
             if (hud is LegacyHudMarker) continue
+            if (hiddenByMenu) {
+                hud.setVisible(false)
+                continue
+            }
             val visible = shouldDraw(hud)
             val backgroundOnly = !visible && keepsBackgroundOnly(hud)
             if (visible || backgroundOnly) {
@@ -1698,9 +1710,14 @@ public object HudManager {
         prepareFrame(screenWidth, screenHeight, {
             prepareOrder.clear()
             val instances = activeInstances
+            val hiddenByMenu = isHiddenByMenu
             for (i in instances.indices) {
                 val hud = instances[i]
                 if (hud is LegacyHudMarker) continue
+                if (hiddenByMenu) {
+                    hud.setVisible(false)
+                    continue
+                }
                 val previewing = isPreviewing(hud)
                 val visible = previewing || inWorld && shouldDraw(hud)
                 val backgroundOnly = !visible && inWorld && keepsBackgroundOnly(hud)

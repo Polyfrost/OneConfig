@@ -38,6 +38,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 public class Mixin_HudRenderEvent {
 
     //~ if >= 26.1 'render' -> 'extractRenderState'
+    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
+    //~ if = 1.8.9 '(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker' -> '(float partialTicks'
+    private void hideForMenu(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (!HudManager.isHiddenByMenu()) return;
+        //? if = 1.8.9
+        //OneConfig.render();
+        ci.cancel();
+    }
+
+    //~ if >= 26.1 'render' -> 'extractRenderState'
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     //~ if = 1.8.9 '(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker' -> '(float partialTicks'
     private void beginVanillaFootprint(GuiGraphicsExtractor ctx, DeltaTracker deltaTracker, CallbackInfo ci) {

@@ -257,6 +257,13 @@ public class OneConfigConfig extends Config {
     )
     public static boolean pauseGame = false;
 
+    @Switch(
+        title = "oneconfig.preferences.hide_hud_in_menu.title",
+        subcategory = "oneconfig.preferences.category.gui",
+        description = "oneconfig.preferences.hide_hud_in_menu.description"
+    )
+    public static boolean hideHudInMenu = false;
+
     @Dropdown(
         title = "oneconfig.preferences.remember_last_page.title",
         subcategory = "oneconfig.preferences.category.gui",

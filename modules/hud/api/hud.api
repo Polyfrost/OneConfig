@@ -453,6 +453,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static field viewport Lorg/polyfrost/oneconfig/api/hud/v1/HudViewport;
 	public final fun getActiveInstances ()Ljava/util/ArrayList;
 	public static final fun getAllHudsHiddenByKey ()Z
+	public static final fun getHideInMenu ()Z
 	public final fun getHudsOfType (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public static final fun getLayoutReferenceHeight ()F
 	public static final fun getLayoutReferenceWidth ()F
@@ -465,6 +466,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final fun invalidate ()V
 	public final fun isEditing ()Z
 	public final fun isEditorOpen ()Z
+	public static final fun isHiddenByMenu ()Z
 	public static final fun isPreviewing (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
 	public static final fun isSuppressed (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Z
 	public static final fun isSystemPosition ()Z
@@ -483,6 +485,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static synthetic fun removeHud$default (Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZILjava/lang/Object;)V
 	public static final fun resetAllHudsKey ()V
 	public static final fun resetVisibilityKeys ()V
+	public static final fun setHideInMenu (Z)V
 	public static final fun suppressionReasons (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Ljava/util/List;
 	public final fun toggleAllHuds (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Z)V
 	public final fun unregister (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;ZZ)Ljava/util/ArrayList;
