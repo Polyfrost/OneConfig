@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -661,50 +660,53 @@ private fun SwitchBar(bridge: HotwireBridge, picked: List<HotwireBridge.ModState
         }
     }
 
-    Row(
-        modifier = modifier
-            // opaque, since the card background would let the tiles underneath show through the text
-            .background(theme.popupBackground, theme.modCardShape)
-            .fillMaxHeight()
-            // it sits over the grid, so a click on the bar mustn't pick the tile underneath
-            .pointerInput(Unit) {}
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(translated("oneconfig.page.hotwire.switch.selected", "%s selected", picked.size), color = theme.textColor, fontSize = 14.sp)
-            if (message.isNotBlank()) {
-                // the whole of a long plan shows on hovering it
-                TooltipBox(message) {
-                    // focusable, so the whole plan can be read from a keyboard or controller too, and read out on focus, as a
-                    // refused plan has no button that carries it
-                    Text(
-                        message,
-                        Modifier.onFocusChanged { if (it.isFocused && A11y.keyboardMode) A11y.say(message, true) }.focusable(),
-                        theme.textColorSecondary,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+    // boxed with the dialog, whose anchor would otherwise take a gap from the row the bar sits in
+    Box(modifier) {
+        Row(
+            modifier = Modifier
+                // opaque, since the card background would let the tiles underneath show through the text
+                .background(theme.popupBackground, theme.modCardShape)
+                .fillMaxSize()
+                // it sits over the grid, so a click on the bar mustn't pick the tile underneath
+                .pointerInput(Unit) {}
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(translated("oneconfig.page.hotwire.switch.selected", "%s selected", picked.size), color = theme.textColor, fontSize = 14.sp)
+                if (message.isNotBlank()) {
+                    // the whole of a long plan shows on hovering it
+                    TooltipBox(message) {
+                        // focusable, so the whole plan can be read from a keyboard or controller too, and read out on focus, as a
+                        // refused plan has no button that carries it
+                        Text(
+                            message,
+                            Modifier.onFocusChanged { if (it.isFocused && A11y.keyboardMode) A11y.say(message, true) }.focusable(),
+                            theme.textColorSecondary,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
+                if (running) ProgressBar(if (planning) download.fraction else fraction, Modifier.fillMaxWidth())
             }
-            if (running) ProgressBar(if (planning) download.fraction else fraction, Modifier.fillMaxWidth())
+            TextButton(translated("oneconfig.page.hotwire.switch.clear", "Clear"), {
+                // the bar goes with the selection, so nothing would show the plan still coming
+                if (planning) HotwireUpdates.dismissReview()
+                onDeselect(pickedIds)
+            })
+            if (!running && updates.isNotEmpty()) {
+                TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), { HotwireUpdates.reviewUpdates(updates, onDeselect) })
+            }
+            // the narrator reads only controls, so the button carries the plan it switches by
+            if (canSwitch) {
+                TextButton(label, { if (plan.needsReopen) reopenPlan = plan else start(plan) }, style = ControlStyle.Primary, contentDescription = spokenWith(label, listOf(message)))
+            }
         }
-        TextButton(translated("oneconfig.page.hotwire.switch.clear", "Clear"), {
-            // the bar goes with the selection, so nothing would show the plan still coming
-            if (planning) HotwireUpdates.dismissReview()
-            onDeselect(pickedIds)
-        })
-        if (!running && updates.isNotEmpty()) {
-            TextButton(translated("oneconfig.page.hotwire.updates.bar", "Update %s", updates.size), { HotwireUpdates.reviewUpdates(updates, onDeselect) })
-        }
-        // the narrator reads only controls, so the button carries the plan it switches by
-        if (canSwitch) {
-            TextButton(label, { if (plan.needsReopen) reopenPlan = plan else start(plan) }, style = ControlStyle.Primary, contentDescription = spokenWith(label, listOf(message)))
-        }
+        reopenPlan?.let { if (!running) ReopenDialog(it, picked.size, onConfirm = { start(it) }, onDismiss = { reopenPlan = null }) }
     }
-    reopenPlan?.let { if (!running) ReopenDialog(it, picked.size, onConfirm = { start(it) }, onDismiss = { reopenPlan = null }) }
 }
 
 /** Confirms a switch that saves and reopens the world, or leaves the server, around it */
