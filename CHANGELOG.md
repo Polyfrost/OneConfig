@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Mods that [Hotwire](https://modrinth.com/mod/irenehotwire) turns off, turns on, adds or updates while the game runs keep their settings, mod cards and HUDs, including when a profile was switched to, created or renamed while they were off
+- With Hotwire installed, a Hotwire page turns mods off and on, adds them from Modrinth or a jar, and updates them while the game runs
 - API: `Hud.previewsBehindMenu` lets HUDs that only show now and then stay as they are in game behind the config menu and preview only in Edit HUD (#1423)
 - API: `oneconfig:config` entrypoints of mods that Hotwire adds or updates while the game runs are run as the mod starts
 

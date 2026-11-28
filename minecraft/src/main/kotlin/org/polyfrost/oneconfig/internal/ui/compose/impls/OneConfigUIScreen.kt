@@ -57,6 +57,7 @@ import org.polyfrost.oneconfig.internal.ui.OneConfigInterface
 import org.polyfrost.oneconfig.internal.ui.UiErrors
 import org.polyfrost.oneconfig.internal.ui.api.ConfigRegistry
 import org.polyfrost.oneconfig.internal.ui.api.ConfigSource
+import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge
 import org.polyfrost.oneconfig.internal.ui.components.AnimationsMotionScale
 import org.polyfrost.oneconfig.internal.ui.components.warmIconCache
 import org.polyfrost.compose.minecraft.screen.ComposeScreen
@@ -300,6 +301,8 @@ class OneConfigUIScreen @JvmOverloads constructor(
         updateAccent()
         ConfigRegistry.loadFrom(ConfigManager.active(), ConfigSource.OC)
         initialTree?.let { ConfigRegistry.registerTree(it, ConfigSource.OC) }
+        // what Hotwire's own screen changed, such as an update it queued for the next launch, tells the Hotwire pages nothing
+        HotwireBridge.invalidate()
 
         val isResume = resumeNext
         resumeNext = false
