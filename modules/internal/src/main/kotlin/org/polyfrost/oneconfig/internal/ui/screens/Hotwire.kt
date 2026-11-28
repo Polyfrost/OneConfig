@@ -382,10 +382,12 @@ fun Hotwire() {
     DisposableEffect(Unit) { onDispose { HotwireUpdates.dismissReview() } }
     val availableUpdates = HotwireUpdates.modIds
     var onlyUpdates by remember { mutableStateOf(false) }
+    // hidden unless asked for, as Hotwire's own list does, since they're only there for other mods
+    var showLibraries by remember { mutableStateOf(false) }
     val query = pageSearchQuery().trim()
-    val mods = remember(states, query, onlyUpdates, availableUpdates) {
+    val mods = remember(states, query, onlyUpdates, showLibraries, availableUpdates) {
         states
-            .filter { it.switchable }
+            .filter { it.switchable && (showLibraries || !it.library) }
             .filter { (query.isEmpty() || it.name.contains(query, true) || it.id.contains(query, true)) && (!onlyUpdates || it.id in availableUpdates) }
             .sortedBy { it.name.lowercase() }
     }
@@ -401,6 +403,7 @@ fun Hotwire() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Chip(translated("oneconfig.page.hotwire.filter.updates", "Has update"), onlyUpdates, { onlyUpdates = !onlyUpdates }, icon = "refresh")
+                Chip(translated("oneconfig.page.hotwire.filter.libraries", "Libraries"), showLibraries, { showLibraries = !showLibraries }, icon = "layers")
                 Spacer(Modifier.weight(1f))
                 IconSegments(
                     listOf(

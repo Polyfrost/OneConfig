@@ -23,7 +23,7 @@ import kotlin.Result as KotlinResult
  */
 @ApiStatus.Internal
 abstract class HotwireBridge {
-    /** A top-level mod as Hotwire lists it, with [authors] from its metadata */
+    /** A top-level mod as Hotwire lists it, with [authors] from its metadata and whether it calls itself a [library] */
     class ModState(
         val id: String,
         val name: String,
@@ -32,6 +32,7 @@ abstract class HotwireBridge {
         val on: Boolean,
         val switchable: Boolean,
         val offSinceStart: Boolean,
+        val library: Boolean = false,
     )
 
     /**

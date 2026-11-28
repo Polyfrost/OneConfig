@@ -13,6 +13,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import net.fabricmc.loader.api.FabricLoader
+import net.fabricmc.loader.api.metadata.CustomValue.CvType
+import net.fabricmc.loader.api.metadata.ModMetadata
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.internal.ui.api.HotwireBridge
 import dev.moon.hotwire.api.OpeningPrompt as HotwirePrompt
@@ -26,12 +28,14 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
 
     // by mod id, as the loader no longer lists a mod while Hotwire has it off
     private val authors = HashMap<String, String>()
+    private val libraries = HashSet<String>()
 
     override fun mods() = api.mods.map {
         FabricLoader.getInstance().getModContainer(it.id()).ifPresent { mod ->
             authors[it.id()] = mod.metadata.authors.joinToString(", ") { person -> person.name }
+            if (isLibrary(mod.metadata)) libraries += it.id()
         }
-        ModState(it.id(), it.name(), it.version(), authors[it.id()], it.on(), it.switchable(), it.offSinceStart())
+        ModState(it.id(), it.name(), it.version(), authors[it.id()], it.on(), it.switchable(), it.offSinceStart(), it.id() in libraries)
     }
 
     override fun icon(modId: String): String? {
@@ -136,6 +140,12 @@ class HotwireBridgeImpl(private val api: HotwireApi) : HotwireBridge() {
     override val onServer get() = !Minecraft.getInstance().isLocalServer
 
     private companion object {
+        // by the badge Mod Menu shows, as Hotwire's own list tells libraries
+        fun isLibrary(metadata: ModMetadata): Boolean {
+            val badges = metadata.getCustomValue("modmenu")?.takeIf { it.type == CvType.OBJECT }?.asObject?.get("badges")
+            return badges != null && badges.type == CvType.ARRAY && badges.asArray.any { it.type == CvType.STRING && it.asString == "library" }
+        }
+
         fun result(result: SwitchResult) = Result(
             result.isDone,
             result.message(),

@@ -358,6 +358,7 @@
   "oneconfig.page.hotwire.change.reopen": "Save and apply",
   "oneconfig.page.hotwire.downloads_folder": "Downloads folder",
   "oneconfig.page.hotwire.filter.updates": "Has update",
+  "oneconfig.page.hotwire.filter.libraries": "Libraries",
   "oneconfig.page.hotwire.hint": "Mods turned off here are unloaded for every profile. The switch on a mod's card only pauses it for the current profile.",
   "oneconfig.page.hotwire.layout.grid": "Grid",
   "oneconfig.page.hotwire.layout.list": "List",
