@@ -84,6 +84,8 @@
 
   "oneconfig.preferences.pause_game.title": "Pause Game",
   "oneconfig.preferences.pause_game.description": "Pause singleplayer worlds while the OneConfig menu is open.",
+  "oneconfig.preferences.hide_hud_in_menu.title": "Hide HUD in Menu",
+  "oneconfig.preferences.hide_hud_in_menu.description": "Hide the HUD while the OneConfig menu is open.",
 
   "oneconfig.preferences.ui_scale.title": "UI Scale",
   "oneconfig.preferences.ui_scale.description": "Size of the OneConfig menu in percent. 100 fits it to the window.",

@@ -646,6 +646,7 @@ internal fun alignHuds(units: List<Collection<Hud>>, align: HudAlign) {
 }
 
 private fun hudBounds(hud: Hud): HudBounds? {
+    if (HudManager.isHiddenByMenu) return null
     if (!HudManager.isPreviewing(hud) && !hud.isVisible.value) return null
     val scale = hud.effectiveScale
     if (hud is LegacyHud) {
