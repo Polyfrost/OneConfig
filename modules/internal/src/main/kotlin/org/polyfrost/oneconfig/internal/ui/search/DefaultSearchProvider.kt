@@ -86,10 +86,11 @@ private val camelCaseBoundary = Regex("(?<=\\p{Ll})(?=\\p{Lu})|(?<=\\p{Lu})(?=\\
  */
 internal fun searchMatches(text: String, query: String): Boolean = searchMatches(text, query, OneConfigConfig.searchDistance)
 
-internal fun searchMatches(text: String, query: String, dist: Int): Boolean {
+internal fun searchMatches(text: String, query: String, maxDist: Int): Boolean {
     val q = query.lowercase()
     val t = text.lowercase()
     if (t.contains(q)) return true
+    val dist = minOf(maxDist, q.length / 3)
     if (dist <= 0) return false
     if (levenshtein(t, q, dist) <= dist) return true
     return text.splitToSequence(' ', '.', '_', '-', '/').any { word ->

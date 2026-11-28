@@ -16,4 +16,13 @@ class SearchMatchesTest {
         assertFalse(DefaultSearchProviderKt.searchMatches("PolyNametag", "play", 2));
         assertFalse(DefaultSearchProviderKt.searchMatches("FPSCounter", "fly", 2));
     }
+
+    @Test
+    void shortQueriesOnlyMatchSubstrings() {
+        assertFalse(DefaultSearchProviderKt.searchMatches("Hud", "x", 2));
+        assertFalse(DefaultSearchProviderKt.searchMatches("Show FPS", "xy", 2));
+        assertFalse(DefaultSearchProviderKt.searchMatches("Hud", "a", 10));
+        assertTrue(DefaultSearchProviderKt.searchMatches("Hud", "h", 2));
+        assertTrue(DefaultSearchProviderKt.searchMatches("Search Typo Tolerance", "tolerence", 2));
+    }
 }
